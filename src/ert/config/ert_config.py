@@ -387,48 +387,48 @@ class ErtConfig:
         config_dict,
     ) -> List[ForwardModelStep]:
         errors = []
-        steps = []
+        fm_steps = []
         for step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(step_description) > 1:
                 unsubstituted_step_name, args = step_description
             else:
                 unsubstituted_step_name = step_description[0]
                 args = []
-            step_name = substitution_list.substitute(unsubstituted_step_name)
+            fm_step_name = substitution_list.substitute(unsubstituted_step_name)
             try:
-                step = copy.deepcopy(installed_steps[step_name])
+                fm_step = copy.deepcopy(installed_steps[fm_step_name])
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find step {step_name!r} in list"
+                        f"Could not find step {fm_step_name!r} in list"
                         f" of installed steps: {list(installed_steps.keys())!r}",
-                        step_name,
+                        fm_step_name,
                     )
                 )
                 continue
-            step.private_args = SubstitutionList()
+            fm_step.private_args = SubstitutionList()
             for key, val in args:
-                step.private_args[key] = val
+                fm_step.private_args[key] = val
 
             should_add_step = True
 
-            if step.required_keywords:
-                for req in step.required_keywords:
-                    if req not in step.private_args:
+            if fm_step.required_keywords:
+                for req in fm_step.required_keywords:
+                    if req not in fm_step.private_args:
                         errors.append(
                             ConfigValidationError.with_context(
-                                f"Required keyword {req} not found for forward model {step_name}",
-                                step_name,
+                                f"Required keyword {req} not found for forward model {fm_step_name}",
+                                fm_step_name,
                             )
                         )
                         should_add_step = False
 
             if should_add_step:
-                steps.append(step)
+                fm_steps.append(fm_step)
 
         for step_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
-                step = copy.deepcopy(installed_steps[step_description[0]])
+                fm_step = copy.deepcopy(installed_steps[step_description[0]])
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
@@ -438,13 +438,13 @@ class ErtConfig:
                     )
                 )
                 continue
-            step.arglist = step_description[1:]
-            steps.append(step)
+            fm_step.arglist = step_description[1:]
+            fm_steps.append(fm_step)
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        return steps
+        return fm_steps
 
     def forward_model_step_name_list(self) -> List[str]:
         return [j.name for j in self.forward_model_steps]
@@ -458,17 +458,17 @@ class ErtConfig:
         context = self.substitution_list
 
         class Substituter:
-            def __init__(self, step):
-                step_args = ",".join(
-                    [f"{key}={value}" for key, value in step.private_args.items()]
+            def __init__(self, fm_step):
+                fm_step_args = ",".join(
+                    [f"{key}={value}" for key, value in fm_step.private_args.items()]
                 )
-                step_description = f"{step.name}({step_args})"
+                fm_step_description = f"{fm_step.name}({fm_step_args})"
                 self.substitution_context_hint = (
-                    f"parsing forward model step `FORWARD_MODEL {step_description}` - "
+                    f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
                     "reconstructed, with defines applied during parsing"
                 )
                 self.copy_private_args = SubstitutionList()
-                for key, val in step.private_args.items():
+                for key, val in fm_step.private_args.items():
                     self.copy_private_args[key] = context.substitute_real_iter(
                         val, iens, itr
                     )
@@ -511,15 +511,15 @@ class ErtConfig:
                     return None
                 return result
 
-        def handle_default(step: ForwardModelStep, arg: str) -> str:
-            return step.default_mapping.get(arg, arg)
+        def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
+            return fm_step.default_mapping.get(arg, arg)
 
-        for step in self.forward_model_steps:
-            for key, val in step.private_args.items():
+        for fm_step in self.forward_model_steps:
+            for key, val in fm_step.private_args.items():
                 if key in context and key != val and context[key] != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
-                        f" global '{context[key]}' in forward model {step.name}"
+                        f" global '{context[key]}' in forward model {fm_step.name}"
                     )
         config_file_path = (
             Path(self.user_config_file) if self.user_config_file is not None else None
@@ -549,13 +549,13 @@ class ErtConfig:
                     ),
                     "stdin": substituter.substitute(step.stdin_file),
                     "argList": [
-                        handle_default(step, substituter.substitute(arg))
-                        for arg in step.arglist
+                        handle_default(fm_step, substituter.substitute(arg))
+                        for arg in fm_step.arglist
                     ],
                     "environment": substituter.filter_env_dict(step.environment),
                     "required_keywords": [
-                        handle_default(step, substituter.substitute(rk))
-                        for rk in step.required_keywords
+                        handle_default(fm_step, substituter.substitute(rk))
+                        for rk in fm_step.required_keywords
                     ],
                     "exec_env": substituter.filter_env_dict(step.exec_env),
                     "max_running_minutes": step.max_running_minutes,
@@ -674,47 +674,49 @@ class ErtConfig:
     @classmethod
     def _installed_forward_model_steps_from_dict(cls, config_dict):
         errors = []
-        steps = {}
-        for step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-            name = step[0]
-            step_config_file = path.abspath(step[1])
+        fm_steps = {}
+        for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+            name = fm_step[0]
+            step_config_file = path.abspath(fm_step[1])
             try:
-                new_step = ForwardModelStep.from_config_file(
+                new_fm_step = ForwardModelStep.from_config_file(
                     name=name,
                     config_file=step_config_file,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
                 continue
-            if name in steps:
+            if name in fm_steps:
                 ConfigWarning.ert_context_warn(
                     f"Duplicate forward model step with name {name!r}, choosing "
-                    f"{step_config_file!r} over {steps[name].executable!r}",
+                    f"{step_config_file!r} over {fm_steps[name].executable!r}",
                     name,
                 )
-            steps[name] = new_step
+            fm_steps[name] = new_fm_step
 
-        for step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-            for file_name in _get_files_in_directory(step_path, errors):
+        for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+            for file_name in _get_files_in_directory(fm_step_path, errors):
                 if not path.isfile(file_name):
                     continue
                 try:
-                    new_step = ForwardModelStep.from_config_file(config_file=file_name)
+                    new_fm_step = ForwardModelStep.from_config_file(
+                        config_file=file_name
+                    )
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue
-                name = new_step.name
-                if name in steps:
+                name = new_fm_step.name
+                if name in fm_steps:
                     ConfigWarning.ert_context_warn(
                         f"Duplicate forward model step with name {name!r}, "
-                        f"choosing {file_name!r} over {steps[name].executable!r}",
+                        f"choosing {file_name!r} over {fm_steps[name].executable!r}",
                         name,
                     )
-                steps[name] = new_step
+                fm_steps[name] = new_fm_step
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
-        return steps
+        return fm_steps
 
     @property
     def preferred_num_cpu(self) -> int:
