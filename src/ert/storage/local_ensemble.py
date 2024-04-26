@@ -192,7 +192,7 @@ class LocalEnsemble(BaseMode):
         all been saved in the ensemble
         """
         if not self.experiment.response_configuration:
-            return False
+            return True
         path = self._realization_dir(realization)
 
         if key:
