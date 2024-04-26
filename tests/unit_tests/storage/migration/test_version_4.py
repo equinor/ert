@@ -22,3 +22,12 @@ def test_summary_config(block_storage_path, setup_case):
         assert len(list(storage.experiments)) == 1
         experiment = list(storage.experiments)[0]
         assert len(experiment.response_configuration) == 0
+
+
+def test_metadata(block_storage_path, setup_case):
+    ert_config = setup_case(
+        str(block_storage_path / "version-4/no_summary_case/"), "config.ert"
+    )
+    with open_storage(ert_config.ens_path, "w") as storage:
+        experiment = list(storage.experiments)[0]
+        assert experiment.metadata == {}
