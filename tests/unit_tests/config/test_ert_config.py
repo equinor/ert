@@ -1421,7 +1421,7 @@ def test_validate_job_args_no_warning(caplog, recwarn):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_validate_no_logs_when_overwriting_with_same_value(caplog):
-    with open("job_file", "w", encoding="utf-8") as fout:
+    with open("step_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
     with open("config_file.ert", "w", encoding="utf-8") as fout:

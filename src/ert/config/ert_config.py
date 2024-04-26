@@ -519,7 +519,7 @@ class ErtConfig:
                 if key in context and key != val and context[key] != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
-                        f" global '{context[key]}' in forward model {fm_step.name}"
+                        f" global '{context[key]}' in forward model step {fm_step.name}"
                     )
         config_file_path = (
             Path(self.user_config_file) if self.user_config_file is not None else None
