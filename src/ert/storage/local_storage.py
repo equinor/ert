@@ -305,6 +305,7 @@ class LocalStorage(BaseMode):
             ert_kind,
             experiment_id,
             gen_kw,
+            metadata,
             observations,
             response_info,
             update_params,
@@ -347,6 +348,11 @@ class LocalStorage(BaseMode):
                 update_params.migrate(self.path)
                 empty_summary.migrate(self.path)
                 self._add_migration_information(4, "experiment_id")
+            elif version == 5:
+                # Should usually not need to migrate here, but
+                # there was a bug on a stable release, which left
+                # some storage partially migrated
+                metadata.migrate(self.path)
         except Exception as err:  # pylint: disable=broad-exception-caught
             logger.error(f"Migrating storage at {self.path} failed with {err}")
 
