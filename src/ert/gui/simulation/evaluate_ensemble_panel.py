@@ -33,9 +33,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(QtCore.Qt.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(
-            notifier, show_only_initialized=True, show_only_no_children=True
-        )
+        self._ensemble_selector = EnsembleSelector(notifier, show_only_no_children=True)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -83,8 +81,13 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
             parameters = self.notifier.storage.get_ensemble_by_name(
                 ensemble
             ).get_realization_mask_with_parameters()
-            responses = self.notifier.storage.get_ensemble_by_name(
+            missing_responses = ~self.notifier.storage.get_ensemble_by_name(
                 ensemble
             ).get_realization_mask_with_responses()
-            mask = np.logical_and(parameters, ~responses)
+            failures = ~self.notifier.storage.get_ensemble_by_name(
+                ensemble
+            ).get_realization_mask_without_failure()
+            mask = np.logical_and(
+                parameters, np.logical_or(missing_responses, failures)
+            )
             self._active_realizations_field.model.setValueFromMask(mask)
