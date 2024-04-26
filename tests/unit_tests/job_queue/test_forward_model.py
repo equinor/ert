@@ -27,19 +27,19 @@ def test_load_forward_model():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    step = ForwardModelStep.from_config_file("CONFIG")
-    assert step.name == "CONFIG"
-    assert step.stdout_file is None
-    assert step.stderr_file is None
+    fm_step = ForwardModelStep.from_config_file("CONFIG")
+    assert fm_step.name == "CONFIG"
+    assert fm_step.stdout_file is None
+    assert fm_step.stderr_file is None
 
-    assert step.executable == os.path.join(os.getcwd(), "script.sh")
-    assert os.access(step.executable, os.X_OK)
+    assert fm_step.executable == os.path.join(os.getcwd(), "script.sh")
+    assert os.access(fm_step.executable, os.X_OK)
 
-    assert step.min_arg is None
+    assert fm_step.min_arg is None
 
-    step = ForwardModelStep.from_config_file("CONFIG", name="Step")
-    assert step.name == "Step"
-    assert repr(step).startswith("ForwardModelStep(")
+    fm_step = ForwardModelStep.from_config_file("CONFIG", name="Step")
+    assert fm_step.name == "Step"
+    assert repr(fm_step).startswith("ForwardModelStep(")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -61,10 +61,10 @@ def test_load_forward_model_upgraded():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    step = ForwardModelStep.from_config_file("CONFIG")
-    assert step.min_arg == 2
-    assert step.max_arg == 7
-    argTypes = step.arg_types
+    fm_step = ForwardModelStep.from_config_file("CONFIG")
+    assert fm_step.min_arg == 2
+    assert fm_step.max_arg == 7
+    argTypes = fm_step.arg_types
     assert argTypes == [
         SchemaItemType.INT,
         SchemaItemType.FLOAT,
