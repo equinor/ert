@@ -96,21 +96,21 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert widget_b.currentData() == ensemble_a
 
 
-@pytest.mark.parametrize("flag, expected", [(True, []), (False, ["default"])])
-def test_only_show_initialized(
+@pytest.mark.parametrize(
+    "flag, expected", [(True, ["child"]), (False, ["child", "parent"])]
+)
+def test_show_only_no_parent(
     qtbot, notifier, storage, uniform_parameter, response, flag, expected
 ):
-    ensemble = storage.create_experiment(
+    experiment = storage.create_experiment(
         parameters=[uniform_parameter], responses=[response]
-    ).create_ensemble(name="default", ensemble_size=1)
+    )
+    ensemble = experiment.create_ensemble(name="parent", ensemble_size=1)
+    experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)
+
     notifier.set_storage(storage)
     notifier.set_current_ensemble(ensemble)
 
-    widget = EnsembleSelector(notifier, show_only_initialized=flag)
+    widget = EnsembleSelector(notifier, show_only_no_children=flag)
     qtbot.addWidget(widget)
     assert [widget.itemText(i) for i in range(widget.count())] == expected
-    ensemble.save_parameters(
-        uniform_parameter.name, 0, uniform_parameter.sample_or_load(0, 1, 1)
-    )
-    notifier.emitErtChange()
-    assert widget.count() == 1
