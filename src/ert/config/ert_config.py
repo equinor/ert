@@ -400,8 +400,8 @@ class ErtConfig:
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find step {fm_step_name!r} in list"
-                        f" of installed steps: {list(installed_steps.keys())!r}",
+                        f"Could not find forward model step {fm_step_name!r} in list"
+                        f" of installed forward model steps: {list(installed_steps.keys())!r}",
                         fm_step_name,
                     )
                 )
@@ -417,7 +417,7 @@ class ErtConfig:
                     if req not in fm_step.private_args:
                         errors.append(
                             ConfigValidationError.with_context(
-                                f"Required keyword {req} not found for forward model {fm_step_name}",
+                                f"Required keyword {req} not found for forward model step {fm_step_name}",
                                 fm_step_name,
                             )
                         )
@@ -432,7 +432,7 @@ class ErtConfig:
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find step {fm_step_description[0]!r} "
+                        f"Could not find forward model step {fm_step_description[0]!r} "
                         f"in list of installed forward model steps: {installed_steps}",
                         fm_step_description[0],
                     )

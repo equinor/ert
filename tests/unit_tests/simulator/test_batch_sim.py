@@ -194,7 +194,7 @@ def test_batch_simulation(batch_simulator, storage):
             ("ORDER", "WELL_ORDER"),
             ("ON_OFF", "WELL_ON_OFF"),
         ):
-            # The forward model job SQUARE_PARAMS will load the control
+            # The forward model step SQUARE_PARAMS will load the control
             # values and square them before writing results to disk in
             # the order W1, W2, W3.
             assert list(result[res_key]) == [

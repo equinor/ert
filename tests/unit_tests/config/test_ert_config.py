@@ -891,7 +891,8 @@ def test_that_unknown_job_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(
-        ConfigValidationError, match="Could not find step 'NO_SUCH_FORWARD_MODEL_STEP'"
+        ConfigValidationError,
+        match="Could not find forward model step 'NO_SUCH_FORWARD_MODEL_STEP'",
     ):
         _ = ErtConfig.from_file(test_config_file_name)
 
@@ -1309,13 +1310,13 @@ def test_that_multiple_errors_are_shown_for_forward_model():
     expected_nice_messages_list = [
         (
             "test.ert: Line 3 (Column 15-29): "
-            "Could not find step 'does_not_exist' "
-            "in list of installed steps: []"
+            "Could not find forward model step 'does_not_exist' "
+            "in list of installed forward model steps: []"
         ),
         (
             "test.ert: Line 4 (Column 15-30): "
-            "Could not find step 'does_not_exist2' "
-            "in list of installed steps: []"
+            "Could not find forward model step 'does_not_exist2' "
+            "in list of installed forward model steps: []"
         ),
     ]
 
@@ -1412,7 +1413,7 @@ def test_validate_job_args_no_warning(caplog, recwarn):
     ErtConfig.from_file("config_file.ert")
 
     # Check no warning is logged when config contains
-    # forward model with <ECLBASE> and <RUNPATH> as arguments
+    # forward model step with <ECLBASE> and <RUNPATH> as arguments
     assert not caplog.text
     for w in recwarn:
         assert not issubclass(w.category, ConfigWarning)
@@ -1428,18 +1429,18 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         fout.write("DEFINE <VAR1> 10\n")
         fout.write("DEFINE <VAR2> 20\n")
         fout.write("DEFINE <VAR3> 55\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write("FORWARD_MODEL job_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
+        fout.write("INSTALL_JOB step_name step_file\n")
+        fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
 
     with caplog.at_level(logging.INFO):
         ert_conf = ErtConfig.from_file("config_file.ert")
         ert_conf.forward_model_data_to_json("0", "0", 0)
     assert (
-        "Private arg '<VAR3>':'5' chosen over global '55' in forward model job_name"
+        "Private arg '<VAR3>':'5' chosen over global '55' in forward model step step_name"
         in caplog.text
-        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model job_name"
+        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model step step_name"
         not in caplog.text
-        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
+        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model step step_name"
         not in caplog.text
     )
 

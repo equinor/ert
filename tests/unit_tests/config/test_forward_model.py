@@ -24,7 +24,9 @@ def test_ert_config_throws_on_missing_forward_model_step(
             ["this-is-not-the-job-you-are-looking-for", "<WAVE-HAND>=casually"]
         )
 
-        with pytest.raises(expected_exception=ValueError, match="Could not find step"):
+        with pytest.raises(
+            expected_exception=ValueError, match="Could not find forward model step"
+        ):
             _ = ErtConfig.from_dict(
                 config_values.to_config_dict("test.ert", os.getcwd())
             )
