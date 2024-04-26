@@ -14,7 +14,7 @@ from .config_dict_generator import config_generators
 
 @settings(max_examples=10)
 @given(config_generators())
-def test_ert_config_throws_on_missing_forward_model_job(
+def test_ert_config_throws_on_missing_forward_model_step(
     tmp_path_factory, config_generator
 ):
     with config_generator(tmp_path_factory) as config_values:
@@ -24,7 +24,9 @@ def test_ert_config_throws_on_missing_forward_model_job(
             ["this-is-not-the-job-you-are-looking-for", "<WAVE-HAND>=casually"]
         )
 
-        with pytest.raises(expected_exception=ValueError, match="Could not find job"):
+        with pytest.raises(
+            expected_exception=ValueError, match="Could not find forward model step"
+        ):
             _ = ErtConfig.from_dict(
                 config_values.to_config_dict("test.ert", os.getcwd())
             )
@@ -48,8 +50,8 @@ def test_that_substitutions_can_be_done_in_job_names():
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert len(ert_config.forward_model_list) == 1
-    job = ert_config.forward_model_list[0]
+    assert len(ert_config.forward_model_steps) == 1
+    job = ert_config.forward_model_steps[0]
     assert job.name == "ECLIPSE100"
 
 
@@ -74,7 +76,7 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     res_config = ErtConfig.from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
-        res_config.forward_model_list[0].private_args["<TO>"]
+        res_config.forward_model_steps[0].private_args["<TO>"]
         == "something/hello--there.txt"
     )
 
@@ -101,7 +103,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert list(ert_config.forward_model_list[0].private_args.values()) == [
+    assert list(ert_config.forward_model_steps[0].private_args.values()) == [
         "foo",
         "smt/<foo>/bar/xx/t--s.s/yy/z/z/oo",
     ]
@@ -129,7 +131,7 @@ def test_that_comments_are_ignored():
     res_config = ErtConfig.from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
-        res_config.forward_model_list[0].private_args["<TO>"]
+        res_config.forward_model_steps[0].private_args["<TO>"]
         == "something/hello--there.txt"
     )
 
@@ -154,17 +156,17 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
 
     res_config = ErtConfig.from_file(test_config_file_name)
 
-    assert res_config.forward_model_list[0].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model_list[0].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model_list[0].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_steps[0].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_steps[0].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_steps[0].private_args["<FILE>"] == "file.txt"
 
-    assert res_config.forward_model_list[1].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model_list[1].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model_list[1].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_steps[1].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_steps[1].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_steps[1].private_args["<FILE>"] == "file.txt"
 
-    assert res_config.forward_model_list[2].private_args["<FROM>"] == "some, thing"
-    assert res_config.forward_model_list[2].private_args["<TO>"] == "some stuff"
-    assert res_config.forward_model_list[2].private_args["<FILE>"] == "file.txt"
+    assert res_config.forward_model_steps[2].private_args["<FROM>"] == "some, thing"
+    assert res_config.forward_model_steps[2].private_args["<TO>"] == "some stuff"
+    assert res_config.forward_model_steps[2].private_args["<FILE>"] == "file.txt"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -184,7 +186,7 @@ def test_that_positional_forward_model_args_gives_config_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
+def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
     test_config_file_name = "test.ert"
     Path("job").write_text("EXECUTABLE echo\n", encoding="utf-8")
     test_config_contents = dedent(
@@ -197,7 +199,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
+    with pytest.warns(ConfigWarning, match="Duplicate forward model step"):
         _ = ErtConfig.from_file(test_config_file_name)
 
 
@@ -222,7 +224,7 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir():
+def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_dir():
     test_config_file_name = "test.ert"
     os.mkdir("jobs")
     Path("jobs/job").write_text("EXECUTABLE echo\n", encoding="utf-8")
@@ -237,7 +239,7 @@ def test_that_installing_two_forward_model_jobs_with_the_same_name_warn_with_dir
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.warns(ConfigWarning, match="Duplicate forward model job"):
+    with pytest.warns(ConfigWarning, match="Duplicate forward model step"):
         _ = ErtConfig.from_file(test_config_file_name)
 
 
@@ -255,8 +257,8 @@ def test_that_spaces_in_forward_model_args_are_dropped():
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert len(ert_config.forward_model_list) == 1
-    job = ert_config.forward_model_list[0]
+    assert len(ert_config.forward_model_steps) == 1
+    job = ert_config.forward_model_steps[0]
     assert job.private_args.get("<VERSION>") == "smersion"
 
 
@@ -282,7 +284,7 @@ def test_that_forward_model_with_different_token_kinds_are_added():
 
     assert [
         (j.name, len(j.private_args))
-        for j in ErtConfig.from_file(test_config_file_name).forward_model_list
+        for j in ErtConfig.from_file(test_config_file_name).forward_model_steps
     ] == [("job", 0), ("job", 1)]
 
 
