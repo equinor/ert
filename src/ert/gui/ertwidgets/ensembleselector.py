@@ -19,7 +19,6 @@ class EnsembleSelector(QComboBox):
         self,
         notifier: ErtNotifier,
         update_ert: bool = True,
-        show_only_initialized: bool = False,
         show_only_undefined: bool = False,
         show_only_no_children: bool = False,
     ):
@@ -29,7 +28,6 @@ class EnsembleSelector(QComboBox):
         # If true current ensemble of ert will be change
         self._update_ert = update_ert
         # only show initialized ensembles
-        self._show_only_initialized = show_only_initialized
         self._show_only_undefined = show_only_undefined
         # If True, we filter out any ensembles which have children
         # One use case is if a user wants to rerun because of failures
@@ -82,13 +80,7 @@ class EnsembleSelector(QComboBox):
         self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
-        if self._show_only_initialized:
-            ensemble_list = (
-                x
-                for x in self.notifier.storage.ensembles
-                if not set(x.is_initalized()).issubset(x.has_data())
-            )
-        elif self._show_only_undefined:
+        if self._show_only_undefined:
             ensemble_list = (
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
