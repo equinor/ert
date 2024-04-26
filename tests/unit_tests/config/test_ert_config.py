@@ -884,13 +884,16 @@ def test_that_unknown_job_gives_config_validation_error():
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        SIMULATION_JOB NO_SUCH_JOB
+        SIMULATION_JOB NO_SUCH_FORWARD_MODEL_STEP
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.raises(ConfigValidationError, match="Could not find job 'NO_SUCH_JOB'"):
+    with pytest.raises(
+        ConfigValidationError,
+        match="Could not find forward model step 'NO_SUCH_FORWARD_MODEL_STEP'",
+    ):
         _ = ErtConfig.from_file(test_config_file_name)
 
 
@@ -1174,7 +1177,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
         fh.write(test_fm_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.installed_jobs["FM"].name == "FM"
+    assert ert_config.installed_forward_model_steps["FM"].name == "FM"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1225,7 +1228,7 @@ def test_that_include_take_into_account_path():
         fh.write(test_include_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert list(ert_config.installed_jobs.keys()) == [
+    assert list(ert_config.installed_forward_model_steps.keys()) == [
         "job1",
         "job2",
     ]
@@ -1307,13 +1310,13 @@ def test_that_multiple_errors_are_shown_for_forward_model():
     expected_nice_messages_list = [
         (
             "test.ert: Line 3 (Column 15-29): "
-            "Could not find job 'does_not_exist' "
-            "in list of installed jobs: []"
+            "Could not find forward model step 'does_not_exist' "
+            "in list of installed forward model steps: []"
         ),
         (
             "test.ert: Line 4 (Column 15-30): "
-            "Could not find job 'does_not_exist2' "
-            "in list of installed jobs: []"
+            "Could not find forward model step 'does_not_exist2' "
+            "in list of installed forward model steps: []"
         ),
     ]
 
@@ -1410,7 +1413,7 @@ def test_validate_job_args_no_warning(caplog, recwarn):
     ErtConfig.from_file("config_file.ert")
 
     # Check no warning is logged when config contains
-    # forward model with <ECLBASE> and <RUNPATH> as arguments
+    # forward model step with <ECLBASE> and <RUNPATH> as arguments
     assert not caplog.text
     for w in recwarn:
         assert not issubclass(w.category, ConfigWarning)
@@ -1418,7 +1421,7 @@ def test_validate_job_args_no_warning(caplog, recwarn):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_validate_no_logs_when_overwriting_with_same_value(caplog):
-    with open("job_file", "w", encoding="utf-8") as fout:
+    with open("step_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
     with open("config_file.ert", "w", encoding="utf-8") as fout:
@@ -1426,18 +1429,18 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         fout.write("DEFINE <VAR1> 10\n")
         fout.write("DEFINE <VAR2> 20\n")
         fout.write("DEFINE <VAR3> 55\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write("FORWARD_MODEL job_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
+        fout.write("INSTALL_JOB step_name step_file\n")
+        fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
 
     with caplog.at_level(logging.INFO):
         ert_conf = ErtConfig.from_file("config_file.ert")
         ert_conf.forward_model_data_to_json("0", "0", 0)
     assert (
-        "Private arg '<VAR3>':'5' chosen over global '55' in forward model job_name"
+        "Private arg '<VAR3>':'5' chosen over global '55' in forward model step step_name"
         in caplog.text
-        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model job_name"
+        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model step step_name"
         not in caplog.text
-        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model job_name"
+        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model step step_name"
         not in caplog.text
     )
 

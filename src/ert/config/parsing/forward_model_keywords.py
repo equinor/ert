@@ -1,7 +1,7 @@
 from ert.enum_shim import StrEnum
 
 
-class ForwardModelKeys(StrEnum):
+class ForwardModelStepKeys(StrEnum):
     NAME = "NAME"
     EXECUTABLE = "EXECUTABLE"
 
