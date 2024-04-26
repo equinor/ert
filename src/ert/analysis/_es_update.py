@@ -10,7 +10,6 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     DefaultDict,
-    Dict,
     Generic,
     Iterable,
     List,
@@ -101,39 +100,36 @@ def _all_parameters(
 ) -> npt.NDArray[np.float_]:
     """Return all parameters in assimilation problem"""
 
-    temp_storage = {}
     param_groups = list(ensemble.experiment.parameter_configuration.keys())
-    for param_group in param_groups:
-        _temp_storage = _create_temporary_parameter_storage(
-            ensemble, iens_active_index, param_group
-        )
-        temp_storage[param_group] = _temp_storage[param_group]
-    matrices = [temp_storage[p] for p in param_groups]
-    return np.vstack(matrices)
+
+    param_arrays = [
+        _load_param_ensemble_array(ensemble, param_group, iens_active_index)
+        for param_group in param_groups
+    ]
+
+    return np.vstack(param_arrays)
 
 
-def _save_temp_storage_to_disk(
+def _save_param_ensemble_array_to_disk(
     ensemble: Ensemble,
-    temp_storage: Dict[str, npt.NDArray[np.float_]],
+    param_ensemble_array: npt.NDArray[np.float_],
+    param_group: str,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
-    for key, matrix in temp_storage.items():
-        config_node = ensemble.experiment.parameter_configuration[key]
-        for i, realization in enumerate(iens_active_index):
-            config_node.save_parameters(ensemble, key, realization, matrix[:, i])
-
-
-def _create_temporary_parameter_storage(
-    ensemble: Ensemble,
-    iens_active_index: npt.NDArray[np.int_],
-    param_group: str,
-) -> Dict[str, npt.NDArray[np.float_]]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
-    return {
-        param_group: config_node.load_parameters(
-            ensemble, param_group, iens_active_index
+    for i, realization in enumerate(iens_active_index):
+        config_node.save_parameters(
+            ensemble, param_group, realization, param_ensemble_array[:, i]
         )
-    }
+
+
+def _load_param_ensemble_array(
+    ensemble: Ensemble,
+    param_group: str,
+    iens_active_index: npt.NDArray[np.int_],
+) -> npt.NDArray[np.float_]:
+    config_node = ensemble.experiment.parameter_configuration[param_group]
+    return config_node.load_parameters(ensemble, param_group, iens_active_index)
 
 
 def _get_observations_and_responses(
@@ -479,11 +475,11 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     for param_group in parameters:
-        temp_storage = _create_temporary_parameter_storage(
-            source_ensemble, iens_active_index, param_group
+        param_ensemble_array = _load_param_ensemble_array(
+            source_ensemble, param_group, iens_active_index
         )
         if module.localization:
-            num_params = temp_storage[param_group].shape[0]
+            num_params = param_ensemble_array.shape[0]
             batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
@@ -493,8 +489,8 @@ def analysis_ES(
 
             start = time.time()
             for param_batch_idx in batches:
-                X_local = temp_storage[param_group][param_batch_idx, :]
-                temp_storage[param_group][param_batch_idx, :] = (
+                X_local = param_ensemble_array[param_batch_idx, :]
+                param_ensemble_array[param_batch_idx, :] = (
                     smoother_adaptive_es.assimilate(
                         X=X_local,
                         Y=S,
@@ -510,15 +506,17 @@ def analysis_ES(
             )
 
         else:
-            temp_storage[param_group] = temp_storage[param_group] @ T.astype(
-                temp_storage[param_group].dtype
+            param_ensemble_array = param_ensemble_array @ T.astype(
+                param_ensemble_array.dtype
             )
 
         log_msg = f"Storing data for {param_group}.."
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
-        _save_temp_storage_to_disk(target_ensemble, temp_storage, iens_active_index)
+        _save_param_ensemble_array_to_disk(
+            target_ensemble, param_ensemble_array, param_group, iens_active_index
+        )
         logger.info(
             f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
         )
@@ -612,16 +610,20 @@ def analysis_IES(
     sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
 
     for param_group in parameters:
-        temp_storage = _create_temporary_parameter_storage(
-            source_ensemble, iens_active_index, param_group
+        param_ensemble_array = _load_param_ensemble_array(
+            source_ensemble, param_group, iens_active_index
         )
-        X = temp_storage[param_group]
-        temp_storage[param_group] = X + X @ sies_smoother.W / np.sqrt(
-            len(iens_active_index) - 1
+        param_ensemble_array = (
+            param_ensemble_array
+            + param_ensemble_array
+            @ sies_smoother.W
+            / np.sqrt(len(iens_active_index) - 1)
         )
 
         progress_callback(AnalysisStatusEvent(msg=f"Storing data for {param_group}.."))
-        _save_temp_storage_to_disk(target_ensemble, temp_storage, iens_active_index)
+        _save_param_ensemble_array_to_disk(
+            target_ensemble, param_ensemble_array, param_group, iens_active_index
+        )
 
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
