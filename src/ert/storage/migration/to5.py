@@ -2,9 +2,10 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.local_experiment import _Index
 
-info = "Adding update property to parameters and removing template_file_path"
+info = "Adding update property to parameters, creating an empty metadata file and removing template_file_path"
 
 
 def migrate(path: Path) -> None:
@@ -37,3 +38,7 @@ def migrate(path: Path) -> None:
                 del info[key]
         with open(responses_file, encoding="utf-8", mode="w") as f:
             json.dump(info, f)
+
+        metadata_file = experiment / "metadata.json"
+        with open(path / metadata_file, "w", encoding="utf-8") as f:
+            json.dump({}, f, cls=ContextBoolEncoder)
