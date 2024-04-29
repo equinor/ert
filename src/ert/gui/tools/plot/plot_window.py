@@ -145,7 +145,7 @@ class PlotWindow(QMainWindow):
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            ensembles = self._api.get_all_ensembles_not_running()
+            ensembles = self._api.get_all_ensembles()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)
             open_error_dialog("Request failed", str(e))
