@@ -362,12 +362,13 @@ class EclRun:
             )
             return await_process_tee(process, sys.stdout, log_file)
 
-    LICENSE_FAILURE_SLEEP_FACTOR = 60
-    LICENSE_RETRY_STAGGER_FACTOR = 25
+    LICENSE_FAILURE_RETRY_INITIAL_SLEEP = 90
+    LICENSE_RETRY_STAGGER_FACTOR = 60
+    LICENSE_RETRY_BACKOFF_EXPONENT = 3
 
-    def runEclipse(self, eclrun_config=None, retries_left=2, backoff_sleep=None):
+    def runEclipse(self, eclrun_config=None, retries_left=3, backoff_sleep=None):
         backoff_sleep = (
-            self.LICENSE_FAILURE_SLEEP_FACTOR
+            self.LICENSE_FAILURE_RETRY_INITIAL_SLEEP
             if backoff_sleep is None
             else backoff_sleep
         )
@@ -397,13 +398,15 @@ class EclRun:
                     )
                     sys.stderr.write(
                         "ECLIPSE failed due to license failure "
-                        f"retrying in {time_to_wait} seconds"
+                        f"retrying in {time_to_wait} seconds\n"
                     )
                     time.sleep(time_to_wait)
                     self.runEclipse(
                         eclrun_config,
                         retries_left=retries_left - 1,
-                        backoff_sleep=int(backoff_sleep * (3 + 3 * random())),
+                        backoff_sleep=int(
+                            backoff_sleep * self.LICENSE_RETRY_BACKOFF_EXPONENT
+                        ),
                     )
                     return
                 else:
