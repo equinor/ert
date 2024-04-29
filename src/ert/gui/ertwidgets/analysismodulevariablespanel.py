@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from functools import partial
+from typing import TYPE_CHECKING
 
 from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
@@ -14,13 +17,14 @@ from qtpy.QtWidgets import (
 )
 from typing_extensions import get_args
 
-from ert.config.analysis_module import AnalysisModule, IESSettings
+if TYPE_CHECKING:
+    from ert.gui.presenter import Presenter
 
 
 class AnalysisModuleVariablesPanel(QWidget):
-    def __init__(self, analysis_module: AnalysisModule, ensemble_size: int):
+    def __init__(self, presenter: Presenter, ensemble_size: int):
         QWidget.__init__(self)
-        self.analysis_module = analysis_module
+        self.presenter = presenter
 
         layout = QFormLayout()
         layout.setVerticalSpacing(5)
@@ -32,38 +36,39 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow(
             QLabel(
                 "AnalysisModule: STD_ENKF"
-                if type(analysis_module) != IESSettings
+                if presenter.ies_selected()
                 else "AnalysisModule: IES_ENKF"
             )
         )
         layout.addRow(self.create_horizontal_line())
 
-        if isinstance(analysis_module, IESSettings):
-            for variable_name in (
-                name for name in analysis_module.model_fields if "steplength" in name
-            ):
-                metadata = analysis_module.model_fields[variable_name]
-                layout.addRow(
-                    metadata.title,
-                    self.createDoubleSpinBox(
-                        variable_name,
-                        analysis_module.__getattribute__(variable_name),
-                        [val for val in metadata.metadata if isinstance(val, Ge)][0].ge,
-                        [val for val in metadata.metadata if isinstance(val, Le)][0].le,
-                        0.1,
-                    ),
-                )
+        for (
+            variable_name,
+            title,
+            current_value,
+            min_value,
+            max_value,
+        ) in presenter.step_length_variables():
+            layout.addRow(
+                title,
+                self.createDoubleSpinBox(
+                    variable_name,
+                    current_value,
+                    min_value,
+                    max_value,
+                    0.1,
+                ),
+            )
 
-            lab = QLabel(analysis_module.__doc__)
-            lab.setStyleSheet("font-style: italic; font-size: 10pt; font-weight: 300")
-            layout.addRow(lab)
+        lab = QLabel(presenter.current_analysis_module_description())
+        lab.setStyleSheet("font-style: italic; font-size: 10pt; font-weight: 300")
+        layout.addRow(lab)
 
-            layout.addRow(self.create_horizontal_line())
+        layout.addRow(self.create_horizontal_line())
 
         layout.addRow(QLabel("Inversion Algorithm"))
         dropdown = QComboBox(self)
-        options = analysis_module.model_fields["inversion"]
-        layout.addRow(QLabel(options.description))
+        layout.addRow(QLabel(self.presenter.inversion_description()))
         default_index = 0
         for i, option in enumerate(get_args(options.annotation)):
             dropdown.addItem(option.upper())
@@ -76,7 +81,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         metadata = analysis_module.model_fields[var_name]
         self.truncation_spinner = self.createDoubleSpinBox(
             var_name,
-            analysis_module.enkf_truncation,
+            self.presenter.enkf_truncation,
             [val for val in metadata.metadata if isinstance(val, Gt)][0].gt + 0.001,
             [val for val in metadata.metadata if isinstance(val, Le)][0].le,
             0.01,
@@ -84,7 +89,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.truncation_spinner.setEnabled(False)
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
-        if not isinstance(analysis_module, IESSettings):
+        if presenter.ies_selected:
             layout.addRow(self.create_horizontal_line())
             layout.addRow(QLabel("[EXPERIMENTAL]"))
 
