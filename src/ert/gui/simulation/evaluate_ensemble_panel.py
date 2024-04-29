@@ -42,7 +42,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),
+            ActiveRealizationsModel(ensemble_size, show_default=False),
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
@@ -66,6 +66,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
+            and bool(self._active_realizations_field.text())
         )
 
     def getSimulationArguments(self) -> Arguments:
