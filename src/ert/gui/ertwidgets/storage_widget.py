@@ -1,4 +1,5 @@
 from qtpy.QtCore import (
+    QAbstractItemModel,
     QItemSelectionModel,
     QModelIndex,
     QSortFilterProxyModel,
@@ -26,6 +27,29 @@ from ert.storage import Ensemble, Experiment
 from ert.storage.realization_storage_state import RealizationStorageState
 
 
+class _SortingProxyModel(QSortFilterProxyModel):
+    def __init__(self, model: QAbstractItemModel):
+        super().__init__()
+        self.setSourceModel(model)
+
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        left_data = left.data()
+        right_data = right.data()
+
+        if (
+            isinstance(left_data, str)
+            and "Realization" in left_data
+            and isinstance(right_data, str)
+            and "Realization" in right_data
+        ):
+            left_realization_number = int(left_data.split(" ")[1])
+            right_realization_number = int(right_data.split(" ")[1])
+
+            return left_realization_number < right_realization_number
+
+        return super().lessThan(left, right)
+
+
 class StorageWidget(QWidget):
     onSelectEnsemble = Signal(Ensemble)
     onSelectExperiment = Signal(Experiment)
@@ -51,7 +75,7 @@ class StorageWidget(QWidget):
 
         search_bar = QLineEdit(self)
         search_bar.setPlaceholderText("Filter")
-        proxy_model = QSortFilterProxyModel()
+        proxy_model = _SortingProxyModel(storage_model)
         proxy_model.setFilterKeyColumn(-1)  # Search all columns.
         proxy_model.setSourceModel(storage_model)
         proxy_model.sort(0, Qt.SortOrder.AscendingOrder)
