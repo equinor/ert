@@ -1,4 +1,4 @@
-import time
+import asyncio
 
 from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import Monitor, Snapshot, identifiers
@@ -74,7 +74,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     # we have to wait for the batching dispatcher to process the events, and for the
     # internal ensemble state to get updated before connecting and getting a full
     # ensemble snapshot
-    time.sleep(2)
+    await asyncio.sleep(2)
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
         new_events = new_monitor.track()
@@ -175,7 +175,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     # we have to wait for the batching dispatcher to process the events, and for the
     # internal ensemble state to get updated before connecting and getting a full
     # ensemble snapshot
-    time.sleep(2)
+    await asyncio.sleep(2)
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
         new_events = new_monitor.track()

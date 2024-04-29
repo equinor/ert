@@ -8,7 +8,7 @@ from ._builder import (
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
-from .monitor_async import Monitor
+from .monitor import Monitor
 from .snapshot import PartialSnapshot, Snapshot
 
 __all__ = (
