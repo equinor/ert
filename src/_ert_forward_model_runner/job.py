@@ -1,14 +1,22 @@
+import contextlib
 import json
 import os
 import signal
 import time
 from datetime import datetime as dt
+from pathlib import Path
 from subprocess import Popen
+from typing import Optional
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
 from _ert_forward_model_runner.io import assert_file_executable
-from _ert_forward_model_runner.reporting.message import Exited, Running, Start
+from _ert_forward_model_runner.reporting.message import (
+    Exited,
+    MemoryStatus,
+    Running,
+    Start,
+)
 
 
 class Job:
@@ -114,21 +122,18 @@ class Job:
 
         max_memory_usage = 0
         while exit_code is None:
-            try:
-                memory = process.memory_info().rss + sum(
-                    child.memory_info().rss
-                    for child in process.children(recursive=True)
-                )
-            except (NoSuchProcess, AccessDenied, ZombieProcess):
-                # In case of a process that has died and is in some transitional
-                # state, we ignore any failures. Only seen on OSX thus far.
-                #
-                # See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532  # noqa
-                memory = 0
-            if memory > max_memory_usage:
-                max_memory_usage = memory
-
-            yield Running(self, max_memory_usage, memory)
+            memory_rss = _get_rss_for_processtree(process)
+            max_memory_usage = max(memory_rss, max_memory_usage)
+            yield Running(
+                self,
+                MemoryStatus(
+                    rss=memory_rss,
+                    max_rss=max_memory_usage,
+                    fm_step_id=self.index,
+                    fm_step_name=self.job_data.get("name"),
+                    oom_score=_get_oom_score_for_processtree(process),
+                ),
+            )
 
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
@@ -274,3 +279,51 @@ class Job:
                 f"stat_start_time:{target_file_mtime}"
             )
         return f"Could not find target_file:{target_file}"
+
+
+def _get_rss_for_processtree(process: Process) -> int:
+    """Sum the memory measure RSS (resident set size) for a process and all
+    its descendants."""
+    try:
+        memory_rss = process.memory_info().rss + sum(
+            child.memory_info().rss for child in process.children(recursive=True)
+        )
+    except (NoSuchProcess, AccessDenied, ZombieProcess):
+        # In case of a process that has died and is in some transitional
+        # state, we ignore any failures. Only seen on OSX thus far.
+        #
+        # See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532  # noqa
+        memory_rss = 0
+    return memory_rss
+
+
+def _get_oom_score_for_processtree(process: Process) -> Optional[int]:
+    """Obtain the oom_score (the Linux kernel uses this number to
+    decide which process to kill first in out-of-memory siturations).
+
+    Since the process being monitored here can have subprocesses using
+    arbitrary memory amounts, we need to track the maximal oom_score for x
+    all its descendants.
+
+    oom_score defaults to 0 in Linux, but varies between -1000 and 1000.
+    If returned value is None, then there is no information, e.g. if run
+    on an OS not providing /proc/<pid>/oom_score
+    """
+
+    oom_score = None
+    # A value of None means that we have no information.
+    with contextlib.suppress(ValueError, FileNotFoundError):
+        oom_score = int(
+            Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
+        )
+    with contextlib.suppress(NoSuchProcess, AccessDenied, ZombieProcess):
+        for child in process.children(recursive=True):
+            with contextlib.suppress(ValueError, FileNotFoundError):
+                oom_score_child = int(
+                    Path(f"/proc/{child.pid}/oom_score").read_text(encoding="utf-8")
+                )
+                if oom_score is None:
+                    oom_score = oom_score_child
+                else:
+                    oom_score = max(oom_score, oom_score_child)
+    return oom_score

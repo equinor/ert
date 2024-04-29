@@ -8,7 +8,7 @@ import typing
 from datetime import datetime
 
 from _ert_forward_model_runner import reporting
-from _ert_forward_model_runner.reporting.message import Finish
+from _ert_forward_model_runner.reporting.message import Finish, MemoryStatus
 from _ert_forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
@@ -41,6 +41,8 @@ def _setup_reporters(
 
 def _setup_logging(directory: str = "logs"):
     job_runner_logger = logging.getLogger("_ert_forward_model_runner")
+    memory_csv_logger = logging.getLogger("_ert_forward_model_memory_profiler")
+
     os.makedirs(directory, exist_ok=True)
 
     formatter = logging.Formatter(
@@ -48,9 +50,18 @@ def _setup_logging(directory: str = "logs"):
     )
 
     filename = f"job-runner-log-{datetime.now().strftime('%Y-%m-%dT%H%M')}.txt"
+    csv_filename = f"memory-profile-{datetime.now().strftime('%Y-%m-%dT%H%M')}.csv"
+
     handler = logging.FileHandler(filename=directory + "/" + filename)
     handler.setFormatter(formatter)
     handler.setLevel(logging.DEBUG)
+
+    csv_handler = logging.FileHandler(filename=directory + "/" + csv_filename)
+    csv_handler.setFormatter(logging.Formatter("%(message)s"))
+    memory_csv_logger.addHandler(csv_handler)
+    memory_csv_logger.setLevel(logging.INFO)
+    # Write the CSV header to the file:
+    memory_csv_logger.info(MemoryStatus().csv_header())
 
     job_runner_logger.addHandler(handler)
     job_runner_logger.setLevel(logging.DEBUG)

@@ -1,10 +1,17 @@
 import os
+import pathlib
 import stat
+import sys
+import textwrap
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
 from unittest.mock import PropertyMock, patch
 
+import numpy as np
 import pytest
 
-from _ert_forward_model_runner.job import Job
+from _ert_forward_model_runner.job import Job, _get_oom_score_for_processtree
 from _ert_forward_model_runner.reporting.message import Exited, Running, Start
 
 
@@ -39,18 +46,21 @@ def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
     with open(scriptname, "w", encoding="utf-8") as script:
         script.write(
-            """#!/usr/bin/env python
-import os
-import sys
-import time
+            textwrap.dedent(
+                """\
+            #!/usr/bin/env python
+            import os
+            import sys
+            import time
 
-counter = int(sys.argv[1])
-numbers = list(range(int(1e6)))
-if counter > 0:
-    parent = os.fork()
-    if not parent:
-        os.execv(sys.argv[0], [sys.argv[0], str(counter - 1)])
-time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
+            counter = int(sys.argv[1])
+            numbers = list(range(int(1e6)))
+            if counter > 0:
+                parent = os.fork()
+                if not parent:
+                    os.execv(sys.argv[0], [sys.argv[0], str(counter - 1)])
+            time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
+            )
         )
     executable = os.path.realpath(scriptname)
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
@@ -67,12 +77,102 @@ time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
         max_seen = 0
         for status in job.run():
             if isinstance(status, Running):
-                max_seen = max(max_seen, status.max_memory_usage)
+                max_seen = max(max_seen, status.memory_status.max_rss)
         return max_seen
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
     assert max_seens[0] < max_seens[1]
     assert max_seens[1] < max_seens[2]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_memory_profile_in_running_events():
+    scriptname = "increasing_memory.py"
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            textwrap.dedent(
+                """\
+            #!/usr/bin/env python
+            import time
+            somelist = []
+
+            for _ in range(20):
+                # 1 Mb allocated pr iteration
+                somelist.append(b' ' * 1024 * 1024)
+                time.sleep(0.02)"""
+            )
+        )
+    executable = os.path.realpath(scriptname)
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+    fm_step = Job(
+        {
+            "executable": executable,
+            "argList": [""],
+        },
+        0,
+    )
+    fm_step.MEMORY_POLL_PERIOD = 0.01
+    emitted_timestamps: List[datetime] = []
+    emitted_rss_values: List[Optional[int]] = []
+    emitted_oom_score_values: List[Optional[int]] = []
+    for status in fm_step.run():
+        if isinstance(status, Running):
+            emitted_timestamps.append(
+                datetime.fromisoformat(status.memory_status.timestamp)
+            )
+            emitted_rss_values.append(status.memory_status.rss)
+            emitted_oom_score_values.append(status.memory_status.oom_score)
+
+    # Any asserts on the emitted_rss_values easily becomes flaky, so be mild:
+    assert (
+        np.diff(np.array(emitted_rss_values[:-3])) >= 0
+        # Avoid the tail of the array, then the process is tearing down
+    ).all(), f"Emitted memory usage not increasing, got {emitted_rss_values[:-3]=}"
+
+    assert (
+        np.diff(np.array(emitted_rss_values[3:])).max() < 3 * 1024 * 1024
+        # Avoid the first steps, which includes the Python interpreters memory usage
+    ), f"Memory increased too sharply, missing a measurement? Got {emitted_rss_values[3:]=}"
+
+    if sys.platform.startswith("darwin"):
+        # No oom_score on MacOS
+        assert set(emitted_oom_score_values) == {None}
+    else:
+        for oom_score in emitted_oom_score_values:
+            assert oom_score is not None, "No oom_score, are you not on Linux?"
+            # Upper limit "should" be 1000, but has been proven to overshoot.
+            assert oom_score >= -1000
+
+    timedeltas = np.diff(np.array(emitted_timestamps))
+    # The timedeltas should be close to MEMORY_POLL_PERIOD==0.01, but
+    # any weak test hardware will make that hard to attain.
+    assert min(timedeltas).total_seconds() >= 0.01
+
+
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
+def test_oom_score_is_max_over_processtree(monkeypatch):
+    @dataclass
+    class MockedProcess:
+        """A very lightweight mocked psutil.Process object"""
+
+        pid: int
+
+        def children(self, recursive: bool = True):
+            if self.pid == 123:
+                return [MockedProcess(124)]
+
+    def read_text_side_effect(self: pathlib.Path, *args, **kwargs):
+        if self.absolute() == pathlib.Path("/proc/123/oom_score"):
+            return "234"
+        if self.absolute() == pathlib.Path("/proc/124/oom_score"):
+            return "456"
+
+    with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
+        mocked_read_text.side_effect = read_text_side_effect
+        oom_score = _get_oom_score_for_processtree(MockedProcess(123))
+
+    assert oom_score == 456
 
 
 @pytest.mark.usefixtures("use_tmpdir")

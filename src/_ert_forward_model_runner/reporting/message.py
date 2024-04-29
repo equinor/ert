@@ -1,4 +1,11 @@
+import dataclasses
 from datetime import datetime as dt
+from typing import TYPE_CHECKING, Optional
+
+import psutil
+
+if TYPE_CHECKING:
+    from _ert_forward_model_runner.job import Job
 
 _JOB_STATUS_SUCCESS = "Success"
 _JOB_STATUS_RUNNING = "Running"
@@ -15,6 +22,34 @@ _JOB_EXIT_FAILED_STRING = """Job {job_name} FAILED with code {exit_code}
 Error message: {error_message}
 ----------------------------------------------------------
 """
+
+
+@dataclasses.dataclass
+class MemoryStatus:
+    """Holds memory information that can be represented as a line of CSV data"""
+
+    timestamp: str = ""
+    fm_step_id: Optional[int] = None
+    fm_step_name: Optional[str] = None
+
+    # Memory unit is bytes
+    rss: Optional[int] = None
+    max_rss: Optional[int] = None
+    free: Optional[int] = None
+
+    oom_score: Optional[int] = None
+
+    def __post_init__(self):
+        self.timestamp = dt.now().isoformat()
+        self.free = psutil.virtual_memory().available
+
+    def __repr__(self):
+        return ",".join([str(value) for value in dataclasses.astuple(self)]).replace(
+            "None", ""
+        )
+
+    def csv_header(self) -> str:
+        return ",".join(dataclasses.asdict(self).keys())
 
 
 class _MetaMessage(type):
@@ -77,10 +112,9 @@ class Start(Message):
 
 
 class Running(Message):
-    def __init__(self, job, max_memory_usage, current_memory_usage):
+    def __init__(self, job: "Job", memory_status: MemoryStatus):
         super().__init__(job)
-        self.max_memory_usage = max_memory_usage
-        self.current_memory_usage = current_memory_usage
+        self.memory_status = memory_status
 
 
 class Exited(Message):
