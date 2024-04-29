@@ -142,7 +142,7 @@ class CSVExportJob(ErtPlugin):
                 ensemble_data.set_index(["Date"], append=True, inplace=True)
 
             ensemble_data["Iteration"] = ensemble.iteration
-            ensemble_data["Ensemble"] = ensemble
+            ensemble_data["Ensemble"] = ensemble.name
             ensemble_data.set_index(
                 ["Ensemble", "Iteration"], append=True, inplace=True
             )
