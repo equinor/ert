@@ -71,6 +71,7 @@ class Driver(ABC):
         retry_interval: float = 1.0,
         driverlogger: Optional[logging.Logger] = None,
         exit_on_msgs: Iterable[str] = (),
+        log_to_debug: Optional[bool] = True,
     ) -> Tuple[bool, str]:
         _logger = driverlogger or logging.getLogger(__name__)
         error_message: Optional[str] = None
@@ -91,9 +92,10 @@ class Driver(ABC):
                 f'error: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
             )
             if process.returncode == 0:
-                _logger.debug(
-                    f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
-                )
+                if log_to_debug:
+                    _logger.debug(
+                        f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                    )
                 return True, stdout.decode(errors="ignore").strip()
             if exit_on_msgs and any(
                 exit_on_msg in stderr.decode(errors="ignore")
@@ -103,9 +105,10 @@ class Driver(ABC):
             elif process.returncode in retry_codes:
                 error_message = outputs
             elif process.returncode in accept_codes:
-                _logger.debug(
-                    f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
-                )
+                if log_to_debug:
+                    _logger.debug(
+                        f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                    )
                 return True, stderr.decode(errors="ignore").strip()
             else:
                 error_message = (

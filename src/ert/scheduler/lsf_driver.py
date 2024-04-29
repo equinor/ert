@@ -251,7 +251,7 @@ class LsfDriver(Driver):
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
 
-        bsub_with_args: List[str] = (
+        bsub_with_args: list[str] = (
             [str(self._bsub_cmd)]
             + arg_queue_name
             + ["-o", str(runpath / (name + ".LSF-stdout"))]
@@ -411,6 +411,7 @@ class LsfDriver(Driver):
             if isinstance(event, FinishedEvent):
                 del self._jobs[job_id]
                 del self._iens2jobid[iens]
+                await self._log_bhist_job_summary(job_id)
             await self.event_queue.put(event)
 
     async def _get_exit_code(self, job_id: str) -> int:
@@ -445,6 +446,21 @@ class LsfDriver(Driver):
                 return int(matches.group(1))
 
         return LSF_FAILED_JOB
+
+    async def _log_bhist_job_summary(self, job_id: str) -> None:
+        bhist_with_args: list[str] = [
+            str(self._bhist_cmd),
+            "-l",  # long format
+            job_id,
+        ]
+        _, process_message = await self._execute_with_retry(
+            bhist_with_args,
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
+            retries=3,
+            retry_interval=self._sleep_time_between_cmd_retries,
+            log_to_debug=False,
+        )
+        logger.info(f"Output from bhist -l: {process_message}")
 
     async def _poll_once_by_bhist(self, missing_job_ids: Iterable[str]) -> _Stat:
         if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:

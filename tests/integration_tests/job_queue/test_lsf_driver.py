@@ -145,6 +145,14 @@ def mock_bsub(request, tmp_path):
 
 
 @pytest.fixture
+def mock_bhist(tmp_path):
+    script_path = tmp_path / "mock_bhist"
+    script_path.write_text("#!/bin/sh\necho 'No matching job found'")
+
+    os.chmod(script_path, 0o755)
+
+
+@pytest.fixture
 def copy_lsf_poly_case(copy_poly_case, tmp_path):
     # Overwriting the "poly.ert" config file in tmpdir runpath
     # with our own customized config with at least sets queue option to LSF and
@@ -156,6 +164,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
         "QUEUE_OPTION LSF MAX_RUNNING 10\n",
         f"QUEUE_OPTION LSF BJOBS_CMD {tmp_path}/mock_bjobs\n",
         f"QUEUE_OPTION LSF BSUB_CMD {tmp_path}/mock_bsub\n",
+        f"QUEUE_OPTION LSF BHIST_CMD {tmp_path}/mock_bhist\n",
         "RUNPATH poly_out/realization-<IENS>/iter-<ITER>\n",
         "OBS_CONFIG observations\n",
         "NUM_REALIZATIONS 10\n",
@@ -173,6 +182,7 @@ def copy_lsf_poly_case(copy_poly_case, tmp_path):
     "copy_lsf_poly_case",
     "mock_bsub",
     "mock_bjobs",
+    "mock_bhist",
     "mock_start_server",
 )
 @pytest.mark.integration_test
