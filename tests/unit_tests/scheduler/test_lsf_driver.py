@@ -6,6 +6,7 @@ from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
 from typing import Collection, List, Optional, get_args
+from unittest.mock import AsyncMock
 
 import pytest
 from hypothesis import given
@@ -94,6 +95,9 @@ async def test_events_produced_from_jobstate_updates(
     mocked_bjobs = tmp_path / "bjobs"
     mocked_bjobs.write_text(f"#!/bin/sh\necho '{exit_code}'")
     mocked_bjobs.chmod(mocked_bjobs.stat().st_mode | stat.S_IEXEC)
+    mocked_bhist = tmp_path / "bhist"
+    mocked_bhist.write_text("#!/bin/sh\necho 'foo'")
+    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
 
     started = any(
         state in jobstate_sequence
@@ -112,18 +116,21 @@ async def test_events_produced_from_jobstate_updates(
         ]
     )
 
-    driver = LsfDriver(bjobs_cmd=mocked_bjobs)
+    driver = LsfDriver(bjobs_cmd=mocked_bjobs, bhist_cmd=mocked_bhist)
 
-    async def mocked_submit(self, iens, *_args, **_kwargs):
+    async def mocked_submit(self, iens, name, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
         self._jobs["1"] = JobData(
             iens=iens,
             job_state=QueuedJob(job_state="PEND"),
             submitted_timestamp=time.time(),
+            runpath=os.getcwd(),
+            name=name,
         )
         self._iens2jobid[iens] = "1"
 
     driver.submit = mocked_submit.__get__(driver)
+    driver._dump_bhist_job_summary_to_runpath = AsyncMock()
     await driver.submit(0, "_")
 
     # Replicate the behaviour of multiple calls to poll()
@@ -478,6 +485,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
     bjobs_path.write_text(f"#!/bin/sh\n{bjobs_script}")
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
+    driver._log_bhist_job_summary = AsyncMock()
     with expectation:
         await driver.submit(0, "sleep")
         await asyncio.wait_for(poll(driver, {0}), timeout=1)

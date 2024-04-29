@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 from pathlib import Path
+from textwrap import dedent
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -39,13 +40,41 @@ def bhist_formatter(jobstats: List[Job]) -> str:
     string += "JOBID   USER    JOB_NAME  PEND    PSUSP   RUN     USUSP   SSUSP   UNKWN   TOTAL\n"
     for job in jobstats:
         string += (
-            f"{str(job.job_id):7.7s} {job.user:7.7s} "
+            f"{job.job_id:7.7s} {job.user:7.7s} "
             f"{job.job_name:9.9s} {str(job.pend):7.7s} "
             f"{str(job.psusp):7.7s} {str(job.run):7.7s} "
             f"{str(job.ususp):7.7s} {str(job.ssusp):7.7s} "
             f"{str(job.unkwn):7.7s} {str(job.total):7.7s}\n"
         )
     return string
+
+
+def bhist_long_formatter(jobstats: List[Job]) -> str:
+    """
+    This function outputs stub data entirely independent from the input.
+    """
+    formatted_job_outputs = []
+    for job in jobstats:
+        job_output = dedent(
+            f"""
+            Job <{job.job_id}>, Job Name <{job.job_name}>, User <{job.user}>,
+                                Project <default>, Command <sleep 100>
+            Mon Apr 19 11:32:57: Submitted from host <test_host>, to Queue <normal>, CWD <$
+                                HOME>;
+            Mon Apr 19 11:32:57: Dispatched to <test_cluster>, Effective RES_REQ <select[
+                                (cs)&&(type == any )&&(mem>maxmem*1/12)] span[hosts=1] >;
+            Mon Apr 19 11:32:57: Starting (Pid 11111);
+            Mon Apr 19 11:32:58: Running with execution home </private/test_user>, Execution CW
+                                D </private/test_user>, Execution Pid <11111>;
+
+            Summary of time in seconds spent in various states by  Mon Apr 19 11:33:14
+            PEND     PSUSP    RUN      USUSP    SSUSP    UNKWN    TOTAL\n\t\t"""
+            f"{str(job.pend):8.8s} {str(job.psusp):8.8s} {str(job.run):8.8s}"
+            f"{str(job.ususp):8.8s} {str(job.ssusp):8.8s} {str(job.unkwn):8.8s}"
+            f"{str(job.total):8.8s}"
+        )
+        formatted_job_outputs.append(job_output)
+    return f"{50*'-'}".join(formatted_job_outputs)
 
 
 def read(path: Path, default: Optional[str] = None) -> Optional[str]:
@@ -69,11 +98,12 @@ def main() -> None:
         run_start_time_millis: int = submit_time_millis + pending_time_millis
         end_time_millis: int = int(time.time() * 1000)
         if (jobs_path / f"{job}.returncode").exists():
-            print("bhist says job is done")
             end_time_millis = int(
                 os.path.getctime(jobs_path / f"{job}.returncode") * 1000
             )
-            print(f"run: {end_time_millis - run_start_time_millis}")
+            if not args.l:
+                print("bhist says job is done")
+                print(f"run: {end_time_millis - run_start_time_millis}")
         pend: int = min(
             run_start_time_millis - submit_time_millis,
             int(time.time() * 1000) - submit_time_millis,
@@ -91,7 +121,7 @@ def main() -> None:
                 }
             )
         )
-    print(bhist_formatter(jobs_output))
+    print(bhist_long_formatter(jobs_output) if args.l else bhist_formatter(jobs_output))
 
 
 if __name__ == "__main__":
