@@ -1,13 +1,16 @@
+import glob
 import importlib
 import json
 import os
 import signal
 import stat
+import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
 from unittest.mock import mock_open, patch
 
+import pandas as pd
 import psutil
 import pytest
 
@@ -103,6 +106,50 @@ else:
     wait_until(lambda: len(p.children(recursive=True)) == 0)
 
     os.wait()  # allow os to clean up zombie processes
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_memory_profile_is_logged_as_csv():
+    """This tests that a csv is produced and has basic validity.
+    It does not try to verify the validity of the logged RSS values."""
+    fm_stepname = "do_nothing"
+    scriptname = fm_stepname + ".py"
+    fm_step_repeats = 3
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            """#!/bin/sh
+        exit 0
+        """
+        )
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    forward_model_steps = {
+        "jobList": [
+            {
+                "name": fm_stepname,
+                "executable": os.path.realpath(scriptname),
+                "argList": [""],
+            }
+        ]
+        * fm_step_repeats,
+    }
+
+    with open("jobs.json", "w", encoding="utf-8") as f:
+        f.write(json.dumps(forward_model_steps))
+
+    subprocess.run(
+        [
+            sys.executable,
+            importlib.util.find_spec("_ert_forward_model_runner.job_dispatch").origin,
+            os.getcwd(),
+        ],
+        check=False,
+    )
+    csv_files = glob.glob("logs/memory-profile*csv")
+    mem_df = pd.read_csv(csv_files[0], parse_dates=True)
+    assert mem_df["timestamp"].is_monotonic_increasing
+    assert (mem_df["fm_step_id"].values == [0, 1, 2]).all()
+    assert mem_df["fm_step_name"].unique() == [fm_stepname]
+    assert (mem_df["rss"] >= 0).all()  # 0 has been observed
 
 
 @pytest.mark.usefixtures("use_tmpdir")

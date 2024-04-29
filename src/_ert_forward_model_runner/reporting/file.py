@@ -23,6 +23,7 @@ from _ert_forward_model_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
+memory_logger = logging.getLogger("_ert_forward_model_memory_profiler")
 append = functools.partial(open, mode="a")
 
 LOG_file = "JOB_LOG"
@@ -96,10 +97,11 @@ class File(Reporter):
 
         elif isinstance(msg, Running):
             job_status.update(
-                max_memory_usage=msg.max_memory_usage,
-                current_memory_usage=msg.current_memory_usage,
+                max_memory_usage=msg.memory_status.max_rss,
+                current_memory_usage=msg.memory_status.rss,
                 status=_JOB_STATUS_RUNNING,
             )
+            memory_logger.info(msg.memory_status)
 
         elif isinstance(msg, Finish):
             logger.debug("Runner finished")

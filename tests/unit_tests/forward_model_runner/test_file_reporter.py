@@ -9,6 +9,7 @@ from _ert_forward_model_runner.reporting.message import (
     Exited,
     Finish,
     Init,
+    MemoryStatus,
     Running,
     Start,
 )
@@ -129,7 +130,7 @@ def test_report_with_failed_exit_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_running_message_argument(reporter):
-    msg = Running(Job({"name": "job1"}, 0), 100, 10)
+    msg = Running(Job({"name": "job1"}, 0), MemoryStatus(max_rss=100, rss=10))
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
     reporter.report(msg)

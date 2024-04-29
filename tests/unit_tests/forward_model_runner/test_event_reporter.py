@@ -22,6 +22,7 @@ from _ert_forward_model_runner.reporting.message import (
     Exited,
     Finish,
     Init,
+    MemoryStatus,
     Running,
     Start,
 )
@@ -121,7 +122,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(job1, 100, 10))
+        reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
         reporter.report(Finish())
 
     assert len(lines) == 1
@@ -140,7 +141,7 @@ def test_report_only_job_running_for_successful_run(unused_tcp_port):
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(job1, 100, 10))
+        reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
         reporter.report(Finish())
 
     assert len(lines) == 1
@@ -155,7 +156,7 @@ def test_report_with_failed_finish_message_argument(unused_tcp_port):
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(job1, 100, 10))
+        reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
         reporter.report(Finish().with_error("massive_failure"))
 
     assert len(lines) == 1
@@ -198,9 +199,9 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
             "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-            reporter.report(Running(job1, 100, 10))
-            reporter.report(Running(job1, 100, 10))
-            reporter.report(Running(job1, 100, 10))
+            reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
+            reporter.report(Running(job1, MemoryStatus(max_rss=1100, rss=10)))
+            reporter.report(Running(job1, MemoryStatus(max_rss=1100, rss=10)))
             # set _stop_timestamp
             reporter.report(Finish())
         if reporter._event_publisher_thread.is_alive():
@@ -236,9 +237,9 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
             patched_send.side_effect = send_func
 
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-            reporter.report(Running(job1, 100, 10))
-            reporter.report(Running(job1, 200, 10))
-            reporter.report(Running(job1, 300, 10))
+            reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
+            reporter.report(Running(job1, MemoryStatus(max_rss=200, rss=10)))
+            reporter.report(Running(job1, MemoryStatus(max_rss=300, rss=10)))
 
             _wait_until(
                 condition=lambda: patched_send.call_count == 3,
@@ -273,8 +274,8 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
         reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(job1, 100, 10))
-        reporter.report(Running(job1, 200, 10))
+        reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
+        reporter.report(Running(job1, MemoryStatus(max_rss=200, rss=10)))
 
         # sleep until both Running events have been received
         _wait_until(
@@ -286,14 +287,14 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
         with patch(
             "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
-            reporter.report(Running(job1, 300, 10))
+            reporter.report(Running(job1, MemoryStatus(max_rss=300, rss=10)))
             # Make sure the publisher thread exits because it got
             # ClientConnectionClosedOK. If it hangs it could indicate that the
             # exception is not caught/handled correctly
             if reporter._event_publisher_thread.is_alive():
                 reporter._event_publisher_thread.join()
 
-        reporter.report(Running(job1, 400, 10))
+        reporter.report(Running(job1, MemoryStatus(max_rss=400, rss=10)))
         reporter.report(Finish())
 
     # set _stop_timestamp was not set to None since the reporter finished on time

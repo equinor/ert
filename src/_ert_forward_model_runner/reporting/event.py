@@ -181,8 +181,8 @@ class Event(Reporter):
             self._dump_event(
                 attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_RUNNING, **job_msg_attrs},
                 data={
-                    "max_memory_usage": msg.max_memory_usage,
-                    "current_memory_usage": msg.current_memory_usage,
+                    "max_memory_usage": msg.memory_status.max_rss,
+                    "current_memory_usage": msg.memory_status.rss,
                 },
             )
 
