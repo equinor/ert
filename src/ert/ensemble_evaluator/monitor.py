@@ -49,9 +49,6 @@ class Monitor:
                 return_exceptions=True,
             )
 
-    def get_base_uri(self) -> str:
-        return self._ee_con_info.url
-
     async def signal_cancel(self) -> None:
         if not self._connection:
             return
