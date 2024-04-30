@@ -108,6 +108,7 @@ dev = [
     "pytest-qt",
     "pytest-raises",
     "pytest-rerunfailures",
+    "pytest-durations",
     "pytest-snapshot",
     "pytest-timeout",
     "pytest-xdist",
