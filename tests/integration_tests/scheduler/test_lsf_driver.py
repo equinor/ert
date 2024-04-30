@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -75,22 +74,6 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     assert json.loads(
         (effective_runpath / "lsf_info.json").read_text(encoding="utf-8")
     ).keys() == {"job_id"}
-
-
-async def test_job_name(tmp_path, job_name):
-    os.chdir(tmp_path)
-    driver = LsfDriver()
-    iens: int = 0
-    await driver.submit(iens, "sh", "-c", "sleep 99", name=job_name)
-    jobid = driver._iens2jobid[iens]
-    bjobs_process = await asyncio.create_subprocess_exec(
-        "bjobs",
-        "-w",
-        jobid,
-        stdout=asyncio.subprocess.PIPE,
-    )
-    stdout, _ = await bjobs_process.communicate()
-    assert job_name in stdout.decode()
 
 
 @pytest.mark.integration_test

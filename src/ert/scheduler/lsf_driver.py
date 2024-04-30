@@ -95,17 +95,16 @@ class JobData(BaseModel):
 def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
     data: Dict[str, Dict[str, str]] = {}
     for line in bjobs_output.splitlines():
-        if not line or not line[0].isdigit():
-            continue
-        tokens = line.split(maxsplit=3)
-        if len(tokens) >= 3 and tokens[0] and tokens[2]:
-            if tokens[2] not in get_args(JobState):
+        tokens = line.split(sep="^")
+        if len(tokens) == 2:
+            job_id, job_state = tokens
+            if job_state not in get_args(JobState):
                 logger.error(
-                    f"Unknown state {tokens[2]} obtained from "
-                    f"LSF for jobid {tokens[0]}, ignored."
+                    f"Unknown state {job_state} obtained from "
+                    f"LSF for jobid {job_id}, ignored."
                 )
                 continue
-            data[tokens[0]] = {"job_state": tokens[2]}
+            data[job_id] = {"job_state": job_state}
     return {"jobs": data}
 
 
@@ -330,7 +329,9 @@ class LsfDriver(Driver):
                 continue
             current_jobids = list(self._jobs.keys())
             process = await asyncio.create_subprocess_exec(
-                self._bjobs_cmd,
+                str(self._bjobs_cmd),
+                "-noheader",
+                "-o \"jobid stat delimiter='^'\"",
                 *current_jobids,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
