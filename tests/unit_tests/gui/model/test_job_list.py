@@ -21,8 +21,8 @@ from .gui_models_utils import partial_snapshot
 
 
 def _id_to_col(identifier):
-    for col, fields in enumerate(COLUMNS[NodeType.REAL]):
-        if fields[1] == identifier:
+    for col, field in enumerate(COLUMNS[NodeType.REAL]):
+        if field == identifier:
             return col
     raise ValueError(f"{identifier} not a column in {COLUMNS}")
 

@@ -2,7 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
@@ -31,14 +31,7 @@ IsRealizationRole = Qt.UserRole + 9
 IsJobRole = Qt.UserRole + 10
 StatusRole = Qt.UserRole + 11
 
-JOB_COLUMN_NAME = "Name"
-JOB_COLUMN_ERROR = "Error"
-JOB_COLUMN_STATUS = "Status"
-JOB_COLUMN_DURATION = "Duration"
-JOB_COLUMN_STDOUT = "STDOUT"
-JOB_COLUMN_STDERR = "STDERR"
-JOB_COLUMN_CURRENT_MEMORY_USAGE = "Current memory usage"
-JOB_COLUMN_MAX_MEMORY_USAGE = "Max memory usage"
+DURATION = "Duration"
 
 SORTED_REALIZATION_IDS = "_sorted_real_ids"
 SORTED_JOB_IDS = "_sorted_forward_model_ids"
@@ -47,21 +40,18 @@ REAL_STATUS_COLOR = "_real_status_colors"
 
 DURATION = "Duration"
 
-COLUMNS: Dict[NodeType, Sequence[Union[str, Tuple[str, str]]]] = {
+COLUMNS: Dict[NodeType, Sequence[str]] = {
     NodeType.ROOT: ["Name", "Status"],
     NodeType.ITER: ["Name", "Status", "Active"],
     NodeType.REAL: [
-        (JOB_COLUMN_NAME, ids.NAME),
-        (JOB_COLUMN_ERROR, ids.ERROR),
-        (JOB_COLUMN_STATUS, ids.STATUS),
-        (
-            JOB_COLUMN_DURATION,
-            DURATION,
-        ),  # Duration is based on two data fields, not coming directly from ert
-        (JOB_COLUMN_STDOUT, ids.STDOUT),
-        (JOB_COLUMN_STDERR, ids.STDERR),
-        (JOB_COLUMN_CURRENT_MEMORY_USAGE, ids.CURRENT_MEMORY_USAGE),
-        (JOB_COLUMN_MAX_MEMORY_USAGE, ids.MAX_MEMORY_USAGE),
+        ids.NAME,
+        ids.ERROR,
+        ids.STATUS,
+        DURATION,  # Duration is based on two data fields, not coming directly from ert
+        ids.STDOUT,
+        ids.STDERR,
+        ids.CURRENT_MEMORY_USAGE,
+        ids.MAX_MEMORY_USAGE,
     ],
     NodeType.JOB: [],
 }
@@ -434,7 +424,7 @@ class SnapshotModel(QAbstractItemModel):
             return real.data[REAL_JOB_STATUS_AGGREGATED][node.id]
 
         if role == Qt.DisplayRole:
-            _, data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
                 _bytes: Optional[str] = data.get(data_name) if data else None
@@ -469,7 +459,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.data.get(data_name)
 
         if role == FileRole:
-            _, data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return (
                     node.data.get(data_name) if node.data.get(data_name) else QVariant()
@@ -482,7 +472,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.parent.parent.id
 
         if role == Qt.ToolTipRole:
-            _, data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None
             if data_name == ids.ERROR:
                 data = node.data.get(data_name)

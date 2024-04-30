@@ -10,6 +10,7 @@ from qtpy.QtCore import (
     Slot,
 )
 
+from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.node import NodeType
 from ert.gui.model.snapshot import (
     COLUMNS,
@@ -83,7 +84,12 @@ class JobListProxyModel(QAbstractProxyModel):
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:
-            return COLUMNS[NodeType.REAL][section][0]
+            header = COLUMNS[NodeType.REAL][section]
+            if header in [ids.STDOUT, ids.STDERR]:
+                return header.upper()
+            if header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
+                header = header.replace("_", " ")
+            return header.capitalize()
         if orientation == Qt.Vertical:
             return section
         return QVariant()
