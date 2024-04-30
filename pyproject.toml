@@ -102,6 +102,7 @@ dev = [
     "pytest-asyncio",
     "pytest-benchmark",
     "pytest-cov",
+    "pytest-durations",
     "pytest-memray",
     "pytest-mock",
     "pytest-mpl",
