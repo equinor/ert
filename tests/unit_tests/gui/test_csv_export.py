@@ -24,6 +24,7 @@ def test_csv_export(esmda_has_run, qtbot):
     plugin_tool = gui.tools["Plugins"]
     plugin_actions = plugin_tool.getAction().menu().actions()
     export_csv_action = [a for a in plugin_actions if a.text() == "CSV Export"][0]
+
     file_name = None
 
     def handle_plugin_dialog():
@@ -43,7 +44,7 @@ def test_csv_export(esmda_has_run, qtbot):
 
     def handle_finished_box():
         """
-        Click on the plugin finised dialog once it pops up
+        Click on the plugin finished dialog once it pops up
         """
         finished_message = wait_for_child(gui, qtbot, QMessageBox)
         assert "completed" in finished_message.text()
@@ -54,6 +55,11 @@ def test_csv_export(esmda_has_run, qtbot):
     QTimer.singleShot(500, handle_plugin_dialog)
     QTimer.singleShot(3000, handle_finished_box)
     export_csv_action.trigger()
+
+    runner = plugin_tool.get_plugin_runner("CSV Export")
+    assert runner.poll_thread is not None
+    if runner.poll_thread.is_alive():
+        runner.poll_thread.join()
 
     assert file_name == "output.csv"
     qtbot.waitUntil(lambda: os.path.exists(file_name))
