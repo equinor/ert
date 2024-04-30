@@ -370,21 +370,13 @@ def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
     "bjobs_output, expected",
     [
         pytest.param(
-            "JOBID   USER   STAT\n1 foobart RUN",
+            "1^RUN",
             {"1": {"job_state": "RUN"}},
             id="basic",
         ),
+        pytest.param("1^DONE", {"1": {"job_state": "DONE"}}, id="done"),
         pytest.param(
-            "1 foobart RUN", {"1": {"job_state": "RUN"}}, id="header_missing_ok"
-        ),
-        pytest.param(
-            "1 _ RUN asdf asdf asdf",
-            {"1": {"job_state": "RUN"}},
-            id="line_remainder_ignored",
-        ),
-        pytest.param("1 _ DONE", {"1": {"job_state": "DONE"}}, id="done"),
-        pytest.param(
-            "1 _ DONE\n2 _ RUN",
+            "1^DONE\n2^RUN",
             {"1": {"job_state": "DONE"}, "2": {"job_state": "RUN"}},
             id="two_jobs",
         ),
@@ -400,49 +392,27 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
     st.from_type(JobState),
 )
 def test_parse_bjobs(job_id, username, job_state):
-    assert parse_bjobs(f"{job_id} {username} {job_state}") == {
+    assert parse_bjobs(f"{job_id}^{job_state}") == {
         "jobs": {str(job_id): {"job_state": job_state}}
     }
 
 
-def test_parse_bjobs_handles_output_with_exec_host_split_over_two_lines():
-    bjobs_output = (
-        "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME\n"
-        "479460  xxxx    RUN   allcpus    foo-host-n1 3*foo-host1 FOO_00-0   Feb 14 13:07\n"
-        "                                             4*foo-hostn105-05-10"
-    )
-    assert parse_bjobs(bjobs_output) == {"jobs": {"479460": {"job_state": "RUN"}}}
-
-
-def test_parse_bjobs_handles_output_with_no_exec_host():
-    bjobs_output = (
-        "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME\n"
-        "479460  xxxx    RUN   allcpus    foo-host-n1             FOO_00-0   Feb 14 13:07\n"
-    )
-    assert parse_bjobs(bjobs_output) == {"jobs": {"479460": {"job_state": "RUN"}}}
-
-
 @given(nonempty_string_without_whitespace().filter(lambda x: x not in valid_jobstates))
 def test_parse_bjobs_invalid_state_is_ignored(random_state):
-    assert parse_bjobs(f"1 _ {random_state}") == {"jobs": {}}
+    assert parse_bjobs(f"1^{random_state}") == {"jobs": {}}
 
 
 def test_parse_bjobs_invalid_state_is_logged(caplog):
     # (cannot combine caplog with hypothesis)
-    parse_bjobs("1 _ FOO")
+    parse_bjobs("1^FOO")
     assert "Unknown state FOO" in caplog.text
-
-
-BJOBS_HEADER = (
-    "JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME"
-)
 
 
 @pytest.mark.parametrize(
     "bjobs_script, expectation",
     [
         pytest.param(
-            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; exit 0",
+            "echo '1^DONE'; exit 0",
             does_not_raise(),
             id="all-good",
         ),
@@ -458,19 +428,13 @@ BJOBS_HEADER = (
             id="empty_cluster_specific_id",
         ),
         pytest.param(
-            "echo '1 someuser DONE foo'",
-            does_not_raise(),
-            id="missing_header_is_accepted",  # (debatable)
-        ),
-        pytest.param(
-            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; "
-            "echo 'Job <2> is not found' >&2 ; exit 255",
+            "echo '1^DONE'; echo 'Job <2> is not found' >&2 ; exit 255",
             # If we have some success and some failures, actual command returns 255
             does_not_raise(),
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            f"echo '{BJOBS_HEADER}\n2 someuser DONE foo'",
+            "echo '2^DONE'",
             pytest.raises(asyncio.TimeoutError),
             id="wrong-job-id",
         ),
@@ -480,13 +444,13 @@ BJOBS_HEADER = (
             id="exit-1",
         ),
         pytest.param(
-            f"echo '{BJOBS_HEADER}\n1 someuser DONE foo'; exit 1",
+            "echo '1^DONE'; exit 1",
             # (this is not observed in reality)
             does_not_raise(),
             id="correct_output_but_exitcode_1",
         ),
         pytest.param(
-            f"echo '{BJOBS_HEADER}\n1 someuser'; exit 0",
+            "echo '1'; exit 0",
             pytest.raises(asyncio.TimeoutError),
             id="unparsable_output",
         ),
