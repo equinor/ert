@@ -158,7 +158,6 @@ class PlotWindow(QMainWindow):
         self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
         self._data_type_keys_widget.selectDefault()
-        self.updatePlot()
 
         logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
 
