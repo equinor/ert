@@ -209,25 +209,28 @@ class PlotApi:
             }
             return pd.DataFrame(data_struct).T
 
-    def history_data(self, key, ensemble=None) -> pd.DataFrame:
+    def history_data(self, key, ensembles: Optional[List[str]]) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
+        if ensembles:
+            for ensemble in ensembles:
+                if ":" in key:
+                    head, tail = key.split(":", 2)
+                    history_key = f"{head}H:{tail}"
+                else:
+                    history_key = f"{key}H"
 
-        if ":" in key:
-            head, tail = key.split(":", 2)
-            history_key = f"{head}H:{tail}"
-        else:
-            history_key = f"{key}H"
+                df = self.data_for_key(ensemble, history_key)
 
-        df = self.data_for_key(ensemble, history_key)
-
-        if not df.empty:
-            df = df.T
-            # Drop columns with equal data
-            duplicate_cols = [
-                cc[0] for cc in combi(df.columns, r=2) if (df[cc[0]] == df[cc[1]]).all()
-            ]
-            return df.drop(columns=duplicate_cols)
+                if not df.empty:
+                    df = df.T
+                    # Drop columns with equal data
+                    duplicate_cols = [
+                        cc[0]
+                        for cc in combi(df.columns, r=2)
+                        if (df[cc[0]] == df[cc[1]]).all()
+                    ]
+                    return df.drop(columns=duplicate_cols)
 
         return pd.DataFrame()

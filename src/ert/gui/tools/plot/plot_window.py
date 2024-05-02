@@ -208,15 +208,17 @@ class PlotWindow(QMainWindow):
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
             plot_context = PlotContext(plot_config, ensembles, key)
 
-            ensemble = plot_context.ensembles()[0] if plot_context.ensembles() else None
-
             # Check if key is a history key.
             # If it is it already has the data it needs
             if str(key).endswith("H") or "H:" in str(key):
                 plot_context.history_data = DataFrame()
             else:
                 try:
-                    plot_context.history_data = self._api.history_data(key, ensemble)
+                    plot_context.history_data = self._api.history_data(
+                        key,
+                        plot_context.ensembles(),
+                    )
+
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     msg = f"{e}"
