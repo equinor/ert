@@ -315,10 +315,19 @@ class PlotWindow(QMainWindow):
         ]
 
         current_widget = self._central_tab.currentWidget()
+
+        # Enabling/disabling tab triggers the
+        # currentTabChanged event which also triggers
+        # the updatePlot, which is slow and redundant.
+        # Therefore, we disable this signal because this
+        # part is only supposed to set which tabs are
+        # enabled according to the available widgets.
+        self._central_tab.currentChanged.disconnect()
         for plot_widget in self._plot_widgets:
             self._central_tab.setTabEnabled(
                 self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
             )
+        self._central_tab.currentChanged.connect(self.currentTabChanged)
 
         # Remember which tab widget was selected when switching between
         # both same and different data-types.
