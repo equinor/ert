@@ -192,18 +192,31 @@ class DateUnit(Enum):
         raise ValueError(f"Unknown date unit {val}")
 
 
-def _is_unsmry(base: str, path: str) -> bool:
+def _is_base_with_extension(base: str, path: str, exts: List[str]) -> bool:
+    """
+    >>> _is_base_with_extension("ECLBASE", "ECLBASE.SMSPEC", ["smspec"])
+    True
+    >>> _is_base_with_extension("ECLBASE", "BASE.SMSPEC", ["smspec"])
+    False
+    >>> _is_base_with_extension("ECLBASE", "BASE.FUNSMRY", ["smspec"])
+    False
+    >>> _is_base_with_extension("ECLBASE", "ECLBASE.smspec", ["smspec"])
+    True
+    >>> _is_base_with_extension("ECLBASE.tar.gz", "ECLBASE.tar.gz.smspec", ["smspec"])
+    True
+    """
     if "." not in path:
         return False
     splitted = path.split(".")
-    return splitted[-2].endswith(base) and splitted[-1].lower() in ["unsmry", "funsmry"]
+    return ".".join(splitted[0:-1]) == base and splitted[-1].lower() in exts
+
+
+def _is_unsmry(base: str, path: str) -> bool:
+    return _is_base_with_extension(base, path, ["unsmry", "funsmry"])
 
 
 def _is_smspec(base: str, path: str) -> bool:
-    if "." not in path:
-        return False
-    splitted = path.split(".")
-    return splitted[-2].endswith(base) and splitted[-1].lower() in ["smspec", "fsmspec"]
+    return _is_base_with_extension(base, path, ["smspec", "fsmspec"])
 
 
 def _find_file_matching(
