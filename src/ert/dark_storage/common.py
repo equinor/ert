@@ -132,10 +132,10 @@ def data_for_key(
             vals = data.sel(report_step=report_step, drop=True)
             index = pd.Index(vals.index.values, name="axis")
             data = pd.DataFrame(
-                data=vals["values"].values.reshape(len(vals.realization), -1).T,
-                index=index,
-                columns=realizations,
-            ).T
+                data=vals["values"].values.reshape(len(vals.realization), -1),
+                index=realizations,
+                columns=index,
+            )
             try:
                 return data.astype(float)
             except ValueError:
