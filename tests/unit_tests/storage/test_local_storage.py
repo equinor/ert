@@ -218,6 +218,61 @@ def test_writing_to_read_only_storage_raises(tmp_path):
         storage.create_experiment()
 
 
+@pytest.mark.timeout(10)
+def test_open_storage_write_with_empty_directory(tmp_path, caplog):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        _ = storage.create_experiment()
+        assert len(list(storage.experiments)) == 1
+
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        _ = storage.create_experiment()
+        assert len(list(storage.experiments)) == 1
+
+    storage.refresh()
+    assert len(list(storage.experiments)) == 0
+
+    assert len(caplog.messages) == 0
+
+
+def test_open_storage_read_with_empty_directory(tmp_path, caplog):
+    with open_storage(tmp_path / "storage", mode="r"):
+        assert len(caplog.messages) == 1
+        assert "Unknown storage version in" in caplog.messages[0]
+
+
+def test_open_storage_nested_dirs(tmp_path, caplog):
+    with open_storage(tmp_path / "extra_level" / "storage", mode="w") as storage:
+        assert storage.path.exists()
+
+
+def test_that_open_storage_in_read_model_with_newer_version_throws_exception(
+    tmp_path, caplog
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION + 1
+        storage._save_index()
+
+    with pytest.raises(
+        RuntimeError,
+        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ERT to continue, or run with a different ENSPATH",
+    ):
+        open_storage(tmp_path, mode="r")
+
+
+def test_that_open_storage_in_read_model_with_older_version_throws_exception(
+    tmp_path, caplog
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION - 1
+        storage._save_index()
+
+    with pytest.raises(
+        RuntimeError,
+        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
+    ):
+        open_storage(tmp_path, mode="r")
+
+
 parameter_configs = st.lists(
     st.one_of(
         st.builds(
@@ -579,57 +634,3 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
 
 TestStorage = StatefulStorageTest.TestCase
-
-
-def test_open_storage_write_with_empty_directory(tmp_path, caplog):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        _ = storage.create_experiment()
-        assert len(list(storage.experiments)) == 1
-
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        _ = storage.create_experiment()
-        assert len(list(storage.experiments)) == 1
-
-    storage.refresh()
-    assert len(list(storage.experiments)) == 0
-
-    assert len(caplog.messages) == 0
-
-
-def test_open_storage_read_with_empty_directory(tmp_path, caplog):
-    with open_storage(tmp_path / "storage", mode="r"):
-        assert len(caplog.messages) == 1
-        assert "Unknown storage version in" in caplog.messages[0]
-
-
-def test_open_storage_nested_dirs(tmp_path, caplog):
-    with open_storage(tmp_path / "extra_level" / "storage", mode="w") as storage:
-        assert storage.path.exists()
-
-
-def test_that_open_storage_in_read_model_with_newer_version_throws_exception(
-    tmp_path, caplog
-):
-    with open_storage(tmp_path, mode="w") as storage:
-        storage._index.version = _LOCAL_STORAGE_VERSION + 1
-        storage._save_index()
-
-    with pytest.raises(
-        RuntimeError,
-        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ERT to continue, or run with a different ENSPATH",
-    ):
-        open_storage(tmp_path, mode="r")
-
-
-def test_that_open_storage_in_read_model_with_older_version_throws_exception(
-    tmp_path, caplog
-):
-    with open_storage(tmp_path, mode="w") as storage:
-        storage._index.version = _LOCAL_STORAGE_VERSION - 1
-        storage._save_index()
-
-    with pytest.raises(
-        RuntimeError,
-        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
-    ):
-        open_storage(tmp_path, mode="r")
