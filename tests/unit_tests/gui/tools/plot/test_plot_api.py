@@ -99,10 +99,22 @@ def test_all_data_type_keys(api):
 
 
 def test_load_history_data(api):
-    df = api.history_data(ensemble="default_0", key="FOPR")
+    df = api.history_data(ensembles=["default_0"], key="FOPR")
     assert_frame_equal(
         df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
     )
+
+
+def test_load_history_data_searches_until_history_found(api):
+    df = api.history_data(ensembles=["no-history", "default_0"], key="FOPR")
+    assert_frame_equal(
+        df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
+    )
+
+
+def test_load_history_data_returns_empty_frame_if_no_history(api):
+    df = api.history_data(ensembles=["no-history", "still-no-history"], key="FOPR")
+    assert_frame_equal(df, pd.DataFrame())
 
 
 def test_plot_api_request_errors_all_data_type_keys(api, mocker):
