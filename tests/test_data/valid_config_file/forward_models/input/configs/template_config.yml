@@ -1,0 +1,5 @@
+templates:
+  -
+    file: './templates/wellopen.jinja'
+    keys:
+        opname: open

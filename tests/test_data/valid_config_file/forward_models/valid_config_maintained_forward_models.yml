@@ -1,0 +1,67 @@
+environment:
+  simulation_folder: sim_output
+  log_level: debug
+
+wells:
+  - {name: A1, drill_time: 120}
+  - {name: A2, drill_time: 120}
+  - {name: A3, drill_time: 120}
+  - {name: A4, drill_time: 120}
+  - {name: A5, drill_time: 120}
+  - {name: A6, drill_time: 120}
+
+controls:
+  -
+    name: well_order
+    type: well_control
+    min: 0
+    max: 1
+    perturbation_magnitude: 0.05
+    variables:
+      - {name: A1, initial_guess: 0.6}
+      - {name: A2, initial_guess: 0.55}
+      - {name: A3, initial_guess: 0.5}
+      - {name: A4, initial_guess: 0.45}
+      - {name: A5, initial_guess: 0.4}
+      - {name: A6, initial_guess: 0.35}
+
+  -
+    name: well_number
+    type: generic_control
+    min: 0.0
+    max: 1.0
+    perturbation_magnitude: 0.1
+    variables:
+        - {name: scaled_number_of_wells , initial_guess: 0.39}
+
+objective_functions:
+  - name: not_really_important_for_this_test
+
+optimization:
+  algorithm: optpp_q_newton
+
+model:
+  realizations: [0]
+
+install_data:
+  -
+    source: input/prices.yml
+    target: prices.yml
+  -
+    source: r{{configpath}}/input/configs/r-r{{realization}}/configs/drill_planner_config.yml
+    target: drill_planner_config.yml
+
+  -
+    source: r{{configpath}}/input/configs
+    target: configs
+
+  -
+    source: r{{configpath}}/input/templates
+    target: templates
+
+forward_model:
+  - drill_planner -i wells.json -c drill_planner_config.yml -opt well_order.json -o wells_dp_result.json
+  - select_wells -i wells_dp_result.json -o wells_sw_result.json file well_number.json -r 0 6 -s 0 1
+  - add_templates -i wells_sw_result.json -c configs/template_config.yml -o wells_tmpl_result.json
+  - schmerge -i wells_tmpl_result.json -s input/model/WELLSELECT.SCH -o input/model/SCHEDULE_OPT.SCH
+  - npv -s something.UNSMRY -o npv_0 -c prices.yml -sd 2022-10-01 -ed 2040-01-01 -i files/a7_readydate.json'

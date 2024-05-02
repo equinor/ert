@@ -1,0 +1,4 @@
+EXECUTABLE  everserver.py
+
+STDOUT ../../logs/everest_server.stdout
+STDERR ../../logs/everest_server.stderr

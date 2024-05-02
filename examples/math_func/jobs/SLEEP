@@ -1,0 +1,4 @@
+EXECUTABLE  sleep.py
+
+MIN_ARG 0
+MAX_ARG 6

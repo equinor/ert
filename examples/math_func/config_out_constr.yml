@@ -1,0 +1,52 @@
+controls:
+  -
+    name: point_0
+    type: generic_control
+    min: -1.0
+    max: 1.0
+    initial_guess: 0
+    perturbation_magnitude : 0.001
+    variables:
+        - name: x
+        - name: y
+        - name: z
+
+
+objective_functions:
+  -
+    name: distance
+
+
+output_constraints:
+  -
+    name: z_coord
+    upper_bound: 0.3
+
+optimization:
+  algorithm: optpp_q_newton
+  convergence_tolerance: 0.001
+  max_batch_num: 6
+
+
+install_jobs:
+  -
+    name: distance3
+    source: jobs/DISTANCE3
+  -
+    name: dump_controls
+    source: jobs/DUMP_CONTROLS
+
+model:
+  realizations: [0]
+
+forward_model:
+  - distance3 --point-file point_0.json
+              --target 0.5 0.5 0.5
+              --out distance_0
+  - dump_controls --controls-file point_0.json --out-suffix _coord_0
+
+environment:
+  output_folder: everest_output_out_constr
+  simulation_folder: scratch
+  log_level: debug
+  random_seed: 999

@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import argparse
+
+import everest
+
+
+def _build_argument_parser() -> argparse.ArgumentParser:
+    description = (
+        'Updates WELL_DATA by ADD_DATA, entry by entry (based on "name"). '
+        "The applicance of wdupdae is associative with respect to ADD_DATA."
+    )
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="the well data will be output to this file as json",
+    )
+    parser.add_argument(
+        "--well_data",
+        required=True,
+        help="the master well data as json or yaml",
+    )
+    parser.add_argument(
+        "--add_data",
+        required=True,
+        nargs="+",
+        help="the data files as yaml or json, "
+        "will be merged into the main well data file",
+    )
+    return parser
+
+
+def main():
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    everest.jobs.well_tools.well_update(
+        args.well_data,
+        args.add_data,
+        args.output,
+    )
+
+
+if __name__ == "__main__":
+    main()

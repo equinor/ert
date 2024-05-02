@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import argparse
+
+import everest
+
+
+def _build_argument_parser() -> argparse.ArgumentParser:
+    eck = everest.ConfigKeys
+    description = (
+        f"Sets the {eck.COMPLETION_DATE} for each well in WELL_DATA based on the "
+        "START_DATE. In particular, the wells are drilled in the provided order. "
+        f"For no well is the drilling initiated before its {eck.DRILL_DATE} and "
+        f"each well finishes its {eck.DRILL_TIME} (defaulted to 0) before the "
+        "drilling of the next well is initiated."
+    )
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="updated well data will be output to this file as json",
+    )
+    parser.add_argument(
+        "--well_data",
+        required=True,
+        help="the well data as json or yaml",
+    )
+    parser.add_argument(
+        "--start_date",
+        required=True,
+        help="the start date of operations on format: dd.mm.yyyy",
+    )
+    return parser
+
+
+def main():
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    everest.jobs.well_tools.add_completion_date(
+        args.well_data,
+        args.start_date,
+        args.output,
+    )
+
+
+if __name__ == "__main__":
+    main()
