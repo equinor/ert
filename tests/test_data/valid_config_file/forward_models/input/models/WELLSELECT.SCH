@@ -1,0 +1,134 @@
+TUNING
+ 1* 30 /
+/
+/
+
+WCONPROD
+ 'A1'    SHUT  LRAT 3*    4000  1* 150 /
+ 'A2'    SHUT  LRAT 3*    2500  1* 150 /
+ 'A3'    SHUT  LRAT 3*    2500  1* 150 /
+ 'A4'    SHUT  LRAT 3*    4000  1* 150 /
+/
+
+WCONINJE
+ 'A5'   WATER  SHUT   RATE    6500         1*         500 /
+ 'A6'   WATER  SHUT   RATE    6500         1*         500 /
+/
+
+DATES
+ 1 JAN 2023 /
+/
+
+DATES
+ 1 APR 2023 /
+/
+
+DATES
+ 1 JLY 2023 /
+/
+
+DATES
+ 1 OCT 2023 /
+/
+
+DATES
+ 1 JAN 2024 /
+/
+
+DATES
+ 1 APR 2024 /
+/
+
+DATES
+ 1 JLY 2024 /
+/
+
+DATES
+ 1 OCT 2024 /
+/
+
+DATES
+ 1 JAN 2025 /
+/
+
+DATES
+ 1 APR 2025 /
+/
+
+DATES
+ 1 JLY 2025 /
+/
+
+DATES
+ 1 OCT 2025 /
+/
+
+DATES
+ 1 JAN 2026 /
+/
+
+DATES
+ 1 APR 2026 /
+/
+
+DATES
+ 1 JLY 2026 /
+/
+
+DATES
+ 1 OCT 2026 /
+/
+
+DATES
+ 1 JAN 2027 /
+/
+
+DATES
+ 1 APR 2027 /
+/
+
+DATES
+ 1 JLY 2027 /
+/
+
+DATES
+ 1 OCT 2027 /
+/
+
+DATES
+ 1 JAN 2028 /
+/
+
+DATES
+ 1 APR 2028 /
+/
+
+DATES
+ 1 JLY 2028 /
+/
+
+DATES
+ 1 OCT 2028 /
+/
+
+DATES
+ 1 JAN 2029 /
+/
+
+DATES
+ 1 APR 2029 /
+/
+
+DATES
+ 1 JLY 2029 /
+/
+
+DATES
+ 1 OCT 2029 /
+/
+
+DATES
+ 1 JAN 2030 /
+/
+
+END

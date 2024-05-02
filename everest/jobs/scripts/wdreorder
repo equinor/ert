@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+import argparse
+
+import everest
+
+
+def _build_argument_parser() -> argparse.ArgumentParser:
+    description = (
+        'Reorders WELL_DATA (by the "name" key) according to the provided ORDER. '
+        "ORDER is expected to be a list of all the names listed in WELL_DATA."
+    )
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="the well data will be output to this file as json",
+    )
+    parser.add_argument(
+        "--well_data",
+        required=True,
+        help="the well data as json or yaml",
+    )
+    parser.add_argument(
+        "--order",
+        required=True,
+        help="an ordering of the wells as a list in yaml or json",
+    )
+    return parser
+
+
+def main():
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    everest.jobs.well_tools.well_reorder(
+        args.well_data,
+        args.order,
+        args.output,
+    )
+
+
+if __name__ == "__main__":
+    main()
