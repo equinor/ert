@@ -131,6 +131,40 @@ types = [
     "types-tqdm",
     "types-psutil"
 ]
+test = [
+    "hypothesis!=6.102.0,>=5.49",
+    "hypothesis>=6.11; python_version >= '3.12'",
+    "jsonpath_ng",
+    "oil_reservoir_synthesizer",
+    "pytest-asyncio",
+    "pytest-benchmark",
+    "pytest-cov",
+    "pytest-memray",
+    "pytest-mock",
+    "pytest-mpl",
+    "pytest-qt",
+    "pytest-raises",
+    "pytest-rerunfailures",
+    "pytest-snapshot",
+    "pytest-timeout",
+    "pytest-xdist",
+    "pytest>6",
+    "resdata",
+    "resfo",
+    "scikit-learn",
+    "testpath",
+]
+docs = [
+    "furo",
+    "jupyter",
+    "jupytext",
+    "nbsphinx",
+    "sphinx",
+    "sphinx-argparse",
+    "sphinx-autoapi",
+    "sphinx-copybutton",
+    "sphinxcontrib.datatemplates",
+]
 
 [tool.setuptools]
 platforms = ["all"]

@@ -120,7 +120,7 @@ jobs:
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        pip install ".[test]"
 
     - name: Make test directory
       run: |

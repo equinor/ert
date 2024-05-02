@@ -26,7 +26,7 @@ jobs:
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        pip install ".[test]"
 
     - name: Install and setup slurm
       run: |

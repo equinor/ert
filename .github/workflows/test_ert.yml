@@ -34,7 +34,7 @@ jobs:
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        pip install ".[test]"
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
