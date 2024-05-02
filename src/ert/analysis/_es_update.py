@@ -1,3 +1,13 @@
+"""
+Module that calls ensemble smoother algorithms
+from the iterative_ensemble_smoother package.
+
+Note that ert updates standard normal samples during the first iteration,
+regardless of which prior distributions users have specified.
+This is done to reduce the chance of producing posterior parameter ensembles
+that lead to unphysical results when used to run a simulator.
+"""
+
 from __future__ import annotations
 
 import logging

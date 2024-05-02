@@ -56,7 +56,6 @@ class ParameterConfig(ABC):
         self,
         real_nr: int,
         random_seed: int,
-        ensemble_size: int,
     ) -> xr.Dataset:
         return self.read_from_runpath(Path(), real_nr)
 

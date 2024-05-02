@@ -101,7 +101,7 @@ def _generate_parameter_files(
         # model has completed.
         if node.forward_init and iteration == 0:
             continue
-        export_values = node.write_to_runpath(Path(run_path), iens, fs)
+        export_values = node.write_to_runpath(run_path, iens, fs)
         if export_values:
             exports.update(export_values)
         continue
@@ -168,7 +168,6 @@ def sample_prior(
             ds = config_node.sample_or_load(
                 realization_nr,
                 random_seed=random_seed,
-                ensemble_size=ensemble.ensemble_size,
             )
             ensemble.save_parameters(parameter, realization_nr, ds)
 

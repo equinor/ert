@@ -187,9 +187,7 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    def sample_or_load(
-        self, real_nr: int, random_seed: int, ensemble_size: int
-    ) -> xr.Dataset:
+    def sample_or_load(self, real_nr: int, random_seed: int) -> xr.Dataset:
         if self.forward_init_file:
             return self.read_from_runpath(Path(), real_nr)
 
@@ -239,15 +237,22 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> Dict[str, Dict[str, float]]:
-        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
-        assert isinstance(array, xr.DataArray)
-        if not array.size == len(self.transfer_functions):
+        transformed_samples = ensemble.load_parameters(self.name, real_nr)[
+            "transformed_values"
+        ]
+        assert isinstance(transformed_samples, xr.DataArray)
+        if transformed_samples.size != len(self.transfer_functions):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self.transfer_functions)}, expected {array.size}"
+                f" is of size {len(self.transfer_functions)}, expected {transformed_samples.size}"
             )
 
-        data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
+        data = dict(
+            zip(
+                transformed_samples["names"].values.tolist(),
+                transformed_samples.values.tolist(),
+            )
+        )
 
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
@@ -322,19 +327,18 @@ class GenKwConfig(ParameterConfig):
 
         return priors
 
-    def transform(self, array: npt.ArrayLike) -> npt.NDArray[np.float64]:
-        """Transform the input array in accordance with priors
-
-        Parameters:
-            array: An array of standard normal values
-
-        Returns: Transformed array, where each element has been transformed from
-            a standard normal distribution to the distribution set by the user
+    def transform(
+        self, standard_normal_samples: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
         """
-        array = np.array(array)
+        Transform an input array of standard normal samples to distributions specified by users.
+        """
+        transformed_samples = np.empty_like(standard_normal_samples)
         for index, tf in enumerate(self.transfer_functions):
-            array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
-        return array
+            transformed_samples[index] = tf.calc_func(
+                transformed_samples[index], list(tf.parameter_list.values())
+            )
+        return transformed_samples
 
     @staticmethod
     def _values_from_file(
@@ -363,7 +367,7 @@ class GenKwConfig(ParameterConfig):
         realization: int,
     ) -> npt.NDArray[np.double]:
         """
-        Generate a sample value for each key in a parameter group.
+        Generate a standard normal sample for each key in a parameter group.
 
         The sampling is reproducible and dependent on a global seed combined
         with the parameter group name and individual key names. The 'realization' parameter
