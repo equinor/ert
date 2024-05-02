@@ -39,7 +39,7 @@ jobs:
 
     - name: Install wheel
       run: |
-        find . -name "*.whl" -exec pip install "{}[dev]" \;
+        find . -name "*.whl" -exec pip install "{}[test]" \;
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'

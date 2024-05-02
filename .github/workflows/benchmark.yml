@@ -33,7 +33,7 @@ jobs:
 
       - name: Install ert with dev-deps
         run: |
-          pip install ".[dev]"
+          pip install ".[test]"
 
       - name: Run benchmark
         run: |

@@ -31,7 +31,7 @@ jobs:
 
     - name: Install wheel
       run: |
-        find . -name "*.whl" -exec pip install "{}[dev]" \;
+        find . -name "*.whl" -exec pip install "{}[test]" \;
 
     - name: Install and setup slurm
       run: |
