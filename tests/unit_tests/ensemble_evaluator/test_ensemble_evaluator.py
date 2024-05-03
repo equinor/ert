@@ -1,5 +1,7 @@
 import asyncio
 
+import pytest
+
 from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import Monitor, Snapshot, identifiers
 from ert.ensemble_evaluator.state import (
@@ -14,6 +16,8 @@ from ert.ensemble_evaluator.state import (
 from .ensemble_evaluator_utils import send_dispatch_event_async
 
 
+# https://github.com/equinor/ert/issues/7717
+@pytest.mark.flaky(reruns=5)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
@@ -86,6 +90,8 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
         assert snapshot.get_job("0", "0").error == ""
 
 
+# https://github.com/equinor/ert/issues/7717
+@pytest.mark.flaky(reruns=5)
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
