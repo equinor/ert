@@ -1,0 +1,48 @@
+name: Test everest
+
+# This job checks whether current main of everest
+# is compatible with the changes. It is not required to pass
+# before merging, but breakage should be followed by fix in everest
+# after merge.
+
+on: [pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test-everest:
+    name: Test everest
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install ert
+      run: |
+        pip install .
+
+    - name: Install everest and dependencies
+      run: |
+        git clone https://github.com/equinor/everest.git
+        pip install git+https://github.com/equinor/everest-models.git
+
+    - name: Test everest
+      env:
+        QT_QPA_PLATFORM: 'minimal'
+        NO_PROJECT_RES: 1
+      run: |
+        pushd everest
+        pip install ".[test]"
+        pytest tests -n 4 --dist loadgroup -m "not ui_test"
+        pytest tests -m "ui_test"
