@@ -613,6 +613,15 @@ class BaseRunModel:
         """
         return any(Path(run_path).exists() for run_path in self.paths)
 
+    def check_if_runpath_contains_data(self, iteration: int) -> bool:
+        target_folder = f"iter-{iteration}"
+
+        for run_path in self.paths:
+            path = Path(run_path)
+            if path.exists() and target_folder in path.name and any(path.iterdir()):
+                return True
+        return False
+
     def rm_run_path(self) -> None:
         for run_path in self.paths:
             if Path(run_path).exists():

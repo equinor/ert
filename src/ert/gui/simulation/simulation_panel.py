@@ -92,7 +92,6 @@ class SimulationPanel(QWidget):
         layout.addWidget(self._simulation_stack)
 
         self._simulation_widgets = OrderedDict()
-        """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(
             SingleTestRunPanel(self.facade.run_path, notifier),
             True,
@@ -132,8 +131,9 @@ class SimulationPanel(QWidget):
 
         self.setLayout(layout)
 
-    def addSimulationConfigPanel(self, panel, mode_enabled: bool):
-        assert isinstance(panel, SimulationConfigPanel)
+    def addSimulationConfigPanel(
+        self, panel: SimulationConfigPanel, mode_enabled: bool
+    ) -> None:
         self._simulation_stack.addWidget(panel)
         simulation_model = panel.getSimulationModel()
         self._simulation_widgets[simulation_model] = panel
@@ -219,7 +219,23 @@ class SimulationPanel(QWidget):
 
             delete_runpath_checkbox = None
 
-            if not abort and model.check_if_runpath_exists():
+            # Whether to show the delete run-path dialog depends on whether this is a restart-run.
+            # A restart-run occurs when an ES-MDA experiment resumes from a specific previously-completed ensemble.
+            # For instance, consider a scenario where three iterations (ensemble_0, ensemble_1, ensemble_2) of an ES-MDA experiment
+            # are run, creating corresponding folders (iter-0, iter-1, iter-2) in each realization folder on the run-path.
+            # When restarting from ensemble_1, the delete run-path dialog should be triggered as it indicates a mid-experiment restart,
+            # where existing output in subsequent folders (e.g., iter-2) will be overwritten.
+            # However, if ensemble_0 and hence iter-0 are manually created and ES-MDA is run in restart-mode
+            # we do not want the delete run-path dialog to pop-up as iter-1 does not exist and nothing will be overwritten.
+            # The delete run-path dialog is shown in all other scenarios to ensure the user is aware that resuming the experiment
+            # could potentially overwrite existing data.
+            if args.mode == ES_MDA_MODE and args.restart_run:
+                iteration = self._notifier.current_ensemble.iteration + 1
+            else:
+                iteration = 0
+
+            msg_box_res = QMessageBox.No
+            if not abort and model.check_if_runpath_contains_data(iteration):
                 msg_box = QMessageBox(self)
                 msg_box.setObjectName("RUN_PATH_WARNING_BOX")
 
@@ -239,11 +255,11 @@ class SimulationPanel(QWidget):
                 )
 
                 delete_runpath_checkbox = QCheckBox()
-                delete_runpath_checkbox.setText("Delete run_path")
+                delete_runpath_checkbox.setText("Delete runpath")
                 msg_box.setCheckBox(delete_runpath_checkbox)
 
                 msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                msg_box.setDefaultButton(QMessageBox.No)
+                msg_box.setDefaultButton(msg_box_res)
 
                 msg_box.setWindowModality(Qt.ApplicationModal)
 
@@ -251,7 +267,7 @@ class SimulationPanel(QWidget):
 
             if (
                 not abort
-                and model.check_if_runpath_exists()
+                and model.check_if_runpath_contains_data(iteration)
                 and msg_box_res == QMessageBox.No
             ):
                 abort = True
