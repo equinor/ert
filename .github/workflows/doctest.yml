@@ -29,7 +29,7 @@ jobs:
         cache: "pip"
         cache-dependency-path: |
           pyproject.toml
-    - run: pip install -e ".[dev]"
+    - run: pip install -e ".[test, docs]"
 
     - name: Test doctest
       run: |

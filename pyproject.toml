@@ -71,6 +71,7 @@ dependencies=[
     "requests",
     "resfo",
     "scipy >= 1.10.1",
+    "seaborn",
     "uvicorn >= 0.17.0",
     "websockets",
     "httpx",
@@ -93,11 +94,12 @@ Repository = "https://github.com/equinor/ert"
 
 [project.optional-dependencies]
 dev = [
-    "decorator",
     "furo",
     "hypothesis",
     "jsonpath_ng",
+    "jupyter",
     "jupytext",
+    "nbsphinx",
     "oil_reservoir_synthesizer",
     "pytest-asyncio",
     "pytest-benchmark",
@@ -121,8 +123,6 @@ dev = [
     "sphinx-copybutton",
     "sphinxcontrib.datatemplates",
     "seaborn",
-    "nbsphinx",
-    "jupyter",
     "testpath",
 ]
 style = [
@@ -139,6 +139,39 @@ types = [
     "types-docutils",
     "types-tqdm",
     "types-psutil"
+]
+test = [
+    "hypothesis",
+    "jsonpath_ng",
+    "oil_reservoir_synthesizer",
+    "pytest-asyncio",
+    "pytest-benchmark",
+    "pytest-cov",
+    "pytest-memray",
+    "pytest-mock",
+    "pytest-mpl",
+    "pytest-qt",
+    "pytest-raises",
+    "pytest-rerunfailures",
+    "pytest-snapshot",
+    "pytest-timeout",
+    "pytest-xdist",
+    "pytest>6",
+    "resdata",
+    "resfo",
+    "scikit-learn",
+    "testpath",
+]
+docs = [
+    "furo",
+    "jupyter",
+    "jupytext",
+    "nbsphinx",
+    "sphinx",
+    "sphinx-argparse",
+    "sphinx-autoapi",
+    "sphinx-copybutton",
+    "sphinxcontrib.datatemplates",
 ]
 
 [tool.setuptools]
