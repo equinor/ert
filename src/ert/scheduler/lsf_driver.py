@@ -266,6 +266,7 @@ class LsfDriver(Driver):
             retry_interval=self._sleep_time_between_cmd_retries,
         )
         if not process_success:
+            self._job_error_message_by_iens[iens] = process_message
             raise RuntimeError(process_message)
 
         match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
@@ -299,7 +300,7 @@ class LsfDriver(Driver):
             job_id,
         ]
 
-        process_success, process_message = await self._execute_with_retry(
+        _, process_message = await self._execute_with_retry(
             bkill_with_args,
             retry_codes=(FLAKY_SSH_RETURNCODE,),
             retries=3,
@@ -507,3 +508,26 @@ class LsfDriver(Driver):
 
     async def finish(self) -> None:
         pass
+
+    def read_stdout_and_stderr_files(
+        self, runpath: str, job_name: str, num_characters_to_read_from_end: int = 300
+    ) -> str:
+        error_msg = ""
+        stderr_file = Path(runpath) / (job_name + ".LSF-stderr")
+        if msg := tail_textfile(stderr_file, num_characters_to_read_from_end):
+            error_msg += f"\n    LSF-stderr:\n{msg}"
+        stdout_file = Path(runpath) / (job_name + ".LSF-stdout")
+        if msg := tail_textfile(stdout_file, num_characters_to_read_from_end):
+            error_msg += f"\n    LSF-stdout:\n{msg}"
+        return error_msg
+
+
+def tail_textfile(file_path: Path, num_chars: int) -> str:
+    if not file_path.exists():
+        return f"No output file {file_path}"
+    with open(file_path, encoding="utf-8") as file:
+        file.seek(0, 2)
+        file_end_position = file.tell()
+        seek_position = max(0, file_end_position - num_chars)
+        file.seek(seek_position)
+        return file.read()[-num_chars:]

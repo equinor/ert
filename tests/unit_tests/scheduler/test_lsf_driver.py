@@ -253,6 +253,28 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
         await driver.submit(0, "sleep")
 
 
+async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+
+    _out = "THIS_IS_OUTPUT"
+    _err = "THIS_IS_ERROR"
+    bsub_script = f"echo {_out} && echo {_err} >&2; exit 1"
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+
+    driver = LsfDriver()
+    with pytest.raises(RuntimeError):
+        await driver.submit(0, "sleep")
+        assert (
+            "failed with exit code 1, output: {_out}, and error: {_err}"
+            in driver._job_error_message_by_iens[0]
+        )
+
+
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "mocked_iens2jobid, iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",

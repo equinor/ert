@@ -18,6 +18,7 @@ class Driver(ABC):
 
     def __init__(self, **kwargs: Dict[str, str]) -> None:
         self._event_queue: Optional[asyncio.Queue[Event]] = None
+        self._job_error_message_by_iens: Dict[int, str] = {}
 
     @property
     def event_queue(self) -> asyncio.Queue[Event]:
@@ -60,6 +61,12 @@ class Driver(ABC):
     @abstractmethod
     async def finish(self) -> None:
         """make sure that all the jobs / realizations are complete."""
+
+    def read_stdout_and_stderr_files(
+        self, runpath: str, job_name: str, num_characters_to_read_from_end: int = 300
+    ) -> str:
+        """Each driver should provide some output in case of failure."""
+        return ""
 
     @staticmethod
     async def _execute_with_retry(

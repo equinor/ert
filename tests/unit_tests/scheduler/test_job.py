@@ -109,6 +109,12 @@ async def test_job_run_sends_expected_events(
         lambda _: LoadResult(forward_model_ok_result, ""),
     )
     scheduler = create_scheduler()
+    monkeypatch.setattr(
+        scheduler.driver,
+        "read_stdout_and_stderr_files",
+        lambda *args: "",
+    )
+
     scheduler.job.forward_model_ok = MagicMock()
     scheduler.job.forward_model_ok.return_value = LoadResult(
         forward_model_ok_result, ""
