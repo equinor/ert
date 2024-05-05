@@ -187,6 +187,13 @@ class Job:
             f"\n\t{self._callback_status_msg}"
         )
 
+        if msg := self.driver._job_error_message_by_iens.get(self.iens, ""):
+            error_msg += f"\nDriver reported: {msg}"
+
+        error_msg += self.driver.read_stdout_and_stderr_files(
+            self.real.run_arg.runpath, self.real.run_arg.job_name
+        )
+
         self.real.run_arg.ensemble_storage.set_failure(
             self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, error_msg
         )

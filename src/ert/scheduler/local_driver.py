@@ -70,7 +70,9 @@ class LocalDriver(Driver):
         except FileNotFoundError as err:
             # /bin/sh uses returncode 127 for FileNotFound, so copy that
             # behaviour.
-            logger.error(f"Realization {iens} failed with {err}")
+            msg = f"Realization {iens} failed with {err}"
+            logger.error(msg)
+            self._job_error_message_by_iens[iens] = msg
             await self._dispatch_finished_event(iens, 127)
             return
 
