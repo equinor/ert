@@ -211,6 +211,7 @@ class OpenPBSDriver(Driver):
             driverlogger=logger,
         )
         if not process_success:
+            self._job_error_message_by_iens[iens] = process_message
             raise RuntimeError(process_message)
 
         job_id_ = process_message

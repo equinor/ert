@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import random
 import stat
+import string
 from pathlib import Path
 
 import pytest
@@ -50,6 +52,75 @@ async def test_lsf_stdout_file(tmp_path, job_name):
     assert "Sender: " in lsf_stdout, "LSF stdout should always start with 'Sender:'"
     assert "The output (if any) follows:" in lsf_stdout
     assert "yay" in lsf_stdout
+
+
+async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    failure_message = "failURE"
+    await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
+    await poll(driver, {0})
+    assert Path(
+        f"{job_name}.LSF-stderr"
+    ).exists(), "LSF system did not write stderr file"
+
+    assert (
+        Path(f"{job_name}.LSF-stderr").read_text(encoding="utf-8").strip()
+        == failure_message
+    )
+
+
+def generate_random_text(size):
+    letters = string.ascii_letters
+    return "".join(random.choice(letters) for i in range(size))
+
+
+@pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
+async def test_lsf_can_retrieve_stdout_and_stderr(
+    tmp_path, job_name, tail_chars_to_read
+):
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    num_written_characters = 600
+    _out = generate_random_text(num_written_characters)
+    _err = generate_random_text(num_written_characters)
+    await driver.submit(0, "sh", "-c", f"echo {_out} && echo {_err} >&2", name=job_name)
+    await poll(driver, {0})
+    message = driver.read_stdout_and_stderr_files(
+        runpath=".",
+        job_name=job_name,
+        num_characters_to_read_from_end=tail_chars_to_read,
+    )
+
+    if tail_chars_to_read > num_written_characters:
+        assert f"LSF-stderr:\n{_err}" in message
+        # we get some extra echos after LSF-out
+        assert f"{_out}" in message
+    else:
+        assert f"LSF-stderr:\n{_err}" not in message
+        assert f"LSF-stderr:\n{_err[-tail_chars_to_read+1:]}" in message
+        assert f"LSF-stdout:\n{_out}" not in message
+        assert f"LSF-stdout:\n{_out[-tail_chars_to_read+1:]}" in message
+
+
+async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    num_written_characters = 600
+    _out = generate_random_text(num_written_characters)
+    _err = generate_random_text(num_written_characters)
+    await driver.submit(0, "sh", "-c", f"echo {_out} && echo {_err} >&2", name=job_name)
+    await poll(driver, {0})
+    # let's remove the output files
+    os.remove(job_name + ".LSF-stderr")
+    os.remove(job_name + ".LSF-stdout")
+    message = driver.read_stdout_and_stderr_files(
+        runpath=".",
+        job_name=job_name,
+        num_characters_to_read_from_end=1,
+    )
+    assert "LSF-stderr:\nNo output file" in message
+    assert "LSF-stdout:\nNo output file" in message
 
 
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
