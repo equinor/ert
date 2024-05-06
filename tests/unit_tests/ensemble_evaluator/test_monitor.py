@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from http import HTTPStatus
 
 import pytest
@@ -76,6 +77,41 @@ async def test_unexpected_close(unused_tcp_port):
         # since connection closed via websocket.close
         with pytest.raises(ConnectionClosedOK):
             await monitor.signal_done()
+
+    set_when_done.set()
+    await websocket_server_task
+
+
+async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluator(
+    unused_tcp_port, caplog
+):
+    caplog.set_level(logging.ERROR)
+    ee_con_info = EvaluatorConnectionInfo(
+        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
+    )
+
+    set_when_done = asyncio.Event()
+
+    async def mock_ws_event_handler(websocket):
+        async for event in websocket:
+            cloud_event = from_json(event)
+            assert cloud_event["type"] == "com.equinor.ert.ee.user_cancel"
+            break
+        await websocket.close()
+
+    websocket_server_task = asyncio.create_task(
+        _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
+    )
+    async with Monitor(ee_con_info) as monitor:
+        monitor._receiver_timeout = 0.1
+        await monitor.signal_cancel()
+
+        async for event in monitor.track():
+            raise RuntimeError(f"Got unexpected event {event} after cancellation")
+
+        assert (
+            "Evaluator did not send the TERMINATED event!"
+        ) in caplog.messages, "Monitor receiver did not stop!"
 
     set_when_done.set()
     await websocket_server_task

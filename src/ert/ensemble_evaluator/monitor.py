@@ -3,7 +3,7 @@ import logging
 import pickle
 import ssl
 import uuid
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Union
 
 from aiohttp import ClientError
 from cloudevents.conversion import to_json
@@ -23,15 +23,22 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class CloseTrackerEvent:
+    pass
+
+
 class Monitor:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
-        self._event_queue: asyncio.Queue[CloudEvent] = asyncio.Queue()
+        self._event_queue: asyncio.Queue[Union[CloudEvent, CloseTrackerEvent]] = (
+            asyncio.Queue()
+        )
         self._connection: Optional[WebSocketClientProtocol] = None
         self._receiver_task: Optional[asyncio.Task[None]] = None
         self._connected: asyncio.Event = asyncio.Event()
-        self._connection_timeout: int = 120
+        self._connection_timeout: float = 120.0
+        self._receiver_timeout: float = 60.0
 
     async def __aenter__(self) -> "Monitor":
         self._receiver_task = asyncio.create_task(self._receiver())
@@ -61,6 +68,7 @@ class Monitor:
     async def signal_cancel(self) -> None:
         if not self._connection:
             return
+        await self._event_queue.put(CloseTrackerEvent())
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
         out_cloudevent = CloudEvent(
@@ -78,6 +86,7 @@ class Monitor:
     async def signal_done(self) -> None:
         if not self._connection:
             return
+        await self._event_queue.put(CloseTrackerEvent())
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
         out_cloudevent = CloudEvent(
@@ -93,13 +102,23 @@ class Monitor:
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(self) -> AsyncGenerator[CloudEvent, None]:
+        timeout: Optional[float] = None
         while True:
-            event = await self._event_queue.get()
-            yield event
-            self._event_queue.task_done()
-            if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                logger.debug(f"monitor-{self._id} client received terminated")
+            try:
+                # We need a timeout in case TERMINATED event get not sent
+                # when signalling cancel or done to evaluator
+                event = await asyncio.wait_for(self._event_queue.get(), timeout)
+            except asyncio.TimeoutError:
+                logger.error("Evaluator did not send the TERMINATED event!")
                 break
+            if isinstance(event, CloseTrackerEvent):
+                timeout = self._receiver_timeout
+            else:
+                yield event
+                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                    logger.debug(f"monitor-{self._id} client received terminated")
+                    break
+            self._event_queue.task_done()
 
     async def _receiver(self) -> None:
         tls: Optional[ssl.SSLContext] = None

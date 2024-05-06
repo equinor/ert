@@ -1,11 +1,13 @@
+import asyncio
 import contextlib
 import os
+from typing import Any, Callable, Coroutine
 from unittest.mock import MagicMock, patch
 
 import pytest
 from websockets.exceptions import ConnectionClosed
 
-from _ert.async_utils import get_running_loop
+from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -13,6 +15,15 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.job_queue.queue import JobQueue
 from ert.scheduler import Scheduler
 from ert.shared.feature_toggling import FeatureScheduler
+
+
+def run_monitor_in_loop(monitor_func: Callable[[], Coroutine[Any, Any, None]]) -> None:
+    loop = new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(monitor_func())
+    finally:
+        loop.close()
 
 
 @pytest.mark.timeout(60)
@@ -43,7 +54,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
                     ]:
                         await monitor.signal_done()
 
-        get_running_loop().run_until_complete(_run_monitor())
+        run_monitor_in_loop(_run_monitor)
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
         assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
@@ -84,7 +95,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
                             await mon.signal_cancel()
                             cancel = False
 
-        get_running_loop().run_until_complete(_run_monitor())
+        run_monitor_in_loop(_run_monitor)
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
         # realisations should not finish, thus not creating a status-file
@@ -124,7 +135,7 @@ def test_run_legacy_ensemble_with_bare_exception(
                         ]:
                             await monitor.signal_done()
 
-            get_running_loop().run_until_complete(_run_monitor())
+            run_monitor_in_loop(_run_monitor)
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
 
         # realisations should not finish, thus not creating a status-file
