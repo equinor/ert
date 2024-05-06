@@ -53,6 +53,7 @@ _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
     on_run_model_event = Signal(object)
+    _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
         self,
@@ -293,7 +294,7 @@ class RunDialog(QDialog):
         self.simulation_done.connect(worker.stop)
         worker_thread.started.connect(worker.consume_and_emit)
 
-        self._ticker.start(1000)
+        self._ticker.start(self._RUN_TIME_POLL_RATE)
         self._worker_thread.start()
         simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
