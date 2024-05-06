@@ -13,17 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Pin git Linux
-      run: |
-        sudo apt-get update
-        sudo apt-get remove git git-man
-        sudo apt-get install git=1:2.34.1-1ubuntu1.10
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Build Linux Wheel
-      uses: docker://quay.io/pypa/manylinux2014_x86_64
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:2024-04-29-07d05a0
       with:
         entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
         args: ${{ inputs.python-version }}
