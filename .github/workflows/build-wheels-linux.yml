@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Pin git Linux
+      run: |
+        sudo apt-get update
+        sudo apt-get remove git git-man
+        sudo apt-get install git=1:2.34.1-1ubuntu1.10
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
