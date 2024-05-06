@@ -44,7 +44,6 @@ def test_snapshot_handling_of_forward_model_events(
     )
 
 
-@pytest.mark.skip("Seems like this test kills github workers")
 def test_gui_snapshot(
     benchmark,
     large_snapshot,  # noqa: F811
