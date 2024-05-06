@@ -90,8 +90,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
         assert snapshot.get_job("0", "0").error == ""
 
 
-# https://github.com/equinor/ert/issues/7717
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.timeout(20)
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
@@ -100,12 +99,6 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
 
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
-        events = monitor.track()
-        # first snapshot before any event occurs
-        snapshot_event = await events.__anext__()
-        snapshot = Snapshot(snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        # two dispatch endpoint clients connect
         async with Client(
             url + "/dispatch",
             cert=cert,
@@ -145,11 +138,25 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
                 {"current_memory_usage": 1000},
             )
 
-        evt = await events.__anext__()
-        snapshot = Snapshot(evt.data)
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-        assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_RUNNING
-        assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_RUNNING
+        final_snapshot = Snapshot({})
+
+        def check_if_all_fm_running(snapshot: Snapshot) -> bool:
+            try:
+                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+                assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_RUNNING
+                assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_RUNNING
+                return True
+            except AssertionError:
+                return False
+
+        async for event in monitor.track():
+            new_snapshot = Snapshot(event.data)
+
+            final_snapshot.merge(new_snapshot.data())
+            if check_if_all_fm_running(final_snapshot):
+                break
+        assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
+
         # take down first monitor by leaving context
 
     async with Client(
@@ -177,22 +184,30 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
             {identifiers.ERROR_MSG: "error"},
         )
 
-    # we have to wait for the batching dispatcher to process the events, and for the
-    # internal ensemble state to get updated before connecting and getting a full
-    # ensemble snapshot
-    while len(evaluator._dispatcher._buffer) > 0:
-        await asyncio.sleep(0.1)
+    def check_if_final_snapshot_is_complete(final_snapshot: Snapshot) -> bool:
+        try:
+            assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
+            assert (
+                final_snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+            )
+            assert (
+                final_snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+            )
+            assert (
+                final_snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+            )
+            return True
+        except AssertionError:
+            return False
+
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
-        new_events = new_monitor.track()
-        full_snapshot_event = await new_events.__anext__()
-
-        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        snapshot = Snapshot(full_snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-        assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
-        assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+        final_snapshot = Snapshot({})
+        async for event in new_monitor.track():
+            new_snapshot = Snapshot(event.data)
+            final_snapshot.merge(new_snapshot.data())
+            if check_if_final_snapshot_is_complete(final_snapshot):
+                break
 
 
 async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
