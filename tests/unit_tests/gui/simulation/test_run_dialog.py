@@ -18,83 +18,99 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
+from ert.run_models import BaseRunModel
 from ert.services import StorageService
 
 
-@pytest.fixture()
-def run_model_mock():
-    run_model = MagicMock()
+@pytest.fixture
+def run_model():
+    run_model = MagicMock(spec=BaseRunModel)
     run_model.hasRunFailed.return_value = False
     run_model.getFailMessage.return_value = ""
-    yield run_model
+    run_model.get_runtime.return_value = 1
+    run_model.support_restart = True
+    return run_model
 
 
-def test_success(qtbot: QtBot, run_model_mock):
-    notifier = Mock()
-    queue = SimpleQueue()
-    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
-    widget.show()
-    qtbot.addWidget(widget)
-
-    widget.startSimulation()
-    queue.put(EndEvent(failed=False, failed_msg=""))
-
-    with qtbot.waitExposed(widget, timeout=30000):
-        qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
-        qtbot.waitUntil(widget.done_button.isVisible, timeout=100)
-        assert widget.done_button.text() == "Done"
+@pytest.fixture
+def event_queue():
+    return SimpleQueue()
 
 
-def test_kill_simulations(qtbot: QtBot, run_model_mock):
-    notifier = Mock()
-    queue = SimpleQueue()
-    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
-    widget.show()
-    qtbot.addWidget(widget)
+@pytest.fixture
+def notifier():
+    return MagicMock(spec=ErtNotifier)
 
-    widget.startSimulation()
-    queue.put(EndEvent(failed=False, failed_msg=""))
 
-    with qtbot.waitSignal(widget.finished, timeout=30000):
+@pytest.fixture
+def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
+    run_dialog = RunDialog("mock.ert", run_model, event_queue, notifier)
+    qtbot.addWidget(run_dialog)
+    yield run_dialog
+
+
+def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
+    qtbot: QtBot, run_dialog, event_queue
+):
+    run_dialog.startSimulation()
+    event_queue.put(EndEvent(failed=False, failed_msg=""))
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=1000)
+    assert not run_dialog.done_button.isHidden()
+    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+
+
+def test_terminating_experiment_shows_a_confirmation_dialog(
+    qtbot: QtBot, run_dialog, event_queue
+):
+    run_dialog.startSimulation()
+    event_queue.put(EndEvent(failed=False, failed_msg=""))
+
+    with qtbot.waitSignal(run_dialog.finished, timeout=30000):
 
         def handle_dialog():
             qtbot.waitUntil(
-                lambda: len(
-                    [
-                        x
-                        for x in widget.children()
-                        if isinstance(x, QtWidgets.QMessageBox)
-                    ]
-                )
-                > 0
+                lambda: run_dialog.findChild(QtWidgets.QMessageBox) is not None
             )
-            message_box = [
-                x for x in widget.children() if isinstance(x, QtWidgets.QMessageBox)
-            ][0]
-            dialog_button_box = [
-                x
-                for x in message_box.children()
-                if isinstance(x, QtWidgets.QDialogButtonBox)
-            ][0]
-            qtbot.mouseClick(dialog_button_box.children()[-2], Qt.LeftButton)
+            confirm_terminate_dialog = run_dialog.findChild(QtWidgets.QMessageBox)
+            assert isinstance(confirm_terminate_dialog, QtWidgets.QMessageBox)
+            dialog_buttons = confirm_terminate_dialog.findChild(
+                QtWidgets.QDialogButtonBox
+            ).buttons()
+            yes_button = [b for b in dialog_buttons if "Yes" in b.text()][0]
+            qtbot.mouseClick(yes_button, Qt.LeftButton)
 
         QTimer.singleShot(100, handle_dialog)
-        widget.killJobs()
+        qtbot.mouseClick(run_dialog.kill_button, Qt.LeftButton)
+
+
+def test_detail_view_toggle(qtbot: QtBot, run_dialog: RunDialog):
+    details_toggled = "Hide" in run_dialog.show_details_button.text()
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    keyword = "Show" if details_toggled else "Hide"
+    qtbot.waitUntil(lambda: keyword in run_dialog.show_details_button.text())
+
+
+def test_run_dialog_polls_run_model_for_runtime(
+    qtbot: QtBot, run_dialog: RunDialog, run_model, notifier, event_queue
+):
+    run_dialog.startSimulation()
+    notifier.set_is_simulation_running.assert_called_with(True)
+    qtbot.waitUntil(
+        lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
+    )
+    event_queue.put(EndEvent(failed=False, failed_msg=""))
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden())
+    run_dialog.close()
 
 
 def test_large_snapshot(
-    large_snapshot, qtbot: QtBot, run_model_mock, timeout_per_iter=5000
+    large_snapshot, qtbot: QtBot, run_dialog, event_queue, timeout_per_iter=5000
 ):
-    notifier = Mock()
-    queue = SimpleQueue()
-    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
-    widget.show()
-    qtbot.addWidget(widget)
-
     events = [
         FullSnapshotEvent(
             snapshot=large_snapshot,
@@ -117,22 +133,21 @@ def test_large_snapshot(
         EndEvent(failed=False, failed_msg=""),
     ]
 
-    widget.startSimulation()
+    run_dialog.startSimulation()
     for event in events:
-        queue.put(event)
+        event_queue.put(event)
 
-    with qtbot.waitExposed(widget, timeout=timeout_per_iter * 6):
-        qtbot.waitUntil(
-            lambda: widget._total_progress_bar.value() == 100,
-            timeout=timeout_per_iter * 3,
-        )
-        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(
-            lambda: widget._tab_widget.count() == 2, timeout=timeout_per_iter
-        )
-        qtbot.waitUntil(
-            lambda: widget.done_button.isVisible(), timeout=timeout_per_iter
-        )
+    qtbot.waitUntil(
+        lambda: run_dialog._total_progress_bar.value() == 100,
+        timeout=timeout_per_iter * 3,
+    )
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    qtbot.waitUntil(
+        lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
+    )
+    qtbot.waitUntil(
+        lambda: not run_dialog.done_button.isHidden(), timeout=timeout_per_iter
+    )
 
 
 @pytest.mark.parametrize(
@@ -329,23 +344,16 @@ def test_large_snapshot(
         ),
     ],
 )
-def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_model_mock):
-    notifier = Mock()
-    queue = SimpleQueue()
-    widget = RunDialog("mock.ert", run_model_mock, queue, notifier)
-    widget.show()
-    qtbot.addWidget(widget)
-
-    widget.startSimulation()
+def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_queue):
+    run_dialog.startSimulation()
     for event in events:
-        queue.put(event)
+        event_queue.put(event)
 
-    with qtbot.waitExposed(widget, timeout=30000):
-        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(
-            lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
-        )
-        qtbot.waitUntil(widget.done_button.isVisible, timeout=5000)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    qtbot.waitUntil(
+        lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
+    )
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
 
 
 @pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
@@ -473,51 +481,41 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
     ],
 )
 def test_run_dialog_memory_usage_showing(
-    events, tab_widget_count, qtbot: QtBot, run_model_mock
+    events, tab_widget_count, qtbot: QtBot, event_queue, run_dialog
 ):
-    notifier = Mock()
-    queue = SimpleQueue()
-    widget = RunDialog("poly.ert", run_model_mock, queue, notifier)
-    widget.show()
-    qtbot.addWidget(widget)
-
-    widget.startSimulation()
+    run_dialog.startSimulation()
     for event in events:
-        queue.put(event)
+        event_queue.put(event)
 
-    with qtbot.waitExposed(widget, timeout=30000):
-        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(
-            lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
-        )
-        qtbot.waitUntil(widget.done_button.isVisible, timeout=5000)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    qtbot.waitUntil(
+        lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
+    )
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
 
-        # This is the container of realization boxes
-        realization_box = widget._tab_widget.widget(0)
-        assert type(realization_box) == RealizationWidget
-        # Click the first realization box
-        qtbot.mouseClick(realization_box, Qt.LeftButton)
-        assert widget._job_model._real == 0
+    # This is the container of realization boxes
+    realization_box = run_dialog._tab_widget.widget(0)
+    assert type(realization_box) == RealizationWidget
+    # Click the first realization box
+    qtbot.mouseClick(realization_box, Qt.LeftButton)
+    job_model = run_dialog._job_view.model()
+    assert job_model._real == 0
 
-        job_number = 0
-        current_memory_column_index = 6
-        max_memory_column_index = 7
+    job_number = 0
+    current_memory_column_index = 6
+    max_memory_column_index = 7
 
-        current_memory_column_proxy_index = widget._job_model.index(
-            job_number, current_memory_column_index
-        )
-        current_memory_value = widget._job_model.data(
-            current_memory_column_proxy_index, Qt.DisplayRole
-        )
-        assert current_memory_value == "50.00 kB"
+    current_memory_column_proxy_index = job_model.index(
+        job_number, current_memory_column_index
+    )
+    current_memory_value = job_model.data(
+        current_memory_column_proxy_index, Qt.DisplayRole
+    )
+    assert current_memory_value == "50.00 kB"
 
-        max_memory_column_proxy_index = widget._job_model.index(
-            job_number, max_memory_column_index
-        )
-        max_memory_value = widget._job_model.data(
-            max_memory_column_proxy_index, Qt.DisplayRole
-        )
-        assert max_memory_value == "60.00 kB"
+    max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
+    max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
+    assert max_memory_value == "60.00 kB"
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config", "using_scheduler")
