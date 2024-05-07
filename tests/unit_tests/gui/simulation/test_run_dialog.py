@@ -51,7 +51,7 @@ def notifier():
 def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
     run_dialog = RunDialog("mock.ert", run_model, event_queue, notifier)
     qtbot.addWidget(run_dialog)
-    yield run_dialog
+    return run_dialog
 
 
 def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
@@ -109,7 +109,11 @@ def test_run_dialog_polls_run_model_for_runtime(
 
 
 def test_large_snapshot(
-    large_snapshot, qtbot: QtBot, run_dialog, event_queue, timeout_per_iter=5000
+    large_snapshot,
+    qtbot: QtBot,
+    run_dialog: RunDialog,
+    event_queue,
+    timeout_per_iter=5000,
 ):
     events = [
         FullSnapshotEvent(
