@@ -2,10 +2,13 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+import numpy as np
+import xarray as xr
+
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.local_experiment import _Index
 
-info = "Adding update property to parameters, creating an empty metadata file and removing template_file_path"
+info = "Adding update property to parameters, creating an empty metadata file, storing summary data as 32 bit float and removing template_file_path"
 
 
 def migrate(path: Path) -> None:
@@ -42,3 +45,14 @@ def migrate(path: Path) -> None:
         metadata_file = experiment / "metadata.json"
         with open(path / metadata_file, "w", encoding="utf-8") as f:
             json.dump({}, f, cls=ContextBoolEncoder)
+
+        # Store summary data as 32 bit float
+        for ensemble_path in path.glob("ensembles/*"):
+            for realization_path in ensemble_path.glob("realization-*"):
+                if (realization_path / "summary.nc").exists():
+                    ds = xr.open_dataset(
+                        realization_path / "summary.nc", engine="scipy"
+                    )
+                    ds.astype(np.float32).to_netcdf(
+                        realization_path / "summary.nc", engine="scipy"
+                    )
