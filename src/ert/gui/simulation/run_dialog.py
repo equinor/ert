@@ -283,18 +283,19 @@ class RunDialog(QDialog):
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
 
-        worker = QueueEmitter(self._event_queue)
-        worker_thread = QThread()
-        self._worker = worker
-        self._worker_thread = worker_thread
+        self._worker_thread = QThread(parent=self)
+        self.destroyed.connect(lambda: _stop_worker(self))
 
-        worker.done.connect(worker_thread.quit)
-        worker.new_event.connect(self._on_event)
-        worker.moveToThread(worker_thread)
-        self.simulation_done.connect(worker.stop)
-        worker_thread.started.connect(worker.consume_and_emit)
+        self._worker = QueueEmitter(self._event_queue)
+        self._worker.done.connect(self._worker_thread.quit)
+        self._worker.new_event.connect(self._on_event)
+        self._worker.moveToThread(self._worker_thread)
 
+        self.simulation_done.connect(self._worker.stop)
+
+        self._worker_thread.started.connect(self._worker.consume_and_emit)
         self._ticker.start(self._RUN_TIME_POLL_RATE)
+
         self._worker_thread.start()
         simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
@@ -443,3 +444,18 @@ class RunDialog(QDialog):
             self.close()
         else:
             QDialog.keyPressEvent(self, q_key_event)
+
+
+# Cannot use a non-static method here as
+# it is called when the object is destroyed
+# https://stackoverflow.com/questions/16842955
+def _stop_worker(run_dialog) -> None:
+    if run_dialog._worker_thread.isRunning():
+        run_dialog._worker.stop()
+        run_dialog._worker_thread.wait(3000)
+    if run_dialog._worker_thread.isRunning():
+        run_dialog._worker_thread.quit()
+        run_dialog._worker_thread.wait(3000)
+    if run_dialog._worker_thread.isRunning():
+        run_dialog._worker_thread.terminate()
+        run_dialog._worker_thread.wait(3000)

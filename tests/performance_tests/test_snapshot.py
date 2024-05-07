@@ -19,7 +19,10 @@ from ..unit_tests.gui.conftest import (  # noqa: F401
     large_snapshot,
 )
 from ..unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
-    run_model_mock,
+    event_queue,
+    notifier,
+    run_dialog,
+    run_model,
     test_large_snapshot,
 )
 
@@ -44,19 +47,20 @@ def test_snapshot_handling_of_forward_model_events(
     )
 
 
-@pytest.mark.skip("Seems like this test kills github workers")
 def test_gui_snapshot(
     benchmark,
     large_snapshot,  # noqa: F811
     qtbot,
-    run_model_mock,  # noqa: F811
+    run_dialog,  # noqa: F811
+    event_queue,  # noqa: F811
 ):
     infinite_timeout = 100000
     benchmark(
         test_large_snapshot,
         large_snapshot,
         qtbot,
-        run_model_mock,
+        run_dialog,
+        event_queue,
         timeout_per_iter=infinite_timeout,
     )
 

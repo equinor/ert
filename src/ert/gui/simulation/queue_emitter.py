@@ -1,5 +1,7 @@
 import logging
-from queue import SimpleQueue
+from contextlib import suppress
+from queue import Empty, SimpleQueue
+from time import sleep
 
 from qtpy.QtCore import QObject, Signal, Slot
 
@@ -29,10 +31,15 @@ class QueueEmitter(QObject):
     def consume_and_emit(self):
         logger.debug("tracking...")
         while True:
-            event = self._event_queue.get()
+            event = None
+            with suppress(Empty):
+                event = self._event_queue.get(timeout=1.0)
             if self._stopped:
                 logger.debug("stopped")
                 break
+            if event is None:
+                sleep(0.1)
+                continue
 
             # pre-rendering in this thread to avoid work in main rendering thread
             if isinstance(event, FullSnapshotEvent) and event.snapshot:
