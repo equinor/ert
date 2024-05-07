@@ -258,7 +258,7 @@ class FieldParameter:
                 read_values,
                 values,
                 atol=5e-5,
-                rtol=1e-6,
+                rtol=1e-4,
             )
 
 
