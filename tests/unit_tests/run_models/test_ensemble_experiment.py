@@ -9,21 +9,19 @@ from ert.run_models.run_arguments import (
 
 
 @pytest.mark.parametrize(
-    "run_path, number_of_iterations, iter_num, active_mask, expected",
+    "iter_num, active_mask, expected",
     [
-        ("out/realization-%d/iter-%d", 4, 2, [True, True, True, True], False),
-        ("out/realization-%d/iter-%d", 4, 1, [True, True, True, True], True),
-        ("out/realization-%d/iter-%d", 4, 1, [False, False, True, False], False),
-        ("out/realization-%d/iter-%d", 4, 0, [False, False, False, False], False),
-        ("out/realization-%d/iter-%d", 4, 0, [], False),
-        ("out/realization-%d", 2, 1, [False, True, True], True),
-        ("out/realization-%d", 2, 0, [False, False, True], False),
+        (2, [True, True, True, True], False),
+        (1, [True, True, True, True], True),
+        (1, [False, False, True, False], False),
+        (0, [False, False, False, False], False),
+        (0, [], False),
+        (1, [False, True, True], True),
+        (0, [False, False, True], False),
     ],
 )
 def test_check_if_runpath_exists(
     create_dummy_run_path,
-    run_path: str,
-    number_of_iterations: int,
     iter_num: int,
     active_mask: list,
     expected: bool,
@@ -50,9 +48,5 @@ def test_check_if_runpath_exists(
         simulation_arguments, MagicMock(), None, None, MagicMock()
     )
     ensemble_experiment.run_paths.get_paths = get_run_path_mock
-    ensemble_experiment.facade = MagicMock(
-        run_path=run_path,
-        number_of_iterations=number_of_iterations,
-    )
 
     assert ensemble_experiment.check_if_runpath_exists() == expected
