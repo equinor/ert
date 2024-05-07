@@ -28,7 +28,6 @@ class SingleTestRunArguments(SimulationArguments):
 @dataclass
 class EnsembleExperimentRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    iter_num: int
     experiment_name: str
     start_iteration: int = 0
     current_ensemble: str = "prior"
@@ -38,6 +37,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
     def __post_init__(self) -> None:
         self.num_iterations = 1
         self.prev_successful_realizations = 0
+        self.iter_num = 0
 
 
 @dataclass

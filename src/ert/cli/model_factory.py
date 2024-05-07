@@ -127,9 +127,6 @@ def _setup_ensemble_experiment(
             random_seed=config.random_seed,
             active_realizations=active_realizations.tolist(),
             current_ensemble=args.current_ensemble,
-            iter_num=int(
-                getattr(args, "iter_num", 0)
-            ),  # Safely access iter_num with 0 as a default
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,

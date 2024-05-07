@@ -8,9 +8,8 @@ from ert.gui.ertwidgets import StringBox, TextModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.run_models import EnsembleExperiment
-from ert.validation import IntegerArgument, RangeStringArgument
+from ert.validation import RangeStringArgument
 from ert.validation.range_string_argument import NotInStorage
 
 from .simulation_config_panel import SimulationConfigPanel
@@ -20,7 +19,6 @@ from .simulation_config_panel import SimulationConfigPanel
 class Arguments:
     mode: str
     realizations: str
-    iter_num: int
     current_ensemble: str
     experiment_name: str
 
@@ -72,15 +70,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._iter_field = StringBox(
-            IterValueModel(notifier),
-            "config/simulation/iter_num",
-        )
-        self._iter_field.setValidator(
-            IntegerArgument(from_value=0),
-        )
-        layout.addRow("Iteration", self._iter_field)
-
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
@@ -100,7 +89,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self.blockSignals(False)
         return (
             self._active_realizations_field.isValid()
-            and self._iter_field.isValid()
             and self._name_field.isValid()
             and self._ensemble_name_field.isValid()
         )
@@ -109,7 +97,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         return Arguments(
             mode="ensemble_experiment",
             current_ensemble=self._ensemble_name_field.get_text,
-            iter_num=int(self._iter_field.text()),
             realizations=self._active_realizations_field.text(),
             experiment_name=self._name_field.get_text,
         )
