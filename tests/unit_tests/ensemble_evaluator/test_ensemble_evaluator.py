@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 
 from _ert_forward_model_runner.client import Client
@@ -16,8 +14,7 @@ from ert.ensemble_evaluator.state import (
 from .ensemble_evaluator_utils import send_dispatch_event_async
 
 
-# https://github.com/equinor/ert/issues/7717
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     evaluator.start_running()
     token = evaluator._config.token
@@ -54,10 +51,20 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
                 {identifiers.ERROR_MSG: "error"},
             )
 
-        evt = await monitor._event_queue.get()
-        snapshot = Snapshot(evt.data)
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FAILURE
-        assert snapshot.get_job("0", "0").error == "error"
+        def is_completed_snapshot(snapshot: Snapshot) -> bool:
+            try:
+                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FAILURE
+                assert snapshot.get_job("0", "0").error == "error"
+                return True
+            except AssertionError:
+                return False
+
+        final_snapshot = Snapshot({})
+        async for event in monitor.track():
+            new_snapshot = Snapshot(event.data)
+            final_snapshot.merge(new_snapshot.data())
+            if is_completed_snapshot(final_snapshot):
+                break
 
     async with Client(
         url + "/dispatch",
@@ -74,20 +81,24 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
             None,
         )
 
-    # we have to wait for the batching dispatcher to process the events, and for the
-    # internal ensemble state to get updated before connecting and getting a full
-    # ensemble snapshot
-    while len(evaluator._dispatcher._buffer) > 0:
-        await asyncio.sleep(0.1)
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
-        full_snapshot_event = await new_monitor._event_queue.get()
 
-        assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        snapshot = Snapshot(full_snapshot_event.data)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
-        assert snapshot.get_job("0", "0").error == ""
+        def check_if_final_snapshot_is_complete(snapshot: Snapshot) -> bool:
+            try:
+                assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
+                assert snapshot.get_job("0", "0").error == ""
+                return True
+            except AssertionError:
+                return False
+
+        final_snapshot = Snapshot({})
+        async for event in new_monitor.track():
+            new_snapshot = Snapshot(event.data)
+            final_snapshot.merge(new_snapshot.data())
+            if check_if_final_snapshot_is_complete(final_snapshot):
+                break
 
 
 @pytest.mark.timeout(20)
