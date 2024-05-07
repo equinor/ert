@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import (
-        EnkfObs,
         PriorDict,
         WorkflowJob,
     )
@@ -187,9 +186,6 @@ class LibresFacade:
                 _logger.error(f"Realization: {iens}, load failure: {message}")
 
         return loaded
-
-    def get_observations(self) -> "EnkfObs":
-        return self.config.enkf_obs
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         obs = self.config.enkf_obs[observation_key]

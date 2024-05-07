@@ -42,6 +42,7 @@ class ObservationType(Enum):
     HISTORY = auto()
     SUMMARY = auto()
     GENERAL = auto()
+    CSV = auto()
 
     @classmethod
     def from_rule(cls, rule: str) -> "ObservationType":
@@ -51,6 +52,8 @@ class ObservationType(Enum):
             return cls.GENERAL
         if rule == "history":
             return cls.HISTORY
+        if rule == "csv":
+            return cls.CSV
         raise ValueError(f"Unexpected observation type {rule}")
 
 
@@ -99,6 +102,17 @@ class _GenObsValues:
 
 @dataclass
 class GenObsValues(DateValues, _GenObsValues):
+    pass
+
+
+@dataclass
+class _CSVObsValues:
+    data: str
+    input_file: str
+
+
+@dataclass
+class CSVObsValues(DateValues, _CSVObsValues):
     pass
 
 
@@ -176,6 +190,7 @@ observations_parser = Lark(
     type: "HISTORY_OBSERVATION" -> history
         | "SUMMARY_OBSERVATION" -> summary
         | "GENERAL_OBSERVATION" -> general
+        | "CSV_OBSERVATION" -> csv
     ?value: object
           | STRING
 
@@ -267,6 +282,13 @@ def _validate_conf_content(
                     (
                         decl[1],
                         _validate_gen_obs_values(directory, decl[1], decl[2]),
+                    )
+                )
+            elif decl[0] == ObservationType.CSV:
+                result.append(
+                    (
+                        decl[1],
+                        _validate_csv_obs_values(directory, decl[1], decl[2]),
                     )
                 )
             else:
@@ -439,6 +461,27 @@ def _validate_gen_obs_values(
             f" VALUE = {output.value}, ERROR must also be given.",
             name_token,
         )
+    return output
+
+
+def _validate_csv_obs_values(
+    directory: str, name_token: FileContextToken, inp: Dict[FileContextToken, Any]
+) -> CSVObsValues:
+    try:
+        data = inp[cast(FileContextToken, "DATA")]
+    except KeyError as err:
+        raise _missing_value_error(name_token, "DATA") from err
+    try:
+        input_file = inp[cast(FileContextToken, "OBS_FILE")]
+    except KeyError as err:
+        raise _missing_value_error(name_token, "OBS_FILE") from err
+    if not os.path.isabs(input_file):
+        filename = os.path.join(directory, input_file)
+    if not os.path.exists(filename):
+        raise ObservationConfigError.with_context(
+            "The OBS_FILE did not" f" resolve to a valid path:\n {input_file}",
+        )
+    output = CSVObsValues(data=data, input_file=input_file)
     return output
 
 

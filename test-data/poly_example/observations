@@ -3,3 +3,8 @@ GENERAL_OBSERVATION POLY_OBS {
    INDEX_LIST = 0,2,4,6,8;
    OBS_FILE   = poly_obs_data.txt;
 };
+
+CSV_OBSERVATION MY_CSV {
+   DATA = CSV_SIM;
+   OBS_FILE = input.csv;
+};

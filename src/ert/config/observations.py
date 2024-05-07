@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Union
@@ -13,6 +15,7 @@ from .general_observation import GenObservation
 from .observation_vector import ObsVector
 from .parsing import ConfigWarning, HistorySource
 from .parsing.observations_parser import (
+    CSVObsValues,
     DateValues,
     ErrorValues,
     GenObsValues,
@@ -459,6 +462,60 @@ class EnkfObs:
                                 else None
                             ),
                             general_observation.obs_file,
+                            indices,
+                        ),
+                    },
+                )
+            }
+        except ValueError as err:
+            raise ObservationConfigError.with_context(str(err), obs_key) from err
+
+    @classmethod
+    def _handle_csv_observation(
+        cls,
+        ensemble_config: EnsembleConfig,
+        csv_observation: CSVObsValues,
+        obs_key: str,
+        time_map: List[datetime],
+        has_refcase: bool,
+    ) -> Dict[str, ObsVector]:
+        state_kw = csv_observation.data
+        if state_kw not in EnsembleConfig.response_configuration:
+            ConfigWarning.ert_context_warn(
+                f"Ensemble key {state_kw} does not exist"
+                f" - ignoring observation {obs_key}",
+                state_kw,
+            )
+            return {}
+
+        config_node = ensemble_config[state_kw]
+        if not isinstance(config_node, GenDataConfig):
+            ConfigWarning.ert_context_warn(
+                f"{state_kw} has implementation type:"
+                f"'{type(config_node)}' - "
+                f"expected:'GEN_DATA' in observation:{obs_key}."
+                "The observation will be ignored",
+                obs_key,
+            )
+            return {}
+        try:
+            return {
+                obs_key: ObsVector(
+                    EnkfObservationImplementationType.CSV_OBS,
+                    obs_key,
+                    config_node.name,
+                    {
+                        restart: cls._create_gen_obs(
+                            (
+                                (
+                                    csv_observation.value,
+                                    csv_observation.error,
+                                )
+                                if csv_observation.value is not None
+                                and csv_observation.error is not None
+                                else None
+                            ),
+                            csv_observation.obs_file,
                             indices,
                         ),
                     },
