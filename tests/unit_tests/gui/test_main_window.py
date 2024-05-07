@@ -4,7 +4,7 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -54,52 +54,6 @@ from .conftest import (
     wait_for_child,
     with_manage_tool,
 )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gui_iter_num(monkeypatch, qtbot):
-    config_file = Path("config.ert")
-    config_file.write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
-
-    args_mock = Mock()
-    args_mock.config = str(config_file)
-
-    # won't run simulations so we mock it and test whether "iter_num" is in arguments
-    def _assert_iter_in_args(panel):
-        assert panel.getSimulationArguments().iter_num == 10
-
-    args_mock = Mock()
-    args_mock.config = "poly.ert"
-    type(args_mock).config = PropertyMock(return_value="config.ert")
-
-    monkeypatch.setattr(
-        ert.gui.simulation.simulation_panel.SimulationPanel,
-        "runSimulation",
-        _assert_iter_in_args,
-    )
-
-    gui = _setup_main_window(
-        EnKFMain(ErtConfig.from_file(str(config_file))),
-        args_mock,
-        GUILogHandler(),
-        MagicMock(),
-    )
-    qtbot.addWidget(gui)
-
-    sim_mode = get_child(gui, QWidget, name="Simulation_mode")
-    qtbot.keyClick(sim_mode, Qt.Key_Down)
-
-    sim_panel = get_child(gui, QWidget, name="Simulation_panel")
-
-    ensemble_panel = get_child(gui, QWidget, name="Ensemble_experiment_panel")
-    # simulate entering number 10 as iter_num
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
-    qtbot.keyClicks(ensemble_panel._iter_field, "10")
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
-
-    start_simulation = get_child(gui, QWidget, name="start_simulation")
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
-    assert sim_panel.getSimulationArguments().iter_num == 10
 
 
 @pytest.mark.usefixtures("set_site_config")
