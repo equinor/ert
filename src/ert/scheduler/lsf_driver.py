@@ -331,7 +331,8 @@ class LsfDriver(Driver):
             process = await asyncio.create_subprocess_exec(
                 str(self._bjobs_cmd),
                 "-noheader",
-                "-o \"jobid stat delimiter='^'\"",
+                "-o",
+                "jobid stat delimiter='^'",
                 *current_jobids,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
