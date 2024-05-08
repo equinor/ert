@@ -6,7 +6,7 @@ import numpy
 import pandas as pd
 from PyQt5.QtWidgets import QCheckBox
 
-from ert.config import CancelPluginException, ErtPlugin
+from ert.config import CancelPluginException, ErtPlugin, ResponseTypes
 
 
 def load_args(filename, column_names=None):
@@ -147,12 +147,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
             obs = ensemble.experiment.observations
 
-            if "gen_data" not in obs:
+            if ResponseTypes.gen_data not in obs:
                 raise UserWarning(
                     "The experiment does not contain any general observations"
                 )
 
-            gen_obs = obs["gen_data"]
+            gen_obs = obs[ResponseTypes.gen_data]
             obs_keys = list(
                 {x for x in gen_obs["obs_name"].data if x.startswith("RFT_")}
             )
@@ -236,10 +236,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         return export_info
 
     def getArguments(self, parent=None):
-        from ert.gui.ertwidgets.customdialog import CustomDialog
-        from ert.gui.ertwidgets.listeditbox import ListEditBox
+        from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
         from ert.gui.ertwidgets.models.path_model import PathModel
-        from ert.gui.ertwidgets.pathchooser import PathChooser
 
         description = (
             "The GEN_DATA RFT CSV export requires some information before it starts:"

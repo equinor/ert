@@ -77,17 +77,17 @@ class ExtParamConfig(ParameterConfig):
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}
-        for da in ensemble.load_parameters(self.name, real_nr)["values"]:
-            assert isinstance(da, xr.DataArray)
-            name = str(da.names.values)
+        df = ensemble.load_parameters(self.name, real_nr)["values"].to_dataframe()
+        as_dict = df.to_dict()["values"]
+        for k, v in as_dict.items():
             try:
-                outer, inner = name.split("\0")
+                outer, inner = k.split("\0")
 
                 if outer not in data:
                     data[outer] = {}
-                data[outer][inner] = float(da)  # type: ignore
+                data[outer][inner] = float(v)  # type: ignore
             except ValueError:
-                data[name] = float(da)
+                data[k] = float(v)
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)

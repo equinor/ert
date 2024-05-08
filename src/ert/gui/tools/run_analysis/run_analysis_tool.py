@@ -53,7 +53,7 @@ class Analyse(QObject):
                 self._source_ensemble,
                 self._target_ensemble,
                 str(uuid.uuid4()),
-                self._source_ensemble.experiment.observations.keys(),
+                self._source_ensemble.experiment.observation_keys,
                 self._source_ensemble.experiment.update_parameters,
                 update_settings,
                 config.analysis_config.es_module,

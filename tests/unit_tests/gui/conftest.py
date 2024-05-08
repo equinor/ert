@@ -99,7 +99,7 @@ def _add_default_ensemble(storage: Storage, gui: ErtMainWindow, config: ErtConfi
     gui.notifier.set_current_ensemble(
         storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
-            observations=config.observations,
+            observations=config.observations.datasets,
         ).create_ensemble(
             name="default",
             ensemble_size=config.model_config.num_realizations,

@@ -70,6 +70,7 @@ def test_migrate_surface(data, storage, parameter, ens_config):
 
     ensemble = experiment.create_ensemble(name="default", ensemble_size=5)
     bf._migrate_surface(ensemble, parameter, ens_config)
+    ensemble.unify_parameters()
 
     for key, var in data["/REAL_0/SURFACE"].groups.items():
         expect = sorted_surface(var)
@@ -83,6 +84,7 @@ def test_migrate_field(data, storage, parameter, ens_config):
 
     ensemble = experiment.create_ensemble(name="default", ensemble_size=5)
     bf._migrate_field(ensemble, parameter, ens_config)
+    ensemble.unify_parameters()
 
     for key, var in data["/REAL_0/FIELD"].groups.items():
         expect = np.array(var["VALUES"]).ravel()

@@ -46,7 +46,7 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
             count = poly_ran["summary_data_entries"] // poly_ran["sum_obs_every"]
             assert len(obs) == 1
             assert obs[0].errors[0] == 0.1
-            assert obs[0].x_axis[0] == "2010-01-02T00:00:00.000000000"
+            assert obs[0].x_axis[0].startswith("2010-01-02T00")
             assert obs[0].values[0] == 2.6357
             assert len(obs[0].errors) == count
             assert len(obs[0].x_axis) == count
@@ -159,7 +159,7 @@ def test_direct_dark_performance_with_storage(
         "summary": "PSUM1",
         "gen_data": "POLY_RES_1@0",
         "summary_with_obs": "PSUM0",
-        "gen_data_with_obs": "POLY_RES_0@0",
+        "gen_data_with_obs": "POLY_RES_0",
     }[keyword]
 
     with template_config["folder"].as_cwd():

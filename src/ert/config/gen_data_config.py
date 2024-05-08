@@ -152,7 +152,7 @@ class GenDataConfig(ResponseConfig):
         try:
             return {
                 obs_key: ObsVector(
-                    ResponseTypes.GEN_DATA,
+                    ResponseTypes.gen_data,
                     obs_key,
                     config_node.name,
                     {

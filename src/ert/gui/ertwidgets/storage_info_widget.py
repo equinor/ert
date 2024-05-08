@@ -191,7 +191,6 @@ class _EnsembleWidget(QWidget):
         response_name = observation_ds.attrs["response"]
         response_ds = self._ensemble.load_responses(
             response_name,
-            tuple(self._ensemble.get_realization_list_with_responses()),
         )
 
         # check if the response is empty

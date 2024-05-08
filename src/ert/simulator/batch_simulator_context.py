@@ -108,6 +108,7 @@ class BatchContext(SimulationContext):
                 "Simulations are still running - need to wait before gettting results"
             )
 
+        self.get_ensemble().unify_responses()
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
             if not self.didRealizationSucceed(sim_id):
@@ -117,7 +118,7 @@ class BatchContext(SimulationContext):
             d = {}
             for key in self.result_keys:
                 data = self.get_ensemble().load_responses(key, (sim_id,))
-                d[key] = data["values"].values.flatten()
+                d[key] = data["values"].dropna("index").values.flatten()
             res.append(d)
 
         return res

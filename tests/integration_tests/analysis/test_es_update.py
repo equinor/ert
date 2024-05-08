@@ -12,7 +12,7 @@ from xtgeo import RegularSurface, surface_from_file
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import ObservationStatus, _all_parameters
-from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
+from ert.config import ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
 from ert.config.gen_kw_config import TransformFunctionDefinition
@@ -40,11 +40,22 @@ def uniform_parameter():
 def obs():
     return xr.Dataset(
         {
-            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
-            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
+            "observations": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[1.0, 1.0, 1.0]]]],
+            ),
+            "std": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[0.1, 1.0, 10.0]]]],
+            ),
         },
-        coords={"index": [0, 1, 2], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+        coords={
+            "obs_name": ["OBSERVATION"],
+            "name": ["RESPONSE"],  # Has to correspond to actual response name
+            "index": [0, 1, 2],
+            "report_step": [0],
+        },
+        attrs={"response": "gen_data"},
     )
 
 
@@ -194,16 +205,28 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
-            "observations": (["report_step", "index"], [[1.0]]),
-            "std": (["report_step", "index"], [[0.1]]),
+            "observations": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[1.0]]]],
+            ),
+            "std": (
+                ["name", "obs_name", "report_step", "index"],
+                [[[[0.1]]]],
+            ),
         },
-        coords={"index": [1000], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+        coords={
+            "obs_name": ["obs_name"],
+            "name": ["RESPONSE"],  # Has to correspond to actual response name
+            "index": [1000],
+            "report_step": [0],
+        },
+        attrs={"response": "gen_data"},
     )
+
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -234,6 +257,10 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ),
             iens,
         )
+
+    prior.unify_responses()
+    prior.unify_parameters()
+
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -241,7 +268,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="posterior",
         prior_ensemble=prior,
     )
-    AnalysisConfig()
+
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
@@ -295,6 +322,10 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.unify_responses()
+    prior.unify_parameters()
+
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -386,6 +417,10 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.unify_responses()
+    prior.unify_parameters()
+
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -463,3 +498,17 @@ def test_that_update_works_with_failed_realizations():
             for idx, v in enumerate(prior.get_ensemble_state())
             if v == RealizationStorageState.LOAD_FAILURE
         )
+
+
+def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
+    """
+    The order of the observations influence the update as it affects the
+    perturbations, so we make sure we maintain the order throughout.
+    """
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    assert ert_config.observation_keys == prior_ens.experiment.observation_keys
+    for observations in prior_ens.experiment.observations.values():
+        assert observations["observations"].dims[0:2] == ("name", "obs_name")
+        primary_key = observations["observations"].dims[2:]
+        assert observations.sortby(*primary_key).equals(observations)

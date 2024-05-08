@@ -91,7 +91,7 @@ class SummaryConfig(ResponseConfig):
             )
         return {
             obs_key: ObsVector(
-                ResponseTypes.SUMMARY,
+                ResponseTypes.summary,
                 obs_key,
                 summary_key,
                 {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
@@ -173,7 +173,7 @@ class SummaryConfig(ResponseConfig):
 
         return {
             obs_name: ObsVector(
-                ResponseTypes.SUMMARY,
+                ResponseTypes.summary,
                 obs_name,
                 obs_name,
                 data,

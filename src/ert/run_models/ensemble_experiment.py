@@ -57,7 +57,7 @@ class EnsembleExperiment(BaseRunModel):
         experiment = self._storage.create_experiment(
             name=self.simulation_arguments.experiment_name,
             parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations,
+            observations=self.ert_config.observations.datasets,
             simulation_arguments=self._simulation_arguments,
             responses=self.ert_config.ensemble_config.response_configuration,
         )
