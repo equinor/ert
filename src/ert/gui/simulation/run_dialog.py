@@ -229,7 +229,7 @@ class RunDialog(QDialog):
             index = self._snapshot_model.index(start, 0, parent)
             iter_row = start
             self._iteration_progress_label.setText(
-                f"Progress for iteration {index.internalPointer().id}"
+                f"Progress for iteration {index.internalPointer().id_}"
             )
 
             widget = RealizationWidget(iter_row)
@@ -237,7 +237,7 @@ class RunDialog(QDialog):
             widget.currentChanged.connect(self._select_real)
 
             self._tab_widget.addTab(
-                widget, f"Realizations for iteration {index.internalPointer().id}"
+                widget, f"Realizations for iteration {index.internalPointer().id_}"
             )
 
     @Slot(QModelIndex)
@@ -372,10 +372,8 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
-        current_memory_usage = self._snapshot_model.root.data.get(
-            ids.CURRENT_MEMORY_USAGE
-        )
-        maximum_memory_usage = self._snapshot_model.root.data.get(ids.MAX_MEMORY_USAGE)
+        current_memory_usage = self._snapshot_model.root.data.current_memory_usage
+        maximum_memory_usage = self._snapshot_model.root.data.max_memory_usage
 
         if current_memory_usage and maximum_memory_usage:
             self.memory_usage.setText(
