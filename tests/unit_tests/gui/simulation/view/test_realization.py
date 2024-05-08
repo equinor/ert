@@ -2,7 +2,7 @@ from qtpy import QtCore
 from qtpy.QtCore import QModelIndex, QSize
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
-from ert.gui.model.node import Node
+from ert.gui.model.node import _Node
 from ert.gui.model.snapshot import SnapshotModel
 from ert.gui.simulation.view.realization import RealizationWidget
 
@@ -14,7 +14,7 @@ class MockDelegate(QStyledItemDelegate):
         self._max_id = 0
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        self._max_id = max(int(index.internalPointer().id), self._max_id)
+        self._max_id = max(int(index.internalPointer().id_), self._max_id)
 
     def sizeHint(self, option, index) -> QSize:
         return self._size
@@ -72,7 +72,7 @@ def test_selection_success(large_snapshot, qtbot):
 
     def check_selection_cb(index):
         node = index.internalPointer()
-        return isinstance(node, Node) and str(node.id) == str(selection_id)
+        return isinstance(node, _Node) and str(node.id_) == str(selection_id)
 
     with qtbot.waitSignal(
         widget.currentChanged, timeout=30000, check_params_cb=check_selection_cb

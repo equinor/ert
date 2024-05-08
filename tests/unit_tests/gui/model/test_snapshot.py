@@ -39,7 +39,7 @@ def test_realization_sort_order(full_snapshot):
     for i in range(0, 100):
         iter_index = model.index(i, 0, model.index(0, 0, QModelIndex()))
 
-        assert str(i) == iter_index.internalPointer().id, print(
+        assert str(i) == iter_index.internalPointer().id_, print(
             i, iter_index.internalPointer()
         )
 
