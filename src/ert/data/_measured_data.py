@@ -32,13 +32,13 @@ class MeasuredData:
         index_lists: Optional[List[List[Union[int, datetime]]]] = None,
     ):
         if keys is None:
-            keys = sorted(list(ensemble.experiment.observations.keys()))
+            keys = sorted(list(ensemble.experiment.observation_keys))
         if not keys:
             raise ObservationError("No observation keys provided")
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
-        self._set_data(self._get_data(ensemble, keys))
+        self._set_data(ensemble.get_measured_data(keys).to_long_dataframe().T)
         self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
@@ -85,87 +85,6 @@ class MeasuredData:
 
     def is_empty(self) -> bool:
         return bool(self.data.empty)
-
-    @staticmethod
-    def _get_data(
-        ensemble: Ensemble,
-        observation_keys: List[str],
-    ) -> pd.DataFrame:
-        """
-        Adds simulated and observed data and returns a dataframe where ensemble
-        members will have a data key, observed data will be named OBS and
-        observed standard deviation will be named STD.
-        """
-
-        measured_data = []
-        observations = ensemble.experiment.observations
-        for key in observation_keys:
-            obs = observations.get(key)
-            if not obs:
-                raise ObservationError(
-                    f"No observation: {key} in ensemble: {ensemble.name}"
-                )
-            group = obs.attrs["response"]
-            try:
-                response = ensemble.load_responses(
-                    group,
-                    tuple(ensemble.get_realization_list_with_responses()),
-                )
-                _msg = f"No response loaded for observation key: {key}"
-                if not response:
-                    raise ResponseError(_msg)
-            except KeyError as e:
-                raise ResponseError(_msg) from e
-            ds = obs.merge(
-                response,
-                join="left",
-            )
-            data = np.vstack(
-                [
-                    ds.observations.values.ravel(),
-                    ds["std"].values.ravel(),
-                    ds["values"].values.reshape(len(ds.realization), -1),
-                ]
-            )
-
-            if "time" in ds.coords:
-                ds = ds.rename(time="key_index")
-                ds = ds.assign_coords({"name": [key]})
-
-                data_index = []
-                for observation_date in obs.time.values:
-                    if observation_date in response.indexes["time"]:
-                        data_index.append(
-                            response.indexes["time"].get_loc(observation_date)
-                        )
-                    else:
-                        data_index.append(np.nan)
-
-                index_vals = ds.observations.coords.to_index(
-                    ["name", "key_index"]
-                ).values
-
-            else:
-                ds = ds.expand_dims({"name": [key]})
-                ds = ds.rename(index="key_index")
-                data_index = ds.key_index.values
-                index_vals = ds.observations.coords.to_index().droplevel("report_step")
-
-            index_vals = [
-                (name, data_i, i) for i, (name, data_i) in zip(data_index, index_vals)
-            ]
-            measured_data.append(
-                pd.DataFrame(
-                    data,
-                    index=("OBS", "STD") + tuple(ds.realization.values),
-                    columns=pd.MultiIndex.from_tuples(
-                        index_vals,
-                        names=[None, "key_index", "data_index"],
-                    ),
-                )
-            )
-
-        return pd.concat(measured_data, axis=1)
 
     def filter_ensemble_std(self, std_cutoff: float) -> None:
         """

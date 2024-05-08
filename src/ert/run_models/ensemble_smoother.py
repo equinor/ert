@@ -69,7 +69,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName(log_msg, indeterminate=True)
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations,
+            observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
             simulation_arguments=self._simulation_arguments,
             name=self._simulation_arguments.experiment_name,
@@ -138,7 +138,7 @@ class EnsembleSmoother(BaseRunModel):
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior_context.ensemble.experiment.update_parameters,
-                observations=prior_context.ensemble.experiment.observations.keys(),
+                observations=prior_context.ensemble.experiment.observation_keys,
                 rng=self.rng,
                 progress_callback=functools.partial(self.send_smoother_event, 0),
                 log_path=self.ert_config.analysis_config.log_path,

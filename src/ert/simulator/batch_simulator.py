@@ -241,6 +241,8 @@ class BatchSimulator:
             assert isinstance(geo_id, int)
             self._setup_sim(sim_id, controls, ensemble)
 
+        ensemble.unify_parameters()
+
         # The input should be validated before we instantiate the BatchContext
         # object, at that stage a job_queue object with multiple threads is
         # started, and things will typically be in a quite sorry state if an

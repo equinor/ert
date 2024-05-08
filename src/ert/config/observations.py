@@ -69,7 +69,10 @@ class _ObsDataset:
 
 
 # Columns used to form a key for observations of the response_type
-ObservationsIndices = {"summary": ["time"], "gen_data": ["index", "report_step"]}
+ObservationsIndices = {
+    ResponseTypes.summary: ["time"],
+    ResponseTypes.gen_data: ["index", "report_step"],
+}
 
 
 class EnkfObs:
@@ -86,7 +89,7 @@ class EnkfObs:
         # observation and then merge/concat
         # this just accumulates 1d vecs before making a dataset
         for vec in vecs:
-            if vec.observation_type == ResponseTypes.GEN_DATA:
+            if vec.observation_type == ResponseTypes.gen_data:
                 for report_step, node in vec.observations.items():
                     assert isinstance(node, GenObservation)
                     gen_obs_ds.write(
@@ -100,7 +103,7 @@ class EnkfObs:
                         },
                     )
 
-            elif vec.observation_type == ResponseTypes.SUMMARY:
+            elif vec.observation_type == ResponseTypes.summary:
                 observations = []
                 stds = []
                 dates = []
@@ -124,12 +127,12 @@ class EnkfObs:
                 raise ValueError("Unknown observation type")
 
         accumulated_ds: Dict[str, _ObsDataset] = {
-            "gen_data": gen_obs_ds,
-            "summary": sum_obs_ds,
+            ResponseTypes.gen_data: gen_obs_ds,
+            ResponseTypes.summary: sum_obs_ds,
         }
 
         obs_dict: Dict[str, xr.Dataset] = {}
-        for key in ["gen_data", "summary"]:
+        for key in [ResponseTypes.summary, ResponseTypes.gen_data]:
             acc_ds = accumulated_ds[key]
             if len(acc_ds) > 0:
                 ds = acc_ds.to_xarray()

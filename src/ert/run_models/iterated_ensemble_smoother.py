@@ -93,7 +93,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self.sies_smoother,
                 ensemble_id,
                 parameters=prior_storage.experiment.update_parameters,
-                observations=prior_storage.experiment.observations.keys(),
+                observations=prior_storage.experiment.observation_keys,
                 update_settings=self.update_settings,
                 analysis_config=self.analysis_config,
                 sies_step_length=self.sies_step_length,
@@ -135,7 +135,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_ensemble_format = self._simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations,
+            observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
             simulation_arguments=self._simulation_arguments,
             name=self._simulation_arguments.experiment_name,

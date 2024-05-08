@@ -1,6 +1,3 @@
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.summary_config import SummaryConfig
-
 from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
 from .ensemble_config import EnsembleConfig
@@ -32,6 +29,8 @@ from .queue_config import (
     queue_string_options,
 )
 from .response_config import ResponseConfig
+from .response_properties import ResponseTypes
+from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
@@ -64,6 +63,7 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ResponseTypes",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

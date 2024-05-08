@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import time
 from multiprocessing.pool import ThreadPool
@@ -21,15 +22,14 @@ from pandas import DataFrame
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.callbacks import forward_model_ok
 from ert.config import (
-    EnkfObservationImplementationType,
     ErtConfig,
     Field,
     GenKwConfig,
 )
+from ert.config.observations import EnkfObs
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
-from ert.storage import Ensemble
 
 from .enkf_main import EnKFMain, ensemble_context
 
@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.config import (
-        EnkfObs,
         PriorDict,
         WorkflowJob,
     )
@@ -189,14 +188,30 @@ class LibresFacade:
         return loaded
 
     def get_observations(self) -> "EnkfObs":
-        return self.config.enkf_obs
+        return self.config.observations
+
+    def _get_response_name_for_obs_name(self, observation_name: str) -> str:
+        obs_ds = next(
+            ds.sel(obs_name=observation_name, drop=True)
+            for ds in self.config.observations.datasets.values()
+            if observation_name in ds["obs_name"]
+        )
+
+        if obs_ds is None:
+            all_obs_and_response_keys = {
+                k: ds["obs_name"].data.tolist()
+                for k, ds in self.config.observations.datasets.items()
+            }
+            raise KeyError(
+                f"Did not find observation {observation_name} in "
+                "any observation datasets. All observations: "
+                f"{json.dumps(all_obs_and_response_keys)}"
+            )
+
+        return str(obs_ds["name"].data.tolist()[0])
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        obs = self.config.enkf_obs[observation_key]
-        if obs.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
-            return list(obs.observations.values())[0].summary_key  # type: ignore
-        else:
-            return obs.data_key
+        return self._get_response_name_for_obs_name(observation_key)
 
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:

@@ -55,6 +55,7 @@ from .parsing.observations_parser import (
     parse,
 )
 from .queue_config import QueueConfig
+from .response_properties import ResponseTypes
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -111,8 +112,8 @@ class ErtConfig:
 
         self.observations = self._create_observations_and_find_summary_keys()
 
-        if "summary" in self.observations:
-            summary_ds = self.observations["summary"]
+        if ResponseTypes.summary in self.observations:
+            summary_ds = self.observations[ResponseTypes.summary]
             names_in_ds = summary_ds["name"].data.tolist()
             self.summary_keys.extend(names_in_ds)
 

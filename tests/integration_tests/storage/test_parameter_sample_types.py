@@ -130,12 +130,12 @@ if __name__ == "__main__":
             prior = storage.get_ensemble_by_name("prior")
             posterior = storage.get_ensemble_by_name("smoother_update")
             prior_param = (
-                prior.load_parameters("MY_PARAM", range(5))["values"]
+                prior.load_parameters("MY_PARAM", list(range(5)))["values"]
                 .values.reshape(5, 2 * 3)
                 .T
             )
             posterior_param = (
-                posterior.load_parameters("MY_PARAM", range(5))["values"]
+                posterior.load_parameters("MY_PARAM", list(range(5)))["values"]
                 .values.reshape(5, 2 * 3)
                 .T
             )
