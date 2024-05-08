@@ -1,17 +1,24 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import xarray as xr
 from typing_extensions import Self
 
+from ert.config import obs_commons
+from ert.config._option_dict import option_dict
+from ert.config.general_observation import GenObservation
+from ert.config.observation_vector import ObsVector
+from ert.config.parsing import ConfigValidationError, ErrorInfo
+from ert.config.parsing.config_errors import ConfigWarning
+from ert.config.parsing.observations_parser import GenObsValues, ObservationConfigError
+from ert.config.response_config import ObsArgs, ResponseConfig
+from ert.config.response_properties import (
+    ResponseTypes,
+)
 from ert.validation import rangestring_to_list
-
-from ._option_dict import option_dict
-from .parsing import ConfigValidationError, ErrorInfo
-from .response_config import ResponseConfig
 
 
 @dataclass
@@ -22,6 +29,151 @@ class GenDataConfig(ResponseConfig):
     def __post_init__(self) -> None:
         if isinstance(self.report_steps, list):
             self.report_steps = list(set(self.report_steps))
+
+    @staticmethod
+    def _create_gen_obs(
+        scalar_value: Optional[Tuple[float, float]] = None,
+        obs_file: Optional[str] = None,
+        data_index: Optional[str] = None,
+    ) -> GenObservation:
+        if scalar_value is None and obs_file is None:
+            raise ValueError(
+                "Exactly one the scalar_value and obs_file arguments must be present"
+            )
+
+        if scalar_value is not None and obs_file is not None:
+            raise ValueError(
+                "Exactly one the scalar_value and obs_file arguments must be present"
+            )
+
+        if obs_file is not None:
+            try:
+                file_values = np.loadtxt(obs_file, delimiter=None).ravel()
+            except ValueError as err:
+                raise ObservationConfigError.with_context(
+                    f"Failed to read OBS_FILE {obs_file}: {err}", obs_file
+                ) from err
+            if len(file_values) % 2 != 0:
+                raise ObservationConfigError.with_context(
+                    "Expected even number of values in GENERAL_OBSERVATION", obs_file
+                )
+            values = file_values[::2]
+            stds = file_values[1::2]
+
+        else:
+            assert scalar_value is not None
+            obs_value, obs_std = scalar_value
+            values = np.array([obs_value])
+            stds = np.array([obs_std])
+
+        if data_index is not None:
+            indices = np.array([])
+            if os.path.isfile(data_index):
+                indices = np.loadtxt(data_index, delimiter=None, dtype=int).ravel()
+            else:
+                indices = np.array(
+                    sorted(rangestring_to_list(data_index)), dtype=np.int32
+                )
+        else:
+            indices = np.arange(len(values))
+        std_scaling = np.full(len(values), 1.0)
+        if len({len(stds), len(values), len(indices)}) != 1:
+            raise ObservationConfigError.with_context(
+                f"Values ({values}), error ({stds}) and "
+                f"index list ({indices}) must be of equal length",
+                obs_file if obs_file is not None else "",
+            )
+        return GenObservation(values, stds, indices, std_scaling)
+
+    @staticmethod
+    def parse_observation(args: ObsArgs) -> Dict[str, ObsVector]:
+        general_observation = args.values
+        assert type(general_observation) is GenObsValues
+        assert general_observation is not None
+        obs_key = args.obs_name
+        time_map = args.obs_time_list
+        has_refcase = args.refcase is not None
+        config_node = args.config_for_response
+
+        state_kw = general_observation.data
+        if not config_node:
+            ConfigWarning.ert_context_warn(
+                f"Ensemble key {state_kw} does not exist"
+                f" - ignoring observation {obs_key}",
+                state_kw,
+            )
+            return {}
+
+        if all(
+            getattr(general_observation, key) is None
+            for key in ["restart", "date", "days", "hours"]
+        ):
+            # The user has not provided RESTART or DATE, this is legal
+            # for GEN_DATA, so we default it to None
+            restart = None
+        else:
+            restart = obs_commons.get_restart(
+                general_observation, obs_key, time_map, has_refcase
+            )
+
+        if not isinstance(config_node, GenDataConfig):
+            ConfigWarning.ert_context_warn(
+                f"{state_kw} has implementation type:"
+                f"'{type(config_node)}' - "
+                f"expected:'GEN_DATA' in observation:{obs_key}."
+                "The observation will be ignored",
+                obs_key,
+            )
+            return {}
+
+        response_report_steps = (
+            [] if config_node.report_steps is None else config_node.report_steps
+        )
+        if (restart is None and response_report_steps) or (
+            restart is not None and restart not in response_report_steps
+        ):
+            ConfigWarning.ert_context_warn(
+                f"The GEN_DATA node:{state_kw} is not configured to load from"
+                f" report step:{restart} for the observation:{obs_key}"
+                " - The observation will be ignored",
+                state_kw,
+            )
+            return {}
+
+        restart = 0 if restart is None else restart
+        index_list = general_observation.index_list
+        index_file = general_observation.index_file
+        if index_list is not None and index_file is not None:
+            raise ObservationConfigError.with_context(
+                f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
+                obs_key,
+            )
+        indices = index_list if index_list is not None else index_file
+        try:
+            return {
+                obs_key: ObsVector(
+                    ResponseTypes.GEN_DATA,
+                    obs_key,
+                    config_node.name,
+                    {
+                        restart: GenDataConfig._create_gen_obs(
+                            (
+                                (
+                                    general_observation.value,
+                                    general_observation.error,
+                                )
+                                if general_observation.value is not None
+                                and general_observation.error is not None
+                                else None
+                            ),
+                            general_observation.obs_file,
+                            indices,
+                        ),
+                    },
+                )
+            }
+        except ValueError as err:
+            raise ObservationConfigError.with_context(str(err), obs_key) from err
 
     @classmethod
     def from_config_list(cls, gen_data: List[str]) -> Self:
