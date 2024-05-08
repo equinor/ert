@@ -149,7 +149,7 @@ def test_everest2ropt_controls_optimizer_setting():
     config = EverestConfig.load_file(config)
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
     assert len(ropt_config.realizations.names) == 15
-    assert ropt_config.optimizer.algorithm == "conmin_mfd"
+    assert ropt_config.optimizer.method == "dakota/conmin_mfd"
     assert ropt_config.gradient.number_of_perturbations == 20
     assert ropt_config.realizations.names == tuple(range(15))
 
@@ -171,7 +171,6 @@ def test_everest2ropt_backend_options():
 
     config.optimization.options = ["test = 1"]
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
-    assert ropt_config.optimizer.backend == "dakota"
     assert ropt_config.optimizer.options == ["test = 1"]
 
     config.optimization.backend = "scipy"
@@ -181,7 +180,6 @@ def test_everest2ropt_backend_options():
 
     config.optimization.options = None
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
-    assert ropt_config.optimizer.backend == "scipy"
     assert ropt_config.optimizer.options["test"] == 1
 
 
@@ -194,11 +192,11 @@ def test_everest2ropt_samplers():
 
     assert len(ropt_config.samplers) == 5
     assert ropt_config.gradient.samplers.tolist() == [0, 0, 1, 2, 3, 4]
-    assert ropt_config.samplers[0].method == "norm"
-    assert ropt_config.samplers[1].method == "norm"
-    assert ropt_config.samplers[2].method == "uniform"
-    assert ropt_config.samplers[3].method == "norm"
-    assert ropt_config.samplers[4].method == "uniform"
+    assert ropt_config.samplers[0].method == "scipy/norm"
+    assert ropt_config.samplers[1].method == "scipy/norm"
+    assert ropt_config.samplers[2].method == "scipy/uniform"
+    assert ropt_config.samplers[3].method == "scipy/norm"
+    assert ropt_config.samplers[4].method == "scipy/uniform"
     for idx in range(5):
         if idx == 1:
             assert ropt_config.samplers[idx].shared
@@ -272,4 +270,4 @@ def test_everest2ropt_no_algorithm_name():
 
     config.optimization.algorithm = None
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
-    assert ropt_config.optimizer.algorithm is None
+    assert ropt_config.optimizer.method == "dakota/default"

@@ -24,7 +24,7 @@ from seba_sqlite import SqliteStorage
 import everest
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.ropt_plugins import EverestPlanStepBackend
+from everest.optimizer.ropt_plugins import EverestPlanStepPlugin
 from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator import Simulator
@@ -404,9 +404,9 @@ class _EverestWorkflow(object):
         simulator = Simulator(self.config, callback=self._simulation_callback)
 
         plugin_manager = get_ropt_plugin_manager()
-        plugin_manager.add_backends(
+        plugin_manager.add_plugins(
             "optimization_step",
-            {EverestPlanStepBackend.BACKEND_NAME: EverestPlanStepBackend(self.config)},
+            {"everest": EverestPlanStepPlugin(self.config)},
         )
         optimizer = EnsembleOptimizer(
             evaluator=simulator, plugin_manager=plugin_manager
@@ -565,8 +565,6 @@ class _EverestWorkflow(object):
         for step in plan:
             if "ensemble_evaluation" in step:
                 have_ensemble_evaluation = True
-            if EverestPlanStepBackend.supported(step):
-                step["backend"] = EverestPlanStepBackend.BACKEND_NAME
         return plan, have_ensemble_evaluation
 
     def _init_evaluation_reporter(self, optimizer, ropt_output_folder):

@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from ropt.exceptions import ConfigError as ROptConfigError
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from everest.optimizer.utils import get_ropt_plugin_manager
 
@@ -36,36 +35,12 @@ This dict of values is passed unchanged to the selected method in the backend.
 """,
     )
 
-    @field_validator("backend")
-    @classmethod
-    def validate_backend(cls, backend):  # type: ignore # pylint: disable=E0213
-        backend = backend if backend is not None else "SciPy"
-        try:
-            get_ropt_plugin_manager().get_backend("sampler", backend)
-        except ROptConfigError as exc:
-            raise ValueError(
-                f"Backend {backend} not found in any of the available backends"
-            ) from exc
-
-        return backend
-
     @model_validator(mode="after")
-    def validate_method(self):  # pylint: disable=E0213
-        if self.method is not None:
-            backend_name = self.backend
-            if backend_name is None:
-                backend_name = "SciPy"
-            try:
-                backend = get_ropt_plugin_manager().get_backend("sampler", backend_name)
-            except ROptConfigError:
-                return self
-            methods = getattr(backend, "SUPPORTED_METHODS", None)
-            if methods is not None and self.method.lower() not in methods:
-                raise ValueError(
-                    f"Method {self.method} not found in backend {backend_name}. "
-                    f"Available methods for backend {backend_name}: "
-                    f"[ {', '.join(methods)} ]"
-                )
+    def validate_backend_and_method(self):  # pylint: disable=E0213
+        method = "default" if self.method is None else self.method
+        backend = "scipy" if self.backend is None else self.backend
+        if not get_ropt_plugin_manager().is_supported("sampler", f"{backend}/{method}"):
+            raise ValueError(f"Sampler '{backend}/{method}' not found")
         return self
 
     model_config = ConfigDict(
