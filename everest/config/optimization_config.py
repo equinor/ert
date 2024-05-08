@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-from ropt.exceptions import ConfigError as ROptConfigError
+from pydantic import BaseModel, Field, model_validator
 
 from everest.config.cvar_config import CVaRConfig
 from everest.config.restart_config import RestartConfig
@@ -10,7 +9,7 @@ from everest.optimizer.utils import get_ropt_plugin_manager
 
 class OptimizationConfig(BaseModel, extra="forbid"):  # type: ignore
     algorithm: Optional[str] = Field(
-        default="optpp_q_newton",
+        default="default",
         description="""Algorithm used by Everest.  Defaults to
 optpp_q_newton, a quasi-Newton algorithm in Dakota's OPT PP library.
 """,
@@ -200,33 +199,12 @@ multiple times.
 """,
     )
 
-    @field_validator("backend")
-    @classmethod
-    def validate_available_backend(cls, backend):  # pylint: disable=E0213
-        try:
-            get_ropt_plugin_manager().get_backend("optimizer", backend)
-        except ROptConfigError as exc:
-            raise ValueError(
-                f"Backend {backend} not found in available optimizers"
-            ) from exc
-
-        return backend
-
     @model_validator(mode="after")
-    def validate_available_algorithm(self):  # pylint: disable=E0213
-        try:
-            backend = get_ropt_plugin_manager().get_backend("optimizer", self.backend)
-        except ROptConfigError:
-            return self
-        algorithms = getattr(backend, "SUPPORTED_ALGORITHMS", None)
-        if (
-            self.algorithm is not None
-            and algorithms is not None
-            and self.algorithm.lower() not in algorithms
+    def validate_backend_and_algorithm(self):  # pylint: disable=E0213
+        method = "default" if self.algorithm is None else self.algorithm
+        backend = "dakota" if self.backend is None else self.backend
+        if not get_ropt_plugin_manager().is_supported(
+            "optimizer", f"{backend}/{method}"
         ):
-            raise ValueError(
-                f"Algorithm '{self.algorithm}' not found for optimizer {self.backend}, "
-                f"available algorithms: {algorithms}"
-            )
-
+            raise ValueError(f"Optimizer algorithm '{backend}/{method}' not found")
         return self

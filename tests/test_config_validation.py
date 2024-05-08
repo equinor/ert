@@ -31,19 +31,11 @@ def all_errors(error: ValidationError, match: str):
     return instances
 
 
-def test_that_sampler_config_with_missing_backend():
-    with pytest.raises(ValueError) as e:
-        SamplerConfig(backend="scipssy", method="hey")
-
-    assert has_error(e.value, match="Backend scipssy not found(.*)")
-    assert not has_error(e.value, match="Method (.*) not found")
-
-
 def test_that_sampler_config_with_wrong_method():
     with pytest.raises(ValueError) as e:
         SamplerConfig(backend="scipy", method="hey")
 
-    assert has_error(e.value, match="Method (.*) not found")
+    assert has_error(e.value, match="Sampler (.*) not found")
 
 
 def test_that_duplicate_well_names_raise_error():
@@ -446,22 +438,11 @@ def test_that_model_realizations_weights_must_correspond_to_realizations():
     )
 
 
-def test_that_missing_optimization_backend_errors():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"optimization": {"backend": "dakotta"}})
-
-    assert has_error(e.value, match="Backend dakotta not found")
-
-    EverestConfig.with_defaults(
-        **{"optimization": {"backend": "scipy", "algorithm": "newton-CG"}}
-    )
-
-
 def test_that_missing_optimization_algorithm_errors():
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(**{"optimization": {"algorithm": "ddlygldt"}})
 
-    assert has_error(e.value, match="Algorithm 'ddlygldt' not found for optimizer")
+    assert has_error(e.value, match="Optimizer algorithm 'dakota/ddlygldt' not found")
 
 
 @pytest.mark.parametrize(

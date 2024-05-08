@@ -43,7 +43,7 @@ def test_all_repo_configs():
     if os.environ.get("NO_PROJECT_RES", False):
         config_files = [f for f in config_files if "examples/egg" not in f]
     try:
-        get_ropt_plugin_manager().get_backend("optimizer", "scipy")
+        get_ropt_plugin_manager().get_plugin("optimizer", "scipy/default")
     except ROptConfigError:
         config_files = [f for f in config_files if "scipy" not in f]
 

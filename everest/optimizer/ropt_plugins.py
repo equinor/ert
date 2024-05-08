@@ -1,18 +1,21 @@
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, Optional
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.job_queue import WorkflowRunner
 from ert.storage import open_storage
 from pydantic import BaseModel, ConfigDict
-from ropt.config.plan import EvaluatorStepConfig, StepConfig
+from ropt.config.plan import EvaluatorStepConfig
 from ropt.exceptions import ConfigError
 from ropt.optimization import BasicStep, Plan, PlanContext
-from ropt.plugins.optimization_steps import get_default_steps
 from ropt.plugins.optimization_steps.evaluator import DefaultEvaluatorStep
+from ropt.plugins.optimization_steps.protocol import (
+    OptimizationStepsPluginProtocol,
+    OptimizationStepsProtocol,
+)
 from ropt.results import FunctionResults, convert_to_maximize
 
 from everest.config import EverestConfig
@@ -141,56 +144,43 @@ class EnsembleEvaluationStep(DefaultEvaluatorStep):
                 json.dump(evaluation_results, fp)
 
 
-# Backend class add new steps to be used in an optimization plan. They should be
-# a callable object that operates as a factory function for creating steps. It
-# is added as a plugin to ropt, see suite.py for usage
-class EverestPlanStepBackend:
-    BACKEND_NAME = "everest"
-    SUPPORTED_STEPS = {"workflow_job", "ensemble_evaluation"}
-
-    def __init__(self, ever_config: EverestConfig):
-        # This should not happen in deployed code:
-        shadowed = get_default_steps().intersection(self.SUPPORTED_STEPS)
-        if shadowed:
-            msg = f"Everest plugins are shadowing ropt plugins: {shadowed}"
-            raise ConfigError(msg)
+class EverestPlanSteps(OptimizationStepsProtocol):
+    def __init__(
+        self, context: PlanContext, plan: Plan, ever_config: EverestConfig
+    ) -> None:
         self._ever_config = ever_config
+        self._context = context
+        self._plan = plan
 
-    def __call__(
-        self, config: StepConfig, context: PlanContext, plan: Plan
-    ) -> EnsembleEvaluationStep:
-        # The StepConfig object is supposed to have one extra field that
-        # designates the type of the step:
-        assert config.model_extra is not None
-        step_type = self._get_step_type(config.model_extra)
+    def get_step(self, config: Dict[str, Any]) -> Any:
+        # There should be a single entry that denotes the step type:
+        keys = iter(config.keys())
+        step_type = next(keys, None)
+        if step_type is None:
+            raise ConfigError("Not an optimization step")
+        if next(keys, None) is not None:
+            msg = f"Step type is ambiguous: {keys}"
+            raise ConfigError(msg)
 
         # Handle the different types supported by this backend:
         if step_type == "workflow_job":
-            return WorkflowJob(
-                config.model_extra["workflow_job"], plan, self._ever_config
-            )
+            return WorkflowJob(config["workflow_job"], self._plan, self._ever_config)
 
         if step_type == "ensemble_evaluation":
             return EnsembleEvaluationStep(
-                config.model_extra["ensemble_evaluation"], context, plan
+                config["ensemble_evaluation"], self._context, self._plan
             )
 
         msg = f"Step type not supported: {step_type}"
         raise ConfigError(msg)
 
-    @classmethod
-    def supported(cls, config: Dict[str, Any]):
-        backend = config.pop("backend", None)
-        if backend is None or backend == cls.BACKEND_NAME:
-            return cls._get_step_type(config) is not None
-        return False
 
-    @classmethod
-    def _get_step_type(cls, mapping: Mapping[str, Any]) -> Optional[str]:
-        keys = mapping.keys()
-        if not keys:
-            raise ConfigError("Not an optimization step")
-        if len(keys) > 1:
-            msg = f"Step type is ambiguous: {keys}"
-            raise ConfigError(msg)
-        return next(iter(keys)) if cls.SUPPORTED_STEPS.intersection(keys) else None
+class EverestPlanStepPlugin(OptimizationStepsPluginProtocol):
+    def __init__(self, ever_config: EverestConfig):
+        self._ever_config = ever_config
+
+    def create(self, context: PlanContext, plan: Plan) -> EverestPlanSteps:
+        return EverestPlanSteps(context, plan, self._ever_config)
+
+    def is_supported(self, method: str) -> bool:
+        return method.lower() in {"workflow_job", "ensemble_evaluation"}

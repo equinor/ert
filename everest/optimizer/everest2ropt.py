@@ -8,17 +8,14 @@ from everest.config.sampler_config import SamplerConfig
 
 
 def _parse_sampler(ever_sampler: SamplerConfig):
-    sampler_keys = {
-        "backend": "backend",
-        "backend_options": "options",
-        "method": "method",
-        "shared": "shared",
-    }
-    return {
-        sampler_keys[key]: value
-        for key, value in ever_sampler.model_dump(exclude_none=True).items()
-        if key in sampler_keys and value is not None
-    }
+    method = "default" if ever_sampler.method is None else ever_sampler.method
+    backend = "scipy" if ever_sampler.backend is None else ever_sampler.backend
+    sampler_config: Dict[str, Any] = {"method": f"{backend}/{method}"}
+    if ever_sampler.backend_options is not None:
+        sampler_config["options"] = ever_sampler.backend_options
+    if ever_sampler.shared is not None:
+        sampler_config["shared"] = ever_sampler.shared
+    return sampler_config
 
 
 def _parse_controls(ever_config: EverestConfig, ropt_config):
@@ -302,10 +299,9 @@ def _parse_optimization(ever_config: EverestConfig, ropt_config):
     ropt_optimizer = ropt_config["optimizer"]
     ropt_gradient = ropt_config["gradient"]
 
-    ropt_optimizer["backend"] = ever_opt.backend or "dakota"
-    algorithm = ever_opt.algorithm or None
-    if algorithm:
-        ropt_optimizer["algorithm"] = algorithm
+    backend = ever_opt.backend or "dakota"
+    algorithm = ever_opt.algorithm or "default"
+    ropt_optimizer["method"] = f"{backend}/{algorithm}"
 
     alg_max_iter = ever_opt.max_iterations
     if alg_max_iter:
@@ -331,7 +327,7 @@ def _parse_optimization(ever_config: EverestConfig, ropt_config):
     if options and backend_options:
         raise RuntimeError("Only one of 'options' and 'backend_options' allowed.")
     # The constraint_tolerance option is only used by Dakota:
-    if ropt_optimizer["backend"] == "dakota":
+    if backend == "dakota":
         output_constraints = ever_config.output_constraints or None
         alg_const_tol = ever_opt.constraint_tolerance or None
         if output_constraints is not None and alg_const_tol is not None:
