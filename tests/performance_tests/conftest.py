@@ -7,8 +7,8 @@ from py import path
 from pytest import fixture
 
 from ert.__main__ import ert_parser
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import run_cli
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 
 from .performance_utils import make_poly_template
 

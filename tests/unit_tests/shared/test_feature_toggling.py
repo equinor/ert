@@ -5,7 +5,7 @@ import pytest
 
 import ert.__main__
 from ert.__main__ import ert_parser
-from ert.cli import TEST_RUN_MODE
+from ert.mode_definitions import TEST_RUN_MODE
 from ert.shared.feature_toggling import FeatureScheduler
 
 

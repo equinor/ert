@@ -5,6 +5,7 @@ from qtpy.QtWidgets import QFormLayout
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
+from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
 from .simulation_config_panel import SimulationConfigPanel
@@ -32,4 +33,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         ensemble_name = f"{datetime.now().strftime('%Y-%m-%dT%H%M')}"
-        return Arguments("test_run", ensemble_name, "single_test_run")
+        return Arguments(TEST_RUN_MODE, ensemble_name, "single_test_run")

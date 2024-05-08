@@ -9,10 +9,10 @@ from py import path
 from starlette.testclient import TestClient
 
 from ert.__main__ import ert_parser
-from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.cli.main import run_cli
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 
 
 @pytest.fixture(scope="session")

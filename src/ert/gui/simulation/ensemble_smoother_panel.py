@@ -11,6 +11,7 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.stringbox import StringBox
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
@@ -44,7 +45,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self.setObjectName("ensemble_smoother_panel")
 
         self._name_field = QLineEdit()
-        self._name_field.setPlaceholderText("ensemble_smoother")
+        self._name_field.setPlaceholderText(ENSEMBLE_SMOOTHER_MODE)
         self._name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._name_field)
 
@@ -92,7 +93,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self) -> Arguments:
         arguments = Arguments(
-            mode="ensemble_smoother",
+            mode=ENSEMBLE_SMOOTHER_MODE,
             current_ensemble=self._ensemble_format_model.getValue() % 0,
             target_ensemble=self._ensemble_format_model.getValue() % 1,
             realizations=self._active_realizations_field.text(),

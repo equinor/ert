@@ -9,7 +9,13 @@ import sys
 from typing import Any, TextIO
 
 from _ert.threading import ErtThread
-from ert.cli import (
+from ert.cli.model_factory import create_model
+from ert.cli.monitor import Monitor
+from ert.cli.workflow import execute_workflow
+from ert.config import ErtConfig, QueueSystem
+from ert.enkf_main import EnKFMain
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -17,12 +23,6 @@ from ert.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert.cli.model_factory import create_model
-from ert.cli.monitor import Monitor
-from ert.cli.workflow import execute_workflow
-from ert.config import ErtConfig, QueueSystem
-from ert.enkf_main import EnKFMain
-from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.namespace import Namespace
 from ert.run_models.base_run_model import StatusEvents
 from ert.storage import open_storage

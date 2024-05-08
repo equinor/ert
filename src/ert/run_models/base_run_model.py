@@ -26,7 +26,6 @@ from cloudevents.http import CloudEvent
 from _ert.async_utils import get_running_loop
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import AnalysisErrorEvent
-from ert.cli import MODULE_MODE
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
@@ -57,6 +56,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.libres_facade import LibresFacade
+from ert.mode_definitions import MODULE_MODE
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Storage

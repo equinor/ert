@@ -15,16 +15,16 @@ import _ert.threading
 import ert.shared
 from _ert.threading import ErtThreadError
 from ert import LibresFacade, ensemble_evaluator
-from ert.cli import (
+from ert.cli.main import ErtCliError
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.enkf_main import sample_prior
+from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.cli.main import ErtCliError
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -77,7 +77,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
         ),
     ):
         run_cli(
-            "es_mda",
+            ES_MDA_MODE,
             "--disable-monitor",
             "poly.ert",
             "--target-case",

@@ -17,7 +17,10 @@ import yaml
 
 import ert.shared
 from _ert.threading import set_signal_handler
-from ert.cli import (
+from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
+from ert.config import ConfigValidationError, ErtConfig, lint_file
+from ert.logging import LOGGING_CONFIG
+from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -25,9 +28,6 @@ from ert.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
-from ert.config import ConfigValidationError, ErtConfig, lint_file
-from ert.logging import LOGGING_CONFIG
 from ert.namespace import Namespace
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt

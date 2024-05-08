@@ -11,6 +11,7 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.stringbox import StringBox
+from ert.mode_definitions import ITERATIVE_ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import IteratedEnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
@@ -119,7 +120,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         return Arguments(
-            mode="iterative_ensemble_smoother",
+            mode=ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
             current_ensemble=self.notifier.current_ensemble_name,
             target_ensemble=self._iterated_target_ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
