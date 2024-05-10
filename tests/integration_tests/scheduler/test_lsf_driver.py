@@ -52,6 +52,22 @@ async def test_lsf_stdout_file(tmp_path, job_name):
     assert "yay" in lsf_stdout
 
 
+async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    failure_message = "failURE"
+    await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
+    await poll(driver, {0})
+    assert Path(
+        f"{job_name}.LSF-stderr"
+    ).exists(), "LSF system did not write stderr file"
+
+    assert (
+        Path(f"{job_name}.LSF-stderr").read_text(encoding="utf-8").strip()
+        == failure_message
+    )
+
+
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
 async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     os.chdir(tmp_path)
