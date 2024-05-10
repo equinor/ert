@@ -23,3 +23,5 @@ echo "Subject: Job $job:"
 echo "[..skipped in mock..]"
 echo "The output (if any) follows:"
 cat ${job}.stdout
+
+cat ${job}.stderr >&2

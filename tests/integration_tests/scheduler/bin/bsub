@@ -3,11 +3,14 @@ set -e
 
 name="STDIN"
 
-while getopts "o:J:q:R:" opt
+while getopts "o:e:J:q:R:" opt
 do
     case "$opt" in
         o)
             stdout=$OPTARG
+            ;;
+        e)
+            stderr=$OPTARG
             ;;
         J)
             name=$OPTARG
@@ -34,8 +37,9 @@ echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
 echo "$resource_requirement" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.resource_requirement"
 
 [ -z $stdout] && stdout="/dev/null"
+[ -z $stderr] && stderr="/dev/null"
 
-bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >$stdout 2>/dev/null &
+bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >$stdout 2>$stderr &
 disown
 
 echo "Job <$jobid> is submitted to default queue <normal>."
