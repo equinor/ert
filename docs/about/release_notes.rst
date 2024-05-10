@@ -33,9 +33,9 @@ Version 9.0
 New workflow: Evaluate ensemble
 ###############################
 
-n this version of ERT, we've introduces a new simulation mode, Evaluate ensemble, to address the
+In this version of ERT, we've introduced a new simulation mode, Evaluate ensemble, to address the
 previously confusing dual functionality of the Ensemble experiment simulation mode, which was
-used both for conducting sensitivity analyses and performing manual updates. Previously, ERT
+used both for conducting sensitivity analysis and performing manual updates. Previously, ERT
 attempted to automatically discern the user's intention, leading to unpredictable behavior.
 To solve this, the Evaluate ensemble mode never overwrites parameters and runs only on ensembles
 that have parameters but lack responses. Conversely, Ensemble experiment will now always generate
@@ -53,7 +53,7 @@ Changes to Ensemble experiment
 ##############################
 
 There has previously been some problems where parameters would not be updated if the configuration
-file was out of sync with what ERT had stored internally. To avoid that Ensemble experiment will now
+file was out of sync with what ERT had stored internally. To avoid that, Ensemble experiment will now
 always create a new experiment, and a new ensemble. This means that the parameters and the responses
 from the configuration will always be used, and it will not be possible to overwrite existing experiments
 and ensembles. When starting a new experiment, it is a requirement that all ensembles and experiments
@@ -103,7 +103,7 @@ with:
 
     GEN_KW PRED <parameters_file> UPDATE:FALSE
 
-replace **PRED** with the name of name of the parameter group you do not wish to update.
+replace **PRED** with the name of the parameter group you do not wish to update.
 
 .. note::
     As a side effect of this, if you have a parameter called **PRED** and set **UPDATE:FALSE**
