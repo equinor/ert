@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
@@ -71,6 +72,9 @@ def _write_responses_to_storage(
 
 def forward_model_ok(
     run_arg: RunArg,
+    *,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -98,6 +102,8 @@ def forward_model_ok(
         )
 
     final_result = parameters_result
+    if start_time and end_time:
+        run_arg.ensemble_storage.set_finished(int(run_arg.iens), start_time, end_time)
     if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
         final_result = response_result
         run_arg.ensemble_storage.set_failure(

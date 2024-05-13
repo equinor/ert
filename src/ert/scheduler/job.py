@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 import uuid
 from contextlib import suppress
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
@@ -69,8 +69,8 @@ class Job:
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
         self._requested_max_submit: Optional[int] = None
-        self._start_time: Optional[float] = None
-        self._end_time: Optional[float] = None
+        self._start_time: Optional[datetime] = None
+        self._end_time: Optional[datetime] = None
 
     @property
     def iens(self) -> int:
@@ -82,11 +82,9 @@ class Job:
 
     @property
     def running_duration(self) -> float:
-        if self._start_time:
-            if self._end_time:
-                return self._end_time - self._start_time
-            return time.time() - self._start_time
-        return 0
+        if self._start_time is None:
+            return 0.0
+        return ((self._end_time or datetime.now()) - self._start_time).total_seconds()
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await sem.acquire()
@@ -106,7 +104,7 @@ class Job:
 
             await self._send(State.PENDING)
             await self.started.wait()
-            self._start_time = time.time()
+            self._start_time = datetime.now()
 
             await self._send(State.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
@@ -166,7 +164,9 @@ class Job:
         self.returncode.cancel()
 
     async def _handle_finished_forward_model(self) -> None:
-        callback_status, status_msg = forward_model_ok(self.real.run_arg)
+        callback_status, status_msg = forward_model_ok(
+            self.real.run_arg, start_time=self._start_time, end_time=datetime.now()
+        )
         if self._callback_status_msg:
             self._callback_status_msg = status_msg
         else:
@@ -210,7 +210,7 @@ class Job:
             await self._handle_aborted()
 
         elif state == State.COMPLETED:
-            self._end_time = time.time()
+            self._end_time = datetime.now()
             await self._scheduler.completed_jobs.put(self.iens)
 
         status = STATE_TO_LEGACY[state]

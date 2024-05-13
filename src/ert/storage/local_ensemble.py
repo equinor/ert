@@ -6,14 +6,14 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from pydantic import BaseModel
-from typing_extensions import deprecated
+from pydantic import BaseModel, Field
+from typing_extensions import Annotated, deprecated
 
 from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class _Realization(BaseModel):
+    start_time: datetime
+    end_time: Optional[datetime] = None
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -38,6 +43,7 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: Optional[UUID]
     started_at: datetime
+    realizations: Annotated[Dict[int, _Realization], Field(default_factory=dict)]
 
 
 class _Failure(BaseModel):
@@ -144,6 +150,10 @@ class LocalEnsemble(BaseMode):
             print(index.model_dump_json(), file=f)
 
         return cls(storage, path, Mode.WRITE)
+
+    def _save_index(self) -> None:
+        with open(self.mount_point / "index.json", mode="w", encoding="utf-8") as f:
+            print(self._index.model_dump_json(), file=f)
 
     @property
     def mount_point(self) -> Path:
@@ -396,6 +406,20 @@ class LocalEnsemble(BaseMode):
 
         mask = self.get_realization_mask_with_responses(key)
         return np.where(mask)[0].tolist()
+
+    def set_finished(
+        self, realization: int, start_time: datetime, end_time: datetime
+    ) -> None:
+        if realization in self._index.realizations:
+            return
+
+        self._index.realizations[realization] = _Realization(
+            start_time=start_time, end_time=end_time
+        )
+        self._save_index()
+
+    def get_realization(self, realization: int) -> _Realization:
+        return self._index.realizations[realization]
 
     def set_failure(
         self,
