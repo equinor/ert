@@ -29,7 +29,7 @@ from ert.substitution_list import SubstitutionList
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
-from .forward_model_step import ForwardModelStep
+from .forward_model import ForwardModel
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -85,10 +85,8 @@ class ErtConfig:
     hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[Tuple[str, str]] = field(default_factory=list)
-    installed_forward_model_steps: Dict[str, ForwardModelStep] = field(
-        default_factory=dict
-    )
-    forward_model_steps: List[ForwardModelStep] = field(default_factory=list)
+    installed_jobs: Dict[str, ForwardModel] = field(default_factory=dict)
+    forward_model_list: List[ForwardModel] = field(default_factory=list)
     summary_keys: List[str] = field(default_factory=list)
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
@@ -158,7 +156,7 @@ class ErtConfig:
         workflow_jobs = {}
         workflows = {}
         hooked_workflows = {}
-        installed_forward_model_steps = {}
+        installed_jobs = {}
         model_config = None
 
         try:
@@ -179,9 +177,7 @@ class ErtConfig:
             errors.append(e)
 
         try:
-            installed_forward_model_steps = (
-                cls._installed_forward_model_steps_from_dict(config_dict)
-            )
+            installed_jobs = cls._installed_jobs_from_dict(config_dict)
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -216,9 +212,9 @@ class ErtConfig:
             runpath_file=Path(runpath_file),
             ert_templates=cls._read_templates(config_dict),
             summary_keys=cls._read_summary_keys(config_dict, ensemble_config),
-            installed_forward_model_steps=installed_forward_model_steps,
-            forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
-                installed_forward_model_steps, substitution_list, config_dict
+            installed_jobs=installed_jobs,
+            forward_model_list=cls.read_forward_model(
+                installed_jobs, substitution_list, config_dict
             ),
             model_config=model_config,
             user_config_file=config_file_path,
@@ -380,74 +376,74 @@ class ErtConfig:
         return errors
 
     @classmethod
-    def _create_list_of_forward_model_steps_to_run(
+    def read_forward_model(
         cls,
-        installed_steps: Dict[str, ForwardModelStep],
+        installed_jobs: Dict[str, ForwardModel],
         substitution_list: SubstitutionList,
         config_dict,
-    ) -> List[ForwardModelStep]:
+    ) -> List[ForwardModel]:
         errors = []
-        fm_steps = []
-        for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(fm_step_description) > 1:
-                unsubstituted_step_name, args = fm_step_description
+        jobs = []
+        for job_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+            if len(job_description) > 1:
+                unsubstituted_job_name, args = job_description
             else:
-                unsubstituted_step_name = fm_step_description[0]
+                unsubstituted_job_name = job_description[0]
                 args = []
-            fm_step_name = substitution_list.substitute(unsubstituted_step_name)
+            job_name = substitution_list.substitute(unsubstituted_job_name)
             try:
-                fm_step = copy.deepcopy(installed_steps[fm_step_name])
+                job = copy.deepcopy(installed_jobs[job_name])
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find forward model step {fm_step_name!r} in list"
-                        f" of installed forward model steps: {list(installed_steps.keys())!r}",
-                        fm_step_name,
+                        f"Could not find job {job_name!r} in list"
+                        f" of installed jobs: {list(installed_jobs.keys())!r}",
+                        job_name,
                     )
                 )
                 continue
-            fm_step.private_args = SubstitutionList()
+            job.private_args = SubstitutionList()
             for key, val in args:
-                fm_step.private_args[key] = val
+                job.private_args[key] = val
 
-            should_add_step = True
+            should_add_job = True
 
-            if fm_step.required_keywords:
-                for req in fm_step.required_keywords:
-                    if req not in fm_step.private_args:
+            if job.required_keywords:
+                for req in job.required_keywords:
+                    if req not in job.private_args:
                         errors.append(
                             ConfigValidationError.with_context(
-                                f"Required keyword {req} not found for forward model step {fm_step_name}",
-                                fm_step_name,
+                                f"Required keyword {req} not found for forward model {job_name}",
+                                job_name,
                             )
                         )
-                        should_add_step = False
+                        should_add_job = False
 
-            if should_add_step:
-                fm_steps.append(fm_step)
+            if should_add_job:
+                jobs.append(job)
 
-        for fm_step_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
+        for job_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
             try:
-                fm_step = copy.deepcopy(installed_steps[fm_step_description[0]])
+                job = copy.deepcopy(installed_jobs[job_description[0]])
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
-                        f"Could not find forward model step {fm_step_description[0]!r} "
-                        f"in list of installed forward model steps: {installed_steps}",
-                        fm_step_description[0],
+                        f"Could not find job {job_description[0]!r} "
+                        "in list of installed jobs.",
+                        job_description[0],
                     )
                 )
                 continue
-            fm_step.arglist = fm_step_description[1:]
-            fm_steps.append(fm_step)
+            job.arglist = job_description[1:]
+            jobs.append(job)
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        return fm_steps
+        return jobs
 
-    def forward_model_step_name_list(self) -> List[str]:
-        return [j.name for j in self.forward_model_steps]
+    def forward_model_job_name_list(self) -> List[str]:
+        return [j.name for j in self.forward_model_list]
 
     def forward_model_data_to_json(
         self,
@@ -458,17 +454,17 @@ class ErtConfig:
         context = self.substitution_list
 
         class Substituter:
-            def __init__(self, fm_step):
-                fm_step_args = ",".join(
-                    [f"{key}={value}" for key, value in fm_step.private_args.items()]
+            def __init__(self, job):
+                job_args = ",".join(
+                    [f"{key}={value}" for key, value in job.private_args.items()]
                 )
-                fm_step_description = f"{fm_step.name}({fm_step_args})"
+                job_description = f"{job.name}({job_args})"
                 self.substitution_context_hint = (
-                    f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
+                    f"parsing forward model job `FORWARD_MODEL {job_description}` - "
                     "reconstructed, with defines applied during parsing"
                 )
                 self.copy_private_args = SubstitutionList()
-                for key, val in fm_step.private_args.items():
+                for key, val in job.private_args.items():
                     self.copy_private_args[key] = context.substitute_real_iter(
                         val, iens, itr
                     )
@@ -511,15 +507,15 @@ class ErtConfig:
                     return None
                 return result
 
-        def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
-            return fm_step.default_mapping.get(arg, arg)
+        def handle_default(job: ForwardModel, arg: str) -> str:
+            return job.default_mapping.get(arg, arg)
 
-        for fm_step in self.forward_model_steps:
-            for key, val in fm_step.private_args.items():
+        for job in self.forward_model_list:
+            for key, val in job.private_args.items():
                 if key in context and key != val and context[key] != val:
                     logger.info(
                         f"Private arg '{key}':'{val}' chosen over"
-                        f" global '{context[key]}' in forward model step {fm_step.name}"
+                        f" global '{context[key]}' in forward model {job.name}"
                     )
         config_file_path = (
             Path(self.user_config_file) if self.user_config_file is not None else None
@@ -532,40 +528,40 @@ class ErtConfig:
             "config_file": config_file,
             "jobList": [
                 {
-                    "name": substituter.substitute(fm_step.name),
-                    "executable": substituter.substitute(fm_step.executable),
-                    "target_file": substituter.substitute(fm_step.target_file),
-                    "error_file": substituter.substitute(fm_step.error_file),
-                    "start_file": substituter.substitute(fm_step.start_file),
+                    "name": substituter.substitute(job.name),
+                    "executable": substituter.substitute(job.executable),
+                    "target_file": substituter.substitute(job.target_file),
+                    "error_file": substituter.substitute(job.error_file),
+                    "start_file": substituter.substitute(job.start_file),
                     "stdout": (
-                        substituter.substitute(fm_step.stdout_file) + f".{idx}"
-                        if fm_step.stdout_file
+                        substituter.substitute(job.stdout_file) + f".{idx}"
+                        if job.stdout_file
                         else None
                     ),
                     "stderr": (
-                        substituter.substitute(fm_step.stderr_file) + f".{idx}"
-                        if fm_step.stderr_file
+                        substituter.substitute(job.stderr_file) + f".{idx}"
+                        if job.stderr_file
                         else None
                     ),
-                    "stdin": substituter.substitute(fm_step.stdin_file),
+                    "stdin": substituter.substitute(job.stdin_file),
                     "argList": [
-                        handle_default(fm_step, substituter.substitute(arg))
-                        for arg in fm_step.arglist
+                        handle_default(job, substituter.substitute(arg))
+                        for arg in job.arglist
                     ],
-                    "environment": substituter.filter_env_dict(fm_step.environment),
+                    "environment": substituter.filter_env_dict(job.environment),
                     "required_keywords": [
-                        handle_default(fm_step, substituter.substitute(rk))
-                        for rk in fm_step.required_keywords
+                        handle_default(job, substituter.substitute(rk))
+                        for rk in job.required_keywords
                     ],
-                    "exec_env": substituter.filter_env_dict(fm_step.exec_env),
-                    "max_running_minutes": fm_step.max_running_minutes,
-                    "min_arg": fm_step.min_arg,
-                    "arg_types": fm_step.arg_types,
-                    "max_arg": fm_step.max_arg,
+                    "exec_env": substituter.filter_env_dict(job.exec_env),
+                    "max_running_minutes": job.max_running_minutes,
+                    "min_arg": job.min_arg,
+                    "arg_types": job.arg_types,
+                    "max_arg": job.max_arg,
                 }
-                for idx, fm_step, substituter in [
-                    (idx, fm_step, Substituter(fm_step))
-                    for idx, fm_step in enumerate(self.forward_model_steps)
+                for idx, job, substituter in [
+                    (idx, job, Substituter(job))
+                    for idx, job in enumerate(self.forward_model_list)
                 ]
             ],
             "run_id": run_id,
@@ -672,51 +668,49 @@ class ErtConfig:
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
-    def _installed_forward_model_steps_from_dict(cls, config_dict):
+    def _installed_jobs_from_dict(cls, config_dict):
         errors = []
-        fm_steps = {}
-        for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-            name = fm_step[0]
-            fm_step_config_file = path.abspath(fm_step[1])
+        jobs = {}
+        for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+            name = job[0]
+            job_config_file = path.abspath(job[1])
             try:
-                new_fm_step = ForwardModelStep.from_config_file(
+                new_job = ForwardModel.from_config_file(
                     name=name,
-                    config_file=fm_step_config_file,
+                    config_file=job_config_file,
                 )
             except ConfigValidationError as e:
                 errors.append(e)
                 continue
-            if name in fm_steps:
+            if name in jobs:
                 ConfigWarning.ert_context_warn(
-                    f"Duplicate forward model step with name {name!r}, choosing "
-                    f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
+                    f"Duplicate forward model job with name {name!r}, choosing "
+                    f"{job_config_file!r} over {jobs[name].executable!r}",
                     name,
                 )
-            fm_steps[name] = new_fm_step
+            jobs[name] = new_job
 
-        for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-            for file_name in _get_files_in_directory(fm_step_path, errors):
+        for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+            for file_name in _get_files_in_directory(job_path, errors):
                 if not path.isfile(file_name):
                     continue
                 try:
-                    new_fm_step = ForwardModelStep.from_config_file(
-                        config_file=file_name
-                    )
+                    new_job = ForwardModel.from_config_file(config_file=file_name)
                 except ConfigValidationError as e:
                     errors.append(e)
                     continue
-                name = new_fm_step.name
-                if name in fm_steps:
+                name = new_job.name
+                if name in jobs:
                     ConfigWarning.ert_context_warn(
-                        f"Duplicate forward model step with name {name!r}, "
-                        f"choosing {file_name!r} over {fm_steps[name].executable!r}",
+                        f"Duplicate forward model job with name {name!r}, "
+                        f"choosing {file_name!r} over {jobs[name].executable!r}",
                         name,
                     )
-                fm_steps[name] = new_fm_step
+                jobs[name] = new_job
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
-        return fm_steps
+        return jobs
 
     @property
     def preferred_num_cpu(self) -> int:

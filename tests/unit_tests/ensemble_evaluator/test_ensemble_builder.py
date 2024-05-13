@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import ForwardModelStep, QueueConfig, QueueSystem
+from ert.config import ForwardModel, QueueConfig, QueueSystem
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
     RealizationBuilder,
@@ -22,7 +22,7 @@ def test_build_ensemble(active_real):
             .set_num_cpu(1)
             .set_max_runtime(0)
             .set_job_script("job_script")
-            .set_forward_models([ForwardModelStep("echo_command", "")])
+            .set_forward_models([ForwardModel("echo_command", "")])
             .active(active_real)
         )
         .set_id("1")

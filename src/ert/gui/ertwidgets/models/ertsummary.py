@@ -8,7 +8,7 @@ class ErtSummary:
         self.ert_config = ert_config
 
     def getForwardModels(self) -> List[str]:
-        return self.ert_config.forward_model_step_name_list()
+        return self.ert_config.forward_model_job_name_list()
 
     def getParameters(self) -> Tuple[List[str], int]:
         parameters = []

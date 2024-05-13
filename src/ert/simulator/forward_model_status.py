@@ -22,7 +22,7 @@ def _deserialize_date(serial_dt: float) -> Optional[datetime.datetime]:
     return datetime.datetime(*time_struct[0:6])
 
 
-class ForwardModelStepStatus:
+class ForwardModelJobStatus:
     def __init__(
         self,
         name: str,
@@ -47,8 +47,8 @@ class ForwardModelStepStatus:
 
     @classmethod
     def load(
-        cls, fm_step: Dict[str, Any], data: Dict[str, Any], run_path: str
-    ) -> "ForwardModelStepStatus":
+        cls, job: Dict[str, Any], data: Dict[str, Any], run_path: str
+    ) -> "ForwardModelJobStatus":
         start_time = _deserialize_date(data["start_time"])
         end_time = _deserialize_date(data["end_time"])
         name = data["name"]
@@ -56,8 +56,8 @@ class ForwardModelStepStatus:
         error = data["error"]
         current_memory_usage = data["current_memory_usage"]
         max_memory_usage = data["max_memory_usage"]
-        std_err_file = fm_step["stderr"]
-        std_out_file = fm_step["stdout"]
+        std_err_file = job["stderr"]
+        std_out_file = job["stdout"]
         return cls(
             name,
             start_time=start_time,
@@ -101,25 +101,25 @@ class ForwardModelStatus:
         self.run_id = run_id
         self.start_time = start_time
         self.end_time = end_time
-        self._fm_steps: List[ForwardModelStepStatus] = []
+        self._jobs: List[ForwardModelJobStatus] = []
 
     @classmethod
     def try_load(cls, path: str) -> "ForwardModelStatus":
         status_file = os.path.join(path, STATUS_json)
-        fm_steps_file = os.path.join(path, JOBS_FILE)
+        jobs_file = os.path.join(path, JOBS_FILE)
 
         with open(status_file) as status_fp:
             status_data = json.load(status_fp)
 
-        with open(fm_steps_file) as fm_steps_fp:
-            fm_steps_data = json.load(fm_steps_fp)
+        with open(jobs_file) as jobs_fp:
+            job_data = json.load(jobs_fp)
 
         start_time = _deserialize_date(status_data["start_time"])
         end_time = _deserialize_date(status_data["end_time"])
         status = cls(status_data["run_id"], start_time, end_time=end_time)
 
-        for fm_step, state in zip(fm_steps_data["jobList"], status_data["jobs"]):
-            status.add_step(ForwardModelStepStatus.load(fm_step, state, path))
+        for job, state in zip(job_data["jobList"], status_data["jobs"]):
+            status.add_job(ForwardModelJobStatus.load(job, state, path))
 
         return status
 
@@ -140,14 +140,14 @@ class ForwardModelStatus:
         return None
 
     @property
-    def steps(self) -> List[ForwardModelStepStatus]:
-        return self._fm_steps
+    def jobs(self) -> List[ForwardModelJobStatus]:
+        return self._jobs
 
-    def add_step(self, step: ForwardModelStepStatus) -> None:
-        self._fm_steps.append(step)
+    def add_job(self, job: ForwardModelJobStatus) -> None:
+        self._jobs.append(job)
 
 
 __all__ = [
-    "ForwardModelStepStatus",
+    "ForwardModelJobStatus",
     "ForwardModelStatus",
 ]

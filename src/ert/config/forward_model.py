@@ -9,7 +9,7 @@ from ert.substitution_list import SubstitutionList
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigValidationError,
-    ForwardModelStepKeys,
+    ForwardModelKeys,
     SchemaItemType,
     init_forward_model_schema,
     lark_parse,
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ForwardModelStep:
+class ForwardModel:
     name: str
     executable: str
     stdin_file: Optional[str] = None
@@ -50,7 +50,7 @@ class ForwardModelStep:
     @classmethod
     def from_config_file(
         cls, config_file: str, name: Optional[str] = None
-    ) -> "ForwardModelStep":
+    ) -> "ForwardModel":
         if name is None:
             name = os.path.basename(config_file)
 
@@ -60,7 +60,7 @@ class ForwardModelStep:
             content_dict = lark_parse(file=config_file, schema=schema, pre_defines=[])
 
             specified_arg_types: List[Tuple[int, str]] = content_dict.get(
-                ForwardModelStepKeys.ARG_TYPE, []
+                ForwardModelKeys.ARG_TYPE, []
             )
 
             specified_max_args: int = content_dict.get("MAX_ARG", 0)

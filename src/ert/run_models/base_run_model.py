@@ -400,7 +400,7 @@ class BaseRunModel:
             active = run_context.is_active(iens)
             real = RealizationBuilder().set_iens(iens).active(active)
             if active:
-                real.set_forward_models(self.ert_config.forward_model_steps)
+                real.set_forward_models(self.ert_config.forward_model_list)
                 real.set_max_runtime(self.ert_config.analysis_config.max_runtime)
                 real.set_run_arg(run_arg)
                 real.set_num_cpu(self.ert_config.preferred_num_cpu)
