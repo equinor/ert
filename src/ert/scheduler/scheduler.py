@@ -122,6 +122,7 @@ class Scheduler:
 
     async def cancel_all_jobs(self) -> None:
         self._cancelled = True
+        logger.info("Cancelling all jobs")
         await self._cancel_job_tasks()
 
     async def _cancel_job_tasks(self) -> None:
@@ -156,6 +157,12 @@ class Scheduler:
                         > long_running_factor * self._average_job_runtime
                         and not task.done()
                     ):
+                        logger.info(
+                            f"Stopping realization {iens} as its running duration "
+                            f"{self._jobs[iens].running_duration}s is longer than "
+                            f"the factor {long_running_factor} multiplied with the "
+                            f"average runtime {self._average_job_runtime}s."
+                        )
                         task.cancel()
                         with suppress(asyncio.CancelledError):
                             await task
