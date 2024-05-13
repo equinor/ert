@@ -553,15 +553,8 @@ class ErtConfig:
                         for arg in fm_step.arglist
                     ],
                     "environment": substituter.filter_env_dict(fm_step.environment),
-                    "required_keywords": [
-                        handle_default(fm_step, substituter.substitute(rk))
-                        for rk in fm_step.required_keywords
-                    ],
                     "exec_env": substituter.filter_env_dict(fm_step.exec_env),
                     "max_running_minutes": fm_step.max_running_minutes,
-                    "min_arg": fm_step.min_arg,
-                    "arg_types": fm_step.arg_types,
-                    "max_arg": fm_step.max_arg,
                 }
                 for idx, fm_step, substituter in [
                     (idx, fm_step, Substituter(fm_step))
