@@ -74,7 +74,7 @@ dependencies=[
     "uvicorn >= 0.17.0",
     "websockets",
     "httpx",
-    "xarray < 2024.5.0",
+    "xarray",
     "xtgeo >= 3.3.0",
     "netCDF4",
     "sortedcontainers",
@@ -95,7 +95,7 @@ Repository = "https://github.com/equinor/ert"
 dev = [
     "decorator",
     "furo",
-    "hypothesis==6.100.6",
+    "hypothesis",
     "jsonpath_ng",
     "jupytext",
     "oil_reservoir_synthesizer",
