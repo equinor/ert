@@ -1,5 +1,6 @@
 import functools
 import re
+from contextlib import ExitStack as does_not_raise
 from functools import partial
 from pathlib import Path
 
@@ -329,13 +330,13 @@ def test_update_snapshot(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "alpha, expected",
+    "alpha, expected, expectation",
     [
         pytest.param(
             0.001,
             [],
+            pytest.raises(ErtAnalysisError),
             id="Low alpha, no active observations",
-            marks=pytest.mark.xfail(raises=ErtAnalysisError, strict=True),
         ),
         (
             0.1,
@@ -344,6 +345,7 @@ def test_update_snapshot(
                 ObservationStatus.OUTLIER,
                 ObservationStatus.ACTIVE,
             ],
+            does_not_raise(),
         ),
         (
             0.5,
@@ -352,6 +354,7 @@ def test_update_snapshot(
                 ObservationStatus.ACTIVE,
                 ObservationStatus.ACTIVE,
             ],
+            does_not_raise(),
         ),
         (
             1,
@@ -360,10 +363,13 @@ def test_update_snapshot(
                 ObservationStatus.ACTIVE,
                 ObservationStatus.ACTIVE,
             ],
+            does_not_raise(),
         ),
     ],
 )
-def test_smoother_snapshot_alpha(alpha, expected, storage, uniform_parameter, obs):
+def test_smoother_snapshot_alpha(
+    alpha, expected, storage, uniform_parameter, obs, expectation
+):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -423,20 +429,23 @@ def test_smoother_snapshot_alpha(alpha, expected, storage, uniform_parameter, ob
     # The initial_mask equals ens_mask on first iteration
     initial_mask = prior_storage.get_realization_mask_with_responses()
 
-    result_snapshot, _ = iterative_smoother_update(
-        prior_storage=prior_storage,
-        posterior_storage=posterior_storage,
-        sies_smoother=sies_smoother,
-        run_id="id",
-        observations=["OBSERVATION"],
-        parameters=["PARAMETER"],
-        update_settings=UpdateSettings(alpha=alpha),
-        analysis_config=IESSettings(),
-        sies_step_length=sies_step_length,
-        initial_mask=initial_mask,
-    )
-    assert result_snapshot.alpha == alpha
-    assert [step.status for step in result_snapshot.update_step_snapshots] == expected
+    with expectation:
+        result_snapshot, _ = iterative_smoother_update(
+            prior_storage=prior_storage,
+            posterior_storage=posterior_storage,
+            sies_smoother=sies_smoother,
+            run_id="id",
+            observations=["OBSERVATION"],
+            parameters=["PARAMETER"],
+            update_settings=UpdateSettings(alpha=alpha),
+            analysis_config=IESSettings(),
+            sies_step_length=sies_step_length,
+            initial_mask=initial_mask,
+        )
+        assert result_snapshot.alpha == alpha
+        assert [
+            step.status for step in result_snapshot.update_step_snapshots
+        ] == expected
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
