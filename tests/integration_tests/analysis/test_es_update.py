@@ -12,10 +12,10 @@ from xtgeo import RegularSurface, surface_from_file
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis._es_update import ObservationStatus, _all_parameters
-from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import AnalysisConfig, ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.integration_tests.run_cli import run_cli

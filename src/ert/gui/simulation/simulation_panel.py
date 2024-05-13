@@ -19,11 +19,15 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.cli import ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE
 from ert.cli.model_factory import create_model
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.libres_facade import LibresFacade
+from ert.mode_definitions import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+)
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
@@ -164,7 +168,7 @@ class SimulationPanel(QWidget):
 
     def runSimulation(self):
         args = self.getSimulationArguments()
-        if args.mode == "es_mda":
+        if args.mode == ES_MDA_MODE:
             if args.restart_run:
                 message = (
                     "Are you sure you want to restart from ensemble"

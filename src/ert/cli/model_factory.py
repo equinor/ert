@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 
-from ert.cli import (
+from ert.config import ConfigWarning, ErtConfig
+from ert.config.analysis_config import UpdateSettings
+from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -14,8 +16,6 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.config import ConfigWarning, ErtConfig
-from ert.config.analysis_config import UpdateSettings
 from ert.run_models import (
     BaseRunModel,
     EnsembleExperiment,

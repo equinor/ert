@@ -3,8 +3,8 @@ from textwrap import dedent
 import numpy as np
 import pytest
 
-from ert.cli import ENSEMBLE_SMOOTHER_MODE
 from ert.config import ErtConfig
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
 random_seed_line = "RANDOM_SEED 1234\n\n"

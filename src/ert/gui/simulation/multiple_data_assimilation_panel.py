@@ -13,6 +13,7 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
+from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
     NumberListStringArgument,
@@ -188,7 +189,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         return Arguments(
-            mode="es_mda",
+            mode=ES_MDA_MODE,
             target_ensemble=self._target_ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             weights=self.weights,

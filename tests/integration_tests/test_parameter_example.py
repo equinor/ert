@@ -15,9 +15,9 @@ from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
 
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from tests.unit_tests.config.egrid_generator import egrids
 from tests.unit_tests.config.summary_generator import names, summaries
 

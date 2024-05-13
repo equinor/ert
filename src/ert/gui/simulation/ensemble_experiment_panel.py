@@ -8,6 +8,7 @@ from ert.gui.ertwidgets import StringBox, TextModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument
 from ert.validation.range_string_argument import NotInStorage
@@ -95,7 +96,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         return Arguments(
-            mode="ensemble_experiment",
+            mode=ENSEMBLE_EXPERIMENT_MODE,
             current_ensemble=self._ensemble_name_field.get_text,
             realizations=self._active_realizations_field.text(),
             experiment_name=self._name_field.get_text,

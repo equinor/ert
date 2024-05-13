@@ -4,13 +4,13 @@ import numpy as np
 from qtpy import QtCore
 from qtpy.QtWidgets import QFormLayout, QLabel
 
-from ert.cli import EVALUATE_ENSEMBLE_MODE
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import RangeStringArgument
 

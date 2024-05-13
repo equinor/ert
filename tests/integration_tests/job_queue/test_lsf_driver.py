@@ -4,7 +4,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from tests.integration_tests.run_cli import run_cli
 
 

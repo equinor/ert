@@ -3,8 +3,8 @@ from functools import partial
 
 import pytest
 
-from ert.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert.cli.main import ErtCliError
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from tests.integration_tests.run_cli import run_cli
 

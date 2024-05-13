@@ -5,7 +5,7 @@ from packaging.version import Version
 
 import ert.shared
 from ert.__main__ import ert_parser
-from ert.cli import (
+from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,

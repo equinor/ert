@@ -12,8 +12,8 @@ import numpy as np
 import pytest
 from hypothesis import assume, given, settings
 
-from ert.cli import ES_MDA_MODE
 from ert.cli.main import ErtCliError
+from ert.mode_definitions import ES_MDA_MODE
 from tests.unit_tests.config.observations_generator import summary_observations
 from tests.unit_tests.config.summary_generator import summaries
 
