@@ -74,7 +74,7 @@ dependencies=[
     "uvicorn >= 0.17.0",
     "websockets",
     "httpx",
-    "xarray",
+    "xarray < 2024.5.0",
     "xtgeo >= 3.3.0",
     "netCDF4",
     "sortedcontainers",
