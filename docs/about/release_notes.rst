@@ -27,6 +27,53 @@
 Highlighted changes
 ===================
 
+Version 10.0
+------------
+
+Changes to the Manage experiments tool
+######################################
+
+The interface for the Manage Experiments tool has been improved to provide more
+information about ensembles and experiments.
+
+A new panel has been introduced, which is dedicated to displaying detailed
+information for each experiment. This streamlines the process of reviewing and
+analyzing experiment data.
+
+.. image:: v10_manage_experiments.png
+
+
+Longer retries for license error
+################################
+
+For ECL100 jobs there is a possibility that the license server may be
+overloaded by too many concurrent realizations. To mitigate this we have
+increased the retrying mechanism for checking the license error from max 6
+minutes to between 19 and 32 minutes (depending on randomized values). In order
+to check whether your realization is waiting for the license server to respond,
+while running the experiment, click on "show details":
+
+.. image:: click-show-details.png
+
+
+Click on the square for the long running realization, 0 in the image and then,
+click the "OPEN" button in the column STDERR for row ECLIPSE100:
+
+.. image:: click-on-stderr.png
+
+If the message contains "Eclipse failed due to license failure, retrying in XXs" then the license server is busy and we will automatically retry running eclipse in the specified number of seconds.
+
+.. image:: license-retry.png
+
+
+Breaking changes for plugins, forward models and api endpoints
+##############################################################
+
+There are a few breaking changes, which only effects users of the storage api and plugins and ertscripts that uses LibresFacade:
+
+* The storage api endpoint "/ensembles/{ensemble_id}/responses/{response_name}/data" is removed.
+* The deprecated methods `grid`, `gen_data_keys`, `gen_kw_keys`, `all_data_type_keys`, `observation_keys` of `LibresFacade` are removed.
+
 Version 9.0
 -----------
 
