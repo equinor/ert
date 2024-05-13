@@ -5,7 +5,7 @@ from .config_keywords import ConfigKeys
 from .config_schema import init_site_config_schema, init_user_config_schema
 from .context_values import ContextList, ContextString, ContextValue
 from .error_info import ErrorInfo, WarningInfo
-from .forward_model_keywords import ForwardModelStepKeys
+from .forward_model_keywords import ForwardModelKeys
 from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
@@ -29,7 +29,7 @@ __all__ = [
     "init_site_config_schema",
     "init_user_config_schema",
     "ConfigDict",
-    "ForwardModelStepKeys",
+    "ForwardModelKeys",
     "ErrorInfo",
     "WarningInfo",
     "init_forward_model_schema",

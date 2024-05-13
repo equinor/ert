@@ -10,7 +10,7 @@ from typing import List
 
 import pytest
 
-from ert.config import ErtConfig, ForwardModelStep
+from ert.config import ErtConfig, ForwardModel
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitution_list import SubstitutionList
@@ -22,7 +22,7 @@ def context():
 
 
 @pytest.fixture
-def fm_step_list():
+def joblist():
     result = [
         {
             "name": "PERLIN",
@@ -77,8 +77,8 @@ def fm_step_list():
             "max_running_minutes": 1,
         },
     ]
-    for step in result:
-        step["environment"].update(ForwardModelStep.default_env)
+    for job in result:
+        job["environment"].update(ForwardModel.default_env)
     return result
 
 
@@ -114,10 +114,10 @@ def str_none_sensitive(x):
     return str(x) if x is not None else None
 
 
-DEFAULT_NAME = "default_step_name"
+DEFAULT_NAME = "default_job_name"
 
 
-def _generate_step(
+def _generate_job(
     name,
     executable,
     target_file,
@@ -159,7 +159,7 @@ def _generate_step(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    return ForwardModelStep.from_config_file(config_file, name)
+    return ForwardModel.from_config_file(config_file, name)
 
 
 def empty_list_if_none(_list):
@@ -170,17 +170,17 @@ def default_name_if_none(name):
     return DEFAULT_NAME if name is None else name
 
 
-def create_std_file(config, std="stdout", step_index=None):
-    if step_index is None:
+def create_std_file(config, std="stdout", job_index=None):
+    if job_index is None:
         if config[std]:
             return f"{config[std]}"
         else:
             return f'{config["name"]}.{std}'
     else:
         if config[std]:
-            return f"{config[std]}.{step_index}"
+            return f"{config[std]}.{job_index}"
         else:
-            return f'{config["name"]}.{std}.{step_index}'
+            return f'{config["name"]}.{std}.{job_index}'
 
 
 def validate_forward_model(forward_model, forward_model_config):
@@ -201,7 +201,7 @@ def validate_forward_model(forward_model, forward_model_config):
     )
     assert forward_model.arglist == empty_list_if_none(forward_model_config["argList"])
     if forward_model_config["environment"] is None:
-        assert forward_model.environment == ForwardModelStep.default_env
+        assert forward_model.environment == ForwardModel.default_env
     else:
         assert (
             forward_model.environment.keys()
@@ -214,12 +214,12 @@ def validate_forward_model(forward_model, forward_model_config):
             )
 
 
-def generate_step_from_dict(forward_model_config):
+def generate_job_from_dict(forward_model_config):
     forward_model_config = copy.deepcopy(forward_model_config)
     forward_model_config["executable"] = os.path.join(
         os.getcwd(), forward_model_config["executable"]
     )
-    forward_model = _generate_step(
+    forward_model = _generate_job(
         forward_model_config["name"],
         forward_model_config["executable"],
         forward_model_config["target_file"],
@@ -237,11 +237,11 @@ def generate_step_from_dict(forward_model_config):
     return forward_model
 
 
-def set_up_forward_model(fm_steplist) -> List[ForwardModelStep]:
-    return [generate_step_from_dict(step) for step in fm_steplist]
+def set_up_forward_model(joblist) -> List[ForwardModel]:
+    return [generate_job_from_dict(job) for job in joblist]
 
 
-def verify_json_dump(fm_steplist, config, selected_steps, run_id):
+def verify_json_dump(joblist, config, selected_jobs, run_id):
     expected_default_env = {
         "_ERT_ITERATION_NUMBER": "0",
         "_ERT_REALIZATION_NUMBER": "0",
@@ -250,67 +250,67 @@ def verify_json_dump(fm_steplist, config, selected_steps, run_id):
     assert "config_path" in config
     assert "config_file" in config
     assert run_id == config["run_id"]
-    assert len(selected_steps) == len(config["jobList"])
+    assert len(selected_jobs) == len(config["jobList"])
 
-    for step_index, selected_step in enumerate(selected_steps):
-        step = fm_steplist[selected_step]
-        loaded_step = config["jobList"][step_index]
+    for job_index, selected_job in enumerate(selected_jobs):
+        job = joblist[selected_job]
+        loaded_job = config["jobList"][job_index]
 
         # Since no argList is loaded as an empty list by forward_model
-        arg_list_back_up = step["argList"]
-        step["argList"] = empty_list_if_none(step["argList"])
+        arg_list_back_up = job["argList"]
+        job["argList"] = empty_list_if_none(job["argList"])
 
         # Since name is set to default if none provided by forward_model
-        name_back_up = step["name"]
-        step["name"] = default_name_if_none(step["name"])
+        name_back_up = job["name"]
+        job["name"] = default_name_if_none(job["name"])
 
         for key in json_keywords:
             if key in ["stdout", "stderr"]:
                 assert (
-                    create_std_file(step, std=key, step_index=step_index)
-                    == loaded_step[key]
+                    create_std_file(job, std=key, job_index=job_index)
+                    == loaded_job[key]
                 )
             elif key == "executable":
-                assert step[key] in loaded_step[key]
-            elif key == "environment" and step[key] is None:
-                assert loaded_step[key] == expected_default_env
-            elif key == "environment" and step[key] is not None:
-                for k in step[key]:
-                    if k not in ForwardModelStep.default_env:
-                        assert step[key][k] == loaded_step[key][k]
+                assert job[key] in loaded_job[key]
+            elif key == "environment" and job[key] is None:
+                assert loaded_job[key] == expected_default_env
+            elif key == "environment" and job[key] is not None:
+                for k in job[key]:
+                    if k not in ForwardModel.default_env:
+                        assert job[key][k] == loaded_job[key][k]
                     else:
-                        assert step[key][k] == ForwardModelStep.default_env[k]
-                        assert loaded_step[key][k] == expected_default_env[k]
+                        assert job[key][k] == ForwardModel.default_env[k]
+                        assert loaded_job[key][k] == expected_default_env[k]
             else:
-                assert step[key] == loaded_step[key]
+                assert job[key] == loaded_job[key]
 
-        step["argList"] = arg_list_back_up
-        step["name"] = name_back_up
+        job["argList"] = arg_list_back_up
+        job["name"] = name_back_up
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_config_path_and_file(context):
     run_id = "test_config_path_and_file_in_jobs_json"
 
-    steps_json = ErtConfig(
-        forward_model_steps=set_up_forward_model([]),
+    jobs_json = ErtConfig(
+        forward_model_list=set_up_forward_model([]),
         substitution_list=context,
         user_config_file="path_to_config_file/config.ert",
     ).forward_model_data_to_json(
         run_id,
     )
-    assert "config_path" in steps_json
-    assert "config_file" in steps_json
-    assert steps_json["config_path"] == "path_to_config_file"
-    assert steps_json["config_file"] == "config.ert"
+    assert "config_path" in jobs_json
+    assert "config_file" in jobs_json
+    assert jobs_json["config_path"] == "path_to_config_file"
+    assert jobs_json["config_file"] == "config.ert"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_steps(context):
+def test_no_jobs(context):
     run_id = "test_no_jobs_id"
 
     data = ErtConfig(
-        forward_model_steps=set_up_forward_model([]),
+        forward_model_list=set_up_forward_model([]),
         substitution_list=context,
         user_config_file="path_to_config_file/config.ert",
     ).forward_model_data_to_json(
@@ -335,17 +335,17 @@ def test_transfer_arg_types(context):
         f.write("ENV KEY1 VALUE2\n")
         f.write("ENV KEY2 VALUE2\n")
 
-    step = ForwardModelStep.from_config_file("FWD_MODEL")
+    job = ForwardModel.from_config_file("FWD_MODEL")
     run_id = "test_no_jobs_id"
 
     config = ErtConfig(
-        forward_model_steps=[step], substitution_list=context
+        forward_model_list=[job], substitution_list=context
     ).forward_model_data_to_json(run_id)
 
-    printed_step = config["jobList"][0]
-    assert printed_step["min_arg"] == 2
-    assert printed_step["max_arg"] == 6
-    assert printed_step["arg_types"] == [
+    printed_job = config["jobList"][0]
+    assert printed_job["min_arg"] == 2
+    assert printed_job["max_arg"] == 6
+    assert printed_job["arg_types"] == [
         "INT",
         "FLOAT",
         "STRING",
@@ -356,34 +356,34 @@ def test_transfer_arg_types(context):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_one_step(fm_step_list, context):
-    for i, step in enumerate(fm_step_list):
+def test_one_job(joblist, context):
+    for i, job in enumerate(joblist):
         run_id = "test_one_job"
 
         data = ErtConfig(
-            forward_model_steps=set_up_forward_model([step]),
+            forward_model_list=set_up_forward_model([job]),
             substitution_list=context,
         ).forward_model_data_to_json(run_id)
-        verify_json_dump(fm_step_list, data, [i], run_id)
+        verify_json_dump(joblist, data, [i], run_id)
 
 
-def run_all(fm_steplist, context):
+def run_all(joblist, context):
     run_id = "run_all"
     data = ErtConfig(
-        forward_model_steps=set_up_forward_model(fm_steplist),
+        forward_model_list=set_up_forward_model(joblist),
         substitution_list=context,
     ).forward_model_data_to_json(run_id)
 
-    verify_json_dump(fm_steplist, data, range(len(fm_steplist)), run_id)
+    verify_json_dump(joblist, data, range(len(joblist)), run_id)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_all_steps(fm_step_list, context):
-    run_all(fm_step_list, context)
+def test_all_jobs(joblist, context):
+    run_all(joblist, context)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_various_null_fields(fm_step_list, context):
+def test_various_null_fields(joblist, context):
     for key in [
         "target_file",
         "error_file",
@@ -395,17 +395,17 @@ def test_various_null_fields(fm_step_list, context):
         "environment",
         "stdin",
     ]:
-        fm_step_list[0][key] = None
-        run_all(fm_step_list, context)
+        joblist[0][key] = None
+        run_all(joblist, context)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_status_file(fm_step_list, context):
+def test_status_file(joblist, context):
     run_id = "test_no_jobs_id"
     with open(JOBS_FILE, "w", encoding="utf-8") as fp:
         json.dump(
             ErtConfig(
-                forward_model_steps=set_up_forward_model(fm_step_list),
+                forward_model_list=set_up_forward_model(joblist),
                 substitution_list=context,
             ).forward_model_data_to_json(run_id),
             fp,
@@ -433,19 +433,19 @@ def test_status_file(fm_step_list, context):
         )
 
     status = ForwardModelStatus.try_load("")
-    for step in status.steps:
-        assert isinstance(step.start_time, datetime.datetime)
-        assert isinstance(step.end_time, datetime.datetime)
+    for job in status.jobs:
+        assert isinstance(job.start_time, datetime.datetime)
+        assert isinstance(job.end_time, datetime.datetime)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
-    forward_model_list: List[ForwardModelStep] = set_up_forward_model(fm_step_list)
+def test_that_values_with_brackets_are_ommitted(caplog, joblist, context):
+    forward_model_list: List[ForwardModel] = set_up_forward_model(joblist)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
     data = ErtConfig(
-        forward_model_steps=forward_model_list, substitution_list=context
+        forward_model_list=forward_model_list, substitution_list=context
     ).forward_model_data_to_json(run_id)
 
     assert "Environment variable ENV_VAR skipped due to" in caplog.text
@@ -596,7 +596,7 @@ def test_forward_model_job(job, forward_model, expected_args):
 
     ert_config = ErtConfig.from_file("config_file.ert")
 
-    forward_model = ert_config.forward_model_steps
+    forward_model = ert_config.forward_model_list
     assert len(forward_model) == 1
     assert (
         ert_config.forward_model_data_to_json(
@@ -698,13 +698,13 @@ def test_simulation_job(job, forward_model, expected_args):
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    assert len(ert_config.forward_model_steps) == 1
-    fm_data = ert_config.forward_model_data_to_json(
+    assert len(ert_config.forward_model_list) == 1
+    job_data = ert_config.forward_model_data_to_json(
         "",
         0,
         0,
     )["jobList"][0]
-    assert fm_data["argList"] == expected_args
+    assert job_data["argList"] == expected_args
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -729,9 +729,9 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         fout.write("FORWARD_MODEL job_name(<ARG>=B)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    fm_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
-    assert len(ert_config.forward_model_steps) == 1
-    assert fm_data["argList"] == ["B"]
+    job_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    assert len(ert_config.forward_model_list) == 1
+    assert job_data["argList"] == ["B"]
     assert "Private arg '<ARG>':'B' chosen over global 'A'" in caplog.text
 
 
@@ -760,9 +760,9 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
 
     ert_config = ErtConfig.from_file("config_file.ert")
 
-    fm_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
-    assert len(ert_config.forward_model_steps) == 1
-    assert fm_data["argList"] == ["A"]
+    job_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    assert len(ert_config.forward_model_list) == 1
+    assert job_data["argList"] == ["A"]
     assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
 
 
@@ -779,7 +779,7 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
             ),
             "DEFINE <ENV> $ENV\nFORWARD_MODEL job_name(<ARG>=<ENV>)",
             ["env_value"],
-            id="Test that the environment variable $ENV is put into the forward model step",
+            id="Test that the environment variable $ENV is put into the forward model",
         ),
     ],
 )
@@ -804,7 +804,7 @@ def test_that_environment_variables_are_set_in_forward_model(
 
     ert_config = ErtConfig.from_file("config_file.ert")
 
-    forward_model_list = ert_config.forward_model_steps
+    forward_model_list = ert_config.forward_model_list
     assert len(forward_model_list) == 1
     assert (
         ert_config.forward_model_data_to_json(

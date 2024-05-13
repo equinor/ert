@@ -216,8 +216,8 @@ class FieldParameter:
         if self.output_transform is not None:
             decl += f" OUTPUT_TRANSFORM:{self.output_transform.name} "
 
-        # If forward_init, a forward model step is expected to produce the
-        # init file. The following COPY_FILE is that forward model step.
+        # If forward_init, a forward model is expected to produce the
+        # init file. The following COPY_FILE is that forward model.
         if self.forward_init:
             decl += f'\nFORWARD_MODEL COPY_FILE(<FROM>="../../../{self.name}.{self.outext}",<TO>=.)'
         return decl
@@ -291,8 +291,8 @@ class SurfaceParameter:
                 f"SURFACE {self.name} OUTPUT_FILE:{filename} "
                 f"INIT_FILES:{filename} BASE_SURFACE:BASE{filename} "
                 "FORWARD_INIT:True\n"
-                # If forward_init, a forward model step is expected to produce the
-                # init file. The following COPY_FILE is that forward model step.
+                # If forward_init, a forward model is expected to produce the
+                # init file. The following COPY_FILE is that forward model.
                 f'FORWARD_MODEL COPY_FILE(<FROM>="../../../{filename}",<TO>=.)'
             )
 
@@ -362,7 +362,7 @@ def test_parameter_example(
         for p in parameters:
             p.create_file(io_source, num_realizations)
 
-        # A COPY_FILE forward model step copies in the summary files expected to be
+        # A COPY_FILE forward model copies in the summary files expected to be
         # created for the SUMMARY keyword
         smspec, unsmry = summary
         smspec.to_file("ECLBASE.SMSPEC")

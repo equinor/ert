@@ -1,7 +1,7 @@
 from ._builder import (
     Ensemble,
     EnsembleBuilder,
-    ForwardModelStep,
+    ForwardModel,
     Realization,
     RealizationBuilder,
 )
@@ -18,8 +18,8 @@ __all__ = (
     "EnsembleBuilder",
     "EnsembleEvaluator",
     "EvaluatorServerConfig",
-    "ForwardModelStep",
     "EvaluatorTracker",
+    "ForwardModel",
     "FullSnapshotEvent",
     "Monitor",
     "PartialSnapshot",
