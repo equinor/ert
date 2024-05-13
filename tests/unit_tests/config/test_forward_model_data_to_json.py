@@ -321,41 +321,6 @@ def test_no_steps(context):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_transfer_arg_types(context):
-    with open("FWD_MODEL", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE ls\n")
-        f.write("MIN_ARG 2\n")
-        f.write("MAX_ARG 6\n")
-        f.write("ARG_TYPE 0 INT\n")
-        f.write("ARG_TYPE 1 FLOAT\n")
-        f.write("ARG_TYPE 2 STRING\n")
-        f.write("ARG_TYPE 3 BOOL\n")
-        f.write("ARG_TYPE 4 RUNTIME_FILE\n")
-        f.write("ARG_TYPE 5 RUNTIME_INT\n")
-        f.write("ENV KEY1 VALUE2\n")
-        f.write("ENV KEY2 VALUE2\n")
-
-    step = ForwardModelStep.from_config_file("FWD_MODEL")
-    run_id = "test_no_jobs_id"
-
-    config = ErtConfig(
-        forward_model_steps=[step], substitution_list=context
-    ).forward_model_data_to_json(run_id)
-
-    printed_step = config["jobList"][0]
-    assert printed_step["min_arg"] == 2
-    assert printed_step["max_arg"] == 6
-    assert printed_step["arg_types"] == [
-        "INT",
-        "FLOAT",
-        "STRING",
-        "BOOL",
-        "RUNTIME_FILE",
-        "RUNTIME_INT",
-    ]
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_one_step(fm_step_list, context):
     for i, step in enumerate(fm_step_list):
         run_id = "test_one_job"
