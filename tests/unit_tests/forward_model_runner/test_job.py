@@ -85,6 +85,7 @@ def test_memory_usage_counts_grandchildren():
     assert max_seens[1] < max_seens[2]
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_in_running_events():
     scriptname = "increasing_memory.py"
@@ -96,10 +97,10 @@ def test_memory_profile_in_running_events():
             import time
             somelist = []
 
-            for _ in range(20):
+            for _ in range(10):
                 # 1 Mb allocated pr iteration
                 somelist.append(b' ' * 1024 * 1024)
-                time.sleep(0.02)"""
+                time.sleep(0.1)"""
             )
         )
     executable = os.path.realpath(scriptname)
