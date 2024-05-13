@@ -81,7 +81,7 @@ dependencies=[
     "tqdm>=4.62.0",
     "uvicorn >= 0.17.0",
     "websockets",
-    "xarray",
+    "xarray<2024.5.0",
     "xtgeo >= 3.3.0",
 ]
 
