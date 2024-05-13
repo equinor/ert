@@ -169,7 +169,7 @@ def _ensemble_experiment_run(
                     dedent(
                         """\
                         #!/usr/bin/env python3
-                        import numpy as np
+                        import os
                         import sys
                         import json
 
@@ -181,7 +181,7 @@ def _ensemble_experiment_run(
                             return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
                         if __name__ == "__main__":
-                            if np.random.random(1) > 0.5:
+                            if int(os.getenv("_ERT_REALIZATION_NUMBER")) % 2 == 0:
                                 sys.exit(1)
                             coeffs = _load_coeffs("parameters.json")
                             output = [_evaluate(coeffs, x) for x in range(10)]
