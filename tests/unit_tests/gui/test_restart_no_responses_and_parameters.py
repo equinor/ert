@@ -36,10 +36,10 @@ def _open_main_window(
             dedent(
                 """\
                 #!/usr/bin/env python3
-                import random
+                import os
 
                 if __name__ == "__main__":
-                    if random.random() > 0.5:
+                    if int(os.getenv("_ERT_REALIZATION_NUMBER")) % 2 == 0:
                         raise ValueError()
                 """
             )
