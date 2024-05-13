@@ -95,7 +95,7 @@ Repository = "https://github.com/equinor/ert"
 [project.optional-dependencies]
 dev = [
     "furo",
-    "hypothesis",
+    "hypothesis<6.100.6",
     "jsonpath_ng",
     "jupyter",
     "jupytext",
