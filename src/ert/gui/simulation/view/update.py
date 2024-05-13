@@ -6,9 +6,10 @@ from typing import Optional
 
 import humanize
 from qtpy.QtCore import Qt, Slot
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QKeyEvent, QKeySequence
 from qtpy.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
@@ -33,6 +34,33 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
 )
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
+
+
+class UpdateLogTable(QTableWidget):
+    def __init__(self, data: DataSection, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+
+        self.setColumnCount(len(data.header))
+        self.setAlternatingRowColors(True)
+        self.setRowCount(len(data.data))
+        self.setHorizontalHeaderLabels(data.header)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.setSortingEnabled(True)
+        for i, row in enumerate(data.data):
+            for j, val in enumerate(row):
+                self.setItem(i, j, QTableWidgetItem(str(val)))
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.matches(QKeySequence.Copy):
+            stream = str()
+            for i in self.selectedIndexes():
+                stream += self.itemFromIndex(i).text()
+                stream += "\n" if i.column() == self.columnCount() - 1 else "\t"
+            clipboard = QApplication.clipboard()
+            clipboard.setText(stream)
+        else:
+            super().keyPressEvent(event)
 
 
 class UpdateWidget(QWidget):
@@ -96,18 +124,9 @@ class UpdateWidget(QWidget):
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
-        table = QTableWidget()
+        table = UpdateLogTable(data)
         table.setObjectName("CSV_" + name)
-        table.setColumnCount(len(data.header))
-        table.setAlternatingRowColors(True)
-        table.setRowCount(len(data.data))
-        table.setHorizontalHeaderLabels(data.header)
-        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        table.setSortingEnabled(True)
-        for i, row in enumerate(data.data):
-            for j, val in enumerate(row):
-                table.setItem(i, j, QTableWidgetItem(str(val)))
+
         layout.addWidget(table)
 
         if data.extra:
@@ -123,7 +142,7 @@ class UpdateWidget(QWidget):
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
 
     @Slot(RunModelUpdateBeginEvent)
-    def begin(self, _: RunModelUpdateBeginEvent) -> None:
+    def begin(self, event: RunModelUpdateBeginEvent) -> None:
         self._start_time = time.perf_counter()
 
     @Slot(RunModelUpdateEndEvent)
