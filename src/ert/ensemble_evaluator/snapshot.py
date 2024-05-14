@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import datetime
 import re
 import typing
 from collections import defaultdict
+from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel, ConfigDict
+from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -71,6 +75,50 @@ def _filter_nones(some_dict: Mapping[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in some_dict.items() if value is not None}
 
 
+@dataclass
+class SnapshotMetadata:
+    aggr_job_status_colors: defaultdict[str, dict[str, QColor]] = field(
+        default_factory=lambda: defaultdict(dict)
+    )
+    real_status_colors: dict[str, QColor] = field(default_factory=dict)
+    sorted_real_ids: list[str] = field(default_factory=list)
+    sorted_forward_model_ids: defaultdict[str, list[str]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+    def merge(self, other_metadata: SnapshotMetadata) -> None:
+        if other_metadata.aggr_job_status_colors:
+            self.aggr_job_status_colors.update(
+                _filter_nones(other_metadata.aggr_job_status_colors)
+            )
+        if other_metadata.real_status_colors:
+            self.real_status_colors.update(
+                _filter_nones(other_metadata.real_status_colors)
+            )
+        if other_metadata.sorted_real_ids:
+            self.sorted_real_ids = other_metadata.sorted_real_ids
+        if other_metadata.sorted_forward_model_ids:
+            self.sorted_forward_model_ids.update(
+                _filter_nones(other_metadata.sorted_forward_model_ids)
+            )
+
+    def to_dict(
+        self,
+    ) -> dict[
+        str,
+        list[str]
+        | dict[str, QColor]
+        | defaultdict[str, dict[str, QColor]]
+        | defaultdict[str, list[str]],
+    ]:
+        return {
+            "aggr_job_status_colors": self.aggr_job_status_colors,
+            "real_status_colors": self.real_status_colors,
+            "sorted_real_ids": self.sorted_real_ids,
+            "sorted_forward_model_ids": self.sorted_forward_model_ids,
+        }
+
+
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
         self._realization_states: Dict[
@@ -90,7 +138,7 @@ class PartialSnapshot:
         self._ensemble_state: Optional[str] = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
         # well
-        self._metadata: Dict[str, Any] = defaultdict(dict)
+        self._metadata = SnapshotMetadata()
 
         self._snapshot = snapshot
 
@@ -98,10 +146,10 @@ class PartialSnapshot:
     def status(self) -> Optional[str]:
         return self._ensemble_state
 
-    def update_metadata(self, metadata: Dict[str, Any]) -> None:
+    def update_metadata(self, metadata: SnapshotMetadata) -> None:
         """only used in gui snapshot model, which only cares about the partial
         snapshot's metadata"""
-        self._metadata.update(_filter_nones(metadata))
+        self._metadata.merge(metadata)
 
     def update_realization(
         self,
@@ -169,7 +217,7 @@ class PartialSnapshot:
         return sorted(real_ids, key=int)
 
     @property
-    def metadata(self) -> Mapping[str, Any]:
+    def metadata(self) -> SnapshotMetadata:
         return self._metadata
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
@@ -180,7 +228,7 @@ class PartialSnapshot:
         access the _snapshot property"""
         _dict: Dict[str, Any] = {}
         if self._metadata:
-            _dict["metadata"] = self._metadata
+            _dict["metadata"] = self._metadata.to_dict()
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
         if self._realization_states:
@@ -204,7 +252,7 @@ class PartialSnapshot:
         return self.to_dict()
 
     def _merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
-        self._metadata.update(other._metadata)
+        self._metadata.merge(other._metadata)
         if other._ensemble_state is not None:
             self._ensemble_state = other._ensemble_state
         for real_id, other_real_data in other._realization_states.items():
@@ -319,8 +367,8 @@ class Snapshot:
     def merge(self, update_as_nested_dict: Mapping[str, Any]) -> None:
         self._my_partial._merge(_from_nested_dict(update_as_nested_dict))
 
-    def merge_metadata(self, metadata: Dict[str, Any]) -> None:
-        self._my_partial._metadata.update(metadata)
+    def merge_metadata(self, metadata: SnapshotMetadata) -> None:
+        self._my_partial._metadata.merge(metadata)
 
     def to_dict(self) -> Dict[str, Any]:
         return self._my_partial.to_dict()
@@ -330,7 +378,7 @@ class Snapshot:
         return self._my_partial._ensemble_state
 
     @property
-    def metadata(self) -> Mapping[str, Any]:
+    def metadata(self) -> SnapshotMetadata:
         return self._my_partial.metadata
 
     def get_all_forward_models(
@@ -468,7 +516,9 @@ class SnapshotBuilder(BaseModel):
 def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
     partial = PartialSnapshot()
     if "metadata" in data:
-        partial._metadata = data["metadata"]
+        partial._metadata = SnapshotMetadata(
+            **{k: v for k, v in data["metadata"].items() if v}
+        )
     if "status" in data:
         partial._ensemble_state = data["status"]
     for real_id, realization_data in data.get("reals", {}).items():

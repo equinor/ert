@@ -80,9 +80,7 @@ def simulate_forward_model_event_handling(
                 index=fm_idx,
                 name=f"FM_{fm_idx}",
             )
-    top = SnapshotDict(
-        reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
-    )
+    top = SnapshotDict(reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN)
 
     snapshot = Snapshot(top.model_dump())
 
