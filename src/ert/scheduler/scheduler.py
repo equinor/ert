@@ -299,7 +299,7 @@ class Scheduler:
             )
 
         if self._cancelled:
-            logger.debug("scheduler cancelled, stopping jobs...")
+            logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return EVTYPE_ENSEMBLE_CANCELLED
 
         return EVTYPE_ENSEMBLE_STOPPED
