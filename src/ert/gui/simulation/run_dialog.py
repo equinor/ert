@@ -2,11 +2,13 @@ import logging
 from queue import SimpleQueue
 from typing import Optional
 
-from PyQt5.QtWidgets import QAbstractItemView
+from PyQt5.QtGui import QTextCursor, QTextOption
+from PyQt5.QtWidgets import QAbstractItemView, QPlainTextEdit
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import QMovie
 from qtpy.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -33,6 +35,7 @@ from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import (
+    COLUMNS,
     FileRole,
     IterNum,
     RealIens,
@@ -50,6 +53,7 @@ from ert.run_models import (
 from ert.run_models.event import RunModelErrorEvent
 from ert.shared.status.utils import byte_with_unit, format_running_time
 
+from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
 
@@ -254,6 +258,24 @@ class RunDialog(QDialog):
                 index.data(IterNum),
                 self,
             )
+        else:
+            if COLUMNS[NodeType.REAL][index.column()] == ids.ERROR and index.data():
+                error_dialog = QDialog(self)
+                error_dialog.setWindowTitle("Error information")
+                layout = QVBoxLayout(error_dialog)
+
+                error_textedit = QPlainTextEdit()
+                error_textedit.setReadOnly(True)
+                error_textedit.setWordWrapMode(QTextOption.NoWrap)
+                error_textedit.appendPlainText(index.data())
+                layout.addWidget(error_textedit)
+
+                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
+                dialog_button.accepted.connect(error_dialog.accept)
+                layout.addWidget(dialog_button)
+                error_dialog.resize(700, 300)
+                error_textedit.moveCursor(QTextCursor.Start)
+                error_dialog.exec_()
 
     @Slot(QModelIndex)
     def _select_real(self, index):
