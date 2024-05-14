@@ -91,6 +91,7 @@ class EnsembleEvaluator:
         self._ws_thread = ErtThread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
+        self._ws_stopped_event = threading.Event()
 
     @property
     def config(self) -> EvaluatorServerConfig:
@@ -144,6 +145,7 @@ class EnsembleEvaluator:
             )
             send_future.result()
             self._loop.call_soon_threadsafe(self._stop)
+            self._ws_stopped_event.wait()
 
     def _failed_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status not in (
@@ -343,6 +345,8 @@ class EnsembleEvaluator:
             close_timeout=60,
         ):
             await self._done
+            # this event signals done to the main thread
+            self._ws_stopped_event.set()
             if self._dispatchers_connected is not None:
                 logger.debug(
                     f"Got done signal. {self._dispatchers_connected.qsize()} "
@@ -401,6 +405,7 @@ class EnsembleEvaluator:
 
     def stop(self) -> None:
         self._loop.call_soon_threadsafe(self._stop)
+        self._ws_stopped_event.wait()
         self._ws_thread.join()
 
     def _signal_cancel(self) -> None:
@@ -418,6 +423,7 @@ class EnsembleEvaluator:
         else:
             logger.debug("Stopping current ensemble")
             self._loop.call_soon_threadsafe(self._stop)
+            self._ws_stopped_event.wait()
 
     def join(self) -> None:
         self._ws_thread.join()
