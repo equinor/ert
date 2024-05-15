@@ -150,8 +150,8 @@ class BaseRunModel:
         self._phase_count = phase_count
         self._phase_name: str = "Starting..."
 
-        self._job_start_time: int = 0
-        self._job_stop_time: int = 0
+        self.start_time: int = 0
+        self.stop_time: int = 0
         self._indeterminate: bool = False
         self._failed: bool = False
         self._exception: Optional[Exception] = None
@@ -295,7 +295,7 @@ class BaseRunModel:
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
         try:
-            self._job_start_time = int(time.time())
+            self.start_time = int(time.time())
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
                 self._initial_realizations_mask = (
@@ -369,7 +369,7 @@ class BaseRunModel:
 
     def _simulationEnded(self) -> None:
         self._clean_env_context()
-        self._job_stop_time = int(time.time())
+        self.stop_time = int(time.time())
         self.send_end_event()
 
     def setPhase(
@@ -388,17 +388,11 @@ class BaseRunModel:
 
         self._phase = phase
 
-    def stop_time(self) -> int:
-        return self._job_stop_time
-
-    def start_time(self) -> int:
-        return self._job_start_time
-
     def get_runtime(self) -> Union[int, float]:
-        if self.stop_time() < self.start_time():
-            return time.time() - self.start_time()
+        if self.stop_time < self.start_time:
+            return time.time() - self.start_time
         else:
-            return self.stop_time() - self.start_time()
+            return self.stop_time - self.start_time
 
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
