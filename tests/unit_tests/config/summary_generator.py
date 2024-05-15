@@ -403,7 +403,7 @@ class Unsmry:
 positive_floats = from_dtype(
     np.dtype(np.float32),
     min_value=np.float32(0.1),
-    max_value=np.float32(1e25),
+    max_value=np.float32(1e19),
     allow_nan=False,
     allow_infinity=False,
 )
