@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from queue import SimpleQueue
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pytestqt.qtbot import QtBot
@@ -9,6 +9,7 @@ from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QToolButton
 
+import ert
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import state
@@ -25,6 +26,8 @@ from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.run_models import BaseRunModel
 from ert.services import StorageService
+
+from ..conftest import wait_for_child
 
 
 @pytest.fixture
@@ -548,4 +551,41 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    enkf_main = EnKFMain(ert_config)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ), patch.object(
+        ert.run_models.SingleTestRun,
+        "run_experiment",
+        MagicMock(side_effect=ValueError("I failed :(")),
+    ):
+        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        qtbot.addWidget(gui)
+        start_simulation = gui.findChild(QToolButton, name="start_simulation")
+
+        def handle_error_dialog(run_dialog):
+            error_dialog = run_dialog.fail_msg_box
+            assert error_dialog
+            text = error_dialog.details_text.toPlainText()
+            assert "I failed :(" in text
+            qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
+
+        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+
+        run_dialog = wait_for_child(gui, qtbot, RunDialog)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+
+        QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
