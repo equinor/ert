@@ -24,13 +24,23 @@ class StdDevPlot:
         layer = plot_context.layer
         if layer is not None:
             for i, ensemble_name in enumerate(plot_context.ensembles(), start=1):
-                images = std_dev_images[ensemble_name]
-                img = plt.imread(io.BytesIO(images))
                 ax = figure.add_subplot(1, ensemble_count, i)
-                ax.imshow(img)
-                ax.set_title(f"{ensemble_name} layer={layer}")
-                p = ax.pcolormesh(img)
-                self._colorbar(p)
+                images = std_dev_images[ensemble_name]
+                if not images:
+                    ax.set_axis_off()
+                    ax.text(
+                        0.5,
+                        0.5,
+                        f"No data for {ensemble_name}",
+                        ha="center",
+                        va="center",
+                    )
+                else:
+                    img = plt.imread(io.BytesIO(images))
+                    ax.imshow(img)
+                    ax.set_title(f"{ensemble_name} layer={layer}")
+                    p = ax.pcolormesh(img)
+                    self._colorbar(p)
 
     @staticmethod
     def _colorbar(mappable) -> Any:
