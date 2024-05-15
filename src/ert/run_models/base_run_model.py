@@ -150,8 +150,8 @@ class BaseRunModel:
         self._phase_count = phase_count
         self._phase_name: str = "Starting..."
 
-        self.start_time: int = 0
-        self.stop_time: int = 0
+        self.start_time: Optional[int] = None
+        self.stop_time: Optional[int] = None
         self._indeterminate: bool = False
         self._failed: bool = False
         self._exception: Optional[Exception] = None
@@ -389,10 +389,11 @@ class BaseRunModel:
         self._phase = phase
 
     def get_runtime(self) -> Union[int, float]:
-        if self.stop_time < self.start_time:
+        if self.start_time is None:
+            return 0
+        elif self.stop_time is None:
             return time.time() - self.start_time
-        else:
-            return self.stop_time - self.start_time
+        return self.stop_time - self.start_time
 
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
