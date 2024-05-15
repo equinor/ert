@@ -85,7 +85,6 @@ class Init(Message):
         ert_pid,
         ens_id=None,
         real_id=None,
-        step_id=None,
         experiment_id=None,
     ):
         super().__init__()
@@ -95,7 +94,6 @@ class Init(Message):
         self.experiment_id = experiment_id
         self.ens_id = ens_id
         self.real_id = real_id
-        self.step_id = step_id
 
 
 class Finish(Message):
