@@ -553,7 +553,7 @@ class LocalEnsemble(BaseMode):
             ]
         else:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
-        return xr.combine_nested(datasets, "realizations")
+        return xr.combine_nested(datasets, concat_dim="realizations")
 
     def load_parameters(
         self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
@@ -637,7 +637,9 @@ class LocalEnsemble(BaseMode):
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe()
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe(
+                dim_order=["time", "name", "realization"]
+            )
         except (ValueError, KeyError):
             return pd.DataFrame()
 

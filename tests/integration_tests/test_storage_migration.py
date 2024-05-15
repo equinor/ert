@@ -138,7 +138,9 @@ def test_that_storage_matches(
             tuple(ensemble.get_realization_list_with_responses("summary")),
         )
         snapshot.assert_match(
-            summary_data.to_dataframe().transform(np.sort).to_csv(),
+            summary_data.to_dataframe(dim_order=["time", "name", "realization"])
+            .transform(np.sort)
+            .to_csv(),
             "summary_data",
         )
         snapshot.assert_match_dir(
