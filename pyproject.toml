@@ -96,6 +96,7 @@ Repository = "https://github.com/equinor/ert"
 dev = [
     "furo",
     "hypothesis!=6.102.0,>=5.49",
+    "hypothesis>=6.11; python_version >= '3.12'",
     "jsonpath_ng",
     "jupyter",
     "jupytext",
