@@ -295,6 +295,7 @@ class BaseRunModel:
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
         try:
+            self._job_start_time = int(time.time())
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
                 self._initial_realizations_mask = (
@@ -381,9 +382,6 @@ class BaseRunModel:
             )
 
         self.setIndeterminate(indeterminate)
-
-        if phase == 0:
-            self._job_start_time = int(time.time())
 
         if phase == self._phase_count:
             self._simulationEnded()
