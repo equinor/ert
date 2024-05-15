@@ -316,7 +316,6 @@ class BaseRunModel:
             self._failed = True
             self._exception = e
             self._simulationEnded()
-            raise
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig

@@ -13,7 +13,6 @@ import xtgeo
 
 import _ert.threading
 import ert.shared
-from _ert.threading import ErtThreadError
 from ert import LibresFacade, ensemble_evaluator
 from ert.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -88,7 +87,6 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
-@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_field_init_file_not_readable(monkeypatch):
     monkeypatch.setattr(
         ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
@@ -97,7 +95,7 @@ def test_field_init_file_not_readable(monkeypatch):
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
 
-    with pytest.raises(ErtThreadError, match="Permission denied:"):
+    with pytest.raises(ErtCliError, match="Permission denied:"):
         run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
 
 
