@@ -1,3 +1,4 @@
+import base64
 import io
 import logging
 from itertools import combinations as combi
@@ -231,8 +232,6 @@ class PlotApi:
         return pd.DataFrame()
 
     def std_dev_for_parameter(self, key: str, ensemble_name: str, z: int) -> bytes:
-        import base64
-
         ensemble = self._get_ensemble(ensemble_name)
         if not ensemble:
             return bytearray()
@@ -243,5 +242,6 @@ class PlotApi:
                 timeout=self._timeout,
             )
             self._check_response(response)
-            assert response.json()["image"]
+            if not response.json()["image"]:
+                return bytearray()
             return base64.b64decode(response.json()["image"])
