@@ -329,7 +329,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         _kill(self, driver)
         self._tried_killing += 1
 
-    def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 2) -> None:
+    def run(self, driver: "Driver", pool_sema: Semaphore, max_submit: int = 1) -> None:
         # Prevent multiple threads working on the same object
         self.wait_for()
         # Do not start if already kill signal is sent

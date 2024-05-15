@@ -769,7 +769,7 @@ def test_failing_job_cli_error_message():
         poly_script.writelines(["    raise RuntimeError('Argh')"])
 
     expected_substrings = [
-        "Realization: 0 failed after reaching max submit (2)",
+        "Realization: 0 failed after reaching max submit (1)",
         "job poly_eval failed",
         "Process exited with status code 1",
         "Traceback",

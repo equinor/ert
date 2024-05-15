@@ -1519,8 +1519,9 @@ MAX_SUBMIT
 ----------
 .. _max_submit:
 
-How many times the queue system should retry a simulation.
-Default is 2.
+How many times a realization can be submitted to the queue system in case of
+realization failures. Default is 1, meaning there will be no resubmission upon
+failures.
 
 
 Advanced keywords
