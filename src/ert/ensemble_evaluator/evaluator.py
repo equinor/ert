@@ -145,7 +145,6 @@ class EnsembleEvaluator:
             )
             send_future.result()
             self._loop.call_soon_threadsafe(self._stop)
-            self._ws_stopped_event.wait()
 
     def _failed_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status not in (
@@ -423,7 +422,6 @@ class EnsembleEvaluator:
         else:
             logger.debug("Stopping current ensemble")
             self._loop.call_soon_threadsafe(self._stop)
-            self._ws_stopped_event.wait()
 
     def join(self) -> None:
         self._ws_thread.join()
