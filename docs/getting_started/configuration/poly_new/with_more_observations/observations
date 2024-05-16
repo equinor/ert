@@ -1,0 +1,4 @@
+GENERAL_OBSERVATION POLY_OBS {
+   DATA       = POLY_RES;
+   OBS_FILE   = poly_obs_data.txt;
+};
