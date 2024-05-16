@@ -365,7 +365,6 @@ class SnapshotModel(QAbstractItemModel):
         node: Union[RootNode, IterNode, RealNode, ForwardModelStepNode] = (
             index.internalPointer()
         )
-        print(f"{type(node).__name__}:{node.id_}")
         if role == NodeRole:
             return node
 
