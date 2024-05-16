@@ -10,7 +10,6 @@ pybind11_add_module(
   job_queue/lsf_driver.cpp
   job_queue/queue_driver.cpp
   job_queue/slurm_driver.cpp
-  job_queue/torque_driver.cpp
   job_queue/spawn.cpp)
 
 # -----------------------------------------------------------------
@@ -22,13 +21,6 @@ target_include_directories(_clib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
 
 set_target_properties(_clib PROPERTIES CXX_VISIBILITY_PRESET "default")
 install(TARGETS _clib LIBRARY DESTINATION src/ert)
-
-# This extra deploy is only for ctest to be able to locate the script, this file
-# is otherwise deployed through setup.py.
-file(
-  COPY "${CMAKE_CURRENT_SOURCE_DIR}/../../ert/job_queue/qstat_proxy.sh"
-  DESTINATION "${CMAKE_BINARY_DIR}/tests"
-  FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 
 # -----------------------------------------------------------------
 # Target: 'libert.so' for use in tests

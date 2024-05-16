@@ -25,6 +25,7 @@ from ert.config import (
 from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
+from ert.config.queue_config import OPENPBS_DRIVER_OPTIONS
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
@@ -124,7 +125,7 @@ def valid_queue_options(queue_system: str):
     elif queue_system == QueueSystem.SLURM.name:
         valids += _clib.slurm_driver.SLURM_DRIVER_OPTIONS
     elif queue_system == QueueSystem.TORQUE.name:
-        valids += _clib.torque_driver.TORQUE_DRIVER_OPTIONS
+        valids += OPENPBS_DRIVER_OPTIONS
     return valids
 
 

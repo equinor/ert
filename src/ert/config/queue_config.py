@@ -19,9 +19,24 @@ from .parsing import (
 )
 
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
+OPENPBS_DRIVER_OPTIONS: List[str] = [
+    "CLUSTER_LABEL",
+    "DEBUG_OUTPUT",
+    "JOB_PREFIX",
+    "KEEP_QSUB_OUTPUT",
+    "MEMORY_PER_JOB",
+    "NUM_CPUS_PER_NODE",
+    "NUM_NODES",
+    "QDEL_CMD",
+    "QSTAT_CMD",
+    "QSTAT_OPTIONS",
+    "QSUB_CMD",
+    "QUEUE",
+    "QUEUE_QUERY_TIMEOUT",
+    "SUBMIT_SLEEP",
+]
 VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
-    QueueSystem.TORQUE: _clib.torque_driver.TORQUE_DRIVER_OPTIONS
-    + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.TORQUE: OPENPBS_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
     QueueSystem.SLURM: _clib.slurm_driver.SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.LSF: _clib.lsf_driver.LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,

@@ -78,22 +78,6 @@ def memory_with_unit(draw):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@given(memory_with_unit())
-def test_torque_queue_config_memory_pr_job(memory_with_unit_str):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
-
-    config = ErtConfig.from_file(filename)
-
-    driver = Driver.create_driver(config.queue_config)
-
-    assert driver.get_option("MEMORY_PER_JOB") == memory_with_unit_str
-
-
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @pytest.mark.parametrize("memory_with_unit_str", ["gb", "mb", "1 gb"])
 def test_that_invalid_memory_pr_job_raises_validation_error(memory_with_unit_str):
     filename = "config.ert"
@@ -162,7 +146,7 @@ def test_undefined_LSF_SERVER_environment_variable_raises_validation_error():
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
-    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE")],
 )
 def test_initializing_empty_config_queue_options_resets_to_default_value(
     queue_system, queue_system_option

@@ -8,7 +8,6 @@ using job_driver_type = enum {
     NULL_DRIVER = 0,
     LSF_DRIVER = 1,
     LOCAL_DRIVER = 2,
-    TORQUE_DRIVER = 4,
     SLURM_DRIVER = 5
 };
 
