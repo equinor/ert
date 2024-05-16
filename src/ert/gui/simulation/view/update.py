@@ -105,23 +105,20 @@ class UpdateWidget(QWidget):
         grid_layout.addWidget(QLabel(str(smoother_snapshot.global_scaling)), 3, 1)
         grid_layout.addWidget(QLabel("Standard cutoff:"), 4, 0)
         grid_layout.addWidget(QLabel(str(smoother_snapshot.std_cutoff)), 4, 1)
-        grid_layout.addWidget(QLabel("Active observations:"), 5, 0)
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.ACTIVE])), 5, 1)
+        grid_layout.addWidget(QLabel("Active observations:"), 0, 2)
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.ACTIVE])), 0, 3)
         grid_layout.addWidget(
-            QLabel("Deactivated observations - missing respons(es):"), 6, 0
+            QLabel("Deactivated observations - missing respons(es):"), 1, 2
         )
         grid_layout.addWidget(
-            QLabel(str(obs_info[ObservationStatus.MISSING_RESPONSE])), 6, 1
+            QLabel(str(obs_info[ObservationStatus.MISSING_RESPONSE])), 1, 3
         )
         grid_layout.addWidget(
-            QLabel("Deactivated observations - ensemble_std > STD_CUTOFF:"), 7, 0
+            QLabel("Deactivated observations - ensemble_std > STD_CUTOFF:"), 2, 2
         )
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.STD_CUTOFF])), 7, 1)
-        grid_layout.addWidget(QLabel("Deactivated observations - outlier"), 8, 0)
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.OUTLIER])), 8, 1)
-
-        layout.addLayout(grid_layout)
-        layout.addSpacing(10)
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.STD_CUTOFF])), 2, 3)
+        grid_layout.addWidget(QLabel("Deactivated observations - outlier"), 3, 2)
+        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.OUTLIER])), 3, 3)
 
         table = QTableWidget()
         table.setColumnCount(4)
@@ -158,6 +155,8 @@ class UpdateWidget(QWidget):
             table.setItem(nr, 3, QTableWidgetItem(f"{step.get_status().capitalize()}"))
 
         layout.addWidget(table)
+        layout.addSpacing(10)
+        layout.addLayout(grid_layout)
 
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, "Report"))
 
