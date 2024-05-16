@@ -101,24 +101,39 @@ class Monitor:
         )
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
-    async def track(self) -> AsyncGenerator[CloudEvent, None]:
-        timeout: Optional[float] = None
+    async def track(
+        self, heartbeat_interval: Optional[float] = None
+    ) -> AsyncGenerator[Optional[CloudEvent], None]:
+        """Yield events from the internal event queue with optional heartbeats.
+
+        Heartbeats are represented by None being yielded.
+
+        Heartbeats stops being emitted after a CloseTrackerEvent is found."""
+        _heartbeat_interval: Optional[float] = heartbeat_interval
+        closetracker_received: bool = False
         while True:
             try:
-                # We need a timeout in case TERMINATED event get not sent
-                # when signalling cancel or done to evaluator
-                event = await asyncio.wait_for(self._event_queue.get(), timeout)
+                event = await asyncio.wait_for(
+                    self._event_queue.get(), timeout=_heartbeat_interval
+                )
             except asyncio.TimeoutError:
-                logger.error("Evaluator did not send the TERMINATED event!")
-                break
+                if closetracker_received:
+                    logger.error("Evaluator did not send the TERMINATED event!")
+                    break
+                event = None
             if isinstance(event, CloseTrackerEvent):
-                timeout = self._receiver_timeout
+                closetracker_received = True
+                _heartbeat_interval = self._receiver_timeout
             else:
                 yield event
-                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                if (
+                    event is not None
+                    and event["type"] == identifiers.EVTYPE_EE_TERMINATED
+                ):
                     logger.debug(f"monitor-{self._id} client received terminated")
                     break
-            self._event_queue.task_done()
+            if event is not None:
+                self._event_queue.task_done()
 
     async def _receiver(self) -> None:
         tls: Optional[ssl.SSLContext] = None

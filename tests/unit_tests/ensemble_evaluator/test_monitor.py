@@ -115,3 +115,26 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
 
     set_when_done.set()
     await websocket_server_task
+
+
+async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
+    """BaseRunModel.run_monitor() depends on heartbeats to be able to
+    exit anytime. A heartbeat is a None event.
+
+    If the heartbeat is never sent, this test function will hang and then timeout."""
+    ee_con_info = EvaluatorConnectionInfo(
+        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
+    )
+
+    set_when_done = asyncio.Event()
+    websocket_server_task = asyncio.create_task(
+        _mock_ws(set_when_done, None, ee_con_info)
+    )
+
+    async with Monitor(ee_con_info) as monitor:
+        async for event in monitor.track(heartbeat_interval=0.001):
+            if event is None:
+                break
+
+    set_when_done.set()  # shuts down websocket server
+    await websocket_server_task
