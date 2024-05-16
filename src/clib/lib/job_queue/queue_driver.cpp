@@ -2,7 +2,6 @@
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
-#include <ert/job_queue/torque_driver.hpp>
 #include <fmt/format.h>
 #include <stdexcept>
 
@@ -91,16 +90,6 @@ queue_driver_type *queue_driver_alloc(job_driver_type type) {
         driver->set_option = local_driver_set_option;
         driver->get_option = local_driver_get_option;
         driver->data = local_driver_alloc();
-        break;
-    case TORQUE_DRIVER:
-        driver->submit = torque_driver_submit_job;
-        driver->get_status = torque_driver_get_job_status;
-        driver->kill_job = torque_driver_kill_job;
-        driver->free_job = torque_driver_free_job;
-        driver->free_driver = torque_driver_free_;
-        driver->set_option = torque_driver_set_option;
-        driver->get_option = torque_driver_get_option;
-        driver->data = torque_driver_alloc();
         break;
     case SLURM_DRIVER:
         driver->set_option = slurm_driver_set_option;

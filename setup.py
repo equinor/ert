@@ -31,9 +31,6 @@ args = dict(
         "ert": package_files("src/ert/gui/resources/")
         + package_files("src/ert/shared/share/")
         + ["logging/logger.conf", "logging/storage_log.conf"]
-        + [
-            "job_queue/qstat_proxy.sh",
-        ],
     },
     cmake_args=[
         "-DBUILD_TESTS=OFF",

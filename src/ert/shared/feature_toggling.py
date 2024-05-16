@@ -25,6 +25,8 @@ class FeatureScheduler:
 
     @classmethod
     def is_enabled(cls, queue_system: QueueSystem) -> bool:
+        if queue_system.name == "TORQUE":
+            return True
         if cls._value is not None:
             return cls._value
         return cls._DEFAULTS[queue_system.name]

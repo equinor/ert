@@ -30,14 +30,11 @@ add_executable(
   job_queue/test_job_slurm_driver.cpp
   $<$<BOOL:${SBATCH}>:job_queue/test_job_slurm_submit.cpp> # if found add file
   $<$<BOOL:${SBATCH}>:job_queue/test_job_slurm_runtest.cpp> # if found add file
-  job_queue/test_job_torque.cpp
-  job_queue/test_job_torque_submit.cpp
   job_queue/test_lsf_driver.cpp
   res_util/test_string.cpp
   tmpdir.cpp)
 
 set_source_files_properties(
-  test_job_torque_submit.cpp
   PROPERTIES ENVIRONMENT "setenv PATH ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PATH}")
 
 target_compile_definitions(

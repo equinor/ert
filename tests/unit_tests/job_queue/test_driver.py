@@ -33,8 +33,6 @@ def test_get_driver_name():
     assert Driver.create_driver(queue_config).name == "LOCAL"
     queue_config = QueueConfig(queue_system=QueueSystem.SLURM)
     assert Driver.create_driver(queue_config).name == "SLURM"
-    queue_config = QueueConfig(queue_system=QueueSystem.TORQUE)
-    assert Driver.create_driver(queue_config).name == "TORQUE"
     queue_config = QueueConfig(queue_system=QueueSystem.LSF)
     assert Driver.create_driver(queue_config).name == "LSF"
 
