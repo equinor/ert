@@ -6,7 +6,7 @@ import time
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
-from typing import Collection, List, Optional, get_args
+from typing import Collection, List, Optional, get_args, get_type_hints
 from unittest.mock import AsyncMock
 
 import pytest
@@ -26,7 +26,7 @@ from ert.scheduler.lsf_driver import (
     QueuedJob,
     RunningJob,
     StartedEvent,
-    _Stat,
+    _parse_jobs_dict,
     build_resource_requirement_string,
     filter_job_ids_on_submission_time,
     parse_bhist,
@@ -102,31 +102,25 @@ async def test_events_produced_from_jobstate_updates(
 
     started = any(
         state in jobstate_sequence
-        for state in RunningJob.model_json_schema()["properties"]["job_state"]["enum"]
+        for state in get_type_hints(RunningJob)["job_state"].__args__
     )
     finished_success = any(
         state in jobstate_sequence
-        for state in FinishedJobSuccess.model_json_schema()["properties"]["job_state"][
-            "enum"
-        ]
+        for state in get_type_hints(FinishedJobSuccess)["job_state"].__args__
     )
     finished_failure = any(
         state in jobstate_sequence
-        for state in FinishedJobFailure.model_json_schema()["properties"]["job_state"][
-            "enum"
-        ]
+        for state in get_type_hints(FinishedJobFailure)["job_state"].__args__
     )
 
     driver = LsfDriver(bjobs_cmd=mocked_bjobs, bhist_cmd=mocked_bhist)
 
-    async def mocked_submit(self, iens, name, *_args, **_kwargs):
+    async def mocked_submit(self: LsfDriver, iens, name, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
         self._jobs["1"] = JobData(
             iens=iens,
             job_state=QueuedJob(job_state="PEND"),
             submitted_timestamp=time.time(),
-            runpath=os.getcwd(),
-            name=name,
         )
         self._iens2jobid[iens] = "1"
 
@@ -136,7 +130,7 @@ async def test_events_produced_from_jobstate_updates(
 
     # Replicate the behaviour of multiple calls to poll()
     for statestr in jobstate_sequence:
-        jobstate = _Stat(**{"jobs": {"1": {"job_state": statestr}}}).jobs["1"]
+        jobstate = _parse_jobs_dict({"1": statestr})["1"]
         await driver._process_job_update("1", jobstate)
 
     events = []
@@ -414,7 +408,7 @@ async def test_kill(
 
 @given(st.text())
 def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
-    assert parse_bjobs(some_text) == {"jobs": {}}
+    assert parse_bjobs(some_text) == {}
 
 
 @pytest.mark.parametrize(
@@ -422,19 +416,19 @@ def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
     [
         pytest.param(
             "1^RUN",
-            {"1": {"job_state": "RUN"}},
+            {"1": "RUN"},
             id="basic",
         ),
-        pytest.param("1^DONE", {"1": {"job_state": "DONE"}}, id="done"),
+        pytest.param("1^DONE", {"1": "DONE"}, id="done"),
         pytest.param(
             "1^DONE\n2^RUN",
-            {"1": {"job_state": "DONE"}, "2": {"job_state": "RUN"}},
+            {"1": "DONE", "2": "RUN"},
             id="two_jobs",
         ),
     ],
 )
 def test_parse_bjobs_happy_path(bjobs_output, expected):
-    assert parse_bjobs(bjobs_output) == {"jobs": expected}
+    assert parse_bjobs(bjobs_output) == expected
 
 
 @given(
@@ -443,14 +437,12 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
     st.from_type(JobState),
 )
 def test_parse_bjobs(job_id, username, job_state):
-    assert parse_bjobs(f"{job_id}^{job_state}") == {
-        "jobs": {str(job_id): {"job_state": job_state}}
-    }
+    assert parse_bjobs(f"{job_id}^{job_state}") == {str(job_id): job_state}
 
 
 @given(nonempty_string_without_whitespace().filter(lambda x: x not in valid_jobstates))
 def test_parse_bjobs_invalid_state_is_ignored(random_state):
-    assert parse_bjobs(f"1^{random_state}") == {"jobs": {}}
+    assert parse_bjobs(f"1^{random_state}") == {}
 
 
 def test_parse_bjobs_invalid_state_is_logged(caplog):
@@ -689,7 +681,7 @@ async def test_parse_bhist(bhist_output, expected):
     assert parse_bhist(bhist_output) == expected
 
 
-empty_states = _Stat(**{"jobs": {}})
+empty_states = _parse_jobs_dict({})
 
 
 @pytest.mark.parametrize(
@@ -700,37 +692,37 @@ empty_states = _Stat(**{"jobs": {}})
         pytest.param(
             "1 x x 0 x 0",
             "1 x x 0 x 0",
-            _Stat(**{"jobs": {"1": {"job_state": "DONE"}}}),
+            _parse_jobs_dict({"1": "DONE"}),
             id="short-job-finished",  # required_cache_age is zero in this test
         ),
         pytest.param(
             "1 x x 1 x 0",
             "1 x x 2 x 0",
-            _Stat(**{"jobs": {"1": {"job_state": "PEND"}}}),
+            _parse_jobs_dict({"1": "PEND"}),
             id="job-is-pending",
         ),
         pytest.param(
             "1 x x 1 x 0",
             "1 x x 1 x 1",
-            _Stat(**{"jobs": {"1": {"job_state": "RUN"}}}),
+            _parse_jobs_dict({"1": "RUN"}),
             id="job-is-running",
         ),
         pytest.param(
             "1 x x 1 x 0\n",
             "1 x x 1 x 1\n2 x x 0 x 0",
-            _Stat(**{"jobs": {"1": {"job_state": "RUN"}}}),
+            _parse_jobs_dict({"1": "RUN"}),
             id="partial_cache",
         ),
         pytest.param(
             "1 x x 1 x 0\n2 x x 0 x 0",
             "1 x x 1 x 1\n2 x x 0 x 0",
-            _Stat(**{"jobs": {"1": {"job_state": "RUN"}, "2": {"job_state": "DONE"}}}),
+            _parse_jobs_dict({"1": "RUN", "2": "DONE"}),
             id="two-jobs",
         ),
         pytest.param(
             "1 x x 1 x 0\n2 x x 0 x 0",
             "2 x x 0 x 0",
-            _Stat(**{"jobs": {"2": {"job_state": "DONE"}}}),
+            _parse_jobs_dict({"2": "DONE"}),
             id="job-exited-from-cache",
         ),
     ],
@@ -760,7 +752,7 @@ async def test_poll_once_by_bhist(
         pytest.param(10, empty_states, id="no_output_for_fresh_cache"),
         pytest.param(
             0,
-            _Stat(**{"jobs": {"1": {"job_state": "DONE"}}}),
+            _parse_jobs_dict({"1": "DONE"}),
             id="cache_is_old_enough",
         ),
     ],

@@ -11,6 +11,7 @@ import stat
 import subprocess
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     Dict,
@@ -21,12 +22,11 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
+    Type,
     Union,
+    cast,
     get_args,
 )
-
-from pydantic import BaseModel, Field
-from typing_extensions import Annotated
 
 from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
@@ -42,34 +42,49 @@ JobState = Literal[
 ]
 
 
-class IgnoredJobstates(BaseModel):
+@dataclass(frozen=True)
+class IgnoredJobstates:
     job_state: Literal["UNKWN"]
 
 
-class FinishedJobSuccess(BaseModel):
+@dataclass(frozen=True)
+class FinishedJobSuccess:
     job_state: Literal["DONE", "PDONE"]
 
 
-class FinishedJobFailure(BaseModel):
+@dataclass(frozen=True)
+class FinishedJobFailure:
     job_state: Literal["EXIT", "ZOMBI"]
 
 
-class QueuedJob(BaseModel):
+@dataclass(frozen=True)
+class QueuedJob:
     job_state: Literal["PEND"]
 
 
-class RunningJob(BaseModel):
+@dataclass(frozen=True)
+class RunningJob:
     job_state: Literal["RUN", "SSUSP", "USUSP", "PSUSP"]
 
 
-AnyJob = Annotated[
-    Union[
-        FinishedJobSuccess, FinishedJobFailure, QueuedJob, RunningJob, IgnoredJobstates
-    ],
-    Field(discriminator="job_state"),
+_JOBSTATE_MAP = {
+    "EXIT": FinishedJobFailure,
+    "DONE": FinishedJobSuccess,
+    "PEND": QueuedJob,
+    "RUN": RunningJob,
+    "ZOMBI": FinishedJobFailure,
+    "PDONE": FinishedJobSuccess,
+    "SSUSP": RunningJob,
+    "USUSP": RunningJob,
+    "PSUSP": RunningJob,
+    "UNKWN": IgnoredJobstates,
+}
+
+AnyJob = Union[
+    FinishedJobSuccess, FinishedJobFailure, QueuedJob, RunningJob, IgnoredJobstates
 ]
 
-_STATE_ORDER: dict[type[BaseModel], int] = {
+_STATE_ORDER: dict[Type[AnyJob], int] = {
     IgnoredJobstates: -1,
     QueuedJob: 0,
     RunningJob: 1,
@@ -82,18 +97,22 @@ FLAKY_SSH_RETURNCODE = 255
 JOB_ALREADY_FINISHED_BKILL_MSG = "Job has already finished"
 
 
-class _Stat(BaseModel):
-    jobs: Mapping[str, AnyJob]
+def _parse_jobs_dict(jobs: Mapping[str, JobState]) -> dict[str, AnyJob]:
+    parsed_jobs_dict: dict[str, AnyJob] = {}
+    for job_id, job_state in jobs.items():
+        parsed_jobs_dict[job_id] = _JOBSTATE_MAP[job_state](job_state)
+    return parsed_jobs_dict
 
 
-class JobData(BaseModel):
+@dataclass
+class JobData:
     iens: int
     job_state: AnyJob
     submitted_timestamp: float
 
 
-def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
-    data: Dict[str, Dict[str, str]] = {}
+def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
+    data: Dict[str, JobState] = {}
     for line in bjobs_output.splitlines():
         tokens = line.split(sep="^")
         if len(tokens) == 2:
@@ -104,8 +123,8 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
                     f"LSF for jobid {job_id}, ignored."
                 )
                 continue
-            data[job_id] = {"job_state": job_state}
-    return {"jobs": data}
+            data[job_id] = cast(JobState, job_state)
+    return data
 
 
 def build_resource_requirement_string(
@@ -367,9 +386,9 @@ class LsfDriver(Driver):
                 logger.warning(
                     f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
                 )
-            bjobs_states = _Stat(**parse_bjobs(stdout.decode(errors="ignore")))
+            bjobs_states = _parse_jobs_dict(parse_bjobs(stdout.decode(errors="ignore")))
 
-            job_ids_found_in_bjobs_output = set(bjobs_states.jobs.keys())
+            job_ids_found_in_bjobs_output = set(bjobs_states.keys())
             if (
                 missing_in_bjobs_output := filter_job_ids_on_submission_time(
                     self._jobs, submitted_before=time.time() - self._poll_period
@@ -379,16 +398,16 @@ class LsfDriver(Driver):
                 logger.debug(f"bhist is used for job ids: {missing_in_bjobs_output}")
                 bhist_states = await self._poll_once_by_bhist(missing_in_bjobs_output)
                 missing_in_bhist_and_bjobs = missing_in_bjobs_output - set(
-                    bhist_states.jobs.keys()
+                    bhist_states.keys()
                 )
             else:
-                bhist_states = _Stat(**{"jobs": {}})
+                bhist_states = {}
                 missing_in_bhist_and_bjobs = set()
 
             for job_id, job in itertools.chain(
-                bjobs_states.jobs.items(), bhist_states.jobs.items()
+                bjobs_states.items(), bhist_states.items()
             ):
-                await self._process_job_update(job_id, job)
+                await self._process_job_update(job_id, new_state=job)
 
             if missing_in_bhist_and_bjobs and self._bhist_cache is not None:
                 logger.debug(
@@ -399,7 +418,6 @@ class LsfDriver(Driver):
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
         if job_id not in self._jobs:
             return
-
         old_state = self._jobs[job_id].job_state
         iens = self._jobs[job_id].iens
         if isinstance(new_state, IgnoredJobstates):
@@ -482,9 +500,11 @@ class LsfDriver(Driver):
         )
         logger.info(f"Output from bhist -l: {process_message}")
 
-    async def _poll_once_by_bhist(self, missing_job_ids: Iterable[str]) -> _Stat:
+    async def _poll_once_by_bhist(
+        self, missing_job_ids: Iterable[str]
+    ) -> Dict[str, AnyJob]:
         if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
-            return _Stat(**{"jobs": {}})
+            return {}
 
         process = await asyncio.create_subprocess_exec(
             self._bhist_cmd,
@@ -499,16 +519,16 @@ class LsfDriver(Driver):
                 f"output{stdout.decode(errors='ignore').strip()} "
                 f"and error {stderr.decode(errors='ignore').strip()}"
             )
-            return _Stat(**{"jobs": {}})
+            return {}
 
         data: Dict[str, Dict[str, int]] = parse_bhist(stdout.decode())
 
         if not self._bhist_cache:
             # Boot-strapping. We can't give any data until we have run again.
             self._bhist_cache = data
-            return _Stat(**{"jobs": {}})
+            return {}
 
-        jobs = {}
+        jobs: dict[str, JobState] = {}
         for job_id, job_stat in data.items():
             if job_id not in self._bhist_cache:
                 continue
@@ -518,20 +538,20 @@ class LsfDriver(Driver):
                 and job_stat["running_seconds"]
                 == self._bhist_cache[job_id]["running_seconds"]
             ):
-                jobs[job_id] = {"job_state": "DONE"}  # or EXIT, we can't tell
+                jobs[job_id] = cast(JobState, "DONE")  # or EXIT, we can't tell
             elif (
                 job_stat["running_seconds"]
                 > self._bhist_cache[job_id]["running_seconds"]
             ):
-                jobs[job_id] = {"job_state": "RUN"}
+                jobs[job_id] = cast(JobState, "RUN")
             elif (
                 job_stat["pending_seconds"]
                 > self._bhist_cache[job_id]["pending_seconds"]
             ):
-                jobs[job_id] = {"job_state": "PEND"}
+                jobs[job_id] = cast(JobState, "PEND")
         self._bhist_cache = data
         self._bhist_cache_timestamp = time.time()
-        return _Stat(**{"jobs": jobs})
+        return _parse_jobs_dict(jobs)
 
     def _build_resource_requirement_arg(self) -> List[str]:
         resource_requirement_string = build_resource_requirement_string(
