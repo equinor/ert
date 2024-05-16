@@ -491,8 +491,8 @@ class BaseRunModel:
             event_logger.debug("connecting to new monitor...")
             async with Monitor(ee_config.get_connection_info()) as monitor:
                 event_logger.debug("connected")
-                async for event in monitor.track():
-                    if event["type"] in (
+                async for event in monitor.track(heartbeat_interval=0.1):
+                    if event is not None and event["type"] in (
                         EVTYPE_EE_SNAPSHOT,
                         EVTYPE_EE_SNAPSHOT_UPDATE,
                     ):
@@ -512,7 +512,7 @@ class BaseRunModel:
                             )
                             # Allow track() to emit an EndEvent.
                             return False
-                    elif event["type"] == EVTYPE_EE_TERMINATED:
+                    elif event is not None and event["type"] == EVTYPE_EE_TERMINATED:
                         event_logger.debug("got terminator event")
 
                     if not self._end_queue.empty():
