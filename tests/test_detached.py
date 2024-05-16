@@ -52,7 +52,7 @@ class MockContext:
         job = namedtuple("Job", "std_err_file")
         job.std_err_file = "error_file.0"
         job_progress = namedtuple("JobProgres", ["jobs"])
-        job_progress.jobs = [job]
+        job_progress.steps = [job]
         return job_progress
 
 

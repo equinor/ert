@@ -174,7 +174,7 @@ def wait_for_server(
                 )
             # Job queueing may fail:
             if context is not None and context.job_status(0) == JobStatus.FAILED:
-                path = context.job_progress(0).jobs[0].std_err_file
+                path = context.job_progress(0).steps[0].std_err_file
                 for err in extract_errors_from_file(path):
                     update_everserver_status(config, ServerStatus.failed, message=err)
                     logging.error(err)
