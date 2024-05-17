@@ -1,11 +1,20 @@
 import dataclasses
 from datetime import datetime as dt
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, Literal, Optional, TypedDict
 
 import psutil
 
 if TYPE_CHECKING:
     from _ert_forward_model_runner.job import Job
+
+    class _ChecksumDictBase(TypedDict):
+        type: Literal["file"]
+        path: str
+
+    class ChecksumDict(_ChecksumDictBase, total=False):
+        md5sum: str
+        error: str
+
 
 _JOB_STATUS_SUCCESS = "Success"
 _JOB_STATUS_RUNNING = "Running"
@@ -119,3 +128,10 @@ class Exited(Message):
     def __init__(self, job, exit_code):
         super().__init__(job)
         self.exit_code = exit_code
+
+
+class Checksum(Message):
+    def __init__(self, checksum_dict: Dict[str, "ChecksumDict"], run_path: str):
+        super().__init__()
+        self.data = checksum_dict
+        self.run_path = run_path

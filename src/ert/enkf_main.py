@@ -234,6 +234,10 @@ def create_run_path(
                 )
 
                 json.dump(forward_model_output, fptr)
+            # Write MANIFEST file to runpath use to avoid NFS sync issues
+            with open(run_path / "manifest.json", mode="w", encoding="utf-8") as fptr:
+                data = ert_config.manifest_to_json(run_arg.iens, run_arg.itr)
+                json.dump(data, fptr)
 
     run_context.runpaths.write_runpath_list(
         [run_context.iteration], run_context.active_realizations

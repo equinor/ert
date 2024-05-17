@@ -528,6 +528,33 @@ class ErtConfig:
     def forward_model_step_name_list(self) -> List[str]:
         return [j.name for j in self.forward_model_steps]
 
+    def manifest_to_json(self, iens: int = 0, iter: int = 0) -> Dict[str, Any]:
+        manifest = {}
+        # Add expected parameter files to manifest
+        if iter == 0:
+            for (
+                name,
+                parameter_config,
+            ) in self.ensemble_config.parameter_configs.items():
+                if parameter_config.forward_init and parameter_config.forward_init_file:
+                    file_path = parameter_config.forward_init_file.replace(
+                        "%d", str(iens)
+                    )
+                    manifest[name] = file_path
+        # Add expected response files to manifest
+        for name, respons_config in self.ensemble_config.response_configs.items():
+            input_file = str(respons_config.input_file)
+            if isinstance(respons_config, SummaryConfig):
+                input_file = input_file.replace("<IENS>", str(iens))
+                manifest[f"{name}_UNSMRY"] = f"{input_file}.UNSMRY"
+                manifest[f"{name}_SMSPEC"] = f"{input_file}.SMSPEC"
+            if isinstance(respons_config, GenDataConfig):
+                if respons_config.report_steps and iens in respons_config.report_steps:
+                    manifest[name] = input_file.replace("%d", str(iens))
+                elif "%d" not in input_file:
+                    manifest[name] = input_file
+        return manifest
+
     def forward_model_data_to_json(
         self,
         run_id: Optional[str] = None,

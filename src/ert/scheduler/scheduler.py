@@ -21,12 +21,16 @@ from typing import (
     Sequence,
 )
 
+from aiohttp import ClientError
+from cloudevents.exceptions import DataUnmarshallerError
+from cloudevents.http import from_json
 from pydantic.dataclasses import dataclass
 from websockets import ConnectionClosed, Headers
 from websockets.client import connect
 
 from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
+from ert.event_type_constants import EVTYPE_FORWARD_MODEL_CHECKSUM
 from ert.job_queue.queue import (
     CLOSE_PUBLISHER_SENTINEL,
     EVTYPE_ENSEMBLE_CANCELLED,
@@ -36,6 +40,7 @@ from ert.scheduler.driver import Driver
 from ert.scheduler.event import FinishedEvent
 from ert.scheduler.job import Job
 from ert.scheduler.job import State as JobState
+from ert.serialization import evaluator_unmarshaller
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator._builder._realization import Realization
@@ -116,6 +121,22 @@ class Scheduler:
         self._ee_cert = ee_cert
         self._ee_token = ee_token
         self._publisher_done = asyncio.Event()
+        self._consumer_started = asyncio.Event()
+        self.checksum: Dict[str, Dict[str, Any]] = {}
+        self.checksum_listener: Optional[asyncio.Task[None]] = None
+
+    async def start_manifest_listener(self) -> Optional[asyncio.Task[None]]:
+        if self._ee_uri is None or "dispatch" not in self._ee_uri:
+            return None
+
+        self.checksum_listener = asyncio.create_task(
+            self._checksum_consumer(), name="consumer_task"
+        )
+        await self._consumer_started.wait()
+        return self.checksum_listener
+
+    def wait_for_checksum(self) -> bool:
+        return self._consumer_started.is_set()
 
     def kill_all_jobs(self) -> None:
         assert self._loop
@@ -183,6 +204,47 @@ class Scheduler:
         for job in self._jobs.values():
             counts[job.state] += 1
         return counts
+
+    async def _checksum_consumer(self) -> None:
+        if not self._ee_uri:
+            return
+        tls: Optional[ssl.SSLContext] = None
+        if self._ee_cert:
+            tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            tls.load_verify_locations(cadata=self._ee_cert)
+        headers = Headers()
+        if self._ee_token:
+            headers["token"] = self._ee_token
+        event = None
+        async for conn in connect(
+            self._ee_uri.replace("dispatch", "client"),
+            ssl=tls,
+            extra_headers=headers,
+            max_size=2**26,
+            max_queue=500,
+            open_timeout=5,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
+        ):
+            try:
+                self._consumer_started.set()
+                async for message in conn:
+                    try:
+                        event = from_json(
+                            str(message), data_unmarshaller=evaluator_unmarshaller
+                        )
+                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                            self.checksum.update(event.data)
+                    except DataUnmarshallerError:
+                        logger.error(
+                            "Scheduler checksum consumer reviced unknown message"
+                        )
+            except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
+                self._consumer_started.clear()
+                logger.debug(
+                    f"Scheduler connection to EnsembleEvaluator went down: {exc}"
+                )
 
     async def _publisher(self) -> None:
         if not self._ee_uri:
@@ -268,6 +330,7 @@ class Scheduler:
         self,
         min_required_realizations: int = 0,
     ) -> str:
+        listener_task = await self.start_manifest_listener()
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(
@@ -275,6 +338,8 @@ class Scheduler:
             ),
             asyncio.create_task(self.driver.poll(), name="poll_task"),
         ]
+        if listener_task is not None:
+            scheduling_tasks.append(listener_task)
 
         if min_required_realizations > 0:
             scheduling_tasks.append(

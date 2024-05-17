@@ -1,6 +1,8 @@
 import asyncio
 import json
+import logging
 import shutil
+from functools import partial
 from pathlib import Path
 from typing import List
 from unittest.mock import AsyncMock, MagicMock
@@ -11,6 +13,7 @@ import ert
 from ert.ensemble_evaluator._builder._realization import Realization
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
+from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
 from ert.scheduler.job import STATE_TO_LEGACY, Job, State
 
@@ -19,6 +22,7 @@ def create_scheduler():
     sch = AsyncMock()
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
+    sch.wait_for_checksum = lambda: False
     sch._cancelled = False
     return sch
 
@@ -121,6 +125,7 @@ async def test_job_run_sends_expected_events(
         forward_model_ok_result, ""
     )
     job = Job(scheduler, realization)
+    job._verify_checksum = partial(job._verify_checksum, timeout=0)
     job.started.set()
 
     job_run_task = asyncio.create_task(
@@ -155,3 +160,122 @@ async def test_job_run_sends_expected_events(
         num_cpu=realization.num_cpu,
     )
     assert scheduler.driver.submit.call_count == max_submit
+
+
+@pytest.mark.asyncio
+async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
+    realization: Realization, monkeypatch
+):
+    scheduler = create_scheduler()
+    scheduler.wait_for_checksum = lambda: True
+    file_path = "does/not/exist"
+    scheduler.checksum = {
+        "test_runpath": {
+            "file": {
+                "path": file_path,
+                "md5sum": "something",
+            }
+        }
+    }
+    log_msgs = []
+    job = Job(scheduler, realization)
+    job._verify_checksum = partial(job._verify_checksum, timeout=0)
+    job.started.set()
+
+    with captured_logs(log_msgs, logging.ERROR):
+        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job.started.set()
+        job.returncode.set_result(0)
+        await job_run_task
+
+    assert "Disk synchronization failed for does/not/exist" in log_msgs
+
+
+@pytest.mark.asyncio
+async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
+    realization: Realization, monkeypatch
+):
+    scheduler = create_scheduler()
+    scheduler.wait_for_checksum = lambda: True
+    file_path = "does/not/exist"
+    error = f"Expected file {file_path} not created by forward model!"
+    scheduler.checksum = {
+        "test_runpath": {
+            "file": {
+                "path": file_path,
+                "error": error,
+            }
+        }
+    }
+    log_msgs = []
+    job = Job(scheduler, realization)
+    job.started.set()
+
+    with captured_logs(log_msgs, logging.ERROR):
+        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job.started.set()
+        job.returncode.set_result(0)
+        await job_run_task
+
+    assert error in log_msgs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.asyncio
+async def test_when_checksums_do_not_match_a_warning_is_logged(
+    realization: Realization,
+):
+    scheduler = create_scheduler()
+    scheduler.wait_for_checksum = lambda: True
+    file_path = "invalid_md5sum"
+    scheduler.checksum = {
+        "test_runpath": {
+            "file": {
+                "path": file_path,
+                "md5sum": "something_something_checksum",
+            }
+        }
+    }
+    # Create the file
+    Path(file_path).write_text("test")
+
+    log_msgs = []
+    job = Job(scheduler, realization)
+    job.started.set()
+
+    with captured_logs(log_msgs, logging.WARNING):
+        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job.started.set()
+        job.returncode.set_result(0)
+        await job_run_task
+
+    assert f"File {file_path} checksum verification failed." in log_msgs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.asyncio
+async def test_when_no_checksum_info_is_received_a_warning_is_logged(
+    realization: Realization, mocker
+):
+    scheduler = create_scheduler()
+    scheduler.wait_for_checksum = lambda: True
+    scheduler.checksum = {}
+    # Create the file
+
+    log_msgs = []
+    job = Job(scheduler, realization)
+    job.started.set()
+
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep", return_value=None)
+
+    with captured_logs(log_msgs, logging.WARNING):
+        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job.started.set()
+        job.returncode.set_result(0)
+        await job_run_task
+
+    assert (
+        f"Checksum information not received for {realization.run_arg.runpath}"
+        in log_msgs
+    )

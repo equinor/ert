@@ -10,3 +10,5 @@ EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
 EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
 EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
 EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
+
+EVTYPE_FORWARD_MODEL_CHECKSUM = "com.equinor.ert.forward_model_job.checksum"

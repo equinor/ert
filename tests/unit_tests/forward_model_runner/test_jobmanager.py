@@ -5,7 +5,7 @@ import stat
 
 import pytest
 
-from _ert_forward_model_runner.reporting.message import Exited, Start
+from _ert_forward_model_runner.reporting.message import Checksum, Exited, Start
 from _ert_forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import _forward_model_step_from_config_file
@@ -121,6 +121,62 @@ def test_run_multiple_ok():
         assert os.path.isfile(f"mkdir_out.{dir_number}")
         assert os.path.isfile(f"mkdir_err.{dir_number}")
         assert os.path.getsize(f"mkdir_err.{dir_number}") == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_when_forward_model_contains_multiple_jobs_just_one_checksum_status_is_given():
+    joblist = []
+    file_list = ["1", "2", "3", "4", "5"]
+    manifest = {}
+    for job_index in file_list:
+        manifest[f"file_{job_index}"] = job_index
+        job = {
+            "name": "TOUCH",
+            "executable": "touch",
+            "stdout": f"touch_out.{job_index}",
+            "stderr": f"touch_err.{job_index}",
+            "argList": [job_index],
+        }
+        joblist.append(job)
+    with open("manifest.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f)
+
+    jobm = ForwardModelRunner(create_jobs_json(joblist))
+
+    statuses = [s for s in list(jobm.run([])) if isinstance(s, Checksum)]
+    assert len(statuses) == 1
+    assert len(statuses[0].data) == 5
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error():
+    joblist = []
+    file_name = "test"
+    manifest = {"file_1": f"{file_name}"}
+
+    joblist.append(
+        {
+            "name": "TOUCH",
+            "executable": "touch",
+            "stdout": "touch_out.test",
+            "stderr": "touch_err.test",
+            "argList": ["not_test"],
+        }
+    )
+    with open("manifest.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f)
+
+    jobm = ForwardModelRunner(create_jobs_json(joblist))
+
+    checksum_msg = [s for s in list(jobm.run([])) if isinstance(s, Checksum)]
+    assert len(checksum_msg) == 1
+    info = checksum_msg[0].data["file_1"]
+    assert "md5sum" not in info
+    assert "error" in info
+    assert (
+        f"Expected file {os.getcwd()}/{file_name} not created by forward model!"
+        in info["error"]
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

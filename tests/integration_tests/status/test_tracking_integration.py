@@ -32,6 +32,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
+from ert.shared.feature_toggling import FeatureScheduler
 
 
 class Events:
@@ -412,3 +413,13 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE"
         ) in failures[0].failed_msg
+        if FeatureScheduler._value:
+            case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
+            assert (
+                f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
+                f"file {case}.SMSPEC not created by forward model!"
+            ) in caplog.messages
+            assert (
+                f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
+                f"file {case}.SMSPEC not created by forward model!"
+            ) in failures[0].failed_msg
