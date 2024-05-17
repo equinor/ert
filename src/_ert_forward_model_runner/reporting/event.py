@@ -17,6 +17,7 @@ from _ert_forward_model_runner.client import (
 from _ert_forward_model_runner.reporting.base import Reporter
 from _ert_forward_model_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
+    Checksum,
     Exited,
     Finish,
     Init,
@@ -29,11 +30,13 @@ from _ert_forward_model_runner.reporting.statemachine import StateMachine
 _FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
 _FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
 _FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
+_FORWARD_MODEL_CHECKSUM = "com.equinor.ert.forward_model_job.checksum"
 _FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
 _CONTENT_TYPE = "datacontenttype"
 _JOB_MSG_TYPE = "type"
 _JOB_SOURCE = "source"
+_RUN_PATH = "run_path"
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,7 @@ class Event(Reporter):
         self._statemachine = StateMachine()
         self._statemachine.add_handler((Init,), self._init_handler)
         self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
+        self._statemachine.add_handler((Checksum,), self._checksum_handler)
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
         self._ens_id = None
@@ -193,3 +197,14 @@ class Event(Reporter):
             )
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
+
+    def _checksum_handler(self, msg):
+        job_msg_attrs = {
+            _JOB_SOURCE: (f"/ert/ensemble/{self._ens_id}/real/{self._real_id}"),
+            _CONTENT_TYPE: "application/json",
+            _RUN_PATH: msg.run_path,
+        }
+        self._dump_event(
+            attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_CHECKSUM, **job_msg_attrs},
+            data=msg.data,
+        )

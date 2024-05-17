@@ -1,13 +1,10 @@
-import asyncio
 import contextlib
 import os
-from typing import Any, Callable, Coroutine
 from unittest.mock import MagicMock, patch
 
 import pytest
 from websockets.exceptions import ConnectionClosed
 
-from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -17,18 +14,11 @@ from ert.scheduler import Scheduler
 from ert.shared.feature_toggling import FeatureScheduler
 
 
-def run_monitor_in_loop(monitor_func: Callable[[], Coroutine[Any, Any, None]]) -> bool:
-    loop = new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        return loop.run_until_complete(monitor_func())
-    finally:
-        loop.close()
-
-
 @pytest.mark.timeout(60)
 @pytest.mark.usefixtures("using_scheduler")
-def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+def test_run_legacy_ensemble(
+    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
+):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -66,7 +56,9 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
 
 @pytest.mark.timeout(60)
 @pytest.mark.usefixtures("using_scheduler")
-def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
+def test_run_and_cancel_legacy_ensemble(
+    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
+):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
@@ -115,7 +107,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
 
 @pytest.mark.timeout(10)
 def test_run_legacy_ensemble_with_bare_exception(
-    tmpdir, make_ensemble_builder, monkeypatch
+    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
 ):
     """This test function is not ported to Scheduler, as it will not
     catch general exceptions."""

@@ -35,6 +35,7 @@ EVTYPE_FORWARD_MODEL_START = "com.equinor.ert.forward_model_job.start"
 EVTYPE_FORWARD_MODEL_RUNNING = "com.equinor.ert.forward_model_job.running"
 EVTYPE_FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
 EVTYPE_FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
+EVTYPE_FORWARD_MODEL_CHECKSUM = "com.equinor.ert.forward_model_job.checksum"
 
 
 EVGROUP_REALIZATION = {

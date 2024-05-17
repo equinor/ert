@@ -43,6 +43,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from .snapshot import PartialSnapshot
 from .state import (
@@ -99,6 +100,18 @@ class EnsembleEvaluator:
     @property
     def ensemble(self) -> Ensemble:
         return self._ensemble
+
+    async def forward_checksum(self, event: CloudEvent) -> None:
+        forward_event = CloudEvent(
+            {
+                "type": EVTYPE_FORWARD_MODEL_CHECKSUM,
+                "source": f"/ert/ensemble/{self.ensemble.id_}",
+            },
+            {event["run_path"]: event.data},
+        )
+        await self._send_message(
+            to_json(forward_event, data_marshaller=evaluator_marshaller).decode()
+        )
 
     def _fm_handler(self, events: List[CloudEvent]) -> None:
         with self._snapshot_mutex:
@@ -171,18 +184,7 @@ class EnsembleEvaluator:
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
         )
-        if message and self._clients:
-            # Note return_exceptions=True in gather. This fire-and-forget
-            # approach is currently how we deal with failures when trying
-            # to send udates to clients. Rationale is that if sending to
-            # the client fails, the websocket is down and we have no way
-            # to re-establish it. Thus, it becomes the responsibility of
-            # the client to re-connect if necessary, in which case the first
-            # update it receives will be a full snapshot.
-            await asyncio.gather(
-                *[client.send(message) for client in self._clients],
-                return_exceptions=True,
-            )
+        await self._send_message(message)
 
     def _create_cloud_event(
         self,
@@ -282,7 +284,10 @@ class EnsembleEvaluator:
                         )
                         continue
                     try:
-                        await self._dispatcher.handle_event(event)
+                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                            await self.forward_checksum(event)
+                        else:
+                            await self._dispatcher.handle_event(event)
                     except BaseException as ex:
                         # Exceptions include asyncio.InvalidStateError, and
                         # anything that self._*_handler() can raise (updates
@@ -430,3 +435,17 @@ class EnsembleEvaluator:
     def _get_ens_id(source: str) -> str:
         # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]
+
+    async def _send_message(self, message: Optional[str] = None) -> None:
+        if message and self._clients:
+            # Note return_exceptions=True in gather. This fire-and-forget
+            # approach is currently how we deal with failures when trying
+            # to send udates to clients. Rationale is that if sending to
+            # the client fails, the websocket is down and we have no way
+            # to re-establish it. Thus, it becomes the responsibility of
+            # the client to re-connect if necessary, in which case the first
+            # update it receives will be a full snapshot.
+            await asyncio.gather(
+                *[client.send(message) for client in self._clients],
+                return_exceptions=True,
+            )

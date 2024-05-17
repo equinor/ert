@@ -1,12 +1,15 @@
+import asyncio
 import json
 import os
 import stat
 from pathlib import Path
+from typing import Any, Callable, Coroutine
 from unittest.mock import MagicMock, Mock
 
 import pytest
 
 import ert.ensemble_evaluator
+from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -189,3 +192,18 @@ def evaluator(make_ee_config):
     )
     yield ee
     ee.stop()
+
+
+@pytest.fixture(name="run_monitor_in_loop")
+def monitor_loop():
+    def run_monitor_in_loop(
+        monitor_func: Callable[[], Coroutine[Any, Any, None]],
+    ) -> bool:
+        loop = new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(monitor_func())
+        finally:
+            loop.close()
+
+    return run_monitor_in_loop

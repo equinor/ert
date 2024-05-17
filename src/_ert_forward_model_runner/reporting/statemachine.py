@@ -2,6 +2,7 @@ import logging
 from typing import Callable, Dict, Tuple, Type
 
 from _ert_forward_model_runner.reporting.message import (
+    Checksum,
     Exited,
     Finish,
     Init,
@@ -22,12 +23,14 @@ class StateMachine:
         logger.debug("Initializing state machines")
         initialized = (Init,)
         jobs = (Start, Running, Exited)
+        checksum = (Checksum,)
         finished = (Finish,)
         self._handler: Dict[Message, Callable[[Message], None]] = {}
         self._transitions = {
             None: initialized,
-            initialized: jobs + finished,
-            jobs: jobs + finished,
+            initialized: jobs + checksum + finished,
+            jobs: jobs + checksum + finished,
+            checksum: checksum + finished,
         }
         self._state = None
 
