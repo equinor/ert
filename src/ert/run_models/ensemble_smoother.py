@@ -50,18 +50,12 @@ class EnsembleSmoother(BaseRunModel):
         self.update_settings = update_settings
         self.support_restart = False
 
-    @property
-    def simulation_arguments(self) -> ESRunArguments:
-        args = self._simulation_arguments
-        assert isinstance(args, ESRunArguments)
-        return args
-
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments.active_realizations.count(True),
-            self._simulation_arguments.minimum_required_realizations,
+            self.simulation_arguments.active_realizations.count(True),
+            self.simulation_arguments.minimum_required_realizations,
         )
 
         log_msg = "Running ES"
@@ -71,15 +65,15 @@ class EnsembleSmoother(BaseRunModel):
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations,
             responses=self.ert_config.ensemble_config.response_configuration,
-            simulation_arguments=self._simulation_arguments,
-            name=self._simulation_arguments.experiment_name,
+            simulation_arguments=self.simulation_arguments,
+            name=self.simulation_arguments.experiment_name,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-        prior_name = self._simulation_arguments.current_ensemble
+        prior_name = self.simulation_arguments.current_ensemble
         prior = self._storage.create_ensemble(
             experiment,
-            ensemble_size=self._simulation_arguments.ensemble_size,
+            ensemble_size=self.simulation_arguments.ensemble_size,
             name=prior_name,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -87,7 +81,7 @@ class EnsembleSmoother(BaseRunModel):
             ensemble=prior,
             runpaths=self.run_paths,
             initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
+                self.simulation_arguments.active_realizations, dtype=bool
             ),
             iteration=0,
         )
@@ -95,7 +89,7 @@ class EnsembleSmoother(BaseRunModel):
         sample_prior(
             prior_context.ensemble,
             prior_context.active_realizations,
-            random_seed=self._simulation_arguments.random_seed,
+            random_seed=self.simulation_arguments.random_seed,
         )
 
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
@@ -113,7 +107,7 @@ class EnsembleSmoother(BaseRunModel):
         self.send_event(
             RunModelStatusEvent(iteration=0, msg="Creating posterior ensemble..")
         )
-        target_ensemble_format = self._simulation_arguments.target_ensemble
+        target_ensemble_format = self.simulation_arguments.target_ensemble
         posterior_context = RunContext(
             ensemble=self._storage.create_ensemble(
                 experiment,

@@ -58,13 +58,13 @@ class EnsembleExperiment(BaseRunModel):
             name=self.simulation_arguments.experiment_name,
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations,
-            simulation_arguments=self._simulation_arguments,
+            simulation_arguments=self.simulation_arguments,
             responses=self.ert_config.ensemble_config.response_configuration,
         )
         ensemble = self._storage.create_ensemble(
             experiment,
-            name=self._simulation_arguments.current_ensemble,
-            ensemble_size=self._simulation_arguments.ensemble_size,
+            name=self.simulation_arguments.current_ensemble,
+            ensemble_size=self.simulation_arguments.ensemble_size,
         )
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
@@ -73,13 +73,13 @@ class EnsembleExperiment(BaseRunModel):
             ensemble=ensemble,
             runpaths=self.run_paths,
             initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
+                self.simulation_arguments.active_realizations, dtype=bool
             ),
         )
         sample_prior(
             prior_context.ensemble,
             prior_context.active_realizations,
-            random_seed=self._simulation_arguments.random_seed,
+            random_seed=self.simulation_arguments.random_seed,
         )
 
         iteration = prior_context.iteration
@@ -100,7 +100,7 @@ class EnsembleExperiment(BaseRunModel):
         return "Ensemble experiment"
 
     def check_if_runpath_exists(self) -> bool:
-        active_mask = self._simulation_arguments.active_realizations
+        active_mask = self.simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         run_paths = self.run_paths.get_paths(active_realizations, 0)
         return any(Path(run_path).exists() for run_path in run_paths)

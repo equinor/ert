@@ -60,10 +60,10 @@ class MultipleDataAssimilation(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.checkHaveSufficientRealizations(
-            self._simulation_arguments.active_realizations.count(True),
-            self._simulation_arguments.minimum_required_realizations,
+            self.simulation_arguments.active_realizations.count(True),
+            self.simulation_arguments.minimum_required_realizations,
         )
-        weights = self.parseWeights(self._simulation_arguments.weights)
+        weights = self.parseWeights(self.simulation_arguments.weights)
 
         if not weights:
             raise ErtRunError(
@@ -83,11 +83,11 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(log_msg, indeterminate=True)
 
         enumerated_weights = list(enumerate(weights))
-        restart_run = self._simulation_arguments.restart_run
-        target_ensemble_format = self._simulation_arguments.target_ensemble
+        restart_run = self.simulation_arguments.restart_run
+        target_ensemble_format = self.simulation_arguments.target_ensemble
 
         if restart_run:
-            prior_ensemble = self._simulation_arguments.prior_ensemble
+            prior_ensemble = self.simulation_arguments.prior_ensemble
             try:
                 prior = self._storage.get_ensemble_by_name(prior_ensemble)
                 experiment = prior.experiment
@@ -98,7 +98,7 @@ class MultipleDataAssimilation(BaseRunModel):
                     ensemble=prior,
                     runpaths=self.run_paths,
                     initial_mask=np.array(
-                        self._simulation_arguments.active_realizations, dtype=bool
+                        self.simulation_arguments.active_realizations, dtype=bool
                     ),
                     iteration=prior.iteration,
                 )
@@ -111,13 +111,13 @@ class MultipleDataAssimilation(BaseRunModel):
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 observations=self.ert_config.observations,
                 responses=self.ert_config.ensemble_config.response_configuration,
-                simulation_arguments=self._simulation_arguments,
-                name=self._simulation_arguments.experiment_name,
+                simulation_arguments=self.simulation_arguments,
+                name=self.simulation_arguments.experiment_name,
             )
 
             prior = self._storage.create_ensemble(
                 experiment,
-                ensemble_size=self._simulation_arguments.ensemble_size,
+                ensemble_size=self.simulation_arguments.ensemble_size,
                 iteration=0,
                 name=target_ensemble_format % 0,
             )
@@ -127,14 +127,14 @@ class MultipleDataAssimilation(BaseRunModel):
                 ensemble=prior,
                 runpaths=self.run_paths,
                 initial_mask=np.array(
-                    self._simulation_arguments.active_realizations, dtype=bool
+                    self.simulation_arguments.active_realizations, dtype=bool
                 ),
                 iteration=prior.iteration,
             )
             sample_prior(
                 prior_context.ensemble,
                 prior_context.active_realizations,
-                random_seed=self._simulation_arguments.random_seed,
+                random_seed=self.simulation_arguments.random_seed,
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
         starting_iteration = prior.iteration + 1
