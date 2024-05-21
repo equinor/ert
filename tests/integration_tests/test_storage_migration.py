@@ -27,6 +27,9 @@ def copy_shared(tmp_path, block_storage_path):
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "10.1.3",
+        "10.0.3",
+        "9.0.17",
         "8.4.9",
         "8.4.8",
         "8.4.7",
