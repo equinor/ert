@@ -10,7 +10,6 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel, ConfigDict
-from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -77,38 +76,32 @@ def _filter_nones(some_dict: Mapping[str, Any]) -> Dict[str, Any]:
 
 @dataclass
 class SnapshotMetadata:
-    aggr_job_status_colors: defaultdict[str, dict[str, QColor]] = field(
+    aggr_job_status_colors: defaultdict[str, dict[str, tuple[int, int, int]]] = field(
         default_factory=lambda: defaultdict(dict)
     )
-    real_status_colors: dict[str, QColor] = field(default_factory=dict)
+    real_status_colors: dict[str, tuple[int, int, int]] = field(default_factory=dict)
     sorted_real_ids: list[str] = field(default_factory=list)
     sorted_forward_model_ids: defaultdict[str, list[str]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
     def merge(self, other_metadata: SnapshotMetadata) -> None:
-        if other_metadata.aggr_job_status_colors:
-            self.aggr_job_status_colors.update(
-                _filter_nones(other_metadata.aggr_job_status_colors)
-            )
-        if other_metadata.real_status_colors:
-            self.real_status_colors.update(
-                _filter_nones(other_metadata.real_status_colors)
-            )
-        if other_metadata.sorted_real_ids:
-            self.sorted_real_ids = other_metadata.sorted_real_ids
-        if other_metadata.sorted_forward_model_ids:
-            self.sorted_forward_model_ids.update(
-                _filter_nones(other_metadata.sorted_forward_model_ids)
-            )
+        self.aggr_job_status_colors.update(
+            _filter_nones(other_metadata.aggr_job_status_colors)
+        )
+        self.real_status_colors.update(_filter_nones(other_metadata.real_status_colors))
+        self.sorted_real_ids = other_metadata.sorted_real_ids
+        self.sorted_forward_model_ids.update(
+            _filter_nones(other_metadata.sorted_forward_model_ids)
+        )
 
     def to_dict(
         self,
     ) -> dict[
         str,
         list[str]
-        | dict[str, QColor]
-        | defaultdict[str, dict[str, QColor]]
+        | dict[str, tuple[int, int, int]]
+        | defaultdict[str, dict[str, tuple[int, int, int]]]
         | defaultdict[str, list[str]],
     ]:
         return {
@@ -517,7 +510,7 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
     partial = PartialSnapshot()
     if "metadata" in data:
         partial._metadata = SnapshotMetadata(
-            **{k: v for k, v in data["metadata"].items() if v}
+            **{key: value for key, value in data["metadata"].items() if value}
         )
     if "status" in data:
         partial._ensemble_state = data["status"]
