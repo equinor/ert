@@ -171,7 +171,7 @@ class BaseRunModel:
         self.validate()
         self._context_env_keys: List[str] = []
         self.rng = np.random.default_rng(
-            _seed_sequence(simulation_arguments.random_seed)
+            _seed_sequence(self._simulation_arguments.random_seed)
         )
         self.substitution_list = config.substitution_list
         self.run_paths = Runpaths(
@@ -180,8 +180,8 @@ class BaseRunModel:
             filename=str(config.runpath_file),
             substitution_list=self.substitution_list,
         )
-        if hasattr(self.simulation_arguments, "current_ensemble"):
-            current_ensemble = self.simulation_arguments.current_ensemble
+        if hasattr(self._simulation_arguments, "current_ensemble"):
+            current_ensemble = self._simulation_arguments.current_ensemble
             if current_ensemble is not None:
                 self.run_paths.set_ert_ensemble(current_ensemble)
 
@@ -588,7 +588,7 @@ class BaseRunModel:
     def paths(self) -> List[str]:
         run_paths = []
         start_iteration = self._simulation_arguments.start_iteration
-        number_of_iterations = self.simulation_arguments.num_iterations
+        number_of_iterations = self._simulation_arguments.num_iterations
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         for iteration in range(start_iteration, number_of_iterations):
