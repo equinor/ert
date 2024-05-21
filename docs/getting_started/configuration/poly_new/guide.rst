@@ -16,7 +16,7 @@ doesn't execute any computations, but only generates the necessary folders and f
 
 Create a Configuration File
 ***************************
-Running ERT requires a dedicated configuration file, typically with the extension `.ert`.
+Running ERT requires a dedicated configuration file, typically with the extension ``.ert``.
 
 1. **Create the File**: Within the ``poly_example`` folder, create a file named ``poly.ert`` with the following content:
 
@@ -77,21 +77,23 @@ In the ``simulations`` folder, you'll find folders for each realization, labeled
 
     simulations
     ├── realization-0
-    │   └── iter-0
-    │       ├── OK
-    │       ├── STATUS
-    │       ├── jobs.json
-    │       ├── logs
-    │       │   └── job-runner-log-2023-08-08T1027.txt
-    │       └── status.json
+    │   └── iter-0
+    │       ├── OK
+    │       ├── STATUS
+    │       ├── jobs.json
+    │       ├── logs
+    │       │   ├── job-runner-log-2024-05-16T0915.txt
+    │       │   └── memory-profile-2024-05-16T0915.csv
+    │       └── status.json
     ├── realization-1
-    │   └── iter-0
-    │       ├── OK
-    │       ├── STATUS
-    │       ├── jobs.json
-    │       ├── logs
-    │       │   └── job-runner-log-2023-08-08T1027.txt
-    │       └── status.json
+    │   └── iter-0
+    │       ├── OK
+    │       ├── STATUS
+    │       ├── jobs.json
+    │       ├── logs
+    │       │   ├── job-runner-log-2024-05-16T0915.txt
+    │       │   └── memory-profile-2024-05-16T0915.csv
+    │       └── status.json
 
     etc.
 
@@ -177,7 +179,7 @@ Here's how to do it:
     INSTALL_JOB poly_eval POLY_EVAL
     FORWARD_MODEL poly_eval
 
-The :ref:`INSTALL_JOB <install_job>` line informs ERT about the job names ``poly_eval``
+The :ref:`INSTALL_JOB <install_job>` line informs ERT about the job named ``poly_eval``
 and the file containing details of how to execute the job.
 The :ref:`FORWARD_MODEL <forward_model>` line instructs ERT to include the job as part of the forward model.
 
@@ -261,7 +263,7 @@ Each line of this file defines a parameter:
 - The first part is the name of the parameter (e.g., ``a``).
 - The second part defines the type of distribution from which to sample the parameter.
   In this case, we're using a uniform distribution (``UNIFORM``).
-- The remaining parts describe the distribution's specific characteristics.
+- The remaining parts describe the distribution's parameters.
   For a uniform distribution, these are the lower and upper bounds.
   Different distributions will require different arguments.
 
@@ -290,7 +292,7 @@ Update ``poly_eval.py`` to the following:
 
 Reading Simulation Results a.k.a Responses
 ******************************************
-To enable ERT to read the simulation results, you'll need to use the :ref:`GEN_DATA <gen_data>` keyword.
+To enable ERT to read the responses, you'll need to use the :ref:`GEN_DATA <gen_data>` keyword.
 
 1. **Adding the GEN_DATA Line**: Edit the ``poly.ert`` file to include the following line:
 
@@ -331,9 +333,9 @@ This ensures that you'll only see the new data in your results.
 
 1. **Launch ERT**: Open ERT again and observe that the "Config Summary" now includes the name of the parameter set you've defined.
 
-2. **Start the Experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and initiate the simulation.
+2. **Run Experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and hit "Run Experiment".
 
-3. **Create Plot**: Once the simulations are complete, you have the option to press the "Create Plot" button either in the progress window or in the main window.
+3. **Create Plot**: Once the experiment is completed, press the "Create Plot" button either in the progress window or in the main window.
    This action will open the "Plotting" window.
 
 4. **View Distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
@@ -349,28 +351,30 @@ You should see something similar to this:
 
 Play around and look at the different plots.
 
-Inspecting the Parameters and Results
+Inspecting Parameters and Responses
 *************************************
-The sampled parameters and resulting simulation data can be inspected within each runpath.
+The sampled parameters and responses can be inspected within each runpath.
 
-1. **Inspecting the Parameters**: You should find the instantiated parameter template files named ``coeffs.json`` in each runpath.
-   To look at a specific realization, you might run a command such as:
+1. **Inspecting the Parameters**: Each realization and ensemble contains a ``parameter.json`` that contains the sampled parameters.
+   To look at a specific file, run:
 
 .. code-block:: shell
 
-    cat poly_out/realization-4/iter-0/coeffs.json
+    cat poly_out/realization-4/iter-0/parameters.json
 
 This should return something similar to:
 
 .. code-block:: json
 
     {
-        "a": 0.830303,
-        "b": 1.69181,
-        "c": 0.114524
+        "COEFFS" : {
+        "a" : 0.7974556153339885,
+        "b" : 1.400852435132108,
+        "c" : 1.9495650072493478
+        }
     }
 
-2. **Inspecting the Results**: Moving to the results, each simulation has generated a unique file named ``poly.out`` reflecting the varying outcomes.
+2. **Inspecting the Results**: Each simulation generated a unique file named ``poly.out`` reflecting the varying outcomes.
    A typical output from a realization might look like:
 
 .. code-block:: shell
@@ -379,38 +383,39 @@ This should return something similar to:
 
 .. code-block:: none
 
-    2.23622
-    4.288035
-    6.83408
-    9.874355
-    13.40886
-    17.437595
-    21.96056
-    26.977755
-    32.48918
-    38.494835
+    1.0578691975883987
+    2.4752839456735467
+    5.031006621683224
+    8.725037225617431
+    13.557375757476166
+    19.52802221725943
+    26.636976604967224
+    34.88423892059954
+    44.26980916415639
+    54.79368733563777
 
-3. **Next Steps**: Having inspected both the parameters and results, you have built an understanding of how sampling works in ERT.
-   In the next section, we will see how to describe the results to ERT, and how to specify some observations that we wish ERT to optimise towards.
+3. **Next Steps**: Having inspected both the parameters and responses, you have built an understanding of how sampling works in ERT.
+   In the next section, we will see how to describe the responses to ERT, and how to specify some observations that we wish ERT to optimise towards.
 
 Adding observations
 -------------------
 The simple polynomial in our example serves as a model of a real-world process,
 representing our best current understanding of how this process behaves.
-The accuracy of this model hinges on how well a polynomial mirrors reality and how precise the parameters `a`, `b`, and `c` are.
-In this section, we'll leverage ERT to enhance the parameter estimates using real-world observations.
+The accuracy of this model hinges on how well a polynomial mirrors reality and how precise the parameters ``a``, ``b``, and ``c`` are.
+In this section, we'll leverage ERT to improve the parameter estimates using real-world observations.
 
 Observations File
 *****************
-We have polynomial observations measured at the points 0, 2, 4, 6, and 8.
-These indices align with the x values of the polynomial evaluation, although this alignment is coincidental.
-The indices indicate how the observations in the file correspond to the result indices.
+The following code adds noise to evaluations of the polynomial at the points 0, 2, 4, 6 and 8 to generate synthetic observations.
+In realistic cases such as reservoir management, the points would instead be times at which the observations were measured.
 
-1. **Create the Observations File**: Create a file named ``poly_obs_data.txt`` in the projects folders with:
+.. literalinclude:: with_observations/generate_synthetic_observations.py
+
+1. **Create the Observations File**: Create ``poly_obs_data.txt`` with the following, which is the result of running the above code:
 
 .. literalinclude:: with_observations/poly_obs_data.txt
 
-Each line holds an observation, where the first number is the observed value, and the second number is the uncertainty.
+Each line holds an observation, where the first number is the observed value, and the second number is its uncertainty.
 
 Defining the Observation Configurations
 ***************************************
@@ -426,10 +431,9 @@ which refers to a file where the :ref:`GENERAL_OBSERVATION <general_observation>
    - **DATA**: Relates the observation to a result set.
    - **INDEX_LIST**: Since we have 10 values in our results file but only 5 observations, this list tells ERT the corresponding results.
      If the lengths are equal, omit this.
-   - **RESTART**: Legacy value, must match ``REPORT_STEPS`` from the ``GEN_DATA`` line.
    - **OBS_FILE**: Specifies the file containing the observations.
 
-2. **Update the Config File**: Add the observation file to the config file:
+1. **Update the Config File**: Add the observation file to the config file:
 
    .. code-block:: none
 
@@ -445,18 +449,18 @@ With the final configuration:
 
 Launch ERT, choose the "Ensemble Smoother" and hit "Run Experiment".
 
-As simulations run, you'll notice the updated parameters yield results that better align with observations.
+Plot prior and posterior ensembles and notice that the updated parameters yield responses that better align with observations.
 
-In the "Plotting window", the ``POLY_RES`` plot will now display a yellow background, denoting attached observations
+In the "Plotting window", the ``POLY_RES`` plot will now display a yellow background, denoting that observations are available.
 Black dots and lines represent observed values and uncertainties, respectively.
-Different iterations can be viewed by selecting "default" and "default_smoother_update."
+Ensembles can be selected / deselected in the "Plot ensemble" section.
 
 .. image:: with_observations/plot_obs.png
 
 Evaluating the Updated Parameters
 *********************************
-Examine the improved estimates for `a`, `b`, and `c`.
-Though not perfect, they're better than the initial guesses. ERT's updating algorithms have reduced uncertainty:
+Examine the improved estimates for ``a``, ``b``, and ``c``.
+Though not perfect, they're better than the initial guesses.
 
 .. image:: with_observations/coeff_a.png
 
@@ -464,6 +468,28 @@ Though not perfect, they're better than the initial guesses. ERT's updating algo
 
 .. image:: with_observations/coeff_c.png
 
+Adding Observations
+*******************
+Notice that there is not much improvement in the estimate of parameter ``b``.
+Let's try adding more observations with lower uncertainty and run a new experiment.
+
+The following code generates synthetic observations as before, but now we generate 50 instead of 5, and reduce their uncertainty from ``0.2*p(x)`` to ``0.1*p(x)``.
+Run this script and copy results to ``poly_obs_data.txt``.
+
+.. literalinclude:: with_more_observations/generate_synthetic_observations.py
+
+Modify ``poly_eval.py`` to generate 50 responses:
+
+.. literalinclude:: with_more_observations/poly_eval.py
+
+Remove index list from ``observations`` as we now use all 50 observations:
+
+.. literalinclude:: with_more_observations/observations
+
+Re-run ``Ensemble smoother`` and notice that the estimate of ``b`` has improved:
+
+.. image:: with_more_observations/coeff_b.png
+
 Conclusion
 **********
-You've now learned the fundamentals of ERT configuration, using real-world observations to enhance parameter estimates.
+You've now learned the fundamentals of ERT configuration, using observations to improve parameter estimates.
