@@ -21,6 +21,7 @@ class ObservationAndResponseSnapshot(BaseModel):
     response_std: float
     response_mean_mask: bool
     response_std_mask: bool
+    index: str
 
     @property
     def status(self) -> ObservationStatus:
