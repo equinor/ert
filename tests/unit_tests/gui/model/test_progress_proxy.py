@@ -51,7 +51,9 @@ def test_progression(full_snapshot):
     }
 
     partial = PartialSnapshot(full_snapshot)
-    partial._realization_states["0"].update({"status": REALIZATION_STATE_FINISHED})
+    partial._realization_states["0"].update_from_dict(
+        {"status": REALIZATION_STATE_FINISHED}
+    )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
@@ -78,7 +80,9 @@ def test_progression_start_iter_not_zero(full_snapshot):
     }
 
     partial = PartialSnapshot(full_snapshot)
-    partial._realization_states["0"].update({"status": REALIZATION_STATE_FINISHED})
+    partial._realization_states["0"].update_from_dict(
+        {"status": REALIZATION_STATE_FINISHED}
+    )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
