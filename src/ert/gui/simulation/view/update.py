@@ -124,17 +124,18 @@ class UpdateWidget(QWidget):
         layout.addSpacing(10)
 
         table = QTableWidget()
-        table.setColumnCount(4)
+        table.setColumnCount(5)
         table.setAlternatingRowColors(True)
         table.setRowCount(len(update_step))
         table.setHorizontalHeaderLabels(
-            ["", "Observed history", "Simulated data", "Status"]
+            ["", "Index", "Observed history", "Simulated data", "Status"]
         )
         table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         table.horizontalHeader().setStretchLastSection(True)
         table.setColumnWidth(0, 200)
-        table.setColumnWidth(1, 350)
-        table.setColumnWidth(2, 250)
+        table.setColumnWidth(1, 200)
+        table.setColumnWidth(2, 350)
+        table.setColumnWidth(3, 250)
 
         for nr, step in enumerate(update_step):
             obs_std = (
@@ -143,19 +144,20 @@ class UpdateWidget(QWidget):
                 else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
             )
             table.setItem(nr, 0, QTableWidgetItem(f"{step.obs_name:20}"))
+            table.setItem(nr, 1, QTableWidgetItem(f"{step.index:20}"))
             table.setItem(
                 nr,
-                1,
+                2,
                 QTableWidgetItem(f"{step.obs_val:>16.3f} +/- {obs_std:<21}"),
             )
             table.setItem(
                 nr,
-                2,
+                3,
                 QTableWidgetItem(
                     f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
                 ),
             )
-            table.setItem(nr, 3, QTableWidgetItem(f"{step.get_status().capitalize()}"))
+            table.setItem(nr, 4, QTableWidgetItem(f"{step.get_status().capitalize()}"))
 
         layout.addWidget(table)
 

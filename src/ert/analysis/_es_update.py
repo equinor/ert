@@ -141,12 +141,14 @@ def _get_observations_and_responses(
     npt.NDArray[np.float_],
     npt.NDArray[np.float_],
     npt.NDArray[np.str_],
+    npt.NDArray[np.str_],
 ]:
     """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
     filtered_responses = []
     observation_keys = []
     observation_values = []
     observation_errors = []
+    indexes = []
     observations = ensemble.experiment.observations
     for obs in selected_observations:
         observation = observations[obs]
@@ -167,6 +169,26 @@ def _get_observations_and_responses(
             ) from e
 
         observation_keys.append([obs] * observations_and_responses["observations"].size)
+
+        if group == "summary":
+            indexes.append(
+                [
+                    np.datetime_as_string(e, unit="s")
+                    for e in observations_and_responses["time"].data
+                ]
+            )
+        else:
+            indexes.append(
+                [
+                    f"{e[0]}, {e[1]}"
+                    for e in zip(
+                        list(observations_and_responses["report_step"].data)
+                        * len(observations_and_responses["index"].data),
+                        observations_and_responses["index"].data,
+                    )
+                ]
+            )
+
         observation_values.append(
             observations_and_responses["observations"].data.ravel()
         )
@@ -183,6 +205,7 @@ def _get_observations_and_responses(
         np.concatenate(observation_values),
         np.concatenate(observation_errors),
         np.concatenate(observation_keys),
+        np.concatenate(indexes),
     )
 
 
@@ -211,7 +234,7 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys = _get_observations_and_responses(
+    S, observations, errors, obs_keys, indexes = _get_observations_and_responses(
         ensemble,
         selected_observations,
         iens_active_index,
@@ -250,6 +273,7 @@ def _load_observations_and_responses(
         response_std,
         response_mean_mask,
         response_std_mask,
+        index,
     ) in zip(
         obs_keys,
         observations,
@@ -259,6 +283,7 @@ def _load_observations_and_responses(
         ens_std,
         ens_mean_mask,
         ens_std_mask,
+        indexes,
     ):
         update_snapshot.append(
             ObservationAndResponseSnapshot(
@@ -270,6 +295,7 @@ def _load_observations_and_responses(
                 response_std=response_std,
                 response_mean_mask=response_mean_mask,
                 response_std_mask=response_std_mask,
+                index=index,
             )
         )
 
