@@ -1398,7 +1398,7 @@ the impact of correlated observations, this can be specified from the config fil
         ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
 
 This will go through all the observations and scale them according to how correlated they are. If
-would would like to only scale some observations, you can use wildcard matching:
+you would like to only scale some observations, you can use wildcard matching:
 
 .. code-block:: text
 
