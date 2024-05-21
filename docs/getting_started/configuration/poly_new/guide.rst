@@ -471,7 +471,7 @@ Though not perfect, they're better than the initial guesses.
 Adding Observations
 *******************
 Notice that there is not much improvement in the estimate of parameter ``b``.
-Let's try adding more obeservations with lower uncertainty and run a new experiment.
+Let's try adding more observations with lower uncertainty and run a new experiment.
 
 The following code generates synthetic observations as before, but now we generate 50 instead of 5, and reduce their uncertainty from ``0.2*p(x)`` to ``0.1*p(x)``.
 Run this script and copy results to ``poly_obs_data.txt``.
