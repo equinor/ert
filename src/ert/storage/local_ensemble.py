@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class _Realization(BaseModel):
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime
 
 
 class _Index(BaseModel):

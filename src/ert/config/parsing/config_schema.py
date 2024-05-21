@@ -290,6 +290,7 @@ def init_site_config_schema() -> ConfigSchemaDict:
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
+        forward_model_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:

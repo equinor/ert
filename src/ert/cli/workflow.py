@@ -16,7 +16,7 @@ def execute_workflow(ert: EnKFMain, storage: Storage, workflow_name: str) -> Non
         workflow = ert.ert_config.workflows[workflow_name]
     except KeyError:
         msg = "Workflow {} is not in the list of available workflows"
-        logger.error(msg.format(workflow_name))
+        print(msg.format(workflow_name))
         return
     runner = WorkflowRunner(workflow, ert, storage)
     runner.run_blocking()

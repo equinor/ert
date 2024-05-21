@@ -303,6 +303,7 @@ class BaseRunModel:
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                 )
+                self.ert.runWorkflows(HookRuntime.POST_EXPERIMENT, self._storage, run_context.ensemble)
                 self._completed_realizations_mask = run_context.mask
         except ErtRunError as e:
             self._completed_realizations_mask = []
