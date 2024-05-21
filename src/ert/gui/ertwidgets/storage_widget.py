@@ -24,7 +24,6 @@ from ert.gui.ertwidgets.models.storage_model import (
     StorageModel,
 )
 from ert.storage import Ensemble, Experiment
-from ert.storage.realization_storage_state import RealizationStorageState
 
 
 class _SortingProxyModel(QSortFilterProxyModel):
@@ -53,7 +52,7 @@ class _SortingProxyModel(QSortFilterProxyModel):
 class StorageWidget(QWidget):
     onSelectEnsemble = Signal(Ensemble)
     onSelectExperiment = Signal(Experiment)
-    onSelectRealization = Signal(RealizationStorageState)
+    onSelectRealization = Signal(Ensemble, int)
 
     def __init__(
         self, notifier: ErtNotifier, ert_config: ErtConfig, ensemble_size: int
@@ -108,10 +107,8 @@ class StorageWidget(QWidget):
             experiment = self._notifier.storage.get_experiment(cls._id)
             self.onSelectExperiment.emit(experiment)
         elif isinstance(cls, RealizationModel):
-            realization_state = self._notifier.storage.get_ensemble(
-                cls.ensemble
-            ).get_ensemble_state()[cls.realization]
-            self.onSelectRealization.emit(realization_state)
+            ensemble = self._notifier.storage.get_ensemble(cls.ensemble_id)
+            self.onSelectRealization.emit(ensemble, cls.realization)
 
     def _addItem(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(parent=self)

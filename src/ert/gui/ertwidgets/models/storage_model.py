@@ -32,13 +32,13 @@ class RealizationModel:
     def __init__(self, realization: int, parent: Any) -> None:
         self._parent = parent
         self._name = f"Realization {realization}"
-        self._ensemble = parent._id
+        self._ensemble_id = parent._id
         self._realization = realization
         self._id = f"{parent._id}_{realization}"
 
     @property
-    def ensemble(self) -> UUID:
-        return self._ensemble
+    def ensemble_id(self) -> UUID:
+        return self._ensemble_id
 
     @property
     def realization(self) -> int:
