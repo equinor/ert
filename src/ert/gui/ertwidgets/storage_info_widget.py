@@ -301,8 +301,23 @@ class _RealizationWidget(QWidget):
         info_frame = QFrame()
         self._state_label = QLabel()
 
+        parameter_label = QLabel("Parameter states:")
+        self._parameter_text_edit = QTextEdit()
+        self._parameter_text_edit.setReadOnly(True)
+
+        response_label = QLabel("Response states:")
+        self._response_text_edit = QTextEdit()
+        self._response_text_edit.setReadOnly(True)
+
         layout = QVBoxLayout()
         layout.addWidget(self._state_label)
+        layout.addStretch(20)
+        layout.addWidget(parameter_label)
+        layout.addWidget(self._parameter_text_edit)
+        layout.addStretch(20)
+        layout.addWidget(response_label)
+        layout.addWidget(self._response_text_edit)
+
         layout.addStretch()
 
         info_frame.setLayout(layout)
@@ -316,8 +331,21 @@ class _RealizationWidget(QWidget):
         self.setLayout(layout)
 
     @Slot(RealizationStorageState)
-    def setRealization(self, realization_state: RealizationStorageState) -> None:
-        self._state_label.setText(f"Realization state: {realization_state.name}")
+    def setRealization(self, ensemble: Ensemble, realization: int) -> None:
+        state = ensemble.get_ensemble_state()[realization]
+        self._state_label.setText(f"Realization state: {state.name}")
+
+        html = "<table>"
+        for name, state in ensemble.get_response_state(realization).items():
+            html += f"<tr><td>{name} - {state.name}</td></tr>"
+        html += "</table>"
+        self._response_text_edit.setHtml(html)
+
+        html = "<table>"
+        for name, state in ensemble.get_parameter_state(realization).items():
+            html += f"<tr><td>{name} - {state.name}</td></tr>"
+        html += "</table>"
+        self._parameter_text_edit.setHtml(html)
 
 
 class StorageInfoWidget(QWidget):
@@ -356,7 +384,7 @@ class StorageInfoWidget(QWidget):
         self._content_layout.setCurrentIndex(_WidgetType.EXPERIMENT_WIDGET)
         self._experiment_widget.setExperiment(experiment)
 
-    @Slot(RealizationStorageState)
-    def setRealization(self, realization_state: RealizationStorageState):
+    @Slot(Ensemble, int)
+    def setRealization(self, ensemble: Ensemble, realization: int):
         self._content_layout.setCurrentIndex(_WidgetType.REALIZATION_WIDGET)
-        self._realization_widget.setRealization(realization_state)
+        self._realization_widget.setRealization(ensemble, realization)

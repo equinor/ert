@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -807,3 +807,31 @@ class LocalEnsemble(BaseMode):
             raise e
 
         return ds.std("realizations")
+
+    def get_parameter_state(
+        self, realization: int
+    ) -> Dict[str, RealizationStorageState]:
+        path = self._realization_dir(realization)
+        return dict(
+            (
+                e,
+                RealizationStorageState.INITIALIZED
+                if (path / f"{e}.nc").exists()
+                else RealizationStorageState.UNDEFINED,
+            )
+            for e in self.experiment.parameter_configuration
+        )
+
+    def get_response_state(
+        self, realization: int
+    ) -> Dict[str, RealizationStorageState]:
+        path = self._realization_dir(realization)
+        return dict(
+            (
+                e,
+                RealizationStorageState.HAS_DATA
+                if (path / f"{e}.nc").exists()
+                else RealizationStorageState.UNDEFINED,
+            )
+            for e in self.experiment.response_configuration
+        )
