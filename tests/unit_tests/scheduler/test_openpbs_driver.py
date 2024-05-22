@@ -27,7 +27,8 @@ from ert.scheduler.openpbs_driver import (
     QueuedJob,
     RunningJob,
     StartedEvent,
-    _Stat,
+    _create_job_class,
+    _parse_jobs_dict,
 )
 
 
@@ -54,9 +55,9 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
 
     # Replicate the behaviour of multiple calls to poll()
     for statestr in jobstate_sequence:
-        jobstate = _Stat(
-            **{"Jobs": {"1": {"job_state": statestr, "Exit_status": 0}}}
-        ).jobs["1"]
+        jobstate = _parse_jobs_dict({"1": {"job_state": statestr, "Exit_status": 0}})[
+            "1"
+        ]
         if statestr in ["E", "F"] and "1" in driver._non_finished_job_ids:
             driver._non_finished_job_ids.remove("1")
             driver._finished_job_ids.add("1")
@@ -515,7 +516,7 @@ async def test_that_kill_does_not_log_error_for_finished_realization(
         job_id = driver._iens2jobid[0]
         driver._finished_job_ids.add(job_id)
         await driver._process_job_update(
-            job_id, FinishedJob(job_state="F", Exit_status=job_return_code)
+            job_id, FinishedJob(job_state="F", returncode=job_return_code)
         )
 
     driver.poll = mock_poll
@@ -525,3 +526,9 @@ async def test_that_kill_does_not_log_error_for_finished_realization(
     assert "kill" not in capsys.readouterr().out
     assert "kill" not in capsys.readouterr().err
     assert "kill" not in caplog.text
+
+
+def test_create_job_class_raises_error_on_invalid_state():
+    with pytest.raises(TypeError, match=r"Invalid job state"):
+        invalid_job_dict = {"job_state": "foobar"}
+        _create_job_class(invalid_job_dict)
