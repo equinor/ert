@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import shlex
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 from typing import (
+    Any,
     Dict,
     List,
     Literal,
@@ -14,12 +17,12 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
+    cast,
     get_args,
+    get_type_hints,
 )
-
-from pydantic import BaseModel, Field
-from typing_extensions import Annotated
 
 from ert.scheduler.driver import Driver
 from ert.scheduler.event import Event, FinishedEvent, StartedEvent
@@ -50,30 +53,31 @@ QDEL_REQUEST_INVALID = 168
 QSTAT_UNKNOWN_JOB_ID = 153
 
 
-class IgnoredJobstates(BaseModel):
+@dataclass(frozen=True)
+class IgnoredJobstates:
     job_state: Literal["B", "M", "S", "T", "U", "W", "X"]
 
 
-class QueuedJob(BaseModel):
+@dataclass(frozen=True)
+class QueuedJob:
     job_state: Literal["H", "Q"] = "H"
 
 
-class RunningJob(BaseModel):
+@dataclass(frozen=True)
+class RunningJob:
     job_state: Literal["R"]
 
 
-class FinishedJob(BaseModel):
+@dataclass(frozen=True)
+class FinishedJob:
     job_state: Literal["E", "F"]
-    returncode: Annotated[Optional[int], Field(alias="Exit_status")] = None
+    returncode: Optional[int] = None
 
 
-AnyJob = Annotated[
-    Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates],
-    Field(discriminator="job_state"),
-]
+AnyJob = Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates]
 
 
-_STATE_ORDER: dict[type[BaseModel], int] = {
+_STATE_ORDER: dict[Type[AnyJob], int] = {
     IgnoredJobstates: -1,
     QueuedJob: 0,
     RunningJob: 1,
@@ -81,11 +85,34 @@ _STATE_ORDER: dict[type[BaseModel], int] = {
 }
 
 
-class _Stat(BaseModel):
-    jobs: Annotated[Mapping[str, AnyJob], Field(alias="Jobs")]
+def _create_job_class(job_dict: Mapping[str, str]) -> AnyJob:
+    job_state = job_dict["job_state"]
+    if job_state in get_type_hints(FinishedJob)["job_state"].__args__:
+        return FinishedJob(
+            cast(Literal["E", "F"], job_state),
+            returncode=int(job_dict["Exit_status"])
+            if "Exit_status" in job_dict
+            else None,
+        )
+    if job_state in get_type_hints(RunningJob)["job_state"].__args__:
+        return RunningJob("R")
+    if job_state in get_type_hints(QueuedJob)["job_state"].__args__:
+        return QueuedJob(cast(Literal["H", "Q"], job_state))
+    if job_state in get_type_hints(IgnoredJobstates)["job_state"].__args__:
+        return IgnoredJobstates(
+            cast(Literal["B", "M", "S", "T", "U", "W", "X"], job_state)
+        )
+    raise TypeError(f"Invalid job state '{job_state}'")
 
 
-def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
+def _parse_jobs_dict(jobs: Mapping[str, Mapping[str, str]]) -> dict[str, AnyJob]:
+    parsed_jobs_dict: dict[str, AnyJob] = {}
+    for job_id, job_dict in jobs.items():
+        parsed_jobs_dict[job_id] = _create_job_class(job_dict)
+    return parsed_jobs_dict
+
+
+def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, str]]:
     data: Dict[str, Dict[str, str]] = {}
     for line in qstat_output.splitlines():
         if line.startswith("Job id  ") or line.startswith("-" * 16):
@@ -99,7 +126,7 @@ def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
                 )
                 continue
             data[tokens[0]] = {"job_state": tokens[4]}
-    return {"Jobs": data}
+    return data
 
 
 class OpenPBSDriver(Driver):
@@ -270,8 +297,10 @@ class OpenPBSDriver(Driver):
                         f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
                         f"with message {stderr.decode(errors='ignore')}"
                     )
-                stat = _Stat(**parse_qstat(stdout.decode(errors="ignore")))
-                for job_id, job in stat.jobs.items():
+                parsed_jobs = _parse_jobs_dict(
+                    parse_qstat(stdout.decode(errors="ignore"))
+                )
+                for job_id, job in parsed_jobs.items():
                     if isinstance(job, FinishedJob):
                         self._non_finished_job_ids.remove(job_id)
                         self._finished_job_ids.add(job_id)
@@ -298,8 +327,11 @@ class OpenPBSDriver(Driver):
                         f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
                         f"with message {stderr.decode(errors='ignore')}"
                     )
-                stat = _Stat.model_validate_json(stdout.decode(errors="ignore"))
-                for job_id, job in stat.jobs.items():
+                stdout_content: dict[str, Any] = json.loads(
+                    stdout.decode(errors="ignore")
+                )
+                parsed_jobs_dict = _parse_jobs_dict(stdout_content.get("Jobs", {}))
+                for job_id, job in parsed_jobs_dict.items():
                     await self._process_job_update(job_id, job)
 
             await asyncio.sleep(self._poll_period)
