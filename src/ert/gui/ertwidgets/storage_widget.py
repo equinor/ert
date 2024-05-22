@@ -62,8 +62,7 @@ class StorageWidget(QWidget):
         self._notifier = notifier
         self._ert_config = ert_config
         self._ensemble_size = ensemble_size
-        self.setMinimumWidth(450)
-        self.setMaximumWidth(450)
+        self.setMinimumWidth(700)
 
         self._tree_view = QTreeView(self)
         storage_model = StorageModel(self._notifier.storage)
@@ -85,7 +84,8 @@ class StorageWidget(QWidget):
         selection_model = QItemSelectionModel(proxy_model)
         self._tree_view.setSelectionModel(selection_model)
         self._tree_view.selectionModel().currentChanged.connect(self._currentChanged)
-        self._tree_view.setColumnWidth(0, 200)
+        self._tree_view.setColumnWidth(0, 350)
+        self._tree_view.setColumnWidth(1, 150)
 
         self._create_experiment_button = AddWidget(self._addItem)
 
