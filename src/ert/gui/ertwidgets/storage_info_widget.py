@@ -284,6 +284,13 @@ class _EnsembleWidget(QWidget):
 
                 self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
 
+            for i in range(self._observations_tree_widget.topLevelItemCount()):
+                if self._observations_tree_widget.topLevelItem(i).childCount() > 0:
+                    self._observations_tree_widget.setCurrentItem(
+                        self._observations_tree_widget.topLevelItem(i).child(0)
+                    )
+                    break
+
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
         self._ensemble = ensemble
