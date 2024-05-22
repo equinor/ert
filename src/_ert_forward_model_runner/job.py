@@ -316,7 +316,9 @@ def _get_oom_score_for_processtree(process: Process) -> Optional[int]:
         oom_score = int(
             Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
         )
-    with contextlib.suppress(NoSuchProcess, AccessDenied, ZombieProcess):
+    with contextlib.suppress(
+        NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
+    ):
         for child in process.children(recursive=True):
             with contextlib.suppress(ValueError, FileNotFoundError):
                 oom_score_child = int(
