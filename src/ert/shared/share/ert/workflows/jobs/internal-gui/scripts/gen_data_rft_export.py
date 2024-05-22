@@ -7,10 +7,6 @@ import pandas as pd
 from PyQt5.QtWidgets import QCheckBox
 
 from ert.config import CancelPluginException, ErtPlugin
-from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.listeditbox import ListEditBox
-from ert.gui.ertwidgets.models.path_model import PathModel
-from ert.gui.ertwidgets.pathchooser import PathChooser
 
 
 def load_args(filename, column_names=None):
@@ -232,6 +228,11 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         return export_info
 
     def getArguments(self, parent=None):
+        from ert.gui.ertwidgets.customdialog import CustomDialog
+        from ert.gui.ertwidgets.listeditbox import ListEditBox
+        from ert.gui.ertwidgets.models.path_model import PathModel
+        from ert.gui.ertwidgets.pathchooser import PathChooser
+
         description = (
             "The GEN_DATA RFT CSV export requires some information before it starts:"
         )

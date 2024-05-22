@@ -6,10 +6,6 @@ from qtpy.QtWidgets import QCheckBox
 
 from ert import LibresFacade
 from ert.config import CancelPluginException, ErtPlugin
-from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.listeditbox import ListEditBox
-from ert.gui.ertwidgets.models.path_model import PathModel
-from ert.gui.ertwidgets.pathchooser import PathChooser
 
 
 def loadDesignMatrix(filename) -> pandas.DataFrame:
@@ -162,6 +158,11 @@ class CSVExportJob(ErtPlugin):
         return export_info
 
     def getArguments(self, parent=None):
+        from ert.gui.ertwidgets.customdialog import CustomDialog
+        from ert.gui.ertwidgets.listeditbox import ListEditBox
+        from ert.gui.ertwidgets.models.path_model import PathModel
+        from ert.gui.ertwidgets.pathchooser import PathChooser
+
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)
 
