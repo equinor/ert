@@ -133,7 +133,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
     def update_inversion_algorithm(self, text):
         self.truncation_spinner.setEnabled(
-            not any(val in text for val in ["direct", "exact"])
+            not any(val in text.lower() for val in ["direct", "exact"])
         )
         self.analysis_module.inversion = text
 
