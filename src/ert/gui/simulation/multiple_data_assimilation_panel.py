@@ -96,7 +96,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._restart_box.toggled.connect(self.restart_run_toggled)
         self._restart_box.toggled.connect(self.update_experiment_edit)
 
-        self._restart_box.setEnabled(False)
+        self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
         layout.addRow("Restart run:", self._restart_box)
 
         self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
