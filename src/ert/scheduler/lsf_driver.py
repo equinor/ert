@@ -287,8 +287,15 @@ class LsfDriver(Driver):
 
     async def kill(self, iens: int) -> None:
         if iens not in self._iens2jobid:
-            logger.error(f"LSF kill failed due to missing jobid for realization {iens}")
-            return
+            for _ in range(10):
+                await asyncio.sleep(self._poll_period)
+                if iens in self._iens2jobid:
+                    break
+            else:
+                logger.error(
+                    f"LSF kill failed due to missing jobid for realization {iens}"
+                )
+                return
 
         job_id = self._iens2jobid[iens]
 

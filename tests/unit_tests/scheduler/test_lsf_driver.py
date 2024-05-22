@@ -358,6 +358,7 @@ async def test_kill(
     driver = LsfDriver()
     driver._iens2jobid = mocked_iens2jobid
     driver._sleep_time_between_bkills = 0
+    driver._poll_period = 0
 
     await driver.kill(iens_to_kill)
 
@@ -796,3 +797,44 @@ def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_res
         )
     }
     assert filter_job_ids_on_submission_time(jobs, submitted_before) == expected_result
+
+
+@pytest.mark.usefixtures("capturing_bsub")
+async def test_killing_job_while_submitting_does_not_log_error(
+    caplog,
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
+    bin_path.mkdir(exist_ok=True)
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bkill_path = bin_path / "bkill"
+    bkill_path.write_text(
+        "#!/bin/sh\necho 'Job <11> is being terminated'\n" "exit 0",
+        encoding="utf-8",
+    )
+    bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver()
+    driver._sleep_time_between_bkills = 0
+
+    iens = 0
+    call_submit_event = asyncio.Event()
+
+    async def call_kill_and_set_flag() -> None:
+        nonlocal driver, iens, call_submit_event
+        kill_task = driver.kill(iens)
+        call_submit_event.set()
+        await kill_task
+
+    async def wait_for_set_flag_and_call_submit() -> None:
+        nonlocal driver, iens, call_submit_event
+        await call_submit_event.wait()
+        await driver.submit(iens, "sleep")
+
+    await asyncio.wait_for(
+        asyncio.gather(call_kill_and_set_flag(), wait_for_set_flag_and_call_submit()),
+        timeout=10,
+    )
+
+    assert "LSF kill failed due to missing jobid for realization" not in caplog.text
