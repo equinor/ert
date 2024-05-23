@@ -118,16 +118,18 @@ async def test_events_produced_from_jobstate_updates(
 
     driver = LsfDriver(bjobs_cmd=mocked_bjobs, bhist_cmd=mocked_bhist)
 
-    async def mocked_submit(self, iens, name, *_args, **_kwargs):
+    async def mocked_submit(self: LsfDriver, iens, name, *_args, **_kwargs):
         """A mocked submit is speedier than going through a command on disk"""
-        self._jobs["1"] = JobData(
+        self._iens2jobdata[1] = JobData(
             iens=iens,
             job_state=QueuedJob(job_state="PEND"),
             submitted_timestamp=time.time(),
             runpath=os.getcwd(),
             name=name,
         )
-        self._iens2jobid[iens] = "1"
+        mock_future = asyncio.Future()
+        mock_future.set_result(True)
+        self._iens2jobdata[iens] = JobData(job_id="1", submitted_future=mock_future)
 
     driver.submit = mocked_submit.__get__(driver)
     driver._dump_bhist_job_summary_to_runpath = AsyncMock()
@@ -145,28 +147,28 @@ async def test_events_produced_from_jobstate_updates(
     if not started and not finished_success and not finished_failure:
         assert len(events) == 0
 
-        iens, state = driver._jobs["1"].iens, driver._jobs["1"].job_state
+        iens, state = driver._jobid2iens["1"], driver._iens2jobdata[1].job_state
         assert iens == 0
         assert isinstance(state, QueuedJob)
     elif started and not finished_success and not finished_failure:
         assert len(events) == 1
         assert events[0] == StartedEvent(iens=0)
 
-        iens, state = driver._jobs["1"].iens, driver._jobs["1"].job_state
+        iens, state = driver._jobid2iens["1"], driver._iens2jobdata[1].job_state
         assert iens == 0
         assert isinstance(state, RunningJob)
     elif started and finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=events[-1].returncode)
-        assert "1" not in driver._jobs
+        assert "1" not in driver._jobid2iens
     elif started is True and finished_success and not finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=0)
-        assert "1" not in driver._jobs
+        assert "1" not in driver._jobid2iens
     elif started is True and not finished_success and finished_failure:
         assert len(events) <= 2  # The StartedEvent is not required
         assert events[-1] == FinishedEvent(iens=0, returncode=exit_code)
-        assert "1" not in driver._jobs
+        assert "1" not in driver._jobid2iens
 
 
 @pytest.mark.usefixtures("capturing_bsub")
@@ -272,10 +274,9 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
 
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
-    "mocked_iens2jobid, iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
+    "iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
     [
         pytest.param(
-            {"1": "11"},
             "1",
             0,
             "Job <11> is being terminated",
@@ -284,7 +285,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             id="happy_path",
         ),
         pytest.param(
-            {"1": "11"},
             "2",
             1,
             "",
@@ -293,7 +293,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             id="internal_ert_error",
         ),
         pytest.param(
-            {"1": "11"},
             "1",
             255,
             "",
@@ -302,7 +301,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             id="inconsistency_ert_vs_lsf",
         ),
         pytest.param(
-            {"1": "11"},
             "1",
             0,
             "wrong_stdout...",
@@ -311,7 +309,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             id="artifical_bkill_stdout_giving_logged_error",
         ),
         pytest.param(
-            {"1": "11"},
             "1",
             1,
             "",
@@ -320,7 +317,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
             id="artifical_bkill_stderr_and_returncode_giving_logged_error",
         ),
         pytest.param(
-            {"1": "11"},
             "1",
             255,
             "",
@@ -333,7 +329,6 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
 async def test_kill(
     monkeypatch,
     tmp_path,
-    mocked_iens2jobid,
     iens_to_kill,
     bkill_returncode,
     bkill_stdout,
@@ -356,7 +351,10 @@ async def test_kill(
     bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
 
     driver = LsfDriver()
-    driver._iens2jobid = mocked_iens2jobid
+    mock_future = asyncio.Future()
+    mock_future.set_result(True)
+    driver._iens2jobdata[1] = JobData(job_id="11", submitted_future=mock_future)
+    driver._jobid2iens[11] = 1
     driver._sleep_time_between_bkills = 0
     driver._poll_period = 0
 
@@ -374,7 +372,7 @@ async def test_kill(
         assert expected_logged_error in caplog.text
     else:
         bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip().split("\n")
-        assert f"-s SIGTERM {mocked_iens2jobid[iens_to_kill]}" in bkill_args
+        assert "-s SIGTERM 11" in bkill_args
 
         await asyncio.wait_for(wait_for_sigkill_in_file(), timeout=5)
 
@@ -816,24 +814,29 @@ async def test_killing_job_while_submitting_does_not_log_error(
     )
     bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
-    driver._sleep_time_between_bkills = 0
-
     iens = 0
+    mock_future = asyncio.Future()
     call_submit_event = asyncio.Event()
+    mock_slow_bsub = asyncio.Event()
+
+    async def mock_submit(*args, **kwargs) -> None:
+        driver._iens2jobdata[iens] = JobData(job_id="11", submitted_future=mock_future)
+        mock_slow_bsub.set()
+        await call_submit_event.wait()
+        mock_future.set_result(True)
+
+    driver._sleep_time_between_bkills = 0
+    driver.submit = mock_submit
 
     async def call_kill_and_set_flag() -> None:
         nonlocal driver, iens, call_submit_event
+        await mock_slow_bsub.wait()
         kill_task = driver.kill(iens)
         call_submit_event.set()
         await kill_task
 
-    async def wait_for_set_flag_and_call_submit() -> None:
-        nonlocal driver, iens, call_submit_event
-        await call_submit_event.wait()
-        await driver.submit(iens, "sleep")
-
     await asyncio.wait_for(
-        asyncio.gather(call_kill_and_set_flag(), wait_for_set_flag_and_call_submit()),
+        asyncio.gather(call_kill_and_set_flag(), driver.submit(iens, "sleep")),
         timeout=10,
     )
 

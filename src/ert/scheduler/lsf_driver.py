@@ -87,9 +87,13 @@ class _Stat(BaseModel):
 
 
 class JobData(BaseModel):
-    iens: int
-    job_state: AnyJob
-    submitted_timestamp: float
+    job_id: Optional[str] = None
+    job_state: Optional[AnyJob] = None
+    submitted_timestamp: Optional[float] = None
+    submitted_future: asyncio.Future[bool] = Field(default_factory=asyncio.Future)
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 def parse_bjobs(bjobs_output: str) -> Dict[str, Dict[str, Dict[str, str]]]:
@@ -175,8 +179,8 @@ def filter_job_ids_on_submission_time(
     jobs: MutableMapping[str, JobData], submitted_before: float
 ) -> set[str]:
     return {
-        job_id
-        for job_id, job_data in jobs.items()
+        job_data.job_id
+        for job_data in jobs.values()
         if submitted_before > job_data.submitted_timestamp
     }
 
@@ -204,8 +208,8 @@ class LsfDriver(Driver):
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
 
-        self._jobs: MutableMapping[str, JobData] = {}
-        self._iens2jobid: MutableMapping[int, str] = {}
+        self._iens2jobdata: MutableMapping[int, JobData] = {}
+        self._jobid2iens: Mapping[str, int] = {}
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
         self._sleep_time_between_cmd_retries = 3
@@ -229,7 +233,7 @@ class LsfDriver(Driver):
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
-
+        self._iens2jobdata[iens] = JobData()
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
 
         script = (
@@ -267,8 +271,9 @@ class LsfDriver(Driver):
             retry_interval=self._sleep_time_between_cmd_retries,
         )
         if not process_success:
+            self._iens2jobdata[iens].submitted_future.cancel()
             raise RuntimeError(process_message)
-
+        self._iens2jobdata[iens].submitted_future.set_result(True)
         match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
         if match is None:
             raise RuntimeError(f"Could not understand '{process_message}' from bsub")
@@ -278,26 +283,18 @@ class LsfDriver(Driver):
         (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
             json.dumps({"job_id": job_id}), encoding="utf-8"
         )
-        self._jobs[job_id] = JobData(
-            iens=iens,
-            job_state=QueuedJob(job_state="PEND"),
-            submitted_timestamp=time.time(),
-        )
-        self._iens2jobid[iens] = job_id
+        self._jobid2iens[job_id] = iens
+        self._iens2jobdata[iens].job_id = job_id
+        self._iens2jobdata[iens].job_state = QueuedJob(job_state="PEND")
+        self._iens2jobdata[iens].submitted_timestamp = time.time()
 
     async def kill(self, iens: int) -> None:
-        if iens not in self._iens2jobid:
-            for _ in range(10):
-                await asyncio.sleep(self._poll_period)
-                if iens in self._iens2jobid:
-                    break
-            else:
-                logger.error(
-                    f"LSF kill failed due to missing jobid for realization {iens}"
-                )
-                return
+        if iens not in self._iens2jobdata:
+            logger.error(f"LSF kill failed due to missing jobid for realization {iens}")
+            return
 
-        job_id = self._iens2jobid[iens]
+        await self._iens2jobdata[iens].submitted_future
+        job_id = self._iens2jobdata[iens].job_id
 
         logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
         bkill_with_args: List[str] = [
@@ -332,16 +329,15 @@ class LsfDriver(Driver):
 
     async def poll(self) -> None:
         while True:
-            if not self._jobs.keys():
+            if not self._jobid2iens:
                 await asyncio.sleep(self._poll_period)
                 continue
-            current_jobids = list(self._jobs.keys())
             process = await asyncio.create_subprocess_exec(
                 str(self._bjobs_cmd),
                 "-noheader",
                 "-o",
                 "jobid stat delimiter='^'",
-                *current_jobids,
+                *self._jobid2iens.keys(),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -358,7 +354,7 @@ class LsfDriver(Driver):
             job_ids_found_in_bjobs_output = set(bjobs_states.jobs.keys())
             if (
                 missing_in_bjobs_output := filter_job_ids_on_submission_time(
-                    self._jobs, submitted_before=time.time() - self._poll_period
+                    self._iens2jobdata, submitted_before=time.time() - self._poll_period
                 )
                 - job_ids_found_in_bjobs_output
             ):
@@ -382,12 +378,12 @@ class LsfDriver(Driver):
                 )
             await asyncio.sleep(self._poll_period)
 
-    async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
-        if job_id not in self._jobs:
+    async def _process_job_update(self, job_id: int, new_state: AnyJob) -> None:
+        if job_id not in self._jobid2iens:
             return
+        iens = self._jobid2iens[job_id]
 
-        old_state = self._jobs[job_id].job_state
-        iens = self._jobs[job_id].iens
+        old_state = self._iens2jobdata[iens].job_state
         if isinstance(new_state, IgnoredJobstates):
             logger.debug(
                 f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
@@ -397,7 +393,7 @@ class LsfDriver(Driver):
         if _STATE_ORDER[type(new_state)] <= _STATE_ORDER[type(old_state)]:
             return
 
-        self._jobs[job_id].job_state = new_state
+        self._iens2jobdata[iens].job_state = new_state
         event: Optional[Event] = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
@@ -417,8 +413,8 @@ class LsfDriver(Driver):
 
         if event:
             if isinstance(event, FinishedEvent):
-                del self._jobs[job_id]
-                del self._iens2jobid[iens]
+                del self._jobid2iens[job_id]
+                del self._iens2jobdata[iens]
                 await self._log_bhist_job_summary(job_id)
             await self.event_queue.put(event)
 
