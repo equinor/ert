@@ -206,6 +206,7 @@ class Scheduler:
                         event = await self._events.get()
                     if event == CLOSE_PUBLISHER_SENTINEL:
                         self._publisher_done.set()
+                        self._events.task_done()
                         return
                     await conn.send(event)
                     event = None

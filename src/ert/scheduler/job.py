@@ -123,6 +123,8 @@ class Job:
         finally:
             if timeout_task and not timeout_task.done():
                 timeout_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await timeout_task
             sem.release()
 
     async def run(self, sem: asyncio.BoundedSemaphore, max_submit: int = 2) -> None:
@@ -224,6 +226,9 @@ class Job:
                 "queue_event_type": status,
             },
         )
+        if self._scheduler._publisher_done.is_set():
+            logger.error("PUBLISHER is CLOSED ALREADY!!!!!!!!!!!!!!**********")
+            print("PUBLISHER is CLOSED ALREADY!!!!!!!!!!!!!!**********")
         await self._scheduler._events.put(to_json(event))
 
 
