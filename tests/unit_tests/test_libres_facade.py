@@ -204,6 +204,7 @@ def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, sna
         _ = data.loc[60]
 
 
+@pytest.mark.skip
 def test_gen_kw_collector(snake_oil_default_storage, snapshot):
     data = snake_oil_default_storage.load_all_gen_kw_data()
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")

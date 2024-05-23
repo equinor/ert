@@ -55,7 +55,9 @@ def test_change_iter(full_snapshot):
     model.setIter(1)
 
     partial = partial_snapshot(full_snapshot)
-    partial._realization_states["0"].update({"status": REALIZATION_STATE_FINISHED})
+    partial._realization_states["0"].update_from_dict(
+        {"status": REALIZATION_STATE_FINISHED}
+    )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
 
     assert (

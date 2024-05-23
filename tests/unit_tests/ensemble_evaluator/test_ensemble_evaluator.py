@@ -370,7 +370,7 @@ async def test_ensure_multi_level_events_in_order(evaluator):
         ensemble_state = snapshot_event.data.get("status")
         async for event in monitor.track():
             if event.data:
-                if "reals" in event.data:
+                if event.data.get("reals"):
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.data.get("status", ensemble_state)
 

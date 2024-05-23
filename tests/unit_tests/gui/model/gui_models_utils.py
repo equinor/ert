@@ -4,7 +4,9 @@ from ert.ensemble_evaluator.state import FORWARD_MODEL_STATE_FINISHED
 
 def partial_snapshot(snapshot) -> PartialSnapshot:
     partial = PartialSnapshot(snapshot)
-    partial._realization_states["0"].update({"status": FORWARD_MODEL_STATE_FINISHED})
+    partial._realization_states["0"].update_from_dict(
+        {"status": FORWARD_MODEL_STATE_FINISHED}
+    )
     partial.update_forward_model(
         "0", "0", ForwardModel(status=FORWARD_MODEL_STATE_FINISHED)
     )
