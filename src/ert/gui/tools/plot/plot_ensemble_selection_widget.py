@@ -40,12 +40,14 @@ class EnsembleSelectListWidget(QListWidget):
     def __init__(self, ensembles):
         super().__init__()
         self._ensembles = reversed(ensembles)
+        self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
 
         for i, ensemble in enumerate(self._ensembles):
             it = QListWidgetItem(ensemble)
             it.setData(Qt.ItemDataRole.UserRole, i == 0)
             self.addItem(it)
+            self._ensemble_count += 1
 
         self.viewport().setMouseTracking(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
@@ -58,7 +60,7 @@ class EnsembleSelectListWidget(QListWidget):
     def get_checked_ensemble_plot_names(self) -> List[str]:
         return [
             self.item(index).text()
-            for index in range(self.count())
+            for index in range(self._ensemble_count)
             if self.item(index).data(Qt.ItemDataRole.UserRole)
         ]
 
@@ -76,7 +78,6 @@ class EnsembleSelectListWidget(QListWidget):
     def slot_toggle_plot(self, item: QListWidgetItem):
         count = len(self.get_checked_ensemble_plot_names())
         selected = item.data(Qt.ItemDataRole.UserRole)
-
         if selected and count > self.MINIMUM_SELECTED:
             item.setData(Qt.ItemDataRole.UserRole, False)
         elif not selected and count < self.MAXIMUM_SELECTED:
