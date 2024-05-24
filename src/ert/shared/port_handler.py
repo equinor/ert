@@ -3,6 +3,8 @@ import random
 import socket
 from typing import Optional, Tuple
 
+from dns import exception, resolver, reversename
+
 
 class PortAlreadyInUseException(Exception):
     pass
@@ -17,6 +19,31 @@ class InvalidHostException(Exception):
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_machine_name() -> str:
+    """Returns a name that can be used to identify this machine in a network
+    A fully qualified domain name is returned if available. Otherwise returns
+    the string `localhost`
+    """
+    hostname = socket.gethostname()
+    try:
+        # We need the ip-address to perform a reverse lookup to deal with
+        # differences in how the clusters are getting their fqdn's
+        ip_addr = socket.gethostbyname(hostname)
+        reverse_name = reversename.from_address(ip_addr)
+        resolved_hosts = [
+            str(ptr_record).rstrip(".")
+            for ptr_record in resolver.resolve(reverse_name, "PTR")
+        ]
+        resolved_hosts.sort()
+        return resolved_hosts[0]
+    except (resolver.NXDOMAIN, exception.Timeout):
+        # If local address and reverse lookup not working - fallback
+        # to socket fqdn which are using /etc/hosts to retrieve this name
+        return socket.getfqdn()
+    except (socket.gaierror, exception.DNSException):
+        return "localhost"
 
 
 def find_available_port(

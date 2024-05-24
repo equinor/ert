@@ -6,6 +6,7 @@ import socket
 import ssl
 import tempfile
 import typing
+import warnings
 from base64 import b64encode
 from datetime import datetime, timedelta
 from typing import Optional
@@ -15,8 +16,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from dns import exception, resolver, reversename
 
+from ert.shared import get_machine_name as ert_shared_get_machine_name
 from ert.shared import port_handler
 
 from .evaluator_connection_info import EvaluatorConnectionInfo
@@ -25,28 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_machine_name() -> str:
-    """Returns a name that can be used to identify this machine in a network
-    A fully qualified domain name is returned if available. Otherwise returns
-    the string `localhost`
-    """
-    hostname = socket.gethostname()
-    try:
-        # We need the ip-address to perform a reverse lookup to deal with
-        # differences in how the clusters are getting their fqdn's
-        ip_addr = socket.gethostbyname(hostname)
-        reverse_name = reversename.from_address(ip_addr)
-        resolved_hosts = [
-            str(ptr_record).rstrip(".")
-            for ptr_record in resolver.resolve(reverse_name, "PTR")
-        ]
-        resolved_hosts.sort()
-        return resolved_hosts[0]
-    except (resolver.NXDOMAIN, exception.Timeout):
-        # If local address and reverse lookup not working - fallback
-        # to socket fqdn which are using /etc/hosts to retrieve this name
-        return socket.getfqdn()
-    except (socket.gaierror, exception.DNSException):
-        return "localhost"
+    warnings.warn(
+        "get_machine_name has been moved from ert.ensemble_evaluator.config to ert.shared",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return ert_shared_get_machine_name()
 
 
 def _generate_authentication() -> str:
@@ -70,7 +55,7 @@ def _generate_certificate(
     )
 
     # Generate the certificate and sign it with the private key
-    cert_name = get_machine_name()
+    cert_name = ert_shared_get_machine_name()
     subject = issuer = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "NO"),
