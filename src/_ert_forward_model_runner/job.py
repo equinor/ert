@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import contextlib
 import json
+import logging
 import os
 import signal
+import sys
 import time
 from datetime import datetime as dt
 from pathlib import Path
-from subprocess import Popen
+from subprocess import Popen, run
 from typing import Optional
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
@@ -17,6 +21,55 @@ from _ert_forward_model_runner.reporting.message import (
     Running,
     Start,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def killed_by_oom(pids: set[int]) -> bool:
+    """Will try to detect if a process (or any of its descendants) was killed
+    by the Linux OOM-killer.
+
+    Debug information will be logged through the system logger.
+
+    Since pids can be reused, this can in theory give false positives.
+    """
+
+    if sys.platform == "darwin":
+        return False
+
+    try:
+        dmesg_result = run("dmesg", capture_output=True, check=False)
+        if dmesg_result.returncode != 0:
+            logger.warning(
+                "Could not use dmesg to check for OOM kill, "
+                f"returncode {dmesg_result.returncode} and stderr: {dmesg_result.stderr}"
+            )
+            return False
+    except FileNotFoundError:
+        logger.warning(
+            "Could not use dmesg to check for OOM kill, utility not available"
+        )
+        return False
+
+    oom_lines = "".join(
+        [
+            line
+            for line in dmesg_result.stdout.decode(
+                "ascii", errors="ignore"
+            ).splitlines()
+            if "Out of memory:" in line
+        ]
+    )
+
+    for pid in pids:
+        rhel7_message = f"Kill process {pid}"
+        rhel8_message = f"Killed process {pid}"
+        if rhel7_message in oom_lines or rhel8_message in oom_lines:
+            logger.warning(
+                f"Found OOM trace in dmesg: {oom_lines}, assuming OOM is the cause of realization kill."
+            )
+            return True
+    return False
 
 
 class Job:
@@ -120,6 +173,10 @@ class Job:
 
         exit_code = None
 
+        # All child pids for the forward model step. Need to track these in order to be able
+        # to detect OOM kills in case of failure.
+        fm_step_pids = set([process.pid])
+
         max_memory_usage = 0
         while exit_code is None:
             memory_rss = _get_rss_for_processtree(process)
@@ -138,6 +195,9 @@ class Job:
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
             except TimeoutExpired:
+                fm_step_pids |= set(
+                    [int(child.pid) for child in process.children(recursive=True)]
+                )
                 run_time = dt.now() - run_start_time
                 if (
                     max_running_minutes is not None
@@ -166,9 +226,17 @@ class Job:
         exited_message = Exited(self, exit_code)
 
         if exit_code != 0:
-            yield exited_message.with_error(
-                f"Process exited with status code {exit_code}"
-            )
+            if killed_by_oom(fm_step_pids):
+                yield exited_message.with_error(
+                    f"Forward model step {self.job_data.get('name')} "
+                    "was killed due to out-of-memory. "
+                    "Max memory usage recorded by Ert for the "
+                    f"realization was {max_memory_usage//1024//1024} MB"
+                )
+            else:
+                yield exited_message.with_error(
+                    f"Process exited with status code {exit_code}"
+                )
             return
 
         # exit_code is 0

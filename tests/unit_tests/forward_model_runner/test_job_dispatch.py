@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import importlib
 import json
@@ -15,6 +17,7 @@ import psutil
 import pytest
 
 from _ert_forward_model_runner.cli import _setup_reporters, main
+from _ert_forward_model_runner.job import killed_by_oom
 from _ert_forward_model_runner.reporting import Event, Interactive
 from _ert_forward_model_runner.reporting.message import Finish, Init
 from tests.utils import _mock_ws_thread, wait_until
@@ -328,3 +331,24 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
             main(["script.py"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)
+
+
+@pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
+def test_killed_by_oom(tmp_path, monkeypatch):
+    """Test out-of-memory detection for pid and descendants based
+    on a mocked dmesg system utility."""
+    parent_pid = 666
+    child_pid = 667
+    killed_pid = child_pid
+
+    dmesg_path = tmp_path / "dmesg"
+    dmesg_path.write_text(
+        f"#!/bin/sh\necho 'Out of memory: Killed process {killed_pid}'; exit 0"
+    )
+    dmesg_path.chmod(dmesg_path.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+
+    assert killed_by_oom(set([parent_pid, child_pid]))
+    assert killed_by_oom(set([child_pid]))
+    assert not killed_by_oom(set([parent_pid]))
+    assert not killed_by_oom(set([child_pid + 1]))
