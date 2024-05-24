@@ -5,7 +5,43 @@ import threading
 
 import pytest
 
-from ert.shared import port_handler
+from ert.shared import get_machine_name, port_handler
+
+
+def test_that_get_machine_name_is_predictive(mocker):
+    """For ip addresses with multiple PTR records we must ensure
+    that get_machine_name() is predictive to avoid mismatch for SSL certificates.
+
+    The order DNS servers respond to reverse DNS lookups for such hosts is not
+    defined."""
+
+    # GIVEN that reverse DNS resolution results in two names (in random order):
+    ptr_records = ["barfoo01.internaldomain.barf.", "foobar01.equinor.com."]
+
+    # It is important that get_machine_name() is predictive for each
+    # invocation, not how it attains predictiveness. Currently the PTR records
+    # are sorted and the first element is returned, but that should be regarded
+    # as an implementation detail.
+    expected_resolved_name = ptr_records[0].rstrip(".")
+
+    # Avoid possibility of flakyness in code paths not relevant
+    # for this test:
+    mocker.patch("socket.gethostname", return_value=None)
+    mocker.patch("socket.gethostbyname", return_value=None)
+    mocker.patch("dns.reversename.from_address", return_value=None)
+
+    # This call is what this test wants to test:
+    mocker.patch("dns.resolver.resolve", return_value=ptr_records)
+
+    # ASSERT the returned name
+    assert get_machine_name() == expected_resolved_name
+
+    # Shuffle the the list and try again:
+    ptr_records.reverse()
+    mocker.patch("dns.resolver.resolve", return_value=ptr_records)
+
+    # ASSERT that we still get the same name
+    assert get_machine_name() == expected_resolved_name
 
 
 def test_find_available_port(unused_tcp_port):
