@@ -673,8 +673,7 @@ def main() -> None:
 
     FeatureScheduler.set_value(args)
     try:
-        with ErtPluginContext() as context:
-            context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
+        with ErtPluginContext(logger=logging.getLogger()) as context:
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)
     except (ErtCliError, ErtTimeoutError) as err:
