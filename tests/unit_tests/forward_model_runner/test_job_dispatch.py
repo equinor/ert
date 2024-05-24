@@ -153,7 +153,7 @@ def test_memory_profile_is_logged_as_csv():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_job_dispatch_run_subset_specified_as_parmeter():
+def test_job_dispatch_run_subset_specified_as_parameter():
     with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(
             "#!/usr/bin/env python\n"
