@@ -148,6 +148,7 @@ platforms = ["all"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration_test",
+    "out_of_memory",
     "quick_only",
     "requires_eclipse",
     "requires_lsf",
