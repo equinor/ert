@@ -158,6 +158,5 @@ if __name__ == "__main__":
     uvicorn.config.LOGGING_CONFIG.clear()
     uvicorn.config.LOGGING_CONFIG.update(logging_conf)
     terminate_on_parent_death()
-    with ErtPluginContext() as context:
-        context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
+    with ErtPluginContext(logger=logging.getLogger()) as context:
         run_server(debug=False)

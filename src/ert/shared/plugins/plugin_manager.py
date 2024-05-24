@@ -25,6 +25,8 @@ from typing import (
     overload,
 )
 
+logger = logging.getLogger(__name__)
+
 import pluggy
 
 from ert.shared.plugins.workflow_config import WorkflowConfigs
@@ -65,7 +67,6 @@ class ErtPluginManager(pluggy.PluginManager):
         else:
             for plugin in plugins:
                 self.register(plugin)
-        logging.debug(str(self))
 
     def __str__(self) -> str:
         self_str = "ERT Plugin manager:\n"
@@ -87,10 +88,10 @@ class ErtPluginManager(pluggy.PluginManager):
         response = hook()
 
         if response is None:
-            logging.debug(f"Got no {config_name} config path from any plugins")
+            logger.debug(f"Got no {config_name} config path from any plugins")
             return None
 
-        logging.debug(
+        logger.debug(
             f"Got {config_name} config path from "
             f"{response.plugin_metadata.plugin_name} "
             f"({response.plugin_metadata.function_name,})"
@@ -104,7 +105,7 @@ class ErtPluginManager(pluggy.PluginManager):
         response = hook(job_name=job_name)
 
         if response is None:
-            logging.debug(f"Got no documentation for {job_name} from any plugins")
+            logger.debug(f"Got no documentation for {job_name} from any plugins")
             return {}
 
         return response.data
@@ -193,7 +194,7 @@ class ErtPluginManager(pluggy.PluginManager):
     ) -> Dict[str, str]:
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
-            logging.info(
+            logger.info(
                 f"Duplicate key: {ck} in workflow hook implementations, "
                 f"config path 1: {config_jobs[ck]}, "
                 f"config path 2: {hooked_jobs[ck]}"
@@ -234,7 +235,7 @@ class ErtPluginManager(pluggy.PluginManager):
         for d in list_of_dicts:
             conflicting_keys = set(merged_dict.keys()) & set(d.data.keys())
             for ck in conflicting_keys:
-                logging.info(
+                logger.info(
                     f"Overwriting {ck} from "
                     f"{merged_dict[ck][1].plugin_name}"
                     f"({merged_dict[ck][1].function_name}) "
@@ -302,26 +303,34 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtPluginContext:
-    def __init__(self, plugins: Optional[List[object]] = None) -> None:
+    def __init__(
+        self,
+        plugins: Optional[List[object]] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir: Optional[str] = None
         self.tmp_site_config_filename: Optional[str] = None
+        self._logger = logger
 
     def _create_site_config(self, tmp_dir: str) -> Optional[str]:
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
         if site_config_content is not None:
-            logging.debug("Creating temporary site-config")
+            logger.debug("Creating temporary site-config")
             tmp_site_config_filename = os.path.join(tmp_dir, "site-config")
             with open(tmp_site_config_filename, "w", encoding="utf-8") as fh:
                 fh.write(site_config_content)
-            logging.debug(f"Temporary site-config created: {tmp_site_config_filename}")
+            logger.debug(f"Temporary site-config created: {tmp_site_config_filename}")
         return tmp_site_config_filename
 
     def __enter__(self) -> ErtPluginContext:
-        logging.debug("Creating temporary directory for site-config")
+        if self._logger is not None:
+            self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
+        logger.debug(str(self.plugin_manager))
+        logger.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
-        logging.debug(f"Temporary directory created: {self.tmp_dir}")
+        logger.debug(f"Temporary directory created: {self.tmp_dir}")
         self.tmp_site_config_filename = self._create_site_config(self.tmp_dir)
         env = {
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
@@ -338,10 +347,10 @@ class ErtPluginContext:
         for name, value in env.items():
             if self.backup_env.get(name) is None:
                 if value is not None:
-                    logging.debug(f"Setting environment variable {name}={value}")
+                    logger.debug(f"Setting environment variable {name}={value}")
                     os.environ[name] = value
             else:
-                logging.debug(
+                logger.debug(
                     f"Environment variable already set "
                     f"{name}={self.backup_env.get(name)}, leaving it as is"
                 )
@@ -349,7 +358,7 @@ class ErtPluginContext:
     def _reset_environment(self) -> None:
         for name in self.env:
             if self.backup_env.get(name) is None and name in os.environ:
-                logging.debug(f"Resetting environment variable {name}")
+                logger.debug(f"Resetting environment variable {name}")
                 del os.environ[name]
 
     def __exit__(
@@ -359,6 +368,6 @@ class ErtPluginContext:
         traceback: TracebackType,
     ) -> None:
         self._reset_environment()
-        logging.debug("Deleting temporary directory for site-config")
+        logger.debug("Deleting temporary directory for site-config")
         if self.tmp_dir is not None:
             shutil.rmtree(self.tmp_dir)
