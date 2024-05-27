@@ -204,7 +204,9 @@ class LegacyEnsemble(Ensemble):
                     ee_cert=self._config.cert,
                     ee_token=self._config.token,
                 )
-                scheduler_logger.info("Experiment ran on ORCHESTRATOR: scheduler")
+                scheduler_logger.info(
+                    f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
+                )
             else:
                 queue = JobQueue(
                     self._queue_config,
@@ -215,7 +217,9 @@ class LegacyEnsemble(Ensemble):
                     ee_token=self._config.token,
                     on_timeout=on_timeout,
                 )
-                scheduler_logger.info("Experiment ran on ORCHESTRATOR: job_queue")
+                scheduler_logger.info(
+                    f"Experiment ran on ORCHESTRATOR: job_queue on {self._queue_config.queue_system}"
+                )
             self._job_queue = queue
 
             await cloudevent_unary_send(
