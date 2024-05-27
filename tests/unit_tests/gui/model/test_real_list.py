@@ -3,7 +3,7 @@ from pytestqt.qt_compat import qt_api
 
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
-    REALIZATION_STATE_UNKNOWN,
+    REALIZATION_STATE_RUNNING,
 )
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import NodeRole, SnapshotModel
@@ -47,7 +47,7 @@ def test_change_iter(full_snapshot):
 
     assert (
         model.index(0, 0, QModelIndex()).data(NodeRole).data.status
-        == REALIZATION_STATE_UNKNOWN
+        == REALIZATION_STATE_RUNNING
     )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)

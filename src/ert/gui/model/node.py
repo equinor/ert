@@ -82,13 +82,13 @@ class IterNodeData:
 class IterNode(_Node):
     parent: RootNode
     data: IterNodeData
-    children: dict[int, RealNode] = field(default_factory=dict)
+    children: dict[str, RealNode] = field(default_factory=dict)
 
     def add_child(self, node: RealNode, node_id: Optional[int] = None) -> None:
         node.parent = self
         if node_id is None:
             node_id = node.id_
-        self.children[node_id] = node
+        self.children[str(node_id)] = node
 
     def row(self) -> int:
         if self.data.index is not None:
@@ -106,7 +106,7 @@ class RealNodeData:
     forward_model_step_status_color_by_id: dict[str, QColor] = field(
         default_factory=dict
     )
-    real_status_color: Optional[str] = None
+    real_status_color: Optional[QColor] = None
     current_memory_usage: Optional[int] = None
     max_memory_usage: Optional[int] = None
 
@@ -115,7 +115,7 @@ class RealNodeData:
 class RealNode(_Node):
     parent: IterNode
     data: RealNodeData
-    children: dict[int, ForwardModelStepNode] = field(default_factory=dict)
+    children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
     def add_child(
         self, node: ForwardModelStepNode, node_id: Optional[int] = None
@@ -123,13 +123,13 @@ class RealNode(_Node):
         node.parent = self
         if node_id is None:
             node_id = node.id_
-        self.children[node_id] = node
+        self.children[str(node_id)] = node
 
     def row(self) -> int:
         if self.data.index is not None:
             return int(self.data.index)
         if self.parent:
-            return list(self.parent.children.keys()).index(self.id_)
+            return list(self.parent.children.keys()).index(str(self.id_))
         raise ValueError(f"{self} had no parent")
 
 

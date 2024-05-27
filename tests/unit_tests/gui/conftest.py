@@ -29,7 +29,9 @@ from ert.ensemble_evaluator.snapshot import (
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     FORWARD_MODEL_STATE_START,
+    REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_UNKNOWN,
+    REALIZATION_STATE_WAITING,
 )
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
@@ -321,7 +323,7 @@ def run_experiment_fixture(request):
 @pytest.fixture()
 def full_snapshot() -> Snapshot:
     real = RealizationSnapshot(
-        status=REALIZATION_STATE_UNKNOWN,
+        status=REALIZATION_STATE_RUNNING,
         active=True,
         forward_models={
             "0": ForwardModel(
@@ -360,6 +362,18 @@ def full_snapshot() -> Snapshot:
                 current_memory_usage="123",
                 max_memory_usage="312",
             ),
+            "3": ForwardModel(
+                start_time=dt.now(),
+                end_time=None,
+                name="poly_not_started",
+                index="3",
+                status=FORWARD_MODEL_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
         },
     )
     snapshot = SnapshotDict(
@@ -367,6 +381,48 @@ def full_snapshot() -> Snapshot:
         reals={},
     )
     for i in range(0, 100):
+        snapshot.reals[str(i)] = copy.deepcopy(real)
+
+    return Snapshot(snapshot.model_dump())
+
+
+@pytest.fixture()
+def waiting_snapshot() -> Snapshot:
+    real = RealizationSnapshot(
+        status=REALIZATION_STATE_WAITING,
+        active=True,
+        forward_models={
+            "0": ForwardModel(
+                start_time=dt.now(),
+                end_time=dt.now(),
+                name="poly_eval",
+                index="0",
+                status=FORWARD_MODEL_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+            "1": ForwardModel(
+                start_time=dt.now(),
+                end_time=None,
+                name="poly_postval",
+                index="1",
+                status=FORWARD_MODEL_STATE_START,
+                error="error",
+                stdout="std_out_file",
+                stderr="std_err_file",
+                current_memory_usage="123",
+                max_memory_usage="312",
+            ),
+        },
+    )
+    snapshot = SnapshotDict(
+        status=ENSEMBLE_STATE_STARTED,
+        reals={},
+    )
+    for i in range(0, 1):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
     return Snapshot(snapshot.model_dump())
