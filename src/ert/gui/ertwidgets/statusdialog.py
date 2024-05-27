@@ -52,9 +52,7 @@ class StatusDialog(QDialog):
         self.setLayout(layout)
 
     def keyPressEvent(self, q_key_event):
-        if not self._close_button.isEnabled() and q_key_event.key() == Qt.Key_Escape:
-            pass
-        else:
+        if self._close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
             QDialog.keyPressEvent(self, q_key_event)
 
     def enable_button(self, caption, enabled: bool = True):
