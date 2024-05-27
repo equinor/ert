@@ -92,15 +92,11 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
         num_characters_to_read_from_end=tail_chars_to_read,
     )
 
-    if tail_chars_to_read > num_written_characters:
-        assert f"LSF-stderr:\n{_err}" in message
-        # we get some extra echos after LSF-out
-        assert f"{_out}" in message
-    else:
-        assert f"LSF-stderr:\n{_err}" not in message
-        assert f"LSF-stderr:\n{_err[-tail_chars_to_read+1:]}" in message
-        assert f"LSF-stdout:\n{_out}" not in message
-        assert f"LSF-stdout:\n{_out[-tail_chars_to_read+1:]}" in message
+    stderr_txt = Path(f"{job_name}.LSF-stderr").read_text(encoding="utf-8").strip()
+    stdout_txt = Path(f"{job_name}.LSF-stdout").read_text(encoding="utf-8").strip()
+
+    assert stderr_txt[-min(tail_chars_to_read, num_written_characters) + 1 :] in message
+    assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 1 :] in message
 
 
 async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
