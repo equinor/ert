@@ -129,9 +129,10 @@ def run_everest(options):
             job_name = fm_job.split()[0]
             logger.info("Everest forward model contains job {}".format(job_name))
 
-        ert_config = ErtConfig.from_dict(
-            config_dict=generate_ert_config(options.config, options.debug)
-        )
+        with PluginSiteConfigEnv():
+            ert_config = ErtConfig.from_dict(
+                config_dict=generate_ert_config(options.config, options.debug)
+            )
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
 
