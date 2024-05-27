@@ -35,7 +35,5 @@ class WorkflowDialog(QDialog):
         self.close_button.setEnabled(True)
 
     def keyPressEvent(self, q_key_event):
-        if not self.close_button.isEnabled() and q_key_event.key() == Qt.Key_Escape:
-            pass
-        else:
+        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
             QDialog.keyPressEvent(self, q_key_event)
