@@ -1,4 +1,6 @@
 [report]
-exclude_lines =
-    pragma: no cover
+exclude_also =
+    ; Don't complain about code for type checking only
     if TYPE_CHECKING:
+    ; Don't complain about overload type specifications, they aren't run:
+    @(typing\.)?overload
