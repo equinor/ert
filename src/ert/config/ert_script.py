@@ -17,6 +17,13 @@ logger = logging.getLogger(__name__)
 
 
 class ErtScript:
+    """
+    ErtScript is the abstract baseclass for workflow jobs and
+    plugins. It provides access to the ert internals and lets
+    jobs implement the "run" function which is called when
+    a workflow is executed.
+    """
+
     stop_on_fail = False
 
     def __init__(
@@ -36,7 +43,18 @@ class ErtScript:
 
     @abstractmethod
     def run(self, *arg: Any, **kwarg: Any) -> Any:
-        pass
+        """
+        This method is implemented by the workflow runners
+        and executed when the workflow job is called.
+
+        The parameters are gotten from the workflow file, e.g. a
+        workflow file containing
+
+        EXPORT_MISFIT_DATA path/to/output.hdf
+
+        will put `path/to/output.hdf` in the first argument
+        to run.
+        """
 
     @property
     def stdoutdata(self) -> str:
