@@ -12,8 +12,8 @@ from ert.enkf_main import EnKFMain
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.services.storage_service import StorageService
@@ -64,19 +64,19 @@ def test_run_path_deleted_error(
         gui = _setup_main_window(
             EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
         )
-        simulation_panel = gui.findChild(SimulationPanel)
+        experiment_panel = gui.findChild(ExperimentPanel)
 
-        assert isinstance(simulation_panel, SimulationPanel)
-        simulation_mode_combo = simulation_panel.findChild(QComboBox)
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
         simulation_settings._name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
-        start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
-        assert start_simulation
-        assert isinstance(start_simulation, QToolButton)
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
 
         # Add something to the runpath
         run_path = Path(
@@ -91,7 +91,7 @@ def test_run_path_deleted_error(
             1000, lambda: handle_run_path_dialog(gui, qtbot, expect_error=True)
         )
         with patch("shutil.rmtree", side_effect=PermissionError("Not allowed!")):
-            qtbot.mouseClick(start_simulation, Qt.LeftButton)
+            qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -115,19 +115,19 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         gui = _setup_main_window(
             EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
         )
-        simulation_panel = gui.findChild(SimulationPanel)
+        experiment_panel = gui.findChild(ExperimentPanel)
 
-        assert isinstance(simulation_panel, SimulationPanel)
-        simulation_mode_combo = simulation_panel.findChild(QComboBox)
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
         simulation_settings._name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
-        start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
-        assert start_simulation
-        assert isinstance(start_simulation, QToolButton)
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
 
         run_path = Path(
             snake_oil_case.model_config.runpath_format_string.replace(
@@ -140,7 +140,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         QTimer.singleShot(
             1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
         )
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -164,19 +164,19 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         gui = _setup_main_window(
             EnKFMain(snake_oil_case), args_mock, GUILogHandler(), storage
         )
-        simulation_panel = gui.findChild(SimulationPanel)
+        experiment_panel = gui.findChild(ExperimentPanel)
 
-        assert isinstance(simulation_panel, SimulationPanel)
-        simulation_mode_combo = simulation_panel.findChild(QComboBox)
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
         simulation_settings._name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
-        start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
-        assert start_simulation
-        assert isinstance(start_simulation, QToolButton)
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
 
         run_path = Path(
             snake_oil_case.model_config.runpath_format_string.replace("<IENS>", "0")
@@ -187,7 +187,7 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         QTimer.singleShot(
             500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
         )
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
         run_dialog = gui.findChild(RunDialog)

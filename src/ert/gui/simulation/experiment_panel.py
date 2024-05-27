@@ -32,17 +32,17 @@ from ert.mode_definitions import (
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
+from .experiment_config_panel import ExperimentConfigPanel
 from .iterated_ensemble_smoother_panel import IteratedEnsembleSmootherPanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
-from .simulation_config_panel import SimulationConfigPanel
 from .single_test_run_panel import SingleTestRunPanel
 
 EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
 EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
 
 
-class SimulationPanel(QWidget):
+class ExperimentPanel(QWidget):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
         QWidget.__init__(self)
         self._notifier = notifier
@@ -51,97 +51,96 @@ class SimulationPanel(QWidget):
         ensemble_size = self.facade.get_ensemble_size()
         self._config_file = config_file
 
-        self.setObjectName("Simulation_panel")
+        self.setObjectName("experiment_panel")
         layout = QVBoxLayout()
 
-        self._simulation_mode_combo = QComboBox()
-        self._simulation_mode_combo.setObjectName("Simulation_mode")
+        self._experiment_type_combo = QComboBox()
+        self._experiment_type_combo.setObjectName("experiment_type")
 
-        self._simulation_mode_combo.currentIndexChanged.connect(
-            self.toggleSimulationMode
+        self._experiment_type_combo.currentIndexChanged.connect(
+            self.toggleExperimentType
         )
 
-        simulation_mode_layout = QHBoxLayout()
-        simulation_mode_layout.addSpacing(10)
-        simulation_mode_layout.addWidget(QLabel("Simulation mode:"), 0, Qt.AlignVCenter)
-        simulation_mode_layout.addWidget(
-            self._simulation_mode_combo, 0, Qt.AlignVCenter
+        experiment_type_layout = QHBoxLayout()
+        experiment_type_layout.addSpacing(10)
+        experiment_type_layout.addWidget(QLabel("Experiment type:"), 0, Qt.AlignVCenter)
+        experiment_type_layout.addWidget(
+            self._experiment_type_combo, 0, Qt.AlignVCenter
         )
 
-        simulation_mode_layout.addSpacing(20)
+        experiment_type_layout.addSpacing(20)
 
         self.run_button = QToolButton()
-        self.run_button.setObjectName("start_simulation")
+        self.run_button.setObjectName("run_experiment")
         self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
-        self.run_button.clicked.connect(self.runSimulation)
+        self.run_button.clicked.connect(self.run_experiment)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
-        simulation_mode_layout.addWidget(self.run_button)
-        simulation_mode_layout.addStretch(1)
+        experiment_type_layout.addWidget(self.run_button)
+        experiment_type_layout.addStretch(1)
 
         layout.addSpacing(5)
-        layout.addLayout(simulation_mode_layout)
+        layout.addLayout(experiment_type_layout)
         layout.addSpacing(10)
 
-        self._simulation_stack = QStackedWidget()
-        self._simulation_stack.setLineWidth(1)
-        self._simulation_stack.setFrameStyle(QFrame.StyledPanel)
+        self._experiment_stack = QStackedWidget()
+        self._experiment_stack.setLineWidth(1)
+        self._experiment_stack.setFrameStyle(QFrame.StyledPanel)
 
-        layout.addWidget(self._simulation_stack)
+        layout.addWidget(self._experiment_stack)
 
-        self._simulation_widgets = OrderedDict()
-        """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
-        self.addSimulationConfigPanel(
+        self._experiment_widgets = OrderedDict()
+        self.addExperimentConfigPanel(
             SingleTestRunPanel(self.facade.run_path, notifier),
             True,
         )
-        self.addSimulationConfigPanel(
+        self.addExperimentConfigPanel(
             EnsembleExperimentPanel(ensemble_size, self.facade.run_path, notifier),
             True,
         )
-        self.addSimulationConfigPanel(
+        self.addExperimentConfigPanel(
             EvaluateEnsemblePanel(ensemble_size, self.facade.run_path, notifier),
             True,
         )
 
         config = self.facade.config
-        simulation_mode_valid = (
+        experiment_type_valid = (
             config.ensemble_config.parameter_configs and config.observations
         )
         analysis_config = self.facade.config.analysis_config
-        self.addSimulationConfigPanel(
+        self.addExperimentConfigPanel(
             EnsembleSmootherPanel(
                 analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
-            simulation_mode_valid,
+            experiment_type_valid,
         )
-        self.addSimulationConfigPanel(
+        self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
                 analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
-            simulation_mode_valid,
+            experiment_type_valid,
         )
-        self.addSimulationConfigPanel(
+        self.addExperimentConfigPanel(
             IteratedEnsembleSmootherPanel(
                 analysis_config, self.facade.run_path, notifier, ensemble_size
             ),
-            simulation_mode_valid,
+            experiment_type_valid,
         )
 
         self.setLayout(layout)
 
-    def addSimulationConfigPanel(self, panel, mode_enabled: bool):
-        assert isinstance(panel, SimulationConfigPanel)
-        self._simulation_stack.addWidget(panel)
-        simulation_model = panel.getSimulationModel()
-        self._simulation_widgets[simulation_model] = panel
-        self._simulation_mode_combo.addItem(simulation_model.name(), simulation_model)
+    def addExperimentConfigPanel(self, panel, mode_enabled: bool):
+        assert isinstance(panel, ExperimentConfigPanel)
+        self._experiment_stack.addWidget(panel)
+        experiment_type = panel.get_experiment_type()
+        self._experiment_widgets[experiment_type] = panel
+        self._experiment_type_combo.addItem(experiment_type.name(), experiment_type)
 
         if not mode_enabled:
-            item_count = self._simulation_mode_combo.count() - 1
-            sim_item = self._simulation_mode_combo.model().item(item_count)
+            item_count = self._experiment_type_combo.count() - 1
+            sim_item = self._experiment_type_combo.model().item(item_count)
             sim_item.setEnabled(False)
             sim_item.setToolTip("Both observations and parameters must be defined")
             sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
@@ -152,22 +151,22 @@ class SimulationPanel(QWidget):
     def getActions():
         return []
 
-    def getCurrentSimulationModel(self):
-        return self._simulation_mode_combo.itemData(
-            self._simulation_mode_combo.currentIndex(), Qt.UserRole
+    def get_current_experiment_type(self):
+        return self._experiment_type_combo.itemData(
+            self._experiment_type_combo.currentIndex(), Qt.UserRole
         )
 
-    def getSimulationArguments(self) -> Dict[str, Any]:
-        simulation_widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-        args = simulation_widget.getSimulationArguments()
+    def get_experiment_arguments(self) -> Dict[str, Any]:
+        simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
+        args = simulation_widget.get_experiment_arguments()
         return args
 
     def getExperimentName(self) -> str:
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
-        return self.getSimulationArguments().experiment_name
+        return self.get_experiment_arguments().experiment_name
 
-    def runSimulation(self):
-        args = self.getSimulationArguments()
+    def run_experiment(self):
+        args = self.get_experiment_arguments()
         if args.mode == ES_MDA_MODE:
             if args.restart_run:
                 message = (
@@ -286,26 +285,26 @@ class SimulationPanel(QWidget):
                 )
                 self.run_button.setEnabled(False)
                 self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
-                dialog.startSimulation()
+                dialog.run_experiment()
                 dialog.show()
 
                 def exit_handler():
                     self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
                     self.run_button.setEnabled(True)
-                    self.toggleSimulationMode()
+                    self.toggleExperimentType()
                     self._notifier.emitErtChange()
 
                 dialog.finished.connect(exit_handler)
 
-    def toggleSimulationMode(self):
-        current_model = self.getCurrentSimulationModel()
+    def toggleExperimentType(self):
+        current_model = self.get_current_experiment_type()
         if current_model is not None:
-            widget = self._simulation_widgets[self.getCurrentSimulationModel()]
-            self._simulation_stack.setCurrentWidget(widget)
+            widget = self._experiment_widgets[self.get_current_experiment_type()]
+            self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
 
     def validationStatusChanged(self):
-        widget = self._simulation_widgets[self.getCurrentSimulationModel()]
+        widget = self._experiment_widgets[self.get_current_experiment_type()]
         self.run_button.setEnabled(
             self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
             and widget.isConfigurationValid()

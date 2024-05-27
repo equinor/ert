@@ -16,7 +16,7 @@ from ert.enkf_main import EnKFMain
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.simulation_panel import SimulationPanel
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
@@ -100,9 +100,9 @@ def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     """
     gui = open_gui
     run_experiment(EnsembleExperiment, gui)
-    simulation_panel = get_child(gui, SimulationPanel)
-    simulation_settings = get_child(simulation_panel, EvaluateEnsemblePanel)
-    simulation_mode_combo = get_child(simulation_panel, QComboBox)
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_settings = get_child(experiment_panel, EvaluateEnsemblePanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData("iter-0", Qt.MatchStartsWith)
@@ -116,6 +116,6 @@ def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     assert not all(success)
     # Check that the failed realizations are suggested for Evaluate ensemble
     assert list(~success) == rangestring_to_mask(
-        simulation_panel.getSimulationArguments().realizations,
+        experiment_panel.get_experiment_arguments().realizations,
         10,
     )

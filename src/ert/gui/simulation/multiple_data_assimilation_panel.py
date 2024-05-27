@@ -21,7 +21,7 @@ from ert.validation import (
     RangeStringArgument,
 )
 
-from .simulation_config_panel import SimulationConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
@@ -38,7 +38,7 @@ class Arguments:
     experiment_name: str
 
 
-class MultipleDataAssimilationPanel(SimulationConfigPanel):
+class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
@@ -46,7 +46,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         notifier: ErtNotifier,
         ensemble_size: int,
     ):
-        SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
+        ExperimentConfigPanel.__init__(self, MultipleDataAssimilation)
         self.notifier = notifier
 
         layout = QFormLayout()
@@ -187,7 +187,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             and self.weights_valid
         )
 
-    def getSimulationArguments(self):
+    def get_experiment_arguments(self):
         return Arguments(
             mode=ES_MDA_MODE,
             target_ensemble=self._target_ensemble_format_model.getValue(),

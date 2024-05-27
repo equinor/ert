@@ -15,8 +15,8 @@ from qtpy.QtWidgets import (
 from ert.data import MeasuredData
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
 
@@ -32,9 +32,9 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
     analysis_tool = gui.tools["Run analysis"]
 
     # Select correct experiment in the simulation panel
-    simulation_panel = get_child(gui, SimulationPanel)
-    simulation_settings = get_child(simulation_panel, EvaluateEnsemblePanel)
-    simulation_mode_combo = get_child(simulation_panel, QComboBox)
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_settings = get_child(experiment_panel, EvaluateEnsemblePanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     # Open the "Run analysis" tool in the main window after ensemble experiment has run
@@ -101,13 +101,13 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
     # Assert that some realizations failed
     assert not all(active_reals)
     assert active_reals == rangestring_to_mask(
-        simulation_panel.getSimulationArguments().realizations,
+        experiment_panel.get_experiment_arguments().realizations,
         analysis_tool.ert.ert_config.model_config.num_realizations,
     )
     # Click start simulation and agree to the message
-    start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.LeftButton)
     # The Run dialog opens, click show details and wait until done appears
     # then click it
     run_dialog = wait_for_child(gui, qtbot, RunDialog)

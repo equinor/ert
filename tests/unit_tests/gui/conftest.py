@@ -37,8 +37,8 @@ from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
@@ -262,19 +262,19 @@ def run_experiment_fixture(request):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
         # Select correct experiment in the simulation panel
-        simulation_panel = gui.findChild(SimulationPanel)
-        assert isinstance(simulation_panel, SimulationPanel)
-        simulation_mode_combo = simulation_panel.findChild(QComboBox)
+        experiment_panel = gui.findChild(ExperimentPanel)
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(experiment_mode.name())
-        simulation_settings = simulation_panel._simulation_widgets[
-            simulation_panel.getCurrentSimulationModel()
+        simulation_settings = experiment_panel._experiment_widgets[
+            experiment_panel.get_current_experiment_type()
         ]
         if hasattr(simulation_settings, "_ensemble_name_field"):
             simulation_settings._ensemble_name_field.setText("iter-0")
 
         # Click start simulation and agree to the message
-        start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
 
         def handle_dialog():
             qtbot.mouseClick(
@@ -291,7 +291,7 @@ def run_experiment_fixture(request):
             "Evaluate ensemble",
         ):
             QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         # The Run dialog opens, click show details and wait until done appears
         # then click it
@@ -310,7 +310,7 @@ def run_experiment_fixture(request):
         list_model = realization_widget._real_view.model()
         assert (
             list_model.rowCount()
-            == simulation_panel.ert.ert_config.model_config.num_realizations
+            == experiment_panel.ert.ert_config.model_config.num_realizations
         )
 
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)

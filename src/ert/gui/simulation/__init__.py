@@ -1,3 +1,3 @@
-from .simulation_panel import SimulationPanel
+from .experiment_panel import ExperimentPanel
 
-__all__ = ["SimulationPanel"]
+__all__ = ["ExperimentPanel"]

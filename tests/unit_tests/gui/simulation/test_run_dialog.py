@@ -60,7 +60,7 @@ def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
 def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
     qtbot: QtBot, run_dialog, event_queue
 ):
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     event_queue.put(EndEvent(failed=False, failed_msg=""))
     qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=1000)
     assert not run_dialog.done_button.isHidden()
@@ -70,7 +70,7 @@ def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
 def test_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog, event_queue
 ):
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     event_queue.put(EndEvent(failed=False, failed_msg=""))
 
     with qtbot.waitSignal(run_dialog.finished, timeout=30000):
@@ -101,7 +101,7 @@ def test_detail_view_toggle(qtbot: QtBot, run_dialog: RunDialog):
 def test_run_dialog_polls_run_model_for_runtime(
     qtbot: QtBot, run_dialog: RunDialog, run_model, notifier, event_queue
 ):
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     notifier.set_is_simulation_running.assert_called_with(True)
     qtbot.waitUntil(
         lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
@@ -140,7 +140,7 @@ def test_large_snapshot(
         EndEvent(failed=False, failed_msg=""),
     ]
 
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     for event in events:
         event_queue.put(event)
 
@@ -352,7 +352,7 @@ def test_large_snapshot(
     ],
 )
 def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_queue):
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     for event in events:
         event_queue.put(event)
 
@@ -381,9 +381,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        start_simulation = gui.findChild(QToolButton, name="start_simulation")
+        run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -414,7 +414,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
 
         # Ensure that once the run dialog is closed
         # another simulation can be started
-        assert start_simulation.isEnabled()
+        assert run_experiment.isEnabled()
 
 
 @pytest.mark.parametrize(
@@ -490,7 +490,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
 def test_run_dialog_memory_usage_showing(
     events, tab_widget_count, qtbot: QtBot, event_queue, run_dialog
 ):
-    run_dialog.startSimulation()
+    run_dialog.run_experiment()
     for event in events:
         event_queue.put(event)
 
@@ -544,9 +544,9 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        start_simulation = gui.findChild(QToolButton, name="start_simulation")
+        run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -573,7 +573,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        start_simulation = gui.findChild(QToolButton, name="start_simulation")
+        run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
         def handle_error_dialog(run_dialog):
             error_dialog = run_dialog.fail_msg_box
@@ -582,7 +582,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
             assert "I failed :(" in text
             qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
 
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)

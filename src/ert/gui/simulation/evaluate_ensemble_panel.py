@@ -9,7 +9,7 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import RangeStringArgument
@@ -22,7 +22,7 @@ class Arguments:
     ensemble_name: str
 
 
-class EvaluateEnsemblePanel(SimulationConfigPanel):
+class EvaluateEnsemblePanel(ExperimentConfigPanel):
     def __init__(self, ensemble_size: int, run_path: str, notifier: ErtNotifier):
         self.notifier = notifier
         super().__init__(EvaluateEnsemble)
@@ -69,7 +69,7 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
             and bool(self._active_realizations_field.text())
         )
 
-    def getSimulationArguments(self) -> Arguments:
+    def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_name=self._ensemble_selector.currentText(),

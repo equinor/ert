@@ -4,7 +4,7 @@ from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget
 
 
-class SimulationConfigPanel(QWidget):
+class ExperimentConfigPanel(QWidget):
     simulationConfigurationChanged = Signal()
 
     def __init__(self, simulation_model):
@@ -12,7 +12,7 @@ class SimulationConfigPanel(QWidget):
         self.setContentsMargins(10, 10, 10, 10)
         self.__simulation_model = simulation_model
 
-    def getSimulationModel(self):
+    def get_experiment_type(self):
         return self.__simulation_model
 
     @staticmethod
@@ -20,5 +20,5 @@ class SimulationConfigPanel(QWidget):
         return True
 
     @staticmethod
-    def getSimulationArguments() -> Dict[str, Any]:
+    def get_experiment_arguments() -> Dict[str, Any]:
         return {}

@@ -15,7 +15,7 @@ from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
-from .simulation_config_panel import SimulationConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
@@ -30,7 +30,7 @@ class Arguments:
     experiment_name: str
 
 
-class EnsembleSmootherPanel(SimulationConfigPanel):
+class EnsembleSmootherPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
@@ -91,7 +91,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             and self._active_realizations_field.isValid()
         )
 
-    def getSimulationArguments(self) -> Arguments:
+    def get_experiment_arguments(self) -> Arguments:
         arguments = Arguments(
             mode=ENSEMBLE_SMOOTHER_MODE,
             current_ensemble=self._ensemble_format_model.getValue() % 0,

@@ -6,8 +6,8 @@ import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.simulation.view import RealizationWidget
 
 from .conftest import wait_for_child
@@ -51,15 +51,15 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
     # Select correct experiment in the simulation panel
-    simulation_panel = gui.findChild(SimulationPanel)
-    assert isinstance(simulation_panel, SimulationPanel)
-    simulation_mode_combo = simulation_panel.findChild(QComboBox)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert isinstance(experiment_panel, ExperimentPanel)
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
     assert isinstance(simulation_mode_combo, QComboBox)
     simulation_mode_combo.setCurrentText("Ensemble experiment")
 
     # Click start simulation and agree to the message
-    start_simulation = simulation_panel.findChild(QWidget, name="start_simulation")
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+    qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
     # The Run dialog opens, click show details and wait until done appears
     # then click it
@@ -78,7 +78,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     list_model = realization_widget._real_view.model()
     assert (
         list_model.rowCount()
-        == simulation_panel.ert.ert_config.model_config.num_realizations
+        == experiment_panel.ert.ert_config.model_config.num_realizations
     )
 
     # Check we have failed realizations
