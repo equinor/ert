@@ -106,7 +106,6 @@ class Event(Reporter):
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
                     logger.error(str(exception))
-                    pass
                 except ClientConnectionClosedOK as exception:
                     # The receiving end has closed the connection, we stop
                     # sending events

@@ -21,13 +21,11 @@ def load_data(filename):
             return yaml.safe_load(fin)
         except yaml.YAMLError as err:
             yaml_err = str(err)
-            pass
 
         try:
             return json.load(fin)
         except yaml.YAMLError as err:
             json_err = str(err)
-            pass
 
     raise IOError(
         f"{filename} is neither yaml (err_msg={yaml_err}) nor json (err_msg={json_err})"

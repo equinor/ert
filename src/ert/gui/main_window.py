@@ -130,4 +130,3 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self):
         diag = AboutDialog(self)
         diag.show()
-        pass
