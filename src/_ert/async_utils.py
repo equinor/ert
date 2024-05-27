@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
+from contextlib import suppress
 from typing import Any, Coroutine, Generator, TypeVar, Union
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def _create_task(
 
 def _done_callback(task: asyncio.Task[_T_co]) -> None:
     assert task.done()
-    try:
+    with suppress(asyncio.CancelledError):
         if (exc := task.exception()) is None:
             return
 
@@ -51,5 +52,3 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
             )
         )
         raise exc
-    except asyncio.CancelledError:
-        pass

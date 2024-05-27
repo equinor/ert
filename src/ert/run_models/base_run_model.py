@@ -6,7 +6,7 @@ import os
 import shutil
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from queue import SimpleQueue
 from typing import (
@@ -631,7 +631,7 @@ class BaseRunModel:
         target_ensemble = self._simulation_arguments.target_ensemble
 
         if current_ensemble is not None:
-            try:
+            with suppress(KeyError):
                 ensemble = self._storage.get_ensemble_by_name(current_ensemble)
                 if ensemble.ensemble_size != self._simulation_arguments.ensemble_size:
                     errors.append(
@@ -640,8 +640,6 @@ class BaseRunModel:
                         f"configuration file \n ({ensemble.ensemble_size} "
                         f" != {self._simulation_arguments.ensemble_size})"
                     )
-            except KeyError:
-                pass
         if target_ensemble is not None:
             if target_ensemble == current_ensemble:
                 errors.append(
@@ -652,21 +650,17 @@ class BaseRunModel:
             if "%d" in target_ensemble:
                 num_iterations = self._simulation_arguments.num_iterations
                 for i in range(num_iterations):
-                    try:
+                    with suppress(KeyError):
                         self._storage.get_ensemble_by_name(
                             target_ensemble % i  # noqa: S001
                         )
                         errors.append(
                             f"- Target ensemble: {target_ensemble % i} exists"  # noqa: S001
                         )
-                    except KeyError:
-                        pass
             else:
-                try:
+                with suppress(KeyError):
                     self._storage.get_ensemble_by_name(target_ensemble)
                     errors.append(f"- Target ensemble: {target_ensemble} exists")
-                except KeyError:
-                    pass
         if errors:
             raise ValueError("\n".join(errors))
 
