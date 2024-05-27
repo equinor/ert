@@ -5,7 +5,7 @@ from pytestqt.qt_compat import qt_api
 from ert.ensemble_evaluator.snapshot import PartialSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
-    REALIZATION_STATE_UNKNOWN,
+    REALIZATION_STATE_RUNNING,
 )
 from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import ProgressRole, SnapshotModel
@@ -47,7 +47,7 @@ def test_progression(full_snapshot):
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
         "nr_reals": 100,
-        "status": {REALIZATION_STATE_UNKNOWN: 100},
+        "status": {REALIZATION_STATE_RUNNING: 100},
     }
 
     partial = PartialSnapshot(full_snapshot)
@@ -56,7 +56,7 @@ def test_progression(full_snapshot):
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
         "nr_reals": 100,
-        "status": {REALIZATION_STATE_UNKNOWN: 99, REALIZATION_STATE_FINISHED: 1},
+        "status": {REALIZATION_STATE_RUNNING: 99, REALIZATION_STATE_FINISHED: 1},
     }
 
 
@@ -74,7 +74,7 @@ def test_progression_start_iter_not_zero(full_snapshot):
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
         "nr_reals": 100,
-        "status": {REALIZATION_STATE_UNKNOWN: 100},
+        "status": {REALIZATION_STATE_RUNNING: 100},
     }
 
     partial = PartialSnapshot(full_snapshot)
@@ -83,5 +83,5 @@ def test_progression_start_iter_not_zero(full_snapshot):
 
     assert model.data(model.index(0, 0, QModelIndex()), ProgressRole) == {
         "nr_reals": 100,
-        "status": {REALIZATION_STATE_UNKNOWN: 99, REALIZATION_STATE_FINISHED: 1},
+        "status": {REALIZATION_STATE_RUNNING: 99, REALIZATION_STATE_FINISHED: 1},
     }

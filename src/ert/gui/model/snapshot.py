@@ -47,8 +47,6 @@ SORTED_JOB_IDS = "_sorted_forward_model_ids"
 REAL_JOB_STATUS_AGGREGATED = "_aggr_job_status_colors"
 REAL_STATUS_COLOR = "_real_status_colors"
 
-DURATION = "Duration"
-
 COLUMNS: Dict[NodeType, Sequence[str]] = {
     NodeType.ROOT: ["Name", "Status"],
     NodeType.ITER: ["Name", "Status", "Active"],
@@ -232,20 +230,22 @@ class SnapshotModel(QAbstractItemModel):
                 if job.index:
                     job_node.data.index = job.index
                 if job.current_memory_usage:
-                    current_memory_usage = float(job.current_memory_usage)
-                    job_node.data.current_memory_usage = current_memory_usage
-                    real_node.data.current_memory_usage = current_memory_usage
-                    self.root.data.current_memory_usage = current_memory_usage
+                    job_node.data.current_memory_usage = job.current_memory_usage
+                    real_node.data.current_memory_usage = int(
+                        float(job.current_memory_usage)
+                    )
+                    self.root.data.current_memory_usage = int(
+                        float(job.current_memory_usage)
+                    )
                 if job.max_memory_usage:
-                    max_memory_usage = float(job.max_memory_usage)
-                    job_node.data.max_memory_usage = max_memory_usage
+                    job_node.data.max_memory_usage = job.max_memory_usage
                     real_node.data.max_memory_usage = max(
                         real_node.data.max_memory_usage or -1,
-                        max_memory_usage,
+                        int(float(job.max_memory_usage)),
                     )
                     self.root.data.max_memory_usage = max(
                         self.root.data.max_memory_usage or -1,
-                        max_memory_usage,
+                        int(float(job.max_memory_usage)),
                     )
 
                 # Errors may be unset as the queue restarts the job
@@ -301,7 +301,9 @@ class SnapshotModel(QAbstractItemModel):
 
             for forward_model_id in metadata[SORTED_JOB_IDS][real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
-                job_node = ForwardModelStepNode(forward_model_id, data=job)
+                job_node = ForwardModelStepNode(
+                    id_=forward_model_id, data=job, parent=real_node
+                )
                 real_node.add_child(job_node)
 
         if iter_ in self.root.children:
@@ -338,12 +340,12 @@ class SnapshotModel(QAbstractItemModel):
     def rowCount(self, parent: QModelIndex = None):
         if parent is None:
             parent = QModelIndex()
-        parentItem = self.root if not parent.isValid() else parent.internalPointer()
+        parent_item = self.root if not parent.isValid() else parent.internalPointer()
 
         if parent.column() > 0:
             return 0
 
-        return len(parentItem.children)
+        return len(parent_item.children)
 
     def parent(self, index: QModelIndex):
         if not index.isValid():
@@ -416,7 +418,7 @@ class SnapshotModel(QAbstractItemModel):
             for (
                 forward_model_id
             ) in node.parent.data.sorted_forward_model_step_ids_by_realization_id[
-                node.id_
+                str(node.id_)
             ]:
                 # if queue system status is WAIT, jobs should indicate WAIT
                 if (
@@ -453,22 +455,26 @@ class SnapshotModel(QAbstractItemModel):
 
     @staticmethod
     def _job_data(index: QModelIndex, node: ForwardModelStepNode, role: int):
+        node_id = str(node.id_)
+
         if role == Qt.BackgroundRole:
             real = node.parent
+
             if (
                 COLOR_RUNNING
                 in real.data.forward_model_step_status_color_by_id.values()
             ):
-                return real.data[REAL_JOB_STATUS_AGGREGATED][node.id_]
+                return real.data.forward_model_step_status_color_by_id[node_id]
 
             # if queue system status is WAIT, jobs should indicate WAIT
             if (
-                real.data.forward_model_step_status_color_by_id[node.id_]
+                real.data.forward_model_step_status_color_by_id[node_id]
                 == COLOR_PENDING
                 and real.data.real_status_color == COLOR_WAITING
             ):
                 return COLOR_WAITING
-            return real.data.forward_model_step_status_color_by_id[node.id_]
+
+            return real.data.forward_model_step_status_color_by_id[node_id]
 
         if role == Qt.DisplayRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
@@ -501,7 +507,7 @@ class SnapshotModel(QAbstractItemModel):
             if (
                 data_name in [ids.STATUS]
                 and real.data.real_status_color == COLOR_WAITING
-                and real.data.forward_model_step_status_color_by_id[node.id_]
+                and real.data.forward_model_step_status_color_by_id[node_id]
                 == COLOR_PENDING
             ):
                 return str("Waiting")
@@ -544,7 +550,6 @@ class SnapshotModel(QAbstractItemModel):
             return QModelIndex()
 
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
-        child_item = None
         try:
             child_item = list(parent_item.children.values())[row]
         except KeyError:
