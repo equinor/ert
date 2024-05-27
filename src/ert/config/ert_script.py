@@ -79,7 +79,6 @@ class ErtScript:
         """
         Override to perform cleanup after a run.
         """
-        pass
 
     def initializeAndRun(
         self,
@@ -179,4 +178,3 @@ class ErtScript:
         the arguments on startup. If it raises ConfigValidationError
         this will be caught and presented to the user.
         """
-        pass

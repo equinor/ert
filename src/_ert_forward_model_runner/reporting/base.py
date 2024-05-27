@@ -7,4 +7,3 @@ class Reporter(ABC):
     @abstractmethod
     def report(self, msg: Message):
         """Report a message."""
-        pass

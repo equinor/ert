@@ -20,8 +20,6 @@ class ModeError(ValueError):
     storage mode is attempted.
     """
 
-    pass
-
 
 class Mode(str, Enum):
     """Enumeration representing the access modes for storage interaction."""
