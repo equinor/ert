@@ -115,4 +115,7 @@ class SchemaItemDict(_UserDict):
         config_dict: ConfigDict,
         filename: str,
     ) -> None:
-        pass
+        """
+        check_required checks that all required keywords are in config_dict and
+        raises an ConfigValidationError if it is not.
+        """
