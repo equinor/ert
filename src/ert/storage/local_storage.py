@@ -448,13 +448,16 @@ class LocalStorage(BaseMode):
             assert isinstance(version, int)
             self._index = self._load_index()
             if version == 0:
+                print(f"Found storage with version: 0 at: {self.path}")
                 self._release_lock()
                 block_fs.migrate(self.path)
                 self._acquire_lock()
                 self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
             elif version < _LOCAL_STORAGE_VERSION:
+                print(f"Found storage with version: {version} at: {self.path}")
                 migrations = list(enumerate([to2, to3, to4, to5], start=1))
                 for from_version, migration in migrations[version - 1 :]:
+                    print(f"* Updating storage to version: {from_version+1}")
                     migration.migrate(self.path)
                     self._add_migration_information(
                         from_version, from_version + 1, migration.info
