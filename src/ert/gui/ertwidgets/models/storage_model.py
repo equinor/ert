@@ -117,6 +117,12 @@ class ExperimentModel:
         if role == Qt.ItemDataRole.DisplayRole:
             if col == _Column.NAME:
                 return self._name
+            if col == _Column.TIME:
+                return (
+                    humanize.naturaltime(self._children[0]._start_time)
+                    if self._children
+                    else "None"
+                )
             if col == _Column.TYPE:
                 return self._experiment_type or "None"
         elif role == Qt.ItemDataRole.ForegroundRole:
