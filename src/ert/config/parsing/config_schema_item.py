@@ -128,6 +128,7 @@ class SchemaItem:
             return ContextString(path, token, keyword)
         if val_type == SchemaItemType.EXECUTABLE:
             absolute_path: Optional[str]
+            is_command = False
             if not os.path.isabs(token):
                 # Try relative
                 absolute_path = os.path.abspath(os.path.join(cwd, token))
@@ -135,6 +136,7 @@ class SchemaItem:
                 absolute_path = token
             if not os.path.exists(absolute_path):
                 absolute_path = shutil.which(token)
+                is_command = True
 
             if absolute_path is None:
                 raise ConfigValidationError.with_context(
@@ -156,7 +158,9 @@ class SchemaItem:
                 raise ConfigValidationError.with_context(
                     f"File not executable: {context}", token
                 )
-            return ContextString(absolute_path, token, keyword)
+            return ContextString(
+                str(token) if is_command else absolute_path, token, keyword
+            )
         if isinstance(val_type, SchemaItemType):
             return ContextString(str(token), token, keyword)
         if isinstance(val_type, EnumType):
