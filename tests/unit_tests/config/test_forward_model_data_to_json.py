@@ -779,3 +779,28 @@ def test_that_environment_variables_are_set_in_forward_model(
         )["jobList"][0]["argList"]
         == expected_args
     )
+
+
+def test_that_executables_in_path_are_not_made_realpath(tmp_path):
+    """
+    Before 9e4fb6aed0d2650f90fa59a24ba2e7e7cac19a0c executables in path would
+    be resolved with `which` and made into an abspath to that executable. When
+    running the forward model on a different machine, that abspath may no
+    longer be valid. Also, if the user wants to give an abspath, that is still
+    possible.
+
+    Therefore, the behavior was changed to what is being tested for here.
+    """
+    (tmp_path / "echo_job").write_text("EXECUTABLE echo\n ARGLIST <MSG>")
+
+    config_file = tmp_path / "config.ert"
+    config_file.write_text(
+        'NUM_REALIZATIONS 1\nINSTALL_JOB echo echo_job\nFORWARD_MODEL echo(<MSG>="hello")\n'
+    )
+
+    ert_config = ErtConfig.from_file(str(config_file))
+
+    assert (
+        ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]["executable"]
+        == "echo"
+    )
