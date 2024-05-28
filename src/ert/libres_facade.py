@@ -192,7 +192,9 @@ class LibresFacade:
 
     def _get_response_name_for_obs_name(self, observation_name: str) -> str:
         obs_ds = next(
-            ds.sel(obs_name=observation_name, drop=True)
+            ds.sel(obs_name=observation_name, drop=True).dropna(
+                "name", how="all", subset=["observations"]
+            )
             for ds in self.config.observations.datasets.values()
             if observation_name in ds["obs_name"]
         )
