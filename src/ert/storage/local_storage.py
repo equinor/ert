@@ -163,7 +163,7 @@ class LocalStorage(BaseMode):
 
         return self._ensembles[uuid]
 
-    def get_ensemble_by_name(self, name: str) -> Union[LocalEnsemble, LocalEnsemble]:
+    def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
         """
         Retrieves an ensemble by name.
 

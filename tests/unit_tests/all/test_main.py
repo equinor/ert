@@ -148,7 +148,7 @@ def test_argparse_exec_ensemble_es_mda_restart_case():
         None, [ES_MDA_MODE, "--restart-case", "test_case", "path/to/config.ert"]
     )
     assert parsed.mode == ES_MDA_MODE
-    assert parsed.restart_ensemble == "test_case"
+    assert parsed.restart_ensemble_id == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 

@@ -90,7 +90,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         target_ensemble="target_%d",
         weights="1",
         restart_run=False,
-        prior_ensemble="",
+        prior_ensemble_id="",
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,

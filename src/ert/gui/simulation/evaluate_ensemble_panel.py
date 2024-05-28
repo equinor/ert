@@ -19,7 +19,7 @@ from ert.validation import RangeStringArgument
 class Arguments:
     mode: str
     realizations: str
-    ensemble_name: str
+    ensemble_id: str
 
 
 class EvaluateEnsemblePanel(SimulationConfigPanel):
@@ -72,22 +72,16 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
     def getSimulationArguments(self) -> Arguments:
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
-            ensemble_name=self._ensemble_selector.currentText(),
+            ensemble_id=str(self._ensemble_selector.selected_ensemble.id),
             realizations=self._active_realizations_field.text(),
         )
 
     def _realizations_from_fs(self):
-        ensemble = str(self._ensemble_selector.currentText())
+        ensemble = self._ensemble_selector.selected_ensemble
         if ensemble:
-            parameters = self.notifier.storage.get_ensemble_by_name(
-                ensemble
-            ).get_realization_mask_with_parameters()
-            missing_responses = ~self.notifier.storage.get_ensemble_by_name(
-                ensemble
-            ).get_realization_mask_with_responses()
-            failures = ~self.notifier.storage.get_ensemble_by_name(
-                ensemble
-            ).get_realization_mask_without_failure()
+            parameters = ensemble.get_realization_mask_with_parameters()
+            missing_responses = ~ensemble.get_realization_mask_with_responses()
+            failures = ~ensemble.get_realization_mask_without_failure()
             mask = np.logical_and(
                 parameters, np.logical_or(missing_responses, failures)
             )

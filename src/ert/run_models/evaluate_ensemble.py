@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 import numpy as np
 
@@ -51,9 +52,12 @@ class EvaluateEnsemble(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
         self.setPhaseName("Running evaluate experiment...", indeterminate=False)
-        ensemble_name = self.simulation_arguments.current_ensemble
-        ensemble = self._storage.get_ensemble_by_name(ensemble_name)
+
+        ensemble_id = self.simulation_arguments.current_ensemble
+        ensemble_uuid = UUID(ensemble_id)
+        ensemble = self._storage.get_ensemble(ensemble_uuid)
         assert isinstance(ensemble, Ensemble)
+
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
