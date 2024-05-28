@@ -1,3 +1,6 @@
+.. image:: ../src/ert/gui/resources/gui/img/ert_icon.svg
+   :align: center
+   :scale: 50%
 
 Welcome to the ERT Documentation!
 =================================
