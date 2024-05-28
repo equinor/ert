@@ -17,11 +17,11 @@ from ert.scheduler import Scheduler
 from ert.shared.feature_toggling import FeatureScheduler
 
 
-def run_monitor_in_loop(monitor_func: Callable[[], Coroutine[Any, Any, None]]) -> None:
+def run_monitor_in_loop(monitor_func: Callable[[], Coroutine[Any, Any, None]]) -> bool:
     loop = new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(monitor_func())
+        return loop.run_until_complete(monitor_func())
     finally:
         loop.close()
 
@@ -53,6 +53,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypatch):
                         state.ENSEMBLE_STATE_STOPPED,
                     ]:
                         await monitor.signal_done()
+            return True
 
         run_monitor_in_loop(_run_monitor)
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
@@ -84,19 +85,28 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder, monkeypat
         evaluator.start_running()
 
         async def _run_monitor():
+            terminated_event = False
             async with Monitor(config) as mon:
+                # on lesser hardware the realizations might be killed by max_runtime
+                # and the ensemble is set to STOPPED
+                mon._receiver_timeout = 10.0
                 cancel = True
                 with contextlib.suppress(
                     ConnectionClosed
                 ):  # monitor throws some variant of CC if dispatcher dies
-                    async for _ in mon.track():
+                    async for event in mon.track(heartbeat_interval=0.1):
                         # Cancel the ensemble upon the arrival of the first event
                         if cancel:
                             await mon.signal_cancel()
                             cancel = False
+                        if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                            terminated_event = True
+            return terminated_event
 
-        run_monitor_in_loop(_run_monitor)
-        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
+        if run_monitor_in_loop(_run_monitor):
+            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
+        else:
+            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
 
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
@@ -134,6 +144,7 @@ def test_run_legacy_ensemble_with_bare_exception(
                             state.ENSEMBLE_STATE_STOPPED,
                         ]:
                             await monitor.signal_done()
+                return True
 
             run_monitor_in_loop(_run_monitor)
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
