@@ -497,6 +497,8 @@ def test_gen_kw_config_validation():
         f.write("\n\n")  # Two blank lines
         f.write("KEY2  UNIFORM 0 1\n")
         f.write("--KEY3  \n")
+        f.write("---KEY3  \n")
+        f.write("------------  \n")
         f.write("KEY3  UNIFORM 0 1\n")
 
     EnsembleConfig.from_dict(
