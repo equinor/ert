@@ -73,8 +73,7 @@ class ESMDARunArguments(SimulationArguments):
     target_ensemble: str
     weights: str
     restart_run: bool
-    prior_ensemble: str
-
+    prior_ensemble_id: str
     ensemble_type: str = "ES_MDA"
     start_iteration: int = 0
     prev_successful_realizations: int = 0

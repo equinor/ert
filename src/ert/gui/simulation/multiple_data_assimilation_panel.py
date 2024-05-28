@@ -34,7 +34,7 @@ class Arguments:
     realizations: str
     weights: List[float]
     restart_run: bool
-    prior_ensemble: str
+    prior_ensemble_id: str  # UUID not serializable in json
     experiment_name: str
 
 
@@ -194,7 +194,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             realizations=self._active_realizations_field.text(),
             weights=self.weights,
             restart_run=self._restart_box.isChecked(),
-            prior_ensemble=self._ensemble_selector.currentText(),
+            prior_ensemble_id=(
+                str(self._ensemble_selector.selected_ensemble.id)
+                if self._restart_box.isChecked()
+                else ""
+            ),
             experiment_name=(
                 self._experiment_name_field.text()
                 if self._experiment_name_field.text()
@@ -206,9 +210,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.weights = str(weights)
 
     def _realizations_from_fs(self):
-        ensemble = str(self._ensemble_selector.currentText())
+        ensemble = self._ensemble_selector.selected_ensemble
         if ensemble:
-            mask = self.notifier.storage.get_ensemble_by_name(
-                ensemble
-            ).get_realization_mask_with_parameters()
+            mask = ensemble.get_realization_mask_with_parameters()
             self._active_realizations_field.model.setValueFromMask(mask)

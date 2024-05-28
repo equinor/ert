@@ -4,6 +4,7 @@ import functools
 import logging
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, List
+from uuid import UUID
 
 import numpy as np
 
@@ -85,9 +86,10 @@ class MultipleDataAssimilation(BaseRunModel):
         target_ensemble_format = self._simulation_arguments.target_ensemble
 
         if restart_run:
-            prior_ensemble = self._simulation_arguments.prior_ensemble
+            id = self._simulation_arguments.prior_ensemble_id
             try:
-                prior = self._storage.get_ensemble_by_name(prior_ensemble)
+                ensemble_id = UUID(id)
+                prior = self._storage.get_ensemble(ensemble_id)
                 experiment = prior.experiment
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -100,9 +102,9 @@ class MultipleDataAssimilation(BaseRunModel):
                     ),
                     iteration=prior.iteration,
                 )
-            except KeyError as err:
+            except (KeyError, ValueError) as err:
                 raise ErtRunError(
-                    f"Prior ensemble: {prior_ensemble} does not exists"
+                    f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
             experiment = self._storage.create_experiment(

@@ -131,7 +131,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         weights="6,4,2",
         target_ensemble="test_case_%d",
         restart_run=False,
-        prior_ensemble="default",
+        prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
         experiment_name=None,
     )
 
@@ -145,7 +145,10 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
     )
     assert model.simulation_arguments.target_ensemble == "test_case_%d"
-    assert model.simulation_arguments.prior_ensemble == "default"
+    assert (
+        model.simulation_arguments.prior_ensemble_id
+        == "b272fe09-83ac-4744-b667-9a0a5415420b"
+    )
     assert model.simulation_arguments.restart_run == False
 
 

@@ -528,7 +528,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         type=valid_name,
         default=None,
         action=DeprecatedAction,
-        dest="restart_ensemble",
+        dest="restart_ensemble_id",
         help="Deprecated: This argument is deprecated and will be "
         "removed in future versions. Use --restart-ensemble instead.",
     )
@@ -536,7 +536,16 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "--restart-ensemble",
         type=valid_name,
         default=None,
-        help="Name of the ensemble where the results for the experiment "
+        dest="restart_ensemble_id",
+        help="Deprecated: This argument is deprecated and will be "
+        "removed in future versions. Use --restart-ensemble-id instead.",
+    )
+    es_mda_parser.add_argument(
+        "--restart-ensemble-id",
+        type=valid_name,  ## validate UUID
+        default=None,
+        dest="restart_ensemble_id",
+        help="UUID of the ensemble where the results for the experiment "
         "using the prior parameters will be stored. Iteration number is read "
         "from this ensemble. If provided this will be a restart a run",
     )

@@ -160,7 +160,7 @@ def _setup_evaluate_ensemble(
         EvaluateEnsembleRunArguments(
             random_seed=config.random_seed,
             active_realizations=active_realizations.tolist(),
-            current_ensemble=args.ensemble_name,
+            current_ensemble=args.ensemble_id,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
@@ -210,14 +210,14 @@ def _determine_restart_info(args: Namespace) -> Tuple[bool, str]:
     A tuple containing the restart_run flag and the ensemble
     to run from.
     """
-    if hasattr(args, "restart_ensemble"):
+    if hasattr(args, "restart_ensemble_id"):
         # When running from CLI
-        restart_run = args.restart_ensemble is not None
-        prior_ensemble = args.restart_ensemble
+        restart_run = args.restart_ensemble_id is not None
+        prior_ensemble = args.restart_ensemble_id
     else:
         # When running from GUI
         restart_run = args.restart_run
-        prior_ensemble = args.prior_ensemble
+        prior_ensemble = args.prior_ensemble_id
     return restart_run, prior_ensemble
 
 
@@ -239,7 +239,7 @@ def _setup_multiple_data_assimilation(
             target_ensemble=_iterative_ensemble_format(config, args),
             weights=args.weights,
             restart_run=restart_run,
-            prior_ensemble=prior_ensemble,
+            prior_ensemble_id=prior_ensemble,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,

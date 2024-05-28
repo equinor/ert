@@ -21,7 +21,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         target_ensemble="target_%d",
         weights="1, 2, 3",
         restart_run=False,
-        prior_ensemble="",
+        prior_ensemble_id="",
         minimum_required_realizations=1,
         ensemble_size=1,
         stop_long_running=True,
