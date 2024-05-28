@@ -264,7 +264,7 @@ class FieldParameter:
 
 @st.composite
 def field_parameters(draw):
-    min = draw(
+    min_value = draw(
         st.one_of(
             st.none(),
             st.floats(
@@ -272,11 +272,18 @@ def field_parameters(draw):
             ),
         )
     )
-    max = st.one_of(
+    max_value = st.one_of(
         st.none(),
-        st.floats(min_value=2.0, max_value=1e9, allow_nan=False, allow_infinity=False),
+        st.floats(
+            min_value=max([2.0, min_value if min_value is not None else 0.0]),
+            max_value=1e9,
+            allow_nan=False,
+            allow_infinity=False,
+        ),
     )
-    return draw(st.builds(FieldParameter, name=names, min=st.just(min), max=max))
+    return draw(
+        st.builds(FieldParameter, name=names, min=st.just(min_value), max=max_value)
+    )
 
 
 @dataclass
