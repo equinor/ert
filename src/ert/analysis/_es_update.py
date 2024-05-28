@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 import time
 from collections import defaultdict
@@ -26,6 +27,10 @@ from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
 )
 from typing_extensions import Self
+
+from ert.config import (
+    GenKwConfig,
+)
 
 from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
@@ -433,11 +438,20 @@ def analysis_ES(
         # Add identity in place for fast computation
         np.fill_diagonal(T, T.diagonal() + 1)
 
+    def correlation_callback(
+        cross_correlations_of_batch: npt.NDArray[np.float_],
+        cross_correlations_accumulator: List[npt.NDArray[np.float_]],
+    ) -> None:
+        cross_correlations_accumulator.append(cross_correlations_of_batch)
+
     for param_group in parameters:
         param_ensemble_array = _load_param_ensemble_array(
             source_ensemble, param_group, iens_active_index
         )
         if module.localization:
+            config_node = source_ensemble.experiment.parameter_configuration[
+                param_group
+            ]
             num_params = param_ensemble_array.shape[0]
             batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
@@ -447,8 +461,16 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
+            cross_correlations: List[npt.NDArray[np.float_]] = []
             for param_batch_idx in batches:
                 X_local = param_ensemble_array[param_batch_idx, :]
+                if isinstance(config_node, GenKwConfig):
+                    correlation_batch_callback = functools.partial(
+                        correlation_callback,
+                        cross_correlations_accumulator=cross_correlations,
+                    )
+                else:
+                    correlation_batch_callback = None
                 param_ensemble_array[param_batch_idx, :] = (
                     smoother_adaptive_es.assimilate(
                         X=X_local,
@@ -458,8 +480,23 @@ def analysis_ES(
                         correlation_threshold=module.correlation_threshold,
                         cov_YY=cov_YY,
                         progress_callback=adaptive_localization_progress_callback,
+                        correlation_callback=correlation_batch_callback,
                     )
                 )
+
+            if cross_correlations:
+                assert isinstance(config_node, GenKwConfig)
+                parameter_names = [
+                    t["name"]  # type: ignore
+                    for t in config_node.transform_function_definitions
+                ]
+                _cross_correlations = np.vstack(cross_correlations)
+                if _cross_correlations.size != 0:
+                    source_ensemble.save_cross_correlations(
+                        _cross_correlations,
+                        param_group,
+                        parameter_names[: _cross_correlations.shape[0]],
+                    )
             logger.info(
                 f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
             )
@@ -473,6 +510,7 @@ def analysis_ES(
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
+
         _save_param_ensemble_array_to_disk(
             target_ensemble, param_ensemble_array, param_group, iens_active_index
         )

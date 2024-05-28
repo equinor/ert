@@ -31,10 +31,8 @@ def run_cli_ES_with_case(poly_config):
     storage_path = ErtConfig.from_file(poly_config).ens_path
     with open_storage(storage_path) as storage:
         prior_ensemble = storage.get_ensemble_by_name(prior_sample_name)
-        prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
         posterior_ensemble = storage.get_ensemble_by_name(posterior_sample_name)
-        posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
-    return prior_sample, posterior_sample
+    return prior_ensemble, posterior_ensemble
 
 
 @pytest.mark.integration_test
@@ -54,8 +52,15 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
 
     with open("poly_localization_1.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
-    prior_sample, posterior_sample = run_cli_ES_with_case("poly_localization_1.ert")
+    prior_ensemble, posterior_ensemble = run_cli_ES_with_case("poly_localization_1.ert")
 
+    with pytest.raises(
+        FileNotFoundError, match="No cross-correlation data available at"
+    ):
+        prior_ensemble.load_cross_correlations()
+
+    prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
+    posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
     # Check prior and posterior samples are equal
     assert np.allclose(posterior_sample, prior_sample)
 
@@ -86,12 +91,13 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    prior_sample_loc0, posterior_sample_loc0 = run_cli_ES_with_case(
-        "poly_localization_0.ert"
-    )
-    prior_sample_noloc, posterior_sample_noloc = run_cli_ES_with_case(
-        "poly_no_localization.ert"
-    )
+    _, posterior_ensemble_loc0 = run_cli_ES_with_case("poly_localization_0.ert")
+    _, posterior_ensemble_noloc = run_cli_ES_with_case("poly_no_localization.ert")
+
+    posterior_sample_loc0 = posterior_ensemble_loc0.load_parameters("COEFFS")["values"]
+    posterior_sample_noloc = posterior_ensemble_noloc.load_parameters("COEFFS")[
+        "values"
+    ]
 
     # Check posterior sample without adaptive localization and with cut-off 0 are equal
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc)
@@ -134,15 +140,30 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     with open("poly_localization_cutoff2.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    prior_sample_cutoff1, posterior_sample_cutoff1 = run_cli_ES_with_case(
+    prior_ensemble_cutoff1, posterior_ensemble_cutoff1 = run_cli_ES_with_case(
         "poly_localization_cutoff1.ert"
     )
-    prior_sample_cutoff2, posterior_sample_cutoff2 = run_cli_ES_with_case(
+    posterior_ensemble_cutoff2, posterior_ensemble_cutoff2 = run_cli_ES_with_case(
         "poly_localization_cutoff2.ert"
     )
 
+    cross_correlations = prior_ensemble_cutoff1.load_cross_correlations()
+    assert all(cross_correlations.parameter.to_numpy() == ["a", "b"])
+    assert cross_correlations["COEFFS"].values.shape == (2, 5)
+    assert (
+        (cross_correlations["COEFFS"].values >= -1)
+        & (cross_correlations["COEFFS"].values <= 1)
+    ).all()
+
+    prior_sample_cutoff1 = prior_ensemble_cutoff1.load_parameters("COEFFS")["values"]
     prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
+    posterior_sample_cutoff1 = posterior_ensemble_cutoff1.load_parameters("COEFFS")[
+        "values"
+    ]
     posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
+    posterior_sample_cutoff2 = posterior_ensemble_cutoff2.load_parameters("COEFFS")[
+        "values"
+    ]
     posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
 
     generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)
