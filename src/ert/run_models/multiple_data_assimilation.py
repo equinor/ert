@@ -75,14 +75,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
         weights = self.normalizeWeights(weights)
 
-        phase_count = iteration_count + 1
-        self.setPhaseCount(phase_count)
+        self.setPhaseCount(iteration_count + 1)
 
         log_msg = f"Running ES-MDA with normalized weights {weights}"
         logger.info(log_msg)
         self.setPhaseName(log_msg, indeterminate=True)
 
-        enumerated_weights = list(enumerate(weights))
         restart_run = self._simulation_arguments.restart_run
         target_ensemble_format = self._simulation_arguments.target_ensemble
 
@@ -137,8 +135,8 @@ class MultipleDataAssimilation(BaseRunModel):
                 random_seed=self._simulation_arguments.random_seed,
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
-        starting_iteration = prior.iteration + 1
-        weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
+        enumerated_weights = list(enumerate(weights))
+        weights_to_run = enumerated_weights[prior.iteration :]
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
