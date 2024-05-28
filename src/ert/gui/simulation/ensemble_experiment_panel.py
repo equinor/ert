@@ -32,7 +32,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         layout = QFormLayout()
         lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))
         lab.setWordWrap(True)
-        lab.setAlignment(QtCore.Qt.AlignLeft)
+        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
         self._name_field = StringBox(
@@ -47,9 +47,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             TextModel(""), placeholder_text="ensemble"
         )
         self._ensemble_name_field.setMinimumWidth(250)
-        self._ensemble_name_field.setValidator(
-            NotInStorage(self.notifier.storage, "ensembles")
-        )
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)
 
