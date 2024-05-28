@@ -132,7 +132,7 @@ class GenKwConfig(ParameterConfig):
         transfer_function_definitions: List[str] = []
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
-                item = item.rsplit("--")[0]  # remove comments
+                item = item.split("--")[0]  # remove comments
                 if item.strip():  # only lines with content
                     transfer_function_definitions.append(item)
 
