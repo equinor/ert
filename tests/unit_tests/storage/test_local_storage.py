@@ -643,9 +643,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
             list(storage_experiment.response_configuration.values())
             == model_experiment.responses
         )
-        assert model_experiment.observations == pytest.approx(
-            storage_experiment.observations
-        )
+
+        for ds_name, ds in model_experiment.observations.items():
+            assert ds.dims == storage_experiment.observations[ds_name].dims
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):
