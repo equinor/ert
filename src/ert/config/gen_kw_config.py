@@ -150,7 +150,7 @@ class GenKwConfig(ParameterConfig):
         transform_function_definitions: List[TransformFunctionDefinition] = []
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
-                item = item.rsplit("--")[0]  # remove comments
+                item = item.split("--")[0]  # remove comments
                 if item.strip():  # only lines with content
                     items = item.split()
                     transform_function_definitions.append(
