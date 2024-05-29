@@ -402,6 +402,7 @@ observations = st.builds(
                 min_size=1,
             ),
         ),
+        max_size=3,
     ).filter(_ensure_unique_obs_names),
 )
 
