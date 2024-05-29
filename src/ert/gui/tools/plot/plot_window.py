@@ -143,14 +143,12 @@ class PlotWindow(QMainWindow):
             ensembles = []
         QApplication.restoreOverrideCursor()
 
-        ensemble_names: List[str] = [
-            ensemble.name for ensemble in ensembles if not ensemble.hidden
-        ]
+        plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
-        self._ensemble_selection_widget = EnsembleSelectionWidget(ensemble_names)
+        self._ensemble_selection_widget = EnsembleSelectionWidget(plot_case_objects)
 
         self._ensemble_selection_widget.ensembleSelectionChanged.connect(
             self.keySelected

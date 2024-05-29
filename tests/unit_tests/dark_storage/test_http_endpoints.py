@@ -14,7 +14,6 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert "ensemble_ids" in answer_json[0]
     assert len(answer_json[0]["ensemble_ids"]) == 2
     assert "name" in answer_json[0]
-    assert answer_json[0]["name"] == "default"
 
 
 def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
@@ -30,6 +29,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
 
     assert ensemble_json["experiment_id"] == experiment_json[0]["id"]
     assert ensemble_json["userdata"]["name"] in ("alpha", "beta")
+    assert ensemble_json["userdata"]["experiment_name"] == experiment_json[0]["name"]
 
 
 def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):

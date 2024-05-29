@@ -22,7 +22,7 @@ def get_experiments(
     return [
         js.ExperimentOut(
             id=experiment.id,
-            name="default",
+            name=experiment.name,
             ensemble_ids=[ens.id for ens in experiment.ensembles],
             priors=create_priors(experiment),
             userdata={},
@@ -39,7 +39,7 @@ def get_experiment_by_id(
 ) -> js.ExperimentOut:
     experiment = storage.get_experiment(experiment_id)
     return js.ExperimentOut(
-        name="default",
+        name=experiment.name,
         id=experiment.id,
         ensemble_ids=[ens.id for ens in experiment.ensembles],
         priors=create_priors(experiment),

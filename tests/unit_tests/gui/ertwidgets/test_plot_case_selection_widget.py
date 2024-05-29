@@ -1,6 +1,7 @@
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 
+from ert.gui.tools.plot.plot_api import PlotCaseObject
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectionWidget,
     EnsembleSelectListWidget,
@@ -10,8 +11,11 @@ from ..conftest import get_child
 
 
 def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
-    test_ensemble_names = [f"case{i}" for i in range(10)]
-    widget = EnsembleSelectionWidget(ensemble_names=test_ensemble_names)
+    test_ensemble_names = [
+        PlotCaseObject(name=f"case{i}", id="id", hidden=False, experiment_name="exp")
+        for i in range(10)
+    ]
+    widget = EnsembleSelectionWidget(test_ensemble_names)
     qtbot.addWidget(widget)
     list_widget = get_child(widget, EnsembleSelectListWidget, "ensemble_selector")
 

@@ -2,6 +2,7 @@ import contextlib
 import os
 import shutil
 import stat
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
@@ -341,11 +342,11 @@ def test_that_the_plot_window_contains_the_expected_elements(
 ):
     gui = esmda_has_run
     expected_ensembles = [
-        "default",
-        "default_0",
-        "default_1",
-        "default_2",
-        "default_3",
+        f"{datetime.today().strftime('%Y-%m-%d')} : default",
+        "es_mda : default_0",
+        "es_mda : default_1",
+        "es_mda : default_2",
+        "es_mda : default_3",
     ]
 
     # Click on Create plot after esmda has run
