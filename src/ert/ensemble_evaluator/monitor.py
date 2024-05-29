@@ -54,8 +54,6 @@ class Monitor:
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        if self._connection:
-            await self._connection.close()
         if self._receiver_task:
             if not self._receiver_task.done():
                 self._receiver_task.cancel()
@@ -64,6 +62,9 @@ class Monitor:
                 self._receiver_task,
                 return_exceptions=True,
             )
+
+        if self._connection:
+            await self._connection.close()
 
     async def signal_cancel(self) -> None:
         if not self._connection:
