@@ -1,6 +1,8 @@
+import asyncio
 import os
 import signal
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -106,3 +108,66 @@ async def test_kill(driver: Driver, tmp_path, request):
     await driver.submit(0, "sh", "-c", "sleep 60; exit 2", name=job_name)
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
+
+
+@pytest.mark.flaky(reruns=5)
+async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
+    """Submits are allowed to be repeated for the same iens, and are to be
+    handled according to FIFO, but this cannot be guaranteed as it depends
+    on the host operating system."""
+    os.chdir(tmp_path)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"echo started > {tmp_path}/submit1; echo submit1 > {tmp_path}/submissionrace",
+        name="submit1",
+    )
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"echo started > {tmp_path}/submit2; echo submit2 > {tmp_path}/submissionrace",
+        name="submit2",
+    )
+    # Wait until both submissions have done their thing:
+    while not Path("submit1").exists() or not Path("submit2").exists():
+        await asyncio.sleep(0.1)
+    await asyncio.sleep(0.1)
+    assert Path("submissionrace").read_text(encoding="utf-8") == "submit2\n"
+
+
+@pytest.mark.flaky(reruns=5)
+async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
+    os.chdir(tmp_path)
+
+    if (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf")) or (
+        isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs")
+    ):
+        # Allow more time when tested on a real compute cluster to avoid false positives.
+        job_kill_window = 60
+        test_grace_time = 120
+    elif sys.platform.startswith("darwin"):
+        # Mitigate flakiness on low-power test nodes
+        job_kill_window = 5
+        test_grace_time = 8
+    else:
+        job_kill_window = 1
+        test_grace_time = 2
+
+    async def kill_job_once_started(iens):
+        nonlocal driver
+        await driver.kill(iens)
+
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"sleep {job_kill_window}; touch {tmp_path}/survived",
+        name="kill_me",
+    )
+    await poll(driver, {0}, started=kill_job_once_started)
+
+    # Give the script a chance to finish if it is running
+    await asyncio.sleep(test_grace_time)
+    assert not Path("survived").exists(), "Job should have been killed"

@@ -38,8 +38,8 @@ echo $@ > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
 echo "$resource_requirement" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.resource_requirement"
 
-[ -z $stdout] && stdout="/dev/null"
-[ -z $stderr] && stderr="/dev/null"
+[ -z $stdout ] && stdout="/dev/null"
+[ -z $stderr ] && stderr="/dev/null"
 
 bash "$(dirname $0)/lsfrunner" "${jobdir}/${jobid}" >$stdout 2>$stderr &
 disown

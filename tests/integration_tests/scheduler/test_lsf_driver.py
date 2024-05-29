@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from ert.scheduler import LsfDriver
+from ert.scheduler.driver import SIGNAL_OFFSET
 from tests.utils import poll
 
 from .conftest import mock_bin
@@ -221,3 +222,47 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     assert "bhist is used" in caplog.text
     assert bhist_called
     assert job_id in driver._bhist_cache
+
+
+async def test_kill_before_submit_is_finished(tmp_path, monkeypatch, caplog):
+    print("")
+    os.chdir(tmp_path)
+
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "slow_bsub"
+    bsub_path.write_text(
+        "#!/bin/sh\nsleep 0.05\nbsub $@",
+        encoding="utf-8",
+    )
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+
+    caplog.set_level(logging.DEBUG)
+    driver = LsfDriver(bsub_cmd="slow_bsub")
+
+    # Allow submit and kill to be interleaved by asyncio by issuing
+    # submit() in its own asyncio Task:
+    asyncio.create_task(
+        driver.submit(
+            # The sleep is the time window in which we can kill the job before
+            # the unwanted finish message appears on disk.
+            0,
+            "sh",
+            "-c",
+            f"sleep 1; touch {tmp_path}/survived",
+        )
+    )
+    await asyncio.sleep(0.01)  # allow submit task to start executing
+    await driver.kill(0)
+
+    async def finished(iens: int, returncode: int):
+        SIGTERM = 15
+        assert iens == 0
+        assert returncode == SIGNAL_OFFSET + SIGTERM
+
+    await poll(driver, {0}, finished=finished)
+
+    assert "ERROR" not in str(caplog.text)
+    await asyncio.sleep(3)
+    assert not Path("survived").exists(), "Job should have been killed"
