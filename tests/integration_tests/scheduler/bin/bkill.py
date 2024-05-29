@@ -24,6 +24,7 @@ def main() -> None:
         if not pidfile.exists():
             sys.exit(1)
         pid = int(pidfile.read_text(encoding="utf-8").strip())
+        print(f"Job <{jobid}> is being terminated")
         os.kill(pid, killsignal)
         pidfile.unlink()
 
