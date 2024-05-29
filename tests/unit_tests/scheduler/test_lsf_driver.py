@@ -319,7 +319,7 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
             1,
             "",
             "",
-            "LSF kill failed due to missing",
+            "not submitted properly",
             id="internal_ert_error",
         ),
         pytest.param(
@@ -389,6 +389,9 @@ async def test_kill(
     driver = LsfDriver()
     driver._iens2jobid = mocked_iens2jobid
     driver._sleep_time_between_bkills = 0
+
+    # Needed because we are not submitting anything in this test
+    driver._submit_locks[iens_to_kill] = asyncio.Lock()
 
     await driver.kill(iens_to_kill)
 
@@ -796,6 +799,7 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
 
     async def mock_submit(*args, **kwargs):
         driver._iens2jobid[0] = "1"
+        driver._submit_locks[0] = asyncio.Lock()
 
     driver.submit = mock_submit
     await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
@@ -828,3 +832,10 @@ def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_res
         )
     }
     assert filter_job_ids_on_submission_time(jobs, submitted_before) == expected_result
+
+
+async def test_kill_before_submit_logs_error(caplog):
+    driver = LsfDriver()
+    await driver.kill(0)
+    assert "ERROR" in caplog.text
+    assert "realization 0 has never been submitted" in caplog.text

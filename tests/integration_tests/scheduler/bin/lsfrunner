@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-job=$1
+job=$1  # NB: Includes full path
 
 function handle_sigterm {
     # LSF uses (128 + SIGNAL) as the returncode
     # SIGTERM=15
     echo "143" > "${job}.returncode"
-    echo ""
     for grandchild in $(pgrep -P $child_pid); do
         kill -s SIGTERM $grandchild
     done
