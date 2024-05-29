@@ -54,7 +54,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
 
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
 
-    app = QApplication([])  # Early so that QT is initialized before other imports
+    app = QApplication(["ert"])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     with add_gui_log_handler() as log_handler:
