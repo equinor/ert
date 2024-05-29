@@ -86,10 +86,10 @@ def mocked_requests_get(*args, **kwargs):
     history_parquet_data = history_stream.getvalue()
 
     ensemble = {
-        "/ensembles/ens_id_1": {"name": "ensemble_1"},
-        "/ensembles/ens_id_2": {"name": ".ensemble_2"},
-        "/ensembles/ens_id_3": {"name": "default_0"},
-        "/ensembles/ens_id_4": {"name": "default_1"},
+        "/ensembles/ens_id_1": {"name": "ensemble_1", "experiment_name": "experiment"},
+        "/ensembles/ens_id_2": {"name": ".ensemble_2", "experiment_name": "experiment"},
+        "/ensembles/ens_id_3": {"name": "default_0", "experiment_name": "experiment"},
+        "/ensembles/ens_id_4": {"name": "default_1", "experiment_name": "experiment"},
     }
     observations = {
         "/ensembles/ens_id_3/records/WOPR:OP1/observations": {

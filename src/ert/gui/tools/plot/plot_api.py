@@ -14,7 +14,8 @@ from ert.services import StorageService
 logger = logging.getLogger(__name__)
 
 PlotCaseObject = NamedTuple(
-    "PlotCaseObject", [("name", str), ("id", str), ("hidden", bool)]
+    "PlotCaseObject",
+    [("name", str), ("id", str), ("hidden", bool), ("experiment_name", str)],
 )
 PlotApiKeyDefinition = NamedTuple(
     "PlotApiKeyDefinition",
@@ -58,10 +59,14 @@ class PlotApi:
                         self._check_response(response)
                         response_json = response.json()
                         ensemble_name: str = response_json["userdata"]["name"]
+                        experiment_name: str = response_json["userdata"][
+                            "experiment_name"
+                        ]
                         self._all_ensembles.append(
                             PlotCaseObject(
                                 name=ensemble_name,
                                 id=ensemble_id,
+                                experiment_name=experiment_name,
                                 hidden=ensemble_name.startswith("."),
                             )
                         )

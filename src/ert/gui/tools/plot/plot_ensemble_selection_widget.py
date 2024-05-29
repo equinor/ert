@@ -11,13 +11,15 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.tools.plot.plot_api import PlotCaseObject
+
 
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
-    def __init__(self, ensemble_names: List[str]):
+    def __init__(self, plot_case_objects: List[PlotCaseObject]):
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(ensemble_names)
+        self.__dndlist = EnsembleSelectListWidget(plot_case_objects)
 
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
@@ -37,15 +39,15 @@ class EnsembleSelectListWidget(QListWidget):
     MAXIMUM_SELECTED = 5
     MINIMUM_SELECTED = 1
 
-    def __init__(self, ensembles):
+    def __init__(self, plot_case_objects: List[PlotCaseObject]):
         super().__init__()
-        self._ensembles = reversed(ensembles)
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
 
-        for i, ensemble in enumerate(self._ensembles):
-            it = QListWidgetItem(ensemble)
-            it.setData(Qt.ItemDataRole.UserRole, i == 0)
+        for i, obj in enumerate(plot_case_objects):
+            it = QListWidgetItem(f"{obj.experiment_name} : {obj.name}")
+            it.setData(Qt.ItemDataRole.UserRole, obj)
+            it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
             self.addItem(it)
             self._ensemble_count += 1
 
@@ -59,9 +61,9 @@ class EnsembleSelectListWidget(QListWidget):
 
     def get_checked_ensemble_plot_names(self) -> List[str]:
         return [
-            self.item(index).text()
+            self.item(index).data(Qt.ItemDataRole.UserRole).name
             for index in range(self._ensemble_count)
-            if self.item(index).data(Qt.ItemDataRole.UserRole)
+            if self.item(index).data(Qt.ItemDataRole.CheckStateRole)
         ]
 
     def mouseMoveEvent(self, event):
@@ -77,11 +79,12 @@ class EnsembleSelectListWidget(QListWidget):
 
     def slot_toggle_plot(self, item: QListWidgetItem):
         count = len(self.get_checked_ensemble_plot_names())
-        selected = item.data(Qt.ItemDataRole.UserRole)
+        selected = item.data(Qt.ItemDataRole.CheckStateRole)
+
         if selected and count > self.MINIMUM_SELECTED:
-            item.setData(Qt.ItemDataRole.UserRole, False)
+            item.setData(Qt.ItemDataRole.CheckStateRole, False)
         elif not selected and count < self.MAXIMUM_SELECTED:
-            item.setData(Qt.ItemDataRole.UserRole, True)
+            item.setData(Qt.ItemDataRole.CheckStateRole, True)
 
         self.ensembleSelectionListChanged.emit()
 
@@ -104,7 +107,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         rect = option.rect.adjusted(2, 2, -2, -2)
         painter.setPen(QPen(pen_color))
 
-        if index.data(Qt.ItemDataRole.UserRole):
+        if index.data(Qt.ItemDataRole.CheckStateRole):
             painter.setBrush(QBrush(selected_background_color))
         else:
             painter.setBrush(QBrush(background_color))
