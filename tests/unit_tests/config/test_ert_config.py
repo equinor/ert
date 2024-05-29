@@ -1613,3 +1613,21 @@ def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
         ErtConfig.from_file(str(config_file)).model_config.jobname_format_string
         == "eclbase_<IENS>"
     )
+
+
+def test_that_empty_params_file_gives_reasonable_error(tmpdir):
+    with tmpdir.as_cwd():
+        config = """
+        NUM_REALIZATIONS 1
+        GEN_KW COEFFS coeffs_priors
+        """
+
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        # Create an empty file named 'coeffs_priors'
+        with open("coeffs_priors", mode="w", encoding="utf-8") as fh:
+            pass
+
+        with pytest.raises(ConfigValidationError, match="No parameters specified in"):
+            ErtConfig.from_file("config.ert")

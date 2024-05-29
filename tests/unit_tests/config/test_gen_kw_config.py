@@ -494,12 +494,12 @@ def test_gen_kw_objects_equal(tmpdir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_pred_special_suggested_removal():
-    with open("empty_file.txt", "a", encoding="utf-8") as f:
-        f.write("")
+    with open("coeff_priors.txt", "a", encoding="utf-8") as f:
+        f.write("a NORMAL 0 1")
     with open("config.ert", "a", encoding="utf-8") as f:
         f.write(
             "NUM_REALIZATIONS 1\n"
-            "GEN_KW PRED empty_file.txt empty_file.txt empty_file.txt\n"
+            "GEN_KW PRED coeff_priors.txt coeff_priors.txt coeff_priors.txt\n"
         )
     with pytest.warns(
         ConfigWarning,
