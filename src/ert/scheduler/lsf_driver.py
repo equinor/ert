@@ -217,6 +217,8 @@ class LsfDriver(Driver):
         self._bhist_required_cache_age: float = 4
         self._bhist_cache_timestamp: float = time.time()
 
+        self._submit_locks: MutableMapping[int, asyncio.Lock] = {}
+
     async def submit(
         self,
         iens: int,
@@ -260,71 +262,87 @@ class LsfDriver(Driver):
             + self._build_resource_requirement_arg()
             + ["-J", name, str(script_path), str(runpath)]
         )
-        logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
-        process_success, process_message = await self._execute_with_retry(
-            bsub_with_args,
-            retry_on_empty_stdout=True,
-            retry_codes=(FLAKY_SSH_RETURNCODE,),
-            retries=self._bsub_retries,
-            retry_interval=self._sleep_time_between_cmd_retries,
-        )
-        if not process_success:
-            self._job_error_message_by_iens[iens] = process_message
-            raise RuntimeError(process_message)
 
-        match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
-        if match is None:
-            raise RuntimeError(f"Could not understand '{process_message}' from bsub")
-        job_id = match[1]
-        logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
+        if iens not in self._submit_locks:
+            self._submit_locks[iens] = asyncio.Lock()
 
-        (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
-            json.dumps({"job_id": job_id}), encoding="utf-8"
-        )
-        self._jobs[job_id] = JobData(
-            iens=iens,
-            job_state=QueuedJob(job_state="PEND"),
-            submitted_timestamp=time.time(),
-        )
-        self._iens2jobid[iens] = job_id
+        async with self._submit_locks[iens]:
+            logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
+            process_success, process_message = await self._execute_with_retry(
+                bsub_with_args,
+                retry_on_empty_stdout=True,
+                retry_codes=(FLAKY_SSH_RETURNCODE,),
+                retries=self._bsub_retries,
+                retry_interval=self._sleep_time_between_cmd_retries,
+            )
+            if not process_success:
+                self._job_error_message_by_iens[iens] = process_message
+                raise RuntimeError(process_message)
+
+            match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
+            if match is None:
+                raise RuntimeError(
+                    f"Could not understand '{process_message}' from bsub"
+                )
+            job_id = match[1]
+            logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
+
+            (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
+                json.dumps({"job_id": job_id}), encoding="utf-8"
+            )
+            self._jobs[job_id] = JobData(
+                iens=iens,
+                job_state=QueuedJob(job_state="PEND"),
+                submitted_timestamp=time.time(),
+            )
+            self._iens2jobid[iens] = job_id
 
     async def kill(self, iens: int) -> None:
-        if iens not in self._iens2jobid:
-            logger.info(f"LSF kill failed due to missing jobid for realization {iens}")
+        if iens not in self._submit_locks:
+            logger.error(
+                f"LSF kill failed, realization {iens} has never been submitted"
+            )
             return
 
-        job_id = self._iens2jobid[iens]
-
-        logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
-        bkill_with_args: List[str] = [
-            str(self._bkill_cmd),
-            "-s",
-            "SIGTERM",
-            job_id,
-        ]
-
-        _, process_message = await self._execute_with_retry(
-            bkill_with_args,
-            retry_codes=(FLAKY_SSH_RETURNCODE,),
-            retries=3,
-            retry_interval=self._sleep_time_between_cmd_retries,
-            exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
-        )
-        subprocess.Popen(
-            f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
-            shell=True,
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-
-        if not re.search(
-            f"Job <{job_id}> is being (terminated|signaled)", process_message
-        ):
-            if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
-                logger.debug(f"LSF kill failed with: {process_message}")
+        async with self._submit_locks[iens]:
+            if iens not in self._iens2jobid:
+                logger.error(
+                    f"LSF kill failed, realization {iens} was not submitted properly"
+                )
                 return
-            logger.error(f"LSF kill failed with: {process_message}")
+
+            job_id = self._iens2jobid[iens]
+
+            logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
+            bkill_with_args: List[str] = [
+                str(self._bkill_cmd),
+                "-s",
+                "SIGTERM",
+                job_id,
+            ]
+
+            _, process_message = await self._execute_with_retry(
+                bkill_with_args,
+                retry_codes=(FLAKY_SSH_RETURNCODE,),
+                retries=3,
+                retry_interval=self._sleep_time_between_cmd_retries,
+                exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
+            )
+            subprocess.Popen(
+                f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
+                shell=True,
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+            if not re.search(
+                f"Job <{job_id}> is being (terminated|signaled)", process_message
+            ):
+                if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
+                    logger.debug(f"LSF kill failed with: {process_message}")
+                    return
+                logger.error(f"LSF kill failed with: {process_message}")
 
     async def poll(self) -> None:
         while True:
