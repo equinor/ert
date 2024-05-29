@@ -1124,9 +1124,6 @@ class LocalEnsemble(BaseMode):
                 active_realizations, np.array(reals_with_responses_mask)
             )
 
-        # Ensure to sort keys at all levels to preserve deterministic ordering
-        # Traversal will be in this order:
-        # response_type -> obs name -> response name
         for response_type in self.experiment.observations:
             obs_datasets = self.experiment.observations[response_type]
             obs_names_to_check = set(obs_datasets["obs_name"].data).intersection(
@@ -1225,6 +1222,7 @@ class LocalEnsemble(BaseMode):
             )
             raise KeyError(msg)
 
+        # Ensure sorting by obs_name->key_index
         long_np = np.concatenate(long_nps)
         sorted_long_np = long_np[np.lexsort((long_np[:, 0], long_np[:, 1]))]
 
