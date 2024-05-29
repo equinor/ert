@@ -1127,7 +1127,7 @@ class LocalEnsemble(BaseMode):
         # Ensure to sort keys at all levels to preserve deterministic ordering
         # Traversal will be in this order:
         # response_type -> obs name -> response name
-        for response_type in sorted(self.experiment.observations):
+        for response_type in self.experiment.observations:
             obs_datasets = self.experiment.observations[response_type]
             obs_names_to_check = set(obs_datasets["obs_name"].data).intersection(
                 observation_keys
@@ -1138,7 +1138,7 @@ class LocalEnsemble(BaseMode):
             )
 
             index = ObservationsIndices[ResponseTypes(response_type)]
-            for obs_name in sorted(obs_names_to_check):
+            for obs_name in obs_names_to_check:
                 obs_ds = obs_datasets.sel(obs_name=obs_name, drop=True)
 
                 obs_ds = obs_ds.dropna("name", subset=["observations"], how="all")
@@ -1147,7 +1147,7 @@ class LocalEnsemble(BaseMode):
 
                 response_names_to_check = obs_ds["name"].data
 
-                for response_name in sorted(response_names_to_check):
+                for response_name in response_names_to_check:
                     observations_for_response = obs_ds.sel(
                         name=response_name, drop=True
                     )
@@ -1226,8 +1226,9 @@ class LocalEnsemble(BaseMode):
             raise KeyError(msg)
 
         long_np = np.concatenate(long_nps)
+        sorted_long_np = long_np[np.lexsort((long_np[:, 0], long_np[:, 1]))]
 
-        return ObservationsAndResponsesData(long_np)
+        return ObservationsAndResponsesData(sorted_long_np)
 
     @staticmethod
     def _ensure_correct_coordinate_order(ds: xr.Dataset) -> xr.Dataset:

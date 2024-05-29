@@ -62,6 +62,17 @@ def test_memory_smoothing(poly_template):
         )
 
 
+@pytest.mark.limit_memory("1 GB")
+def test_that_get_measured_data_is_always_ordered(poly_template):
+    ert_config = ErtConfig.from_file("poly.ert")
+    fill_storage_with_data(poly_template, ert_config)
+    with open_storage(poly_template / "ensembles", mode="w") as storage:
+        prior_ens = storage.get_ensemble_by_name("prior")
+        ds = prior_ens.get_measured_data(prior_ens.experiment.observation_keys)
+        np_ds = ds._as_np
+        assert np.all(np_ds[np.lexsort((np_ds[:, 0], np_ds[:, 1]))] == np_ds)
+
+
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:

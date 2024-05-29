@@ -103,9 +103,9 @@ def test_gen_obs_and_summary_index_range(create_measured_data):
     )
     df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == ["WPR_DIFF_1", "FOPR"]
-    assert df.data.loc["OBS"].values == pytest.approx([0.1, 0.23281], abs=0.00001)
-    assert df.data.loc["STD"].values == pytest.approx([0.2, 0.1])
+    assert df.data.columns.get_level_values(0).to_list() == ["FOPR", "WPR_DIFF_1"]
+    assert df.data.loc["OBS"].values == pytest.approx([0.23281, 0.1], abs=0.00001)
+    assert df.data.loc["STD"].values == pytest.approx([0.1, 0.2])
 
 
 @pytest.mark.parametrize(
