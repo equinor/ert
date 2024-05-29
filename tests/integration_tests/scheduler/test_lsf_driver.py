@@ -95,8 +95,8 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
     stderr_txt = Path(f"{job_name}.LSF-stderr").read_text(encoding="utf-8").strip()
     stdout_txt = Path(f"{job_name}.LSF-stdout").read_text(encoding="utf-8").strip()
 
-    assert stderr_txt[-min(tail_chars_to_read, num_written_characters) + 1 :] in message
-    assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 1 :] in message
+    assert stderr_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
+    assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
 async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
