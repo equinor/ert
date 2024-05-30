@@ -5,9 +5,8 @@ from typing import Any, Dict, Optional
 import xarray as xr
 
 from ert.config.commons import Refcase
-
-from .observation_vector import ObsVector
-from .parameter_config import CustomDict
+from ert.config.parameter_config import CustomDict
+from ert.config.responses.observation_vector import ObsVector
 
 
 @dataclasses.dataclass

@@ -16,18 +16,17 @@ from typing import (
 
 import xarray as xr
 
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.response_config import ResponseConfig
-from ert.config.summary_config import SummaryConfig
+from ert.config.commons import Refcase
+from ert.config.field import Field
+from ert.config.gen_kw_config import GenKwConfig
+from ert.config.parameter_config import ParameterConfig
+from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from ert.config.responses._read_summary import read_summary
+from ert.config.responses.gen_data_config import GenDataConfig
+from ert.config.responses.response_config import ResponseConfig
+from ert.config.responses.summary_config import SummaryConfig
+from ert.config.surface_config import SurfaceConfig
 from ert.field_utils import get_shape
-
-from ._read_summary import read_summary
-from .commons import Refcase
-from .field import Field
-from .gen_kw_config import GenKwConfig
-from .parameter_config import ParameterConfig
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
-from .surface_config import SurfaceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +72,8 @@ class EnsembleConfig:
         self.refcase = refcase
         self.eclbase = eclbase
 
-        for gen_data in _gendata_list:
-            self.addNode(gen_data)
+        # for gen_data in _gendata_list:
+        #    self.addNode(gen_data)
 
         for gen_kw in _genkw_list:
             self.addNode(gen_kw)

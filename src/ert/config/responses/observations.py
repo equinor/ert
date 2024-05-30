@@ -11,11 +11,11 @@ from typing import (
 import pandas as pd
 import xarray as xr
 
-from ert.config.summary_observation import SummaryObservation
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.response_properties import ResponseTypes
+from ert.config.responses.summary_observation import SummaryObservation
 
-from .general_observation import GenObservation
 from .observation_vector import ObsVector
-from .response_properties import ResponseTypes
 
 
 def history_key(key: str) -> str:

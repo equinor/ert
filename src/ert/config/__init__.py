@@ -1,6 +1,7 @@
+from ert.config.ensemble_config import EnsembleConfig
+
 from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
-from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .ert_plugin import CancelPluginException, ErtPlugin
 from .ert_script import ErtScript
@@ -13,7 +14,6 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
-from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
@@ -35,10 +35,11 @@ from .queue_config import (
     queue_positive_number_options,
     queue_string_options,
 )
-from .response_config import ResponseConfig
-from .response_properties import ResponseTypes
-from .summary_config import SummaryConfig
-from .summary_observation import SummaryObservation
+from .responses.gen_data_config import GenDataConfig
+from .responses.response_config import ResponseConfig
+from .responses.response_properties import ResponseTypes
+from .responses.summary_config import SummaryConfig
+from .responses.summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
 from .workflow_job import WorkflowJob

@@ -17,7 +17,7 @@ from hypothesis.extra.numpy import from_dtype
 from pydantic import PositiveInt, conint
 from typing_extensions import Self
 
-from ert.config._read_summary import SPECIAL_KEYWORDS
+from ert.config.responses._read_summary import SPECIAL_KEYWORDS
 
 from .egrid_generator import GrdeclKeyword
 

@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING, Dict, Set, Union
 import numpy as np
 import xarray as xr
 
-from ert.config._read_summary import read_summary
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.config.parsing import ConfigWarning, HistorySource
 from ert.config.parsing.observations_parser import (
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
 )
-from ert.config.response_config import ObsArgs, ResponseConfig
-from ert.config.response_properties import (
+from ert.config.responses._read_summary import read_summary
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.observation_vector import ObsVector
+from ert.config.responses.response_config import ObsArgs, ResponseConfig
+from ert.config.responses.response_properties import (
     ResponseTypes,
 )
 

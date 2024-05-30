@@ -9,8 +9,8 @@ import pytest
 
 import ert.storage
 import ert.storage.migration.block_fs as bf
-from ert.config import ErtConfig, GenDataConfig, GenKwConfig
-from ert.config.summary_config import SummaryConfig
+from ert.config import ErtConfig, GenKwConfig
+from ert.config.responses.summary_config import GenDataConfig, SummaryConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 

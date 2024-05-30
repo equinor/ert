@@ -26,10 +26,6 @@ from typing import (
 
 from typing_extensions import Self
 
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.observations import group_observations_by_response_type
-from ert.config.response_config import ObsArgs
-from ert.config.summary_config import SummaryConfig
 from ert.substitution_list import SubstitutionList
 
 from ._get_num_cpu import get_num_cpu_from_data_file
@@ -42,8 +38,6 @@ from .forward_model_step import (
     ForwardModelStepValidationError,
 )
 from .model_config import ModelConfig
-from .observation_vector import ObsVector
-from .observations import EnkfObs
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -66,7 +60,12 @@ from .parsing.observations_parser import (
     parse,
 )
 from .queue_config import QueueConfig
-from .response_properties import ResponseTypes
+from .responses.gen_data_config import GenDataConfig
+from .responses.observation_vector import ObsVector
+from .responses.observations import EnkfObs, group_observations_by_response_type
+from .responses.response_config import ObsArgs
+from .responses.response_properties import ResponseTypes
+from .responses.summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 

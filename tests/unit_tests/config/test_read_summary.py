@@ -7,7 +7,11 @@ import resfo
 from hypothesis import given
 from resdata.summary import Summary, SummaryVarType
 
-from ert.config._read_summary import _SummaryType, make_summary_key, read_summary
+from ert.config.responses._read_summary import (
+    _SummaryType,
+    make_summary_key,
+    read_summary,
+)
 
 from .summary_generator import (
     inter_region_summary_variables,

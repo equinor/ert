@@ -26,7 +26,7 @@ from ert.config import (
     Field,
     GenKwConfig,
 )
-from ert.config.observations import EnkfObs
+from ert.config.responses.observations import EnkfObs
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus

@@ -7,15 +7,15 @@ import numpy as np
 import xarray as xr
 from typing_extensions import Self
 
-from ert.config import obs_commons
 from ert.config._option_dict import option_dict
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.config.parsing import ConfigValidationError, ErrorInfo
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.observations_parser import GenObsValues, ObservationConfigError
-from ert.config.response_config import ObsArgs, ResponseConfig
-from ert.config.response_properties import (
+from ert.config.responses import obs_commons
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.observation_vector import ObsVector
+from ert.config.responses.response_config import ObsArgs, ResponseConfig
+from ert.config.responses.response_properties import (
     ResponseTypes,
 )
 from ert.validation import rangestring_to_list

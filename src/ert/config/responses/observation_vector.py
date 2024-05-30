@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Iterable, Union
 
-from .general_observation import GenObservation
-from .response_properties import ResponseTypes
-from .summary_observation import SummaryObservation
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.response_properties import ResponseTypes
+from ert.config.responses.summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
     from datetime import datetime

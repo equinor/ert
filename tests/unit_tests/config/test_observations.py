@@ -14,9 +14,9 @@ from ert.config import (
     ResponseTypes,
     SummaryObservation,
 )
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.config.parsing.observations_parser import ObservationConfigError
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.observation_vector import ObsVector
 
 
 def run_simulator():
