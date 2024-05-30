@@ -1,0 +1,50 @@
+name: 🐛 Bug Report
+description: File a bug report to help us improve
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened? (You can include a screenshot if it helps explain)
+      description: |
+        Thanks for reporting a bug! Tell us what happened, what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-did-you-expect-to-happen
+    attributes:
+      label: What did you expect to happen?
+      description: Describe what you expected to happen.
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: steps to reproduce
+      description: Detailed desription of how to reproduce the failure.
+      render: Python
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: environment-checkboxes
+    attributes:
+      label: Environment where bug has been observed
+      description: |
+        Please check of the environments where this behavior has been observed.
+      options:
+        - label: python 3.8
+        - label: python 3.9
+        - label: python 3.10
+        - label: python 3.11
+        - label: python 3.12
+        - label: macosx
+        - label: rhel7
+        - label: rhel8
+        - label: local queue
+        - label: lsf queue
+        - label: slurm queue
+        - label: openPBS queue
+        - label: used flag `--enable-scheduler`
