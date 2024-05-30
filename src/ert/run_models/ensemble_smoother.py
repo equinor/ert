@@ -15,6 +15,7 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import Storage
 
+from ..analysis.event import DataSection
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
@@ -150,7 +151,14 @@ class EnsembleSmoother(BaseRunModel):
             ) from e
 
         self.send_event(
-            RunModelUpdateEndEvent(iteration=0, smoother_snapshot=smoother_snapshot)
+            RunModelUpdateEndEvent(
+                iteration=0,
+                data=DataSection(
+                    header=smoother_snapshot.header,
+                    data=smoother_snapshot.csv,
+                    extra=smoother_snapshot.extra,
+                ),
+            )
         )
 
         self.ert.runWorkflows(

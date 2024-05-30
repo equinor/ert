@@ -25,7 +25,7 @@ from cloudevents.http import CloudEvent
 
 from _ert.async_utils import get_running_loop
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
-from ert.analysis.event import AnalysisErrorEvent
+from ert.analysis.event import AnalysisDataEvent, AnalysisErrorEvent
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
@@ -62,6 +62,7 @@ from ert.runpaths import Runpaths
 from ert.storage import Storage
 
 from .event import (
+    RunModelDataEvent,
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
@@ -86,6 +87,7 @@ StatusEvents = Union[
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
+    RunModelDataEvent,
     RunModelUpdateEndEvent,
 ]
 
@@ -206,10 +208,12 @@ class BaseRunModel:
         elif isinstance(event, AnalysisErrorEvent):
             self.send_event(
                 RunModelErrorEvent(
-                    iteration=iteration,
-                    error_msg=event.error_msg,
-                    smoother_snapshot=event.smoother_snapshot,
+                    iteration=iteration, error_msg=event.error_msg, data=event.data
                 )
+            )
+        elif isinstance(event, AnalysisDataEvent):
+            self.send_event(
+                RunModelDataEvent(iteration=iteration, name=event.name, data=event.data)
             )
 
     @property

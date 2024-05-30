@@ -16,6 +16,7 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import Ensemble, Storage
 
+from ..analysis.event import DataSection
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
@@ -212,7 +213,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
             if update_success:
                 self.send_event(
                     RunModelUpdateEndEvent(
-                        iteration=current_iter - 1, smoother_snapshot=smoother_snapshot
+                        iteration=current_iter - 1,
+                        data=DataSection(
+                            header=smoother_snapshot.header,
+                            data=smoother_snapshot.csv,
+                            extra=smoother_snapshot.extra,
+                        ),
                     )
                 )
                 self._evaluate_and_postprocess(

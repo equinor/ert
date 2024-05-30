@@ -16,6 +16,7 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import Ensemble, Storage
 
+from ..analysis.event import DataSection
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
@@ -181,7 +182,12 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             self.send_event(
                 RunModelUpdateEndEvent(
-                    iteration=iteration, smoother_snapshot=smoother_snapshot
+                    iteration=iteration,
+                    data=DataSection(
+                        header=smoother_snapshot.header,
+                        data=smoother_snapshot.csv,
+                        extra=smoother_snapshot.extra,
+                    ),
                 )
             )
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)

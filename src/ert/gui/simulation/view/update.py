@@ -1,6 +1,7 @@
+from __future__ import annotations
+
+import math
 import time
-from collections import defaultdict
-from typing import DefaultDict
 
 import humanize
 from qtpy.QtCore import Qt, Slot
@@ -9,6 +10,7 @@ from qtpy.QtWidgets import (
     QAbstractItemView,
     QGridLayout,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -20,7 +22,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.analysis import ObservationStatus, SmootherSnapshot
+from ert.analysis.event import DataSection
 from ert.ensemble_evaluator import state
 from ert.run_models import (
     RunModelEvent,
@@ -29,7 +31,7 @@ from ert.run_models import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from ert.run_models.event import RunModelErrorEvent
+from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 
 
 class UpdateWidget(QWidget):
@@ -84,83 +86,40 @@ class UpdateWidget(QWidget):
         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
         self._msg_list.addItem(item)
 
-    def _insert_report_tab(self, smoother_snapshot: SmootherSnapshot) -> None:
+    def _insert_table_tab(
+        self,
+        name: str,
+        data: DataSection,
+    ) -> None:
         widget = QWidget()
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
-        update_step = smoother_snapshot.update_step_snapshots
-        obs_info: DefaultDict[ObservationStatus, int] = defaultdict(lambda: 0)
-        for update in update_step:
-            obs_info[update.status] += 1
-
-        grid_layout = QGridLayout()
-        grid_layout.addWidget(QLabel("Parent ensemble:"), 0, 0)
-        grid_layout.addWidget(QLabel(smoother_snapshot.source_ensemble_name), 0, 1)
-        grid_layout.addWidget(QLabel("Target ensemble:"), 1, 0)
-        grid_layout.addWidget(QLabel(smoother_snapshot.target_ensemble_name), 1, 1)
-        grid_layout.addWidget(QLabel("Alpha:"), 2, 0)
-        grid_layout.addWidget(QLabel(str(smoother_snapshot.alpha)), 2, 1)
-        grid_layout.addWidget(QLabel("Global scaling:"), 3, 0)
-        grid_layout.addWidget(QLabel(str(smoother_snapshot.global_scaling)), 3, 1)
-        grid_layout.addWidget(QLabel("Standard cutoff:"), 4, 0)
-        grid_layout.addWidget(QLabel(str(smoother_snapshot.std_cutoff)), 4, 1)
-        grid_layout.addWidget(QLabel("Active observations:"), 0, 2)
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.ACTIVE])), 0, 3)
-        grid_layout.addWidget(
-            QLabel("Deactivated observations - missing respons(es):"), 1, 2
-        )
-        grid_layout.addWidget(
-            QLabel(str(obs_info[ObservationStatus.MISSING_RESPONSE])), 1, 3
-        )
-        grid_layout.addWidget(
-            QLabel("Deactivated observations - ensemble_std > STD_CUTOFF:"), 2, 2
-        )
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.STD_CUTOFF])), 2, 3)
-        grid_layout.addWidget(QLabel("Deactivated observations - outlier"), 3, 2)
-        grid_layout.addWidget(QLabel(str(obs_info[ObservationStatus.OUTLIER])), 3, 3)
-
         table = QTableWidget()
-        table.setColumnCount(5)
+        table.setObjectName("CSV_" + name)
+        table.setColumnCount(len(data.header))
         table.setAlternatingRowColors(True)
-        table.setRowCount(len(update_step))
-        table.setHorizontalHeaderLabels(
-            ["", "Index", "Observed history", "Simulated data", "Status"]
-        )
+        table.setRowCount(len(data.data))
+        table.setHorizontalHeaderLabels(data.header)
         table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        table.horizontalHeader().setStretchLastSection(True)
-        table.setColumnWidth(0, 200)
-        table.setColumnWidth(1, 200)
-        table.setColumnWidth(2, 350)
-        table.setColumnWidth(3, 250)
-
-        for nr, step in enumerate(update_step):
-            obs_std = (
-                f"{step.obs_std:.3f}"
-                if step.obs_scaling == 1
-                else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-            )
-            table.setItem(nr, 0, QTableWidgetItem(f"{step.obs_name:20}"))
-            table.setItem(nr, 1, QTableWidgetItem(f"{step.index:20}"))
-            table.setItem(
-                nr,
-                2,
-                QTableWidgetItem(f"{step.obs_val:>16.3f} +/- {obs_std:<21}"),
-            )
-            table.setItem(
-                nr,
-                3,
-                QTableWidgetItem(
-                    f"{step.response_mean:>21.3f} +/- {step.response_std:<16.3f}"
-                ),
-            )
-            table.setItem(nr, 4, QTableWidgetItem(f"{step.get_status().capitalize()}"))
-
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        table.setSortingEnabled(True)
+        for i, row in enumerate(data.data):
+            for j, val in enumerate(row):
+                table.setItem(i, j, QTableWidgetItem(str(val)))
         layout.addWidget(table)
-        layout.addSpacing(10)
-        layout.addLayout(grid_layout)
 
-        self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, "Report"))
+        if data.extra:
+            grid_layout = QGridLayout()
+            nr_each_column = math.ceil(len(data.extra) / 2)
+            for i, (k, v) in enumerate(data.extra.items()):
+                column = (i // nr_each_column) * 2
+                grid_layout.addWidget(QLabel(str(k) + ":"), i % nr_each_column, column)
+                grid_layout.addWidget(QLabel(str(v)), i % nr_each_column, column + 1)
+            layout.addSpacing(10)
+            layout.addLayout(grid_layout)
+
+        self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
 
     @Slot(RunModelUpdateBeginEvent)
     def begin(self, _: RunModelUpdateBeginEvent) -> None:
@@ -178,8 +137,11 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        if event.smoother_snapshot:
-            self._insert_report_tab(event.smoother_snapshot)
+        self._insert_table_tab("Report", event.data)
+
+    @Slot(RunModelDataEvent)
+    def add_table(self, event: RunModelDataEvent) -> None:
+        self._insert_table_tab(event.name, event.data)
 
     @Slot(RunModelEvent)
     def update_status(self, event: RunModelEvent) -> None:
@@ -205,5 +167,4 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        if event.smoother_snapshot:
-            self._insert_report_tab(event.smoother_snapshot)
+        self._insert_table_tab("Report", event.data)

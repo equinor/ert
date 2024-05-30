@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 
-from ert.analysis import SmootherSnapshot
+from ert.analysis.event import DataSection
 
 
 @dataclass
@@ -26,11 +28,17 @@ class RunModelUpdateBeginEvent(RunModelEvent):
 
 
 @dataclass
+class RunModelDataEvent(RunModelEvent):
+    name: str
+    data: DataSection
+
+
+@dataclass
 class RunModelUpdateEndEvent(RunModelEvent):
-    smoother_snapshot: Optional[SmootherSnapshot] = None
+    data: DataSection
 
 
 @dataclass
 class RunModelErrorEvent(RunModelEvent):
-    smoother_snapshot: Optional[SmootherSnapshot] = None
-    error_msg: Optional[str] = None
+    error_msg: str
+    data: Optional[DataSection] = None
