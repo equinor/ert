@@ -12,7 +12,7 @@ from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument
 from ert.validation.range_string_argument import NotInStorage
 
-from .simulation_config_panel import SimulationConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel
 
 
 @dataclass
@@ -23,7 +23,7 @@ class Arguments:
     experiment_name: str
 
 
-class EnsembleExperimentPanel(SimulationConfigPanel):
+class EnsembleExperimentPanel(ExperimentConfigPanel):
     def __init__(self, ensemble_size: int, run_path: str, notifier: ErtNotifier):
         self.notifier = notifier
         super().__init__(EnsembleExperiment)
@@ -91,7 +91,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             and self._ensemble_name_field.isValid()
         )
 
-    def getSimulationArguments(self):
+    def get_experiment_arguments(self):
         return Arguments(
             mode=ENSEMBLE_EXPERIMENT_MODE,
             current_ensemble=self._ensemble_name_field.get_text,

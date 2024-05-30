@@ -295,7 +295,7 @@ class RunDialog(QDialog):
         elif self.killJobs() != QMessageBox.Yes:
             QCloseEvent.ignore()
 
-    def startSimulation(self):
+    def run_experiment(self):
         self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
@@ -462,7 +462,7 @@ class RunDialog(QDialog):
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
             self._run_model.restart()
-            self.startSimulation()
+            self.run_experiment()
 
     @Slot()
     def toggle_detailed_progress(self):

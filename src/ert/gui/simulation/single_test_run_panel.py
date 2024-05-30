@@ -8,7 +8,7 @@ from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
-from .simulation_config_panel import SimulationConfigPanel
+from .experiment_config_panel import ExperimentConfigPanel
 
 
 @dataclass
@@ -18,9 +18,9 @@ class Arguments:
     experiment_name: str
 
 
-class SingleTestRunPanel(SimulationConfigPanel):
+class SingleTestRunPanel(ExperimentConfigPanel):
     def __init__(self, run_path: str, notifier: ErtNotifier):
-        SimulationConfigPanel.__init__(self, SingleTestRun)
+        ExperimentConfigPanel.__init__(self, SingleTestRun)
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")
 
@@ -31,6 +31,6 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-    def getSimulationArguments(self):
+    def get_experiment_arguments(self):
         ensemble_name = f"{datetime.now().strftime('%Y-%m-%dT%H%M')}"
         return Arguments(TEST_RUN_MODE, ensemble_name, "single_test_run")

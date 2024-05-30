@@ -19,7 +19,7 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets import SummaryPanel
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.simulation import SimulationPanel
+from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
     EventViewerTool,
     GUILogHandler,
@@ -229,7 +229,7 @@ def _setup_main_window(
     config = ert.ert_config
     window = ErtMainWindow(config_file, plugin_manager)
     window.notifier.set_storage(storage)
-    window.setWidget(SimulationPanel(ert, window.notifier, config_file))
+    window.setWidget(ExperimentPanel(ert, window.notifier, config_file))
     plugin_handler = PluginHandler(
         ert,
         window.notifier,

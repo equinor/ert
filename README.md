@@ -204,7 +204,7 @@ cd test-data/poly_example
 ert gui poly.ert
 ````
 This opens up the ert graphical user interface.
-Finally, test ert by starting and successfully running the simulation.
+Finally, test ert by starting and successfully running the experiment.
 
 ### ert with a reservoir simulator
 To actually get ert to work at your site you need to configure details about

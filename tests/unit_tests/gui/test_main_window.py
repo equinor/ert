@@ -33,8 +33,8 @@ from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
@@ -95,7 +95,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 6
 
         for i in range(combo_box.count()):
@@ -115,7 +115,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 6
 
         for i in range(3):
@@ -142,7 +142,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     args.config = "poly-no-gen-kw.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 6
 
         for i in range(3):
@@ -178,22 +178,22 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     ):
         gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        simulation_mode = get_child(gui, QComboBox, name="Simulation_mode")
-        start_simulation = get_child(gui, QToolButton, name="start_simulation")
+        simulation_mode = get_child(gui, QComboBox, name="experiment_type")
+        run_experiment = get_child(gui, QToolButton, name="run_experiment")
 
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         # Ensure that once the run dialog is opened
         # another simulation cannot be started
-        assert not start_simulation.isEnabled()
+        assert not run_experiment.isEnabled()
 
         # Change simulation mode and ensure that
         # another experiment still cannot be started
         for ind in range(simulation_mode.count()):
             simulation_mode.setCurrentIndex(ind)
-            assert not start_simulation.isEnabled()
+            assert not run_experiment.isEnabled()
 
         # The user expects to be able to open e.g. the even viewer
         # while the run dialog is open
@@ -205,7 +205,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
 
         # Ensure that once the run dialog is closed
         # another simulation can be started
-        assert start_simulation.isEnabled()
+        assert run_experiment.isEnabled()
 
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
@@ -285,7 +285,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle() == "ERT - poly.ert"
 
-        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="experiment_type")
         combo_box.setCurrentIndex(4)
 
         assert (
@@ -296,7 +296,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
 
-        run_sim_button = get_child(gui, QToolButton, name="start_simulation")
+        run_sim_button = get_child(gui, QToolButton, name="run_experiment")
         assert run_sim_button
         assert run_sim_button.isEnabled()
 
@@ -468,7 +468,7 @@ def test_that_the_manage_experiments_tool_can_be_used(
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
     gui = opened_main_window
 
-    sim_mode = get_child(gui, QWidget, name="Simulation_mode")
+    sim_mode = get_child(gui, QWidget, name="experiment_type")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
     es_panel = get_child(gui, QWidget, name="ensemble_smoother_panel")
     es_edit = get_child(es_panel, QWidget, name="ensemble_smoother_edit")
@@ -619,12 +619,12 @@ def test_that_a_failing_job_shows_error_message_with_context(
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")
     # Select correct experiment in the simulation panel
-    simulation_panel = get_child(gui, SimulationPanel)
-    simulation_mode_combo = get_child(simulation_panel, QComboBox)
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
     simulation_mode_combo.setCurrentText(SingleTestRun.name())
 
     # Click start simulation and agree to the message
-    start_simulation = get_child(simulation_panel, QWidget, name="start_simulation")
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
     def handle_error_dialog(run_dialog):
         error_dialog = run_dialog.fail_msg_box
@@ -644,7 +644,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
             assert substring in text
         qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
 
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
@@ -688,7 +688,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
         assert gui.windowTitle() == "ERT - poly.ert"
 
-        combo_box = get_child(gui, QComboBox, name="Simulation_mode")
+        combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 6
         combo_box.setCurrentIndex(4)
 
