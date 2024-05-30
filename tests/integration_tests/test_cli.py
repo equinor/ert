@@ -30,8 +30,8 @@ from ert.mode_definitions import (
 )
 from ert.shared.plugins import ErtPluginManager
 from ert.storage import open_storage
-
 from tests.unit_tests.all.plugins import dummy_plugins
+
 from .run_cli import run_cli, run_cli_with_pm
 
 
@@ -83,9 +83,11 @@ def test_that_oom_kills_are_reported():
 
     Path("MEMORY_HOG").write_text("EXECUTABLE memory_hog.sh", encoding="utf-8")
     Path("memory_hog.sh").write_text(
-        dedent("""#!/bin/sh
+        dedent(
+            """#!/bin/sh
     perl -wE 'my @xs; for (1..2**20) { push @xs, q{a} x 2**20 }; say scalar @xs;'
-    """),
+    """
+        ),
         encoding="utf-8",
     )
     os.chmod("memory_hog.sh", 0o0755)

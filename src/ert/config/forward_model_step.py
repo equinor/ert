@@ -147,7 +147,6 @@ class ForwardModelStep:
         as the forward model step requires it to be. For example
         a missing FLOW version.
         """
-        pass
 
     def validate_pre_realization_run(
         self, fm_step_json: ForwardModelStepJSON

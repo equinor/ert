@@ -309,15 +309,15 @@ def test_that_eclipse100_require_version_field():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
-def test_that_plugin_forward_models_are_installed():
-    test_config_contents = dedent(
-        """
+def test_that_plugin_forward_models_are_installed(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
         NUM_REALIZATIONS  1
         FORWARD_MODEL PluginForwardModel(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
         """
+        )
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class PluginForwardModel(ForwardModelStepPlugin):
         def __init__(self):
@@ -336,7 +336,7 @@ def test_that_plugin_forward_models_are_installed():
 
     config = ErtConfig.with_plugins(
         forward_model_step_classes=[PluginForwardModel]
-    ).from_file("test.ert")
+    ).from_file(tmp_path / "test.ert")
 
     first_fm = config.forward_model_steps[0]
 
@@ -387,15 +387,15 @@ def test_that_plugin_forward_models_are_installed():
     assert job_from_joblist["argList"] == ["hello", "-f", "world", "derpyderp"]
 
 
-def test_that_plugin_forward_model_validation_failure_propagates():
-    test_config_contents = dedent(
-        """
+def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
         NUM_REALIZATIONS  1
         FORWARD_MODEL PluginFM(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
         """
+        )
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class FM(ForwardModelStepPlugin):
         def __init__(self):
@@ -411,7 +411,7 @@ def test_that_plugin_forward_model_validation_failure_propagates():
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
-        "test.ert"
+        tmp_path / "test.ert"
     )
 
     first_fm = config.forward_model_steps[0]
@@ -424,15 +424,15 @@ def test_that_plugin_forward_model_validation_failure_propagates():
         _ = config.forward_model_data_to_json("id", 0, 0)
 
 
-def test_that_plugin_forward_model_validation_accepts_valid_args():
-    test_config_contents = dedent(
-        """
+def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
         NUM_REALIZATIONS  1
         FORWARD_MODEL FM(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
         """
+        )
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class FM(ForwardModelStepPlugin):
         def __init__(self):
@@ -448,7 +448,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args():
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
-        "test.ert"
+        tmp_path / "test.ert"
     )
     first_fm = config.forward_model_steps[0]
 
@@ -457,16 +457,16 @@ def test_that_plugin_forward_model_validation_accepts_valid_args():
     _ = config.forward_model_data_to_json("id", 0, 0)
 
 
-def test_that_plugin_forward_model_raises_pre_realization_validation_error():
-    test_config_contents = dedent(
-        """
+def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
         NUM_REALIZATIONS  1
         FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
         FORWARD_MODEL FM2
         """
+        )
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
@@ -494,7 +494,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error():
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
-        "test.ert"
+        tmp_path / "test.ert"
     )
     assert isinstance(config.forward_model_steps[0], FM1)
     assert config.forward_model_steps[0].name == "FM1"
@@ -509,16 +509,16 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error():
         config.forward_model_data_to_json("id", 0, 0)
 
 
-def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early():
-    test_config_contents = dedent(
+def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
         """
         NUM_REALIZATIONS  1
         FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
         FORWARD_MODEL FM2
         """
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
@@ -541,13 +541,16 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
     with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):
         _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
-            "test.ert"
+            tmp_path / "test.ert"
         )
 
 
-def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms():
-    test_config_contents = dedent(
-        """
+def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
         NUM_REALIZATIONS  1
 
         DEFINE <yo> dear
@@ -557,9 +560,8 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
 
         FORWARD_MODEL FM1(<arg1>=<yo>,<arg2>=<dawg>,<arg3>=<iherdulike>)
         """
+        )
     )
-    with open("test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
@@ -603,4 +605,6 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
                 "<arg3>": "solonius",
             }
 
-    ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file("test.ert")
+    ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
+        tmp_path / "test.ert"
+    )

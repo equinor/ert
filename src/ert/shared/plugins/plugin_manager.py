@@ -89,8 +89,7 @@ class ErtPluginManager(pluggy.PluginManager):
         fm_steps_listed = [
             resp.data for resp in self.hook.installable_forward_model_steps()
         ]
-        all_fm_steps = [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
-        return all_fm_steps
+        return [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
 
     @staticmethod
     def _evaluate_config_hook(
