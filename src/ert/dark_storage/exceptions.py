@@ -28,3 +28,7 @@ class ExpectationError(ErtStorageError):
 
 class UnprocessableError(ErtStorageError):
     __status_code__ = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class InternalServerError(ErtStorageError):
+    __status_code__ = status.HTTP_500_INTERNAL_SERVER_ERROR
