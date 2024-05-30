@@ -26,6 +26,13 @@ ignored if the algorithm that is used does not support different control types.
 Index should be given either for all of the variables or for none of them
 """,
     )
+    enabled: Optional[bool] = Field(
+        default=None,
+        description="""
+If `True`, the variable will be optimized, otherwise it will be fixed to the
+initial value.
+""",
+    )
     auto_scale: Optional[bool] = Field(
         default=None,
         description="""
