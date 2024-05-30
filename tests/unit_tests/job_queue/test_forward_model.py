@@ -5,14 +5,15 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config import ConfigValidationError, ConfigWarning, ForwardModelStep
+from ert.config import ConfigValidationError, ConfigWarning
+from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.config.parsing import SchemaItemType
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_raises_on_missing():
     with pytest.raises(ConfigValidationError, match="No such file or directory"):
-        _ = ForwardModelStep.from_config_file("CONFIG_FILE")
+        _ = _forward_model_step_from_config_file("CONFIG_FILE")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -27,7 +28,7 @@ def test_load_forward_model():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    fm_step = ForwardModelStep.from_config_file("CONFIG")
+    fm_step = _forward_model_step_from_config_file("CONFIG")
     assert fm_step.name == "CONFIG"
     assert fm_step.stdout_file is None
     assert fm_step.stderr_file is None
@@ -37,7 +38,7 @@ def test_load_forward_model():
 
     assert fm_step.min_arg is None
 
-    fm_step = ForwardModelStep.from_config_file("CONFIG", name="Step")
+    fm_step = _forward_model_step_from_config_file("CONFIG", name="Step")
     assert fm_step.name == "Step"
     assert repr(fm_step).startswith("ForwardModelStep(")
 
@@ -61,7 +62,7 @@ def test_load_forward_model_upgraded():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    fm_step = ForwardModelStep.from_config_file("CONFIG")
+    fm_step = _forward_model_step_from_config_file("CONFIG")
     assert fm_step.min_arg == 2
     assert fm_step.max_arg == 7
     argTypes = fm_step.arg_types
@@ -93,7 +94,7 @@ def test_portable_exe_error_message():
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must be set"
     ), pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'):
-        _ = ForwardModelStep.from_config_file("CONFIG")
+        _ = _forward_model_step_from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -101,7 +102,7 @@ def test_load_forward_model_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE missing_script.sh\n")
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        _ = ForwardModelStep.from_config_file("CONFIG")
+        _ = _forward_model_step_from_config_file("CONFIG")
 
 
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword 'EXECU'.*:UserWarning")
@@ -110,7 +111,7 @@ def test_load_forward_model_execu_missing_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECU missing_script.sh\n")
     with pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"):
-        _ = ForwardModelStep.from_config_file("CONFIG")
+        _ = _forward_model_step_from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -118,7 +119,7 @@ def test_load_forward_model_is_directory_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /tmp\n")
     with pytest.raises(ConfigValidationError, match="directory"):
-        _ = ForwardModelStep.from_config_file("CONFIG")
+        _ = _forward_model_step_from_config_file("CONFIG")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -126,7 +127,7 @@ def test_load_forward_model_foreign_raises():
     with open("CONFIG", "w", encoding="utf-8") as f:
         f.write("EXECUTABLE /etc/passwd\n")
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        _ = ForwardModelStep.from_config_file("CONFIG")
+        _ = _forward_model_step_from_config_file("CONFIG")
 
 
 def test_forward_model_optionals(
@@ -138,7 +139,7 @@ def test_forward_model_optionals(
     os.chmod(executable, st.st_mode | stat.S_IEXEC)
     config_file = tmp_path / "config_file"
     config_file.write_text("EXECUTABLE exec\n")
-    forward_model = ForwardModelStep.from_config_file(str(config_file))
+    forward_model = _forward_model_step_from_config_file(str(config_file))
     assert forward_model.name == "config_file"
 
 
@@ -161,7 +162,7 @@ def test_forward_model_env_and_exec_env_is_set():
         """
             )
         )
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
 
     assert forward_model.environment["a"] == "b"
     assert forward_model.environment["c"] == "d"
@@ -186,7 +187,7 @@ def test_forward_model_stdout_stderr_defaults_to_filename():
             )
         )
 
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
 
     assert forward_model.name == "CONFIG"
     assert forward_model.stdout_file == "CONFIG.stdout"
@@ -212,7 +213,7 @@ def test_forward_model_stdout_stderr_null_results_in_none():
             )
         )
 
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
 
     assert forward_model.name == "CONFIG"
     assert forward_model.stdin_file is None
@@ -237,7 +238,7 @@ def test_that_arglist_is_parsed_correctly():
             )
         )
 
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
 
     assert forward_model.arglist == ["<A>", "B", "<C>", "<D>", "<E>"]
 
@@ -258,7 +259,7 @@ def test_that_default_env_is_set():
             )
         )
 
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
     assert forward_model.environment == forward_model.default_env
 
 
@@ -286,7 +287,7 @@ ARG_TYPE 0 STRING
             )
         )
 
-    forward_model = ForwardModelStep.from_config_file("CONFIG")
+    forward_model = _forward_model_step_from_config_file("CONFIG")
     assert forward_model.environment == forward_model.default_env
     assert forward_model.arglist == [
         "-i",

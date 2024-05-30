@@ -1,5 +1,6 @@
 import logging
 
+from ert.config.forward_model_step import ForwardModelStepPlugin
 from ert.shared.plugins.plugin_manager import hook_implementation
 from ert.shared.plugins.plugin_response import plugin_response
 
@@ -90,3 +91,14 @@ def add_log_handle_to_root():
     )
     fh.setFormatter(formatter)
     return fh
+
+
+class DummyFMStep(ForwardModelStepPlugin):
+    def __init__(self):
+        super().__init__(name="DummyForwardModel", command=["touch", "dummy.out"])
+
+
+@hook_implementation
+@plugin_response(plugin_name="dummy")
+def installable_forward_model_steps():
+    return [DummyFMStep]

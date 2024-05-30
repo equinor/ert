@@ -5,6 +5,9 @@ from unittest.mock import Mock
 import ert.shared.hook_implementations
 from ert.shared.plugins import ErtPluginManager
 from tests.unit_tests.all.plugins import dummy_plugins
+from tests.unit_tests.all.plugins.dummy_plugins import (
+    DummyFMStep,
+)
 
 
 def test_no_plugins():
@@ -112,3 +115,9 @@ def test_add_logging_handle(tmpdir):
         with open("spam.log", encoding="utf-8") as fin:
             result = fin.read()
         assert "I should write this to spam.log" in result
+
+
+def test_that_forward_model_step_is_registered(tmpdir):
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        assert pm.forward_model_steps == [DummyFMStep]
