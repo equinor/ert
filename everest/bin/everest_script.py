@@ -13,7 +13,7 @@ from everest.config import EverestConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    generate_ert_config,
+    generate_everserver_ert_config,
     server_is_running,
     start_server,
     wait_for_context,
@@ -131,7 +131,9 @@ def run_everest(options):
 
         with PluginSiteConfigEnv():
             ert_config = ErtConfig.from_dict(
-                config_dict=generate_ert_config(options.config, options.debug)
+                config_dict=generate_everserver_ert_config(
+                    options.config, options.debug
+                )
             )
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)

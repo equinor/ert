@@ -8,7 +8,7 @@ from everest.config import EverestConfig, validation_utils
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    generate_ert_config,
+    generate_everserver_ert_config,
     get_opt_status,
     get_sim_status,
     server_is_running,
@@ -192,7 +192,9 @@ class IEverest(QObject):
             self._gui.monitor_gui.update_status(
                 workflow_is_running=True,
             )
-            ert_config = ErtConfig.from_dict(generate_ert_config(self.config))
+            ert_config = ErtConfig.from_dict(
+                generate_everserver_ert_config(self.config)
+            )
             self._storage = open_storage(ert_config.ens_path)
             self.start_monitoring_detached_server(self.update_progress_callback)
 
@@ -278,7 +280,9 @@ class IEverest(QObject):
         if not server_is_running(self.config):
             app_output().info("Starting optimization session....")
             with PluginSiteConfigEnv():
-                ert_config = ErtConfig.from_dict(generate_ert_config(self.config))
+                ert_config = ErtConfig.from_dict(
+                    generate_everserver_ert_config(self.config)
+                )
 
                 makedirs_if_needed(self.config.output_dir, roll_if_exists=True)
                 self._storage = open_storage(ert_config.ens_path, "w")

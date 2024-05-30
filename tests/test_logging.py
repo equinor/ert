@@ -7,7 +7,7 @@ from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.detached import (
     context_stop_and_wait,
-    generate_ert_config,
+    generate_everserver_ert_config,
     start_server,
     wait_for_context,
     wait_for_server,
@@ -34,7 +34,9 @@ def test_logging_setup():
     everest_config = EverestConfig.load_file(CONFIG_FILE)
 
     wait_for_context()
-    ert_config = ErtConfig.from_dict(generate_ert_config(everest_config, True))
+    ert_config = ErtConfig.from_dict(
+        generate_everserver_ert_config(everest_config, True)
+    )
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(everest_config, ert_config, storage)

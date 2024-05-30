@@ -7,7 +7,7 @@ import requests
 from ert.config import ErtConfig, QueueSystem
 from ert.job_queue import JobStatus
 from ert.storage import open_storage
-
+from everest.simulator.everest2res import everest2res
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -20,7 +20,7 @@ from everest.detached import (
     _generate_queue_options,
     context_stop_and_wait,
     everserver_status,
-    generate_ert_config,
+    generate_everserver_ert_config,
     server_is_running,
     start_server,
     stop_server,
@@ -67,7 +67,7 @@ def test_https_requests():
     expected_server_status = ServerStatus.never_run
     assert expected_server_status == everserver_status(everest_config)["status"]
     wait_for_context()
-    ert_config = ErtConfig.from_dict(generate_ert_config(everest_config))
+    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(everest_config))
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(everest_config, ert_config, storage)
@@ -221,16 +221,49 @@ def _get_reference_config():
 @tmpdir(relpath("..", "examples", "math_func"))
 def test_detached_mode_config_base():
     everest_config, reference = _get_reference_config()
-    ert_config = generate_ert_config(everest_config)
+    ert_config = generate_everserver_ert_config(everest_config)
 
     assert ert_config is not None
     assert ert_config == reference
 
 
+@pytest.mark.parametrize(
+    "queue_system, cores, name",
+    [
+        ("lsf", 2, None),
+        ("slurm", 4, None),
+        ("lsf", 3, "test_lsf"),
+        ("slurm", 5, "test_slurm"),
+    ],
+)
+@tmpdir(relpath("..", "examples", "math_func"))
+def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
+    everest_config, reference = _get_reference_config()
+
+    simulator_config = {CK.QUEUE_SYSTEM: queue_system, CK.CORES: cores}
+
+    if name is not None:
+        simulator_config.update({"name": name})
+    everest_config.simulator = SimulatorConfig(**simulator_config)
+    server_ert_config = generate_everserver_ert_config(everest_config)
+    ert_config = everest2res(everest_config)
+
+    server_queue_option = server_ert_config["QUEUE_OPTION"]
+    run_queue_option = ert_config["QUEUE_OPTION"]
+
+    assert ert_config["QUEUE_SYSTEM"] == server_ert_config["QUEUE_SYSTEM"]
+    assert next(filter(lambda x: "MAX_RUNNING" in x, run_queue_option))[-1] == cores
+    assert next(filter(lambda x: "MAX_RUNNING" in x, server_queue_option))[-1] == 1
+    if name is not None:
+        assert next(filter(lambda x: name in x, run_queue_option)) == next(
+            filter(lambda x: name in x, server_queue_option)
+        )
+
+
 @tmpdir(relpath("..", "examples", "math_func"))
 def test_detached_mode_config_debug():
     everest_config, reference = _get_reference_config()
-    ert_config = generate_ert_config(everest_config, debug_mode=True)
+    ert_config = generate_everserver_ert_config(everest_config, debug_mode=True)
 
     reference["SIMULATION_JOB"][0].append("--debug")
 
@@ -244,8 +277,10 @@ def test_detached_mode_config_only_sim(queue_system):
     everest_config, reference = _get_reference_config()
 
     reference["QUEUE_SYSTEM"] = queue_system.upper()
+    queue_options = [(queue_system.upper(), "MAX_RUNNING", 1)]
+    reference["QUEUE_OPTION"] = queue_options
     everest_config.simulator = SimulatorConfig(**{CK.QUEUE_SYSTEM: queue_system})
-    ert_config = generate_ert_config(everest_config)
+    ert_config = generate_everserver_ert_config(everest_config)
     assert ert_config is not None
     assert ert_config == reference
 
@@ -260,7 +295,7 @@ def test_detached_mode_config_error():
 
     everest_config.server = ServerConfig(name="server", queue_system="lsf")
     with pytest.raises(ValueError):
-        generate_ert_config(everest_config)
+        generate_everserver_ert_config(everest_config)
 
 
 @tmpdir(relpath("..", "examples", "math_func"))
@@ -275,7 +310,7 @@ def test_detached_mode_config_queue_name():
     everest_config.simulator = SimulatorConfig(queue_system="lsf")
     everest_config.server = ServerConfig(queue_system="lsf", name=queue_name)
 
-    ert_config = generate_ert_config(everest_config)
+    ert_config = generate_everserver_ert_config(everest_config)
     assert ert_config is not None
     assert ert_config == reference
 
@@ -321,7 +356,7 @@ def test_find_queue_system_error():
 def test_generate_queue_options_no_config(queue_options, queue_system):
     config = EverestConfig.with_defaults(**{})
     res_queue_name = "SOME_ERT_KEY"  # LSF_QUEUE_KEY for LSF
-    assert not _generate_queue_options(
+    assert [(queue_system, "MAX_RUNNING", 1)] == _generate_queue_options(
         config, queue_options, res_queue_name, queue_system
     )
 
@@ -371,10 +406,24 @@ def test_generate_queue_options_only_options(queue_options, expected_result):
 @pytest.mark.parametrize(
     "queue_options, expected_result",
     [
-        ([], []),
+        (
+            [],
+            [
+                (
+                    "SLURM",
+                    "MAX_RUNNING",
+                    1,
+                )
+            ],
+        ),
         (
             [("options", "RES_KEY")],
             [
+                (
+                    "SLURM",
+                    "MAX_RUNNING",
+                    1,
+                ),
                 (
                     "SLURM",
                     "RES_KEY",

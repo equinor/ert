@@ -8,7 +8,7 @@ from ert.config import ErtConfig
 from ert.storage import open_storage
 
 from everest.config import EverestConfig
-from everest.detached import generate_ert_config, start_server
+from everest.detached import generate_everserver_ert_config, start_server
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     DETACHED_NODE_DIR,
@@ -52,7 +52,7 @@ def test_everest_output(start_mock):
 
     assert "storage" not in initial_folders
     assert DETACHED_NODE_DIR not in initial_folders
-    ert_config = ErtConfig.from_dict(generate_ert_config(config))
+    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(config))
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(config, ert_config, storage)
@@ -87,7 +87,7 @@ def test_everest_output(start_mock):
 def test_save_running_config(start_mock):
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
-    ert_config = ErtConfig.from_dict(generate_ert_config(config))
+    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(config))
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(config, ert_config, storage)
