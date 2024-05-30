@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import glob
 import json
 import logging
 import os
@@ -699,7 +700,9 @@ class LocalEnsemble(BaseMode):
                     return xr.combine_nested(
                         [
                             xr.open_dataset(p)
-                            for p in self._path.glob(f"realization-*/{group}.nc")
+                            for p in self._path.glob(
+                                f"realization-*/{glob.escape(group)}.nc"
+                            )
                         ],
                         concat_dim="realizations",
                     )
@@ -1262,7 +1265,9 @@ class LocalEnsemble(BaseMode):
             combined_ds_path = self._path / f"{group}.nc"
             has_existing_combined = os.path.exists(combined_ds_path)
 
-            paths = sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+            paths = sorted(
+                self.mount_point.glob(f"realization-*/{glob.escape(group)}.nc")
+            )
 
             if len(paths) > 0:
                 new_combined = xr.combine_nested(
@@ -1317,7 +1322,9 @@ class LocalEnsemble(BaseMode):
             files_to_remove = []
             to_concat = []
             for group in gen_data_keys:
-                paths = sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+                paths = sorted(
+                    self.mount_point.glob(f"realization-*/{glob.escape(group)}.nc")
+                )
 
                 if len(paths) > 0:
                     ds_for_group = xr.concat(
