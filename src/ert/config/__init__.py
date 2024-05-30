@@ -7,7 +7,11 @@ from .ert_script import ErtScript
 from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
-from .forward_model_step import ForwardModelStep
+from .forward_model_step import (
+    ForwardModelStep,
+    ForwardModelStepJSON,
+    ForwardModelStepPlugin,
+)
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
@@ -52,6 +56,8 @@ __all__ = [
     "ExternalErtScript",
     "Field",
     "ForwardModelStep",
+    "ForwardModelStepPlugin",
+    "ForwardModelStepJSON",
     "GenDataConfig",
     "GenKwConfig",
     "TransformFunction",

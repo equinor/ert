@@ -4,6 +4,10 @@ from .ecl_config import (
     flow_config_path,
     rms_config_path,
 )
+from .forward_model_steps import (
+    forward_model_step_documentation,
+    installable_forward_model_steps,
+)
 from .help_resources import help_links
 from .jobs import (
     installable_jobs,
@@ -26,4 +30,6 @@ __all__ = [
     "legacy_ertscript_workflow",
     "rms_config_path",
     "site_config_lines",
+    "installable_forward_model_steps",
+    "forward_model_step_documentation",
 ]
