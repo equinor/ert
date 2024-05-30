@@ -424,7 +424,7 @@ def _generate_queue_options(
             queue_system=queue_system, everest_to_ert_key_tuples=queue_options
         )
         if config.server is not None
-        else []
+        else [(queue_system, "MAX_RUNNING", 1)]
     )
 
     if queue_name:
@@ -462,7 +462,7 @@ def _find_res_queue_system(config: EverestConfig):
     return QueueSystem(queue_system.upper())
 
 
-def generate_ert_config(config: EverestConfig, debug_mode: bool = False):
+def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = False):
     assert config.config_directory is not None
     assert config.config_file is not None
 
