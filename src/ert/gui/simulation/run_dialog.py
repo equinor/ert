@@ -50,7 +50,7 @@ from ert.run_models import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from ert.run_models.event import RunModelErrorEvent
+from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import byte_with_unit, format_running_time
 
 from ..model.node import NodeType
@@ -427,6 +427,11 @@ class RunDialog(QDialog):
             widget := self._get_update_widget(event.iteration)
         ) is not None:
             widget.update_status(event)
+
+        elif (isinstance(event, RunModelDataEvent)) and (
+            widget := self._get_update_widget(event.iteration)
+        ) is not None:
+            widget.add_table(event)
 
         elif isinstance(event, RunModelErrorEvent):
             if (widget := self._get_update_widget(event.iteration)) is not None:

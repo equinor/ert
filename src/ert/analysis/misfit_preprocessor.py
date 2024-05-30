@@ -1,4 +1,5 @@
 import logging
+from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -67,27 +68,32 @@ def cluster_responses(
 
 
 def main(
-    responses: npt.NDArray[np.float_], obs_errors: npt.NDArray[np.float_]
-) -> npt.NDArray[np.float_]:
+    responses: npt.NDArray[np.float_],
+    obs_errors: npt.NDArray[np.float_],
+) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     logger.info("Scaling observation errors based on response correlations")
     scale_factors = np.ones(len(obs_errors))
+    nr_components = np.ones(len(obs_errors), dtype=int)
 
     normalized_responses = (responses.T * obs_errors).T
     if len(obs_errors) <= 2:
         # Either observations are not correlated, or only correlated
         # each other
-        return scale_factors
-    nr_components = get_nr_primary_components(normalized_responses, threshold=0.95)
-    clusters = cluster_responses(normalized_responses.T, nr_components)
+        return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
+    prim_components = get_nr_primary_components(normalized_responses, threshold=0.95)
+    clusters = cluster_responses(normalized_responses.T, prim_components)
 
     for cluster in np.unique(clusters):
         index = np.where(clusters == cluster)[0]
         if len(index) == 1:
-            # Not correlated to anything, so we can continue
-            continue
-        nr_components = get_nr_primary_components(
-            normalized_responses[index], threshold=0.95
-        )
-        scale_factor = get_scaling_factor(len(index), nr_components)
+            # Not correlated to anything
+            components = 1
+        else:
+            components = get_nr_primary_components(
+                normalized_responses[index], threshold=0.95
+            )
+            components = 1 if components == 0 else components
+        scale_factor = get_scaling_factor(len(index), components)
+        nr_components[index] *= components
         scale_factors[index] *= scale_factor
-    return scale_factors
+    return scale_factors, clusters, nr_components
