@@ -1,6 +1,8 @@
+import asyncio
 import os
 import signal
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -81,7 +83,7 @@ async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
     assert finished_called
 
 
-async def test_kill(driver: Driver, tmp_path, request):
+async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     os.chdir(tmp_path)
     aborted_called = False
     expected_returncodes = [
@@ -106,3 +108,39 @@ async def test_kill(driver: Driver, tmp_path, request):
     await driver.submit(0, "sh", "-c", "sleep 60; exit 2", name=job_name)
     await poll(driver, {0}, started=started, finished=finished)
     assert aborted_called
+
+
+async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
+    os.chdir(tmp_path)
+
+    if (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf")) or (
+        isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs")
+    ):
+        # Allow more time when tested on a real compute cluster to avoid false positives.
+        job_kill_window = 10
+        test_grace_time = 20
+    elif sys.platform.startswith("darwin"):
+        # Mitigate flakiness on low-power test nodes
+        job_kill_window = 5
+        test_grace_time = 8
+    else:
+        job_kill_window = 1
+        test_grace_time = 2
+
+    async def started(iens):
+        nonlocal driver
+        await driver.kill(iens)
+
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"sleep {job_kill_window}; touch {tmp_path}/survived",
+        name="kill_me",
+    )
+    await poll(driver, {0}, started=started)
+
+    # Give the script a chance to finish if it is running
+    await asyncio.sleep(test_grace_time)
+
+    assert not Path("survived").exists(), "Job should have been killed"
