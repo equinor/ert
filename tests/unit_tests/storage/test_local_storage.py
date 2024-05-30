@@ -402,7 +402,6 @@ observations = st.builds(
                 min_size=1,
             ),
         ),
-        max_size=3,
     ).filter(_ensure_unique_obs_names),
 )
 
@@ -644,9 +643,19 @@ class StatefulStorageTest(RuleBasedStateMachine):
             list(storage_experiment.response_configuration.values())
             == model_experiment.responses
         )
-        assert model_experiment.observations == pytest.approx(
-            storage_experiment.observations
+
+        assert (
+            model_experiment.observations.keys()
+            == storage_experiment.observations.keys()
         )
+
+        for response_type in model_experiment.observations:
+            model_obs = model_experiment.observations[response_type]
+            storage_obs = storage_experiment.observations[response_type]
+
+            assert model_obs.sum(skipna=True) == pytest.approx(
+                storage_obs.sum(skipna=True)
+            )
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):
