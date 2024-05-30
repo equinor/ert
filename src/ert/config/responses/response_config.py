@@ -1,6 +1,6 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import xarray as xr
 
@@ -18,6 +18,39 @@ class ObsArgs:
     history: Optional[Any]
     obs_time_list: Any
     config_for_response: Optional["ResponseConfig"] = None
+
+
+class ResponseConfigWithLifecycleHooks(ABC):
+    name: str
+
+    @classmethod
+    @abstractmethod
+    def ert_config_response_keyword(cls) -> str:
+        """Denotes the keyword to be used in the ert config to give responses
+            of the implemented type. For example CSV_RESPONSE.
+        :return: The ert config keyword for specifying responses for this type.
+        """
+
+    @classmethod
+    @abstractmethod
+    def ert_config_observation_keyword(cls) -> str:
+        """Denotes the keyword to be used in the ert config to give observations
+            on responses of this type. For example CSV_OBSERVATION.
+        :return: The ert config keyword for specifying observations
+                 on this response type.
+        """
+
+    @abstractmethod
+    def parse_response_from_config(self, config_list: List[Tuple[str, str]]) -> None:
+        """ """
+
+    @abstractmethod
+    def parse_observation_from_config(self, config_list: List[Tuple[str, str]]) -> None:
+        pass
+
+    @abstractmethod
+    def parse_response_from_runpath(self, run_path: str) -> str:
+        pass
 
 
 @dataclasses.dataclass
