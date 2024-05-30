@@ -74,17 +74,18 @@ async def test_run_legacy_ensemble(
             use_token=False,
             generate_cert=False,
         )
-        async with evaluator_to_use(ensemble, config) as evaluator:
-            async with Monitor(config) as monitor:
-                async for e in monitor.track():
-                    if e["type"] in (
-                        identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                        identifiers.EVTYPE_EE_SNAPSHOT,
-                    ) and e.data.get(identifiers.STATUS) in [
-                        state.ENSEMBLE_STATE_FAILED,
-                        state.ENSEMBLE_STATE_STOPPED,
-                    ]:
-                        await monitor.signal_done()
+        async with evaluator_to_use(ensemble, config) as evaluator, Monitor(
+            config
+        ) as monitor:
+            async for e in monitor.track():
+                if e["type"] in (
+                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                    identifiers.EVTYPE_EE_SNAPSHOT,
+                ) and e.data.get(identifiers.STATUS) in [
+                    state.ENSEMBLE_STATE_FAILED,
+                    state.ENSEMBLE_STATE_STOPPED,
+                ]:
+                    await monitor.signal_done()
 
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
             assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
@@ -113,22 +114,23 @@ async def test_run_and_cancel_legacy_ensemble(
 
         terminated_event = False
 
-        async with evaluator_to_use(ensemble, config) as evaluator:
-            async with Monitor(config) as monitor:
-                # on lesser hardware the realizations might be killed by max_runtime
-                # and the ensemble is set to STOPPED
-                monitor._receiver_timeout = 10.0
-                cancel = True
-                with contextlib.suppress(
-                    ConnectionClosed
-                ):  # monitor throws some variant of CC if dispatcher dies
-                    async for event in monitor.track(heartbeat_interval=0.1):
-                        # Cancel the ensemble upon the arrival of the first event
-                        if cancel:
-                            await monitor.signal_cancel()
-                            cancel = False
-                        if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                            terminated_event = True
+        async with evaluator_to_use(ensemble, config) as evaluator, Monitor(
+            config
+        ) as monitor:
+            # on lesser hardware the realizations might be killed by max_runtime
+            # and the ensemble is set to STOPPED
+            monitor._receiver_timeout = 10.0
+            cancel = True
+            with contextlib.suppress(
+                ConnectionClosed
+            ):  # monitor throws some variant of CC if dispatcher dies
+                async for event in monitor.track(heartbeat_interval=0.1):
+                    # Cancel the ensemble upon the arrival of the first event
+                    if cancel:
+                        await monitor.signal_cancel()
+                        cancel = False
+                    if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                        terminated_event = True
 
         if terminated_event:
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
