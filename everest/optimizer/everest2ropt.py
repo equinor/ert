@@ -23,6 +23,7 @@ def _parse_controls(ever_config: EverestConfig, ropt_config):
     names = []
     control_types = []
     initial_values = []
+    enabled = []
     min_values = []
     max_values = []
     scales = []
@@ -56,6 +57,9 @@ def _parse_controls(ever_config: EverestConfig, ropt_config):
                 control.initial_guess
                 if control.initial_guess is not None
                 else group.initial_guess
+            )
+            enabled.append(
+                control.enabled if control.enabled is not None else group.enabled
             )
             control_type = (
                 control.control_type
@@ -124,6 +128,9 @@ def _parse_controls(ever_config: EverestConfig, ropt_config):
             else control_types
         ),
         "initial_values": initial_values,
+        "indices": (
+            None if all(enabled) else [idx for idx, item in enumerate(enabled) if item]
+        ),
         "lower_bounds": min_values,
         "upper_bounds": max_values,
         "scales": scales if have_auto_scale else None,

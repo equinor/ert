@@ -95,6 +95,14 @@ a group of control variables
         Index should be given either for all of the variables or for none of them
 
 
+    **enabled (optional)**
+        Type: *Optional[bool]*
+
+
+        If `True`, the variable will be optimized, otherwise it will be fixed to the
+        initial value.
+
+
     **auto_scale (optional)**
         Type: *Optional[bool]*
 
@@ -200,6 +208,14 @@ a group of control variables
     control variables will override this value. Set to "integer" for discrete
     optimization. This may be ignored if the algorithm that is used does not support
     different control types.
+
+
+**enabled (optional)**
+    Type: *Optional[bool]*
+
+
+    If `True`, all variables in this control group will be optimized. If set to `False`
+    the value of the variables will remain fixed.
 
 
 **auto_scale (optional)**

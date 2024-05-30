@@ -39,6 +39,13 @@ optimization. This may be ignored if the algorithm that is used does not support
 different control types.
 """,
     )
+    enabled: Optional[bool] = Field(
+        default=True,
+        description="""
+If `True`, all variables in this control group will be optimized. If set to `False`
+the value of the variables will remain fixed.
+""",
+    )
     auto_scale: Optional[bool] = Field(
         default=None,
         description="""
