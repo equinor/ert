@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
@@ -50,9 +51,13 @@ from ert.run_models import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from ert.run_models.event import RunModelCSVEvent, RunModelErrorEvent
+from ert.run_models.event import (
+    RunModelCSVEvent,
+    RunModelErrorEvent,
+)
 from ert.shared.status.utils import byte_with_unit, format_running_time
 
+from ...shared.exporter import csv_event_to_report
 from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
@@ -72,8 +77,10 @@ class RunDialog(QDialog):
         event_queue: SimpleQueue,
         notifier: ErtNotifier,
         parent=None,
+        output_path: Optional[Path] = None,
     ):
         QDialog.__init__(self, parent)
+        self.output_path = output_path
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -436,6 +443,9 @@ class RunDialog(QDialog):
             widget := self._get_update_widget(event.iteration)
         ) is not None:
             widget.add_csv(event)
+
+        if isinstance(event, RunModelCSVEvent) and self.output_path:
+            csv_event_to_report(event, self.output_path)
 
     def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
         for i in range(0, self._tab_widget.count()):

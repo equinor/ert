@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from iterative_ensemble_smoother import steplength_exponential
 
-from ert.analysis import ErtAnalysisError, SmootherSnapshot, iterative_smoother_update
+from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -19,7 +19,7 @@ from ert.storage import Ensemble, Storage
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
+from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -81,7 +81,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         ensemble_id: str,
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
-    ) -> SmootherSnapshot:
+    ) -> None:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
@@ -91,7 +91,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 prior_storage,
                 posterior_storage,
                 self.sies_smoother,
-                ensemble_id,
                 parameters=prior_storage.experiment.update_parameters,
                 observations=prior_storage.experiment.observation_keys,
                 update_settings=self.update_settings,
@@ -100,9 +99,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 initial_mask=initial_mask,
                 rng=self.rng,
                 progress_callback=functools.partial(
-                    self.send_smoother_event, iteration
+                    self.send_smoother_event, iteration, ensemble_id
                 ),
-                log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
@@ -111,8 +109,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Post processing update...", indeterminate=True)
         self.ert.runWorkflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
-
-        return smoother_snapshot
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -169,10 +165,16 @@ class IteratedEnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
         )
         for current_iter in range(1, iteration_count + 1):
-            self.send_event(RunModelUpdateBeginEvent(iteration=current_iter - 1))
+            self.send_event(
+                RunModelUpdateBeginEvent(
+                    iteration=current_iter - 1, run_id=prior_context.run_id
+                )
+            )
             self.send_event(
                 RunModelStatusEvent(
-                    iteration=current_iter - 1, msg="Creating posterior ensemble.."
+                    iteration=current_iter - 1,
+                    run_id=prior_context.run_id,
+                    msg="Creating posterior ensemble..",
                 )
             )
 
@@ -195,7 +197,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
             update_success = False
             for _iteration in range(self._simulation_arguments.num_retries_per_iter):
-                smoother_snapshot = self.analyzeStep(
+                self.analyzeStep(
                     prior_storage=prior_context.ensemble,
                     posterior_storage=posterior_context.ensemble,
                     ensemble_id=str(prior_context.ensemble.id),
@@ -210,15 +212,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
             if update_success:
-                self.send_event(
-                    RunModelUpdateEndEvent(
-                        iteration=current_iter - 1,
-                        name="Report",
-                        header=smoother_snapshot.header,
-                        data=smoother_snapshot.csv,
-                        extra=smoother_snapshot.extra,
-                    )
-                )
                 self._evaluate_and_postprocess(
                     posterior_context, evaluator_server_config
                 )

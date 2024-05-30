@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
+from uuid import UUID
 
 
 @dataclass
 class RunModelEvent:
     iteration: int
+    run_id: UUID
 
 
 @dataclass
@@ -31,11 +33,12 @@ class RunModelCSVEvent(RunModelEvent):
     name: str
     header: List[str]
     data: Sequence[Sequence[Union[str, float]]]
+    extra: Optional[Dict[str, str]]
 
 
 @dataclass
 class RunModelUpdateEndEvent(RunModelCSVEvent):
-    extra: Dict[str, str]
+    pass
 
 
 @dataclass

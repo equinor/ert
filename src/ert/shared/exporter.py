@@ -1,10 +1,15 @@
 import logging
+import re
+from pathlib import Path
 from typing import Any, Dict
+
+import pandas as pd
 
 from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
 from ert.job_queue import WorkflowJobRunner
 from ert.libres_facade import LibresFacade
+from ert.run_models.event import RunModelCSVEvent
 
 logger = logging.getLogger(__name__)
 
@@ -66,3 +71,18 @@ class Exporter:
         )
         if export_job_runner.hasFailed():
             raise UserWarning(f"Failed to execute {self._export_job}\n{user_warn}")
+
+
+def csv_event_to_report(event: RunModelCSVEvent, output_path: Path):
+    fname = str(event.name).strip().replace(" ", "_")
+    fname = re.sub(r"(?u)[^-\w]", "", fname)
+    f_path = output_path / f"{event.run_id}" / f"{fname}.txt"
+    f_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(f_path, "w", encoding="utf-8") as fout:
+        df = pd.DataFrame(event.data, columns=event.header)
+        if event.extra:
+            for k, v in event.extra.items():
+                fout.write(f"{k}: {v}\n")
+            fout.write(df.to_markdown(tablefmt="simple_outline", floatfmt=".4f"))
+        else:
+            df.to_csv(fout)

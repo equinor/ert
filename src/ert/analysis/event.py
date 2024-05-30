@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 
 @dataclass
@@ -31,9 +31,10 @@ class AnalysisCSVEvent(AnalysisEvent):
     name: str
     header: List[str]
     data: Sequence[Sequence[Union[str, float]]]
+    extra: Optional[Dict[str, str]]
 
     def __post_init__(self) -> None:
-        if len(self.header) != len(self.data[0]):
+        if len(self.data) > 0 and len(self.header) != len(self.data[0]):
             raise ValueError(
                 f"Header ({self.header}) must have same length as "
                 f"number of columns ({len(self.data[0])})"
@@ -41,6 +42,10 @@ class AnalysisCSVEvent(AnalysisEvent):
 
 
 @dataclass
+class AnalysisCompleteEvent(AnalysisCSVEvent):
+    pass
+
+
+@dataclass
 class AnalysisErrorEvent(AnalysisCSVEvent):
-    extra: Dict[str, str]
     error_msg: str

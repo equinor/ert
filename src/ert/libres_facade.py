@@ -89,7 +89,6 @@ class LibresFacade:
         update_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
-            run_id,
             observations,
             parameters,
             self.config.analysis_config.observation_settings,
@@ -97,7 +96,6 @@ class LibresFacade:
             rng,
             progress_callback,
             global_std_scaling,
-            log_path=self.config.analysis_config.log_path,
         )
         self.update_snapshots[run_id] = update_snapshot
         return update_snapshot

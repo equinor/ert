@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from queue import SimpleQueue
 from typing import Dict, Optional, TextIO, Tuple
 
@@ -22,6 +23,8 @@ from ert.ensemble_evaluator.state import (
     REAL_STATE_TO_COLOR,
 )
 from ert.run_models.base_run_model import StatusEvents
+from ert.run_models.event import RunModelCSVEvent
+from ert.shared.exporter import csv_event_to_report
 from ert.shared.status.utils import format_running_time
 
 Color = Tuple[int, int, int]
@@ -66,6 +69,7 @@ class Monitor:
     def monitor(
         self,
         event_queue: SimpleQueue[StatusEvents],
+        output_path: Optional[Path] = None,
     ) -> None:
         self._start_time = datetime.now()
         while True:
@@ -82,6 +86,9 @@ class Monitor:
                 self._print_result(event.failed, event.failed_msg)
                 self._print_job_errors()
                 return
+
+            if isinstance(event, RunModelCSVEvent) and output_path:
+                csv_event_to_report(event, output_path)
 
     def _print_job_errors(self) -> None:
         failed_jobs: Dict[Optional[str], int] = {}

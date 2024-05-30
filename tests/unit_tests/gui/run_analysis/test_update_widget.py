@@ -8,7 +8,11 @@ from ert.run_models.event import RunModelCSVEvent
 
 def test_update_widget(qtbot: QtBot):
     event = RunModelCSVEvent(
-        iteration=0, name="test", header=["a", "b"], data=np.array([[42, 2], [3, 4]])
+        iteration=0,
+        name="test",
+        header=["a", "b"],
+        data=np.array([[42, 2], [3, 4]]),
+        extra=None,
     )
     widget = UpdateWidget(event.iteration)
     widget.show()

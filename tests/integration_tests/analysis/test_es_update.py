@@ -10,8 +10,9 @@ from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
-from ert.analysis import ErtAnalysisError, smoother_update
-from ert.analysis._es_update import ObservationStatus, _all_parameters
+from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
+from ert.analysis._es_update import _all_parameters
+from ert.analysis.event import AnalysisCompleteEvent
 from ert.config import ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
@@ -276,7 +277,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         smoother_update(
             prior,
             posterior_ens,
-            "id",
             ["OBSERVATION"],
             ["PARAMETER"],
             UpdateSettings(),
@@ -333,15 +333,16 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
+    events = []
+
     update_snapshot = smoother_update(
         prior,
         posterior_ens,
-        "id",
         ["OBSERVATION"],
         ["PARAMETER"],
         UpdateSettings(),
         ESSettings(),
-        log_path=Path("update_log"),
+        progress_callback=events.append,
     )
     assert [step.status for step in update_snapshot.update_step_snapshots] == [
         ObservationStatus.ACTIVE,
@@ -349,12 +350,9 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ObservationStatus.MISSING_RESPONSE,
     ]
 
-    update_report_file = Path("update_log/id.txt")
-    assert update_report_file.exists()
-
-    report = update_report_file.read_text(encoding="utf-8")
-    assert "Active observations: 2" in report
-    assert "Deactivated observations - missing respons(es): 1" in report
+    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    assert update_event.extra["Active observations"] == "2"
+    assert update_event.extra["Deactivated observations - missing respons(es)"] == "1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -431,7 +429,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     smoother_update(
         prior,
         posterior_ens,
-        "id",
         ["OBSERVATION"],
         ["PARAMETER"],
         UpdateSettings(),

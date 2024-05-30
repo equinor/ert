@@ -1,3 +1,4 @@
+import functools
 import uuid
 from contextlib import contextmanager
 from typing import Optional
@@ -48,18 +49,20 @@ class Analyse(QObject):
         config = self._ert.ert_config
         rng = np.random.default_rng(_seed_sequence(config.random_seed))
         update_settings = config.analysis_config.observation_settings
+        update_id = uuid.uuid4()
         try:
             smoother_update(
                 self._source_ensemble,
                 self._target_ensemble,
-                str(uuid.uuid4()),
                 self._source_ensemble.experiment.observation_keys,
                 self._source_ensemble.experiment.update_parameters,
                 update_settings,
                 config.analysis_config.es_module,
                 rng,
-                self.send_smoother_event,
-                log_path=config.analysis_config.log_path,
+                functools.partial(
+                    self.send_smoother_event,
+                    update_id,
+                ),
             )
         except ErtAnalysisError as e:
             error = str(e)
@@ -68,13 +71,16 @@ class Analyse(QObject):
 
         self.finished.emit(error, self._source_ensemble.name)
 
-    def send_smoother_event(self, event: AnalysisEvent) -> None:
+    def send_smoother_event(self, run_id: uuid.UUID, event: AnalysisEvent) -> None:
         if isinstance(event, AnalysisStatusEvent):
-            self.progress_update.emit(RunModelStatusEvent(iteration=0, msg=event.msg))
+            self.progress_update.emit(
+                RunModelStatusEvent(iteration=0, run_id=run_id, msg=event.msg)
+            )
         elif isinstance(event, AnalysisTimeEvent):
             self.progress_update.emit(
                 RunModelTimeEvent(
                     iteration=0,
+                    run_id=run_id,
                     elapsed_time=event.elapsed_time,
                     remaining_time=event.remaining_time,
                 )

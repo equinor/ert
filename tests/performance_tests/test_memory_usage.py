@@ -1,5 +1,4 @@
 import tempfile
-import uuid
 from pathlib import Path
 from typing import List
 
@@ -56,7 +55,6 @@ def test_memory_smoothing(poly_template):
         smoother_update(
             prior_ens,
             posterior_ens,
-            str(uuid.uuid4()),
             list(ert_config.observation_keys),
             list(ert_config.ensemble_config.parameters),
         )

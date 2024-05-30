@@ -19,7 +19,7 @@ from ert.storage import Ensemble, Storage
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
+from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -143,7 +143,11 @@ class MultipleDataAssimilation(BaseRunModel):
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
 
-            self.send_event(RunModelUpdateBeginEvent(iteration=iteration))
+            self.send_event(
+                RunModelUpdateBeginEvent(
+                    iteration=iteration, run_id=prior_context.run_id
+                )
+            )
             if is_first_iteration:
                 self.ert.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
@@ -152,7 +156,9 @@ class MultipleDataAssimilation(BaseRunModel):
 
             self.send_event(
                 RunModelStatusEvent(
-                    iteration=iteration, msg="Creating posterior ensemble.."
+                    iteration=iteration,
+                    run_id=prior_context.run_id,
+                    msg="Creating posterior ensemble..",
                 )
             )
             posterior_context = RunContext(
@@ -171,22 +177,13 @@ class MultipleDataAssimilation(BaseRunModel):
                 ),
                 iteration=iteration + 1,
             )
-            smoother_snapshot = self.update(
+            self.update(
                 prior_context,
                 posterior_context,
                 weight=weight,
             )
             self.ert.runWorkflows(
                 HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble
-            )
-            self.send_event(
-                RunModelUpdateEndEvent(
-                    name="Report",
-                    iteration=iteration,
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                )
             )
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
@@ -211,7 +208,6 @@ class MultipleDataAssimilation(BaseRunModel):
             return smoother_update(
                 prior_context.ensemble,
                 posterior_context.ensemble,
-                prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior_context.ensemble.experiment.update_parameters,
@@ -219,9 +215,10 @@ class MultipleDataAssimilation(BaseRunModel):
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(
-                    self.send_smoother_event, prior_context.iteration
+                    self.send_smoother_event,
+                    prior_context.iteration,
+                    prior_context.run_id,
                 ),
-                log_path=self.ert_config.analysis_config.log_path,
             )
         except ErtAnalysisError as e:
             raise ErtRunError(
