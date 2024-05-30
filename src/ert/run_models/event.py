@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from typing import Optional
+from __future__ import annotations
 
-from ert.analysis import SmootherSnapshot
+from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Dict, List, Union
 
 
 @dataclass
@@ -26,11 +27,17 @@ class RunModelUpdateBeginEvent(RunModelEvent):
 
 
 @dataclass
-class RunModelUpdateEndEvent(RunModelEvent):
-    smoother_snapshot: Optional[SmootherSnapshot] = None
+class RunModelCSVEvent(RunModelEvent):
+    name: str
+    header: List[str]
+    data: Sequence[Sequence[Union[str, float]]]
 
 
 @dataclass
-class RunModelErrorEvent(RunModelEvent):
-    smoother_snapshot: Optional[SmootherSnapshot] = None
-    error_msg: Optional[str] = None
+class RunModelUpdateEndEvent(RunModelCSVEvent):
+    extra: Dict[str, str]
+
+
+@dataclass
+class RunModelErrorEvent(RunModelUpdateEndEvent):
+    error_msg: str

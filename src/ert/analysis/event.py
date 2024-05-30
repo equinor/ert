@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from typing import Optional
+from __future__ import annotations
 
-from .snapshots import SmootherSnapshot
+from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Dict, List, Union
 
 
 @dataclass
@@ -26,6 +27,20 @@ class AnalysisReportEvent(AnalysisEvent):
 
 
 @dataclass
-class AnalysisErrorEvent(AnalysisEvent):
-    smoother_snapshot: Optional[SmootherSnapshot] = None
-    error_msg: Optional[str] = None
+class AnalysisCSVEvent(AnalysisEvent):
+    name: str
+    header: List[str]
+    data: Sequence[Sequence[Union[str, float]]]
+
+    def __post_init__(self) -> None:
+        if len(self.header) != len(self.data[0]):
+            raise ValueError(
+                f"Header ({self.header}) must have same length as "
+                f"number of columns ({len(self.data[0])})"
+            )
+
+
+@dataclass
+class AnalysisErrorEvent(AnalysisCSVEvent):
+    extra: Dict[str, str]
+    error_msg: str

@@ -181,7 +181,11 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             self.send_event(
                 RunModelUpdateEndEvent(
-                    iteration=iteration, smoother_snapshot=smoother_snapshot
+                    name="Report",
+                    iteration=iteration,
+                    header=smoother_snapshot.header,
+                    data=smoother_snapshot.csv,
+                    extra=smoother_snapshot.extra,
                 )
             )
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)

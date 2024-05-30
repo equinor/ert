@@ -36,6 +36,7 @@ from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import (
+    AnalysisCSVEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
     AnalysisStatusEvent,
@@ -156,6 +157,7 @@ def _load_observations_and_responses(
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
     auto_scale_observations: Optional[List[ObservationGroups]],
+    progress_callback: Callable[[AnalysisEvent], None],
 ) -> Tuple[
     npt.NDArray[np.float_],
     Tuple[
@@ -197,8 +199,33 @@ def _load_observations_and_responses(
             group = _expand_wildcards(obs_keys, input_group)
             logger.info(f"Scaling observation group: {group}")
             obs_group_mask = np.isin(obs_keys, group) & obs_mask
-            scaling[obs_group_mask] *= misfit_preprocessor.main(
+            if not any(obs_group_mask):
+                logger.error(f"No observations active for group: {input_group}")
+                continue
+            scaling_factors, clusters, nr_components = misfit_preprocessor.main(
                 S[obs_group_mask], scaled_errors[obs_group_mask]
+            )
+            scaling[obs_group_mask] *= scaling_factors
+            progress_callback(
+                AnalysisCSVEvent(
+                    name=f"Auto scale: {input_group}",
+                    header=[
+                        "Observation",
+                        "Index",
+                        "Cluster",
+                        "Nr components",
+                        "Scaling factor",
+                    ],
+                    data=np.array(
+                        (
+                            obs_keys[obs_group_mask],
+                            indexes[obs_group_mask],
+                            clusters,
+                            nr_components.astype(int),
+                            scaling_factors,
+                        )
+                    ).T,  # type: ignore
+                )
             )
 
     update_snapshot = []
@@ -396,6 +423,7 @@ def analysis_ES(
         iens_active_index,
         observations,
         auto_scale_observations,
+        progress_callback,
     )
     num_obs = len(observation_values)
 
@@ -404,7 +432,13 @@ def analysis_ES(
     if num_obs == 0:
         msg = "No active observations for update step"
         progress_callback(
-            AnalysisErrorEvent(error_msg=msg, smoother_snapshot=smoother_snapshot)
+            AnalysisErrorEvent(
+                error_msg=msg,
+                name="Report",
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
         )
         raise ErtAnalysisError(msg)
 
@@ -568,13 +602,20 @@ def analysis_IES(
         iens_active_index,
         observations,
         auto_scale_observations,
+        progress_callback,
     )
 
     smoother_snapshot.update_step_snapshots = update_snapshot
     if len(observation_values) == 0:
         msg = "No active observations for update step"
         progress_callback(
-            AnalysisErrorEvent(error_msg=msg, smoother_snapshot=smoother_snapshot)
+            AnalysisErrorEvent(
+                error_msg=msg,
+                name="Report",
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
         )
         raise ErtAnalysisError(msg)
 

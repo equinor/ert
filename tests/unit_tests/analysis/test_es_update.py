@@ -14,11 +14,11 @@ from scipy.ndimage import gaussian_filter
 
 from ert.analysis import (
     ErtAnalysisError,
+    ObservationStatus,
     iterative_smoother_update,
     smoother_update,
 )
 from ert.analysis._es_update import (
-    ObservationStatus,
     SmootherSnapshot,
     _load_param_ensemble_array,
     _save_param_ensemble_array_to_disk,

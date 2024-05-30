@@ -150,7 +150,13 @@ class EnsembleSmoother(BaseRunModel):
             ) from e
 
         self.send_event(
-            RunModelUpdateEndEvent(iteration=0, smoother_snapshot=smoother_snapshot)
+            RunModelUpdateEndEvent(
+                name="Report",
+                iteration=0,
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
         )
 
         self.ert.runWorkflows(

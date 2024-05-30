@@ -85,7 +85,7 @@ def test_misfit_preprocessor(nr_observations):
     obs_errors = Y.mean(axis=1)
     Y_original = Y.copy()
     obs_error_copy = obs_errors.copy()
-    result = main(Y, obs_errors)
+    result, *_ = main(Y, obs_errors)
     np.testing.assert_equal(
         result,
         np.array(
@@ -108,7 +108,7 @@ def test_misfit_preprocessor_single(nr_observations):
     parameters_a = rng.normal(10, 1, nr_realizations)
     for i in range(nr_observations):
         Y[i] = (i + 1) * parameters_a
-    result = main(Y, Y.mean(axis=1))
+    result, *_ = main(Y, Y.mean(axis=1))
     np.testing.assert_equal(
         result,
         np.array(nr_observations * [1.0]),

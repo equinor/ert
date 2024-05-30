@@ -212,7 +212,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
             if update_success:
                 self.send_event(
                     RunModelUpdateEndEvent(
-                        iteration=current_iter - 1, smoother_snapshot=smoother_snapshot
+                        iteration=current_iter - 1,
+                        name="Report",
+                        header=smoother_snapshot.header,
+                        data=smoother_snapshot.csv,
+                        extra=smoother_snapshot.extra,
                     )
                 )
                 self._evaluate_and_postprocess(
