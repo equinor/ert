@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import Depends
 
+from ert.dark_storage.exceptions import InternalServerError
 from ert.dark_storage.security import security
 from ert.storage import Storage, open_storage
 
@@ -19,6 +20,9 @@ DEFAULT_SECURITY = Depends(security)
 def get_storage() -> Storage:
     global _storage  # noqa: PLW0603e
     if _storage is None:
-        return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+        try:
+            return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+        except RuntimeError as err:
+            raise InternalServerError(f"{str(err)}") from err
     _storage.refresh()
     return _storage
