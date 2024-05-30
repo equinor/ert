@@ -31,7 +31,7 @@ from ert.mode_definitions import (
 from ert.shared.plugins import ErtPluginManager
 from ert.storage import open_storage
 
-from ..unit_tests.all.plugins import dummy_plugins
+from tests.unit_tests.all.plugins import dummy_plugins
 from .run_cli import run_cli, run_cli_with_pm
 
 
