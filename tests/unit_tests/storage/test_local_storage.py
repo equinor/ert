@@ -15,6 +15,7 @@ import xarray as xr
 from hypothesis import assume
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
+from xarray.testing import assert_allclose
 
 from ert.config import (
     Field,
@@ -402,7 +403,6 @@ observations = st.builds(
                 min_size=1,
             ),
         ),
-        max_size=3,
     ).filter(_ensure_unique_obs_names),
 )
 
@@ -644,9 +644,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
             list(storage_experiment.response_configuration.values())
             == model_experiment.responses
         )
-        assert model_experiment.observations == pytest.approx(
-            storage_experiment.observations
-        )
+        for obskey, obs in model_experiment.observations.items():
+            assert obskey in storage_experiment.observations
+            assert_allclose(obs, storage_experiment.observations[obskey])
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):
