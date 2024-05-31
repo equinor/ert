@@ -17,7 +17,6 @@ def installable_forward_model_steps() -> (
     """
     :return: List of forward model step plugins in the form of subclasses of the
         ForwardModelStepPlugin class
-    :rtype: PluginResponse with data as List[Type[ForwardModelStepPlugin]]
     """
 
 
@@ -27,16 +26,25 @@ def forward_model_step_documentation(
     forward_model_step_name: str, description: str, examples: str, category: str
 ) -> PluginResponse[Optional[Dict[str, str]]]:
     """
-    :return: If forward_model_step_name is from your plugin return
-             dict with documentation fields as keys and corresponding
-             text as value (See below for details), else None.
-
     Valid fields:
-    description: RST markdown as a string. Example: "This is a **dummy** description"
-    examples: RST markdown as a string. Example: "This is an example"
-    category: Dot separated list categories (main_category.sub_category)
-              for forward model.
-              Example: "simulator.reservoir". When generating documentation in ERT the
-              main category (category before the first dot) will be used to group
-              the forward models into sections.
+
+    description:
+        RST markdown as a string.
+        Example: "This is a **dummy** description"
+
+    examples:
+        RST markdown as a string.
+        Example: "This is an example"
+
+    category:
+        Dot separated list categories (main_category.sub_category) for forward model.
+        Example: "simulator.reservoir"
+        When generating documentation in ERT, the main category
+        (category before the first dot) will be used to group the forward
+        models into sections.
+
+    Returns:
+        dict or None: If `forward_model_step_name` is from your plugin, returns a
+        dictionary with documentation fields as keys and corresponding text as values,
+        else None.
     """
