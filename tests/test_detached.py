@@ -252,8 +252,14 @@ def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
     run_queue_option = ert_config["QUEUE_OPTION"]
 
     assert ert_config["QUEUE_SYSTEM"] == server_ert_config["QUEUE_SYSTEM"]
-    assert next(filter(lambda x: "MAX_RUNNING" in x, run_queue_option))[-1] == cores
-    assert next(filter(lambda x: "MAX_RUNNING" in x, server_queue_option))[-1] == 1
+    assert (
+        next(filter(lambda x: "MAX_RUNNING" in x, reversed(run_queue_option)))[-1]
+        == cores
+    )
+    assert (
+        next(filter(lambda x: "MAX_RUNNING" in x, reversed(server_queue_option)))[-1]
+        == 1
+    )
     if name is not None:
         assert next(filter(lambda x: name in x, run_queue_option)) == next(
             filter(lambda x: name in x, server_queue_option)
@@ -278,7 +284,7 @@ def test_detached_mode_config_only_sim(queue_system):
 
     reference["QUEUE_SYSTEM"] = queue_system.upper()
     queue_options = [(queue_system.upper(), "MAX_RUNNING", 1)]
-    reference["QUEUE_OPTION"] = queue_options
+    reference.setdefault("QUEUE_OPTION", []).extend(queue_options)
     everest_config.simulator = SimulatorConfig(**{CK.QUEUE_SYSTEM: queue_system})
     ert_config = generate_everserver_ert_config(everest_config)
     assert ert_config is not None
@@ -306,7 +312,7 @@ def test_detached_mode_config_queue_name():
     reference["QUEUE_SYSTEM"] = QueueSystem.LSF
     queue_options = [(QueueSystem.LSF, "LSF_QUEUE", queue_name)]
 
-    reference["QUEUE_OPTION"] = queue_options
+    reference.setdefault("QUEUE_OPTION", []).extend(queue_options)
     everest_config.simulator = SimulatorConfig(queue_system="lsf")
     everest_config.server = ServerConfig(queue_system="lsf", name=queue_name)
 
