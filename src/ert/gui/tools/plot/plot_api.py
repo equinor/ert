@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+from dataclasses import dataclass
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import Dict, List, NamedTuple, Optional
@@ -13,10 +14,15 @@ from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
 
-PlotCaseObject = NamedTuple(
-    "PlotCaseObject",
-    [("name", str), ("id", str), ("hidden", bool), ("experiment_name", str)],
-)
+
+@dataclass(frozen=True, eq=True)
+class EnsembleObject:
+    name: str
+    id: str
+    hidden: bool
+    experiment_name: str
+
+
 PlotApiKeyDefinition = NamedTuple(
     "PlotApiKeyDefinition",
     [
@@ -32,16 +38,16 @@ PlotApiKeyDefinition = NamedTuple(
 
 class PlotApi:
     def __init__(self):
-        self._all_ensembles: Optional[List[PlotCaseObject]] = None
+        self._all_ensembles: Optional[List[EnsembleObject]] = None
         self._timeout = 120
 
-    def _get_ensemble(self, name: str) -> Optional[PlotCaseObject]:
-        for ensemble in self._get_all_ensembles():
+    def _get_ensemble(self, name: str) -> Optional[EnsembleObject]:
+        for ensemble in self.get_all_ensembles():
             if ensemble.name == name:
                 return ensemble
         return None
 
-    def _get_all_ensembles(self) -> List[PlotCaseObject]:
+    def get_all_ensembles(self) -> List[EnsembleObject]:
         if self._all_ensembles is not None:
             return self._all_ensembles
 
@@ -63,7 +69,7 @@ class PlotApi:
                             "experiment_name"
                         ]
                         self._all_ensembles.append(
-                            PlotCaseObject(
+                            EnsembleObject(
                                 name=ensemble_name,
                                 id=ensemble_id,
                                 experiment_name=experiment_name,
@@ -135,9 +141,6 @@ class PlotApi:
                         )
 
         return list(all_keys.values())
-
-    def get_all_ensembles(self) -> List[PlotCaseObject]:
-        return self._get_all_ensembles()
 
     def data_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given

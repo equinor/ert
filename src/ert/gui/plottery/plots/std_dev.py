@@ -23,22 +23,24 @@ class StdDevPlot:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer
         if layer is not None:
-            for i, ensemble_name in enumerate(plot_context.ensembles(), start=1):
+            for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
-                images = std_dev_images[ensemble_name]
+                images = std_dev_images[ensemble.name]
                 if not images:
                     ax.set_axis_off()
                     ax.text(
                         0.5,
                         0.5,
-                        f"No data for {ensemble_name}",
+                        f"No data for {ensemble.experiment_name} : {ensemble.name}",
                         ha="center",
                         va="center",
                     )
                 else:
                     img = plt.imread(io.BytesIO(images))
                     ax.imshow(img)
-                    ax.set_title(f"{ensemble_name} layer={layer}")
+                    ax.set_title(
+                        f"{ensemble.experiment_name} : {ensemble.name} layer={layer}"
+                    )
                     p = ax.pcolormesh(img)
                     self._colorbar(p)
 

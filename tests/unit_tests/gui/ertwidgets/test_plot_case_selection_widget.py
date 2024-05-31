@@ -1,7 +1,7 @@
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 
-from ert.gui.tools.plot.plot_api import PlotCaseObject
+from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectionWidget,
     EnsembleSelectListWidget,
@@ -12,7 +12,7 @@ from ..conftest import get_child
 
 def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
     test_ensemble_names = [
-        PlotCaseObject(name=f"case{i}", id="id", hidden=False, experiment_name="exp")
+        EnsembleObject(name=f"case{i}", id="id", hidden=False, experiment_name="exp")
         for i in range(10)
     ]
     widget = EnsembleSelectionWidget(test_ensemble_names)
@@ -20,7 +20,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
     list_widget = get_child(widget, EnsembleSelectListWidget, "ensemble_selector")
 
     assert (
-        len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
+        len(widget.get_selected_ensembles()) == list_widget.MINIMUM_SELECTED
     )  # initially one selected
 
     qtbot.mouseClick(
@@ -30,7 +30,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
     )  # deselect the only item selected
 
     assert (
-        len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
+        len(widget.get_selected_ensembles()) == list_widget.MINIMUM_SELECTED
     )  # still one selected
 
     for index in range(list_widget.count()):  # select 'all'
@@ -41,7 +41,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
             pos=list_widget.visualItemRect(it).center(),
         )
 
-    assert len(widget.getPlotEnsembleNames()) == list_widget.MAXIMUM_SELECTED
+    assert len(widget.get_selected_ensembles()) == list_widget.MAXIMUM_SELECTED
 
     for index in reversed(range(list_widget.count())):  # deselect 'all'
         it = list_widget.item(index)
@@ -51,4 +51,4 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
             pos=list_widget.visualItemRect(it).center(),
         )
 
-    assert len(widget.getPlotEnsembleNames()) == list_widget.MINIMUM_SELECTED
+    assert len(widget.get_selected_ensembles()) == list_widget.MINIMUM_SELECTED

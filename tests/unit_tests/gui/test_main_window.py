@@ -656,7 +656,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
-    monkeypatch.setattr(PlotApi, "_get_all_ensembles", lambda _: [])
+    monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
@@ -674,7 +674,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
 
         ensemble_plot_names = get_child(
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
-        ).get_checked_ensemble_plot_names()
+        ).get_checked_ensembles()
         assert len(ensemble_plot_names) == 0
 
 

@@ -1,9 +1,11 @@
 from math import ceil, floor, log10, sqrt
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List
 
 import numpy
 import pandas as pd
 from matplotlib.patches import Rectangle
+
+from ert.gui.tools.plot.plot_api import EnsembleObject
 
 from .plot_tools import PlotTools
 
@@ -25,15 +27,26 @@ class HistogramPlot:
 
 
 def plotHistogram(
-    figure, plot_context: "PlotContext", ensemble_to_data_map, _observation_data
+    figure,
+    plot_context: "PlotContext",
+    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    _observation_data,
 ):
     config = plot_context.plotConfig()
 
     ensemble_list = plot_context.ensembles()
     if not ensemble_list:
+        # ???
         dummy_ensemble_name = "default"
         ensemble_list = [dummy_ensemble_name]
-        ensemble_to_data_map = {dummy_ensemble_name: pd.DataFrame()}
+        ensemble_to_data_map = {
+            EnsembleObject(
+                name=dummy_ensemble_name,
+                hidden=False,
+                id="id",
+                experiment_name="default",
+            ): pd.DataFrame()
+        }
 
     ensemble_count = len(ensemble_list)
 
@@ -59,51 +72,59 @@ def plotHistogram(
             data[ensemble] = pd.Series(dtype="float64")
             continue
 
-        data[ensemble] = datas[0]
+        data[ensemble.name] = datas[0]
 
-        if data[ensemble].dtype == "object":
+        if data[ensemble.name].dtype == "object":
             try:
-                data[ensemble] = pd.to_numeric(data[ensemble], errors="ignore")
+                data[ensemble.name] = pd.to_numeric(
+                    data[ensemble.name], errors="ignore"
+                )
             except AttributeError:
-                data[ensemble] = data[ensemble].convert_objects(convert_numeric=True)
+                data[ensemble.name] = data[ensemble.name].convert_objects(
+                    convert_numeric=True
+                )
 
-        if data[ensemble].dtype == "object":
+        if data[ensemble.name].dtype == "object":
             categorical = True
 
         if categorical:
-            categories = categories.union(set(data[ensemble].unique()))
+            categories = categories.union(set(data[ensemble.name].unique()))
         else:
-            current_min = data[ensemble].min()
-            current_max = data[ensemble].max()
+            current_min = data[ensemble.name].min()
+            current_max = data[ensemble.name].max()
             minimum = current_min if minimum is None else min(minimum, current_min)
-
             maximum = current_max if maximum is None else max(maximum, current_max)
-
-            max_element_count = max(max_element_count, len(data[ensemble].index))
+            max_element_count = max(max_element_count, len(data[ensemble.name].index))
 
     categories = sorted(categories)
     bin_count = int(ceil(sqrt(max_element_count)))
 
     axes = {}
     for index, ensemble in enumerate(ensemble_list):
-        axes[ensemble] = figure.add_subplot(ensemble_count, 1, index + 1)
+        axes[ensemble.name] = figure.add_subplot(ensemble_count, 1, index + 1)
 
-        axes[ensemble].set_title(f"{config.title()} ({ensemble})")
+        axes[ensemble.name].set_title(
+            f"{config.title()} ({ensemble.experiment_name} : {ensemble.name})"
+        )
 
         if use_log_scale:
-            axes[ensemble].set_xscale("log")
+            axes[ensemble.name].set_xscale("log")
 
-        if not data[ensemble].empty:
+        if not data[ensemble.name].empty:
             if categorical:
                 _plotCategoricalHistogram(
-                    axes[ensemble], config, data[ensemble], ensemble, categories
+                    axes[ensemble.name],
+                    config,
+                    data[ensemble.name],
+                    ensemble.name,
+                    categories,
                 )
             else:
                 _plotHistogram(
-                    axes[ensemble],
+                    axes[ensemble.name],
                     config,
-                    data[ensemble],
-                    ensemble,
+                    data[ensemble.name],
+                    ensemble.name,
                     bin_count,
                     use_log_scale,
                     minimum,
@@ -111,7 +132,7 @@ def plotHistogram(
                 )
 
             config.nextColor()
-            PlotTools.showGrid(axes[ensemble], plot_context)
+            PlotTools.showGrid(axes[ensemble.name], plot_context)
 
     min_count = 0
     max_count = max(subplot.get_ylim()[1] for subplot in axes.values())
