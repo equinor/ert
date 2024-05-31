@@ -26,6 +26,10 @@ from typing import (
 
 from typing_extensions import Self
 
+
+from ert.config.responses.response_config import (
+    ResponseConfigWithLifecycleHooks,
+)
 from ert.substitution_list import SubstitutionList
 
 from ._get_num_cpu import get_num_cpu_from_data_file
@@ -52,6 +56,7 @@ from .parsing import (
     init_user_config_schema,
     lark_parse,
 )
+from .parsing.config_schema_item import SchemaItem
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -85,6 +90,7 @@ def site_config_location() -> str:
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
+    RESPONSE_TYPE_CLASSES: ClassVar[Dict[str, Type[ResponseConfigWithLifecycleHooks]]]
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
     substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
@@ -134,16 +140,29 @@ class ErtConfig:
     @staticmethod
     def with_plugins(
         forward_model_step_classes: List[Type[ForwardModelStepPlugin]],
+        response_type_classes: Optional[
+            List[Type[ResponseConfigWithLifecycleHooks]]
+        ] = None,
     ) -> Type["ErtConfig"]:
         preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
 
+        response_type_classes_dict: Dict[
+            str, Type[ResponseConfigWithLifecycleHooks]
+        ] = {}
+        if response_type_classes:
+            for response_cls in response_type_classes:
+                response_type_classes_dict[response_cls.response_type()] = response_cls
+
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 Dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
+            RESPONSE_TYPE_CLASSES: ClassVar[
+                Dict[str, Type[ResponseConfigWithLifecycleHooks]]
+            ] = response_type_classes_dict
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
@@ -367,9 +386,57 @@ class ErtConfig:
     @classmethod
     def read_user_config(cls, user_config_file: str) -> ConfigDict:
         site_config = cls.read_site_config()
+        schema = init_user_config_schema()
+        if cls.RESPONSE_TYPE_CLASSES:
+            for response_type_name, response_cls in cls.RESPONSE_TYPE_CLASSES.items():
+                response_kw = response_cls.ert_config_response_keyword()
+                observation_kw = response_cls.ert_config_observation_keyword()
+
+                assert response_kw not in schema, (
+                    f"Response type {response_type_name} is trying to use "
+                    f"response keyword {response_kw} that is already in use. "
+                    f"Please use another keyword for this."
+                )
+
+                assert observation_kw not in schema, (
+                    f"Response type {response_type_name} is trying to use "
+                    f"observation keyword {observation_kw} that is already in use. "
+                    f"Please use another keyword for this."
+                )
+
+                # Note/TODO, might have to extend grammar a bit
+                # this is a copypaste of the FORWARD_MODEL schema item, and
+                # FORWARD_MODEL is always in the form
+                # FORWARD_MODEL name(...args)
+                # whereas this is in the form KW(...args)
+                # to support instant use of (<X>=..)
+                response_kw_schema_item = SchemaItem(
+                    kw=response_kw,
+                    argc_min=0,
+                    argc_max=None,
+                    join_after=1,
+                    multi_occurrence=True,
+                    substitute_from=0,
+                )
+
+                observation_kw_schema_item = SchemaItem(
+                    kw=observation_kw,
+                    argc_min=0,
+                    argc_max=None,
+                    join_after=1,
+                    multi_occurrence=True,
+                    substitute_from=0,
+                )
+                schema.update(
+                    {
+                        response_kw: response_kw_schema_item,
+                        observation_kw: observation_kw_schema_item,
+                    }
+                )
+
         return lark_parse(
             file=user_config_file,
-            schema=init_user_config_schema(),
+            schema=schema,
             site_config=site_config,
         )
 
