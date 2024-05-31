@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
+from ert.gui.tools.plot.plot_api import EnsembleObject
+
 if TYPE_CHECKING:
     from ert.gui.plottery import PlotConfig
 
@@ -22,7 +24,13 @@ class PlotContext:
         VALUE_AXIS,
     ]
 
-    def __init__(self, plot_config, ensembles, key, layer: Optional[int] = None):
+    def __init__(
+        self,
+        plot_config,
+        ensembles: List[EnsembleObject],
+        key,
+        layer: Optional[int] = None,
+    ):
         super().__init__()
         self._key = key
         self._ensembles = ensembles
@@ -38,7 +46,7 @@ class PlotContext:
     def plotConfig(self) -> "PlotConfig":
         return self._plot_config
 
-    def ensembles(self) -> List[str]:
+    def ensembles(self) -> List[EnsembleObject]:
         return self._ensembles
 
     def key(self) -> str:

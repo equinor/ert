@@ -4,6 +4,8 @@ import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 
+from ert.gui.tools.plot.plot_api import EnsembleObject
+
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
@@ -43,7 +45,10 @@ class CrossEnsembleStatisticsPlot:
 
 
 def plotCrossEnsembleStatistics(
-    figure, plot_context: "PlotContext", ensemble_to_data_map, _observation_data
+    figure,
+    plot_context: "PlotContext",
+    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    _observation_data,
 ):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -101,7 +106,15 @@ def plotCrossEnsembleStatistics(
     if len(ensemble_list) > 3:
         rotation = 30
 
-    axes.set_xticklabels([""] + ensemble_list + [""], rotation=rotation)
+    axes.set_xticklabels(
+        [""]
+        + [
+            f"{ensemble.experiment_name} : {ensemble.name}"
+            for ensemble in ensemble_list
+        ]
+        + [""],
+        rotation=rotation,
+    )
 
     PlotTools.finalizePlot(
         plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"

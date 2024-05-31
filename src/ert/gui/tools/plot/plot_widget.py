@@ -15,6 +15,8 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
+from ert.gui.tools.plot.plot_api import EnsembleObject
+
 if TYPE_CHECKING:
     from ert.gui.plottery import PlotContext
     from ert.gui.plottery.plots.cesp import CrossEnsembleStatisticsPlot
@@ -133,7 +135,7 @@ class PlotWidget(QWidget):
     def updatePlot(
         self,
         plot_context: "PlotContext",
-        ensemble_to_data_map: Dict[str, pd.DataFrame],
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observations: Optional[pd.DataFrame] = None,
         std_dev_images: Optional[bytes] = None,
     ):

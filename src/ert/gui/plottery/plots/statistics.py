@@ -39,11 +39,12 @@ class StatisticsPlot:
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
+                label = f"{ensemble.experiment_name} : {ensemble.name}"
                 style = config.getStatisticsStyle("mean")
                 rectangle = Rectangle(
                     (0, 0), 1, 1, color=style.color, alpha=0.8
                 )  # creates rectangle patch for legend use.
-                config.addLegendItem(ensemble, rectangle)
+                config.addLegendItem(label, rectangle)
 
                 statistics_data = DataFrame()
                 std_dev_factor = config.getStandardDeviationFactor()
@@ -60,7 +61,7 @@ class StatisticsPlot:
                 statistics_data["std+"] = statistics_data["Mean"] + std
                 statistics_data["std-"] = statistics_data["Mean"] - std
 
-                _plotPercentiles(axes, config, statistics_data, ensemble)
+                _plotPercentiles(axes, config, statistics_data, label)
                 config.nextColor()
 
         _addStatisticsLegends(plot_config=config)

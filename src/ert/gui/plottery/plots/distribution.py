@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Dict, List
 
 import pandas as pd
 
+from ert.gui.tools.plot.plot_api import EnsembleObject
+
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
@@ -25,7 +27,7 @@ class DistributionPlot:
 def plotDistribution(
     figure: "Figure",
     plot_context: "PlotContext",
-    ensemble_to_data_map: Dict[str, pd.DataFrame],
+    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
     _observation_data: pd.DataFrame,
 ):
     config = plot_context.plotConfig()
@@ -46,7 +48,7 @@ def plotDistribution(
 
         if not data.empty:
             _plotDistribution(
-                axes, config, data, ensemble, ensemble_index, previous_data
+                axes, config, data, ensemble.name, ensemble_index, previous_data
             )
             config.nextColor()
 
@@ -58,8 +60,15 @@ def plotDistribution(
     if len(ensemble_list) > 3:
         rotation = 30
 
-    axes.set_xticklabels([""] + ensemble_list + [""], rotation=rotation)
-
+    axes.set_xticklabels(
+        [""]
+        + [
+            f"{ensemble.experiment_name} : {ensemble.name}"
+            for ensemble in ensemble_list
+        ]
+        + [""],
+        rotation=rotation,
+    )
     config.setLegendEnabled(False)
 
     PlotTools.finalizePlot(

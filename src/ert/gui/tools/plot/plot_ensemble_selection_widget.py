@@ -11,15 +11,15 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.plot.plot_api import PlotCaseObject
+from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
-    def __init__(self, plot_case_objects: List[PlotCaseObject]):
+    def __init__(self, ensembles: List[EnsembleObject]):
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(plot_case_objects)
+        self.__dndlist = EnsembleSelectListWidget(ensembles)
 
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
@@ -30,8 +30,8 @@ class EnsembleSelectionWidget(QWidget):
             self.ensembleSelectionChanged.emit
         )
 
-    def getPlotEnsembleNames(self) -> List[str]:
-        return self.__dndlist.get_checked_ensemble_plot_names()
+    def get_selected_ensembles(self) -> List[EnsembleObject]:
+        return self.__dndlist.get_checked_ensembles()
 
 
 class EnsembleSelectListWidget(QListWidget):
@@ -39,14 +39,14 @@ class EnsembleSelectListWidget(QListWidget):
     MAXIMUM_SELECTED = 5
     MINIMUM_SELECTED = 1
 
-    def __init__(self, plot_case_objects: List[PlotCaseObject]):
+    def __init__(self, ensembles: List[EnsembleObject]):
         super().__init__()
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
 
-        for i, obj in enumerate(plot_case_objects):
-            it = QListWidgetItem(f"{obj.experiment_name} : {obj.name}")
-            it.setData(Qt.ItemDataRole.UserRole, obj)
+        for i, ensemble in enumerate(ensembles):
+            it = QListWidgetItem(f"{ensemble.experiment_name} : {ensemble.name}")
+            it.setData(Qt.ItemDataRole.UserRole, ensemble)
             it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
             self.addItem(it)
             self._ensemble_count += 1
@@ -59,9 +59,9 @@ class EnsembleSelectListWidget(QListWidget):
             "Select/deselect [1,5] or reorder plots\nOrder determines draw order and color"
         )
 
-    def get_checked_ensemble_plot_names(self) -> List[str]:
+    def get_checked_ensembles(self) -> List[EnsembleObject]:
         return [
-            self.item(index).data(Qt.ItemDataRole.UserRole).name
+            self.item(index).data(Qt.ItemDataRole.UserRole)
             for index in range(self._ensemble_count)
             if self.item(index).data(Qt.ItemDataRole.CheckStateRole)
         ]
@@ -78,7 +78,7 @@ class EnsembleSelectListWidget(QListWidget):
         self.ensembleSelectionListChanged.emit()
 
     def slot_toggle_plot(self, item: QListWidgetItem):
-        count = len(self.get_checked_ensemble_plot_names())
+        count = len(self.get_checked_ensembles())
         selected = item.data(Qt.ItemDataRole.CheckStateRole)
 
         if selected and count > self.MINIMUM_SELECTED:

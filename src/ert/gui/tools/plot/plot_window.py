@@ -17,7 +17,7 @@ from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
 from ert.gui.plottery.plots.std_dev import StdDevPlot
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
@@ -176,21 +176,25 @@ class PlotWindow(QMainWindow):
         plot_widget = self._central_tab.currentWidget()
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
-            ensembles = self._ensemble_selection_widget.getPlotEnsembleNames()
-            ensemble_to_data_map: Dict[str, pd.DataFrame] = {}
-            for ensemble in ensembles:
+            selected_ensembles = (
+                self._ensemble_selection_widget.get_selected_ensembles()
+            )
+            ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame] = {}
+            for ensemble in selected_ensembles:
                 try:
                     ensemble_to_data_map[ensemble] = self._api.data_for_key(
-                        ensemble, key
+                        ensemble.name, key
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")
 
             observations = None
-            if key_def.observations and ensembles:
+            if key_def.observations and selected_ensembles:
                 try:
-                    observations = self._api.observations_for_key(ensembles[0], key)
+                    observations = self._api.observations_for_key(
+                        selected_ensembles[0], key
+                    )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")
@@ -206,10 +210,10 @@ class PlotWindow(QMainWindow):
                     plot_widget.resetLayerWidget.emit()
                     layer = 0
 
-                for ensemble in ensembles:
+                for ensemble in selected_ensembles:
                     try:
-                        std_dev_images[ensemble] = self._api.std_dev_for_parameter(
-                            key, ensemble, layer
+                        std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
+                            key, ensemble.name, layer
                         )
                     except (RequestError, TimeoutError) as e:
                         logger.exception(e)
@@ -218,7 +222,7 @@ class PlotWindow(QMainWindow):
                 plot_widget.showLayerWidget.emit(False)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-            plot_context = PlotContext(plot_config, ensembles, key, layer)
+            plot_context = PlotContext(plot_config, selected_ensembles, key, layer)
 
             # Check if key is a history key.
             # If it is it already has the data it needs

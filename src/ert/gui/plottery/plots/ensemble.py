@@ -1,12 +1,14 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
+
+import pandas as pd
 
 from ert.gui.plottery.plots.history import plotHistory
+from ert.gui.tools.plot.plot_api import EnsembleObject
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
-    import pandas as pd
     from matplotlib.axes import Axes
 
     from ert.gui.plottery import PlotConfig, PlotContext
@@ -20,7 +22,7 @@ class EnsemblePlot:
         self,
         figure,
         plot_context: "PlotContext",
-        ensemble_to_data_map,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data,
         _,
     ):
@@ -39,7 +41,11 @@ class EnsemblePlot:
                     plot_context.x_axis = plot_context.INDEX_AXIS
 
                 self._plotLines(
-                    axes, config, data, ensemble, plot_context.isDateSupportActive()
+                    axes,
+                    config,
+                    data,
+                    f"{ensemble.experiment_name} : {ensemble.name}",
+                    plot_context.isDateSupportActive(),
                 )
                 config.nextColor()
 

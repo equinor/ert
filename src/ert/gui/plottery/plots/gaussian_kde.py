@@ -1,13 +1,15 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 import numpy
+import pandas as pd
 from scipy.stats import gaussian_kde
+
+from ert.gui.tools.plot.plot_api import EnsembleObject
 
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
-    from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
@@ -24,7 +26,10 @@ class GaussianKDEPlot:
 
 
 def plotGaussianKDE(
-    figure, plot_context: "PlotContext", ensemble_to_data_map, _observation_data
+    figure,
+    plot_context: "PlotContext",
+    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    _observation_data,
 ):
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
@@ -41,7 +46,9 @@ def plotGaussianKDE(
             continue
         data = data[0]
         if data.nunique() > 1:
-            _plotGaussianKDE(axes, config, data, ensemble)
+            _plotGaussianKDE(
+                axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
+            )
             config.nextColor()
 
     PlotTools.finalizePlot(
@@ -50,7 +57,7 @@ def plotGaussianKDE(
 
 
 def _plotGaussianKDE(
-    axes: "Axes", plot_config: "PlotConfig", data: "DataFrame", label: str
+    axes: "Axes", plot_config: "PlotConfig", data: pd.DataFrame, label: str
 ):
     style = plot_config.histogramStyle()
 
