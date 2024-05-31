@@ -599,11 +599,8 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
                 "iter",
             ]
 
-            # It is in the command, but not in the forward model(...) entry in the
+            # It is in the arglist, but not in the forward model(...) invocation in the
             # ert config. Thus it is not a "private" arg in that sense.
-            # Note2reviewer: We COULD include references to variables in the
-            # arglist in private_args just for this validation, but for now we don't.
-            # it is available in the job json.
             assert "<some_var>" not in self.private_args
 
             assert dict(self.private_args) == {
