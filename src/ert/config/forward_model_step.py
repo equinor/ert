@@ -7,7 +7,7 @@ from typing import (
     TypedDict,
 )
 
-from typing_extensions import Unpack
+from typing_extensions import NotRequired, Unpack
 
 from ert.substitution_list import SubstitutionList
 
@@ -69,16 +69,16 @@ class ForwardModelStepJSON(TypedDict):
 
 
 class ForwardModelStepOptions(TypedDict, total=False):
-    stdin_file: Optional[str]
-    stdout_file: Optional[str]
-    stderr_file: Optional[str]
-    start_file: Optional[str]
-    target_file: Optional[str]
-    error_file: Optional[str]
-    max_running_minutes: Optional[int]
-    environment: Optional[Dict[str, str]]
-    exec_env: Optional[Dict[str, str]]
-    default_mapping: Optional[Dict[str, str]]
+    stdin_file: NotRequired[str]
+    stdout_file: NotRequired[str]
+    stderr_file: NotRequired[str]
+    start_file: NotRequired[str]
+    target_file: NotRequired[str]
+    error_file: NotRequired[str]
+    max_running_minutes: NotRequired[int]
+    environment: NotRequired[Dict[str, str]]
+    exec_env: NotRequired[Dict[str, str]]
+    default_mapping: NotRequired[Dict[str, str]]
 
 
 @dataclass
