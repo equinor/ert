@@ -87,7 +87,6 @@ class ForwardModelStep:
     Holds information to execute one step of a forward model
 
     Attributes:
-        name: The name of the forward model step
         executable: The name of the executable to be run
         stdin_file: File where this forward model step's stdout is written
         stdout_file: File where this forward model step's stderr is written
@@ -102,8 +101,7 @@ class ForwardModelStep:
             a forward model step's execution.
             This file is used for the legacy ERT queue driver, and may be deprecated.
         max_running_minutes: Maximum runtime in minutes. If the forward model step
-            takes longer than this, the job is requested to be cancelled by the queue
-            driver.
+            takes longer than this, the job is requested to be cancelled.
         min_arg: The minimum number of arguments
         max_arg: The maximum number of arguments
         arglist: The arglist with which the executable is invoked
