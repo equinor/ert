@@ -8,10 +8,10 @@ from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
-    ForwardModelInvalidCallError,
     ForwardModelStep,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
+    ForwardModelStepValidationError,
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
@@ -59,7 +59,7 @@ __all__ = [
     "ForwardModelStep",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
-    "ForwardModelInvalidCallError",
+    "ForwardModelStepValidationError",
     "GenDataConfig",
     "GenKwConfig",
     "TransformFunction",

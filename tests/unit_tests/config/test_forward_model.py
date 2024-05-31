@@ -9,9 +9,9 @@ from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.forward_model_step import (
-    ForwardModelInvalidCallError,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
+    ForwardModelStepValidationError,
 )
 from ert.substitution_list import SubstitutionList
 
@@ -332,7 +332,7 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             if set(self.private_args.keys()) != {"<arg1>", "<arg2>", "<arg3>"}:
-                raise ForwardModelInvalidCallError("Bad")
+                raise ForwardModelStepValidationError("Bad")
 
         def validate_pre_realization_run(
             self, fm_step_json: ForwardModelStepJSON
@@ -413,7 +413,7 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
             if fm_json["argList"][0] != "never":
-                raise ForwardModelInvalidCallError("Oh no")
+                raise ForwardModelStepValidationError("Oh no")
 
             return fm_json
 
@@ -422,7 +422,7 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
     )
 
     first_fm = config.forward_model_steps[0]
-    with pytest.raises(ForwardModelInvalidCallError, match="Oh no"):
+    with pytest.raises(ForwardModelStepValidationError, match="Oh no"):
         first_fm.validate_pre_realization_run({"argList": ["not hello"]})
 
     with pytest.raises(
@@ -452,7 +452,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
             if fm_json["argList"][0] != "never":
-                raise ForwardModelInvalidCallError("Oh no")
+                raise ForwardModelStepValidationError("Oh no")
 
             return fm_json
 
@@ -487,7 +487,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         def validate_pre_realization_run(
             self, fm_step_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
-            raise ForwardModelInvalidCallError(
+            raise ForwardModelStepValidationError(
                 "This is a bad forward model step, dont use it"
             )
 
@@ -502,7 +502,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
             if fm_json["argList"][0] != "never":
-                raise ForwardModelInvalidCallError("Oh no")
+                raise ForwardModelStepValidationError("Oh no")
 
             return fm_json
 
@@ -533,7 +533,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
         """
     )
 
-    class InvalidFightingStyle(ForwardModelInvalidCallError):
+    class InvalidFightingStyle(ForwardModelStepValidationError):
         pass
 
     class FM1(ForwardModelStepPlugin):
@@ -542,7 +542,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             if self.name != "FM1":
-                raise ForwardModelInvalidCallError("Expected name to be FM1")
+                raise ForwardModelStepValidationError("Expected name to be FM1")
 
             raise InvalidFightingStyle("I don't think I wanna do hamster style anymore")
 
@@ -555,9 +555,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             if self.name != "FM2":
-                raise ForwardModelInvalidCallError("Expected name to be FM2")
+                raise ForwardModelStepValidationError("Expected name to be FM2")
 
-            raise ForwardModelInvalidCallError("well that's nice")
+            raise ForwardModelStepValidationError("well that's nice")
 
     with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):
         _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(

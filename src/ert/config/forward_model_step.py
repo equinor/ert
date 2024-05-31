@@ -18,7 +18,7 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 
-class ForwardModelInvalidCallError(Exception):
+class ForwardModelStepValidationError(Exception):
     """Thrown when the user calls the forward model incorrectly.
 
     Can be subtyped by the implementation of ForwardModelStepPlugin and
