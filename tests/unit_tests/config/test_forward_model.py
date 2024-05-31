@@ -331,7 +331,8 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
             )
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
-            assert set(self.private_args.keys()) == {"<arg1>", "<arg2>", "<arg3>"}
+            if set(self.private_args.keys()) != {"<arg1>", "<arg2>", "<arg3>"}:
+                raise ForwardModelInvalidCallError("Bad")
 
         def validate_pre_realization_run(
             self, fm_step_json: ForwardModelStepJSON
@@ -411,7 +412,9 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
         def validate_pre_realization_run(
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
-            assert fm_json["argList"][0] == "never", "Oh no"
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelInvalidCallError("Oh no")
+
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
@@ -419,7 +422,7 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
     )
 
     first_fm = config.forward_model_steps[0]
-    with pytest.raises(AssertionError, match="Oh no"):
+    with pytest.raises(ForwardModelInvalidCallError, match="Oh no"):
         first_fm.validate_pre_realization_run({"argList": ["not hello"]})
 
     with pytest.raises(
@@ -448,7 +451,9 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
         def validate_pre_realization_run(
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
-            assert fm_json["argList"][0] == "never", "Oh no"
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelInvalidCallError("Oh no")
+
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
@@ -482,7 +487,9 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         def validate_pre_realization_run(
             self, fm_step_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
-            raise AssertionError("This is a bad forward model step, dont use it")
+            raise ForwardModelInvalidCallError(
+                "This is a bad forward model step, dont use it"
+            )
 
     class FM2(ForwardModelStepPlugin):
         def __init__(self):
@@ -494,7 +501,9 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         def validate_pre_realization_run(
             self, fm_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
-            assert fm_json["argList"][0] == "never", "Oh no"
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelInvalidCallError("Oh no")
+
             return fm_json
 
     config = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
@@ -532,7 +541,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
             super().__init__(name="FM1", command=["the_executable.sh"])
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
-            assert self.name == "FM1"
+            if self.name != "FM1":
+                raise ForwardModelInvalidCallError("Expected name to be FM1")
+
             raise InvalidFightingStyle("I don't think I wanna do hamster style anymore")
 
     class FM2(ForwardModelStepPlugin):
@@ -543,7 +554,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
             )
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
-            assert self.name == "FM2"
+            if self.name != "FM2":
+                raise ForwardModelInvalidCallError("Expected name to be FM2")
+
             raise ForwardModelInvalidCallError("well that's nice")
 
     with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):

@@ -505,7 +505,7 @@ class ErtConfig:
             if fm_step.name in cls.PREINSTALLED_FORWARD_MODEL_STEPS:
                 try:
                     substituted_json = cls._create_forward_model_json(
-                        run_id="N/A",
+                        run_id=None,
                         context=substitution_list,
                         forward_model_steps=[fm_step],
                         skip_pre_experiment_validation=True,
@@ -662,7 +662,7 @@ class ErtConfig:
             try:
                 if not skip_pre_experiment_validation:
                     fm_step_json = fm_step.validate_pre_realization_run(fm_step_json)
-            except BaseException as exc:
+            except ForwardModelInvalidCallError as exc:
                 job_list_errors.append(
                     ErrorInfo(
                         message=f"Validation failed for "
