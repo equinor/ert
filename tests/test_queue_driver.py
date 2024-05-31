@@ -1,10 +1,9 @@
 from unittest.mock import Mock
 
 import pytest
-
 from everest.config import EverestConfig
 from everest.queue_driver import queue_driver
-from everest.queue_driver.queue_driver import extract_queue_system
+from everest.queue_driver.queue_driver import _extract_queue_system
 
 
 @pytest.mark.parametrize(
@@ -34,5 +33,7 @@ def test_extract_queue_system(monkeypatch, input_config, queue_system, expected_
         "_extract_ert_queue_options_from_simulator_config",
         extract_options_mock,
     )
-    assert extract_queue_system(input_config) == expected_result
+    ert_config = {}
+    _extract_queue_system(input_config, ert_config)
+    assert ert_config == expected_result
     extract_options_mock.assert_called_once_with(input_config.simulator, queue_system)

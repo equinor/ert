@@ -11,7 +11,7 @@ from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys
-from everest.queue_driver.queue_driver import extract_queue_system
+from everest.queue_driver.queue_driver import _extract_queue_system
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 from everest.util.forward_models import collect_forward_models
 
@@ -481,7 +481,7 @@ def everest2res(ever_config: EverestConfig, site_config=None):
     _extract_workflow_jobs(ever_config, ert_config, config_dir)
     _extract_workflows(ever_config, ert_config, config_dir)
     _extract_model(ever_config, ert_config)
-    ert_config.update(extract_queue_system(ever_config))
+    _extract_queue_system(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
 
     return ert_config

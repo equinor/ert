@@ -503,7 +503,7 @@ def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = Fal
             queue_system,
         )
         if queue_options:
-            everserver_config["QUEUE_OPTION"] = queue_options
+            everserver_config.setdefault("QUEUE_OPTION", []).extend(queue_options)
     else:
         everserver_config["QUEUE_SYSTEM"] = queue_system
 

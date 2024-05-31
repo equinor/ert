@@ -1,7 +1,6 @@
 from typing import Any, List, Optional, Tuple
 
 from ert.config import QueueSystem
-
 from everest.config import EverestConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys
@@ -58,16 +57,13 @@ def _extract_ert_queue_options_from_simulator_config(
     )
 
 
-def extract_queue_system(ever_config: EverestConfig):
+def _extract_queue_system(ever_config: EverestConfig, ert_config):
     queue_system = (
         ever_config.simulator.queue_system if ever_config.simulator else None
     ) or "local"
-
-    queue = {
-        "QUEUE_SYSTEM": QueueSystem(queue_system.upper()),
-        "QUEUE_OPTION": _extract_ert_queue_options_from_simulator_config(
+    ert_config["QUEUE_SYSTEM"] = QueueSystem(queue_system.upper())
+    ert_config.setdefault("QUEUE_OPTION", []).extend(
+        _extract_ert_queue_options_from_simulator_config(
             ever_config.simulator, queue_system
-        ),
-    }
-
-    return queue
+        )
+    )
