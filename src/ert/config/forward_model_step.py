@@ -7,6 +7,8 @@ from typing import (
     TypedDict,
 )
 
+from typing_extensions import Unpack
+
 from ert.substitution_list import SubstitutionList
 
 from .parsing import (
@@ -30,7 +32,6 @@ class ForwardModelStepJSON(TypedDict):
     on the queue.
 
     Attributes:
-        name: A string representing the name of the job
         executable: The name of the executable to be run
         target_file: Name of file expected to be produced after the forward
             model step is executed successfully.
@@ -50,8 +51,7 @@ class ForwardModelStepJSON(TypedDict):
         exec_env: Dictionary of environment variables to inject into the execution
             environment of RMS
         max_running_minutes: Maximum runtime in minutes. If the forward model step
-            takes longer than this, the job is requested to be cancelled by the queue
-            driver.
+            takes longer than this, the job is requested to be cancelled.
     """
 
     name: str
@@ -191,27 +191,24 @@ class ForwardModelStep:
 
 class ForwardModelStepPlugin(ForwardModelStep):
     def __init__(
-        self,
-        name: str,
-        command: List[str],
-        options: Optional[ForwardModelStepOptions] = None,
+        self, name: str, command: List[str], **kwargs: Unpack[ForwardModelStepOptions]
     ):
-        if not options:
-            options = ForwardModelStepOptions()
+        if not kwargs:
+            kwargs = ForwardModelStepOptions()
 
         executable = command[0]
         arglist = command[1:]
 
-        stdin_file = options.get("stdin_file")
-        stdout_file = options.get("stdout_file")
-        stderr_file = options.get("stderr_file")
-        start_file = options.get("start_file")
-        target_file = options.get("target_file")
-        error_file = options.get("error_file")
-        max_running_minutes = options.get("max_running_minutes")
-        environment = options.get("environment", {}) or {}
-        exec_env = options.get("exec_env", {}) or {}
-        default_mapping = options.get("default_mapping", {}) or {}
+        stdin_file = kwargs.get("stdin_file")
+        stdout_file = kwargs.get("stdout_file")
+        stderr_file = kwargs.get("stderr_file")
+        start_file = kwargs.get("start_file")
+        target_file = kwargs.get("target_file")
+        error_file = kwargs.get("error_file")
+        max_running_minutes = kwargs.get("max_running_minutes")
+        environment = kwargs.get("environment", {}) or {}
+        exec_env = kwargs.get("exec_env", {}) or {}
+        default_mapping = kwargs.get("default_mapping", {}) or {}
 
         super().__init__(
             name,
