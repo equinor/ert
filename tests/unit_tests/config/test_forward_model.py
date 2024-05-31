@@ -8,7 +8,11 @@ import pytest
 from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.config.forward_model_step import ForwardModelStepJSON, ForwardModelStepPlugin
+from ert.config.forward_model_step import (
+    ForwardModelInvalidCallError,
+    ForwardModelStepJSON,
+    ForwardModelStepPlugin,
+)
 from ert.substitution_list import SubstitutionList
 
 from .config_dict_generator import config_generators
@@ -520,13 +524,16 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
         """
     )
 
+    class InvalidFightingStyle(ForwardModelInvalidCallError):
+        pass
+
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
             super().__init__(name="FM1", command=["the_executable.sh"])
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             assert self.name == "FM1"
-            raise ChildProcessError("I don't think I wanna do hamster style anymore")
+            raise InvalidFightingStyle("I don't think I wanna do hamster style anymore")
 
     class FM2(ForwardModelStepPlugin):
         def __init__(self):
@@ -537,7 +544,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             assert self.name == "FM2"
-            raise PermissionError("well that's nice")
+            raise ForwardModelInvalidCallError("well that's nice")
 
     with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):
         _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(

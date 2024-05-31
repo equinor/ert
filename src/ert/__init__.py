@@ -2,7 +2,12 @@
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
 
-from .config import ErtScript, ForwardModelStepJSON, ForwardModelStepPlugin
+from .config import (
+    ErtScript,
+    ForwardModelInvalidCallError,
+    ForwardModelStepJSON,
+    ForwardModelStepPlugin,
+)
 from .data import MeasuredData
 from .job_queue import JobStatus
 from .libres_facade import LibresFacade
@@ -16,4 +21,5 @@ __all__ = [
     "JobStatus",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
+    "ForwardModelInvalidCallError",
 ]

@@ -36,6 +36,7 @@ from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
+    ForwardModelInvalidCallError,
     ForwardModelStep,
     ForwardModelStepJSON,
 )
@@ -511,7 +512,7 @@ class ErtConfig:
                     )
                     job_json = substituted_json["jobList"][0]
                     fm_step.validate_pre_experiment(job_json)
-                except BaseException as err:
+                except ForwardModelInvalidCallError as err:
                     errors.append(
                         ConfigValidationError.with_context(
                             f"Forward model step pre-experiment validation failed: {str(err)}",

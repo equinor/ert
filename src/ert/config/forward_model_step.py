@@ -16,6 +16,14 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 
+class ForwardModelInvalidCallError(Exception):
+    """Thrown when the user calls the forward model incorrectly.
+
+    Can be subtyped by the implementation of ForwardModelStepPlugin and
+    thrown from `validate_pre_realization_run` or `validate_pre_experiment`.
+    """
+
+
 class ForwardModelStepJSON(TypedDict):
     """
     A dictionary containing information about how a forward model step should be run

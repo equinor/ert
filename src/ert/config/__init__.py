@@ -8,6 +8,7 @@ from .ext_param_config import ExtParamConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
+    ForwardModelInvalidCallError,
     ForwardModelStep,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
@@ -58,6 +59,7 @@ __all__ = [
     "ForwardModelStep",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
+    "ForwardModelInvalidCallError",
     "GenDataConfig",
     "GenKwConfig",
     "TransformFunction",
