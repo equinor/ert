@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pandas import DataFrame
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from typing_extensions import deprecated
 
 from ert.config.gen_kw_config import GenKwConfig
@@ -43,6 +43,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+RUNTIME_INFO_FILENAME = "runtime.json"
+
 
 class _Index(BaseModel):
     id: UUID
@@ -58,6 +60,14 @@ class _Failure(BaseModel):
     type: RealizationStorageState
     message: str
     time: datetime
+
+
+class _RuntimeInfo(BaseModel):
+    start_time: datetime
+    final_time: datetime
+
+
+_RuntimeInfos = RootModel[Dict[int, List[_RuntimeInfo]]]
 
 
 class ObservationsAndResponsesData:
@@ -154,6 +164,13 @@ class LocalEnsemble(BaseMode):
         @lru_cache(maxsize=None)
         def create_realization_dir(realization: int) -> Path:
             return self._path / f"realization-{realization}"
+
+        try:
+            self._runtime_infos = _RuntimeInfos.model_validate_json(
+                (self._path / RUNTIME_INFO_FILENAME).read_text(encoding="utf-8")
+            )
+        except FileNotFoundError:
+            self._runtime_infos = _RuntimeInfos.model_validate({})
 
         self._realization_dir = create_realization_dir
 
@@ -510,6 +527,54 @@ class LocalEnsemble(BaseMode):
 
         mask = self.get_realization_mask_with_responses(key)
         return np.where(mask)[0].tolist()
+
+    def get_runtime_infos(self, realization: int) -> list[_RuntimeInfo]:
+        """
+        List of runtimeinfo per realization. There will be an entry of Runtime
+        info for each time a driver submits a job. For instance a job that has
+        been resubmitted will have two entries; once for the failed job and
+        another for the second submit.
+
+        Parameters
+        ----------
+        realization: int
+            Realization index
+
+        Returns
+        -------
+        runtimeinfo: list of _Runtimeinfo
+            List of Runetimeinfo for a given realization.
+        """
+        return self._runtime_infos.root.get(realization) or []
+
+    def append_runtimeinfo(
+        self, realization: int, start_time: datetime, final_time: datetime
+    ) -> None:
+        """
+        Append runtimeinfo for a realization index
+
+        Parameters
+        ----------
+        realization: int
+            Realization index
+        start_time: datetime
+            timestamp at start of realization
+
+        final_time: datetime
+            timestamp at end of realization
+        """
+        runtimeinfo = _RuntimeInfo(
+            start_time=start_time,
+            final_time=final_time,
+        )
+
+        if (runtime_list := self._runtime_infos.root.get(realization)) is None:
+            runtime_list = self._runtime_infos.root[realization] = []
+
+        runtime_list.append(runtimeinfo)
+
+        with open(self._path / RUNTIME_INFO_FILENAME, mode="w", encoding="utf-8") as f:
+            print(self._runtime_infos.model_dump_json(), file=f)
 
     def set_failure(
         self,

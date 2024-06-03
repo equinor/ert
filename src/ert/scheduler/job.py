@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 import uuid
 from contextlib import suppress
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
@@ -69,8 +69,8 @@ class Job:
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
         self._requested_max_submit: Optional[int] = None
-        self._start_time: Optional[float] = None
-        self._end_time: Optional[float] = None
+        self._start_time: Optional[datetime] = None
+        self._end_time: Optional[datetime] = None
 
     @property
     def iens(self) -> int:
@@ -83,10 +83,10 @@ class Job:
     @property
     def running_duration(self) -> float:
         if self._start_time:
-            if self._end_time:
-                return self._end_time - self._start_time
-            return time.time() - self._start_time
-        return 0
+            return (
+                (self._end_time or datetime.now()) - self._start_time
+            ).total_seconds()
+        return 0.0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await sem.acquire()
@@ -106,7 +106,7 @@ class Job:
 
             await self._send(State.PENDING)
             await self.started.wait()
-            self._start_time = time.time()
+            self._start_time = datetime.now()
 
             await self._send(State.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
@@ -121,6 +121,12 @@ class Job:
                 self.returncode.cancel()
             await self._send(State.ABORTED)
         finally:
+            if self._start_time is not None:
+                self._end_time = datetime.now()
+
+                self.real.run_arg.ensemble_storage.append_runtimeinfo(
+                    self.real.iens, self._start_time, self._end_time
+                )
             if timeout_task and not timeout_task.done():
                 timeout_task.cancel()
             sem.release()
@@ -145,6 +151,8 @@ class Job:
                 logger.warning(message)
                 self.returncode = asyncio.Future()
                 self.started.clear()
+                self._start_time = None
+                self._end_time = None
             else:
                 await self._send(State.FAILED)
 
@@ -217,7 +225,6 @@ class Job:
             await self._handle_aborted()
 
         elif state == State.COMPLETED:
-            self._end_time = time.time()
             await self._scheduler.completed_jobs.put(self.iens)
 
         status = STATE_TO_LEGACY[state]
