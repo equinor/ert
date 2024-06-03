@@ -1,10 +1,10 @@
 import os
 
-import pytest
-
 import everest
+import pytest
 from everest.config import EverestConfig
 from everest.simulator.everest2res import everest2res
+
 from tests.utils import relpath, tmpdir
 
 root = os.path.join("..", "examples", "math_func")

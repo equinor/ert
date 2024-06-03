@@ -1,8 +1,8 @@
 import pytest
-
 from everest.config import EverestConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.suite import _EverestWorkflow
+
 from tests.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "examples", "math_func")
@@ -26,9 +26,9 @@ def test_sampler_uniform():
     assert x2 == pytest.approx(0.4, abs=0.025)
 
     # Check optimum value
-    assert -(
+    assert pytest.approx(workflow.result.total_objective, abs=0.01) == -(
         0.25 * (1.6**2 + 1.5**2 + 0.1**2) + 0.75 * (0.4**2 + 0.5**2 + 0.1**2)
-    ) == pytest.approx(workflow.result.total_objective, abs=0.01)
+    )
     # Expected distance is the weighted average of the (squared) distances
     #  from (x, y, z) to (-1.5, -1.5, 0.5) and (0.5, 0.5, 0.5)
     w = config.model.realizations_weights
@@ -58,9 +58,9 @@ def test_sampler_mixed():
     assert x2 == pytest.approx(0.4, abs=0.025)
 
     # Check optimum value
-    assert -(
+    assert pytest.approx(workflow.result.total_objective, abs=0.01) == -(
         0.25 * (1.6**2 + 1.5**2 + 0.1**2) + 0.75 * (0.4**2 + 0.5**2 + 0.1**2)
-    ) == pytest.approx(workflow.result.total_objective, abs=0.01)
+    )
     # Expected distance is the weighted average of the (squared) distances
     #  from (x, y, z) to (-1.5, -1.5, 0.5) and (0.5, 0.5, 0.5)
     w = config.model.realizations_weights

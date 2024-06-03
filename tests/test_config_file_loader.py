@@ -3,12 +3,12 @@ import string
 from unittest.mock import patch
 
 import pytest
-from pydantic_core import ValidationError
-from ruamel.yaml import YAML
-
 from everest import ConfigKeys as CK
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
+from pydantic_core import ValidationError
+from ruamel.yaml import YAML
+
 from tests.utils import relpath, tmpdir
 
 mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))

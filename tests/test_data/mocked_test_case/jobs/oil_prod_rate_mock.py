@@ -17,7 +17,7 @@ def main(argv):
     # Main script starts here
     times = sys.argv[2:]
 
-    sum = dict()
+    sum = {}
     sum["FOPR"] = 17 * [6000]
 
     for i in range(0, len(times)):

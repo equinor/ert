@@ -1,10 +1,10 @@
 import json
 import os
 
+import everest
 import pytest
 from ruamel.yaml import YAML
 
-import everest
 from tests.utils import tmpdir
 
 
@@ -13,16 +13,15 @@ def test_safe_open():
     filename = "a/relative/path"
     assert not os.path.exists(filename)
 
-    with pytest.raises(IOError):
-        with everest.jobs.io.safe_open(filename) as fout:
-            print(fout.readlines())
+    with pytest.raises(IOError), everest.jobs.io.safe_open(filename) as fout:
+        print(fout.readlines())
 
     with everest.jobs.io.safe_open(filename, "w") as fout:
         fout.write("testing testing")
 
     assert os.path.exists(filename)
     with everest.jobs.io.safe_open(filename) as fin:
-        assert "testing testing" == "".join(fin.readlines())
+        assert "".join(fin.readlines()) == "testing testing"
 
 
 @tmpdir(None)

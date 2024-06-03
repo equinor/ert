@@ -2,10 +2,10 @@ import sys
 from unittest.mock import PropertyMock, patch
 
 import pytest
-
 from everest.bin.visualization_script import visualization_entry
 from everest.config import EverestConfig
 from everest.detached import ServerStatus
+
 from tests.utils import capture_streams, relpath
 
 CONFIG_PATH = relpath("..", "examples", "math_func", "config_advanced.yml")

@@ -2,9 +2,6 @@ import os
 from textwrap import dedent
 
 import pytest
-from ruamel.yaml import YAML
-from seba_sqlite.snapshot import SebaSnapshot
-
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig
@@ -14,6 +11,8 @@ from everest.detached import (
     everserver_status,
     wait_for_context,
 )
+from ruamel.yaml import YAML
+from seba_sqlite.snapshot import SebaSnapshot
 from tests.utils import capture_streams, relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "examples", "math_func")
@@ -32,9 +31,10 @@ def test_everest_entry_docs():
     other tests. Here we just check that the entry point triggers the
     correct execution paths in the applcation
     """
-    with capture_streams() as (out, err):
-        with pytest.raises(SystemExit):  # there is a call to sys.exit
-            start_everest(["everest", "--docs"])
+    with capture_streams() as (out, err), pytest.raises(
+        SystemExit
+    ):  # there is a call to sys.exit
+        start_everest(["everest", "--docs"])
     lines = [line.strip() for line in out.getvalue().split("\n")]
     assert "wells (optional)" in lines
     assert "controls (required)" in lines
@@ -45,9 +45,8 @@ def test_everest_entry_docs():
 
 def test_everest_entry_manual():
     """Test calling everest with --manual"""
-    with capture_streams() as (out, err):
-        with pytest.raises(SystemExit):
-            start_everest(["everest", "--manual"])
+    with capture_streams() as (out, err), pytest.raises(SystemExit):
+        start_everest(["everest", "--manual"])
     lines = [line.strip() for line in out.getvalue().split("\n")]
     assert "wells (optional)" in lines
     assert "controls (required)" in lines
@@ -61,9 +60,8 @@ def test_everest_entry_manual():
 
 def test_everest_entry_version():
     """Test calling everest with --version"""
-    with capture_streams() as (out, err):
-        with pytest.raises(SystemExit):
-            start_everest(["everest", "--version"])
+    with capture_streams() as (out, err), pytest.raises(SystemExit):
+        start_everest(["everest", "--version"])
 
     channels = [err.getvalue(), out.getvalue()]
     assert any(everest_version in channel for channel in channels)
@@ -71,9 +69,8 @@ def test_everest_entry_version():
 
 def test_everest_main_entry_bad_command():
     # Setup command line arguments for the test
-    with capture_streams() as (out, err):
-        with pytest.raises(SystemExit):
-            start_everest(["everest", "bad_command"])
+    with capture_streams() as (out, err), pytest.raises(SystemExit):
+        start_everest(["everest", "bad_command"])
     lines = [line.strip() for line in err.getvalue().split("\n")]
     # Check everest run fails and correct err msg is displayed
     assert "The most commonly used everest commands are:" in lines
@@ -154,9 +151,8 @@ def test_everest_main_lint_entry():
         yaml.default_flow_style = False
         yaml.dump(raw_config, f)
 
-    with capture_streams() as (out, err):
-        with pytest.raises(SystemExit):
-            start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
+    with capture_streams() as (out, err), pytest.raises(SystemExit):
+        start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
 
     _type = "(type=float_parsing)"
     validation_msg = dedent(

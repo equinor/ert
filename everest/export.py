@@ -110,7 +110,7 @@ def _metadata(config: EverestConfig):
         if (
             discard_rejected
             and data.batch in opt_data
-            and not opt_data[data.batch].merit_flag == 1
+            and opt_data[data.batch].merit_flag != 1
         ):
             continue
 

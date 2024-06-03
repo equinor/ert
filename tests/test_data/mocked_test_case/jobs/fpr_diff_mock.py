@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 
-sum_mock = dict()
+sum_mock = {}
 sum_mock["FPR"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 sum_mock["TIME"] = [
     10,

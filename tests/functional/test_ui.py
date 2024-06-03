@@ -1,8 +1,4 @@
 import pytest
-from PyQt5.QtWidgets import QAction, QPushButton, QWidget
-from qtpy.QtCore import Qt
-from seba_sqlite.snapshot import SebaSnapshot
-
 from everest.config import EverestConfig
 from everest.detached import (
     ServerStatus,
@@ -11,6 +7,9 @@ from everest.detached import (
     wait_for_context,
 )
 from ieverest import IEverest
+from PyQt5.QtWidgets import QAction, QPushButton, QWidget
+from qtpy.QtCore import Qt
+from seba_sqlite.snapshot import SebaSnapshot
 from tests.dialogs_mocker import mock_dialogs_all
 from tests.utils import relpath, tmpdir
 

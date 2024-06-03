@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from ert.enkf_main import EnKFMain
-
 from everest import MetaDataColumnNames as MDCN
 from everest import export
 from everest.bin.everload_script import everload_entry
@@ -80,13 +79,12 @@ def test_everload_entry_run(mocked_internalize, cache_dir):
 @pytest.mark.fails_on_macos_github_workflow
 def test_everload_entry_run_empty_batch_list(_):
     """Test running everload on an optimization case"""
-    with pytest.raises(SystemExit):
-        with capture_streams() as (_, err):
-            everload_entry([CONFIG_FILE, "-s", "-b"])
-            assert (
-                "error: argument -b/--batches: expected at least one argument"
-                in err.getvalue()
-            )
+    with pytest.raises(SystemExit), capture_streams() as (_, err):
+        everload_entry([CONFIG_FILE, "-s", "-b"])
+        assert (
+            "error: argument -b/--batches: expected at least one argument"
+            in err.getvalue()
+        )
 
 
 @patch("everest.bin.everload_script._internalize_batch")
@@ -127,15 +125,13 @@ def test_everload_entry_batches(mocked_internalize, cache_dir):
 @pytest.mark.fails_on_macos_github_workflow
 def test_everload_entry_invalid_batches(mocked_internalize):
     """Test running everload with no or wrong batches"""
-    with pytest.raises(SystemExit):
-        with capture_streams() as (_, err):
-            everload_entry([CONFIG_FILE, "-s", "-b", "-2", "5412"])
-            assert "error: Invalid batch given: '-2'" in err.getvalue()
+    with pytest.raises(SystemExit), capture_streams() as (_, err):
+        everload_entry([CONFIG_FILE, "-s", "-b", "-2", "5412"])
+        assert "error: Invalid batch given: '-2'" in err.getvalue()
 
-    with pytest.raises(SystemExit):
-        with capture_streams() as (_, err):
-            everload_entry([CONFIG_FILE, "-s", "-b", "0123"])
-            assert "error: Invalid batch given: '0123'" in err.getvalue()
+    with pytest.raises(SystemExit), capture_streams() as (_, err):
+        everload_entry([CONFIG_FILE, "-s", "-b", "0123"])
+        assert "error: Invalid batch given: '0123'" in err.getvalue()
 
     mocked_internalize.assert_not_called()
 
@@ -165,8 +161,8 @@ def test_everload_entry_not_silent(mocked_internalize, cache_dir):
     """Test running everload without the -s flag"""
     config = get_config(cache_dir)
 
-    no = lambda _: "n"  # noqa
-    yes = lambda _: "y"  # noqa
+    no = lambda _: "n"  # noqa #pylint:disable=unnecessary-lambda-assignment
+    yes = lambda _: "y"  # noqa #pylint:disable=unnecessary-lambda-assignment
 
     with capture_streams() as (stdout, _):
         with patch("everest.bin.everload_script.input", side_effect=no):

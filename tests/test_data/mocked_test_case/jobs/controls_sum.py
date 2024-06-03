@@ -4,7 +4,7 @@ import sys
 
 
 def main(control_group_name):
-    with open(control_group_name + ".json") as f:
+    with open(control_group_name + ".json", encoding="utf-8") as f:
         control_group = json.load(f)
 
     with open(control_group_name + "_sum_0", "w", encoding="utf-8") as f_out:

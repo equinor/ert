@@ -1,16 +1,16 @@
 import json
 import os
 
+import everest
 import pytest
 from ert.config import ErtConfig, QueueSystem
-
-import everest
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator.everest2res import everest2res
+
 from tests.utils import (
     everest_default_jobs,
     hide_opm,
@@ -780,14 +780,12 @@ def test_egg_model_wells_json_output_no_none():
     config = EverestConfig.load_file(CONFIG_FILE)
     _ = everest2res(config)
 
-    f = open(
+    with open(
         os.path.join(config.output_dir, ".internal_data", "wells.json"),
         encoding="utf-8",
-    )
-    data = json.load(f)
+    ) as f:
+        data = json.load(f)
 
-    assert data
-    assert data[0]["name"] == "PROD1"
-    assert all(v for i in data for v in i.values())
-
-    f.close()
+        assert data
+        assert data[0]["name"] == "PROD1"
+        assert all(v for i in data for v in i.values())

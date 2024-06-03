@@ -368,13 +368,17 @@ and environment variables are exposed in the form 'os.NAME', for example:
         nreals = cvar.number_of_realizations
         model = self.model
 
-        if cvar and nreals is not None and model is not None:
-            if not (0 < nreals < len(model.realizations)):
-                raise ValueError(
-                    f"number_of_realizations: (got {nreals}) was"
-                    f" expected to be between 0 and number of realizations specified "
-                    f"in model config: {len(model.realizations)}"
-                )
+        if (
+            cvar
+            and nreals is not None
+            and model is not None
+            and not (0 < nreals < len(model.realizations))
+        ):
+            raise ValueError(
+                f"number_of_realizations: (got {nreals}) was"
+                f" expected to be between 0 and number of realizations specified "
+                f"in model config: {len(model.realizations)}"
+            )
 
         return self
 
@@ -570,7 +574,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     ):
         env = self.environment
         assert env is not None
-        env.log_level = level
+        env.log_level = level  # pylint:disable = E0237
 
     @property
     def config_directory(self) -> Optional[str]:

@@ -4,8 +4,9 @@ import argparse
 import json
 import logging
 import signal
-from functools import partial
 import threading
+from functools import partial
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 

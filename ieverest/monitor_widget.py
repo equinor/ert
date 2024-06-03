@@ -2,11 +2,11 @@ from typing import Optional
 
 import pandas as pd
 from dateutil import parser
+from everest.config import EverestConfig
+from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QComboBox, QVBoxLayout, QWidget
 
-from everest.config import EverestConfig
-from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from ieverest.utils import load_ui, remove_layout_item
 from ieverest.widgets import BatchStatusWidget, PlotWidget
 from ieverest.widgets.batch_status_widget import get_job_status

@@ -1,8 +1,8 @@
+from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import QLabel, QSizePolicy, QSpacerItem, QStyle, QWidget, qApp
 
-from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING
 from ieverest.utils import load_ui
 
 

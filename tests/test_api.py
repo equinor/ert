@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pandas as pd
 import pytest
+from everest.api import EverestDataAPI
+from everest.config import EverestConfig
+from everest.detached import ServerStatus
 from pandas import Timestamp
 from seba_sqlite.database import ControlDefinition, Function
 from seba_sqlite.snapshot import Metadata, OptimizationInfo, SimulationInfo, Snapshot
 
-from everest.api import EverestDataAPI
-from everest.config import EverestConfig
-from everest.detached import ServerStatus
 from tests.utils import relpath, tmpdir
 
 # Global values used to create the mock snapshot.
@@ -327,7 +327,7 @@ def test_single_objective_values(api_no_gradient):
     ]
     expected_objectives = {b: {} for b in _batch_ids}
     realization_weight = 1 / len(_realizations)
-    for r, b, f in function_data:
+    for _r, b, f in function_data:
         for name in _functions:
             factor = realization_weight * _weights[name] * _norms[name]
             if expected_objectives[b].get(name, None) is None:

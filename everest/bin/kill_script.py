@@ -6,9 +6,9 @@ import logging
 import os
 import signal
 import sys
+import threading
 import traceback
 from functools import partial
-import threading
 
 from everest.config import EverestConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
@@ -64,7 +64,7 @@ def _handle_keyboard_interrupt(signal, frame, after=False):
             "kill request will be cancelled..."
         )
     sys.tracebacklimit = 0
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
     sys.exit()
 
 

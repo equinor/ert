@@ -2,10 +2,9 @@ import itertools
 import os
 from unittest.mock import patch
 
+import everest
 import pytest
 from ert.config import ErtConfig
-
-import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
@@ -14,6 +13,7 @@ from everest.config.well_config import WellConfig
 from everest.config.workflow_config import WorkflowConfig
 from everest.simulator.everest2res import everest2res
 from everest.util.forward_models import collect_forward_models
+
 from tests.utils import (
     everest_default_jobs,
     hide_opm,
@@ -309,12 +309,12 @@ def test_lsf_queue_system():
     snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
     ever_config = EverestConfig.load_file(snake_all_path)
 
-    assert ConfigKeys.LSF == ever_config.simulator.queue_system
+    assert ever_config.simulator.queue_system == ConfigKeys.LSF
 
     ert_config = everest2res(ever_config)
 
     queue_system = ert_config["QUEUE_SYSTEM"]
-    assert "LSF" == queue_system
+    assert queue_system == "LSF"
 
 
 @tmpdir(relpath("test_data"))
@@ -322,7 +322,7 @@ def test_queue_configuration():
     snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
     ever_config = EverestConfig.load_file(snake_all_path)
 
-    assert 3 == ever_config.simulator.cores
+    assert ever_config.simulator.cores == 3
 
     ert_config = everest2res(ever_config)
 
@@ -344,11 +344,11 @@ def test_queue_config():
 
     config = EverestConfig.load_file(config_file)
 
-    assert "mr" == config.simulator.name
-    assert 17 == config.simulator.resubmit_limit
-    assert 3 == config.simulator.cores
-    assert "lsf" == config.simulator.queue_system
-    assert "lx-fastserver01" == config.simulator.server
+    assert config.simulator.name == "mr"
+    assert config.simulator.resubmit_limit == 17
+    assert config.simulator.cores == 3
+    assert config.simulator.queue_system == "lsf"
+    assert config.simulator.server == "lx-fastserver01"
     opts = "span = 1 && select[x86 and GNU/Linux]"
     assert opts == config.simulator.options
 

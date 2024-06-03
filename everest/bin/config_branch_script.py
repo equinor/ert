@@ -73,7 +73,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
             else:
                 opt_control_name = variable[CK.NAME]
 
-            opt_control_val = batch_controls.get(opt_control_name, None)
+            opt_control_val = batch_controls.get(opt_control_name)
 
             if opt_control_val is None:
                 print(

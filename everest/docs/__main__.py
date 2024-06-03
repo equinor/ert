@@ -1,7 +1,8 @@
 import os
 
-from everest.docs.generate_docs_from_config_spec import generate_docs_pydantic_to_rst
 from tests.utils import relpath
+
+from everest.docs.generate_docs_from_config_spec import generate_docs_pydantic_to_rst
 
 committed_file = os.path.abspath(
     relpath("..", "docs", "source", "config_generated.rst")
