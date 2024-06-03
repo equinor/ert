@@ -138,7 +138,8 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
-    "types-psutil"
+    "types-psutil",
+    "types-seaborn",
 ]
 
 [tool.setuptools]

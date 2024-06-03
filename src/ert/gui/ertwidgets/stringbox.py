@@ -1,7 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Optional
+
 from qtpy.QtGui import QPalette
 from qtpy.QtWidgets import QLineEdit
 
 from ert.gui.ertwidgets import ValidationSupport
+
+if TYPE_CHECKING:
+    from ert.validation import ArgumentDefinition
+
+    from .models import TextModel
 
 
 class StringBox(QLineEdit):
@@ -9,7 +18,11 @@ class StringBox(QLineEdit):
     getter and setter is a string."""
 
     def __init__(
-        self, model, default_string="", continuous_update=False, placeholder_text=""
+        self,
+        model: TextModel,
+        default_string: str = "",
+        continuous_update: bool = False,
+        placeholder_text: str = "",
     ):
         """
         :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
@@ -20,7 +33,7 @@ class StringBox(QLineEdit):
         QLineEdit.__init__(self)
         self.setMinimumWidth(250)
         self._validation = ValidationSupport(self)
-        self._validator = None
+        self._validator: Optional[ArgumentDefinition] = None
         self._model = model
         if placeholder_text:
             self.setPlaceholderText(placeholder_text)
@@ -38,7 +51,7 @@ class StringBox(QLineEdit):
         self._model.valueChanged.connect(self.modelChanged)
         self.modelChanged()
 
-    def validateString(self):
+    def validateString(self) -> None:
         string_to_validate = str(self.text())
         if not string_to_validate and self.placeholderText():
             string_to_validate = self.placeholderText()
@@ -57,10 +70,10 @@ class StringBox(QLineEdit):
                 self.setPalette(palette)
                 self._validation.setValidationMessage("")
 
-    def emitChange(self, q_string):
+    def emitChange(self, q_string: Any) -> None:
         self.textChanged.emit(str(q_string))
 
-    def stringBoxChanged(self):
+    def stringBoxChanged(self) -> None:
         """Called whenever the contents of the editline changes."""
         text = self.text()
         if not text:
@@ -68,7 +81,7 @@ class StringBox(QLineEdit):
 
         self._model.setValue(text)
 
-    def modelChanged(self):
+    def modelChanged(self) -> None:
         """Retrieves data from the model and inserts it into the edit line"""
         text = self._model.getValue()
         if text is None:
@@ -79,18 +92,18 @@ class StringBox(QLineEdit):
         self.setText(str(text))
 
     @property
-    def model(self):
+    def model(self) -> TextModel:
         return self._model
 
-    def setValidator(self, validator):
+    def setValidator(self, validator: ArgumentDefinition) -> None:  # type: ignore
         self._validator = validator
 
-    def getValidationSupport(self):
+    def getValidationSupport(self) -> ValidationSupport:
         return self._validation
 
-    def isValid(self):
+    def isValid(self) -> bool:
         return self._validation.isValid()
 
     @property
-    def get_text(self):
+    def get_text(self) -> str:
         return self.text() if self.text() else self.placeholderText()

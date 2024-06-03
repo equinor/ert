@@ -1,5 +1,7 @@
+from typing import Optional
+
 from qtpy.QtCore import QRect, QSize, Signal
-from qtpy.QtGui import QColor, QPainter
+from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import QColorDialog, QFrame
 
 
@@ -8,7 +10,7 @@ class ColorBox(QFrame):
 
     """A widget that shows a colored box"""
 
-    def __init__(self, color, size=15):
+    def __init__(self, color: QColor, size: int = 15) -> None:
         QFrame.__init__(self)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.setMaximumSize(QSize(size, size))
@@ -17,7 +19,7 @@ class ColorBox(QFrame):
         self._tile_colors = [QColor(255, 255, 255), QColor(200, 200, 255)]
         self._color = color
 
-    def paintEvent(self, paint_event):
+    def paintEvent(self, paint_event: Optional[QPaintEvent]) -> None:
         """Paints the box"""
         painter = QPainter(self)
         rect = self.contentsRect()
@@ -37,7 +39,7 @@ class ColorBox(QFrame):
 
         QFrame.paintEvent(self, paint_event)
 
-    def mouseReleaseEvent(self, QMouseEvent):
+    def mouseReleaseEvent(self, _: Optional[QMouseEvent]) -> None:
         color = QColorDialog.getColor(
             self._color, self, "Select color", QColorDialog.ShowAlphaChannel
         )
@@ -52,6 +54,6 @@ class ColorBox(QFrame):
         return self._color
 
     @color.setter
-    def color(self, color):
+    def color(self, color: str) -> None:
         self._color = QColor(color)
         self.update()

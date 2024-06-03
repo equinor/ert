@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from PyQt5 import QtSvg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
@@ -8,6 +12,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QWidget,
 )
+from typing_extensions import Self
 
 from ._colors import (
     BLUE_BACKGROUND,
@@ -18,17 +23,27 @@ from ._colors import (
     YELLOW_TEXT,
 )
 
+if TYPE_CHECKING:
+    from ert.config import ErrorInfo
 
-def _svg_icon(image_name):
+
+def _svg_icon(image_name: str) -> QtSvg.QSvgWidget:
     widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
     widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     return widget
 
 
 class SuggestorMessage(QWidget):
-    def __init__(self, header, text_color, bg_color, icon, info):
+    def __init__(
+        self,
+        header: str,
+        text_color: str,
+        bg_color: str,
+        icon: QWidget,
+        info: ErrorInfo,
+    ):
         super().__init__()
-        self.setAttribute(Qt.WA_StyledBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet(
             f"""
             background-color: {bg_color};
@@ -57,29 +72,25 @@ class SuggestorMessage(QWidget):
             + "</div>"
         )
         self.lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lbl.setWordWrap(True)
 
         self.hbox = QHBoxLayout()
         self.hbox.setContentsMargins(16, 16, 16, 16)
-        self.hbox.addWidget(self.icon, alignment=Qt.AlignTop)
-        self.hbox.addWidget(self.lbl, alignment=Qt.AlignTop)
+        self.hbox.addWidget(self.icon, alignment=Qt.Alignment.AlignTop)
+        self.hbox.addWidget(self.lbl, alignment=Qt.Alignment.AlignTop)
         self.setLayout(self.hbox)
 
     @classmethod
-    def error_msg(cls, info):
-        return SuggestorMessage(
-            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), info
-        )
+    def error_msg(cls, info: ErrorInfo) -> Self:
+        return cls("Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), info)
 
     @classmethod
-    def warning_msg(cls, info):
-        return SuggestorMessage(
+    def warning_msg(cls, info: ErrorInfo) -> Self:
+        return cls(
             "Warning: ", YELLOW_TEXT, YELLOW_BACKGROUND, _svg_icon("warning"), info
         )
 
     @classmethod
-    def deprecation_msg(cls, info):
-        return SuggestorMessage(
-            "Deprecation: ", BLUE_TEXT, BLUE_BACKGROUND, _svg_icon("bell"), info
-        )
+    def deprecation_msg(cls, info: ErrorInfo) -> Self:
+        return cls("Deprecation: ", BLUE_TEXT, BLUE_BACKGROUND, _svg_icon("bell"), info)

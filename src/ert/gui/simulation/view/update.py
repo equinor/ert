@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import time
+from typing import Optional
 
 import humanize
 from qtpy.QtCore import Qt, Slot
@@ -35,7 +36,7 @@ from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 
 
 class UpdateWidget(QWidget):
-    def __init__(self, iteration: int, parent=None) -> None:
+    def __init__(self, iteration: int, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
 
         self._iteration = iteration

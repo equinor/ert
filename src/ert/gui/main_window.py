@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import functools
 import webbrowser
-from typing import Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from qtpy.QtCore import QSettings, Qt, Signal
+from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
     QAction,
     QDockWidget,
@@ -16,6 +19,9 @@ from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.shared.plugins import ErtPluginManager
 
+if TYPE_CHECKING:
+    from ert.gui.tools import Tool
+
 
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
@@ -25,7 +31,7 @@ class ErtMainWindow(QMainWindow):
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
-        self.tools = {}
+        self.tools: Dict[str, Tool] = {}
 
         self.setWindowTitle(f"ERT - {config_file}")
 
@@ -38,29 +44,42 @@ class ErtMainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        self.toolbar = self.addToolBar("Tools")
+        toolbar = self.addToolBar("Tools")
+        assert toolbar is not None
+        self.toolbar = toolbar
         self.toolbar.setObjectName("Toolbar")
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
-        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
-        self.setCorner(Qt.BottomLeftCorner, Qt.BottomDockWidgetArea)
+        self.setCorner(Qt.Corner.TopLeftCorner, Qt.DockWidgetArea.LeftDockWidgetArea)
+        self.setCorner(
+            Qt.Corner.BottomLeftCorner, Qt.DockWidgetArea.BottomDockWidgetArea
+        )
 
-        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
-        self.setCorner(Qt.BottomRightCorner, Qt.BottomDockWidgetArea)
-        self.__view_menu = None
-        self.__help_menu = None
+        self.setCorner(Qt.Corner.TopRightCorner, Qt.DockWidgetArea.RightDockWidgetArea)
+        self.setCorner(
+            Qt.Corner.BottomRightCorner, Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        menuBar = self.menuBar()
+        assert menuBar is not None
+        view_menu = menuBar.addMenu("&View")
+        assert view_menu is not None
+        self.__view_menu = view_menu
+        help_menu = menuBar.addMenu("&Help")
+        assert help_menu is not None
+        self.__help_menu = help_menu
 
         self.__createMenu()
         self.__fetchSettings()
 
     def addDock(
         self,
-        name,
-        widget,
-        area=Qt.RightDockWidgetArea,
-        allowed_areas=Qt.AllDockWidgetAreas,
+        name: str,
+        widget: QWidget,
+        area: Qt.DockWidgetArea = Qt.DockWidgetArea.RightDockWidgetArea,
+        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
     ):
         dock_widget = QDockWidget(name)
+        assert dock_widget is not None
         dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
@@ -70,47 +89,49 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu.addAction(dock_widget.toggleViewAction())
         return dock_widget
 
-    def addTool(self, tool):
+    def addTool(self, tool: Tool) -> None:
         tool.setParent(self)
         self.tools[tool.getName()] = tool
         self.toolbar.addAction(tool.getAction())
 
         if tool.isPopupMenu():
             tool_button = self.toolbar.widgetForAction(tool.getAction())
+            assert tool_button is not None
             tool_button.setPopupMode(QToolButton.InstantPopup)
 
-    def __createMenu(self):
-        self.__view_menu = self.menuBar().addMenu("&View")
-        self.__help_menu = self.menuBar().addMenu("&Help")
+    def __createMenu(self) -> None:
+        assert self.__help_menu is not None
 
         help_links = self.plugin_manager.get_help_links() if self.plugin_manager else {}
 
         for menu_label, link in help_links.items():
             help_link_item = self.__help_menu.addAction(menu_label)
-            help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
+            assert help_link_item is not None
+            help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
         show_about = self.__help_menu.addAction("About")
-        show_about.setMenuRole(QAction.ApplicationSpecificRole)
+        assert show_about is not None
+        show_about.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
-    def __saveSettings(self):
+    def __saveSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
-    def closeEvent(self, event):
+    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         # Use QT settings saving mechanism
         # settings stored in ~/.config/Equinor/ErtGui.conf
 
-        if self.notifier.is_simulation_running:
-            event.ignore()
+        if a0 is not None and self.notifier.is_simulation_running:
+            a0.ignore()
         else:
             self.__saveSettings()
             self.close_signal.emit()
-            QMainWindow.closeEvent(self, event)
+            QMainWindow.closeEvent(self, a0)
 
-    def __fetchSettings(self):
+    def __fetchSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")
         geo = settings.value("geometry")
         if geo:
@@ -119,7 +140,7 @@ class ErtMainWindow(QMainWindow):
         if wnd:
             self.restoreState(wnd)
 
-    def setWidget(self, widget):
+    def setWidget(self, widget: QWidget) -> None:
         self.__main_widget = widget
         actions = widget.getActions()
         for action in actions:
@@ -127,6 +148,6 @@ class ErtMainWindow(QMainWindow):
 
         self.central_layout.addWidget(widget)
 
-    def __showAboutMessage(self):
+    def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()

@@ -1,7 +1,7 @@
 import math
-from typing import Final
+from typing import Final, Optional, cast
 
-from qtpy.QtCore import QEvent, QModelIndex, QPoint, QRect, QSize, Qt, Signal
+from qtpy.QtCore import QEvent, QModelIndex, QObject, QPoint, QRect, QSize, Qt, Signal
 from qtpy.QtGui import QColor, QColorConstants, QImage, QPainter, QPen
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -163,13 +163,13 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawRect(rect)
         painter.drawImage(rect, foreground_image)
 
-    def sizeHint(self, option, index) -> QSize:
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, watched, event: QEvent):
-        if event.type() == QEvent.Type.ToolTip:
+    def eventFilter(self, object: Optional[QObject], event: Optional[QEvent]) -> bool:
+        if event is not None and event.type() == QEvent.Type.ToolTip:
             mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
-            parent: RealizationWidget = self.parent()
+            parent = cast(RealizationWidget, self.parent())
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():
@@ -184,4 +184,4 @@ class RealizationDelegate(QStyledItemDelegate):
                     QToolTip.showText(view.mapToGlobal(mouse_pos), txt)
                     return True
 
-        return super().eventFilter(watched, event)
+        return super().eventFilter(object, event)

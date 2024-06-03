@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -16,7 +16,12 @@ from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class CopyStyleToDialog(QDialog):
-    def __init__(self, parent, current_key, key_defs: List[PlotApiKeyDefinition]):
+    def __init__(
+        self,
+        parent: Optional[QWidget],
+        current_key: Any,
+        key_defs: List[PlotApiKeyDefinition],
+    ):
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)
@@ -55,10 +60,10 @@ class CopyStyleToDialog(QDialog):
 
         layout.addRow(button_layout)
 
-    def getSelectedKeys(self):
+    def getSelectedKeys(self) -> List[str]:
         return self._list_model.getSelectedItems()
 
-    def filterSettingsChanged(self, item):
+    def filterSettingsChanged(self, item: Dict[str, bool]) -> None:
         for value, visible in item.items():
             self._list_model.setFilterOnMetadata("data_origin", value, visible)
         self._cl.modelChanged()

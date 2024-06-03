@@ -16,7 +16,7 @@ class ProgressProxyModel(QAbstractItemModel):
         self._progress: Optional[Dict[Union[str, dict], int]] = None
         self._connect()
 
-    def _connect(self):
+    def _connect(self) -> None:
         self._source_model.dataChanged.connect(self._source_data_changed)
         self._source_model.rowsInserted.connect(self._source_rows_inserted)
         self._source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
@@ -86,7 +86,7 @@ class ProgressProxyModel(QAbstractItemModel):
 
         return QVariant()
 
-    def _recalculate_progress(self, iter_: int):
+    def _recalculate_progress(self, iter_: int) -> None:
         status_counts = defaultdict(int)
         nr_reals: int = 0
         current_iter_index = self._source_model.index(iter_, 0, QModelIndex())
@@ -105,7 +105,7 @@ class ProgressProxyModel(QAbstractItemModel):
         top_left: QModelIndex,
         _bottom_right: QModelIndex,
         _roles: List[int],
-    ):
+    ) -> None:
         if top_left.internalPointer() is None:
             return
         if not top_left.data(IsEnsembleRole):
@@ -114,11 +114,13 @@ class ProgressProxyModel(QAbstractItemModel):
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
 
-    def _source_rows_inserted(self, _parent: QModelIndex, start: int, _end: int):
+    def _source_rows_inserted(
+        self, _parent: QModelIndex, start: int, _end: int
+    ) -> None:
         self._recalculate_progress(start)
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
 
-    def _source_reset(self):
+    def _source_reset(self) -> None:
         self._recalculate_progress(0)
         self.modelReset.emit()

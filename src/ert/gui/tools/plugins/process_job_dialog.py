@@ -1,7 +1,10 @@
+from typing import Optional, cast
+
 from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QMovie
+from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie
 from qtpy.QtWidgets import (
     QDialog,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLayout,
@@ -22,17 +25,19 @@ class ProcessJobDialog(QDialog):
     closeButtonPressed = Signal()
     cancelConfirmed = Signal()
 
-    def __init__(self, title, parent=None):
+    def __init__(self, title: str, parent: Optional[QWidget] = None) -> None:
         QDialog.__init__(self, parent)
 
         self.__parent = parent
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         widget = QWidget()
         widget_layout = QHBoxLayout()
@@ -50,7 +55,7 @@ class ProcessJobDialog(QDialog):
         widget_layout.addWidget(processing_animation)
 
         self.processing_label = QLabel(f"Processing job: '{title}'")
-        widget_layout.addWidget(self.processing_label, Qt.AlignBottom)
+        widget_layout.addWidget(self.processing_label, Qt.AlignmentFlag.AlignBottom)
 
         widget.setLayout(widget_layout)
 
@@ -72,24 +77,29 @@ class ProcessJobDialog(QDialog):
         self.presentError.connect(self.__presentError)
         self.closeButtonPressed.connect(self.__confirmCancel)
 
-        self._msg_box = None
+        self._msg_box: Optional[QMessageBox] = None
 
-    def disableCloseButton(self):
+    def disableCloseButton(self) -> None:
         self.close_button.setEnabled(False)
 
-    def enableCloseButton(self):
+    def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, q_key_event):
-        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
+    def keyPressEvent(self, q_key_event: Optional[QKeyEvent]) -> None:
+        if self.close_button.isEnabled() or (
+            q_key_event and q_key_event.key() != Qt.Key.Key_Escape
+        ):
             QDialog.keyPressEvent(self, q_key_event)
 
-    def closeEvent(self, close_event):
-        close_event.ignore()
-        self.closeButtonPressed.emit()
+    def closeEvent(self, close_event: Optional[QCloseEvent]) -> None:
+        if close_event:
+            close_event.ignore()
+            self.closeButtonPressed.emit()
 
-    def __createMsgBox(self, title, message, details):
-        msg_box = QMessageBox(self.parent())
+    def __createMsgBox(
+        self, title: Optional[str], message: Optional[str], details: str
+    ) -> QMessageBox:
+        msg_box = QMessageBox(cast(Optional[QWidget], self.parent()))
         msg_box.setText(title)
         msg_box.setInformativeText(message)
 
@@ -99,24 +109,28 @@ class ProcessJobDialog(QDialog):
         horizontal_spacer = QSpacerItem(
             500, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Expanding
         )
-        layout = msg_box.layout()
+        layout = cast(QGridLayout, msg_box.layout())
         layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
 
         return msg_box
 
-    def __presentInformation(self, title, message, details):
+    def __presentInformation(
+        self, title: Optional[str], message: Optional[str], details: str
+    ) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Information)
 
         self._msg_box.exec_()
 
-    def __presentError(self, title, message, details):
+    def __presentError(
+        self, title: Optional[str], message: Optional[str], details: str
+    ) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Critical)
 
         self._msg_box.exec_()
 
-    def __confirmCancel(self):
+    def __confirmCancel(self) -> None:
         cancel_box = self.__createMsgBox(
             "Confirm cancel", "Are you sure you want to cancel the running job?", ""
         )

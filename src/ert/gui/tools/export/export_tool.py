@@ -20,7 +20,7 @@ class ExportTool(Tool):
         self.__exporter = Exporter(ert, notifier)
         self.setEnabled(self.__exporter.is_valid())
 
-    def trigger(self):
+    def trigger(self) -> None:
         if self.__export_widget is None:
             self.__export_widget = ref(ExportPanel(self.parent()))
             self.__export_widget().runExport.connect(self._run_export)
@@ -47,6 +47,6 @@ class ExportTool(Tool):
                 QMessageBox.Ok,
             )
 
-    def export(self):
+    def export(self) -> None:
         self.__export_widget().export()
         self.__dialog().accept()

@@ -1,7 +1,7 @@
-from typing import List
+from typing import Dict, List, Optional
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QCursor
+from qtpy.QtGui import QCursor, QEvent
 from qtpy.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -18,17 +18,17 @@ from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 class FilterPopup(QDialog):
     filterSettingsChanged = Signal(dict)
 
-    def __init__(self, parent, key_defs: List[PlotApiKeyDefinition]):
+    def __init__(self, parent: QWidget, key_defs: List[PlotApiKeyDefinition]) -> None:
         QDialog.__init__(
             self,
             parent,
-            Qt.WindowStaysOnTopHint
-            | Qt.X11BypassWindowManagerHint
-            | Qt.FramelessWindowHint,
+            Qt.WindowFlags.WindowStaysOnTopHint
+            | Qt.WindowFlags.X11BypassWindowManagerHint
+            | Qt.WindowFlags.FramelessWindowHint,
         )
         self.setVisible(False)
 
-        self.filter_items = {}
+        self.filter_items: Dict[str, bool] = {}
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -37,7 +37,7 @@ class FilterPopup(QDialog):
         layout.addWidget(frame)
 
         self.__layout = QVBoxLayout()
-        self.__layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.__layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
         self.__layout.addWidget(QLabel("Filter by datatype:"))
 
         filters = {k.metadata["data_origin"] for k in key_defs}
@@ -49,14 +49,14 @@ class FilterPopup(QDialog):
         self.setLayout(layout)
         self.adjustSize()
 
-    def addFilterItem(self, name, _id, value=True):
+    def addFilterItem(self, name: str, _id: str, value: bool = True) -> None:
         self.filter_items[_id] = value
 
         check_box = QCheckBox(name)
         check_box.setChecked(value)
         check_box.setObjectName("FilterCheckBox")
 
-        def toggleItem(checked):
+        def toggleItem(checked: bool) -> None:
             self.filter_items[_id] = checked
             self.filterSettingsChanged.emit(self.filter_items)
 
@@ -64,11 +64,11 @@ class FilterPopup(QDialog):
 
         self.__layout.addWidget(check_box)
 
-    def leaveEvent(self, QEvent):
-        QWidget.leaveEvent(self, QEvent)
+    def leaveEvent(self, a0: Optional[QEvent]) -> None:
+        QWidget.leaveEvent(self, a0)
         self.hide()
 
-    def show(self):
+    def show(self) -> None:
         QWidget.show(self)
         p = QCursor().pos()
         self.move(p.x(), p.y())

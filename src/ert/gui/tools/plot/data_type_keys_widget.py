@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QIcon
@@ -54,11 +54,11 @@ class DataTypeKeysWidget(QWidget):
 
         self.setLayout(layout)
 
-    def onItemChanged(self, item):
+    def onItemChanged(self, item: Dict[str, bool]) -> None:
         for value, visible in item.items():
             self.filter_model.setFilterOnMetadata("data_origin", value, visible)
 
-    def itemSelected(self):
+    def itemSelected(self) -> None:
         selected_item = self.getSelectedItem()
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
@@ -69,11 +69,11 @@ class DataTypeKeysWidget(QWidget):
         item = self.model.itemAt(source_index)
         return item
 
-    def selectDefault(self):
+    def selectDefault(self) -> None:
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
-    def setSearchString(self, _filter):
+    def setSearchString(self, _filter: Optional[str]) -> None:
         self.filter_model.setFilterFixedString(_filter)
 
-    def showFilterPopup(self):
+    def showFilterPopup(self) -> None:
         self.__filter_popup.show()

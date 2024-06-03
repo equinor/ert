@@ -2,10 +2,10 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union, overload
 
 from dateutil import tz
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
@@ -24,21 +24,21 @@ from ert.shared.status.utils import byte_with_unit
 logger = logging.getLogger(__name__)
 
 
-NodeRole = Qt.UserRole + 1
-RealJobColorHint = Qt.UserRole + 2
-RealStatusColorHint = Qt.UserRole + 3
-RealLabelHint = Qt.UserRole + 4
-ProgressRole = Qt.UserRole + 5
-FileRole = Qt.UserRole + 6
-RealIens = Qt.UserRole + 7
-IterNum = Qt.UserRole + 12
-MemoryUsageRole = Qt.UserRole + 13
+NodeRole = Qt.ItemDataRole.UserRole + 1
+RealJobColorHint = Qt.ItemDataRole.UserRole + 2
+RealStatusColorHint = Qt.ItemDataRole.UserRole + 3
+RealLabelHint = Qt.ItemDataRole.UserRole + 4
+ProgressRole = Qt.ItemDataRole.UserRole + 5
+FileRole = Qt.ItemDataRole.UserRole + 6
+RealIens = Qt.ItemDataRole.UserRole + 7
+IterNum = Qt.ItemDataRole.UserRole + 12
+MemoryUsageRole = Qt.ItemDataRole.UserRole + 13
 
 # Indicates what type the underlying data is
-IsEnsembleRole = Qt.UserRole + 8
-IsRealizationRole = Qt.UserRole + 9
-IsJobRole = Qt.UserRole + 10
-StatusRole = Qt.UserRole + 11
+IsEnsembleRole = Qt.ItemDataRole.UserRole + 8
+IsRealizationRole = Qt.ItemDataRole.UserRole + 9
+IsJobRole = Qt.ItemDataRole.UserRole + 10
+StatusRole = Qt.ItemDataRole.UserRole + 11
 
 DURATION = "Duration"
 
@@ -79,7 +79,7 @@ _QCOLORS = {
 
 
 def _estimate_duration(
-    start_time: datetime.datetime, end_time: datetime.datetime = None
+    start_time: datetime.datetime, end_time: Optional[datetime.datetime] = None
 ) -> datetime.timedelta:
     timezone = None
     if start_time.tzname() is not None:
@@ -89,8 +89,11 @@ def _estimate_duration(
     return end_time - start_time
 
 
+default_index = QModelIndex()
+
+
 class SnapshotModel(QAbstractItemModel):
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
         self.root: RootNode = RootNode(0)
 
@@ -161,7 +164,7 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
+    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int) -> None:
         metadata = partial.metadata
         if not metadata:
             logger.debug("no metadata in partial, ignoring partial")
@@ -272,7 +275,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: int):
+    def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             iter_,
@@ -319,8 +322,7 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_node = parent.internalPointer()
@@ -337,7 +339,7 @@ class SnapshotModel(QAbstractItemModel):
                 count = len(COLUMNS[NodeType.JOB])
         return count
 
-    def rowCount(self, parent: QModelIndex = None):
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -347,22 +349,29 @@ class SnapshotModel(QAbstractItemModel):
 
         return len(parent_item.children)
 
-    def parent(self, index: QModelIndex):
-        if not index.isValid():
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> QObject | None: ...
+
+    def parent(
+        self, child: QModelIndex = default_index
+    ) -> Optional[Union[QModelIndex, QObject]]:
+        if not child.isValid():
             return QModelIndex()
 
-        parent_item = index.internalPointer().parent
+        parent_item = child.internalPointer().parent
         if parent_item == self.root:
             return QModelIndex()
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole):
+    def data(self, index: QModelIndex, role: int = 0) -> Any:
         if not index.isValid():
             return QVariant()
 
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.Alignment.AlignCenter
 
         node: Union[RootNode, IterNode, RealNode, ForwardModelStepNode] = (
             index.internalPointer()
@@ -382,28 +391,36 @@ class SnapshotModel(QAbstractItemModel):
         if isinstance(node, RealNode):
             return self._real_data(index, node, role)
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
                 return f"{type(node).__name__}:{node.id_}"
             if index.column() == 1:
                 return f"{node.data.status}"
 
-        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+        if role in (
+            Qt.ItemDataRole.StatusTipRole,
+            Qt.ItemDataRole.WhatsThisRole,
+            Qt.ItemDataRole.ToolTipRole,
+        ):
             return ""
 
-        if role == Qt.SizeHintRole:
+        if role == Qt.ItemDataRole.SizeHintRole:
             return QSize()
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             return QFont()
 
-        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+        if role in (
+            Qt.ItemDataRole.BackgroundRole,
+            Qt.ItemDataRole.ForegroundRole,
+            Qt.ItemDataRole.DecorationRole,
+        ):
             return QColor()
 
         return QVariant()
 
     @staticmethod
-    def _real_data(_index: QModelIndex, node: RealNode, role: int):
+    def _real_data(_index: QModelIndex, node: RealNode, role: int) -> Any:
         if role == RealJobColorHint:
             colors: List[QColor] = []
 
@@ -457,7 +474,7 @@ class SnapshotModel(QAbstractItemModel):
     def _job_data(index: QModelIndex, node: ForwardModelStepNode, role: int):
         node_id = str(node.id_)
 
-        if role == Qt.BackgroundRole:
+        if role == Qt.ItemDataRole.BackgroundRole:
             real = node.parent
 
             if (
@@ -476,7 +493,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return real.data.forward_model_step_status_color_by_id[node_id]
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
@@ -528,7 +545,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == IterNum:
             return node.parent.parent.id_
 
-        if role == Qt.ToolTipRole:
+        if role == Qt.ItemDataRole.ToolTipRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None
             if data_name == ids.ERROR:
@@ -543,7 +560,9 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if not self.hasIndex(row, column, parent):
@@ -557,7 +576,7 @@ class SnapshotModel(QAbstractItemModel):
         else:
             return self.createIndex(row, column, child_item)
 
-    def reset(self):
+    def reset(self) -> None:
         self.modelAboutToBeReset.emit()
         self.root = RootNode(0)
         self.modelReset.emit()

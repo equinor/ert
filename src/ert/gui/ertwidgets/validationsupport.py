@@ -1,8 +1,17 @@
 import html
+from typing import Optional
 
 from qtpy.QtCore import QObject, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QEvent,
+    QFrame,
+    QHideEvent,
+    QLabel,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class ErrorPopup(QWidget):
@@ -15,8 +24,8 @@ class ErrorPopup(QWidget):
         "</html>"
     )
 
-    def __init__(self):
-        QWidget.__init__(self, None, Qt.ToolTip)
+    def __init__(self) -> None:
+        QWidget.__init__(self, None, Qt.WindowType.ToolTip)
         self.resize(300, 50)
 
         self.setContentsMargins(0, 0, 0, 0)
@@ -28,14 +37,12 @@ class ErrorPopup(QWidget):
         self._error_widget.setFrameStyle(QFrame.Box)
         self._error_widget.setWordWrap(True)
         self._error_widget.setScaledContents(True)
-        self._error_widget.setTextFormat(Qt.RichText)
+        self._error_widget.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self._error_widget)
 
         self.setLayout(layout)
 
-    def presentError(self, widget, error):
-        assert isinstance(widget, QWidget)
-
+    def presentError(self, widget: QWidget, error: str) -> None:
         self._error_widget.setText(ErrorPopup.error_template % html.escape(error))
         self.show()
 
@@ -60,43 +67,45 @@ class ValidationSupport(QObject):
 
     validationChanged = Signal(bool)
 
-    def __init__(self, validation_target: QWidget):
+    def __init__(self, validation_target: QWidget) -> None:
         QObject.__init__(self)
 
         self._validation_target = validation_target
-        self._validation_message = None
-        self._validation_type = None
+        self._validation_message: Optional[str] = None
+        self._validation_type: Optional[str] = None
         self._error_popup = ErrorPopup()
 
         self._originalEnterEvent = validation_target.enterEvent
         self._originalLeaveEvent = validation_target.leaveEvent
         self._originalHideEvent = validation_target.hideEvent
 
-        def enterEvent(event):
+        def enterEvent(event: Optional[QEvent]) -> None:
             self._originalEnterEvent(event)
 
             if not self.isValid():
-                self._error_popup.presentError(
-                    self._validation_target, self._validation_message
-                )
+                message = self._validation_target
+                assert message is not None
+                self._error_popup.presentError(self._validation_target, message)
 
-        validation_target.enterEvent = enterEvent
+        validation_target.enterEvent = enterEvent  # type: ignore
 
-        def leaveEvent(event):
+        def leaveEvent(event: Optional[QEvent]) -> None:
             self._originalLeaveEvent(event)
 
             if self._error_popup is not None:
                 self._error_popup.hide()
 
-        validation_target.leaveEvent = leaveEvent
+        validation_target.leaveEvent = leaveEvent  # type: ignore
 
-        def hideEvent(hide_event):
+        def hideEvent(hide_event: Optional[QHideEvent]) -> None:
             self._error_popup.hide()
             self._originalHideEvent(hide_event)
 
-        validation_target.hideEvent = hideEvent
+        validation_target.hideEvent = hideEvent  # type: ignore
 
-    def setValidationMessage(self, message: str, validation_type=WARNING):
+    def setValidationMessage(
+        self, message: str, validation_type: str = WARNING
+    ) -> None:
         """Add a warning or information icon to the widget with a tooltip"""
         message = message.strip()
         if not message:
@@ -112,10 +121,8 @@ class ValidationSupport(QObject):
                 self._validation_target.hasFocus()
                 or self._validation_target.underMouse()
             ):
-                self._error_popup.presentError(
-                    self._validation_target, self._validation_message
-                )
+                self._error_popup.presentError(self._validation_target, message)
             self.validationChanged.emit(False)
 
-    def isValid(self):
+    def isValid(self) -> bool:
         return self._validation_message is None

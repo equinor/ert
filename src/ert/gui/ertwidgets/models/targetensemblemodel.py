@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
@@ -16,7 +18,7 @@ class TargetEnsembleModel(ValueModel):
         notifier.ertChanged.connect(self.on_current_ensemble_changed)
         notifier.current_ensemble_changed.connect(self.on_current_ensemble_changed)
 
-    def setValue(self, value: str):
+    def setValue(self, value: Optional[str]) -> None:
         """Set a new target ensemble"""
         if not value or not value.strip() or value == self.getDefaultValue():
             self._custom = False
@@ -25,7 +27,7 @@ class TargetEnsembleModel(ValueModel):
             self._custom = True
             ValueModel.setValue(self, value)
 
-    def getDefaultValue(self) -> str:
+    def getDefaultValue(self) -> Optional[str]:
         analysis_config = self.analysis_config
         if analysis_config.ensemble_format_is_set():
             return analysis_config.ensemble_format
@@ -33,6 +35,6 @@ class TargetEnsembleModel(ValueModel):
             ensemble_name = self.notifier.current_ensemble_name
             return f"{ensemble_name}_%d"
 
-    def on_current_ensemble_changed(self, *args) -> None:
+    def on_current_ensemble_changed(self, *args: Any) -> None:
         if not self._custom:
             super().setValue(self.getDefaultValue())

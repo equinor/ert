@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qtpy.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -5,6 +7,7 @@ from qtpy.QtWidgets import (
     QLabel,
     QStyle,
     QTextEdit,
+    QWidget,
 )
 
 from ert.gui.tools.file.file_dialog import (
@@ -16,12 +19,17 @@ from ert.gui.tools.file.file_dialog import (
 # This might seem like NIH, however the QtMessageBox is notoriously
 # hard to work with if you need anything like for example resizing.
 class ErtMessageBox(QDialog):
-    def __init__(self, text, detailed_text, parent=None):
+    def __init__(
+        self,
+        text: Optional[str],
+        detailed_text: Optional[str],
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
         self.box = QDialogButtonBox(
-            QDialogButtonBox.Ok,
-            centerButtons=True,
+            QDialogButtonBox.StandardButtons.Ok,
         )
+        self.box.setCenterButtons(True)
         self.box.accepted.connect(self.accept)
 
         self.details_text = QTextEdit()
@@ -31,7 +39,9 @@ class ErtMessageBox(QDialog):
 
         self.label_text = QLabel(text)
         self.label_icon = QLabel()
-        icon = self.style().standardIcon(QStyle.SP_MessageBoxCritical)
+        style = self.style()
+        assert isinstance(style, QStyle)
+        icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
         self.label_icon.setPixmap(icon.pixmap(32))
 
         lay = QGridLayout(self)

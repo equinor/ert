@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
+from numpy.typing import ArrayLike
 from pandas import DataFrame
 
-from ert.gui.plottery import PlotConfig, PlotContext
+from ert.gui.plottery import PlotConfig, PlotContext, PlotStyle
 from ert.gui.plottery.plots.history import plotHistory
 
 from .observations import plotObservations
@@ -12,20 +13,21 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 class StatisticsPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 2
 
     @staticmethod
     def plot(
-        figure,
+        figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map,
-        _observation_data,
-        std_dev_images,
-    ):
+        ensemble_to_data_map: dict[str, DataFrame],
+        _observation_data: DataFrame,
+        std_dev_images: Any,
+    ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 
@@ -79,7 +81,7 @@ class StatisticsPlot:
         )
 
 
-def _addStatisticsLegends(plot_config):
+def _addStatisticsLegends(plot_config: PlotConfig) -> None:
     _addStatisticsLegend(plot_config, "mean")
     _addStatisticsLegend(plot_config, "p50")
     _addStatisticsLegend(plot_config, "min-max", 0.2)
@@ -88,7 +90,9 @@ def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "p33-p67", 0.6)
 
 
-def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
+def _addStatisticsLegend(
+    plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
+) -> None:
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
         if style.line_style == "#":
@@ -112,12 +116,12 @@ def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
 
 def _plotPercentiles(
     axes: "Axes", plot_config: PlotConfig, data: DataFrame, ensemble_label: str
-):
+) -> None:
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
         axes.plot(
             data.index.values,
-            data["Mean"].values,
+            data["Mean"].values,  # type: ignore
             alpha=style.alpha,
             linestyle=style.line_style,
             color=style.color,
@@ -130,7 +134,7 @@ def _plotPercentiles(
     if style.isVisible():
         axes.plot(
             data.index.values,
-            data["p50"].values,
+            data["p50"].values,  # type: ignore
             alpha=style.alpha,
             linestyle=style.line_style,
             color=style.color,
@@ -141,7 +145,12 @@ def _plotPercentiles(
 
     style = plot_config.getStatisticsStyle("std")
     _plotPercentile(
-        axes, style, data.index.values, data["std+"].values, data["std-"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["std+"].values,  # type: ignore
+        data["std-"].values,  # type: ignore
+        0.5,
     )
 
     style = plot_config.getStatisticsStyle("min-max")
@@ -149,25 +158,40 @@ def _plotPercentiles(
         axes,
         style,
         data.index.values,
-        data["Maximum"].values,
-        data["Minimum"].values,
+        data["Maximum"].values,  # type: ignore
+        data["Minimum"].values,  # type: ignore
         0.5,
     )
 
     style = plot_config.getStatisticsStyle("p10-p90")
     _plotPercentile(
-        axes, style, data.index.values, data["p90"].values, data["p10"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["p90"].values,  # type: ignore
+        data["p10"].values,  # type: ignore
+        0.5,
     )
 
     style = plot_config.getStatisticsStyle("p33-p67")
     _plotPercentile(
-        axes, style, data.index.values, data["p67"].values, data["p33"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["p67"].values,  # type: ignore
+        data["p33"].values,  # type: ignore
+        0.5,
     )
 
 
 def _plotPercentile(
-    axes, style, index_values, top_line_data, bottom_line_data, alpha_multiplier
-):
+    axes: Axes,
+    style: PlotStyle,
+    index_values: ArrayLike,
+    top_line_data: ArrayLike,
+    bottom_line_data: ArrayLike,
+    alpha_multiplier: float,
+) -> None:
     alpha = style.alpha
     line_style = style.line_style
     color = style.color

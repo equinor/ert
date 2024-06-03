@@ -94,8 +94,8 @@ class PlotWidget(QWidget):
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
         ],
-        parent=None,
-    ):
+        parent: Optional[QWidget] = None,
+    ) -> None:
         QWidget.__init__(self, parent)
 
         self._name = name
@@ -106,7 +106,7 @@ class PlotWidget(QWidget):
         self._figure.set_layout_engine("tight")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.setParent(self)
-        self._canvas.setFocusPolicy(Qt.StrongFocus)
+        self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
 
         vbox = QVBoxLayout()
@@ -138,15 +138,15 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observations: Optional[pd.DataFrame] = None,
         std_dev_images: Optional[bytes] = None,
-    ):
+    ) -> None:
         self.resetPlot()
         try:
             self._plotter.plot(
                 self._figure,
                 plot_context,
                 ensemble_to_data_map,
-                observations,
-                std_dev_images,
+                observations,  # type: ignore
+                std_dev_images,  # type: ignore
             )
             self._canvas.draw()
         except Exception as e:

@@ -36,9 +36,11 @@ class AnalysisModuleEdit(QWidget):
 
         self.setLayout(layout)
 
-    def showVariablesPopup(self):
+    def showVariablesPopup(self) -> None:
         variable_dialog = AnalysisModuleVariablesPanel(
             self.analysis_module, self.ensemble_size
         )
-        dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
+        parent = self.parent()
+        assert isinstance(parent, QWidget)
+        dialog = ClosableDialog("Edit variables", variable_dialog, parent)
         dialog.exec_()

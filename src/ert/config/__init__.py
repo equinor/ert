@@ -22,6 +22,7 @@ from .parsing import (
     AnalysisMode,
     ConfigValidationError,
     ConfigWarning,
+    ErrorInfo,
     HookRuntime,
     QueueSystem,
 )
@@ -49,6 +50,7 @@ __all__ = [
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
+    "ErrorInfo",
     "EnsembleConfig",
     "ErtConfig",
     "ErtPlugin",

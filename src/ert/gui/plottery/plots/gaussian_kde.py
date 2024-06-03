@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Dict
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict
 
 import numpy
 import pandas as pd
@@ -10,27 +11,32 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class GaussianKDEPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: Dict[str, DataFrame],
+        _observation_data: Any,
+        std_dev_images: Any,
+    ) -> None:
         plotGaussianKDE(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotGaussianKDE(
-    figure,
-    plot_context: "PlotContext",
+    figure: Figure,
+    plot_context: PlotContext,
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-    _observation_data,
-):
+    _observation_data: Any,
+) -> None:
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -57,8 +63,8 @@ def plotGaussianKDE(
 
 
 def _plotGaussianKDE(
-    axes: "Axes", plot_config: "PlotConfig", data: pd.DataFrame, label: str
-):
+    axes: Axes, plot_config: PlotConfig, data: pd.DataFrame, label: str
+) -> None:
     style = plot_config.histogramStyle()
 
     sample_range = data.max() - data.min()

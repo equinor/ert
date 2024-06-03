@@ -12,22 +12,27 @@ from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
+    from ert.gui.ertnotifier import ErtNotifier
 
 
 class ManageExperimentsTool(Tool):
-    def __init__(self, config: ErtConfig, notifier, ensemble_size: int):
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int
+    ) -> None:
         self.notifier = notifier
         self.ert_config = config
         self.ensemble_size = ensemble_size
         super().__init__("Manage experiments", QIcon("img:build_wrench.svg"))
 
-    def trigger(self):
+    def trigger(self) -> None:
         ensemble_management_widget = EnsembleInitializationConfigurationPanel(
             self.ert_config, self.notifier, self.ensemble_size
         )
 
         dialog = ClosableDialog(
-            "Manage experiments", ensemble_management_widget, self.parent()
+            "Manage experiments",
+            ensemble_management_widget,
+            self.parent(),  # type: ignore
         )
         dialog.setObjectName("manage-experiments")
         dialog.exec_()

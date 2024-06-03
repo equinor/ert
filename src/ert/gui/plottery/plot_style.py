@@ -1,15 +1,18 @@
+from typing import Optional
+
+
 class PlotStyle:
     def __init__(
         self,
-        name,
-        color="#000000",
-        alpha=1.0,
-        line_style="-",
-        marker="",
-        width=1.0,
-        size=7.5,
-        enabled=True,
-    ):
+        name: str,
+        color: Optional[str] = "#000000",
+        alpha: float = 1.0,
+        line_style: str = "-",
+        marker: str = "",
+        width: float = 1.0,
+        size: float = 7.5,
+        enabled: bool = True,
+    ) -> None:
         super().__init__()
 
         self.name = name
@@ -22,7 +25,9 @@ class PlotStyle:
         self._enabled = enabled
         self._is_copy = False
 
-    def copyStyleFrom(self, other: "PlotStyle", copy_enabled_state=False):
+    def copyStyleFrom(
+        self, other: "PlotStyle", copy_enabled_state: bool = False
+    ) -> None:
         self.color = other.color
         self.alpha = other.alpha
         self.line_style = other._line_style
@@ -37,34 +42,26 @@ class PlotStyle:
     def isEnabled(self) -> bool:
         return self._enabled
 
-    def setEnabled(self, enabled: bool):
+    def setEnabled(self, enabled: bool) -> None:
         self._enabled = enabled
 
     def isVisible(self) -> bool:
-        return self.line_style or self.marker
+        return bool(self.line_style or self.marker)
 
     @property
     def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, name):
+    def name(self, name: str) -> None:
         self._name = name
-
-    @property
-    def color(self) -> str:
-        return self._color
-
-    @color.setter
-    def color(self, color):
-        self._color = color
 
     @property
     def alpha(self) -> float:
         return self._alpha
 
     @alpha.setter
-    def alpha(self, alpha):
+    def alpha(self, alpha: float) -> None:
         self._alpha = max(min(alpha, 1.0), 0.0)
 
     @property
@@ -72,7 +69,7 @@ class PlotStyle:
         return self._marker if self._marker is not None else ""
 
     @marker.setter
-    def marker(self, marker: str):
+    def marker(self, marker: str) -> None:
         self._marker = marker
 
     @property
@@ -80,7 +77,7 @@ class PlotStyle:
         return self._line_style if self._line_style is not None else ""
 
     @line_style.setter
-    def line_style(self, line_style: str):
+    def line_style(self, line_style: str) -> None:
         self._line_style = line_style
 
     @property
@@ -88,7 +85,7 @@ class PlotStyle:
         return self._width
 
     @width.setter
-    def width(self, width: float):
+    def width(self, width: float) -> None:
         self._width = max(width, 0.0)
 
     @property
@@ -96,10 +93,10 @@ class PlotStyle:
         return self._size
 
     @size.setter
-    def size(self, size):
+    def size(self, size: float) -> None:
         self._size = max(size, 0.0)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.name} c:{self.color} a:{self.alpha} "
             f"ls:{self.line_style} m:{self.marker} w:{self.width} "

@@ -5,7 +5,7 @@ import matplotlib
 import ert.shared
 
 
-def headless():
+def headless() -> bool:
     return "DISPLAY" not in os.environ
 
 

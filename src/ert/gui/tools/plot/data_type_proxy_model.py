@@ -1,31 +1,35 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-from qtpy.QtCore import QSortFilterProxyModel, Qt
+from typing import TYPE_CHECKING, Optional
+
+from qtpy.QtCore import (
+    QAbstractItemModel,
+    QModelIndex,
+    QObject,
+    QSortFilterProxyModel,
+    Qt,
+)
 
 if TYPE_CHECKING:
     from .data_type_keys_list_model import DataTypeKeysListModel
 
 
 class DataTypeProxyModel(QSortFilterProxyModel):
-    def __init__(self, parent, model):
+    def __init__(self, parent: QObject, model: Optional[QAbstractItemModel]):
         QSortFilterProxyModel.__init__(self, parent)
 
-        self.__show_summary_keys = True
-        self.__show_block_keys = True
-        self.__show_gen_kw_keys = True
-        self.__show_gen_data_keys = True
-        self.__show_custom_pca_keys = True
-        self._metadata_filters = {}
-        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self._metadata_filters: dict[str, dict[str, bool]] = {}
+        self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setSourceModel(model)
 
-    def filterAcceptsRow(self, index, q_model_index):
-        show = QSortFilterProxyModel.filterAcceptsRow(self, index, q_model_index)
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        show = QSortFilterProxyModel.filterAcceptsRow(self, source_row, source_parent)
 
         if show:
             source_model = self.sourceModel()
-            source_index = source_model.index(index, 0, q_model_index)
+            source_index = source_model.index(source_row, 0, source_parent)
             key = source_model.itemAt(source_index)
+            assert key is not None
 
             for meta_key, values in self._metadata_filters.items():
                 for value, visible in values.items():
@@ -38,10 +42,10 @@ class DataTypeProxyModel(QSortFilterProxyModel):
 
         return show
 
-    def sourceModel(self) -> "DataTypeKeysListModel":
-        return QSortFilterProxyModel.sourceModel(self)
+    def sourceModel(self) -> DataTypeKeysListModel:
+        return QSortFilterProxyModel.sourceModel(self)  # type: ignore
 
-    def setFilterOnMetadata(self, key, value, visible):
+    def setFilterOnMetadata(self, key: str, value: str, visible: bool) -> None:
         if key not in self._metadata_filters:
             self._metadata_filters[key] = {}
 

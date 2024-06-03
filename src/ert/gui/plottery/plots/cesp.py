@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List, TypedDict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
 
 import pandas as pd
 from matplotlib.lines import Line2D
@@ -10,6 +12,8 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+    from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
@@ -32,24 +36,28 @@ CcsData = TypedDict(
 
 
 class CrossEnsembleStatisticsPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: Dict[str, DataFrame],
+        _observation_data: DataFrame,
+        std_dev_images: Any,
+    ) -> None:
         plotCrossEnsembleStatistics(
             figure, plot_context, ensemble_to_data_map, _observation_data
         )
 
 
 def plotCrossEnsembleStatistics(
-    figure,
+    figure: Figure,
     plot_context: "PlotContext",
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-    _observation_data,
-):
+    _observation_data: DataFrame,
+) -> None:
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -121,7 +129,7 @@ def plotCrossEnsembleStatistics(
     )
 
 
-def _addStatisticsLegends(plot_config):
+def _addStatisticsLegends(plot_config: "PlotConfig") -> None:
     _addStatisticsLegend(plot_config, "mean")
     _addStatisticsLegend(plot_config, "p50")
     _addStatisticsLegend(plot_config, "min-max", 0.2)
@@ -130,7 +138,9 @@ def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "p33-p67", 0.6)
 
 
-def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
+def _addStatisticsLegend(
+    plot_config: "PlotConfig", style_name: str, alpha_multiplier: float = 1.0
+) -> None:
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
         if style.line_style == "#":
@@ -166,9 +176,11 @@ def _assertNumeric(data):
 
 def _plotCrossEnsembleStatistics(
     axes: "Axes", plot_config: "PlotConfig", data: CcsData, index: int
-):
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
+) -> None:
+    if xlabel := plot_config.xLabel():
+        axes.set_xlabel(xlabel)
+    if ylabel := plot_config.yLabel():
+        axes.set_ylabel(ylabel)
 
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
@@ -283,7 +295,7 @@ def _plotConnectionLines(
     axes: "Axes",
     plot_config: "PlotConfig",
     ccs: CcsData,
-):
+) -> None:
     line_style = plot_config.distributionLineStyle()
     index_list = ccs["index"]
     for index in range(len(index_list) - 1):

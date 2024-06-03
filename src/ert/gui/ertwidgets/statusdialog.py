@@ -1,6 +1,7 @@
-from typing import List, cast
+from typing import Any, List, Optional, cast
 
-from qtpy.QtCore import QObject, Qt, Signal, Slot
+from qtpy.QtCore import Qt, Signal, Slot
+from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -14,17 +15,18 @@ from ert.run_models import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
 
 
 class StatusDialog(QDialog):
-    close = Signal()
     run = Signal()
 
-    def __init__(self, title: str, widget: QWidget, parent: QObject = None):
+    def __init__(self, title: str, widget: QWidget, parent: Optional[QWidget] = None):
         QDialog.__init__(self, parent)
 
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowFlags.CustomizeWindowHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
         layout.addWidget(widget)
@@ -51,24 +53,22 @@ class StatusDialog(QDialog):
 
         self.setLayout(layout)
 
-    def keyPressEvent(self, q_key_event):
-        if self._close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
-            QDialog.keyPressEvent(self, q_key_event)
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if self._close_button.isEnabled() or (a0 and (a0.key() != Qt.Key.Key_Escape)):
+            QDialog.keyPressEvent(self, a0)
 
-    def enable_button(self, caption, enabled: bool = True):
-        button = cast(
-            QPushButton, self.findChild(QPushButton, str(caption).capitalize())
-        )
+    def enable_button(self, caption: Any, enabled: bool = True) -> None:
+        button = self.findChild(QPushButton, str(caption).capitalize())
         if button is not None:
             button.setEnabled(enabled)
 
-    def enable_buttons(self, enabled: bool = True):
+    def enable_buttons(self, enabled: bool = True) -> None:
         buttons = cast(List[QPushButton], self.findChildren(QPushButton))
         for button in buttons:
             button.setEnabled(enabled)
 
     @Slot(RunModelEvent)
-    def progress_update(self, event: RunModelEvent):
+    def progress_update(self, event: RunModelEvent) -> None:
         if isinstance(event, RunModelStatusEvent):
             self._status_bar.showMessage(f"{event.msg}")
         elif isinstance(event, RunModelTimeEvent):
@@ -77,5 +77,5 @@ class StatusDialog(QDialog):
             )
 
     @Slot()
-    def clear_status(self):
+    def clear_status(self) -> None:
         self._status_bar.clearMessage()

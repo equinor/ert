@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Optional
 
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -18,14 +20,14 @@ if TYPE_CHECKING:
 
 
 class CustomizationView(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
 
         self._layout = QFormLayout()
         self.setLayout(self._layout)
         self._widgets = {}
 
-    def addRow(self, title, widget):
+    def addRow(self, title: Optional[str], widget: Optional[QWidget]) -> None:
         self._layout.addRow(title, widget)
 
     def addLineEdit(self, attribute_name, title, tool_tip=None, placeholder=""):
@@ -35,43 +37,45 @@ class CustomizationView(QWidget):
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self):
+        def getter(self) -> Optional[str]:
             value = str(self[attribute_name].text())
             if not value:
                 value = None
             return value
 
-        def setter(self, value):
+        def setter(self, value: Optional[str]) -> None:
             if value is None:
                 value = ""
             self[attribute_name].setText(str(value))
 
         self.updateProperty(attribute_name, getter, setter)
 
-    def addCheckBox(self, attribute_name, title, tool_tip=None):
+    def addCheckBox(
+        self, attribute_name: str, title: str, tool_tip: Optional[str] = None
+    ) -> None:
         self[attribute_name] = QCheckBox()
         self.addRow(title, self[attribute_name])
 
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self):
+        def getter(self) -> bool:
             return self[attribute_name].isChecked()
 
-        def setter(self, value):
+        def setter(self, value: bool) -> None:
             self[attribute_name].setChecked(value)
 
         self.updateProperty(attribute_name, getter, setter)
 
     def addSpinBox(
         self,
-        attribute_name,
-        title,
-        tool_tip=None,
-        min_value=1,
-        max_value=10,
-        single_step=1,
-    ):
+        attribute_name: str,
+        title: str,
+        tool_tip: Optional[str] = None,
+        min_value: int = 1,
+        max_value: int = 10,
+        single_step: int = 1,
+    ) -> QSpinBox:
         sb = QSpinBox()
         self[attribute_name] = sb
         sb.setMaximumHeight(25)
@@ -87,18 +91,22 @@ class CustomizationView(QWidget):
         sb.setMaximum(max_value)
         sb.setSingleStep(single_step)
 
-        def getter(self):
+        def getter(self) -> QWidget:
             return self[attribute_name].value()
 
-        def setter(self, value):
+        def setter(self, value: QWidget) -> None:
             self[attribute_name].setValue(value)
 
         self.updateProperty(attribute_name, getter, setter)
         return sb
 
     def addStyleChooser(
-        self, attribute_name, title, tool_tip=None, line_style_set=sc.STYLESET_DEFAULT
-    ):
+        self,
+        attribute_name: str,
+        title: str,
+        tool_tip: Optional[str] = None,
+        line_style_set=sc.STYLESET_DEFAULT,
+    ) -> None:
         style_chooser = sc.StyleChooser(line_style_set=line_style_set)
         self[attribute_name] = style_chooser
         self.addRow(title, self[attribute_name])
@@ -106,10 +114,10 @@ class CustomizationView(QWidget):
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self):
+        def getter(self) -> QWidget:
             return self[attribute_name].getStyle()
 
-        def setter(self, style):
+        def setter(self, style: QWidget) -> None:
             self[attribute_name].setStyle(style)
 
         self.updateProperty(attribute_name, getter, setter)
@@ -125,19 +133,19 @@ class CustomizationView(QWidget):
         self._layout.addRow(title, None)
         self.addSpacing(1)
 
-    def __getitem__(self, item) -> QWidget:
+    def __getitem__(self, item: str) -> QWidget:
         return self._widgets[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: QWidget) -> None:
         self._widgets[key] = value
 
-    def applyCustomization(self, plot_config: "PlotConfig"):
+    def applyCustomization(self, plot_config: PlotConfig) -> None:
         raise NotImplementedError(
             f"Class '{self.__class__.__name__}' has not implemented "
             "the applyCustomization() function!"
         )
 
-    def revertCustomization(self, plot_config: "PlotConfig"):
+    def revertCustomization(self, plot_config: "PlotConfig") -> None:
         raise NotImplementedError(
             f"Class '{self.__class__.__name__}' has not implemented "
             "the revertCustomization() function!"
@@ -145,8 +153,8 @@ class CustomizationView(QWidget):
 
 
 class WidgetProperty:
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any) -> Any:
         raise UserWarning("Property is invalid!")
 
-    def __set__(self, instance, value):
+    def __set__(self, instance: Any, value: Any) -> Any:
         raise UserWarning("Property is invalid!")

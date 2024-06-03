@@ -1,3 +1,5 @@
+from typing import Any
+
 from qtpy.QtWidgets import QFormLayout, QLineEdit, QWidget
 
 from ert.config import AnalysisModule
@@ -23,8 +25,8 @@ class RunAnalysisPanel(QWidget):
         layout.addRow("Source ensemble", self.source_ensemble_selector)
         self.setLayout(layout)
 
-    def target_ensemble(self):
+    def target_ensemble(self) -> str:
         return str(self.target_ensemble_text.text())
 
-    def source_ensemble(self):
+    def source_ensemble(self) -> Any:
         return self.source_ensemble_selector.currentData()

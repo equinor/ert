@@ -1,3 +1,4 @@
+# mypy: disable-error-code="override"
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -56,8 +57,8 @@ class RootNodeData:
 @dataclass
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
-    children: dict[int, IterNode] = field(default_factory=dict)
-    data: RootNodeData = field(default_factory=RootNodeData)
+    children: dict[int, IterNode] = field(default_factory=dict)  # type: ignore
+    data: RootNodeData = field(default_factory=RootNodeData)  # type: ignore
 
     def add_child(self, node: IterNode, node_id: Optional[int] = None) -> None:
         node.parent = self
@@ -81,8 +82,8 @@ class IterNodeData:
 @dataclass
 class IterNode(_Node):
     parent: RootNode
-    data: IterNodeData
-    children: dict[str, RealNode] = field(default_factory=dict)
+    data: IterNodeData  # type: ignore
+    children: dict[str, RealNode] = field(default_factory=dict)  # type: ignore
 
     def add_child(self, node: RealNode, node_id: Optional[int] = None) -> None:
         node.parent = self
@@ -114,8 +115,8 @@ class RealNodeData:
 @dataclass
 class RealNode(_Node):
     parent: IterNode
-    data: RealNodeData
-    children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
+    data: RealNodeData  # type: ignore
+    children: dict[str, ForwardModelStepNode] = field(default_factory=dict)  # type: ignore
 
     def add_child(
         self, node: ForwardModelStepNode, node_id: Optional[int] = None
@@ -136,7 +137,7 @@ class RealNode(_Node):
 @dataclass
 class ForwardModelStepNode(_Node):
     parent: RealNode
-    data: ForwardModel
+    data: ForwardModel  # type: ignore
 
-    def add_child(self, *args, **kwargs):
+    def add_child(self, *args: Any, **kwargs: Any) -> None:
         pass

@@ -1,9 +1,11 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 from qtpy.QtGui import QColor, QIcon
 
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
+default_index = QModelIndex()
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
@@ -16,21 +18,18 @@ class DataTypeKeysListModel(QAbstractItemModel):
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")
 
-    def index(self, row, column, parent=None, *args, **kwargs):
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         return self.createIndex(row, column)
 
-    @staticmethod
-    def parent(index=None):
-        return QModelIndex()
-
-    def rowCount(self, parent=None, *args, **kwargs):
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         return len(self._keys)
 
-    @staticmethod
-    def columnCount(QModelIndex_parent=None, *args, **kwargs):
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         return 1
 
-    def data(self, index, role=None):
+    def data(self, index: QModelIndex, role: int = 0) -> Any:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():
@@ -38,14 +37,14 @@ class DataTypeKeysListModel(QAbstractItemModel):
             row = index.row()
             item = items[row]
 
-            if role == Qt.DisplayRole:
+            if role == Qt.ItemDataRole.DisplayRole:
                 return item.key
-            elif role == Qt.BackgroundRole and item.observations:
+            elif role == Qt.ItemDataRole.BackgroundRole and item.observations:
                 return self.HAS_OBSERVATIONS
 
         return None
 
-    def itemAt(self, index) -> Optional[PlotApiKeyDefinition]:
+    def itemAt(self, index: QModelIndex) -> Optional[PlotApiKeyDefinition]:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

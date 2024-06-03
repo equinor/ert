@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import os
 import re
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from qtpy.QtCore import QSize
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
 from ert.gui.ertwidgets.validationsupport import ValidationSupport
+
+if TYPE_CHECKING:
+    from .models.path_model import PathModel
 
 
 class PathChooser(QWidget):
@@ -22,11 +27,7 @@ class PathChooser(QWidget):
     PATH_IS_NOT_A_DIRECTORY_MSG = "The specified path must be a directory."
     REQUIRED_FIELD_MSG = "A path is required."
 
-    def __init__(self, model):
-        """
-        :type model: ert.gui.ertwidgets.models.path_model.PathModel
-        :param help_link: str
-        """
+    def __init__(self, model: PathModel):
         QWidget.__init__(self)
         self._validation_support = ValidationSupport(self)
 
@@ -99,7 +100,7 @@ class PathChooser(QWidget):
 
         return valid, message
 
-    def validatePath(self):
+    def validatePath(self) -> None:
         """Called whenever the path is modified"""
         palette = self._path_line.palette()
 
@@ -115,11 +116,11 @@ class PathChooser(QWidget):
 
         self._path_line.setPalette(palette)
 
-    def getPath(self):
+    def getPath(self) -> str:
         """Returns the path"""
         return os.path.expanduser(str(self._path_line.text()).strip())
 
-    def selectPath(self):
+    def selectPath(self) -> None:
         """Pops up the 'select a file/directory' dialog"""
         # todo: This probably needs some reworking to work properly with
         # different scenarios... (file + dir)
@@ -127,11 +128,11 @@ class PathChooser(QWidget):
         current_directory = self.getPath()
 
         if self._model.pathMustBeAFile():
-            current_directory: tuple[str, str] = QFileDialog.getOpenFileName(
+            current_directory = QFileDialog.getOpenFileName(
                 self, "Select a file path", current_directory
             )[0]
         else:
-            current_directory: str = QFileDialog.getExistingDirectory(
+            current_directory = QFileDialog.getExistingDirectory(
                 self, "Select a directory", current_directory
             )
 
@@ -147,14 +148,14 @@ class PathChooser(QWidget):
 
         self._editing = False
 
-    def contentsChanged(self):
+    def contentsChanged(self) -> None:
         """Called whenever the path is changed."""
         path_is_valid, message = self.isPathValid(self.getPath())
 
         if not self._editing and path_is_valid:
             self._model.setPath(self.getPath())
 
-    def getPathFromModel(self):
+    def getPathFromModel(self) -> None:
         """Retrieves data from the model and inserts it into the edit line"""
         self._editing = True
 
@@ -165,8 +166,8 @@ class PathChooser(QWidget):
         self._path_line.setText(str(path))
         self._editing = False
 
-    def getValidationSupport(self):
+    def getValidationSupport(self) -> ValidationSupport:
         return self._validation_support
 
-    def isValid(self):
+    def isValid(self) -> bool:
         return self._validation_support.isValid()

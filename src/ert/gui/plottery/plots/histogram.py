@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from math import ceil, floor, log10, sqrt
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import numpy
 import pandas as pd
@@ -11,27 +13,32 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class HistogramPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        _observation_data: Any,
+        std_dev_images: Any,
+    ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotHistogram(
-    figure,
-    plot_context: "PlotContext",
+    figure: Figure,
+    plot_context: PlotContext,
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-    _observation_data,
-):
+    _observation_data: Any,
+) -> None:
     config = plot_context.plotConfig()
 
     ensemble_list = plot_context.ensembles()
@@ -51,7 +58,7 @@ def plotHistogram(
     ensemble_count = len(ensemble_list)
 
     plot_context.x_axis = plot_context.VALUE_AXIS
-    plot_context.Y_axis = plot_context.COUNT_AXIS
+    plot_context.y_axis = plot_context.COUNT_AXIS
 
     if config.xLabel() is None:
         config.setXLabel("Value")
@@ -62,9 +69,9 @@ def plotHistogram(
     use_log_scale = plot_context.log_scale
 
     data = {}
-    minimum = None
-    maximum = None
-    categories = set()
+    minimum: Optional[float] = None
+    maximum: Optional[float] = None
+    categories: Set[str] = set()
     max_element_count = 0
     categorical = False
     for ensemble, datas in ensemble_to_data_map.items():
@@ -96,7 +103,6 @@ def plotHistogram(
             maximum = current_max if maximum is None else max(maximum, current_max)
             max_element_count = max(max_element_count, len(data[ensemble.name].index))
 
-    categories = sorted(categories)
     bin_count = int(ceil(sqrt(max_element_count)))
 
     axes = {}
@@ -117,7 +123,7 @@ def plotHistogram(
                     config,
                     data[ensemble.name],
                     ensemble.name,
-                    categories,
+                    sorted(categories),
                 )
             else:
                 _plotHistogram(
@@ -153,13 +159,14 @@ def plotHistogram(
 def _plotCategoricalHistogram(
     axes: "Axes",
     plot_config: "PlotConfig",
-    data: pd.DataFrame,
+    data: pd.Series,
     label: str,
     categories: List[str],
-):
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
-
+) -> None:
+    if xlabel := plot_config.xLabel():
+        axes.set_xlabel(xlabel)
+    if ylabel := plot_config.yLabel():
+        axes.set_ylabel(ylabel)
     style = plot_config.histogramStyle()
 
     counts = data.value_counts()
@@ -180,15 +187,17 @@ def _plotCategoricalHistogram(
 def _plotHistogram(
     axes: "Axes",
     plot_config: "PlotConfig",
-    data: pd.DataFrame,
+    data: pd.Series,
     label: str,
-    bin_count,
-    use_log_scale=False,
-    minimum=None,
-    maximum=None,
-):
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
+    bin_count: int,
+    use_log_scale: bool = False,
+    minimum: Optional[float] = None,
+    maximum: Optional[float] = None,
+) -> None:
+    if xlabel := plot_config.xLabel():
+        axes.set_xlabel(xlabel)
+    if ylabel := plot_config.yLabel():
+        axes.set_ylabel(ylabel)
 
     style = plot_config.histogramStyle()
 
@@ -197,14 +206,13 @@ def _plotHistogram(
             bins = _histogramLogBins(bin_count, minimum, maximum)
         else:
             bins = numpy.linspace(minimum, maximum, bin_count)
+        if minimum == maximum:
+            minimum -= 0.5
+            maximum += 0.5
     else:
         bins = bin_count
 
     axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
-
-    if minimum == maximum:
-        minimum -= 0.5
-        maximum += 0.5
 
     axes.set_xlim(minimum, maximum)
 
@@ -214,7 +222,7 @@ def _plotHistogram(
     plot_config.addLegendItem(label, rectangle)
 
 
-def _histogramLogBins(bin_count, minimum=None, maximum=None):
+def _histogramLogBins(bin_count: int, minimum: float, maximum: float):
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 
