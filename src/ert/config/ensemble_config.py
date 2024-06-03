@@ -20,7 +20,7 @@ from ert.config.commons import Refcase
 from ert.config.field import Field
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parameter_config import ParameterConfig
-from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError, ErrorInfo
 from ert.config.responses._read_summary import read_summary
 from ert.config.responses.gen_data_config import GenDataConfig
 from ert.config.responses.response_config import (
@@ -97,25 +97,36 @@ class EnsembleConfig:
     def _parse_observations(self) -> None:
         observations_by_type = {}
 
+        errors = []
         for obs_config in self.observation_configs.values():
-            response_config = next(
-                rc
-                for rc in self.response_configs.values()
-                if rc.response_type() == obs_config.response_type
-            )
+            try:
+                response_config = next(
+                    rc
+                    for rc in self.response_configs.values()
+                    if rc.response_type() == obs_config.response_type
+                    or (rc.name == obs_config.response_name and rc.name is not None)
+                )
+            except StopIteration:
+                errors.append(
+                    ErrorInfo(
+                        "Could not match observation to a response type or name"
+                    ).set_context_list(obs_config.line_from_ert_config)
+                )
+
             observation_ds = response_config.parse_observation_from_config(
                 obs_config.line_from_ert_config
             )
 
-            if obs_config.response_type not in observations_by_type:
-                observations_by_type[obs_config.response_type] = []
+            if observation_ds:
+                if obs_config.response_type not in observations_by_type:
+                    observations_by_type[obs_config.response_type] = []
 
-            observations_by_type[obs_config.response_type].append(observation_ds)
+                observations_by_type[obs_config.response_type].append(observation_ds)
 
         # Merge by type & primary key
         self.observations_datasets: Dict[str, xr.Dataset] = {
             obs_type: xr.concat(obs_ds_list, dim="obs_name")
-            for obs_type, obs_ds_list in observations_by_type
+            for obs_type, obs_ds_list in observations_by_type.items()
         }
 
     @staticmethod

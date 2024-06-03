@@ -41,7 +41,7 @@ class ObservationConfig:
 
         response_name = kwargs.get("<RESPONSE_NAME>")
         response_type = kwargs.get("<RESPONSE_TYPE>")
-        obs_name = kwargs.get("<OBS_NAME>", f"obs({line_from_ert_config})")
+        obs_name = kwargs.get("<OBS_NAME>", f"obs{line_from_ert_config}")
 
         # Expect <SRC> always
         if "<SRC>" not in kwargs:
@@ -89,7 +89,7 @@ class ResponseConfigWithLifecycleHooks(ABC):
             kwargs = self.parse_kwargs_from_config_list(self.line_from_ert_config[0])
             return kwargs.get(
                 "<NAME>",
-                f"response({self.line_from_ert_config[0].token.line})",
+                f"response{self.line_from_ert_config[0]}",
             )
 
     @classmethod
