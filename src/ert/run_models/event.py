@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
+from uuid import UUID
 
 from ert.analysis.event import DataSection
 
@@ -9,6 +10,7 @@ from ert.analysis.event import DataSection
 @dataclass
 class RunModelEvent:
     iteration: int
+    run_id: UUID
 
 
 @dataclass

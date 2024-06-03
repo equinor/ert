@@ -11,6 +11,7 @@ import xarray as xr
 import xtgeo
 from iterative_ensemble_smoother import steplength_exponential
 from scipy.ndimage import gaussian_filter
+from tabulate import tabulate
 
 from ert.analysis import (
     ErtAnalysisError,
@@ -19,10 +20,10 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
-    SmootherSnapshot,
     _load_param_ensemble_array,
     _save_param_ensemble_array_to_disk,
 )
+from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings, IESSettings
@@ -84,8 +85,8 @@ def remove_timestamp_from_logfile(log_file: Path):
 def test_update_report(
     snake_oil_case_storage,
     snake_oil_storage,
-    snapshot,
     misfit_preprocess,
+    snapshot,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
@@ -100,33 +101,26 @@ def test_update_report(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+    events = []
 
     smoother_update(
         prior_ens,
         posterior_ens,
-        "id",
         posterior_ens.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
-        log_path=Path("update_log"),
+        progress_callback=events.append,
     )
-    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
-    remove_timestamp_from_logfile(log_file)
-    snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
-    json = (prior_ens.experiment._path / "update_log_id.json").read_text(
-        encoding="utf-8"
+    event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    snapshot.assert_match(
+        tabulate(event.data.data, floatfmt=".3f") + "\n", "update_log"
     )
-    snapshot = SmootherSnapshot.model_validate_json(json)
-
-    assert snapshot.source_ensemble_name == "default_0"
-    assert snapshot.target_ensemble_name == "new_ensemble"
-    assert len(snapshot.update_step_snapshots) == 210
 
 
 def test_update_report_with_exception_in_analysis_ES(
-    mocker,
+    snapshot,
     snake_oil_case_storage,
     snake_oil_storage,
 ):
@@ -139,26 +133,26 @@ def test_update_report_with_exception_in_analysis_ES(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+    events = []
 
-    def mock_analysis_ES(*args):
-        raise ErtAnalysisError("one_exception")
-
-    with mocker.patch(
-        "ert.analysis._es_update.analysis_ES", side_effect=mock_analysis_ES
+    with pytest.raises(
+        ErtAnalysisError, match="No active observations for update step"
     ):
-        with pytest.raises(ErtAnalysisError, match="one_exception"):
-            smoother_update(
-                prior_ens,
-                posterior_ens,
-                "id",
-                posterior_ens.experiment.observation_keys,
-                ert_config.ensemble_config.parameters,
-                UpdateSettings(),
-                ESSettings(inversion="subspace"),
-                log_path=Path("update_log"),
-            )
+        smoother_update(
+            prior_ens,
+            posterior_ens,
+            posterior_ens.experiment.observation_keys,
+            ert_config.ensemble_config.parameters,
+            UpdateSettings(alpha=0.0000000001),
+            ESSettings(inversion="subspace"),
+            progress_callback=events.append,
+        )
 
-        assert (ert_config.analysis_config.log_path / "id.txt").exists()
+    error_event = next(e for e in events if isinstance(e, AnalysisErrorEvent))
+    assert error_event.error_msg == "No active observations for update step"
+    snapshot.assert_match(
+        tabulate(error_event.data.data, floatfmt=".3f") + "\n", "error_event"
+    )
 
 
 @pytest.mark.parametrize(
@@ -184,16 +178,16 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+    events = []
 
     ss = smoother_update(
         prior_ens,
         posterior_ens,
-        "id",
         posterior_ens.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         update_settings,
         ESSettings(inversion="subspace"),
-        log_path=Path("update_log"),
+        progress_callback=events.append,
     )
 
     outliers = len(
@@ -215,16 +209,16 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     )
     active = len(ss.update_step_snapshots) - outliers - std_cutoff - missing
 
-    update_report_file = ert_config.analysis_config.log_path / "id.txt"
-    assert update_report_file.exists()
-
-    report = update_report_file.read_text(encoding="utf-8")
-    assert f"Active observations: {active}" in report
-    assert f"Deactivated observations - missing respons(es): {missing}" in report
-    assert (
-        f"Deactivated observations - ensemble_std > STD_CUTOFF: {std_cutoff}" in report
+    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    data_section = update_event.data
+    assert data_section.extra["Active observations"] == str(active)
+    assert data_section.extra["Deactivated observations - missing respons(es)"] == str(
+        missing
     )
-    assert f"Deactivated observations - outlier: {outliers}" in report
+    assert data_section.extra[
+        "Deactivated observations - ensemble_std > STD_CUTOFF"
+    ] == str(std_cutoff)
+    assert data_section.extra["Deactivated observations - outliers"] == str(outliers)
 
 
 @pytest.mark.parametrize(
@@ -304,7 +298,6 @@ def test_update_snapshot(
             prior_storage=prior_ens,
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
-            run_id="id",
             observations=posterior_ens.experiment.observation_keys,
             parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
@@ -317,7 +310,6 @@ def test_update_snapshot(
         smoother_update(
             prior_ens,
             posterior_ens,
-            "id",
             posterior_ens.experiment.observation_keys,
             list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
@@ -447,7 +439,6 @@ def test_smoother_snapshot_alpha(
             prior_storage=prior_storage,
             posterior_storage=posterior_storage,
             sies_smoother=sies_smoother,
-            run_id="id",
             observations=["OBSERVATION"],
             parameters=["PARAMETER"],
             update_settings=UpdateSettings(alpha=alpha),
@@ -606,7 +597,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
         smoother_update,
         prior_ensemble,
         posterior_ensemble,
-        "id",
         ["OBSERVATION"],
         [param_group],
         UpdateSettings(),
@@ -649,19 +639,22 @@ def test_update_only_using_subset_observations(
         name="new_ensemble",
         prior_ensemble=prior_ens,
     )
+    events = []
+
     smoother_update(
         prior_ens,
         posterior_ens,
-        "id",
         ["WPR_DIFF_1"],
         ert_config.ensemble_config.parameters,
         UpdateSettings(),
         ESSettings(),
-        log_path=Path(ert_config.analysis_config.log_path),
+        progress_callback=events.append,
     )
-    log_file = Path(ert_config.analysis_config.log_path) / "id.txt"
-    remove_timestamp_from_logfile(log_file)
-    snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    snapshot.assert_match(
+        tabulate(update_event.data.data, floatfmt=".3f") + "\n", "update_log"
+    )
 
 
 def test_temporary_parameter_storage_with_inactive_fields(

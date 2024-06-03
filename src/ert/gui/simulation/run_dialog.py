@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
@@ -53,6 +54,7 @@ from ert.run_models import (
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import byte_with_unit, format_running_time
 
+from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
 from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
@@ -73,8 +75,10 @@ class RunDialog(QDialog):
         event_queue: SimpleQueue,
         notifier: ErtNotifier,
         parent=None,
+        output_path: Optional[Path] = None,
     ):
         QDialog.__init__(self, parent)
+        self.output_path = output_path
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -436,6 +440,18 @@ class RunDialog(QDialog):
         elif isinstance(event, RunModelErrorEvent):
             if (widget := self._get_update_widget(event.iteration)) is not None:
                 widget.error(event)
+
+        if (
+            isinstance(
+                event, (RunModelDataEvent, RunModelUpdateEndEvent, RunModelErrorEvent)
+            )
+            and self.output_path
+        ):
+            name = event.name if hasattr(event, "name") else "Report"
+            if event.data:
+                csv_event_to_report(
+                    name, event.data, self.output_path / str(event.run_id)
+                )
 
     def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
         for i in range(0, self._tab_widget.count()):

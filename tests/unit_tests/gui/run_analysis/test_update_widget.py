@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import numpy as np
 from pytestqt.qtbot import QtBot
 from qtpy.QtWidgets import QTableWidget
@@ -11,6 +13,7 @@ def test_update_widget(qtbot: QtBot):
     event = RunModelDataEvent(
         iteration=0,
         name="test",
+        run_id=uuid4(),
         data=DataSection(header=["a", "b"], data=np.array([[42, 2], [3, 4]])),
     )
     widget = UpdateWidget(event.iteration)

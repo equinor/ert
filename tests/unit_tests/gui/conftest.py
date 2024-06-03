@@ -8,6 +8,7 @@ import stat
 import time
 from contextlib import contextmanager
 from datetime import datetime as dt
+from pathlib import Path
 from textwrap import dedent
 from typing import Generator, List, Tuple, Type, TypeVar
 from unittest.mock import MagicMock, Mock
@@ -139,6 +140,11 @@ def _esmda_run(run_experiment, source_root, tmp_path_factory):
         mp.chdir(path)
         _add_default_ensemble(storage, gui, config)
         run_experiment(MultipleDataAssimilation, gui)
+        # Check that we produce update log
+        log_paths = list(Path(config.analysis_config.log_path).iterdir())
+        assert log_paths
+        assert (log_paths[0] / "Report.report").exists()
+        assert (log_paths[0] / "Report.csv").exists()
 
     return path
 

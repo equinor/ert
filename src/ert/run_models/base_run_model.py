@@ -25,7 +25,11 @@ from cloudevents.http import CloudEvent
 
 from _ert.async_utils import get_running_loop
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
-from ert.analysis.event import AnalysisDataEvent, AnalysisErrorEvent
+from ert.analysis.event import (
+    AnalysisCompleteEvent,
+    AnalysisDataEvent,
+    AnalysisErrorEvent,
+)
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
@@ -193,13 +197,18 @@ class BaseRunModel:
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
 
-    def send_smoother_event(self, iteration: int, event: AnalysisEvent) -> None:
+    def send_smoother_event(
+        self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
+    ) -> None:
         if isinstance(event, AnalysisStatusEvent):
-            self.send_event(RunModelStatusEvent(iteration=iteration, msg=event.msg))
+            self.send_event(
+                RunModelStatusEvent(iteration=iteration, run_id=run_id, msg=event.msg)
+            )
         elif isinstance(event, AnalysisTimeEvent):
             self.send_event(
                 RunModelTimeEvent(
                     iteration=iteration,
+                    run_id=run_id,
                     elapsed_time=event.elapsed_time,
                     remaining_time=event.remaining_time,
                 )
@@ -207,12 +216,23 @@ class BaseRunModel:
         elif isinstance(event, AnalysisErrorEvent):
             self.send_event(
                 RunModelErrorEvent(
-                    iteration=iteration, error_msg=event.error_msg, data=event.data
+                    iteration=iteration,
+                    run_id=run_id,
+                    error_msg=event.error_msg,
+                    data=event.data,
                 )
             )
         elif isinstance(event, AnalysisDataEvent):
             self.send_event(
-                RunModelDataEvent(iteration=iteration, name=event.name, data=event.data)
+                RunModelDataEvent(
+                    iteration=iteration, run_id=run_id, name=event.name, data=event.data
+                )
+            )
+        elif isinstance(event, AnalysisCompleteEvent):
+            self.send_event(
+                RunModelUpdateEndEvent(
+                    iteration=iteration, run_id=run_id, data=event.data
+                )
             )
 
     @property
