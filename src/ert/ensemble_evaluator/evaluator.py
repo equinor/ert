@@ -313,9 +313,10 @@ class EnsembleEvaluator:
             ping_timeout=60,
             ping_interval=60,
             close_timeout=60,
-        ):
+        ) as server:
             self._server_started.set()
             await self._server_done.wait()
+            server.close(close_connections=False)
             if self._dispatchers_connected is not None:
                 logger.debug(
                     f"Got done signal. {self._dispatchers_connected.qsize()} "
