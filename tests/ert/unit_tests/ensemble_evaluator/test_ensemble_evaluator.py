@@ -94,6 +94,28 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
+async def test_new_connections_are_denied_when_evaluator_is_closing_down(
+    evaluator_to_use,
+):
+    evaluator = evaluator_to_use
+
+    class TestMonitor(Monitor):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._connection_timeout = 1
+
+    async def new_connection():
+        await evaluator._server_done.wait()
+        async with TestMonitor(evaluator._config.get_connection_info()):
+            pass
+
+    new_connection_task = asyncio.create_task(new_connection())
+    evaluator.stop()
+
+    with pytest.raises(RuntimeError):
+        await new_connection_task
+
+
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
