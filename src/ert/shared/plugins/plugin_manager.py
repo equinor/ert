@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 import pluggy
 
+from ert.config.forward_model_step import ForwardModelStep
 from ert.shared.plugins.workflow_config import WorkflowConfigs
 
 _PLUGIN_NAMESPACE = "ert"
@@ -80,6 +81,15 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_help_links(self) -> Dict[str, Any]:
         return ErtPluginManager._merge_dicts(self.hook.help_links())
+
+    @property
+    def forward_model_steps(
+        self,
+    ) -> List[Type[ForwardModelStep]]:
+        fm_steps_listed = [
+            resp.data for resp in self.hook.installable_forward_model_steps()
+        ]
+        return [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
 
     @staticmethod
     def _evaluate_config_hook(

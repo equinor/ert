@@ -8,6 +8,12 @@ import pytest
 from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config.forward_model_step import (
+    ForwardModelStepJSON,
+    ForwardModelStepPlugin,
+    ForwardModelStepValidationError,
+)
+from ert.substitution_list import SubstitutionList
 
 from .config_dict_generator import config_generators
 
@@ -305,3 +311,317 @@ def test_that_eclipse100_require_version_field():
         ConfigValidationError, match="Required keyword <VERSION>.*ECLIPSE100"
     ):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+def test_that_plugin_forward_models_are_installed(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL PluginForwardModel(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
+        """
+        )
+    )
+
+    class PluginForwardModel(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="PluginForwardModel",
+                command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
+            )
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            if set(self.private_args.keys()) != {"<arg1>", "<arg2>", "<arg3>"}:
+                raise ForwardModelStepValidationError("Bad")
+
+        def validate_pre_realization_run(
+            self, fm_step_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            return fm_step_json
+
+    config = ErtConfig.with_plugins(
+        forward_model_step_classes=[PluginForwardModel]
+    ).from_file(tmp_path / "test.ert")
+
+    first_fm = config.forward_model_steps[0]
+
+    expected_attrs = {
+        "name": "PluginForwardModel",
+        "executable": "something",
+        "stdin_file": None,
+        "stdout_file": "PluginForwardModel.stdout",
+        "stderr_file": "PluginForwardModel.stderr",
+        "start_file": None,
+        "target_file": None,
+        "error_file": None,
+        "max_running_minutes": None,
+        "min_arg": 0,
+        "max_arg": 0,
+        "arglist": ["<arg1>", "-f", "<arg2>", "<arg3>"],
+        "required_keywords": [],
+        "arg_types": [],
+        "environment": {
+            "_ERT_ITERATION_NUMBER": "<ITER>",
+            "_ERT_REALIZATION_NUMBER": "<IENS>",
+            "_ERT_RUNPATH": "<RUNPATH>",
+        },
+        "exec_env": {},
+        "default_mapping": {},
+        "help_text": "",
+        "private_args": SubstitutionList(
+            {
+                "<arg1>": "hello",
+                "<arg2>": "world",
+                "<arg3>": "derpyderp",
+            }
+        ),
+    }
+
+    for a, v in expected_attrs.items():
+        assert (
+            getattr(first_fm, a) == v
+        ), f"Expected fm[{a}] to be {v} but was {getattr(first_fm,a)}"
+
+    fm_json = config.forward_model_data_to_json("some_id", 0, 0)
+    assert len(fm_json["jobList"]) == 1
+    job_from_joblist = fm_json["jobList"][0]
+    assert job_from_joblist["name"] == "PluginForwardModel"
+    assert job_from_joblist["executable"] == "something"
+    assert job_from_joblist["stdout"] == "PluginForwardModel.stdout.0"
+    assert job_from_joblist["stderr"] == "PluginForwardModel.stderr.0"
+    assert job_from_joblist["argList"] == ["hello", "-f", "world", "derpyderp"]
+
+
+def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL PluginFM(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
+        """
+        )
+    )
+
+    class FM(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="PluginFM",
+                command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelStepValidationError("Oh no")
+
+            return fm_json
+
+    config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
+        tmp_path / "test.ert"
+    )
+
+    first_fm = config.forward_model_steps[0]
+    with pytest.raises(ForwardModelStepValidationError, match="Oh no"):
+        first_fm.validate_pre_realization_run({"argList": ["not hello"]})
+
+    with pytest.raises(
+        ConfigValidationError, match="Validation failed for forward model step"
+    ):
+        _ = config.forward_model_data_to_json("id", 0, 0)
+
+
+def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL FM(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+        """
+        )
+    )
+
+    class FM(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FM",
+                command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelStepValidationError("Oh no")
+
+            return fm_json
+
+    config = ErtConfig.with_plugins(forward_model_step_classes=[FM]).from_file(
+        tmp_path / "test.ert"
+    )
+    first_fm = config.forward_model_steps[0]
+
+    first_fm.validate_pre_realization_run({"argList": ["never"]})
+
+    _ = config.forward_model_data_to_json("id", 0, 0)
+
+
+def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+        FORWARD_MODEL FM2
+        """
+        )
+    )
+
+    class FM1(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FM1",
+                command=["the_executable.sh"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_step_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            raise ForwardModelStepValidationError(
+                "This is a bad forward model step, dont use it"
+            )
+
+    class FM2(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FM2",
+                command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            if fm_json["argList"][0] != "never":
+                raise ForwardModelStepValidationError("Oh no")
+
+            return fm_json
+
+    config = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
+        tmp_path / "test.ert"
+    )
+    assert isinstance(config.forward_model_steps[0], FM1)
+    assert config.forward_model_steps[0].name == "FM1"
+
+    assert isinstance(config.forward_model_steps[1], FM2)
+    assert config.forward_model_steps[1].name == "FM2"
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=".*This is a bad forward model step, dont use it.*",
+    ):
+        config.forward_model_data_to_json("id", 0, 0)
+
+
+def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+        FORWARD_MODEL FM2
+        """
+    )
+
+    class InvalidFightingStyle(ForwardModelStepValidationError):
+        pass
+
+    class FM1(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(name="FM1", command=["the_executable.sh"])
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            if self.name != "FM1":
+                raise ForwardModelStepValidationError("Expected name to be FM1")
+
+            raise InvalidFightingStyle("I don't think I wanna do hamster style anymore")
+
+    class FM2(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FM2",
+                command=["the_executable.sh"],
+            )
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            if self.name != "FM2":
+                raise ForwardModelStepValidationError("Expected name to be FM2")
+
+            raise ForwardModelStepValidationError("well that's nice")
+
+    with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):
+        _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
+            tmp_path / "test.ert"
+        )
+
+
+def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+
+        DEFINE <yo> dear
+        DEFINE <dawg> good
+        DEFINE <iherdulike> solonius
+        DEFINE <some_var> schmidt
+
+        FORWARD_MODEL FM1(<arg1>=<yo>,<arg2>=<dawg>,<arg3>=<iherdulike>)
+        """
+        )
+    )
+
+    class FM1(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FM1",
+                command=[
+                    "the_executable.sh",
+                    "sed",
+                    "-i",
+                    "<yo>",
+                    "-c",
+                    "<dawg>",
+                    "<iherdulike>",
+                    "<some_var>",
+                    "iter",
+                ],
+            )
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            assert fm_step_json["argList"] == [
+                "sed",
+                "-i",
+                "dear",
+                "-c",
+                "good",
+                "solonius",
+                "schmidt",
+                "iter",
+            ]
+
+            # It is in the arglist, but not in the forward model(...) invocation in the
+            # ert config. Thus it is not a "private" arg in that sense.
+            assert "<some_var>" not in self.private_args
+
+            assert dict(self.private_args) == {
+                "<arg1>": "dear",
+                "<arg2>": "good",
+                "<arg3>": "solonius",
+            }
+
+    ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
+        tmp_path / "test.ert"
+    )

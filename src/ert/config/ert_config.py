@@ -18,15 +18,16 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
+    no_type_check,
     overload,
 )
 
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
-from ert.config.observation_vector import ObsVector
-from ert.config.observations import EnkfObs, group_observations_by_response_type
+from ert.config.observations import group_observations_by_response_type
 from ert.config.response_config import ObsArgs
 from ert.config.summary_config import SummaryConfig
 from ert.substitution_list import SubstitutionList
@@ -34,15 +35,24 @@ from ert.substitution_list import SubstitutionList
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
-from .forward_model_step import ForwardModelStep
+from .forward_model_step import (
+    ForwardModelStep,
+    ForwardModelStepJSON,
+    ForwardModelStepValidationError,
+)
 from .model_config import ModelConfig
+from .observation_vector import ObsVector
+from .observations import EnkfObs
+from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
     ErrorInfo,
+    ForwardModelStepKeys,
     HookRuntime,
+    init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
     lark_parse,
@@ -75,6 +85,7 @@ def site_config_location() -> str:
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
+    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
     substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
@@ -120,6 +131,23 @@ class ErtConfig:
         if len(self.summary_keys) != 0:
             self.ensemble_config.addNode(self._create_summary_config())
 
+    @staticmethod
+    def with_plugins(
+        forward_model_step_classes: List[Type[ForwardModelStep]],
+    ) -> Type["ErtConfig"]:
+        preinstalled_fm_steps: Dict[str, ForwardModelStep] = {}
+        for fm_step_subclass in forward_model_step_classes:
+            fm_step = fm_step_subclass()
+            preinstalled_fm_steps[fm_step.name] = fm_step
+
+        class ErtConfigWithPlugins(ErtConfig):
+            PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = (
+                preinstalled_fm_steps
+            )
+
+        assert issubclass(ErtConfigWithPlugins, ErtConfig)
+        return ErtConfigWithPlugins
+
     @cached_property
     def observation_keys(self):
         keys = []
@@ -143,12 +171,12 @@ class ErtConfig:
         Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
         when the user should be notified with non-fatal configuration problems.
         """
-        user_config_dict = ErtConfig.read_user_config(user_config_file)
+        user_config_dict = cls.read_user_config(user_config_file)
         config_dir = path.abspath(path.dirname(user_config_file))
-        ErtConfig._log_config_file(user_config_file)
-        ErtConfig._log_config_dict(user_config_dict)
-        ErtConfig.apply_config_content_defaults(user_config_dict, config_dir)
-        return ErtConfig.from_dict(user_config_dict)
+        cls._log_config_file(user_config_file)
+        cls._log_config_dict(user_config_dict)
+        cls.apply_config_content_defaults(user_config_dict, config_dir)
+        return cls.from_dict(user_config_dict)
 
     @classmethod
     def from_dict(cls, config_dict) -> Self:
@@ -195,9 +223,14 @@ class ErtConfig:
             errors.append(e)
 
         try:
-            installed_forward_model_steps = (
+            installed_forward_model_steps = copy.deepcopy(
+                cls.PREINSTALLED_FORWARD_MODEL_STEPS
+            )
+
+            installed_forward_model_steps.update(
                 cls._installed_forward_model_steps_from_dict(config_dict)
             )
+
         except ConfigValidationError as e:
             errors.append(e)
 
@@ -234,7 +267,9 @@ class ErtConfig:
             summary_keys=cls._read_summary_keys(config_dict, ensemble_config),
             installed_forward_model_steps=installed_forward_model_steps,
             forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
-                installed_forward_model_steps, substitution_list, config_dict
+                installed_forward_model_steps,
+                substitution_list,
+                config_dict,
             ),
             model_config=model_config,
             user_config_file=config_file_path,
@@ -419,6 +454,9 @@ class ErtConfig:
             fm_step_name = substitution_list.substitute(unsubstituted_step_name)
             try:
                 fm_step = copy.deepcopy(installed_steps[fm_step_name])
+
+                # Preserve as ContextString
+                fm_step.name = fm_step_name
             except KeyError:
                 errors.append(
                     ConfigValidationError.with_context(
@@ -463,6 +501,25 @@ class ErtConfig:
             fm_step.arglist = fm_step_description[1:]
             fm_steps.append(fm_step)
 
+        for fm_step in fm_steps:
+            if fm_step.name in cls.PREINSTALLED_FORWARD_MODEL_STEPS:
+                try:
+                    substituted_json = cls._create_forward_model_json(
+                        run_id=None,
+                        context=substitution_list,
+                        forward_model_steps=[fm_step],
+                        skip_pre_experiment_validation=True,
+                    )
+                    job_json = substituted_json["jobList"][0]
+                    fm_step.validate_pre_experiment(job_json)
+                except ForwardModelStepValidationError as err:
+                    errors.append(
+                        ConfigValidationError.with_context(
+                            f"Forward model step pre-experiment validation failed: {str(err)}",
+                            context=fm_step.name,
+                        ),
+                    )
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
@@ -473,11 +530,34 @@ class ErtConfig:
 
     def forward_model_data_to_json(
         self,
-        run_id: str,
+        run_id: Optional[str] = None,
         iens: int = 0,
         itr: int = 0,
+    ):
+        return self._create_forward_model_json(
+            context=self.substitution_list,
+            forward_model_steps=self.forward_model_steps,
+            user_config_file=self.user_config_file,
+            env_vars=self.env_vars,
+            run_id=run_id,
+            iens=iens,
+            itr=itr,
+        )
+
+    @classmethod
+    def _create_forward_model_json(
+        cls,
+        context: SubstitutionList,
+        forward_model_steps: List[ForwardModelStep],
+        run_id: Optional[str],
+        iens: int = 0,
+        itr: int = 0,
+        user_config_file: Optional[str] = "",
+        env_vars: Optional[Dict[str, str]] = None,
+        skip_pre_experiment_validation: bool = False,
     ) -> Dict[str, Any]:
-        context = self.substitution_list
+        if env_vars is None:
+            env_vars = {}
 
         class Substituter:
             def __init__(self, fm_step):
@@ -536,7 +616,7 @@ class ErtConfig:
         def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
             return fm_step.default_mapping.get(arg, arg)
 
-        for fm_step in self.forward_model_steps:
+        for fm_step in forward_model_steps:
             for key, val in fm_step.private_args.items():
                 if key in context and key != val and context[key] != val:
                     logger.info(
@@ -544,45 +624,62 @@ class ErtConfig:
                         f" global '{context[key]}' in forward model step {fm_step.name}"
                     )
         config_file_path = (
-            Path(self.user_config_file) if self.user_config_file is not None else None
+            Path(user_config_file) if user_config_file is not None else None
         )
         config_path = str(config_file_path.parent) if config_file_path else ""
         config_file = str(config_file_path.name) if config_file_path else ""
+
+        job_list_errors = []
+        job_list: List[ForwardModelStepJSON] = []
+        for idx, fm_step in enumerate(forward_model_steps):
+            substituter = Substituter(fm_step)
+            fm_step_json = {
+                "name": substituter.substitute(fm_step.name),
+                "executable": substituter.substitute(fm_step.executable),
+                "target_file": substituter.substitute(fm_step.target_file),
+                "error_file": substituter.substitute(fm_step.error_file),
+                "start_file": substituter.substitute(fm_step.start_file),
+                "stdout": (
+                    substituter.substitute(fm_step.stdout_file) + f".{idx}"
+                    if fm_step.stdout_file
+                    else None
+                ),
+                "stderr": (
+                    substituter.substitute(fm_step.stderr_file) + f".{idx}"
+                    if fm_step.stderr_file
+                    else None
+                ),
+                "stdin": substituter.substitute(fm_step.stdin_file),
+                "argList": [
+                    handle_default(fm_step, substituter.substitute(arg))
+                    for arg in fm_step.arglist
+                ],
+                "environment": substituter.filter_env_dict(fm_step.environment),
+                "exec_env": substituter.filter_env_dict(fm_step.exec_env),
+                "max_running_minutes": fm_step.max_running_minutes,
+            }
+
+            try:
+                if not skip_pre_experiment_validation:
+                    fm_step_json = fm_step.validate_pre_realization_run(fm_step_json)
+            except ForwardModelStepValidationError as exc:
+                job_list_errors.append(
+                    ErrorInfo(
+                        message=f"Validation failed for "
+                        f"forward model step {fm_step.name}: {str(exc)}"
+                    ).set_context(fm_step.name)
+                )
+
+            job_list.append(fm_step_json)
+
+        if job_list_errors:
+            raise ConfigValidationError.from_collected(job_list_errors)
+
         return {
-            "global_environment": self.env_vars,
+            "global_environment": env_vars,
             "config_path": config_path,
             "config_file": config_file,
-            "jobList": [
-                {
-                    "name": substituter.substitute(fm_step.name),
-                    "executable": substituter.substitute(fm_step.executable),
-                    "target_file": substituter.substitute(fm_step.target_file),
-                    "error_file": substituter.substitute(fm_step.error_file),
-                    "start_file": substituter.substitute(fm_step.start_file),
-                    "stdout": (
-                        substituter.substitute(fm_step.stdout_file) + f".{idx}"
-                        if fm_step.stdout_file
-                        else None
-                    ),
-                    "stderr": (
-                        substituter.substitute(fm_step.stderr_file) + f".{idx}"
-                        if fm_step.stderr_file
-                        else None
-                    ),
-                    "stdin": substituter.substitute(fm_step.stdin_file),
-                    "argList": [
-                        handle_default(fm_step, substituter.substitute(arg))
-                        for arg in fm_step.arglist
-                    ],
-                    "environment": substituter.filter_env_dict(fm_step.environment),
-                    "exec_env": substituter.filter_env_dict(fm_step.exec_env),
-                    "max_running_minutes": fm_step.max_running_minutes,
-                }
-                for idx, fm_step, substituter in [
-                    (idx, fm_step, Substituter(fm_step))
-                    for idx, fm_step in enumerate(self.forward_model_steps)
-                ]
-            ],
+            "jobList": job_list,
             "run_id": run_id,
             "ert_pid": str(os.getpid()),
         }
@@ -687,14 +784,16 @@ class ErtConfig:
         return workflow_jobs, workflows, hooked_workflows
 
     @classmethod
-    def _installed_forward_model_steps_from_dict(cls, config_dict):
+    def _installed_forward_model_steps_from_dict(
+        cls, config_dict
+    ) -> Dict[str, ForwardModelStep]:
         errors = []
         fm_steps = {}
         for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
             name = fm_step[0]
             fm_step_config_file = path.abspath(fm_step[1])
             try:
-                new_fm_step = ForwardModelStep.from_config_file(
+                new_fm_step = _forward_model_step_from_config_file(
                     name=name,
                     config_file=fm_step_config_file,
                 )
@@ -714,7 +813,7 @@ class ErtConfig:
                 if not path.isfile(file_name):
                     continue
                 try:
-                    new_fm_step = ForwardModelStep.from_config_file(
+                    new_fm_step = _forward_model_step_from_config_file(
                         config_file=file_name
                     )
                 except ConfigValidationError as e:
@@ -867,3 +966,54 @@ def _substitution_list_from_dict(config_dict) -> SubstitutionList:
         subst_list[key] = val
 
     return subst_list
+
+
+@no_type_check
+def _forward_model_step_from_config_file(
+    config_file: str, name: Optional[str] = None
+) -> "ForwardModelStep":
+    if name is None:
+        name = os.path.basename(config_file)
+
+    schema = init_forward_model_schema()
+
+    try:
+        content_dict = lark_parse(file=config_file, schema=schema, pre_defines=[])
+
+        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
+            ForwardModelStepKeys.ARG_TYPE, []
+        )
+
+        specified_max_args: int = content_dict.get("MAX_ARG", 0)
+        specified_min_args: int = content_dict.get("MIN_ARG", 0)
+
+        arg_types_list = parse_arg_types_list(
+            specified_arg_types, specified_min_args, specified_max_args
+        )
+
+        environment = {k: v for [k, v] in content_dict.get("ENV", [])}
+        exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
+        default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+
+        return ForwardModelStep(
+            name=name,
+            executable=content_dict.get("EXECUTABLE"),
+            stdin_file=content_dict.get("STDIN"),
+            stdout_file=content_dict.get("STDOUT"),
+            stderr_file=content_dict.get("STDERR"),
+            start_file=content_dict.get("START_FILE"),
+            target_file=content_dict.get("TARGET_FILE"),
+            error_file=content_dict.get("ERROR_FILE"),
+            max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
+            min_arg=content_dict.get("MIN_ARG"),
+            max_arg=content_dict.get("MAX_ARG"),
+            arglist=content_dict.get("ARGLIST", []),
+            arg_types=arg_types_list,
+            environment=environment,
+            required_keywords=content_dict.get("REQUIRED", []),
+            exec_env=exec_env,
+            default_mapping=default_mapping,
+            help_text=content_dict.get("HELP_TEXT", ""),
+        )
+    except IOError as err:
+        raise ConfigValidationError.with_context(str(err), config_file) from err

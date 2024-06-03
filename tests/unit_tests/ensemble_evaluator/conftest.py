@@ -7,7 +7,8 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 import ert.ensemble_evaluator
-from ert.config import ForwardModelStep, QueueConfig, QueueSystem
+from ert.config import QueueConfig, QueueSystem
+from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
@@ -97,7 +98,7 @@ def make_ensemble_builder(queue_config):
                 os.chmod(forward_model_exec, stat.S_IMODE(mode))
 
                 forward_model_list.append(
-                    ForwardModelStep.from_config_file(
+                    _forward_model_step_from_config_file(
                         str(forward_model_config), name=f"forward_model_{job_index}"
                     )
                 )

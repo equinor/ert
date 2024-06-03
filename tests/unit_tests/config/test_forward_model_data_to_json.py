@@ -11,6 +11,7 @@ from typing import List
 import pytest
 
 from ert.config import ErtConfig, ForwardModelStep
+from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitution_list import SubstitutionList
@@ -159,7 +160,7 @@ def _generate_step(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    return ForwardModelStep.from_config_file(config_file, name)
+    return _forward_model_step_from_config_file(config_file, name)
 
 
 def empty_list_if_none(_list):
