@@ -363,6 +363,7 @@ class StorageInfoWidget(QWidget):
         self._ensemble_widget = _EnsembleWidget()
         self._realization_widget = _RealizationWidget()
         empty_widget = QWidget()
+        self.setMinimumWidth(200)
 
         self._content_layout = QStackedLayout()
         self._content_layout.insertWidget(_WidgetType.EMPTY_WIDGET, empty_widget)
