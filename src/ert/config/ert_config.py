@@ -26,7 +26,6 @@ from typing import (
 
 from typing_extensions import Self
 
-
 from ert.config.responses.response_config import (
     ResponseConfigWithLifecycleHooks,
 )
@@ -139,22 +138,18 @@ class ErtConfig:
 
     @staticmethod
     def with_plugins(
-        forward_model_step_classes: List[Type[ForwardModelStepPlugin]],
-        response_type_classes: Optional[
-            List[Type[ResponseConfigWithLifecycleHooks]]
-        ] = None,
+        forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,
+        response_types: Optional[List[Type[ResponseConfigWithLifecycleHooks]]] = None,
     ) -> Type["ErtConfig"]:
         preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
 
-        response_type_classes_dict: Dict[
-            str, Type[ResponseConfigWithLifecycleHooks]
-        ] = {}
-        if response_type_classes:
-            for response_cls in response_type_classes:
-                response_type_classes_dict[response_cls.response_type()] = response_cls
+        response_types_dict: Dict[str, Type[ResponseConfigWithLifecycleHooks]] = {}
+        if response_types:
+            for response_cls in response_types:
+                response_types_dict[response_cls.response_type()] = response_cls
 
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
@@ -162,7 +157,7 @@ class ErtConfig:
             ] = preinstalled_fm_steps
             RESPONSE_TYPE_CLASSES: ClassVar[
                 Dict[str, Type[ResponseConfigWithLifecycleHooks]]
-            ] = response_type_classes_dict
+            ] = response_types_dict
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
@@ -265,6 +260,13 @@ class ErtConfig:
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
+        try:
+            ensemble_config = EnsembleConfig.from_dict(
+                config_dict=config_dict, response_types=cls.RESPONSE_TYPE_CLASSES
+            )
+        except ConfigValidationError as err:
+            errors.append(err)
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):

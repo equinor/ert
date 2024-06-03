@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from ert.config import ErtConfig
 from ert.config.responses.response_config import ResponseConfigWithLifecycleHooks
 
@@ -70,3 +72,47 @@ def test_that_custom_response_type_is_not_parsed_into_config_when_not_invoked(tm
 
     assert "DUMMY_RESPONSE" not in config_dict
     assert "DUMMY_OBSERVATION" not in config_dict
+
+
+def test_that_custom_response_appears_in_ensemble_config(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM LOCAL
+
+        DUMMY_RESPONSE(<SRC>=DUMMY)
+        DUMMY_OBSERVATION(<SRC>=DUMMY.csv,<RESPONSE_TYPE>=DUMMY)
+    """
+    )
+
+    class DummyResponseConfig(ResponseConfigWithLifecycleHooks):
+        def parse_response_from_config(
+            self, config_list: List[Tuple[str, str]]
+        ) -> None:
+            pass
+
+        def parse_observation_from_config(
+            self, config_list: List[Tuple[str, str]]
+        ) -> None:
+            pass
+
+        def parse_response_from_runpath(self, run_path: str) -> str:
+            pass
+
+        @classmethod
+        def response_type(cls) -> str:
+            return "DUMMY"
+
+        @classmethod
+        def ert_config_response_keyword(cls) -> str:
+            return "DUMMY_RESPONSE"
+
+        @classmethod
+        def ert_config_observation_keyword(cls) -> str:
+            return "DUMMY_OBSERVATION"
+
+    _ = ErtConfig.with_plugins(response_types=[DummyResponseConfig]).from_file(
+        tmp_path / "test.ert"
+    )
+
+    print("hey")

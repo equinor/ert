@@ -23,7 +23,11 @@ from ert.config.parameter_config import ParameterConfig
 from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from ert.config.responses._read_summary import read_summary
 from ert.config.responses.gen_data_config import GenDataConfig
-from ert.config.responses.response_config import ResponseConfig
+from ert.config.responses.response_config import (
+    ObservationConfig,
+    ResponseConfig,
+    ResponseConfigWithLifecycleHooks,
+)
 from ert.config.responses.summary_config import SummaryConfig
 from ert.config.surface_config import SurfaceConfig
 from ert.field_utils import get_shape
@@ -51,6 +55,8 @@ class EnsembleConfig:
     def __init__(
         self,
         grid_file: Optional[str] = None,
+        response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = None,
+        observation_configs: Dict[str, ObservationConfig] = None,
         gendata_list: Optional[List[GenDataConfig]] = None,
         genkw_list: Optional[List[GenKwConfig]] = None,
         surface_list: Optional[List[SurfaceConfig]] = None,
@@ -67,8 +73,10 @@ class EnsembleConfig:
 
         self._grid_file = _get_abs_path(grid_file)
         self.parameter_configs: Dict[str, ParameterConfig] = {}
-        self.response_configs: Dict[str, ResponseConfig] = {}
-        self.observations: Dict[str, xr.Dataset] = {}
+        self.response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = (
+            response_configs
+        )
+        self.observation_configs: Dict[str, ObservationConfig] = observation_configs
         self.refcase = refcase
         self.eclbase = eclbase
 
@@ -83,6 +91,32 @@ class EnsembleConfig:
 
         for field in _field_list:
             self.addNode(field)
+
+        self._parse_observations()
+
+    def _parse_observations(self) -> None:
+        observations_by_type = {}
+
+        for obs_config in self.observation_configs.values():
+            response_config = next(
+                rc
+                for rc in self.response_configs.values()
+                if rc.response_type() == obs_config.response_type
+            )
+            observation_ds = response_config.parse_observation_from_config(
+                obs_config.line_from_ert_config
+            )
+
+            if obs_config.response_type not in observations_by_type:
+                observations_by_type[obs_config.response_type] = []
+
+            observations_by_type[obs_config.response_type].append(observation_ds)
+
+        # Merge by type & primary key
+        self.observations_datasets: Dict[str, xr.Dataset] = {
+            obs_type: xr.concat(obs_ds_list, dim="obs_name")
+            for obs_type, obs_ds_list in observations_by_type
+        }
 
     @staticmethod
     def _check_for_duplicate_names(
@@ -100,7 +134,11 @@ class EnsembleConfig:
 
     @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
+    def from_dict(
+        cls,
+        config_dict: ConfigDict,
+        response_types: Dict[str, ResponseConfigWithLifecycleHooks],
+    ) -> EnsembleConfig:
         grid_file_path = config_dict.get(ConfigKeys.GRID)
         refcase_file_path = config_dict.get(ConfigKeys.REFCASE)
         gen_data_list = config_dict.get(ConfigKeys.GEN_DATA, [])
@@ -138,7 +176,30 @@ class EnsembleConfig:
             except Exception as err:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err
 
+        for response_type_cls in response_types.values():
+            observation_keyword = response_type_cls.ert_config_observation_keyword()
+            response_keyword = response_type_cls.ert_config_response_keyword()
+
+            # Find all occurrences in config
+            responses = config_dict[response_keyword]
+            observations = config_dict[observation_keyword]
+
+            response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = {}
+            for config_list in responses:
+                config_instance = response_type_cls(config_list)
+                response_configs[config_instance.name] = config_instance
+
+            observation_configs = {}
+            for [observations_kwargs_str] in observations:
+                # We cannot validate the name&type against observations until we
+                # receive it from the forward model and read in the names, unless
+                # the response was specifically specified with a name
+                obs_config = ObservationConfig(observations_kwargs_str)
+                observation_configs[obs_config.obs_name] = obs_config
+
         return cls(
+            observation_configs=observation_configs,
+            response_configs=response_configs,
             grid_file=grid_file_path,
             gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
             genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
@@ -235,7 +296,7 @@ class EnsembleConfig:
 
     @property
     def responses(self) -> List[str]:
-        return list(self.response_configs)
+        return list(self.response_configs.keys())
 
     @property
     def keys(self) -> List[str]:
