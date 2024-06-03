@@ -92,7 +92,7 @@ def test_that_invalid_memory_pr_job_raises_validation_error(memory_with_unit_str
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
-    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+    [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
 )
 def test_that_overwriting_QUEUE_OPTIONS_warns(
     tmp_path, monkeypatch, queue_system, queue_system_option, caplog
@@ -123,30 +123,10 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
     ) not in caplog.text
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_undefined_LSF_SERVER_environment_variable_raises_validation_error():
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM LSF\n")
-        f.write("QUEUE_OPTION LSF LSF_SERVER $MY_SERVER\n")
-    with pytest.raises(
-        ConfigValidationError,
-        match=(
-            r"Invalid server name specified for QUEUE_OPTION LSF LSF_SERVER: "
-            r"\$MY_SERVER. Server name is currently an undefined environment variable."
-            r" The LSF_SERVER keyword is usually provided by the site-configuration"
-            r" file, beware that you are effectively replacing the default value"
-            r" provided."
-        ),
-    ):
-        ErtConfig.from_file(filename)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
-    [("LSF", "LSF_SERVER"), ("SLURM", "SQUEUE")],
+    [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE")],
 )
 def test_initializing_empty_config_queue_options_resets_to_default_value(
     queue_system, queue_system_option
@@ -161,8 +141,17 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     driver = Driver.create_driver(config_object.queue_config)
     assert not driver.get_option(queue_system_option)
     assert driver.get_option("MAX_RUNNING") == "0"
-    for options in config_object.queue_config.queue_options[queue_system]:
-        assert isinstance(options, tuple)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_nonvalid_max_submit():
+    filename = "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM LSF\n")
+        f.write("MAX_SUBMIT -10\n")
+        f.write("SUBMIT_SLEEP -1")
+    ErtConfig.from_file(filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

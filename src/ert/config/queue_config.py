@@ -3,17 +3,15 @@ from __future__ import annotations
 import logging
 import re
 import shutil
-import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Tuple, no_type_check
+from typing import Dict, List, Mapping
 
 from ert import _clib
 
 from .parsing import (
     ConfigDict,
     ConfigValidationError,
-    ConfigWarning,
     MaybeWithContext,
     QueueSystem,
 )
@@ -35,7 +33,7 @@ OPENPBS_DRIVER_OPTIONS: List[str] = [
     "QUEUE_QUERY_TIMEOUT",
     "SUBMIT_SLEEP",
 ]
-VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
+VALID_QUEUE_OPTIONS: Dict[QueueSystem, List[str]] = {
     QueueSystem.TORQUE: OPENPBS_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
     QueueSystem.SLURM: _clib.slurm_driver.SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
@@ -49,11 +47,8 @@ class QueueConfig:
     max_submit: int = 1
     submit_sleep: float = 0.0
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
-        default_factory=dict
-    )
+    queue_options: Dict[str, str] = field(default_factory=dict)
 
-    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
         selected_queue_system = QueueSystem(
@@ -62,28 +57,19 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
-        job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 1)
         submit_sleep: float = config_dict.get("SUBMIT_SLEEP", 0.0)
-        queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
+        queue_options_dict: Dict[str, list] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
+            if queue_system != selected_queue_system:
+                continue
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
                     f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
                 )
 
-            queue_options[queue_system].append(
-                (option_name, values[0] if values else "")
-            )
-            if values and option_name == "LSF_SERVER" and values[0].startswith("$"):
-                raise ConfigValidationError(
-                    "Invalid server name specified for QUEUE_OPTION LSF"
-                    f" LSF_SERVER: {values[0]}. Server name is currently an"
-                    " undefined environment variable. The LSF_SERVER keyword is"
-                    " usually provided by the site-configuration file, beware that"
-                    " you are effectively replacing the default value provided."
-                )
+            queue_options_dict[option_name].append(values[0] if values else "")
             if (
                 values
                 and option_name == "SUBMIT_SLEEP"
@@ -91,29 +77,27 @@ class QueueConfig:
             ):
                 submit_sleep = float(values[0])
 
-        for queue_system_val in queue_options:
-            if queue_options[queue_system_val]:
-                _validate_queue_driver_settings(
-                    queue_options[queue_system_val],
-                    QueueSystem(queue_system_val).name,
-                    throw_error=(queue_system_val == selected_queue_system),
-                )
-
-        if (
-            selected_queue_system != QueueSystem.LOCAL
-            and queue_options[selected_queue_system]
-        ):
+        if queue_options_dict:
             _check_for_overwritten_queue_system_options(
                 selected_queue_system,
-                queue_options[selected_queue_system],
+                queue_options_dict,
+            )
+
+            _validate_queue_driver_settings(
+                queue_options_dict,
+                selected_queue_system,
             )
         if selected_queue_system == QueueSystem.TORQUE:
             _check_num_cpu_requirement(
                 config_dict.get("NUM_CPU", 1),
-                queue_options[selected_queue_system],
+                queue_options_dict,
             )
         return QueueConfig(
-            job_script, max_submit, submit_sleep, selected_queue_system, queue_options
+            job_script,
+            max_submit,
+            submit_sleep,
+            selected_queue_system,
+            {key: value[-1] for key, value in queue_options_dict.items()},
         )
 
     def create_local_copy(self) -> QueueConfig:
@@ -122,32 +106,19 @@ class QueueConfig:
             self.max_submit,
             self.submit_sleep,
             QueueSystem.LOCAL,
-            self.queue_options,
+            {"MAX_RUNNING": self.queue_options.get("MAX_RUNNING", 0)},
         )
 
     @property
     def max_running(self) -> int:
-        max_running = 0
-        for key, val in self.queue_options.get(self.queue_system, []):
-            if key == "MAX_RUNNING":
-                max_running = int(val)
-        return max_running
-
-
-def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
-    temp_dict: Dict[str, List[str]] = defaultdict(list)
-    for option_string in option_list:
-        temp_dict.setdefault(option_string[0], []).append(option_string[1])
-    return temp_dict
+        return int(self.queue_options.get("MAX_RUNNING", 0))
 
 
 def _check_for_overwritten_queue_system_options(
     selected_queue_system: QueueSystem,
-    queue_system_options: List[Tuple[str, str]],
+    queue_system_options: Dict[str, List[str]],
 ) -> None:
-    for option_name, option_values in _option_list_to_dict(
-        queue_system_options
-    ).items():
+    for option_name, option_values in queue_system_options.items():
         if len(option_values) > 1 and option_values[0] != option_values[-1]:
             logging.info(
                 f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
@@ -157,11 +128,10 @@ def _check_for_overwritten_queue_system_options(
 
 def _check_num_cpu_requirement(
     num_cpu: int,
-    queue_system_options: List[Tuple[str, str]],
+    torque_options: Dict[str, List[str]],
 ) -> None:
-    torque_options = _option_list_to_dict(queue_system_options)
-    num_nodes_str = torque_options.get("NUM_NODES", [""])[0]
-    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[0]
+    num_nodes_str = torque_options.get("NUM_NODES", [""])[-1]
+    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[-1]
     num_nodes = int(num_nodes_str) if num_nodes_str else 1
     num_cpus_per_node = int(num_cpus_per_node_str) if num_cpus_per_node_str else 1
     if num_cpu != num_nodes * num_cpus_per_node:
@@ -191,19 +161,6 @@ class QueueMemoryStringFormat:
             )
             is not None
         )
-
-
-def parse_slurm_memopt(s: str) -> str:
-    return s.lower().replace("b", "").upper()
-
-
-def parse_torque_memopt(s: str) -> str:
-    if re.match(r"\d+[kgmt](?!\w)", s, re.IGNORECASE):
-        return s.lower() + "b"
-    if re.match(r"^\d+$", s):
-        return s + "kb"
-
-    return s
 
 
 queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
@@ -283,38 +240,27 @@ queue_bool_options: Mapping[str, List[str]] = {
 }
 
 
-def throw_error_or_warning(
-    error_msg: str, option_value: MaybeWithContext, throw_error: bool
-) -> None:
-    if throw_error:
-        raise ConfigValidationError.with_context(
-            error_msg,
-            option_value,
-        )
-    else:
-        warnings.warn(
-            ConfigWarning.with_context(
-                error_msg,
-                option_value,
-            ),
-            stacklevel=1,
-        )
+def throw_error_or_warning(error_msg: str, option_value: MaybeWithContext) -> None:
+    raise ConfigValidationError.with_context(
+        error_msg,
+        option_value,
+    )
 
 
 def _validate_queue_driver_settings(
-    queue_system_options: List[Tuple[str, str]], queue_type: str, throw_error: bool
+    queue_system_options: Dict[str, List[str]], queue_type: QueueSystem
 ) -> None:
-    for option_name, option_value in queue_system_options:
+    for option_name, option_values in queue_system_options.items():
+        option_value = option_values[-1]
         if not option_value:  # This is equivalent to the option not being set
             continue
-        elif option_name in queue_memory_options[queue_type]:
+        if option_name in queue_memory_options[queue_type]:
             option_format = queue_memory_usage_formats[queue_type]
 
             if not option_format.validate(str(option_value)):
                 throw_error_or_warning(
                     f"'{option_value}' for {option_name} is not a valid string type.",
                     option_value,
-                    throw_error,
                 )
         elif option_name in queue_string_options[queue_type] and not isinstance(
             option_value, str
@@ -322,7 +268,6 @@ def _validate_queue_driver_settings(
             throw_error_or_warning(
                 f"'{option_value}' for {option_name} is not a valid string type.",
                 option_value,
-                throw_error,
             )
 
         elif option_name in queue_positive_number_options[queue_type] and (
@@ -331,7 +276,6 @@ def _validate_queue_driver_settings(
             throw_error_or_warning(
                 f"'{option_value}' for {option_name} is not a valid integer or float.",
                 option_value,
-                throw_error,
             )
 
         elif option_name in queue_positive_int_options[queue_type] and (
@@ -340,12 +284,11 @@ def _validate_queue_driver_settings(
             throw_error_or_warning(
                 f"'{option_value}' for {option_name} is not a valid positive integer.",
                 option_value,
-                throw_error,
             )
 
-        elif option_name in queue_bool_options[queue_type] and not str(
+        elif option_name in queue_bool_options[queue_type] and str(
             option_value
-        ) in [
+        ) not in [
             "TRUE",
             "FALSE",
             "0",
@@ -358,5 +301,4 @@ def _validate_queue_driver_settings(
             throw_error_or_warning(
                 f"The '{option_value}' for {option_name} should be either TRUE or FALSE.",
                 option_value,
-                throw_error,
             )
