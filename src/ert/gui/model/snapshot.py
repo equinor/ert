@@ -2,7 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union
+from typing import Dict, Final, List, Mapping, Optional, Sequence, Union
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
@@ -10,6 +10,7 @@ from qtpy.QtGui import QColor, QFont
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator.snapshot import SnapshotMetadata
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -41,11 +42,6 @@ IsJobRole = Qt.UserRole + 10
 StatusRole = Qt.UserRole + 11
 
 DURATION = "Duration"
-
-SORTED_REALIZATION_IDS = "_sorted_real_ids"
-SORTED_JOB_IDS = "_sorted_forward_model_ids"
-REAL_JOB_STATUS_AGGREGATED = "_aggr_job_status_colors"
-REAL_STATUS_COLOR = "_real_status_colors"
 
 COLUMNS: Dict[NodeType, Sequence[str]] = {
     NodeType.ROOT: ["Name", "Status"],
@@ -108,24 +104,24 @@ class SnapshotModel(QAbstractItemModel):
         if not reals and not forward_model_states:
             return None
 
-        metadata: Dict[str, Any] = {
+        metadata = SnapshotMetadata(
             # A mapping from real to job to that job's QColor status representation
-            REAL_JOB_STATUS_AGGREGATED: defaultdict(dict),
+            aggr_job_status_colors=defaultdict(dict),
             # A mapping from real to that real's QColor status representation
-            REAL_STATUS_COLOR: defaultdict(dict),
-        }
+            real_status_colors=defaultdict(dict),
+        )
 
         for real_id, real in reals.items():
             if real.status:
-                metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
+                metadata["real_status_colors"][real_id] = _QCOLORS[
                     state.REAL_STATE_TO_COLOR[real.status]
                 ]
 
         isSnapshot = False
         if isinstance(snapshot, Snapshot):
             isSnapshot = True
-            metadata[SORTED_REALIZATION_IDS] = sorted(snapshot.reals.keys(), key=int)
-            metadata[SORTED_JOB_IDS] = defaultdict(list)
+            metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
+            metadata["sorted_forward_model_ids"] = defaultdict(list)
 
         running_forward_model_id: Dict[str, int] = {}
         for (
@@ -140,7 +136,7 @@ class SnapshotModel(QAbstractItemModel):
             forward_model_id,
         ), forward_model_status in forward_model_states.items():
             if isSnapshot:
-                metadata[SORTED_JOB_IDS][real_id].append(forward_model_id)
+                metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
             if (
                 real_id in running_forward_model_id
                 and int(forward_model_id) > running_forward_model_id[real_id]
@@ -153,7 +149,7 @@ class SnapshotModel(QAbstractItemModel):
                 color = _QCOLORS[
                     state.FORWARD_MODEL_STATE_TO_COLOR[forward_model_status]
                 ]
-            metadata[REAL_JOB_STATUS_AGGREGATED][real_id][forward_model_id] = color
+            metadata["aggr_job_status_colors"][real_id][forward_model_id] = color
 
         if isSnapshot:
             snapshot.merge_metadata(metadata)
@@ -195,13 +191,13 @@ class SnapshotModel(QAbstractItemModel):
                 if real and real.status:
                     real_node.data.status = real.status
                 for real_forward_model_id, color in (
-                    metadata[REAL_JOB_STATUS_AGGREGATED].get(real_id, {}).items()
+                    metadata["aggr_job_status_colors"].get(real_id, {}).items()
                 ):
                     real_node.data.forward_model_step_status_color_by_id[
                         real_forward_model_id
                     ] = color
-                if real_id in metadata[REAL_STATUS_COLOR]:
-                    real_node.data.real_status_color = metadata[REAL_STATUS_COLOR][
+                if real_id in metadata["real_status_colors"]:
+                    real_node.data.real_status_color = metadata["real_status_colors"][
                         real_id
                     ]
                 reals_changed.append(real_node.row())
@@ -278,9 +274,9 @@ class SnapshotModel(QAbstractItemModel):
             iter_,
             data=IterNodeData(
                 status=snapshot.status,
-                sorted_realization_ids=metadata[SORTED_REALIZATION_IDS],
+                sorted_realization_ids=metadata["sorted_real_ids"],
                 sorted_forward_model_step_ids_by_realization_id=metadata[
-                    SORTED_JOB_IDS
+                    "sorted_forward_model_ids"
                 ],
             ),
         )
@@ -292,14 +288,14 @@ class SnapshotModel(QAbstractItemModel):
                     status=real.status,
                     active=real.active,
                     forward_model_step_status_color_by_id=metadata[
-                        REAL_JOB_STATUS_AGGREGATED
+                        "aggr_job_status_colors"
                     ][real_id],
-                    real_status_color=metadata[REAL_STATUS_COLOR][real_id],
+                    real_status_color=metadata["real_status_colors"][real_id],
                 ),
             )
             snapshot_tree.add_child(real_node)
 
-            for forward_model_id in metadata[SORTED_JOB_IDS][real_id]:
+            for forward_model_id in metadata["sorted_forward_model_ids"][real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
