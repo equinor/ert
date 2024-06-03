@@ -177,9 +177,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                         "active for exactly one report step"
                     )
 
-                realizations = ensemble.get_realization_list_with_responses(
-                    response_name
-                )
+                realizations = ensemble.get_realization_with_responses(response_name)
                 vals = ensemble.load_responses(response_name, tuple(realizations)).sel(
                     report_step=report_step, drop=True
                 )
@@ -190,7 +188,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     columns=realizations,
                 )
 
-                realizations = ensemble.get_realization_list_with_responses()
+                realizations = ensemble.get_realization_with_responses()
 
                 # Trajectory
                 trajectory_file = os.path.join(trajectory_path, f"{well}.txt")
