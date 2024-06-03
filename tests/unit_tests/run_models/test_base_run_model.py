@@ -8,6 +8,7 @@ from ert.config import ModelConfig
 from ert.run_models import BaseRunModel
 from ert.run_models.run_arguments import (
     EnsembleExperimentRunArguments,
+    ESMDARunArguments,
     SimulationArguments,
 )
 from ert.substitution_list import SubstitutionList
@@ -100,11 +101,13 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    simulation_arguments = EnsembleExperimentRunArguments(
+    simulation_arguments = ESMDARunArguments(
         random_seed=None,
         active_realizations=active_mask,
-        current_ensemble=None,
+        prior_ensemble_id="",
         target_ensemble=None,
+        weights="1,1,1",
+        restart_run=False,
         start_iteration=start_iteration,
         minimum_required_realizations=0,
         ensemble_size=1,
@@ -140,7 +143,6 @@ def test_delete_run_path(run_path_format, active_realizations):
         active_realizations=active_realizations,
         current_ensemble="Case_Name",
         target_ensemble=None,
-        start_iteration=0,
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,

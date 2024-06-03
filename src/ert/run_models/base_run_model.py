@@ -591,7 +591,7 @@ class BaseRunModel:
     @property
     def paths(self) -> List[str]:
         run_paths = []
-        start_iteration = self._simulation_arguments.start_iteration
+        start_iteration = getattr(self._simulation_arguments, "start_iteration", 0)
         number_of_iterations = self._simulation_arguments.num_iterations
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
