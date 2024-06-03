@@ -880,3 +880,8 @@ def test_exclude_parameter_from_update():
         assert prior.load_parameters(
             "ANOTHER_KW", tuple(range(5))
         ) == posterior.load_parameters("ANOTHER_KW", tuple(range(5)))
+
+    log_paths = list(Path("update_log").iterdir())
+    assert log_paths
+    assert (log_paths[0] / "Report.report").exists()
+    assert (log_paths[0] / "Report.csv").exists()

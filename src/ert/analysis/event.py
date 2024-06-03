@@ -50,3 +50,8 @@ class AnalysisDataEvent(AnalysisEvent):
 class AnalysisErrorEvent(AnalysisEvent):
     error_msg: str
     data: Optional[DataSection] = None
+
+
+@dataclass
+class AnalysisCompleteEvent(AnalysisEvent):
+    data: DataSection

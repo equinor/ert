@@ -15,11 +15,10 @@ from ert.run_context import RunContext
 from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import Storage
 
-from ..analysis.event import DataSection
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent, RunModelUpdateEndEvent
+from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -101,7 +100,9 @@ class EnsembleSmoother(BaseRunModel):
 
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.send_event(RunModelUpdateBeginEvent(iteration=0))
+        self.send_event(
+            RunModelUpdateBeginEvent(iteration=0, run_id=prior_context.run_id)
+        )
 
         self.setPhaseName("Running ES update step")
         self.ert.runWorkflows(
@@ -112,7 +113,11 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         self.send_event(
-            RunModelStatusEvent(iteration=0, msg="Creating posterior ensemble..")
+            RunModelStatusEvent(
+                iteration=0,
+                run_id=prior_context.run_id,
+                msg="Creating posterior ensemble..",
+            )
         )
         target_ensemble_format = self._simulation_arguments.target_ensemble
         posterior_context = RunContext(
@@ -132,34 +137,23 @@ class EnsembleSmoother(BaseRunModel):
             iteration=1,
         )
         try:
-            smoother_snapshot = smoother_update(
+            smoother_update(
                 prior_context.ensemble,
                 posterior_context.ensemble,
-                prior_context.run_id,  # type: ignore
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior_context.ensemble.experiment.update_parameters,
                 observations=prior_context.ensemble.experiment.observation_keys,
                 rng=self.rng,
-                progress_callback=functools.partial(self.send_smoother_event, 0),
-                log_path=self.ert_config.analysis_config.log_path,
+                progress_callback=functools.partial(
+                    self.send_smoother_event, 0, prior_context.run_id
+                ),
             )
 
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of experiment failed with the following error: {e}"
             ) from e
-
-        self.send_event(
-            RunModelUpdateEndEvent(
-                iteration=0,
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
-        )
 
         self.ert.runWorkflows(
             HookRuntime.POST_UPDATE, self._storage, posterior_context.ensemble

@@ -3,14 +3,10 @@ from __future__ import annotations
 import functools
 import logging
 import time
-from collections import defaultdict
-from datetime import datetime
 from fnmatch import fnmatch
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
-    DefaultDict,
     Generic,
     Iterable,
     List,
@@ -36,6 +32,7 @@ from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import (
+    AnalysisCompleteEvent,
     AnalysisDataEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
@@ -45,14 +42,13 @@ from .event import (
 )
 from .snapshots import (
     ObservationAndResponseSnapshot,
-    ObservationStatus,
     SmootherSnapshot,
 )
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage import Ensemble, Experiment
+    from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -685,67 +681,6 @@ def analysis_IES(
     return sies_smoother
 
 
-def _write_update_report(
-    path: Path, snapshot: SmootherSnapshot, run_id: str, experiment: Experiment
-) -> None:
-    update_step = snapshot.update_step_snapshots
-
-    (experiment._path / f"update_log_{run_id}.json").write_text(
-        snapshot.model_dump_json()
-    )
-
-    fname = path / f"{run_id}.txt"
-    fname.parent.mkdir(parents=True, exist_ok=True)
-    update_step = snapshot.update_step_snapshots
-
-    obs_info: DefaultDict[ObservationStatus, int] = defaultdict(lambda: 0)
-    for update in update_step:
-        obs_info[update.status] += 1
-
-    with open(fname, "w", encoding="utf-8") as fout:
-        fout.write("=" * 150 + "\n")
-        timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
-        fout.write(f"Time: {timestamp}\n")
-        fout.write(f"Parent ensemble: {snapshot.source_ensemble_name}\n")
-        fout.write(f"Target ensemble: {snapshot.target_ensemble_name}\n")
-        fout.write(f"Alpha: {snapshot.alpha}\n")
-        fout.write(f"Global scaling: {snapshot.global_scaling}\n")
-        fout.write(f"Standard cutoff: {snapshot.std_cutoff}\n")
-        fout.write(f"Run id: {run_id}\n")
-        fout.write(f"Active observations: {obs_info[ObservationStatus.ACTIVE]}\n")
-        fout.write(
-            f"Deactivated observations - missing respons(es): {obs_info[ObservationStatus.MISSING_RESPONSE]}\n"
-        )
-        fout.write(
-            f"Deactivated observations - ensemble_std > STD_CUTOFF: {obs_info[ObservationStatus.STD_CUTOFF]}\n"
-        )
-        fout.write(
-            f"Deactivated observations - outlier: {obs_info[ObservationStatus.OUTLIER]}\n"
-        )
-        fout.write("-" * 150 + "\n")
-        fout.write(
-            "Observed history".rjust(56)
-            + "|".rjust(17)
-            + "Simulated data".rjust(32)
-            + "|".rjust(13)
-            + "Status".rjust(12)
-            + "\n"
-        )
-        fout.write("-" * 150 + "\n")
-        for nr, step in enumerate(update_step):
-            obs_std = (
-                f"{step.obs_std:.3f}"
-                if step.obs_scaling == 1
-                else f"{step.obs_std * step.obs_scaling:.3f} ({step.obs_std:<.3f} * {step.obs_scaling:.3f})"
-            )
-            fout.write(
-                f"{nr+1:^6}: {step.obs_name:20} {step.obs_val:>16.3f} +/- "
-                f"{obs_std:<21} | {step.response_mean:>21.3f} +/- "
-                f"{step.response_std:<16.3f} {'|':<6} "
-                f"{step.get_status().capitalize()}\n"
-            )
-
-
 def _assert_has_enough_realizations(
     ens_mask: npt.NDArray[np.bool_], min_required_realizations: int
 ) -> None:
@@ -776,7 +711,6 @@ def _create_smoother_snapshot(
 def smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
-    run_id: str,
     observations: Iterable[str],
     parameters: Iterable[str],
     analysis_config: Optional[UpdateSettings] = None,
@@ -784,7 +718,6 @@ def smoother_update(
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     global_scaling: float = 1.0,
-    log_path: Optional[Path] = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -819,16 +752,26 @@ def smoother_update(
             analysis_config.auto_scale_observations,
         )
     except Exception as e:
-        raise e
-    finally:
-        if log_path is not None:
-            _write_update_report(
-                log_path,
-                smoother_snapshot,
-                run_id,
-                prior_storage.experiment,
+        progress_callback(
+            AnalysisErrorEvent(
+                error_msg=str(e),
+                data=DataSection(
+                    header=smoother_snapshot.header,
+                    data=smoother_snapshot.csv,
+                    extra=smoother_snapshot.extra,
+                ),
             )
-
+        )
+        raise e
+    progress_callback(
+        AnalysisCompleteEvent(
+            data=DataSection(
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
+        )
+    )
     return smoother_snapshot
 
 
@@ -836,7 +779,6 @@ def iterative_smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
     sies_smoother: Optional[ies.SIES],
-    run_id: str,
     parameters: Iterable[str],
     observations: Iterable[str],
     update_settings: UpdateSettings,
@@ -845,7 +787,6 @@ def iterative_smoother_update(
     initial_mask: npt.NDArray[np.bool_],
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
-    log_path: Optional[Path] = None,
     global_scaling: float = 1.0,
 ) -> Tuple[SmootherSnapshot, ies.SIES]:
     if not progress_callback:
@@ -882,14 +823,24 @@ def iterative_smoother_update(
             initial_mask=initial_mask,
         )
     except Exception as e:
-        raise e
-    finally:
-        if log_path is not None:
-            _write_update_report(
-                log_path,
-                smoother_snapshot,
-                run_id,
-                prior_storage.experiment,
+        progress_callback(
+            AnalysisErrorEvent(
+                error_msg=str(e),
+                data=DataSection(
+                    header=smoother_snapshot.header,
+                    data=smoother_snapshot.csv,
+                    extra=smoother_snapshot.extra,
+                ),
             )
-
+        )
+        raise e
+    progress_callback(
+        AnalysisCompleteEvent(
+            data=DataSection(
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
+        )
+    )
     return smoother_snapshot, sies_smoother

@@ -282,7 +282,12 @@ class ExperimentPanel(QWidget):
 
             if not abort:
                 dialog = RunDialog(
-                    self._config_file, model, event_queue, self._notifier, self.parent()
+                    self._config_file,
+                    model,
+                    event_queue,
+                    self._notifier,
+                    self.parent(),
+                    output_path=self.ert.ert_config.analysis_config.log_path,
                 )
                 self.run_button.setEnabled(False)
                 self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)

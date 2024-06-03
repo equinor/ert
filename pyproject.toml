@@ -78,6 +78,7 @@ dependencies=[
     "sortedcontainers",
     "tables; python_version >= '3.9'",
     "tables<3.9;python_version == '3.8'",
+    "tabulate",
     "tqdm>=4.62.0",
     "uvicorn >= 0.17.0",
     "websockets",
