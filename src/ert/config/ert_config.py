@@ -429,12 +429,12 @@ class ErtConfig:
                     multi_occurrence=True,
                     substitute_from=0,
                 )
-                schema.update(
-                    {
-                        response_kw: response_kw_schema_item,
-                        observation_kw: observation_kw_schema_item,
-                    }
-                )
+
+                if response_kw and response_kw_schema_item not in schema:
+                    schema.update({response_kw: response_kw_schema_item})
+
+                if observation_kw and observation_kw not in schema:
+                    schema.update({observation_kw: observation_kw_schema_item})
 
         return lark_parse(
             file=user_config_file,
