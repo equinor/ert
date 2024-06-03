@@ -1,9 +1,5 @@
 from ert.config import ErtConfig
 from ert.storage import open_storage
-from pydantic import ValidationError
-from qtpy.QtCore import QObject, QThread, Signal
-from qtpy.QtWidgets import QFileDialog, QMessageBox, qApp
-
 from everest.config import EverestConfig, validation_utils
 from everest.detached import (
     ServerStatus,
@@ -23,6 +19,10 @@ from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator import Status
 from everest.strings import OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import configure_logger, makedirs_if_needed
+from pydantic import ValidationError
+from qtpy.QtCore import QObject, QThread, Signal
+from qtpy.QtWidgets import QFileDialog, QMessageBox, qApp
+
 from ieverest import settings
 from ieverest.io import QtDialogsOut, QtStatusBarOut
 from ieverest.main_window import MainWindow
@@ -154,9 +154,8 @@ class IEverest(QObject):
         export_data_dlg.show()
 
     def open(self, filename=""):
-        if server_is_running(self.config):
-            if not self.stop_optimization_prompt():
-                return
+        if server_is_running(self.config) and not self.stop_optimization_prompt():
+            return
         filename = str(filename)  # Convert Qt4 QString to str
         if not filename:
             selection = QFileDialog.getOpenFileName(
@@ -240,9 +239,7 @@ class IEverest(QObject):
         return False
 
     def quit(self):
-        if not server_is_running(self.config):
-            qApp.quit()
-        elif self.stop_optimization_prompt():
+        if not server_is_running(self.config) or self.stop_optimization_prompt():
             qApp.quit()
         else:
             return

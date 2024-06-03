@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import pytest
-
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
+
 from tests.utils import relpath, tmpdir
 
 CONFIG_DIR = relpath("test_data", "mocked_test_case")

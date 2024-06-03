@@ -4,14 +4,14 @@ import os
 from typing import List
 
 import pytest
-from pydantic import ValidationError
-
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.input_constraint_config import InputConstraintConfig
 from everest.config.well_config import WellConfig
+from pydantic import ValidationError
+
 from tests.utils import relpath, tmp, tmpdir
 
 cfg_dir = relpath("test_data", "mocked_test_case")

@@ -1,9 +1,9 @@
 import os
 
 import pytest
-
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
+
 from tests.utils import relpath, tmp
 
 NO_PROJECT_RES = (

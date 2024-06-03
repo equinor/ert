@@ -2,11 +2,11 @@ import json
 import os
 import subprocess
 
+import everest
 import pytest
+from everest.config import EverestConfig
 from ruamel.yaml import YAML
 
-import everest
-from everest.config import EverestConfig
 from tests.utils import relpath, tmpdir
 
 TMPL_TEST_PATH = os.path.join("test_data", "templating")
@@ -128,7 +128,7 @@ def test_render_executable():
 
     # Verify result
     with open(output_file, encoding="utf-8") as fout:
-        assert "0.2 vs 0.8" == "\n".join(fout.readlines())
+        assert "\n".join(fout.readlines()) == "0.2 vs 0.8"
 
 
 @pytest.mark.integration_test
@@ -242,5 +242,5 @@ def test_user_specified_data_n_template():
     with open(expected_file, "r", encoding="utf-8") as f:
         contents = f.read()
     assert (
-        "VALUE1+VALUE2" == contents
+        contents == "VALUE1+VALUE2"
     ), 'Expected contents: "VALUE1+VALUE2", found: {}'.format(contents)

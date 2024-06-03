@@ -3,6 +3,8 @@ import argparse
 import logging
 import sys
 
+from ieverest.bin.ieverest_script import ieverest_entry
+
 from everest import __version__ as everest_version
 from everest import docs
 from everest.bin.config_branch_script import config_branch_entry
@@ -15,7 +17,6 @@ from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
 from everest.util import configure_logger
-from ieverest.bin.ieverest_script import ieverest_entry
 
 
 def _create_dump_action(dumps, extended=False):

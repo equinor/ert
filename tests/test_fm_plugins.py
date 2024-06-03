@@ -2,7 +2,6 @@ import logging
 from itertools import chain
 
 import pytest
-
 from everest.plugins import hookimpl
 from everest.plugins.hook_manager import EverestPluginManager
 from everest.util.forward_models import collect_forward_models

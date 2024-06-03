@@ -7,7 +7,6 @@ import requests
 from ert.config import ErtConfig, QueueSystem
 from ert.job_queue import JobStatus
 from ert.storage import open_storage
-from everest.simulator.everest2res import everest2res
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -29,6 +28,7 @@ from everest.detached import (
     wait_for_server,
     wait_for_server_to_stop,
 )
+from everest.simulator.everest2res import everest2res
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     DETACHED_NODE_DIR,
@@ -36,6 +36,7 @@ from everest.strings import (
     SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
+
 from tests.utils import capture_logger, relpath, tmpdir
 
 
@@ -86,7 +87,7 @@ def test_https_requests():
 
         # Test http request fail
         url = url.replace("https", "http")
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa B017
             response = requests.get(url, verify=cert, auth=auth, proxies=PROXY)
             response.raise_for_status()
 
@@ -94,7 +95,7 @@ def test_https_requests():
         url, cert, _ = everest_config.server_context
         usr = "admin"
         password = "wrong_password"
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa B017
             result = requests.get(url, verify=cert, auth=(usr, password), proxies=PROXY)
             result.raise_for_status()
 
@@ -158,15 +159,13 @@ def test_server_status():
 def test_wait_for_server(server_is_running_mock):
     config = EverestConfig.load_file("valid_yaml_config.yml")
 
-    with capture_logger() as logstream:
-        with pytest.raises(Exception):
-            wait_for_server(config, timeout=1, context=None)
+    with capture_logger() as logstream, pytest.raises(Exception):
+        wait_for_server(config, timeout=1, context=None)
 
     assert logstream.getvalue() == ""
     context = MockContext()
-    with capture_logger() as logstream:
-        with pytest.raises(SystemExit):
-            wait_for_server(config, timeout=120, context=context)
+    with capture_logger() as logstream, pytest.raises(SystemExit):
+        wait_for_server(config, timeout=120, context=context)
 
     expected_error_msg = (
         'Error when parsing config_file:"DISTANCE3" '

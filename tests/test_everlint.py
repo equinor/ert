@@ -2,13 +2,13 @@ import os
 import tempfile
 from pathlib import Path
 
-import pytest
-
 import everest
+import pytest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.util.forward_models import collect_forward_models
+
 from tests.test_config_validation import has_error
 from tests.utils import relpath
 
@@ -111,7 +111,7 @@ def test_invalid_shallow_value():
         errors = EverestConfig.lint_config_dict(config)
         has_error(errors, match="value is not a valid float")
         assert len(errors) > 0
-        assert 1 == len(errors)
+        assert len(errors) == 1
 
 
 def test_invalid_shallow_key():
@@ -260,7 +260,7 @@ def test_simulation_spec():
         "/usr/bin/unwriteable"
     )
     errors = EverestConfig.lint_config_dict(config)
-    assert 1 == len(errors)
+    assert len(errors) == 1
     config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
     has_error(errors, match="User does not have write access (.*)")
 

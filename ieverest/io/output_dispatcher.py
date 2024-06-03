@@ -5,7 +5,7 @@ import logging
 class OutputDispatcher(object):
     """Forward output requests to multiple output channels"""
 
-    def __init__(self, output_channels={}):
+    def __init__(self, output_channels={}):  # noqa B006
         super(OutputDispatcher, self).__init__()
         self.output_channels = output_channels
 

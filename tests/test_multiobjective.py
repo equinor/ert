@@ -1,11 +1,11 @@
 import pytest
 from ert.config import ErtConfig
-from ropt.config.enopt import EnOptConfig
-
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator.everest2res import everest2res
 from everest.suite import _EverestWorkflow
+from ropt.config.enopt import EnOptConfig
+
 from tests.test_config_validation import has_error
 from tests.utils import relpath, tmpdir
 

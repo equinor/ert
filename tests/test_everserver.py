@@ -3,14 +3,14 @@ import ssl
 from functools import partial
 from unittest.mock import patch
 
-from ropt.enums import OptimizerExitCode
-from seba_sqlite.snapshot import SebaSnapshot
-
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from everest.strings import OPT_FAILURE_REALIZATIONS, SIM_PROGRESS_ENDPOINT
+from ropt.enums import OptimizerExitCode
+from seba_sqlite.snapshot import SebaSnapshot
+
 from tests.utils import relpath, tmpdir
 
 
@@ -127,7 +127,7 @@ def test_everserver_status_running_complete(*args):
     status = everserver_status(config)
 
     assert status["status"] == ServerStatus.completed
-    assert "Optimization completed." == status["message"]
+    assert status["message"] == "Optimization completed."
 
 
 @patch("everest.detached.jobs.everserver.configure_logger")

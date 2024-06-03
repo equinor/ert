@@ -98,7 +98,7 @@ def _render_definitions(definitions, jinja_env):
         if not isinstance(definitions[key], str):
             continue
 
-        for idx in range(len(definitions) + 1):
+        for _idx in range(len(definitions) + 1):
             new_val = render(definitions[key], definitions)
             if definitions[key] != new_val:
                 definitions[key] = new_val

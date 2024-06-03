@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 from ert.config import ErtConfig
 from ert.storage import open_storage
-
 from everest.config import EverestConfig
 from everest.detached import generate_everserver_ert_config, start_server
 from everest.strings import (
@@ -16,6 +15,7 @@ from everest.strings import (
 )
 from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
+
 from tests.utils import relpath, tmpdir
 
 
@@ -69,7 +69,7 @@ def test_everest_output(start_mock):
     # Check only the everest output folder was added
     assert list(new_folders) == [DEFAULT_OUTPUT_DIR]
     # Check no new files were created when starting the server
-    assert 0 == len(final_files.difference(initial_files))
+    assert len(final_files.difference(initial_files)) == 0
     # Check storage folder no longer created in the config folder
     assert "storage" not in final_folders
     makedirs_if_needed(config.output_dir, roll_if_exists=True)

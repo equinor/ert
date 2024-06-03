@@ -1,5 +1,7 @@
 from functools import partial
 
+from everest import __version__ as everest_version
+from everest.config import EverestConfig
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -13,8 +15,6 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from everest import __version__ as everest_version
-from everest.config import EverestConfig
 from ieverest.config_widget import ConfigWidget
 from ieverest.monitor_widget import MonitorWidget
 from ieverest.utils import load_ui

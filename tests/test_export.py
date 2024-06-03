@@ -3,12 +3,12 @@ import shutil
 
 import pandas as pd
 import pytest
-
 from everest import filter_data
 from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export, validate_export
+
 from tests.utils import create_cached_mocked_test_case, relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "examples", "math_func")

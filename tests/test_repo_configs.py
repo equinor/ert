@@ -1,9 +1,8 @@
 import os
 
-from ropt.exceptions import ConfigError as ROptConfigError
-
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.utils import get_ropt_plugin_manager
+from ropt.exceptions import ConfigError as ROptConfigError
 
 
 def _get_all_files(folder):

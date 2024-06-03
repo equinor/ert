@@ -10,7 +10,6 @@ from unittest import mock
 
 import decorator
 import pytest
-
 from everest.bin.main import start_everest
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status

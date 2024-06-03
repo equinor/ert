@@ -2,13 +2,13 @@ import os.path
 
 import numpy
 import pytest
+from everest.config import EverestConfig
+from everest.config_file_loader import yaml_file_to_substituted_config_dict
+from everest.optimizer.everest2ropt import everest2ropt
 from pydantic import ValidationError
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType
 
-from everest.config import EverestConfig
-from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.optimizer.everest2ropt import everest2ropt
 from tests.utils import relpath, tmpdir
 
 _CONFIG_DIR = relpath("test_data/mocked_test_case")
@@ -23,9 +23,9 @@ def test_tutorial_everest2ropt():
 
     realizations = ropt_config.realizations
 
-    assert 2 == len(realizations.names)
-    assert 0 == realizations.names[0]
-    assert 0.5 == realizations.weights[0]
+    assert len(realizations.names) == 2
+    assert realizations.names[0] == 0
+    assert realizations.weights[0] == 0.5
 
 
 @tmpdir(relpath("test_data"))
@@ -35,12 +35,12 @@ def test_everest2ropt_controls():
     )
 
     controls = config.controls
-    assert 1 == len(controls)
+    assert len(controls) == 1
 
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
 
-    assert 16 == len(ropt_config.variables.lower_bounds)
-    assert 16 == len(ropt_config.variables.upper_bounds)
+    assert len(ropt_config.variables.lower_bounds) == 16
+    assert len(ropt_config.variables.upper_bounds) == 16
 
 
 @tmpdir(relpath("test_data"))
@@ -80,7 +80,7 @@ def test_everest2ropt_controls_input_constraint():
     )
     input_constraints_ever_config = config.input_constraints
     # Check that there are two input constraints entries in the config
-    assert 2 == len(input_constraints_ever_config)
+    assert len(input_constraints_ever_config) == 2
 
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
 
@@ -90,7 +90,7 @@ def test_everest2ropt_controls_input_constraint():
     # constraints: LE, GE and EQ.
 
     # Check that the config is defining three input constraints.
-    assert 3 == ropt_config.linear_constraints.coefficients.shape[0]
+    assert ropt_config.linear_constraints.coefficients.shape[0] == 3
 
     # Check the input constraint types
     exp_type = [ConstraintType.LE, ConstraintType.GE, ConstraintType.EQ]
@@ -107,7 +107,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     )
     input_constraints_ever_config = config.input_constraints
     # Check that there are two input constraints entries in the config
-    assert 2 == len(input_constraints_ever_config)
+    assert len(input_constraints_ever_config) == 2
 
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
     min_values = ropt_config.variables.lower_bounds.copy()

@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import pytest
 from ert.shared import ert_share_path as get_ert_share_path
-
 from everest.plugins import hook_impl as everest_implementation
 from everest.plugins import hookimpl
 from everest.plugins.hook_manager import EverestPluginManager

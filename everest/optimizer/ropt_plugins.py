@@ -11,11 +11,11 @@ from pydantic import BaseModel, ConfigDict
 from ropt.config.plan import EvaluatorStepConfig
 from ropt.exceptions import ConfigError
 from ropt.optimization import BasicStep, Plan, PlanContext
-from ropt.plugins.optimization_steps.evaluator import DefaultEvaluatorStep
 from ropt.plugins.optimization_steps.base import (
-    OptimizationStepsPlugin,
     OptimizationSteps,
+    OptimizationStepsPlugin,
 )
+from ropt.plugins.optimization_steps.evaluator import DefaultEvaluatorStep
 from ropt.results import FunctionResults, convert_to_maximize
 
 from everest.config import EverestConfig

@@ -3,8 +3,8 @@
 import argparse
 import logging
 import signal
-from functools import partial
 import threading
+from functools import partial
 
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status, server_is_running

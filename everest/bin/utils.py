@@ -70,8 +70,8 @@ def handle_keyboard_interrupt(signal, frame, options):
     )
     print("=" * 80)
     sys.tracebacklimit = 0
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")
-    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")  # noqa SIM115
     sys.exit()
 
 

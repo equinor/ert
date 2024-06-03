@@ -84,9 +84,11 @@ class PluginSiteConfigEnv:
                 os.environ["ERT_SITE_CONFIG"] = tmp_site_conf_path
 
     def __exit__(self, *args):
-        if self.backup_env.get("ERT_SITE_CONFIG", None) is None:
-            if self._is_site_config_env_set():
-                del os.environ["ERT_SITE_CONFIG"]
+        if (
+            self.backup_env.get("ERT_SITE_CONFIG", None) is None
+            and self._is_site_config_env_set()
+        ):
+            del os.environ["ERT_SITE_CONFIG"]
 
         if self.tmp_dir is not None:
             shutil.rmtree(self.tmp_dir)

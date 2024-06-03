@@ -4,13 +4,13 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
-
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export
 from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
+
 from tests.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "examples", "math_func")
@@ -78,7 +78,7 @@ def test_math_func_in_constr():
 
     # Check optimum value
     optim = -workflow.result.total_objective  # distance is provided as -distance
-    assert 0.25**2 + 0.25**2 == pytest.approx(optim, abs=0.1)
+    assert pytest.approx(optim, abs=0.1) == 0.25**2 + 0.25**2
     expected_dist = (x - 0.5) ** 2 + (y - 0.5) ** 2 + (z - 0.5) ** 2
     assert expected_dist == pytest.approx(optim, abs=0.001)
 
@@ -110,7 +110,7 @@ def test_math_func_out_constr():
 
     # Check optimum value
     optim = -workflow.result.total_objective  # distance is provided as -distance
-    assert 0.2 * 0.2 == pytest.approx(optim, abs=0.1)
+    assert pytest.approx(optim, abs=0.1) == 0.2 * 0.2
     expected_dist = (x - 0.5) ** 2 + (y - 0.5) ** 2 + (z - 0.5) ** 2
     assert expected_dist == pytest.approx(optim, abs=0.001)
 
@@ -163,7 +163,7 @@ def test_math_func_multiobj():
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
 
     # Three points in this case are increasing the merit
-    assert 2 == len(ok_evals[ok_evals["increased_merit"] == 1])
+    assert len(ok_evals[ok_evals["increased_merit"] == 1]) == 2
 
     first = ok_evals.iloc[0]
     best = ok_evals.iloc[-1]
@@ -232,9 +232,9 @@ def test_math_func_advanced():
     assert x2 == pytest.approx(0.4, abs=0.05)
 
     # Check optimum value
-    assert -(
+    assert pytest.approx(workflow.result.total_objective, abs=0.1) == -(
         0.25 * (1.6**2 + 1.5**2 + 0.1**2) + 0.75 * (0.4**2 + 0.5**2 + 0.1**2)
-    ) == pytest.approx(workflow.result.total_objective, abs=0.1)
+    )
     # Expected distance is the weighted average of the (squared) distances
     #  from (x, y, z) to (-1.5, -1.5, 0.5) and (0.5, 0.5, 0.5)
     w = config.model.realizations_weights

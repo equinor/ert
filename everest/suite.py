@@ -181,7 +181,7 @@ class _MonitorThread(threading.Thread):
                                 "Failed to remove {}, {}".format(path, sys_info)
                             )
 
-                        shutil.rmtree(path_to_delete, onerror=onerror)
+                        shutil.rmtree(path_to_delete, onerror=onerror)  # pylint: disable=deprecated-argument
 
         self._context = None
         self._callback = lambda *_, **__: None
