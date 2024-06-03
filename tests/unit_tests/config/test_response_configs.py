@@ -76,7 +76,9 @@ def test_that_custom_response_type_is_not_parsed_into_config_when_not_invoked(tm
     assert "DUMMY_OBSERVATION" not in config_dict
 
 
-def test_that_custom_response_appears_in_ensemble_config(tmp_path):
+def test_that_custom_response_with_observations_appears_correctly_in_ertconfig(
+    tmp_path,
+):
     (tmp_path / "test.ert").write_text(
         """
         NUM_REALIZATIONS 1
