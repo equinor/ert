@@ -194,11 +194,6 @@ class ErtConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        try:
-            ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
-        except ConfigValidationError as err:
-            errors.append(err)
-
         workflow_jobs = {}
         workflows = {}
         hooked_workflows = {}
@@ -241,6 +236,11 @@ class ErtConfig:
 
         try:
             analysis_config = AnalysisConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        try:
+            ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
             errors.append(err)
 
