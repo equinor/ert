@@ -17,10 +17,7 @@ def create_driver(config: QueueConfig) -> Driver:
     if config.queue_system == QueueSystem.LOCAL:
         return LocalDriver()
     elif config.queue_system == QueueSystem.TORQUE:
-        queue_config = {
-            key: value
-            for key, value in config.queue_options.get(QueueSystem.TORQUE, [])
-        }
+        queue_config = config.queue_options
         return OpenPBSDriver(
             qsub_cmd=queue_config.get("QSUB_CMD"),
             qstat_cmd=queue_config.get("QSTAT_CMD"),
@@ -34,9 +31,7 @@ def create_driver(config: QueueConfig) -> Driver:
             job_prefix=queue_config.get("JOB_PREFIX"),
         )
     elif config.queue_system == QueueSystem.LSF:
-        queue_config = {
-            key: value for key, value in config.queue_options.get(QueueSystem.LSF, [])
-        }
+        queue_config = config.queue_options
         return LsfDriver(
             bsub_cmd=queue_config.get("BSUB_CMD"),
             bkill_cmd=queue_config.get("BKILL_CMD"),

@@ -50,9 +50,9 @@ class Driver(BaseCClass):  # type: ignore
     @classmethod
     def create_driver(cls, queue_config: QueueConfig) -> "Driver":
         driver = Driver(queue_config.queue_system)
-        if queue_config.queue_system in queue_config.queue_options:
-            for setting in queue_config.queue_options[queue_config.queue_system]:
-                if not driver.set_option(*setting):
+        if queue_config.queue_options:
+            for setting, value in queue_config.queue_options.items():
+                if not driver.set_option(setting, value):
                     raise ValueError(f"Queue option not set {setting}")
         return driver
 
