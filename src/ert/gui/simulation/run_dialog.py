@@ -1,4 +1,5 @@
 import logging
+import os.path
 from queue import SimpleQueue
 from typing import Optional
 
@@ -248,6 +249,8 @@ class RunDialog(QDialog):
         file_dialog = self.findChild(QDialog, name=selected_file)
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
+        elif selected_file and not os.path.exists(selected_file):
+            pass
         elif selected_file:
             job_name = index.siblingAtColumn(0).data()
             FileDialog(

@@ -290,9 +290,22 @@ def test_makedirs(monkeypatch, tmp_path):
     they don't exist
     """
     monkeypatch.chdir(tmp_path)
+    scriptname = "selctive_output.py"
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            textwrap.dedent(
+                """\
+            #!/usr/bin/env python
+            print('Hello')
+            raise ValueError('Error')"""
+            )
+        )
+    executable = os.path.realpath(scriptname)
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
     job = Job(
         {
-            "executable": "true",
+            "executable": executable,
             "stdout": "a/file",
             "stderr": "b/c/file",
         },
@@ -302,3 +315,43 @@ def test_makedirs(monkeypatch, tmp_path):
         pass
     assert (tmp_path / "a/file").is_file()
     assert (tmp_path / "b/c/file").is_file()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("stdout", [True, False])
+@pytest.mark.parametrize("stderr", [True, False])
+def test_output_files_on_output(stderr, stdout):
+    scriptname = "selctive_output.py"
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            textwrap.dedent(
+                """\
+            #!/usr/bin/env python
+            """
+            )
+        )
+        if stdout:
+            script.write('print("Hello")\n')
+        if stderr:
+            script.write('raise ValueError("Error")')
+    executable = os.path.realpath(scriptname)
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+    fm_step = Job(
+        {
+            "executable": executable,
+            "stdout": "stdout",
+            "stderr": "stderr",
+        },
+        0,
+    )
+    for _ in fm_step.run():
+        pass
+    if stderr:
+        assert pathlib.Path("stderr").is_file()
+    else:
+        assert not pathlib.Path("stderr").is_file()
+    if stdout:
+        assert pathlib.Path("stdout").is_file()
+    else:
+        assert not pathlib.Path("stdout").is_file()

@@ -146,8 +146,18 @@ class Job:
                 stdin.close()
             if stdout is not None:
                 stdout.close()
+                try:
+                    if os.path.getsize(self.std_out) == 0:
+                        os.remove(self.std_out)
+                except (OSError, FileNotFoundError):
+                    pass
             if stderr is not None:
                 stderr.close()
+                try:
+                    if os.path.getsize(self.std_err) == 0:
+                        os.remove(self.std_err)
+                except (OSError, FileNotFoundError):
+                    pass
 
         try:
             proc = Popen(
@@ -237,6 +247,7 @@ class Job:
                 yield exited_message.with_error(
                     f"Process exited with status code {exit_code}"
                 )
+            ensure_file_handles_closed()
             return
 
         # exit_code is 0
