@@ -76,14 +76,6 @@ class QueueConfig:
             queue_options[queue_system].append(
                 (option_name, values[0] if values else "")
             )
-            if values and option_name == "LSF_SERVER" and values[0].startswith("$"):
-                raise ConfigValidationError(
-                    "Invalid server name specified for QUEUE_OPTION LSF"
-                    f" LSF_SERVER: {values[0]}. Server name is currently an"
-                    " undefined environment variable. The LSF_SERVER keyword is"
-                    " usually provided by the site-configuration file, beware that"
-                    " you are effectively replacing the default value provided."
-                )
             if (
                 values
                 and option_name == "SUBMIT_SLEEP"
@@ -137,7 +129,7 @@ class QueueConfig:
 def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
     temp_dict: Dict[str, List[str]] = defaultdict(list)
     for option_string in option_list:
-        temp_dict.setdefault(option_string[0], []).append(option_string[1])
+        temp_dict[option_string[0]].append(option_string[1])
     return temp_dict
 
 
@@ -160,8 +152,8 @@ def _check_num_cpu_requirement(
     queue_system_options: List[Tuple[str, str]],
 ) -> None:
     torque_options = _option_list_to_dict(queue_system_options)
-    num_nodes_str = torque_options.get("NUM_NODES", [""])[0]
-    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[0]
+    num_nodes_str = torque_options.get("NUM_NODES", [""])[-1]
+    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[-1]
     num_nodes = int(num_nodes_str) if num_nodes_str else 1
     num_cpus_per_node = int(num_cpus_per_node_str) if num_cpus_per_node_str else 1
     if num_cpu != num_nodes * num_cpus_per_node:
@@ -191,19 +183,6 @@ class QueueMemoryStringFormat:
             )
             is not None
         )
-
-
-def parse_slurm_memopt(s: str) -> str:
-    return s.lower().replace("b", "").upper()
-
-
-def parse_torque_memopt(s: str) -> str:
-    if re.match(r"\d+[kgmt](?!\w)", s, re.IGNORECASE):
-        return s.lower() + "b"
-    if re.match(r"^\d+$", s):
-        return s + "kb"
-
-    return s
 
 
 queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
