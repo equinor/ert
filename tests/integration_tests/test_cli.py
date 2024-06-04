@@ -1,5 +1,6 @@
 import fileinput
 import json
+import logging
 import os
 import threading
 from pathlib import Path
@@ -796,6 +797,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     prior_mask,
     reals_rerun_option,
+    caplog,
 ):
     ert_config = ErtConfig.from_file("poly.ert")
     num_realizations = ert_config.model_config.num_realizations
@@ -810,21 +812,22 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
         ]
-
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitor",
-        "poly.ert",
-        "--current-case=iter-0",
-        "--realizations",
-        reals_rerun_option,
-    )
+    with caplog.at_level(logging.INFO):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitor",
+            "poly.ert",
+            "--current-case=iter-0",
+            "--realizations",
+            reals_rerun_option,
+        )
 
     with open_storage(ert_config.ens_path, mode="w") as storage:
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
             "values"
         ]
         np.testing.assert_array_equal(parameter_values, prior_values)
+    assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 1
 
 
 @pytest.mark.integration_test
