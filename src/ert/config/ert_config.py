@@ -24,9 +24,11 @@ from typing import (
     overload,
 )
 
+import xarray as xr
 from typing_extensions import Self
 
 from ert.config.responses.response_config import (
+    ObsArgsNew,
     ResponseConfigWithLifecycleHooks,
 )
 from ert.substitution_list import SubstitutionList
@@ -68,7 +70,6 @@ from .responses.gen_data_config import GenDataConfig
 from .responses.observation_vector import ObsVector
 from .responses.observations import EnkfObs, group_observations_by_response_type
 from .responses.response_config import ObsArgs
-from .responses.response_properties import ResponseTypes
 from .responses.summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
@@ -89,9 +90,12 @@ def site_config_location() -> str:
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
-    RESPONSE_TYPE_CLASSES: ClassVar[Dict[str, Type[ResponseConfigWithLifecycleHooks]]]
+    RESPONSE_TYPE_CLASSES: ClassVar[
+        Dict[str, Type[ResponseConfigWithLifecycleHooks]]
+    ] = {}
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
+    observations: Dict[str, xr.Dataset] = field(default_factory=dict)
     substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
@@ -126,15 +130,17 @@ class ErtConfig:
             else os.getcwd()
         )
 
-        self.observations = self._create_observations_and_find_summary_keys()
+        # TODO port this over to regular obs parsing in .from_dict()
+        # self.observations = self._create_observations_and_find_summary_keys()
 
-        if ResponseTypes.summary in self.observations:
-            summary_ds = self.observations[ResponseTypes.summary]
-            names_in_ds = summary_ds["name"].data.tolist()
-            self.summary_keys.extend(names_in_ds)
+        # if ResponseTypes.summary in self.observations:
+        #     summary_ds = self.observations[ResponseTypes.summary]
+        #     names_in_ds = summary_ds["name"].data.tolist()
+        #     self.summary_keys.extend(names_in_ds)
 
-        if len(self.summary_keys) != 0:
-            self.ensemble_config.addNode(self._create_summary_config())
+    #
+    # if len(self.summary_keys) != 0:
+    #     self.ensemble_config.addNode(self._create_summary_config())
 
     @staticmethod
     def with_plugins(
@@ -165,7 +171,7 @@ class ErtConfig:
     @cached_property
     def observation_keys(self):
         keys = []
-        for ds in self.observations.datasets.values():
+        for ds in self.observations.values():
             keys.extend(ds["obs_name"].data)
 
         return sorted(keys)
@@ -268,11 +274,21 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        observations = cls._parse_observations(
+            ensemble_config=ensemble_config,
+            model_config=model_config,
+            analysis_config=analysis_config,
+        )
+
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = val
 
         return cls(
+            observations=observations,
             substitution_list=substitution_list,
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
@@ -295,6 +311,166 @@ class ErtConfig:
             model_config=model_config,
             user_config_file=config_file_path,
         )
+
+    @classmethod
+    def _parse_observations_legacy(
+        cls,
+        ensemble_config: EnsembleConfig,
+        model_config: ModelConfig,
+        analysis_config: AnalysisConfig,
+    ):
+        obs_vectors: Dict[str, ObsVector] = {}
+        obs_config_file = model_config.obs_config_file
+        obs_time_list: Sequence[datetime] = []
+
+        if ensemble_config.refcase is not None:
+            obs_time_list = ensemble_config.refcase.all_dates
+        elif model_config.time_map is not None:
+            obs_time_list = model_config.time_map
+
+        if obs_config_file:
+            if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
+                raise ObservationConfigError.with_context(
+                    f"Empty observations file: {obs_config_file}", obs_config_file
+                )
+
+            if not os.access(obs_config_file, os.R_OK):
+                raise ObservationConfigError.with_context(
+                    "Do not have permission to open observation"
+                    f" config file {obs_config_file!r}",
+                    obs_config_file,
+                )
+
+            obs_config_content = parse(obs_config_file)
+
+            config_errors: List[ErrorInfo] = []
+            for obs_name, values in obs_config_content:
+                obs_args = ObsArgs(
+                    values=values,
+                    std_cutoff=analysis_config.std_cutoff,
+                    obs_name=obs_name,
+                    refcase=ensemble_config.refcase,
+                    history=model_config.history_source,
+                    obs_time_list=obs_time_list,
+                )
+
+                try:
+                    if type(values) is HistoryValues or type(values) is SummaryValues:
+                        # ^
+                        # (
+                        #   Everything else is legacy, parsing the global observations
+                        #   file, and is left as is
+                        # )
+                        # This goes into new summary config obs parsing hook
+                        obs_vectors.update(
+                            **ensemble_config.response_configs.get(
+                                "SUMMARY", SummaryConfig
+                            ).parse_observation_from_legacy_obsconfig(obs_args)
+                        )
+                    elif type(values) is GenObsValues:
+                        has_gen_data = ensemble_config.hasNodeGenData(values.data)
+
+                        config_for_response = (
+                            ensemble_config.getNodeGenData(values.data)
+                            if has_gen_data
+                            else None
+                        )
+
+                        obs_args.config_for_response = config_for_response
+                        # ^
+                        # (
+                        #   Everything else is legacy, parsing the global observations
+                        #   file, and is left as is
+                        # )
+                        # This goes into new gen data config obs parsing hook
+                        obs_vectors.update(
+                            **GenDataConfig.parse_observation_from_legacy_obsconfig(
+                                obs_args
+                            )
+                        )
+                    else:
+                        config_errors.append(
+                            ErrorInfo(
+                                message=f"Unknown ObservationType {type(values)} for {obs_name}"
+                            ).set_context(obs_name)
+                        )
+                        continue
+                except ObservationConfigError as err:
+                    config_errors.extend(err.errors)
+                except ValueError as err:
+                    config_errors.append(
+                        ErrorInfo(message=str(err)).set_context(obs_name)
+                    )
+
+            if config_errors:
+                raise ObservationConfigError.from_collected(config_errors)
+
+        return group_observations_by_response_type(obs_vectors, obs_time_list)
+
+    @classmethod
+    def _parse_observations(
+        cls,
+        ensemble_config: EnsembleConfig,
+        model_config: ModelConfig,
+        analysis_config: AnalysisConfig,
+    ):
+        response_configs = ensemble_config.response_configs
+        observation_configs = ensemble_config.observation_configs
+        observations_by_type = {}
+
+        obs_time_list: Sequence[datetime] = []
+        if ensemble_config.refcase is not None:
+            obs_time_list = ensemble_config.refcase.all_dates
+        elif model_config.time_map is not None:
+            obs_time_list = model_config.time_map
+
+        errors = []
+        for obs_config in observation_configs.values():
+            try:
+                response_config = next(
+                    rc
+                    for rc in response_configs.values()
+                    if rc.response_type() == obs_config.response_type
+                    or (rc.name == obs_config.response_name and rc.name is not None)
+                )
+            except StopIteration:
+                errors.append(
+                    ErrorInfo(
+                        "Could not match observation to a response type or name"
+                    ).set_context_list(obs_config.line_from_ert_config)
+                )
+
+            obs_args = ObsArgsNew(
+                std_cutoff=analysis_config.std_cutoff,
+                refcase=ensemble_config.refcase,
+                history=model_config.history_source,
+                obs_time_list=obs_time_list,
+            )
+
+            observation_ds = response_config.parse_observation_from_config(
+                obs_config, obs_args
+            )
+
+            if observation_ds:
+                if obs_config.response_type not in observations_by_type:
+                    observations_by_type[obs_config.response_type] = []
+
+                observations_by_type[obs_config.response_type].append(observation_ds)
+
+        # Merge by type & primary key
+        enkf_obs = cls._create_observations_and_find_summary_keys(
+            ensemble_config=ensemble_config,
+            analysis_config=analysis_config,
+            model_config=model_config,
+        )
+
+        return {
+            **enkf_obs.datasets,
+            **{
+                obs_type: xr.concat(obs_ds_list, dim="obs_name")
+                for obs_type, obs_ds_list in observations_by_type.items()
+            },
+        }
 
     @classmethod
     def _read_summary_keys(
@@ -390,21 +566,9 @@ class ErtConfig:
         site_config = cls.read_site_config()
         schema = init_user_config_schema()
         if cls.RESPONSE_TYPE_CLASSES:
-            for response_type_name, response_cls in cls.RESPONSE_TYPE_CLASSES.items():
-                response_kw = response_cls.ert_config_response_keyword()
-                observation_kw = response_cls.ert_config_observation_keyword()
-
-                assert response_kw not in schema, (
-                    f"Response type {response_type_name} is trying to use "
-                    f"response keyword {response_kw} that is already in use. "
-                    f"Please use another keyword for this."
-                )
-
-                assert observation_kw not in schema, (
-                    f"Response type {response_type_name} is trying to use "
-                    f"observation keyword {observation_kw} that is already in use. "
-                    f"Please use another keyword for this."
-                )
+            for response_cls in cls.RESPONSE_TYPE_CLASSES.values():
+                response_kws = response_cls.ert_config_response_keyword()
+                observation_kws = response_cls.ert_config_observation_keyword()
 
                 # Note/TODO, might have to extend grammar a bit
                 # this is a copypaste of the FORWARD_MODEL schema item, and
@@ -412,29 +576,42 @@ class ErtConfig:
                 # FORWARD_MODEL name(...args)
                 # whereas this is in the form KW(...args)
                 # to support instant use of (<X>=..)
-                response_kw_schema_item = SchemaItem(
-                    kw=response_kw,
-                    argc_min=0,
-                    argc_max=None,
-                    join_after=1,
-                    multi_occurrence=True,
-                    substitute_from=0,
-                )
 
-                observation_kw_schema_item = SchemaItem(
-                    kw=observation_kw,
-                    argc_min=0,
-                    argc_max=None,
-                    join_after=1,
-                    multi_occurrence=True,
-                    substitute_from=0,
-                )
+                if not isinstance(response_kws, list):
+                    response_kws = [response_kws]
 
-                if response_kw and response_kw_schema_item not in schema:
-                    schema.update({response_kw: response_kw_schema_item})
+                if not isinstance(observation_kws, list):
+                    observation_kws = [observation_kws]
 
-                if observation_kw and observation_kw not in schema:
-                    schema.update({observation_kw: observation_kw_schema_item})
+                for kw in response_kws:
+                    if kw not in schema:
+                        schema.update(
+                            {
+                                kw: SchemaItem(
+                                    kw=kw,
+                                    argc_min=0,
+                                    argc_max=None,
+                                    join_after=1,
+                                    multi_occurrence=True,
+                                    substitute_from=0,
+                                )
+                            }
+                        )
+
+                for kw in observation_kws:
+                    if kw not in schema:
+                        schema.update(
+                            {
+                                kw: SchemaItem(
+                                    kw=kw,
+                                    argc_min=0,
+                                    argc_max=None,
+                                    join_after=1,
+                                    multi_occurrence=True,
+                                    substitute_from=0,
+                                )
+                            }
+                        )
 
         return lark_parse(
             file=user_config_file,
@@ -949,15 +1126,21 @@ class ErtConfig:
             refcase=time_map,
         )
 
-    def _create_observations_and_find_summary_keys(self) -> EnkfObs:
+    @classmethod
+    def _create_observations_and_find_summary_keys(
+        cls,
+        ensemble_config: EnsembleConfig,
+        analysis_config: AnalysisConfig,
+        model_config: ModelConfig,
+    ) -> EnkfObs:
         obs_vectors: Dict[str, ObsVector] = {}
-        obs_config_file = self.model_config.obs_config_file
+        obs_config_file = model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
 
-        if self.ensemble_config.refcase is not None:
-            obs_time_list = self.ensemble_config.refcase.all_dates
-        elif self.model_config.time_map is not None:
-            obs_time_list = self.model_config.time_map
+        if ensemble_config.refcase is not None:
+            obs_time_list = ensemble_config.refcase.all_dates
+        elif model_config.time_map is not None:
+            obs_time_list = model_config.time_map
 
         if obs_config_file:
             if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
@@ -973,22 +1156,25 @@ class ErtConfig:
                 )
 
             obs_config_content = parse(obs_config_file)
-            ensemble_config = self.ensemble_config
 
             config_errors: List[ErrorInfo] = []
             for obs_name, values in obs_config_content:
                 obs_args = ObsArgs(
                     values=values,
-                    std_cutoff=self.analysis_config.std_cutoff,
+                    std_cutoff=analysis_config.std_cutoff,
                     obs_name=obs_name,
                     refcase=ensemble_config.refcase,
-                    history=self.model_config.history_source,
+                    history=model_config.history_source,
                     obs_time_list=obs_time_list,
                 )
 
                 try:
                     if type(values) is HistoryValues or type(values) is SummaryValues:
-                        obs_vectors.update(**SummaryConfig.parse_observation(obs_args))
+                        obs_vectors.update(
+                            **SummaryConfig.parse_observation_from_legacy_obsconfig(
+                                obs_args
+                            )
+                        )
                     elif type(values) is GenObsValues:
                         has_gen_data = ensemble_config.hasNodeGenData(values.data)
 
@@ -999,7 +1185,11 @@ class ErtConfig:
                         )
 
                         obs_args.config_for_response = config_for_response
-                        obs_vectors.update(**GenDataConfig.parse_observation(obs_args))
+                        obs_vectors.update(
+                            **GenDataConfig.parse_observation_from_legacy_obsconfig(
+                                obs_args
+                            )
+                        )
                     else:
                         config_errors.append(
                             ErrorInfo(

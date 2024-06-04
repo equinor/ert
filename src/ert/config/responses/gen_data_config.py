@@ -86,7 +86,7 @@ class GenDataConfig(ResponseConfig):
         return GenObservation(values, stds, indices, std_scaling)
 
     @staticmethod
-    def parse_observation(args: ObsArgs) -> Dict[str, ObsVector]:
+    def parse_observation_from_legacy_obsconfig(args: ObsArgs) -> Dict[str, ObsVector]:
         general_observation = args.values
         assert type(general_observation) is GenObsValues
         assert general_observation is not None

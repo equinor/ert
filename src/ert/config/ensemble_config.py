@@ -14,13 +14,11 @@ from typing import (
     overload,
 )
 
-import xarray as xr
-
 from ert.config.commons import Refcase
 from ert.config.field import Field
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parameter_config import ParameterConfig
-from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError, ErrorInfo
+from ert.config.parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from ert.config.responses._read_summary import read_summary
 from ert.config.responses.gen_data_config import GenDataConfig
 from ert.config.responses.response_config import (
@@ -73,15 +71,15 @@ class EnsembleConfig:
 
         self._grid_file = _get_abs_path(grid_file)
         self.parameter_configs: Dict[str, ParameterConfig] = {}
-        self.response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = (
-            response_configs
-        )
+        self.response_configs: Dict[
+            str, Union[ResponseConfigWithLifecycleHooks, ResponseConfig]
+        ] = response_configs  # TODO use only ported when porting is done
         self.observation_configs: Dict[str, ObservationConfig] = observation_configs
         self.refcase = refcase
         self.eclbase = eclbase
 
-        # for gen_data in _gendata_list:
-        #    self.addNode(gen_data)
+        for gen_data in _gendata_list:
+            self.addNode(gen_data)
 
         for gen_kw in _genkw_list:
             self.addNode(gen_kw)
@@ -92,42 +90,40 @@ class EnsembleConfig:
         for field in _field_list:
             self.addNode(field)
 
-        self._parse_observations()
+        # self._parse_observations()
 
-    def _parse_observations(self) -> None:
-        observations_by_type = {}
-
-        errors = []
-        for obs_config in self.observation_configs.values():
-            try:
-                response_config = next(
-                    rc
-                    for rc in self.response_configs.values()
-                    if rc.response_type() == obs_config.response_type
-                    or (rc.name == obs_config.response_name and rc.name is not None)
-                )
-            except StopIteration:
-                errors.append(
-                    ErrorInfo(
-                        "Could not match observation to a response type or name"
-                    ).set_context_list(obs_config.line_from_ert_config)
-                )
-
-            observation_ds = response_config.parse_observation_from_config(
-                obs_config.line_from_ert_config
-            )
-
-            if observation_ds:
-                if obs_config.response_type not in observations_by_type:
-                    observations_by_type[obs_config.response_type] = []
-
-                observations_by_type[obs_config.response_type].append(observation_ds)
-
-        # Merge by type & primary key
-        self.observations_datasets: Dict[str, xr.Dataset] = {
-            obs_type: xr.concat(obs_ds_list, dim="obs_name")
-            for obs_type, obs_ds_list in observations_by_type.items()
-        }
+    # def parse_observations(self) -> Dict[str, xr.Dataset]:
+    #    observations_by_type = {}
+    #
+    #    errors = []
+    #    for obs_config in observation_configs.values():
+    #        try:
+    #            response_config = next(
+    #                rc
+    #                for rc in response_configs.values()
+    #                if rc.response_type() == obs_config.response_type
+    #                or (rc.name == obs_config.response_name and rc.name is not None)
+    #            )
+    #        except StopIteration:
+    #            errors.append(
+    #                ErrorInfo(
+    #                    "Could not match observation to a response type or name"
+    #                ).set_context_list(obs_config.line_from_ert_config)
+    #            )
+    #
+    #        observation_ds = response_config.parse_observation_from_config(obs_config)
+    #
+    #        if observation_ds:
+    #            if obs_config.response_type not in observations_by_type:
+    #                observations_by_type[obs_config.response_type] = []
+    #
+    #            observations_by_type[obs_config.response_type].append(observation_ds)
+    #
+    #    # Merge by type & primary key
+    #    return {
+    #        obs_type: xr.concat(obs_ds_list, dim="obs_name")
+    #        for obs_type, obs_ds_list in observations_by_type.items()
+    #    }
 
     @staticmethod
     def _check_for_duplicate_names(
@@ -187,26 +183,45 @@ class EnsembleConfig:
             except Exception as err:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err
 
+        observation_configs: Dict[str, ObservationConfig] = {}
+        response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = {}
         for response_type_cls in response_types.values():
-            observation_keyword = response_type_cls.ert_config_observation_keyword()
-            response_keyword = response_type_cls.ert_config_response_keyword()
+            observation_keywords = response_type_cls.ert_config_observation_keyword()
+            response_keywords = response_type_cls.ert_config_response_keyword()
+
+            if not isinstance(observation_keywords, list):
+                observation_keywords = [observation_keywords]
+
+            if not isinstance(response_keywords, list):
+                response_keywords = [response_keywords]
 
             # Find all occurrences in config
-            responses = config_dict[response_keyword]
-            observations = config_dict[observation_keyword]
 
-            response_configs: Dict[str, ResponseConfigWithLifecycleHooks] = {}
-            for config_list in responses:
-                config_instance = response_type_cls(config_list)
-                response_configs[config_instance.name] = config_instance
+            for resp_kw in response_keywords:
+                if resp_kw not in config_dict:
+                    continue
 
-            observation_configs = {}
-            for [observations_kwargs_str] in observations:
-                # We cannot validate the name&type against observations until we
-                # receive it from the forward model and read in the names, unless
-                # the response was specifically specified with a name
-                obs_config = ObservationConfig(observations_kwargs_str)
-                observation_configs[obs_config.obs_name] = obs_config
+                response_config_instances = response_type_cls.from_config_list(
+                    config_dict[resp_kw]
+                )
+                for inst in response_config_instances:
+                    response_configs[inst.name] = inst
+
+            for obs_kw in observation_keywords:
+                if obs_kw not in config_dict:
+                    continue
+
+                observations = config_dict[obs_kw]
+
+                for line_from_ert_config in observations:
+                    # We cannot validate the name&type against observations until we
+                    # receive it from the forward model and read in the names, unless
+                    # the response was specifically specified with a name
+                    obs_config = ObservationConfig(
+                        line_from_ert_config,
+                        response_type_cls.response_type(),
+                    )
+                    observation_configs[obs_config.obs_name] = obs_config
 
         return cls(
             observation_configs=observation_configs,

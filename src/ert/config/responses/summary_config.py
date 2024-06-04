@@ -181,7 +181,7 @@ class SummaryConfig(ResponseConfig):
         }
 
     @staticmethod
-    def parse_observation(args: ObsArgs) -> Dict[str, ObsVector]:
+    def parse_observation_from_legacy_obsconfig(args: ObsArgs) -> Dict[str, ObsVector]:
         if type(args.values) is HistoryValues:
             return SummaryConfig._parse_history_obs(args)
 

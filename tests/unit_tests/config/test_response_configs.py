@@ -1,9 +1,14 @@
 from typing import List, Tuple
 
+import xarray as xr
+
 from ert.config import ErtConfig
 from ert.config.responses.response_config import (
+    ObsArgsNew,
+    ObservationConfig,
     ResponseConfigWithLifecycleHooks,
 )
+from ert.config.responses.summary_config_with_hooks import SummaryConfigWithHooks
 
 
 def test_that_custom_response_type_is_parsed_into_config_when_invoked(tmp_path):
@@ -93,12 +98,12 @@ def test_that_custom_response_with_observations_appears_correctly_in_ertconfig(
     )
 
     class DummyResponseConfig(ResponseConfigWithLifecycleHooks):
-        def parse_response_from_config(
-            self, config_list: List[Tuple[str, str]]
-        ) -> None:
-            pass
-
         def parse_observation_from_config(
+            self, obs_config: ObservationConfig, obs_args: ObsArgsNew
+        ) -> xr.Dataset:
+            return None
+
+        def parse_response_from_config(
             self, config_list: List[Tuple[str, str]]
         ) -> None:
             pass
@@ -161,3 +166,37 @@ def test_that_custom_response_with_observations_appears_correctly_in_ertconfig(
     assert o2c.response_type is None
     assert o2c.response_name == "D2"
     assert o2c.src == "DUMMY2.csv"
+
+
+def test_that_summary_config_parsing_works(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM LOCAL
+
+        ECLBASE somewhere
+        SUMMARY *
+        SUMMARY HELLO
+        SUMMARY G*:NORTH
+        SUMMARY_OBSERVATION(<SRC>=sum_obs0.csv)
+
+    """
+    )
+
+    ert_config = ErtConfig.with_plugins(
+        response_types=[SummaryConfigWithHooks]
+    ).from_file(tmp_path / "test.ert")
+
+    ens_config = ert_config.ensemble_config
+    obs_configs = ens_config.observation_configs
+    resp_configs = ens_config.response_configs
+
+    assert set(obs_configs.keys()) == {
+        "DMY1",
+        "DMY2",
+        "obs(<SRC>=DUMMY0.csv,<RESPONSE_TYPE>=DUMMY)",
+    }
+
+    assert set(resp_configs.keys()) == {"D2", "response(<SRC>=DUMMY)"}
