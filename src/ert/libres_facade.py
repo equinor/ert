@@ -32,6 +32,7 @@ from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
 
 from .enkf_main import EnKFMain, ensemble_context
+from .shared.plugins import ErtPluginContext
 
 _logger = logging.getLogger(__name__)
 
@@ -294,4 +295,12 @@ class LibresFacade:
     def from_config_file(
         cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
-        return cls(EnKFMain(ErtConfig.from_file(config_file), read_only))
+        with ErtPluginContext() as ctx:
+            return cls(
+                EnKFMain(
+                    ErtConfig.with_plugins(
+                        forward_model_step_classes=ctx.plugin_manager.forward_model_steps
+                    ).from_file(config_file),
+                    read_only,
+                )
+            )
