@@ -79,7 +79,7 @@ class EnsembleExperiment(BaseRunModel):
         sample_prior(
             prior_context.ensemble,
             prior_context.active_realizations,
-            random_seed=self._simulation_arguments.random_seed,
+            random_seed=self.random_seed,
         )
 
         iteration = prior_context.iteration

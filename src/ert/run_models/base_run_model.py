@@ -172,9 +172,8 @@ class BaseRunModel:
         self._iter_map: Dict[int, str] = {}
         self.validate()
         self._context_env_keys: List[str] = []
-        self.rng = np.random.default_rng(
-            _seed_sequence(self._simulation_arguments.random_seed)
-        )
+        self.random_seed: int = _seed_sequence(self._simulation_arguments.random_seed)
+        self.rng = np.random.default_rng(self.random_seed)
         self.substitution_list = config.substitution_list
         self.run_paths = Runpaths(
             jobname_format=config.model_config.jobname_format_string,

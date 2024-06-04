@@ -96,7 +96,7 @@ class EnsembleSmoother(BaseRunModel):
         sample_prior(
             prior_context.ensemble,
             prior_context.active_realizations,
-            random_seed=self._simulation_arguments.random_seed,
+            random_seed=self.random_seed,
         )
 
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
