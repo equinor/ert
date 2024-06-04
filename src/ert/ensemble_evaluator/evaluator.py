@@ -45,7 +45,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_STOPPED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
-from .snapshot import PartialSnapshot
+from .snapshot import Snapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -177,9 +177,7 @@ class EnsembleEvaluator:
             send_future.result()
             self._signal_cancel()  # let ensemble know it should stop
 
-    async def _send_snapshot_update(
-        self, snapshot_update_event: PartialSnapshot
-    ) -> None:
+    async def _send_snapshot_update(self, snapshot_update_event: Snapshot) -> None:
         message = self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),

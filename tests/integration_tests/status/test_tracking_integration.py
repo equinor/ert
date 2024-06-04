@@ -217,11 +217,8 @@ def test_tracking(
     for event in queue:
         if isinstance(event, FullSnapshotEvent):
             snapshots[event.iteration] = event.snapshot
-        if (
-            isinstance(event, SnapshotUpdateEvent)
-            and event.partial_snapshot is not None
-        ):
-            snapshots[event.iteration].merge(event.partial_snapshot.data())
+        if isinstance(event, SnapshotUpdateEvent) and event.snapshot is not None:
+            snapshots[event.iteration].merge(event.snapshot.data())
         if isinstance(event, EndEvent):
             pass
 
