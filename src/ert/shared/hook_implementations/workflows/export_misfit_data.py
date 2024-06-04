@@ -23,13 +23,13 @@ class ExportMisfitDataJob(ErtScript):
         if self.ensemble is None:
             raise StorageError("No responses loaded")
 
-        realizations = self.ensemble.get_realization_list_with_responses()
+        realizations = self.ensemble.get_realization_with_responses()
 
         from ert import LibresFacade
 
         facade = LibresFacade(ert)
         misfit = facade.load_all_misfit_data(self.ensemble)
-        if not realizations or misfit.empty:
+        if realizations.size == 0 or misfit.empty:
             raise StorageError("No responses loaded")
 
         misfit.columns = [val.split(":")[1] for val in misfit.columns]

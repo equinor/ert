@@ -310,17 +310,23 @@ class LocalEnsemble(BaseMode):
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.bool_]:
         """
-        Mask array indicating realizations with associated responses.
+        Generates a mask array indicating which realizations have
+        associated responses based on a given key.
+        If no key is provided,
+        it checks for any responses associated with each realization.
 
         Parameters
         ----------
-        key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
+        key : Optional[str]
+            The specific response key to filter realizations.
+            If `None`, all types of responses are considered.
 
         Returns
         -------
-        masks : ndarray of bool
-            Boolean array where True means responses are associated.
+        NDArray[np.bool_]
+            A boolean numpy array where each element is `True`
+            if the corresponding realization has associated responses,
+            and `False` otherwise.
         """
 
         return np.array(
@@ -384,20 +390,22 @@ class LocalEnsemble(BaseMode):
         self, realization: int, key: Optional[str] = None
     ) -> bool:
         """
-        Returns true if there are responses in the experiment and they have
-        all been saved in the ensemble
+        Determines whether responses exist for a specified realization
+        in the ensemble, potentially filtered by a response key.
 
         Parameters
         ----------
         realization : int
-            Realization index.
+            The index of the realization within the ensemble to check.
         key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
+            Response key to filter realizations.
+            If None, all responses are considered.
 
         Returns
         -------
-        exists : bool
-            True if responses exist for realization.
+        bool
+            `True` if the specified responses exist for the given realization;
+            otherwise, `False`.
         """
 
         if not self.experiment.response_configuration:
@@ -491,25 +499,25 @@ class LocalEnsemble(BaseMode):
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
-    def get_realization_list_with_responses(
+    def get_realization_with_responses(
         self, key: Optional[str] = None
-    ) -> List[int]:
+    ) -> npt.NDArray[np.int_]:
         """
-        List of realization indices with associated responses.
+        Get an array of indices for realizations that have associated responses.
 
         Parameters
         ----------
-        key : str, optional
+        key : Optional[str], default None
             Response key to filter realizations. If None, all responses are considered.
 
         Returns
         -------
-        realizations : list of int
-            List of realization indices with associated responses.
+        npt.NDArray[np.int_]
+            Array of realization indices with associated responses.
         """
 
         mask = self.get_realization_mask_with_responses(key)
-        return np.where(mask)[0].tolist()
+        return np.flatnonzero(mask)
 
     def set_failure(
         self,
@@ -809,7 +817,7 @@ class LocalEnsemble(BaseMode):
         dataset.to_netcdf(path=file_path, engine="scipy")
 
     def load_responses(
-        self, key: str, realizations: Union[Tuple[int], Tuple[int, ...], None] = None
+        self, key: str, realizations: Union[Tuple[int, ...], None] = None
     ) -> xr.Dataset:
         """Load responses for key and realizations into xarray Dataset.
 
@@ -862,7 +870,7 @@ class LocalEnsemble(BaseMode):
                 for real in (
                     realizations
                     if realizations is not None
-                    else self.get_realization_list_with_responses(key)
+                    else self.get_realization_with_responses(key).tolist()
                 )
             ]
 
@@ -1121,7 +1129,7 @@ class LocalEnsemble(BaseMode):
         """
 
         long_nps = []
-        reals_with_responses_mask = self.get_realization_list_with_responses()
+        reals_with_responses_mask = self.get_realization_with_responses()
         if active_realizations is not None:
             reals_with_responses_mask = np.intersect1d(
                 active_realizations, np.array(reals_with_responses_mask)
