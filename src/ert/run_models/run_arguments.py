@@ -21,7 +21,6 @@ class SingleTestRunArguments(SimulationArguments):
         self.num_iterations = 1
         self.prev_successful_realizations = 0
         self.iter_num = 0
-        self.start_iteration = 0
         self.active_realizations = [True]
 
 
@@ -29,7 +28,6 @@ class SingleTestRunArguments(SimulationArguments):
 class EnsembleExperimentRunArguments(SimulationArguments):
     active_realizations: List[bool]
     experiment_name: str
-    start_iteration: int = 0
     current_ensemble: str = "prior"
     target_ensemble: Optional[str] = None
     ensemble_type: str = "Ensemble experiment"
@@ -50,7 +48,6 @@ class EvaluateEnsembleRunArguments(SimulationArguments):
         self.target_ensemble = None
         self.iter_num = 0
         self.prev_successful_realizations = 0
-        self.start_iteration = 0
         self.num_iterations = 1
 
 
@@ -62,7 +59,6 @@ class ESRunArguments(SimulationArguments):
     ensemble_type: str = "ES"
 
     num_iterations: int = 1
-    start_iteration: int = 0
     prev_successful_realizations: int = 0
 
 
@@ -92,7 +88,6 @@ class SIESRunArguments(SimulationArguments):
 
     current_ensemble = None
     ensemble_type: str = "IES"
-    start_iteration = 0
     iter_num = 0
     prev_successful_realizations = 0
 
