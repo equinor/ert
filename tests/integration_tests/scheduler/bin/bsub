@@ -3,7 +3,7 @@ set -e
 
 name="STDIN"
 
-while getopts "o:e:J:q:R:" opt
+while getopts "o:e:J:q:R:n:" opt
 do
     case "$opt" in
         o)
@@ -17,6 +17,8 @@ do
             ;;
         q)
             queue=$OPTARG
+            ;;
+        n)
             ;;
         R)
             resource_requirement=$OPTARG

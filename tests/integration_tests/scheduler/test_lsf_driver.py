@@ -1,7 +1,9 @@
+import asyncio
 import json
 import logging
 import os
 import random
+import re
 import stat
 import string
 from pathlib import Path
@@ -164,6 +166,30 @@ async def test_submit_with_resource_requirement(job_name):
     driver = LsfDriver(resource_requirement=resource_requirement)
     await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
     await poll(driver, {0})
+
+    assert Path("test").read_text(encoding="utf-8") == "test\n"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_submit_with_num_cpu(pytestconfig, job_name):
+    if not pytestconfig.getoption("lsf"):
+        return
+
+    num_cpu = 2
+    driver = LsfDriver(num_cpu=num_cpu)
+    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
+    await poll(driver, {0})
+
+    job_id = driver._iens2jobid[0]
+    process = await asyncio.create_subprocess_exec(
+        "bhist",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await process.communicate()
+    matches = re.search(".*([0-9]+) Processors Requested", stdout.decode())
+    assert matches and matches[1] == num_cpu
 
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
