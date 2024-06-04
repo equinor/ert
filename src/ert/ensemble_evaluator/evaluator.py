@@ -44,7 +44,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
-from .snapshot import PartialSnapshot
+from .snapshot import Snapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -91,7 +91,7 @@ class EnsembleEvaluator:
             )
             self._messages_to_send.task_done()
 
-    async def _append_message(self, snapshot_update_event: PartialSnapshot) -> None:
+    async def _append_message(self, snapshot_update_event: Snapshot) -> None:
         message = self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
@@ -187,6 +187,7 @@ class EnsembleEvaluator:
     @property
     def ensemble(self) -> Ensemble:
         return self._ensemble
+
 
     def _create_cloud_event(
         self,

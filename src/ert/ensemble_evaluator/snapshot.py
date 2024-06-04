@@ -99,8 +99,8 @@ def _filter_nones(some_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in some_dict.items() if value is not None}
 
 
-class PartialSnapshot:
-    def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
+class Snapshot:
+    def __init__(self) -> None:
         self._realization_states: Dict[
             str,
             Dict[str, Union[bool, datetime, str, Dict[str, "ForwardModel"]]],
@@ -124,16 +124,6 @@ class PartialSnapshot:
             sorted_real_ids=[],
             sorted_forward_model_ids=defaultdict(list),
         )
-        self._snapshot = snapshot
-
-    @property
-    def status(self) -> Optional[str]:
-        return self._ensemble_state
-
-    def update_metadata(self, metadata: SnapshotMetadata) -> None:
-        """only used in gui snapshot model, which only cares about the partial
-        snapshot's metadata"""
-        self._metadata.update(metadata)
 
     def update_realization(
         self,
@@ -141,7 +131,7 @@ class PartialSnapshot:
         status: str,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-    ) -> "PartialSnapshot":
+    ) -> "Snapshot":
         self._realization_states[real_id].update(
             _filter_nones(
                 {"status": status, "start_time": start_time, "end_time": end_time}
@@ -154,58 +144,12 @@ class PartialSnapshot:
         real_id: str,
         forward_model_id: str,
         forward_model: "ForwardModel",
-    ) -> "PartialSnapshot":
+    ) -> "Snapshot":
         self._forward_model_states[(real_id, forward_model_id)].update(forward_model)
-        if self._snapshot:
-            self._snapshot._my_partial._forward_model_states[
-                (real_id, forward_model_id)
-            ].update(forward_model)
         return self
 
-    def get_all_forward_models(
-        self,
-    ) -> Mapping[Tuple[str, str], "ForwardModel"]:
-        if self._snapshot:
-            return self._snapshot.get_all_forward_models()
-        return {}
-
-    def get_forward_model_status_for_all_reals(
-        self,
-    ) -> Mapping[Tuple[str, str], str]:
-        if self._snapshot:
-            return self._snapshot.get_forward_model_status_for_all_reals()
-        return {}
-
-    @property
-    def reals(self) -> Dict[str, "RealizationSnapshot"]:
-        return {
-            real_id: RealizationSnapshot(**real_data)
-            for real_id, real_data in self._realization_states.items()
-        }
-
-    def get_real_ids(self) -> Sequence[str]:
-        """we can have information about realizations in both _realization_states and
-        _forward_model_states - we combine the existing IDs"""
-        real_ids = []
-        for idx in self._forward_model_states:
-            real_id = idx[0]
-            if real_id not in real_ids:
-                real_ids.append(real_id)
-        for real_id in self._realization_states:
-            if real_id not in real_ids:
-                real_ids.append(real_id)
-        return sorted(real_ids, key=int)
-
-    @property
-    def metadata(self) -> SnapshotMetadata:
-        return self._metadata
-
-    def get_real(self, real_id: str) -> "RealizationSnapshot":
-        return RealizationSnapshot(**self._realization_states[real_id])
-
     def to_dict(self) -> Dict[str, Any]:
-        """used to send snapshot updates - for thread safety, this method should not
-        access the _snapshot property"""
+        """Used to send snapshot updates"""
         _dict: Dict[str, Any] = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
@@ -226,10 +170,7 @@ class PartialSnapshot:
 
         return _dict
 
-    def data(self) -> Mapping[str, Any]:
-        return self.to_dict()
-
-    def _merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
+    def _merge(self, other: "Snapshot") -> "Snapshot":
         self._metadata.update(other._metadata)
         if other._ensemble_state is not None:
             self._ensemble_state = other._ensemble_state
@@ -239,177 +180,189 @@ class PartialSnapshot:
             self._forward_model_states[forward_model_id].update(other_fm_data)
         return self
 
-    def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
+    def update_from_cloudevent_and_generate_update_snapshot(
+        self,
+        event: CloudEvent,
+        update_event_snapshot: Optional["Snapshot"] = None,
+    ) -> "Snapshot":
+        """Add the data from the cloudevent, and also generate a new snapshot containing only the updated data.
+
+        Args:
+            event (CloudEvent): The CloudEvent with the data to update.
+            update_event_snapshot (Optional[&quot;Snapshot&quot;], optional): The snapshot which should only have the updated data attached. Returns a new snapshot if None is provided.
+
+        Returns:
+            Snapshot: A snapshot only containing the updated data.
+        """
+        if update_event_snapshot is None:
+            update_event_snapshot = Snapshot()
         e_type = event["type"]
-        e_source = event["source"]
-        timestamp = event["time"]
-
-        if self._snapshot is None:
-            raise UnsupportedOperationException(
-                f"updating {self.__class__} without a snapshot is not supported"
-            )
-
         if e_type in ids.EVGROUP_REALIZATION:
-            status = _FM_TYPE_EVENT_TO_STATUS[e_type]
-            start_time = None
-            end_time = None
-            if e_type == ids.EVTYPE_REALIZATION_RUNNING:
-                start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
-                ids.EVTYPE_REALIZATION_SUCCESS,
-                ids.EVTYPE_REALIZATION_FAILURE,
-                ids.EVTYPE_REALIZATION_TIMEOUT,
-            }:
-                end_time = convert_iso8601_to_datetime(timestamp)
-
-            self.update_realization(
-                _get_real_id(e_source), status, start_time, end_time
+            update_event_snapshot = self._handle_realization_event(
+                event, update_event_snapshot
             )
-
-            if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
-                for (
-                    forward_model_id,
-                    forward_model,
-                ) in self._snapshot.get_forward_models_for_real(
-                    _get_real_id(e_source)
-                ).items():
-                    if (
-                        forward_model.get(ids.STATUS)
-                        != state.FORWARD_MODEL_STATE_FINISHED
-                    ):
-                        real_id = _get_real_id(e_source)
-                        forward_model_idx = (real_id, forward_model_id)
-                        if forward_model_idx not in self._forward_model_states:
-                            self._forward_model_states[forward_model_idx] = {}
-                        self._forward_model_states[forward_model_idx].update(
-                            {
-                                "status": state.FORWARD_MODEL_STATE_FAILURE,
-                                "end_time": end_time,
-                                "error": "The run is cancelled due to "
-                                "reaching MAX_RUNTIME",
-                            }
-                        )
 
         elif e_type in ids.EVGROUP_FORWARD_MODEL:
-            status = _FM_TYPE_EVENT_TO_STATUS[e_type]
-            start_time = None
-            end_time = None
-            error = None
-            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
-                ids.EVTYPE_FORWARD_MODEL_SUCCESS,
-                ids.EVTYPE_FORWARD_MODEL_FAILURE,
-            }:
-                end_time = convert_iso8601_to_datetime(timestamp)
-                # Make sure error msg from previous failed run is replaced
-                error = ""
-                if event.data is not None:
-                    error = event.data.get(ids.ERROR_MSG)
-
-            fm = ForwardModel(
-                **_filter_nones(  # type: ignore
-                    {
-                        ids.STATUS: status,
-                        ids.INDEX: _get_forward_model_index(e_source),
-                        ids.START_TIME: start_time,
-                        ids.END_TIME: end_time,
-                        ids.ERROR: error,
-                    }
-                )
-            )
-
-            if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
-                fm[ids.CURRENT_MEMORY_USAGE] = event.data.get(ids.CURRENT_MEMORY_USAGE)
-                fm[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
-            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                fm[ids.STDOUT] = event.data.get(ids.STDOUT)
-                fm[ids.STDERR] = event.data.get(ids.STDERR)
-
-            self.update_forward_model(
-                _get_real_id(e_source),
-                _get_forward_model_id(e_source),
-                fm,
+            update_event_snapshot = self._handle_forward_model_event(
+                event, update_event_snapshot
             )
 
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type]
+            update_event_snapshot._ensemble_state = self._ensemble_state
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-            other_partial = _from_nested_dict(event.data)
-            self._merge(other_partial)
+            other_snapshot = Snapshot.from_nested_dict(event.data)
+            self._merge(other_snapshot)
+            update_event_snapshot._merge(other_snapshot)
         else:
             raise ValueError(f"Unknown type: {e_type}")
+        return update_event_snapshot
+
+    def _handle_realization_event(
+        self, event: CloudEvent, update_event_snapshot: "Snapshot"
+    ) -> "Snapshot":
+        e_source = event["source"]
+        e_type = event["type"]
+        timestamp = event["time"]
+        status = _FM_TYPE_EVENT_TO_STATUS[e_type]
+        start_time = None
+        end_time = None
+        if e_type == ids.EVTYPE_REALIZATION_RUNNING:
+            start_time = convert_iso8601_to_datetime(timestamp)
+        elif e_type in {
+            ids.EVTYPE_REALIZATION_SUCCESS,
+            ids.EVTYPE_REALIZATION_FAILURE,
+            ids.EVTYPE_REALIZATION_TIMEOUT,
+        }:
+            end_time = convert_iso8601_to_datetime(timestamp)
+        self.update_realization(_get_real_id(e_source), status, start_time, end_time)
+
+        if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
+            for (
+                forward_model_id,
+                forward_model,
+            ) in self.get_forward_models_for_real(_get_real_id(e_source)).items():
+                if forward_model.get(ids.STATUS) != state.FORWARD_MODEL_STATE_FINISHED:
+                    real_id = _get_real_id(e_source)
+                    forward_model_idx = (real_id, forward_model_id)
+                    if forward_model_idx not in self._forward_model_states:
+                        self._forward_model_states[forward_model_idx] = {}
+                    self._forward_model_states[forward_model_idx].update(
+                        {
+                            "status": state.FORWARD_MODEL_STATE_FAILURE,
+                            "end_time": end_time,
+                            "error": "The run is cancelled due to "
+                            "reaching MAX_RUNTIME",
+                        }
+                    )
         return self
 
+    def _handle_forward_model_event(
+        self, event: CloudEvent, update_event_snapshot: "Snapshot"
+    ) -> "Snapshot":
+        e_source = event["source"]
+        e_type = event["type"]
+        timestamp = event["time"]
+        status = _FM_TYPE_EVENT_TO_STATUS[e_type]
+        start_time = None
+        end_time = None
+        error = None
+        if e_type == ids.EVTYPE_FORWARD_MODEL_START:
+            start_time = convert_iso8601_to_datetime(timestamp)
+        elif e_type in {
+            ids.EVTYPE_FORWARD_MODEL_SUCCESS,
+            ids.EVTYPE_FORWARD_MODEL_FAILURE,
+        }:
+            end_time = convert_iso8601_to_datetime(timestamp)
+            # Make sure error msg from previous failed run is replaced
+            error = ""
+            if event.data is not None:
+                error = event.data.get(ids.ERROR_MSG)
+        fm = ForwardModel(
+            **_filter_nones(  # type: ignore
+                {
+                    ids.STATUS: status,
+                    ids.INDEX: _get_forward_model_index(e_source),
+                    ids.START_TIME: start_time,
+                    ids.END_TIME: end_time,
+                    ids.ERROR: error,
+                }
+            )
+        )
+        if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
+            fm[ids.CURRENT_MEMORY_USAGE] = event.data.get(ids.CURRENT_MEMORY_USAGE)
+            fm[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
+        if e_type == ids.EVTYPE_FORWARD_MODEL_START:
+            fm[ids.STDOUT] = event.data.get(ids.STDOUT)
+            fm[ids.STDERR] = event.data.get(ids.STDERR)
+        self.update_forward_model(
+            _get_real_id(e_source), _get_forward_model_id(e_source), fm
+        )
+        update_event_snapshot._forward_model_states = self._forward_model_states
+        return update_event_snapshot
 
-class Snapshot:
-    def __init__(self, input_dict: Mapping[str, Any]) -> None:
-        self._my_partial = _from_nested_dict(input_dict)
-
-    def merge_event(self, event: PartialSnapshot) -> None:
-        self._my_partial._merge(event)
+    def merge_event(self, event: "Snapshot") -> None:
+        self._merge(event)
 
     def merge(self, update_as_nested_dict: Mapping[str, Any]) -> None:
-        self._my_partial._merge(_from_nested_dict(update_as_nested_dict))
+        self._merge(self.from_nested_dict(update_as_nested_dict))
 
     def merge_metadata(self, metadata: SnapshotMetadata) -> None:
-        self._my_partial._metadata.update(metadata)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return self._my_partial.to_dict()
+        self._metadata.update(metadata)
 
     @property
     def status(self) -> Optional[str]:
-        return self._my_partial._ensemble_state
+        return self._ensemble_state
 
     @property
     def metadata(self) -> SnapshotMetadata:
-        return self._my_partial.metadata
+        return self._metadata
 
     def get_all_forward_models(
         self,
     ) -> Mapping[Tuple[str, str], "ForwardModel"]:
-        return self._my_partial._forward_model_states.copy()
+        return self._forward_model_states.copy()
 
     def get_forward_model_status_for_all_reals(
         self,
     ) -> Mapping[Tuple[str, str], str]:
         return {
             idx: forward_model_state["status"]
-            for idx, forward_model_state in self._my_partial._forward_model_states.items()
+            for idx, forward_model_state in self._forward_model_states.items()
             if "status" in forward_model_state
             and forward_model_state["status"] is not None
         }
 
     @property
-    def reals(self) -> Mapping[str, "RealizationSnapshot"]:
-        return self._my_partial.reals
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+        return {
+            real_id: RealizationSnapshot(**real_data)
+            for real_id, real_data in self._realization_states.items()
+        }
 
     def get_forward_models_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
             fm_idx[1]: forward_model_data.copy()
-            for fm_idx, forward_model_data in self._my_partial._forward_model_states.items()
+            for fm_idx, forward_model_data in self._forward_model_states.items()
             if fm_idx[0] == real_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
-        return RealizationSnapshot(**self._my_partial._realization_states[real_id])
+        return RealizationSnapshot(**self._realization_states[real_id])
 
     def get_job(self, real_id: str, forward_model_id: str) -> "ForwardModel":
-        return self._my_partial._forward_model_states[
-            (real_id, forward_model_id)
-        ].copy()
+        return self._forward_model_states[(real_id, forward_model_id)].copy()
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
             int(real_idx)
-            for real_idx, real_data in self._my_partial._realization_states.items()
+            for real_idx, real_data in self._realization_states.items()
             if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
         ]
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states: Dict[str, int] = defaultdict(int)
-        for real in self._my_partial._realization_states.values():
+        for real in self._realization_states.values():
             status = real["status"]
             assert isinstance(status, str)
             states[status] += 1
@@ -417,7 +370,31 @@ class Snapshot:
 
     def data(self) -> Mapping[str, Any]:
         # The gui uses this
-        return self._my_partial.to_dict()
+        return self.to_dict()
+
+    @classmethod
+    def from_nested_dict(cls, data: Mapping[str, Any]) -> "Snapshot":
+        snapshot = Snapshot()
+        if "metadata" in data:
+            snapshot._metadata = data["metadata"]
+        if "status" in data:
+            snapshot._ensemble_state = data["status"]
+        for real_id, realization_data in data.get("reals", {}).items():
+            snapshot._realization_states[real_id] = _filter_nones(
+                {
+                    "status": realization_data.get("status"),
+                    "active": realization_data.get("active"),
+                    "start_time": realization_data.get("start_time"),
+                    "end_time": realization_data.get("end_time"),
+                }
+            )
+            for forward_model_id, job in realization_data.get(
+                "forward_models", {}
+            ).items():
+                forward_model_idx = (real_id, forward_model_id)
+                snapshot._forward_model_states[forward_model_idx] = job
+
+        return snapshot
 
 
 class ForwardModel(TypedDict, total=False):
@@ -467,7 +444,7 @@ class SnapshotBuilder(BaseModel):
                 end_time=end_time,
                 status=status,
             )
-        return Snapshot(top.model_dump())
+        return Snapshot.from_nested_dict(top.model_dump())
 
     def add_forward_model(
         self,
@@ -498,25 +475,3 @@ class SnapshotBuilder(BaseModel):
             )
         )
         return self
-
-
-def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
-    partial = PartialSnapshot()
-    if "metadata" in data:
-        partial._metadata = data["metadata"]
-    if "status" in data:
-        partial._ensemble_state = data["status"]
-    for real_id, realization_data in data.get("reals", {}).items():
-        partial._realization_states[real_id] = _filter_nones(
-            {
-                "status": realization_data.get("status"),
-                "active": realization_data.get("active"),
-                "start_time": realization_data.get("start_time"),
-                "end_time": realization_data.get("end_time"),
-            }
-        )
-        for forward_model_id, job in realization_data.get("forward_models", {}).items():
-            forward_model_idx = (real_id, forward_model_id)
-            partial._forward_model_states[forward_model_idx] = job
-
-    return partial

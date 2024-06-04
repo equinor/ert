@@ -7,7 +7,6 @@ from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
 from .snapshot import (
     ForwardModel,
-    PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
@@ -21,7 +20,7 @@ __all__ = (
     "ForwardModelStep",
     "FullSnapshotEvent",
     "Monitor",
-    "PartialSnapshot",
+    "Realization",
     "Snapshot",
     "SnapshotUpdateEvent",
     "wait_for_evaluator",

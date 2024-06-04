@@ -50,7 +50,7 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_EE_TERMINATED,
     STATUS,
 )
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
+from ert.ensemble_evaluator.snapshot import Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -385,7 +385,7 @@ class BaseRunModel:
 
     def send_snapshot_event(self, event: CloudEvent, iteration: int) -> None:
         if event["type"] == EVTYPE_EE_SNAPSHOT:
-            snapshot = Snapshot(event.data)
+            snapshot = Snapshot.from_nested_dict(event.data)
             self._iter_snapshot[iteration] = snapshot
             status, current_progress, realization_count = self._current_status()
             self.send_event(
@@ -406,10 +406,9 @@ class BaseRunModel:
                     f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
                     f"snapshot for iter {iteration}"
                 )
-            partial = PartialSnapshot(self._iter_snapshot[iteration]).from_cloudevent(
-                event
-            )
-            self._iter_snapshot[iteration].merge_event(partial)
+            snapshot = self._iter_snapshot[
+                iteration
+            ].update_from_cloudevent_and_generate_update_snapshot(event)
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 SnapshotUpdateEvent(
@@ -420,7 +419,7 @@ class BaseRunModel:
                     realization_count=realization_count,
                     status_count=status,
                     iteration=iteration,
-                    partial_snapshot=partial,
+                    snapshot=snapshot,
                 )
             )
 

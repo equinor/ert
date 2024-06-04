@@ -16,7 +16,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
+from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
@@ -188,10 +188,8 @@ def test_large_snapshot(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder().build(
-                            [], status=state.REALIZATION_STATE_FINISHED
-                        )
+                    snapshot=SnapshotBuilder().build(
+                        [], status=state.REALIZATION_STATE_FINISHED
                     ),
                     iteration_label="Foo",
                     current_iteration=0,
@@ -204,7 +202,7 @@ def test_large_snapshot(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="real_less_partial",
+            id="real_less_snapshot",
         ),
         pytest.param(
             [
@@ -230,10 +228,8 @@ def test_large_snapshot(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder().build(
-                            ["0"], status=state.REALIZATION_STATE_FINISHED
-                        )
+                    snapshot=SnapshotBuilder().build(
+                        ["0"], status=state.REALIZATION_STATE_FINISHED
                     ),
                     iteration_label="Foo",
                     current_iteration=0,
@@ -246,7 +242,7 @@ def test_large_snapshot(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="jobless_partial",
+            id="jobless_snapshot",
         ),
         pytest.param(
             [
@@ -276,16 +272,14 @@ def test_large_snapshot(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
-                            index="0",
-                            status=state.FORWARD_MODEL_STATE_FINISHED,
-                            name="job_0",
-                        )
-                        .build(["1"], status=state.REALIZATION_STATE_RUNNING)
-                    ),
+                    snapshot=SnapshotBuilder()
+                    .add_forward_model(
+                        forward_model_id="0",
+                        index="0",
+                        status=state.FORWARD_MODEL_STATE_FINISHED,
+                        name="job_0",
+                    )
+                    .build(["1"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
                     current_iteration=0,
                     total_iterations=1,
@@ -295,16 +289,14 @@ def test_large_snapshot(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="1",
-                            index="1",
-                            status=state.FORWARD_MODEL_STATE_FAILURE,
-                            name="job_1",
-                        )
-                        .build(["0"], status=state.REALIZATION_STATE_FAILED)
-                    ),
+                    snapshot=SnapshotBuilder()
+                    .add_forward_model(
+                        forward_model_id="1",
+                        index="1",
+                        status=state.FORWARD_MODEL_STATE_FAILURE,
+                        name="job_1",
+                    )
+                    .build(["0"], status=state.REALIZATION_STATE_FAILED),
                     iteration_label="Foo",
                     current_iteration=0,
                     total_iterations=1,
@@ -316,7 +308,7 @@ def test_large_snapshot(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="two_job_updates_over_two_partials",
+            id="two_job_updates_over_two_snapshots",
         ),
         pytest.param(
             [
@@ -466,18 +458,16 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
-                            index="0",
-                            status=state.FORWARD_MODEL_STATE_RUNNING,
-                            current_memory_usage="45000",
-                            max_memory_usage="55000",
-                            name="job_0",
-                        )
-                        .build(["0"], status=state.REALIZATION_STATE_RUNNING)
-                    ),
+                    snapshot=SnapshotBuilder()
+                    .add_forward_model(
+                        forward_model_id="0",
+                        index="0",
+                        status=state.FORWARD_MODEL_STATE_RUNNING,
+                        current_memory_usage="45000",
+                        max_memory_usage="55000",
+                        name="job_0",
+                    )
+                    .build(["0"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
                     current_iteration=0,
                     total_iterations=1,
@@ -487,18 +477,16 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
-                    partial_snapshot=PartialSnapshot(
-                        SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
-                            index="0",
-                            status=state.FORWARD_MODEL_STATE_FINISHED,
-                            name="job_0",
-                            current_memory_usage="50000",
-                            max_memory_usage="60000",
-                        )
-                        .build(["0"], status=state.REALIZATION_STATE_FINISHED)
-                    ),
+                    snapshot=SnapshotBuilder()
+                    .add_forward_model(
+                        forward_model_id="0",
+                        index="0",
+                        status=state.FORWARD_MODEL_STATE_FINISHED,
+                        name="job_0",
+                        current_memory_usage="50000",
+                        max_memory_usage="60000",
+                    )
+                    .build(["0"], status=state.REALIZATION_STATE_FINISHED),
                     iteration_label="Foo",
                     current_iteration=0,
                     total_iterations=1,
