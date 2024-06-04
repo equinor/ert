@@ -186,6 +186,7 @@ class LsfDriver(Driver):
         self,
         queue_name: Optional[str] = None,
         resource_requirement: Optional[str] = None,
+        num_cpu: int = 1,
         exclude_hosts: Optional[str] = None,
         bsub_cmd: Optional[str] = None,
         bjobs_cmd: Optional[str] = None,
@@ -193,9 +194,9 @@ class LsfDriver(Driver):
         bhist_cmd: Optional[str] = None,
     ) -> None:
         super().__init__()
-
         self._queue_name = queue_name
         self._resource_requirement = resource_requirement
+        self._num_cpu = num_cpu
         self._exclude_hosts = [
             host.strip() for host in (exclude_hosts.split(",") if exclude_hosts else [])
         ]
@@ -256,6 +257,7 @@ class LsfDriver(Driver):
             + arg_queue_name
             + ["-o", str(runpath / (name + ".LSF-stdout"))]
             + ["-e", str(runpath / (name + ".LSF-stderr"))]
+            + ["-n", str(self._num_cpu)]
             + self._build_resource_requirement_arg()
             + ["-J", name, str(script_path), str(runpath)]
         )
