@@ -66,7 +66,10 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self._addCreateNewEnsembleTab()
         self._addInitializeFromScratchTab()
         self.installEventFilter(self)
-        self.setMinimumWidth(650)
+
+        self.setWindowTitle("Manage experiments")
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(250)
 
     def _addCreateNewEnsembleTab(self) -> None:
         panel = QWidget()
