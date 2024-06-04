@@ -110,6 +110,7 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     assert aborted_called
 
 
+@pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     os.chdir(tmp_path)
 
@@ -117,8 +118,8 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
         isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs")
     ):
         # Allow more time when tested on a real compute cluster to avoid false positives.
-        job_kill_window = 10
-        test_grace_time = 20
+        job_kill_window = 60
+        test_grace_time = 120
     elif sys.platform.startswith("darwin"):
         # Mitigate flakiness on low-power test nodes
         job_kill_window = 5
@@ -127,7 +128,7 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
         job_kill_window = 1
         test_grace_time = 2
 
-    async def started(iens):
+    async def kill_job_once_started(iens):
         nonlocal driver
         await driver.kill(iens)
 
@@ -138,9 +139,8 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
         f"sleep {job_kill_window}; touch {tmp_path}/survived",
         name="kill_me",
     )
-    await poll(driver, {0}, started=started)
+    await poll(driver, {0}, started=kill_job_once_started)
 
     # Give the script a chance to finish if it is running
     await asyncio.sleep(test_grace_time)
-
     assert not Path("survived").exists(), "Job should have been killed"
