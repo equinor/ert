@@ -151,6 +151,11 @@ class _Proc(threading.Thread):
                 if self._shutdown.wait(1):
                     self._do_shutdown()
                     break
+
+        except Exception as e:
+            print(str(e))
+            self.logger.error(e, exc_info=True)
+
         finally:
             self._ensure_delete_conn_info()
 
@@ -334,6 +339,8 @@ class BaseService:
         self._conn_info = info
 
         if self._project is not None:
+            if not Path(self._project).exists():
+                raise RuntimeError(f"No storage exists at : {self._project}")
             path = f"{self._project}/{self.service_name}_server.json"
         else:
             path = f"{self.service_name}_server.json"
