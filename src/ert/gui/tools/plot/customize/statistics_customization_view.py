@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtWidgets import QComboBox, QHBoxLayout
 
@@ -20,7 +22,7 @@ class StatisticsCustomizationView(CustomizationView):
     std_dev_factor = WidgetProperty()
     distribution_lines = WidgetProperty()
 
-    def __init__(self):
+    def __init__(self) -> None:
         CustomizationView.__init__(self)
 
         self._presets = [
@@ -81,7 +83,7 @@ class StatisticsCustomizationView(CustomizationView):
 
         self["mean_style"].createLabelLayout(layout)
 
-    def createPresets(self):
+    def createPresets(self) -> QComboBox:
         preset_combo = QComboBox()
         for preset in self._presets:
             preset_combo.addItem(preset)
@@ -89,7 +91,7 @@ class StatisticsCustomizationView(CustomizationView):
         preset_combo.currentIndexChanged.connect(self.presetSelected)
         return preset_combo
 
-    def presetSelected(self, index):
+    def presetSelected(self, index: int) -> None:
         if index == 0:  # Default
             self.updateStyle("mean_style", "-", None)
             self.updateStyle("p50_style", None, None)
@@ -119,13 +121,18 @@ class StatisticsCustomizationView(CustomizationView):
             self.updateStyle("p10_p90_style", "#", None)
             self.updateStyle("p33_p67_style", "#", None)
 
-    def updateStyle(self, attribute_name, line_style, marker_style):
+    def updateStyle(
+        self,
+        attribute_name: str,
+        line_style: Optional[str],
+        marker_style: Optional[str],
+    ) -> None:
         style = getattr(self, attribute_name)
         style.line_style = line_style
         style.marker = marker_style
         setattr(self, attribute_name, style)
 
-    def applyCustomization(self, plot_config: "PlotConfig"):
+    def applyCustomization(self, plot_config: PlotConfig) -> None:
         plot_config.setStatisticsStyle("mean", self.mean_style)
         plot_config.setStatisticsStyle("p50", self.p50_style)
         plot_config.setStatisticsStyle("std", self.std_style)
@@ -136,7 +143,7 @@ class StatisticsCustomizationView(CustomizationView):
         plot_config.setStandardDeviationFactor(self.std_dev_factor)
         plot_config.setDistributionLineEnabled(self.distribution_lines)
 
-    def revertCustomization(self, plot_config: "PlotConfig"):
+    def revertCustomization(self, plot_config: PlotConfig) -> None:
         self.mean_style = plot_config.getStatisticsStyle("mean")
         self.p50_style = plot_config.getStatisticsStyle("p50")
         self.std_style = plot_config.getStatisticsStyle("std")

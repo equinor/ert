@@ -163,7 +163,7 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawRect(rect)
         painter.drawImage(rect, foreground_image)
 
-    def sizeHint(self, option, index) -> QSize:
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
     def eventFilter(self, watched, event: QEvent):

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from PyQt5 import QtSvg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
@@ -18,15 +22,25 @@ from ._colors import (
     YELLOW_TEXT,
 )
 
+if TYPE_CHECKING:
+    from ert.config import ErrorInfo
 
-def _svg_icon(image_name):
+
+def _svg_icon(image_name: str) -> QtSvg.QSvgWidget:
     widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
     widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     return widget
 
 
 class SuggestorMessage(QWidget):
-    def __init__(self, header, text_color, bg_color, icon, info):
+    def __init__(
+        self,
+        header: str,
+        text_color: str,
+        bg_color: str,
+        icon: QWidget,
+        info: ErrorInfo,
+    ) -> None:
         super().__init__()
         self.setAttribute(Qt.WA_StyledBackground)
         self.setStyleSheet(

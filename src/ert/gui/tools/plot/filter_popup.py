@@ -49,14 +49,14 @@ class FilterPopup(QDialog):
         self.setLayout(layout)
         self.adjustSize()
 
-    def addFilterItem(self, name, _id, value=True):
+    def addFilterItem(self, name: str, _id: str, value: bool = True) -> None:
         self.filter_items[_id] = value
 
         check_box = QCheckBox(name)
         check_box.setChecked(value)
         check_box.setObjectName("FilterCheckBox")
 
-        def toggleItem(checked):
+        def toggleItem(checked: bool) -> None:
             self.filter_items[_id] = checked
             self.filterSettingsChanged.emit(self.filter_items)
 
@@ -68,7 +68,7 @@ class FilterPopup(QDialog):
         QWidget.leaveEvent(self, QEvent)
         self.hide()
 
-    def show(self):
+    def show(self) -> None:
         QWidget.show(self)
         p = QCursor().pos()
         self.move(p.x(), p.y())

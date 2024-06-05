@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor, QIcon
 from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
@@ -6,7 +8,7 @@ from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
 class ClearableLineEdit(QLineEdit):
     passive_color = QColor(194, 194, 194)
 
-    def __init__(self, placeholder="yyyy-mm-dd"):
+    def __init__(self, placeholder: str = "yyyy-mm-dd") -> None:
         QLineEdit.__init__(self)
 
         self._placeholder_text = placeholder
@@ -27,16 +29,16 @@ class ClearableLineEdit(QLineEdit):
 
         self.showPlaceholder()
 
-    def toggleClearButtonVisibility(self):
+    def toggleClearButtonVisibility(self) -> None:
         self._clear_button.setVisible(
             len(self.text()) > 0 and not self._placeholder_active
         )
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
         size = QLineEdit.sizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
-    def minimumSizeHint(self):
+    def minimumSizeHint(self) -> QSize:
         size = QLineEdit.minimumSizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
@@ -49,10 +51,10 @@ class ClearableLineEdit(QLineEdit):
         )
         QLineEdit.resizeEvent(self, event)
 
-    def clearButtonClicked(self):
+    def clearButtonClicked(self) -> None:
         self.setText("")
 
-    def showPlaceholder(self):
+    def showPlaceholder(self) -> None:
         if not self._placeholder_active:
             self._placeholder_active = True
             QLineEdit.setText(self, self._placeholder_text)
@@ -60,7 +62,7 @@ class ClearableLineEdit(QLineEdit):
             palette.setColor(self.foregroundRole(), self.passive_color)
             self.setPalette(palette)
 
-    def hidePlaceHolder(self):
+    def hidePlaceHolder(self) -> None:
         if self._placeholder_active:
             self._placeholder_active = False
             QLineEdit.setText(self, "")
@@ -85,7 +87,7 @@ class ClearableLineEdit(QLineEdit):
 
         QLineEdit.keyPressEvent(self, key_event)
 
-    def setText(self, string):
+    def setText(self, string: Optional[str]) -> None:
         self.hidePlaceHolder()
 
         QLineEdit.setText(self, string)
@@ -93,7 +95,7 @@ class ClearableLineEdit(QLineEdit):
         if len(str(string)) == 0 and not self.hasFocus():
             self.showPlaceholder()
 
-    def text(self):
+    def text(self) -> str:
         if self._placeholder_active:
             return ""
         else:

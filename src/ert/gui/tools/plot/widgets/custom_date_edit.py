@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional, Union
 
 from qtpy.QtCore import QDate
 from qtpy.QtGui import QIcon
@@ -15,7 +16,7 @@ from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 
 class CustomDateEdit(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
         self._line_edit = ClearableLineEdit()
 
@@ -43,7 +44,7 @@ class CustomDateEdit(QWidget):
 
         self._calendar_widget.activated.connect(self.setDate)
 
-    def setDate(self, date):
+    def setDate(self, date: Union[datetime.date, QDate]) -> None:
         if isinstance(date, datetime.date):
             date = QDate(date.year, date.month, date.day)
 
@@ -52,7 +53,7 @@ class CustomDateEdit(QWidget):
         else:
             self._line_edit.setText("")
 
-    def date(self):
+    def date(self) -> Optional[datetime.date]:
         date_string = self._line_edit.text()
         if len(str(date_string).strip()) > 0:
             date = QDate.fromString(date_string, "yyyy-MM-dd")

@@ -8,7 +8,7 @@ class ColorBox(QFrame):
 
     """A widget that shows a colored box"""
 
-    def __init__(self, color, size=15):
+    def __init__(self, color: QColor, size: int = 15) -> None:
         QFrame.__init__(self)
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.setMaximumSize(QSize(size, size))
@@ -52,6 +52,6 @@ class ColorBox(QFrame):
         return self._color
 
     @color.setter
-    def color(self, color):
+    def color(self, color: str) -> None:
         self._color = QColor(color)
         self.update()

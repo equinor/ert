@@ -28,7 +28,7 @@ class AddWidget(QWidget):
     addFunction: Callable to be connected to the add button.
     """
 
-    def __init__(self, addFunction: Callable):
+    def __init__(self, addFunction: Callable[[], None]) -> None:
         super().__init__()
 
         self.addButton = QToolButton(self)
@@ -78,7 +78,7 @@ class EnsembleList(QWidget):
     def storage(self) -> Storage:
         return self.notifier.storage
 
-    def addItem(self):
+    def addItem(self) -> None:
         dialog = ValidatedDialog(
             "New ensemble",
             "Enter name of new ensemble:",
@@ -98,7 +98,7 @@ class EnsembleList(QWidget):
             self.notifier.set_current_ensemble(ensemble)
             self.notifier.ertChanged.emit()
 
-    def updateList(self):
+    def updateList(self) -> None:
         """Retrieves data from the model and inserts it into the list"""
         ensemble_list = sorted(
             self.storage.ensembles, key=lambda x: x.started_at, reverse=True

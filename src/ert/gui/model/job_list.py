@@ -36,7 +36,7 @@ class JobListProxyModel(QAbstractProxyModel):
         self._real = real
 
     @Slot(int, int)
-    def set_real(self, iter_: int, real: int):
+    def set_real(self, iter_: int, real: int) -> None:
         """Called when the user clicks a specific realization in the run_dialog window."""
         self._disconnect()
         self.modelAboutToBeReset.emit()
@@ -45,7 +45,7 @@ class JobListProxyModel(QAbstractProxyModel):
         self.modelReset.emit()
         self._connect()
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -53,7 +53,7 @@ class JobListProxyModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
         source_model.modelReset.disconnect(self.modelReset)
 
-    def _connect(self):
+    def _connect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -144,7 +144,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
-    ):
+    ) -> None:
         if not self._accept_index(top_left):
             return
         proxy_top_left = self.mapFromSource(top_left)
@@ -172,8 +172,8 @@ class JobListProxyModel(QAbstractProxyModel):
             index = index.parent()
         return True
 
-    def get_iter(self):
+    def get_iter(self) -> int:
         return self._iter
 
-    def get_real(self):
+    def get_real(self) -> int:
         return self._real

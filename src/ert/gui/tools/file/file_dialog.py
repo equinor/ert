@@ -1,4 +1,5 @@
 from math import floor
+from typing import Optional
 
 from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
@@ -9,6 +10,7 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from .file_update_worker import FileUpdateWorker
@@ -20,7 +22,7 @@ def calculate_screen_size_based_height():
     return floor(screen_height * max_ratio_of_screen)
 
 
-def calculate_font_based_width(charWidth):
+def calculate_font_based_width(charWidth: int) -> int:
     desired_width_in_characters = 120
     extra_bit_of_margin_space = 2
     extra_space_for_vertical_scroll_bar = 5
@@ -33,8 +35,14 @@ def calculate_font_based_width(charWidth):
 
 class FileDialog(QDialog):
     def __init__(
-        self, file_name, job_name, job_number, realization, iteration, parent=None
-    ):
+        self,
+        file_name: str,
+        job_name: str,
+        job_number: int,
+        realization: int,
+        iteration: int,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
 
         self.setWindowTitle(
@@ -75,13 +83,13 @@ class FileDialog(QDialog):
 
         self.show()
 
-    def _quit_thread(self):
+    def _quit_thread(self) -> None:
         self._thread.quit()
         self._thread.wait()
         self._file.close()
 
-    def _init_layout(self):
-        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
+    def _init_layout(self) -> None:
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         dialog_buttons.accepted.connect(self.accept)
 
         self._copy_all_button = dialog_buttons.addButton(
@@ -102,7 +110,7 @@ class FileDialog(QDialog):
         layout.addWidget(self._view)
         layout.addWidget(dialog_buttons)
 
-    def _init_thread(self):
+    def _init_thread(self) -> None:
         self._thread = QThread()
 
         self._worker = FileUpdateWorker(self._file)

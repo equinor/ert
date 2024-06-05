@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
+from numpy.typing import ArrayLike
 from pandas import DataFrame
 
-from ert.gui.plottery import PlotConfig, PlotContext
+from ert.gui.plottery import PlotConfig, PlotContext, PlotStyle
 from ert.gui.plottery.plots.history import plotHistory
 
 from .observations import plotObservations
@@ -12,15 +15,16 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 class StatisticsPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 2
 
     @staticmethod
     def plot(
-        figure,
+        figure: Figure,
         plot_context: PlotContext,
         ensemble_to_data_map,
         _observation_data,
@@ -79,7 +83,7 @@ class StatisticsPlot:
         )
 
 
-def _addStatisticsLegends(plot_config):
+def _addStatisticsLegends(plot_config: PlotConfig) -> None:
     _addStatisticsLegend(plot_config, "mean")
     _addStatisticsLegend(plot_config, "p50")
     _addStatisticsLegend(plot_config, "min-max", 0.2)
@@ -88,7 +92,9 @@ def _addStatisticsLegends(plot_config):
     _addStatisticsLegend(plot_config, "p33-p67", 0.6)
 
 
-def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
+def _addStatisticsLegend(
+    plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
+) -> None:
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
         if style.line_style == "#":
@@ -112,7 +118,7 @@ def _addStatisticsLegend(plot_config, style_name, alpha_multiplier=1.0):
 
 def _plotPercentiles(
     axes: "Axes", plot_config: PlotConfig, data: DataFrame, ensemble_label: str
-):
+) -> None:
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():
         axes.plot(
@@ -166,8 +172,13 @@ def _plotPercentiles(
 
 
 def _plotPercentile(
-    axes, style, index_values, top_line_data, bottom_line_data, alpha_multiplier
-):
+    axes: Axes,
+    style: PlotStyle,
+    index_values: ArrayLike,
+    top_line_data: ArrayLike,
+    bottom_line_data: ArrayLike,
+    alpha_multiplier: float,
+) -> None:
     alpha = style.alpha
     line_style = style.line_style
     color = style.color

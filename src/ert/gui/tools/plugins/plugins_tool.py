@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from qtpy.QtGui import QIcon
@@ -8,11 +10,13 @@ from ert.gui.tools import Tool
 from .plugin_runner import PluginRunner
 
 if TYPE_CHECKING:
+    from ert.gui.ertnotifier import ErtNotifier
+
     from .plugin_handler import PluginHandler
 
 
 class PluginsTool(Tool):
-    def __init__(self, plugin_handler: "PluginHandler", notifier):
+    def __init__(self, plugin_handler: PluginHandler, notifier: ErtNotifier) -> None:
         enabled = len(plugin_handler) > 0
         self.notifier = notifier
         super().__init__(
@@ -36,10 +40,10 @@ class PluginsTool(Tool):
 
         self.getAction().setMenu(menu)
 
-    def trigger(self):
+    def trigger(self) -> None:
         self.notifier.emitErtChange()  # plugin may have added new cases.
 
-    def get_plugin_runner(self, plugin_name):
+    def get_plugin_runner(self, plugin_name: str) -> None:
         for pulgin, runner in self.__plugins.items():
             if pulgin.getName() == plugin_name:
                 return runner

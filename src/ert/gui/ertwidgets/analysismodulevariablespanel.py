@@ -131,7 +131,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.setLayout(layout)
         self.blockSignals(False)
 
-    def update_inversion_algorithm(self, text):
+    def update_inversion_algorithm(self, text: str) -> None:
         self.truncation_spinner.setEnabled(
             not any(val in text.lower() for val in ["direct", "exact"])
         )
@@ -147,12 +147,12 @@ class AnalysisModuleVariablesPanel(QWidget):
 
     def createDoubleSpinBox(
         self,
-        variable_name,
-        variable_value,
-        min_value,
-        max_value,
-        step_length,
-    ):
+        variable_name: str,
+        variable_value: float,
+        min_value: float,
+        max_value: float,
+        step_length: float,
+    ) -> QDoubleSpinBox:
         spinner = QDoubleSpinBox()
         spinner.setDecimals(6)
         spinner.setFixedWidth(180)

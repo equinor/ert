@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict
 
 from qtpy.QtCore import Signal
@@ -16,7 +18,7 @@ class ExperimentConfigPanel(QWidget):
         return self.__simulation_model
 
     @staticmethod
-    def isConfigurationValid():
+    def isConfigurationValid() -> bool:
         return True
 
     @staticmethod

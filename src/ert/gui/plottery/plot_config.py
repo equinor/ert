@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import itertools
+from typing import Any, List, Optional
 
 from ert.gui.plottery import PlotLimits, PlotStyle
 
@@ -74,7 +77,7 @@ class PlotConfig:
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
-    def currentColor(self):
+    def currentColor(self) -> str:
         if self._current_color is None:
             self.nextColor()
 
@@ -84,33 +87,33 @@ class PlotConfig:
         self._current_color = next(self._line_color_cycle)
         return self._current_color
 
-    def setLineColorCycle(self, color_list):
+    def setLineColorCycle(self, color_list: List[str]) -> None:
         self._line_color_cycle_colors = color_list
         self._line_color_cycle = itertools.cycle(color_list)
 
-    def lineColorCycle(self):
+    def lineColorCycle(self) -> List[str]:
         return list(self._line_color_cycle_colors)
 
-    def addLegendItem(self, label, item):
+    def addLegendItem(self, label: str, item: Any) -> None:
         self._legend_items.append(item)
         self._legend_labels.append(label)
 
     def title(self) -> str:
         return self._title if self._title is not None else "Unnamed"
 
-    def setTitle(self, title: str):
+    def setTitle(self, title: str) -> None:
         self._title = title
 
-    def isUnnamed(self):
+    def isUnnamed(self) -> bool:
         return self._title is None
 
-    def defaultStyle(self):
+    def defaultStyle(self) -> PlotStyle:
         style = PlotStyle("Default style")
         style.copyStyleFrom(self._default_style)
         style.color = self.currentColor()
         return style
 
-    def observationsColor(self):
+    def observationsColor(self) -> Optional[str]:
         return self._observs_style.color
 
     def observationsStyle(self) -> PlotStyle:
@@ -140,90 +143,90 @@ class PlotConfig:
         style.copyStyleFrom(self._distribution_line_style)
         return style
 
-    def xLabel(self):
+    def xLabel(self) -> Optional[str]:
         return self._x_label
 
-    def yLabel(self):
+    def yLabel(self) -> Optional[str]:
         return self._y_label
 
     def legendItems(self):
         return self._legend_items
 
-    def legendLabels(self):
+    def legendLabels(self) -> List[str]:
         return self._legend_labels
 
-    def setXLabel(self, label):
+    def setXLabel(self, label: str) -> None:
         self._x_label = label
 
-    def setYLabel(self, label):
+    def setYLabel(self, label: str) -> None:
         self._y_label = label
 
-    def setObservationsEnabled(self, enabled):
+    def setObservationsEnabled(self, enabled: bool) -> None:
         self._observs_style.setEnabled(enabled)
 
-    def isObservationsEnabled(self):
+    def isObservationsEnabled(self) -> bool:
         return self._observs_style.isEnabled()
 
-    def setHistoryEnabled(self, enabled):
+    def setHistoryEnabled(self, enabled: bool) -> None:
         self._history_style.setEnabled(enabled)
 
-    def isHistoryEnabled(self):
+    def isHistoryEnabled(self) -> bool:
         return self._history_style.isEnabled()
 
-    def isLegendEnabled(self):
+    def isLegendEnabled(self) -> bool:
         return self._legend_enabled
 
-    def isDistributionLineEnabled(self):
+    def isDistributionLineEnabled(self) -> bool:
         return self._distribution_line_style.isEnabled()
 
-    def setDistributionLineEnabled(self, enabled):
+    def setDistributionLineEnabled(self, enabled: bool) -> None:
         self._distribution_line_style.setEnabled(enabled)
 
-    def setStandardDeviationFactor(self, value):
+    def setStandardDeviationFactor(self, value: float) -> None:
         self._std_dev_factor = value
 
-    def getStandardDeviationFactor(self):
+    def getStandardDeviationFactor(self) -> float:
         return self._std_dev_factor
 
-    def setLegendEnabled(self, enabled):
+    def setLegendEnabled(self, enabled: bool) -> None:
         self._legend_enabled = enabled
 
-    def isGridEnabled(self):
+    def isGridEnabled(self) -> bool:
         return self._grid_enabled
 
-    def setGridEnabled(self, enabled):
+    def setGridEnabled(self, enabled: bool) -> None:
         self._grid_enabled = enabled
 
-    def setStatisticsStyle(self, statistic: str, style: PlotStyle):
+    def setStatisticsStyle(self, statistic: str, style: PlotStyle) -> None:
         statistics_style = self._statistics_style[statistic]
         statistics_style.line_style = style.line_style
         statistics_style.marker = style.marker
         statistics_style.width = style.width
         statistics_style.size = style.size
 
-    def getStatisticsStyle(self, statistic):
+    def getStatisticsStyle(self, statistic: str) -> PlotStyle:
         style = self._statistics_style[statistic]
         copy_style = PlotStyle(style.name)
         copy_style.copyStyleFrom(style)
         copy_style.color = self.currentColor()
         return copy_style
 
-    def setHistoryStyle(self, style: PlotStyle):
+    def setHistoryStyle(self, style: PlotStyle) -> None:
         self._history_style.line_style = style.line_style
         self._history_style.marker = style.marker
         self._history_style.width = style.width
         self._history_style.size = style.size
 
-    def setObservationsColor(self, color):
+    def setObservationsColor(self, color: str) -> None:
         self._observs_style.color = color
 
-    def setObservationsStyle(self, style: PlotStyle):
+    def setObservationsStyle(self, style: PlotStyle) -> None:
         self._observs_style.line_style = style.line_style
         self._observs_style.marker = style.marker
         self._observs_style.width = style.width
         self._observs_style.size = style.size
 
-    def setDefaultStyle(self, style: PlotStyle):
+    def setDefaultStyle(self, style: PlotStyle) -> None:
         self._default_style.line_style = style.line_style
         self._default_style.marker = style.marker
         self._default_style.width = style.width
@@ -236,10 +239,10 @@ class PlotConfig:
         return limits
 
     @limits.setter
-    def limits(self, value: PlotLimits):
+    def limits(self, value: PlotLimits) -> None:
         self._limits.copyLimitsFrom(value)
 
-    def copyConfigFrom(self, other: "PlotConfig"):
+    def copyConfigFrom(self, other: "PlotConfig") -> None:
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
         self._history_style.copyStyleFrom(other._history_style, copy_enabled_state=True)
         self._histogram_style.copyStyleFrom(
@@ -290,7 +293,7 @@ class PlotConfig:
             self._title = other._title
 
     @classmethod
-    def createCopy(cls, other):
+    def createCopy(cls, other: PlotConfig) -> PlotConfig:
         copy = PlotConfig(other._plot_settings)
         copy.copyConfigFrom(other)
         return copy

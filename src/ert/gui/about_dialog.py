@@ -1,12 +1,21 @@
+from typing import Optional
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 import ert.gui as ert_gui
 
 
 class AboutDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent: Optional[QWidget]) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle("About")
@@ -23,14 +32,14 @@ class AboutDialog(QDialog):
 
         self.setLayout(main_layout)
 
-    def createTopLayout(self):
+    def createTopLayout(self) -> QHBoxLayout:
         top_layout = QHBoxLayout()
         top_layout.addLayout(self.createInfoLayout(), 1)
 
         return top_layout
 
     @staticmethod
-    def createInfoLayout():
+    def createInfoLayout() -> QVBoxLayout:
         info_layout = QVBoxLayout()
 
         ert = QLabel()
@@ -59,7 +68,7 @@ class AboutDialog(QDialog):
         return info_layout
 
     @staticmethod
-    def createGplLayout():
+    def createGplLayout() -> QVBoxLayout:
         gpl = QLabel()
         gpl.setText(
             'ERT is free software: you can redistribute it and/or modify \
@@ -80,7 +89,7 @@ class AboutDialog(QDialog):
         gpl_layout.addWidget(gpl)
         return gpl_layout
 
-    def createButtonLayout(self):
+    def createButtonLayout(self) -> QHBoxLayout:
         button_layout = QHBoxLayout()
 
         close_button = QPushButton("Close")

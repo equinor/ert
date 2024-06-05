@@ -1,24 +1,29 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotContext
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
+    from ert.gui.plottery import PlotContext, PlotLimits
 
 
 class PlotTools:
     @staticmethod
-    def showGrid(axes, plot_context):
+    def showGrid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.isGridEnabled():
             axes.grid()
 
     @staticmethod
-    def showLegend(axes, plot_context):
+    def showLegend(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.isLegendEnabled() and len(config.legendItems()) > 0:
             axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
 
     @staticmethod
-    def _getXAxisLimits(plot_context: "PlotContext"):
+    def _getXAxisLimits(plot_context: PlotContext) -> Optional[PlotLimits]:
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.x_axis
 
@@ -38,7 +43,7 @@ class PlotTools:
         return None  # No limits set
 
     @staticmethod
-    def _getYAxisLimits(plot_context: "PlotContext"):
+    def _getYAxisLimits(plot_context: PlotContext) -> Optional[PlotLimits]:
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.y_axis
 
@@ -59,12 +64,12 @@ class PlotTools:
 
     @staticmethod
     def finalizePlot(
-        plot_context: "PlotContext",
-        figure,
-        axes,
-        default_x_label="Unnamed",
-        default_y_label="Unnamed",
-    ):
+        plot_context: PlotContext,
+        figure: Figure,
+        axes: Axes,
+        default_x_label: str = "Unnamed",
+        default_y_label: str = "Unnamed",
+    ) -> None:
         PlotTools.showLegend(axes, plot_context)
         PlotTools.showGrid(axes, plot_context)
 
@@ -88,7 +93,9 @@ class PlotTools:
             figure.autofmt_xdate()
 
     @staticmethod
-    def __setupLabels(plot_context, default_x_label, default_y_label):
+    def __setupLabels(
+        plot_context: PlotContext, default_x_label: str, default_y_label: str
+    ) -> None:
         config = plot_context.plotConfig()
 
         if config.xLabel() is None:

@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import pandas as pd
 
@@ -9,27 +11,32 @@ from .plot_tools import PlotTools
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class DistributionPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: dict[str, DataFrame],
+        _observation_data: DataFrame,
+        std_dev_images: Any,
+    ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotDistribution(
-    figure: "Figure",
-    plot_context: "PlotContext",
+    figure: Figure,
+    plot_context: PlotContext,
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
     _observation_data: pd.DataFrame,
-):
+) -> None:
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 

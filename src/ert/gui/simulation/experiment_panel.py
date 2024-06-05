@@ -1,10 +1,11 @@
 from collections import OrderedDict
 from queue import SimpleQueue
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
+    QAction,
     QApplication,
     QCheckBox,
     QComboBox,
@@ -131,7 +132,7 @@ class ExperimentPanel(QWidget):
 
         self.setLayout(layout)
 
-    def addExperimentConfigPanel(self, panel, mode_enabled: bool):
+    def addExperimentConfigPanel(self, panel, mode_enabled: bool) -> None:
         assert isinstance(panel, ExperimentConfigPanel)
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
@@ -148,7 +149,7 @@ class ExperimentPanel(QWidget):
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
 
     @staticmethod
-    def getActions():
+    def getActions() -> List[QAction]:
         return []
 
     def get_current_experiment_type(self):
@@ -165,7 +166,7 @@ class ExperimentPanel(QWidget):
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
         return self.get_experiment_arguments().experiment_name
 
-    def run_experiment(self):
+    def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         if args.mode == ES_MDA_MODE:
             if args.restart_run:
@@ -288,7 +289,7 @@ class ExperimentPanel(QWidget):
                 dialog.run_experiment()
                 dialog.show()
 
-                def exit_handler():
+                def exit_handler() -> None:
                     self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
                     self.run_button.setEnabled(True)
                     self.toggleExperimentType()
@@ -296,14 +297,14 @@ class ExperimentPanel(QWidget):
 
                 dialog.finished.connect(exit_handler)
 
-    def toggleExperimentType(self):
+    def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
         if current_model is not None:
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
 
-    def validationStatusChanged(self):
+    def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
         self.run_button.setEnabled(
             self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE

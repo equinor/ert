@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from ert import ErtScript
 
@@ -17,7 +19,7 @@ class Plugin:
         self.__ert = ert
         self.__notifier = notifier
         self.__workflow_job = workflow_job
-        self.__parent_window = None
+        self.__parent_window: Optional[QWidget] = None
 
         script = self.__loadPlugin()
         self.__name = script.getName()
@@ -46,13 +48,13 @@ class Plugin:
         script = self.__loadPlugin()
         return script.getArguments(self.__parent_window)
 
-    def setParentWindow(self, parent_window):
+    def setParentWindow(self, parent_window: Optional[QWidget]) -> None:
         self.__parent_window = parent_window
 
-    def getParentWindow(self) -> "QWidget":
+    def getParentWindow(self) -> Optional[QWidget]:
         return self.__parent_window
 
-    def ert(self) -> "EnKFMain":
+    def ert(self) -> EnKFMain:
         return self.__ert
 
     @property
@@ -63,5 +65,5 @@ class Plugin:
     def ensemble(self):
         return self.__notifier.current_ensemble
 
-    def getWorkflowJob(self) -> "WorkflowJob":
+    def getWorkflowJob(self) -> WorkflowJob:
         return self.__workflow_job

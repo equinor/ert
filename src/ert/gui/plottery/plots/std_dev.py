@@ -9,7 +9,7 @@ from ert.gui.plottery import PlotContext
 
 
 class StdDevPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 3
 
     def plot(

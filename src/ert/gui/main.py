@@ -62,7 +62,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             args, log_handler, plugin_manager
         )
 
-        def show_window():
+        def show_window() -> int:
             window.show()
             window.activateWindow()
             window.raise_()
@@ -190,7 +190,7 @@ def _start_initial_gui_window(
         )
 
 
-def _check_locale():
+def _check_locale() -> None:
     # There seems to be a setlocale() call deep down in the initialization of
     # QApplication, if the user has set the LC_NUMERIC environment variables to
     # a locale with decimalpoint different from "." the application will fail
@@ -208,7 +208,7 @@ decimalpoint.\n"""  # noqa
         warnings.warn(msg, category=ConfigWarning, stacklevel=1)
 
 
-def _clicked_help_button(menu_label: str, link: str):
+def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
