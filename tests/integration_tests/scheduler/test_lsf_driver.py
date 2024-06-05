@@ -178,9 +178,9 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     num_cpu = 2
     driver = LsfDriver(num_cpu=num_cpu)
     await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
+    job_id = driver._iens2jobid[0]
     await poll(driver, {0})
 
-    job_id = driver._iens2jobid[0]
     process = await asyncio.create_subprocess_exec(
         "bhist",
         job_id,
