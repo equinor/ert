@@ -330,11 +330,11 @@ class OpenPBSDriver(Driver):
             )
 
             if new_state.returncode != 0:
-                logger.debug(
+                logger.info(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) failed"
                 )
             else:
-                logger.debug(
+                logger.info(
                     f"Realization {iens} (PBS-id: {self._iens2jobid[iens]}) succeeded"
                 )
             self._finished_iens.add(iens)

@@ -399,14 +399,12 @@ class LsfDriver(Driver):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
         elif isinstance(new_state, FinishedJobFailure):
-            logger.debug(
-                f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed"
-            )
+            logger.info(f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed")
             exit_code = await self._get_exit_code(job_id)
             event = FinishedEvent(iens=iens, returncode=exit_code)
 
         elif isinstance(new_state, FinishedJobSuccess):
-            logger.debug(
+            logger.info(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
             )
             event = FinishedEvent(iens=iens, returncode=0)
