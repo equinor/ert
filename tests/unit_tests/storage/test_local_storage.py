@@ -174,6 +174,26 @@ def test_that_load_responses_throws_exception(tmp_path):
             ensemble.load_responses("I_DONT_EXIST", (1,))
 
 
+def test_that_load_unified_responses_errors_for_missing_type_and_key(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[GenDataConfig(name="FOPR", input_file="", report_steps=[199])]
+        )
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(
+            expected_exception=FileNotFoundError,
+            match=".*for response type gen_data not found",
+        ):
+            ensemble.open_unified_response_dataset("gen_data")
+
+        with pytest.raises(
+            expected_exception=FileNotFoundError,
+            match=".*for response FOPR not found",
+        ):
+            ensemble.open_unified_response_dataset("FOPR")
+
+
 def test_that_load_parameters_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()

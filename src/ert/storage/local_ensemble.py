@@ -764,7 +764,9 @@ class LocalEnsemble(BaseMode):
 
         if not ds:
             raise FileNotFoundError(
-                f"Dataset file for group {key} not found (tried {key}.nc)"
+                f"Dataset file for "
+                f"{'response type' if key == dataset_key else 'response'} "
+                f"{key} not found (tried {key}.nc)"
             )
 
         if key != dataset_key:
