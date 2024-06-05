@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 
+from ert.analysis._es_update import _get_observations_and_responses
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
+from ert.storage.local_ensemble import LocalEnsemble
 
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, StatusEvents
+from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
@@ -97,6 +100,8 @@ class EnsembleExperiment(BaseRunModel):
 
         self.current_iteration = 1
 
+        self._validate_results(self.ensemble, self.active_realizations)
+
     @classmethod
     def run_message(cls) -> str:
         return "Running ensemble experiment..."
@@ -104,3 +109,32 @@ class EnsembleExperiment(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Ensemble experiment"
+
+    def check_if_runpath_exists(self) -> bool:
+        active_mask = self.active_realizations
+        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
+        run_paths = self.run_paths.get_paths(active_realizations, 0)
+        return any(Path(run_path).exists() for run_path in run_paths)
+
+    def _validate_results(
+        self, ensemble: LocalEnsemble, active_indexes: List[bool]
+    ) -> None:
+        # Validate that each observation has a response
+
+        if ensemble.experiment.observations:
+            try:
+                filtered_responses, _, _, observation_keys, _ = (
+                    _get_observations_and_responses(
+                        ensemble,
+                        ensemble.experiment.observations.keys(),
+                        np.flatnonzero(active_indexes),
+                    )
+                )
+            except KeyError as e:
+                # Exit early if some observations are pointing to non-existing responses
+                raise ErtRunError("No active observations for update step") from e
+
+            missing_responses = np.count_nonzero(np.isnan(filtered_responses))
+            if missing_responses != 0:
+                obs_idx = np.unique(np.nonzero(np.isnan(filtered_responses))[0])
+                raise ErtRunError(f"Missing observations {observation_keys[obs_idx]}")
