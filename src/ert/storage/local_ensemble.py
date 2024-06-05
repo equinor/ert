@@ -1133,7 +1133,7 @@ class LocalEnsemble(BaseMode):
         reals_with_responses_mask = self.get_realization_with_responses()
         if active_realizations is not None:
             reals_with_responses_mask = np.intersect1d(
-                active_realizations, np.array(reals_with_responses_mask)
+                active_realizations, reals_with_responses_mask
             )
 
         for response_type in self.experiment.observations:
