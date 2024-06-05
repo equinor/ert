@@ -2,6 +2,8 @@ import shutil
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
+
 from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, ensemble_context
@@ -54,7 +56,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
         facade.load_from_forward_model(ensemble, [True], 0)
         ensemble.unify_responses()
 
-        df = ensemble.load_responses("summary", (0,)).to_dataframe()
+        df = ensemble.load_responses("summary", np.array([0])).to_dataframe()
         df = df.unstack(level="name")
         df.columns = [col[1] for col in df.columns.values]
         df.index = df.index.rename(

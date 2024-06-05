@@ -160,7 +160,7 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
             ),
         )
         with pytest.raises(ValueError, match="PARAMETER is not a response"):
-            prior.load_responses("PARAMETER", (0,))
+            prior.load_responses("PARAMETER", np.array([0]))
 
 
 def test_that_load_responses_throws_exception(tmp_path):
@@ -171,7 +171,7 @@ def test_that_load_responses_throws_exception(tmp_path):
         with pytest.raises(
             expected_exception=ValueError, match="I_DONT_EXIST is not a response"
         ):
-            ensemble.load_responses("I_DONT_EXIST", (1,))
+            ensemble.load_responses("I_DONT_EXIST", np.array([1]))
 
 
 def test_that_load_parameters_throws_exception(tmp_path):

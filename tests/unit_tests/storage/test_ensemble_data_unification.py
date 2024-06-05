@@ -169,7 +169,7 @@ def test_unify_gen_data_correctness(
 
         ens.unify_responses("gen_data")
 
-        combined = ens.load_responses("gen_data", realizations=tuple(range(num_reals)))
+        combined = ens.load_responses("gen_data", realizations=np.arange(num_reals))
 
         by_group = []
         for group, ds in gen_data_ds.items():
@@ -213,7 +213,7 @@ def test_unify_summary_correctness(
 
         ens.unify_responses("summary")
 
-        combined = ens.load_responses("summary", realizations=tuple(range(num_reals)))
+        combined = ens.load_responses("summary", realizations=np.arange(num_reals))
 
         manual_concat = []
         for i in range(num_reals):
@@ -257,7 +257,7 @@ def test_rewrite_summary_for_some_realizations(
 
         ens.unify_responses("summary")
 
-        combined = ens.load_responses("summary", realizations=tuple(range(num_reals)))
+        combined = ens.load_responses("summary", realizations=np.arange(num_reals))
 
         manual_concat = []
         for i in range(num_reals):
@@ -278,7 +278,7 @@ def test_rewrite_summary_for_some_realizations(
             ens.save_response("summary", scaled_ds, real)
 
             # Expect load_responses to give the value from the combined first
-            assert ens.load_responses("summary", (real,)).equals(
+            assert ens.load_responses("summary", np.array([real])).equals(
                 combined.sel(realization=[real])
             )
 
@@ -287,7 +287,7 @@ def test_rewrite_summary_for_some_realizations(
         # Now we expect them to be scaled
         for real in realizations_to_rewrite:
             # Now we expect scaled values
-            assert ens.load_responses("summary", (real,)).equals(
+            assert ens.load_responses("summary", np.array([real])).equals(
                 scaled_selection_to_rewrite.sel(realization=[real])
             )
 
@@ -329,7 +329,7 @@ def test_rewrite_gen_data_for_some_realizations(
 
         ens.unify_responses("gen_data")
 
-        combined = ens.load_responses("gen_data", realizations=tuple(range(num_reals)))
+        combined = ens.load_responses("gen_data", realizations=np.arange(num_reals))
 
         by_group = []
         for group, ds in gen_data_ds.items():
@@ -359,7 +359,7 @@ def test_rewrite_gen_data_for_some_realizations(
             ens.save_response("gen_data_0", scaled_ds, real)
 
             # Expect load_responses to give the value from the combined first
-            assert ens.load_responses("gen_data_0", (real,)).equals(
+            assert ens.load_responses("gen_data_0", np.array([real])).equals(
                 selection_to_rewrite.sel(realization=[real])
             )
 
@@ -368,7 +368,7 @@ def test_rewrite_gen_data_for_some_realizations(
         # Now we expect them to be scaled
         for real in realizations_to_rewrite:
             # Now we expect scaled values
-            assert ens.load_responses("gen_data_0", (real,)).equals(
+            assert ens.load_responses("gen_data_0", np.array([real])).equals(
                 scaled_selection_to_rewrite.sel(realization=[real])
             )
 
@@ -452,11 +452,12 @@ def test_that_unify_works_through_load_forward_model_with_realization_data_rewri
     reals_to_edit = [0, 2, 4]
 
     gen_datas_before_edit = [
-        (real, ensemble.load_responses(a_gen_data_key, (real,)))
+        (real, ensemble.load_responses(a_gen_data_key, np.array([real])))
         for real in reals_to_edit
     ]
     summaries_before_edit = [
-        (real, ensemble.load_responses("summary", (real,))) for real in reals_to_edit
+        (real, ensemble.load_responses("summary", np.array([real])))
+        for real in reals_to_edit
     ]
 
     for real, ds in gen_datas_before_edit:
@@ -471,7 +472,7 @@ def test_that_unify_works_through_load_forward_model_with_realization_data_rewri
 
     def assert_unedited(realizations: List[int]):
         gen_data_combined_edited = ensemble.load_responses(
-            a_gen_data_key, realizations=tuple(realizations)
+            a_gen_data_key, realizations=realizations
         )
 
         assert set(
@@ -479,7 +480,7 @@ def test_that_unify_works_through_load_forward_model_with_realization_data_rewri
         ) != {1337}
 
         summary_combined_edited = ensemble.load_responses(
-            a_summary_key, realizations=tuple(realizations)
+            a_summary_key, realizations=realizations
         )
 
         assert set(
@@ -488,7 +489,7 @@ def test_that_unify_works_through_load_forward_model_with_realization_data_rewri
 
     def assert_edited(realizations: List[int]):
         gen_data_combined_edited = ensemble.load_responses(
-            a_gen_data_key, realizations=tuple(realizations)
+            a_gen_data_key, realizations=realizations
         )
 
         assert set(
@@ -496,7 +497,7 @@ def test_that_unify_works_through_load_forward_model_with_realization_data_rewri
         ) == {1337}
 
         summary_combined_edited = ensemble.load_responses(
-            a_summary_key, realizations=tuple(realizations)
+            a_summary_key, realizations=realizations
         )
 
         assert set(

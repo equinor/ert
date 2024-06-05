@@ -178,7 +178,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     )
 
                 realizations = ensemble.get_realization_with_responses(response_name)
-                vals = ensemble.load_responses(response_name, tuple(realizations)).sel(
+                vals = ensemble.load_responses(response_name, realizations).sel(
                     report_step=report_step, drop=True
                 )
                 index = pd.Index(vals.index.values, name="axis")

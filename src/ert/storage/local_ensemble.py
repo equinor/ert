@@ -16,7 +16,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Tuple,
     Union,
 )
 from uuid import UUID
@@ -816,7 +815,7 @@ class LocalEnsemble(BaseMode):
         dataset.to_netcdf(path=file_path, engine="scipy")
 
     def load_responses(
-        self, key: str, realizations: Union[Tuple[int, ...], None] = None
+        self, key: str, realizations: Optional[npt.NDArray[np.int_]] = None
     ) -> xr.Dataset:
         """Load responses for key and realizations into xarray Dataset.
 
@@ -1131,7 +1130,7 @@ class LocalEnsemble(BaseMode):
         reals_with_responses_mask = self.get_realization_with_responses()
         if active_realizations is not None:
             reals_with_responses_mask = np.intersect1d(
-                active_realizations, np.array(reals_with_responses_mask)
+                active_realizations, reals_with_responses_mask
             )
 
         for response_type in self.experiment.observations:
@@ -1141,7 +1140,7 @@ class LocalEnsemble(BaseMode):
             )
             responses_ds = self.load_responses(
                 response_type,
-                realizations=tuple(reals_with_responses_mask),
+                realizations=reals_with_responses_mask,
             )
 
             index = ObservationsIndices[ResponseTypes(response_type)]

@@ -173,7 +173,7 @@ def test_load_forward_model_gen_data(setup_case):
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     prior_ensemble.unify_responses()
     assert list(
-        prior_ensemble.load_responses("RESPONSE", (0,))
+        prior_ensemble.load_responses("RESPONSE", np.array([0]))
         .sel(report_step=0, drop=True)
         .to_dataframe()
         .dropna()
@@ -200,7 +200,9 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     prior_ensemble.unify_responses()
     assert list(
-        prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
+        prior_ensemble.load_responses("RESPONSE", np.array([0]))
+        .to_dataframe()
+        .values.flatten()
     ) == [1.0]
 
 
@@ -223,7 +225,9 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     prior_ensemble.unify_responses()
     response = (
-        prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
+        prior_ensemble.load_responses("RESPONSE", np.array([0]))
+        .to_dataframe()
+        .values.flatten()
     )
     assert np.isnan(response[0])
     assert len(response) == 1
@@ -268,7 +272,7 @@ def test_loading_gen_data_without_restart(storage):
     facade.load_from_forward_model(prior_ensemble, [True], 0)
     prior_ensemble.unify_responses()
     assert list(
-        prior_ensemble.load_responses("RESPONSE", (0,))
+        prior_ensemble.load_responses("RESPONSE", np.array([0]))
         .to_dataframe()
         .dropna()
         .values.flatten()

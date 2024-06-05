@@ -142,7 +142,7 @@ def test_that_storage_matches(
 
         summary_data = ensemble.load_responses(
             "summary",
-            tuple(ensemble.get_realization_with_responses("summary")),
+            ensemble.get_realization_with_responses("summary"),
         )
         snapshot.assert_match(
             summary_data.to_dataframe(dim_order=["realization", "name", "time"])
