@@ -91,6 +91,8 @@ def _create_gen_data_config_ds_and_obs(
         .to_xarray()
     )
 
+    gen_data_obs.attrs["response"] = "gen_data"
+
     return gen_data_configs, gen_data_ds, gen_data_obs
 
 
@@ -135,10 +137,70 @@ def _create_summary_config_ds_and_obs(
         .set_index(["name", "obs_name", "time"])
         .to_xarray()
     )
+    summary_obs_ds.attrs["response"] = "summary"
 
     summary_ds = summary_df.set_index(["name", "time"]).to_xarray()
 
     return summary_config, summary_ds, summary_obs_ds
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    ("num_reals, num_responses, num_obs, num_indices, num_report_steps"),
+    [
+        (100, 1, 1, 1, 1),
+        (100, 5, 3, 2, 10),
+        (10, 50, 100, 10, 200),
+    ],
+)
+def test_that_observation_getters_from_experiment_match_expected_data(
+    tmpdir, num_reals, num_responses, num_obs, num_indices, num_report_steps
+):
+    gen_data_configs, gen_data_ds, gen_data_obs = _create_gen_data_config_ds_and_obs(
+        num_responses, num_obs, num_indices, num_report_steps
+    )
+
+    summary_config, summary_ds, summary_obs = _create_summary_config_ds_and_obs(
+        num_responses, num_indices * num_report_steps, num_obs
+    )
+
+    with open_storage(tmpdir, "w") as s:
+        exp = s.create_experiment(
+            responses=[*gen_data_configs],
+            observations={"gen_data": gen_data_obs, "summary": summary_obs},
+        )
+
+        assert exp._obs_key_to_response_name_and_type == {
+            **{
+                f"gen_obs_{i}": (
+                    f"gen_data_{i%num_responses}",
+                    "gen_data",
+                )
+                for i in range(num_obs)
+            },
+            **{
+                f"sum_obs_{i}": (f"sum_key_{i%num_responses}", "summary")
+                for i in range(num_obs)
+            },
+        }
+
+        for i in range(num_obs):
+            assert (
+                gen_data_obs.sel(obs_name=f"gen_obs_{i}", drop=True)
+                .dropna("name", how="all")
+                .squeeze("name", drop=True)
+                .to_dataframe()
+                .dropna()
+                .equals(exp.get_single_obs_ds(f"gen_obs_{i}").to_dataframe().dropna())
+            )
+            assert (
+                summary_obs.sel(obs_name=f"sum_obs_{i}", drop=True)
+                .dropna("name", how="all")
+                .squeeze("name", drop=True)
+                .to_dataframe()
+                .dropna()
+                .equals(exp.get_single_obs_ds(f"sum_obs_{i}").to_dataframe().dropna())
+            )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

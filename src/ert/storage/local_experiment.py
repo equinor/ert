@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 from uuid import UUID
 
 import numpy as np
@@ -24,6 +24,8 @@ from ert.config import (
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
+
+from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
@@ -317,3 +319,33 @@ class LocalExperiment(BaseMode):
                 return ds.sel(name=response_name)
 
         return xr.Dataset()
+
+    @cached_property
+    def _obs_key_to_response_name_and_type(self) -> Dict[str, Tuple[str, str]]:
+        obs_to_response: Dict[str, Tuple[str, str]] = {}
+
+        for response_type, obs_ds_for_response in self.observations.items():
+            for response_name, ds_for_response in obs_ds_for_response.groupby("name"):
+                for obs_name in ds_for_response.dropna("obs_name", how="all")[
+                    "obs_name"
+                ].values:
+                    obs_to_response[obs_name] = (response_name, response_type)
+
+        return obs_to_response
+
+    def response_info_for_obs(self, obs_name: str) -> Tuple[str, str]:
+        """
+        Returns a tuple containing (response_name, response_type)
+        """
+        return self._obs_key_to_response_name_and_type[obs_name]
+
+    def get_single_obs_ds(self, obs_name: str) -> xr.Dataset:
+        response_name, response_type = self._obs_key_to_response_name_and_type[obs_name]
+
+        # Note: Does not dropna on index
+        # "time" for summary, "index", "report_step" for gen_data
+        return ensure_correct_coordinate_order(
+            self.observations[response_type]
+            .sel(obs_name=obs_name, drop=True)
+            .sel(name=response_name, drop=True)
+        )
