@@ -61,59 +61,58 @@ class _Failure(BaseModel):
 
 
 class ObservationsAndResponsesData:
-    def __init__(self, np_arr: npt.NDArray[Any]) -> None:
-        self._as_np = np_arr
+    def __init__(self, observations_and_responses: npt.NDArray[Any]) -> None:
+        self._observations_and_responses = observations_and_responses
 
     def to_long_dataframe(self) -> pd.DataFrame:
-        cols = ["key_index", "name", "OBS", "STD", *range(self._as_np.shape[1] - 4)]
+        cols = [
+            "key_index",
+            "name",
+            "OBS",
+            "STD",
+            *range(self._observations_and_responses.shape[1] - 4),
+        ]
         return (
-            pd.DataFrame(self._as_np, columns=cols)
+            pd.DataFrame(self._observations_and_responses, columns=cols)
             .set_index(["name", "key_index"])
             .astype(float)
         )
 
-    def vec_of_obs_indexes(self) -> npt.NDArray[np.str_]:
+    def index(self) -> npt.NDArray[np.str_]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observation primary key.
-        vec_of* getters of this class.
         """
-        return self._as_np[:, 0].astype(str)
+        return self._observations_and_responses[:, 0].astype(str)
 
-    def vec_of_obs_names(self) -> npt.NDArray[np.str_]:
+    def observation_keys(self) -> npt.NDArray[np.str_]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observation name.
-        vec_of* getters of this class.
         """
-        return self._as_np[:, 1].astype(str)
+        return self._observations_and_responses[:, 1].astype(str)
 
-    def vec_of_errors(self) -> npt.NDArray[np.float_]:
+    def errors(self) -> npt.NDArray[np.float_]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the std. error of the observed value.
-        The index in this list corresponds to the index of the other
-        vec_of* getters of this class.
         """
-        return self._as_np[:, 3].astype(float)
+        return self._observations_and_responses[:, 3].astype(float)
 
-    def vec_of_obs_values(self) -> npt.NDArray[np.float_]:
+    def observations(self) -> npt.NDArray[np.float_]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observed value.
-        The index in this list corresponds to the index of the other
-        vec_of* getters of this class.
         """
-        return self._as_np[:, 2].astype(float)
+        return self._observations_and_responses[:, 2].astype(float)
 
-    def vec_of_realization_values(self) -> npt.NDArray[np.float_]:
+    def responses(self) -> npt.NDArray[np.float_]:
         """
         Extracts a ndarray with the shape (num_obs, num_reals).
         Each cell holds the response value corresponding to the observation/realization
-        indicated by the index. The first index here corresponds to that of other
-        vec_of* getters of this class.
+        indicated by the index.
         """
-        return self._as_np[:, 4:].astype(float)
+        return self._observations_and_responses[:, 4:].astype(float)
 
 
 class LocalEnsemble(BaseMode):
@@ -1103,7 +1102,7 @@ class LocalEnsemble(BaseMode):
 
         return ds.std("realizations")
 
-    def get_measured_data(
+    def get_observations_and_responses(
         self,
         observation_keys: List[str],
         active_realizations: Optional[npt.NDArray[np.int_]] = None,

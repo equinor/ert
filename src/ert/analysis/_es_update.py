@@ -168,18 +168,18 @@ def _load_observations_and_responses(
     ],
 ]:
     try:
-        observed_responses_data = ensemble.get_measured_data(
+        observations_and_responses = ensemble.get_observations_and_responses(
             [*selected_observations], iens_active_index
         )
     except KeyError as e:
         # Exit early if some observations are pointing to non-existing responses
         raise ErtAnalysisError("No active observations for update step") from e
 
-    S = observed_responses_data.vec_of_realization_values()
-    observations = observed_responses_data.vec_of_obs_values()
-    errors = observed_responses_data.vec_of_errors()
-    obs_keys = observed_responses_data.vec_of_obs_names()
-    indexes = observed_responses_data.vec_of_obs_indexes()
+    responses = observations_and_responses.responses()
+    observations = observations_and_responses.observations()
+    errors = observations_and_responses.errors()
+    observation_keys = observations_and_responses.observation_keys()
+    indexes = observations_and_responses.index()
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
@@ -189,22 +189,22 @@ def _load_observations_and_responses(
     scaled_errors = errors * scaling
 
     # Identifies non-outlier observations based on responses.
-    ens_mean = S.mean(axis=1)
-    ens_std = S.std(ddof=0, axis=1)
+    ens_mean = responses.mean(axis=1)
+    ens_std = responses.std(ddof=0, axis=1)
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     if auto_scale_observations:
         for input_group in auto_scale_observations:
-            group = _expand_wildcards(obs_keys, input_group)
+            group = _expand_wildcards(observation_keys, input_group)
             logger.info(f"Scaling observation group: {group}")
-            obs_group_mask = np.isin(obs_keys, group) & obs_mask
+            obs_group_mask = np.isin(observation_keys, group) & obs_mask
             if not any(obs_group_mask):
                 logger.error(f"No observations active for group: {input_group}")
                 continue
             scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                S[obs_group_mask], scaled_errors[obs_group_mask]
+                responses[obs_group_mask], scaled_errors[obs_group_mask]
             )
             scaling[obs_group_mask] *= scaling_factors
             progress_callback(
@@ -220,7 +220,7 @@ def _load_observations_and_responses(
                         ],
                         data=np.array(
                             (
-                                obs_keys[obs_group_mask],
+                                observation_keys[obs_group_mask],
                                 indexes[obs_group_mask],
                                 clusters,
                                 nr_components.astype(int),
@@ -243,7 +243,7 @@ def _load_observations_and_responses(
         response_std_mask,
         index,
     ) in zip(
-        obs_keys,
+        observation_keys,
         observations,
         errors,
         scaling,
@@ -267,10 +267,10 @@ def _load_observations_and_responses(
             )
         )
 
-    for missing_obs in obs_keys[~obs_mask]:
+    for missing_obs in observation_keys[~obs_mask]:
         logger.warning(f"Deactivating observation: {missing_obs}")
 
-    return S[obs_mask], (
+    return responses[obs_mask], (
         observations[obs_mask],
         scaled_errors[obs_mask],
         update_snapshot,
