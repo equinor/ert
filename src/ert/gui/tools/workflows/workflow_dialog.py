@@ -1,20 +1,36 @@
+from typing import Optional
+
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayout
+from qtpy.QtGui import QKeyEvent
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class WorkflowDialog(QDialog):
     closeButtonPressed = Signal()
 
-    def __init__(self, title, widget, parent=None):
+    def __init__(
+        self, title: str, widget: QWidget, parent: Optional[QWidget] = None
+    ) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
+        layout.setSizeConstraint(
+            QLayout.SizeConstraint.SetFixedSize
+        )  # not resizable!!!
         layout.addWidget(widget)
 
         button_layout = QHBoxLayout()
@@ -28,12 +44,12 @@ class WorkflowDialog(QDialog):
 
         self.setLayout(layout)
 
-    def disableCloseButton(self):
+    def disableCloseButton(self) -> None:
         self.close_button.setEnabled(False)
 
-    def enableCloseButton(self):
+    def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, q_key_event):
-        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
-            QDialog.keyPressEvent(self, q_key_event)
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if self.close_button.isEnabled() or (a0 and a0.key() != Qt.Key.Key_Escape):
+            QDialog.keyPressEvent(self, a0)

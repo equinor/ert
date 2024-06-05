@@ -28,7 +28,7 @@ class QueueEmitter(QObject):
         self._stopped = False
 
     @Slot()
-    def consume_and_emit(self):
+    def consume_and_emit(self) -> None:
         logger.debug("tracking...")
         while True:
             event = None
@@ -58,6 +58,6 @@ class QueueEmitter(QObject):
         logger.debug("tracking done.")
 
     @Slot()
-    def stop(self):
+    def stop(self) -> None:
         logger.debug("stopping...")
         self._stopped = True

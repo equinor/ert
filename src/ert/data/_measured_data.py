@@ -67,7 +67,7 @@ class MeasuredData:
         pre_index = self.data.index
         post_index = list(self.data.dropna(axis=0, how="all").index)
         drop_index = set(pre_index) - set(post_index + ["STD", "OBS"])
-        self._set_data(self.data.drop(index=drop_index))
+        self._set_data(self.data.drop(index=drop_index))  # type: ignore
 
     def get_simulated_data(self) -> pd.DataFrame:
         """Dimension of data is (number of responses x number of realizations)."""
@@ -126,8 +126,8 @@ class MeasuredData:
 
     @staticmethod
     def _create_condition(
-        names: pd.Index,
-        data_index: pd.Index,
+        names: pd.Index,  # type: ignore
+        data_index: pd.Index,  # type: ignore
         obs_keys: List[str],
         index_lists: List[List[Union[int, datetime]]],
     ) -> "npt.NDArray[np.bool_]":

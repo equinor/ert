@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 from .snapshot import PartialSnapshot, Snapshot
 
@@ -28,3 +28,6 @@ class SnapshotUpdateEvent(_UpdateEvent):
 class EndEvent:
     failed: bool
     failed_msg: Optional[str] = None
+
+
+EEEvent = Union[EndEvent, SnapshotUpdateEvent, FullSnapshotEvent]

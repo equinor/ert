@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -22,10 +22,12 @@ from ert.gui.ertwidgets.storage_info_widget import StorageInfoWidget
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 
 if TYPE_CHECKING:
-    from typing import List
+    from ert.gui.ertnotifier import ErtNotifier
 
 
-def createCheckLists(ensemble_size: int, parameters: List[str]):
+def createCheckLists(
+    ensemble_size: int, parameters: List[str]
+) -> Tuple[QHBoxLayout, SelectableListModel, SelectableListModel]:
     parameter_model = SelectableListModel(parameters)
 
     parameter_check_list = CheckList(parameter_model, "Parameters")
@@ -44,7 +46,7 @@ def createCheckLists(ensemble_size: int, parameters: List[str]):
     )
 
 
-def createRow(*widgets):
+def createRow(*widgets: CheckList) -> QHBoxLayout:
     row = QHBoxLayout()
 
     for widget in widgets:
@@ -56,7 +58,9 @@ def createRow(*widgets):
 
 class EnsembleInitializationConfigurationPanel(QTabWidget):
     @showWaitCursorWhileWaiting
-    def __init__(self, config: ErtConfig, notifier, ensemble_size: int):
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int
+    ) -> None:
         QTabWidget.__init__(self)
         self.ert_config = config
         self.ensemble_size = ensemble_size
@@ -64,7 +68,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self._addCreateNewEnsembleTab()
         self._addInitializeFromScratchTab()
 
-    def _addCreateNewEnsembleTab(self):
+    def _addCreateNewEnsembleTab(self) -> None:
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
@@ -88,7 +92,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(panel, "Create new experiment")
 
-    def _addInitializeFromScratchTab(self):
+    def _addInitializeFromScratchTab(self) -> None:
         panel = QWidget()
         panel.setObjectName("initialize_from_scratch_panel")
         layout = QVBoxLayout()
@@ -111,7 +115,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initializeFromScratch(_):
+        def initializeFromScratch(_) -> None:
             parameters = parameter_model.getSelectedItems()
             sample_prior(
                 ensemble=target_ensemble.currentData(),
@@ -119,7 +123,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
                 parameters=parameters,
             )
 
-        def update_button_state():
+        def update_button_state() -> None:
             initialize_button.setEnabled(target_ensemble.count() > 0)
 
         update_button_state()

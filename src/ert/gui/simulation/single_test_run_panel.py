@@ -31,6 +31,6 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
-    def get_experiment_arguments(self):
+    def get_experiment_arguments(self) -> Arguments:
         ensemble_name = f"{datetime.now().strftime('%Y-%m-%dT%H%M')}"
         return Arguments(TEST_RUN_MODE, ensemble_name, "single_test_run")

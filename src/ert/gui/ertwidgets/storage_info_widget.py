@@ -1,10 +1,11 @@
 import json
 from enum import IntEnum
+from typing import Optional
 
 import numpy as np
 import seaborn as sns
 import yaml
-from matplotlib.backends.backend_qt5agg import FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import (
@@ -45,9 +46,9 @@ class _EnsembleWidgetTabs(IntEnum):
 
 
 class _ExperimentWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
-        self._experiment = None
+        self._experiment: Optional[Experiment] = None
 
         self._responses_text_edit = QTextEdit()
         self._responses_text_edit.setReadOnly(True)
@@ -111,20 +112,20 @@ class _ExperimentWidget(QWidget):
 
 
 class _EnsembleWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
-        self._ensemble = None
+        self._ensemble: Optional[Ensemble] = None
 
         info_frame = QFrame()
         self._name_label = QLabel()
         self._uuid_label = QLabel()
 
-        layout = QVBoxLayout()
-        layout.addWidget(self._name_label)
-        layout.addWidget(self._uuid_label)
-        layout.addStretch()
+        info_layout = QVBoxLayout()
+        info_layout.addWidget(self._name_label)
+        info_layout.addWidget(self._uuid_label)
+        info_layout.addStretch()
 
-        info_frame.setLayout(layout)
+        info_frame.setLayout(info_layout)
 
         self._state_text_edit = QTextEdit()
         self._state_text_edit.setReadOnly(True)
@@ -146,10 +147,10 @@ class _EnsembleWidget(QWidget):
         self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
 
-        layout = QHBoxLayout()
-        layout.addWidget(self._observations_tree_widget)
-        layout.addWidget(self._canvas)
-        observations_frame.setLayout(layout)
+        observation_layout = QHBoxLayout()
+        observation_layout.addWidget(self._observations_tree_widget)
+        observation_layout.addWidget(self._canvas)
+        observations_frame.setLayout(observation_layout)
 
         self._tab_widget = QTabWidget()
         self._tab_widget.insertTab(
@@ -173,6 +174,9 @@ class _EnsembleWidget(QWidget):
     ) -> None:
         if not selected:
             return
+
+        if self._ensemble is None:
+            raise ValueError("Must set ensemble before calling _currentItemChanged")
 
         observation_name = selected.data(1, Qt.ItemDataRole.DisplayRole)
         if not observation_name:
@@ -209,7 +213,7 @@ class _EnsembleWidget(QWidget):
 
             ax.errorbar(
                 x="Observation",
-                y=observation_ds.get("observations"),
+                y=observation_ds.get("observations"),  # type: ignore
                 yerr=observation_ds.get("std"),
                 fmt=".",
                 linewidth=1,
@@ -229,7 +233,7 @@ class _EnsembleWidget(QWidget):
 
             ax.errorbar(
                 x="Observation",
-                y=observation_ds.get("observations"),
+                y=observation_ds.get("observations"),  # type: ignore
                 yerr=observation_ds.get("std"),
                 fmt=".",
                 linewidth=1,
@@ -240,6 +244,8 @@ class _EnsembleWidget(QWidget):
         self._canvas.draw()
 
     def _currentTabChanged(self, index: int) -> None:
+        if self._ensemble is None:
+            raise ValueError("Must set ensemble before calling _currentTabChanged")
         if index == _EnsembleWidgetTabs.STATE_TAB:
             self._state_text_edit.clear()
             html = "<table>"
@@ -284,10 +290,10 @@ class _EnsembleWidget(QWidget):
                 self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
 
             for i in range(self._observations_tree_widget.topLevelItemCount()):
-                if self._observations_tree_widget.topLevelItem(i).childCount() > 0:
-                    self._observations_tree_widget.setCurrentItem(
-                        self._observations_tree_widget.topLevelItem(i).child(0)
-                    )
+                item = self._observations_tree_widget.topLevelItem(i)
+                assert item is not None
+                if item.childCount() > 0:
+                    self._observations_tree_widget.setCurrentItem(item.child(0))
                     break
 
     @Slot(Ensemble)
@@ -301,7 +307,7 @@ class _EnsembleWidget(QWidget):
 
 
 class _RealizationWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
 
         info_frame = QFrame()
@@ -355,7 +361,7 @@ class _RealizationWidget(QWidget):
 
 
 class StorageInfoWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
 
         self._experiment_widget = _ExperimentWidget()
@@ -391,6 +397,6 @@ class StorageInfoWidget(QWidget):
         self._experiment_widget.setExperiment(experiment)
 
     @Slot(Ensemble, int)
-    def setRealization(self, ensemble: Ensemble, realization: int):
+    def setRealization(self, ensemble: Ensemble, realization: int) -> None:
         self._content_layout.setCurrentIndex(_WidgetType.REALIZATION_WIDGET)
         self._realization_widget.setRealization(ensemble, realization)

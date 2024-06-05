@@ -1,24 +1,29 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotContext
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
+    from ert.gui.plottery import PlotContext, PlotLimits
 
 
 class PlotTools:
     @staticmethod
-    def showGrid(axes, plot_context):
+    def showGrid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.isGridEnabled():
             axes.grid()
 
     @staticmethod
-    def showLegend(axes, plot_context):
+    def showLegend(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.isLegendEnabled() and len(config.legendItems()) > 0:
             axes.legend(config.legendItems(), config.legendLabels(), numpoints=1)
 
     @staticmethod
-    def _getXAxisLimits(plot_context: "PlotContext"):
+    def _getXAxisLimits(plot_context: PlotContext) -> Optional[PlotLimits]:
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.x_axis
 
@@ -38,7 +43,7 @@ class PlotTools:
         return None  # No limits set
 
     @staticmethod
-    def _getYAxisLimits(plot_context: "PlotContext"):
+    def _getYAxisLimits(plot_context: PlotContext) -> Optional[PlotLimits]:
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.y_axis
 
@@ -59,28 +64,30 @@ class PlotTools:
 
     @staticmethod
     def finalizePlot(
-        plot_context: "PlotContext",
-        figure,
-        axes,
-        default_x_label="Unnamed",
-        default_y_label="Unnamed",
-    ):
+        plot_context: PlotContext,
+        figure: Figure,
+        axes: Axes,
+        default_x_label: str = "Unnamed",
+        default_y_label: str = "Unnamed",
+    ) -> None:
         PlotTools.showLegend(axes, plot_context)
         PlotTools.showGrid(axes, plot_context)
 
         PlotTools.__setupLabels(plot_context, default_x_label, default_y_label)
 
         plot_config = plot_context.plotConfig()
-        axes.set_xlabel(plot_config.xLabel())
-        axes.set_ylabel(plot_config.yLabel())
+        if xlabel := plot_config.xLabel():
+            axes.set_xlabel(xlabel)
+        if ylabel := plot_config.yLabel():
+            axes.set_ylabel(ylabel)
 
         x_axis_limits = PlotTools._getXAxisLimits(plot_context)
         if x_axis_limits is not None:
-            axes.set_xlim(*x_axis_limits)
+            axes.set_xlim(*x_axis_limits)  # type: ignore
 
         y_axis_limits = PlotTools._getYAxisLimits(plot_context)
         if y_axis_limits is not None:
-            axes.set_ylim(*y_axis_limits)
+            axes.set_ylim(*y_axis_limits)  # type: ignore
 
         axes.set_title(plot_config.title())
 
@@ -88,7 +95,9 @@ class PlotTools:
             figure.autofmt_xdate()
 
     @staticmethod
-    def __setupLabels(plot_context, default_x_label, default_y_label):
+    def __setupLabels(
+        plot_context: PlotContext, default_x_label: str, default_y_label: str
+    ) -> None:
         config = plot_context.plotConfig()
 
         if config.xLabel() is None:

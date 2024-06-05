@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
@@ -19,11 +21,11 @@ class ValidatedDialog(QDialog):
 
     def __init__(
         self,
-        title="Title",
-        description="Description",
-        unique_names=None,
-        parent=None,
-    ):
+        title: str = "Title",
+        description: str = "Description",
+        unique_names: Optional[List[str]] = None,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         QDialog.__init__(self, parent=parent)
         self.setModal(True)
         self.setWindowTitle(title)
@@ -33,21 +35,25 @@ class ValidatedDialog(QDialog):
 
         self.unique_names = unique_names
 
-        self.layout = QFormLayout()
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        layout = QFormLayout()
+        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         label = QLabel(description)
-        label.setAlignment(Qt.AlignHCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.layout.addRow(self.createSpace(5))
-        self.layout.addRow(label)
-        self.layout.addRow(self.createSpace(10))
+        layout.addRow(self.createSpace(5))
+        layout.addRow(label)
+        layout.addRow(self.createSpace(10))
 
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Orientation.Horizontal,
+            self,
         )
         self.cancel_button = buttons.button(QDialogButtonBox.Cancel)
-        self.ok_button = buttons.button(QDialogButtonBox.Ok)
+        ok_button = buttons.button(QDialogButtonBox.Ok)
+        assert ok_button is not None
+        self.ok_button = ok_button
         self.ok_button.setEnabled(False)
 
         self.param_name = QLineEdit(self)
@@ -57,18 +63,18 @@ class ValidatedDialog(QDialog):
             self.param_name.backgroundRole()
         )
 
-        self.layout.addRow("Name:", self.param_name)
+        layout.addRow("Name:", self.param_name)
 
-        self.layout.addRow(self.createSpace(10))
+        layout.addRow(self.createSpace(10))
 
-        self.layout.addRow(buttons)
+        layout.addRow(buttons)
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
-        self.setLayout(self.layout)
+        self.setLayout(layout)
 
-    def notValid(self, msg):
+    def notValid(self, msg: Optional[str]) -> None:
         """Called when the name is not valid."""
         self.ok_button.setEnabled(False)
         palette = self.param_name.palette()
@@ -76,7 +82,7 @@ class ValidatedDialog(QDialog):
         self.param_name.setToolTip(msg)
         self.param_name.setPalette(palette)
 
-    def valid(self):
+    def valid(self) -> None:
         """Called when the name is valid."""
         self.ok_button.setEnabled(True)
         palette = self.param_name.palette()
@@ -84,7 +90,7 @@ class ValidatedDialog(QDialog):
         self.param_name.setToolTip("")
         self.param_name.setPalette(palette)
 
-    def validateName(self, value):
+    def validateName(self, value: str) -> None:
         """Called to perform validation of a name. For specific needs override
         this function and call valid() and notValid(msg)."""
         value = str(value)
@@ -98,11 +104,11 @@ class ValidatedDialog(QDialog):
         else:
             self.valid()
 
-    def getName(self):
+    def getName(self) -> str:
         """Return the new name chosen by the user"""
         return str(self.param_name.text())
 
-    def showAndTell(self):
+    def showAndTell(self) -> str:
         """Shows the dialog and returns the result"""
         if self.exec_():
             return str(self.getName()).strip()
@@ -110,7 +116,7 @@ class ValidatedDialog(QDialog):
         return ""
 
     @staticmethod
-    def createSpace(size=5):
+    def createSpace(size: int = 5) -> QWidget:
         """Creates a widget that can be used as spacing on  a panel."""
         qw = QWidget()
         qw.setMinimumSize(QSize(size, size))

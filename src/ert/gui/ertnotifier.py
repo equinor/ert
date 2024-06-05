@@ -14,7 +14,7 @@ class ErtNotifier(QObject):
         QObject.__init__(self)
         self._config_file = config_file
         self._storage: Optional[Storage] = None
-        self._current_ensemble = None
+        self._current_ensemble: Optional[Ensemble] = None
         self._is_simulation_running = False
 
     @property
@@ -22,7 +22,7 @@ class ErtNotifier(QObject):
         return self._storage is not None
 
     @property
-    def storage(self) -> Storage:
+    def storage(self) -> Optional[Storage]:
         assert self.is_storage_available
         return self._storage
 
@@ -49,7 +49,7 @@ class ErtNotifier(QObject):
         return self._is_simulation_running
 
     @Slot()
-    def emitErtChange(self):
+    def emitErtChange(self) -> None:
         self.ertChanged.emit()
 
     @Slot(object)

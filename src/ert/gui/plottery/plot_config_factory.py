@@ -4,11 +4,7 @@ from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 class PlotConfigFactory:
     @classmethod
-    def createPlotConfigForKey(cls, key_def: PlotApiKeyDefinition):
-        """
-        @param key_def: PlotApiKeyDefinition instance
-        @return: PlotConfig
-        """
+    def createPlotConfigForKey(cls, key_def: PlotApiKeyDefinition) -> PlotConfig:
         plot_config = PlotConfig(plot_settings=None, title=key_def.key)
 
         # The styling of statistics changes based on the nature of the data

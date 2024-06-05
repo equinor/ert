@@ -909,7 +909,7 @@ class LocalEnsemble(BaseMode):
             df = ds.to_dataframe().pivot_table(
                 index=["realization", "time"], columns="name", values="values"
             )
-            df.index = df.index.rename(
+            df.index = df.index.rename(  # type: ignore
                 {"time": "Date", "realization": "Realization"}
             ).reorder_levels(["Realization", "Date"])
             df.axes[1].rename("", inplace=True)

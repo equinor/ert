@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qtpy.QtCore import QDir, Signal
 from qtpy.QtWidgets import (
     QFileDialog,
@@ -13,7 +15,7 @@ class ExportPanel(QWidget):
     updateExportButton = Signal(str, bool)
     runExport = Signal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         QWidget.__init__(self, parent)
         self.setMinimumWidth(500)
         self.setMinimumHeight(200)
@@ -50,14 +52,14 @@ class ExportPanel(QWidget):
 
         self.setLayout(layout)
 
-    def selectFileDirectory(self):
+    def selectFileDirectory(self) -> None:
         directory = QFileDialog(self).getExistingDirectory(
             self, "Directory", self._file_name.text(), QFileDialog.ShowDirsOnly
         )
         if len(str(directory)) > 0:
             self._file_name.setText(str(directory))
 
-    def export(self):
+    def export(self) -> None:
         path = self._file_name.text()
         time_index = self._time_index_input.text()
         column_keys = self._column_keys_input.text()

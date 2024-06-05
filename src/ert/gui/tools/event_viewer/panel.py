@@ -15,14 +15,14 @@ class GUILogHandler(logging.Handler, QObject):
 
     append_log_statement = QtCore.Signal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
         self.setLevel(logging.INFO)
 
         QObject.__init__(self)
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         msg = self.format(record)
         self.append_log_statement.emit(msg)
 
@@ -49,7 +49,7 @@ class EventViewerPanel(QPlainTextEdit):
         log_handler.append_log_statement.connect(self.val_changed)
 
     @QtCore.Slot(str)
-    def val_changed(self, value):
+    def val_changed(self, value: str) -> None:
         self.text_box.appendPlainText(value)
 
 

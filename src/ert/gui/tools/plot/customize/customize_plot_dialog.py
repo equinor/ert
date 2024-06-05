@@ -1,17 +1,20 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Union
 
 from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
+    QKeyEvent,
     QLayout,
     QListWidget,
+    QListWidgetItem,
     QMenu,
     QPushButton,
     QTabWidget,
     QToolButton,
     QVBoxLayout,
+    QWidget,
     QWidgetAction,
 )
 
@@ -37,7 +40,7 @@ class PlotCustomizer(QObject):
         self._plot_config_key = None
         self._previous_key = None
         self.default_plot_settings = None
-        self._plot_configs = {
+        self._plot_configs: Dict[Optional[str], PlotConfigHistory] = {
             None: PlotConfigHistory(
                 "No_Key_Selected", PlotConfig(plot_settings=None, title=None)
             )
@@ -71,22 +74,22 @@ class PlotCustomizer(QObject):
     def _getPlotConfigHistory(self) -> PlotConfigHistory:
         return self._plot_configs[self._plot_config_key]
 
-    def undoCustomization(self):
+    def undoCustomization(self) -> None:
         history = self._getPlotConfigHistory()
         history.undoChanges()
         self._revertCustomization(history.getPlotConfig())
 
-    def redoCustomization(self):
+    def redoCustomization(self) -> None:
         history = self._getPlotConfigHistory()
         history.redoChanges()
         self._revertCustomization(history.getPlotConfig())
 
-    def resetCustomization(self):
+    def resetCustomization(self) -> None:
         history = self._getPlotConfigHistory()
         history.resetChanges()
         self._revertCustomization(history.getPlotConfig())
 
-    def applyCustomization(self):
+    def applyCustomization(self) -> None:
         history = self._getPlotConfigHistory()
         plot_config = history.getPlotConfig()
         if self._customization_dialog is not None:
@@ -97,14 +100,14 @@ class PlotCustomizer(QObject):
 
         self._emitChangedSignal()
 
-    def _revertCustomization(self, plot_config, emit=True):
+    def _revertCustomization(self, plot_config: PlotConfig, emit: bool = True) -> None:
         if self._customization_dialog is not None:
             for customization_view in self._customization_dialog:
                 customization_view.revertCustomization(plot_config)
 
         self._emitChangedSignal(emit)
 
-    def _emitChangedSignal(self, emit=True):
+    def _emitChangedSignal(self, emit: bool = True) -> None:
         history = self._getPlotConfigHistory()
         self._customization_dialog.setUndoRedoCopyState(
             history.isUndoPossible(), history.isRedoPossible(), self.isCopyPossible()
@@ -116,7 +119,7 @@ class PlotCustomizer(QObject):
     def isCopyPossible(self) -> bool:
         return len(self._plot_configs) > 2
 
-    def copyCustomizationTo(self, keys):
+    def copyCustomizationTo(self, keys: Optional[str]) -> None:
         """copies the plotconfig of the current key, to a set of other keys"""
         history = self._getPlotConfigHistory()
 
@@ -146,13 +149,13 @@ class PlotCustomizer(QObject):
 
             self._revertCustomization(history.getPlotConfig())
 
-    def toggleCustomizationDialog(self):
+    def toggleCustomizationDialog(self) -> None:
         if self._customization_dialog.isVisible():
             self._customization_dialog.hide()
         else:
             self._customization_dialog.show()
 
-    def switchPlotConfigHistory(self, key_def: PlotApiKeyDefinition):
+    def switchPlotConfigHistory(self, key_def: PlotApiKeyDefinition) -> None:
         if key_def is None:
             return
         key = key_def.key
@@ -182,7 +185,13 @@ class CustomizePlotDialog(QDialog):
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
 
-    def __init__(self, title, parent, key_defs: List[PlotApiKeyDefinition], key=""):
+    def __init__(
+        self,
+        title,
+        parent,
+        key_defs: List[PlotApiKeyDefinition],
+        key: Optional[str] = "",
+    ):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 
@@ -265,25 +274,25 @@ class CustomizePlotDialog(QDialog):
 
         self.setLayout(layout)
 
-    def initiateCopyStyleToDialog(self):
+    def initiateCopyStyleToDialog(self) -> None:
         dialog = CopyStyleToDialog(self, self.current_key, self._key_defs)
         if dialog.exec_():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
-    def addCopyableKey(self, key):
+    def addCopyableKey(self, key: Optional[Union[str, QListWidgetItem]]) -> None:
         self._popup_list.addItem(key)
 
-    def keySelected(self, list_widget_item):
+    def keySelected(self, list_widget_item: QListWidgetItem) -> None:
         self.copySettings.emit(str(list_widget_item.text()))
 
     def currentPlotKeyChanged(self, new_key):
         self.current_key = new_key
 
-    def keyPressEvent(self, q_key_event):
-        if q_key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.hide()
         else:
-            QDialog.keyPressEvent(self, q_key_event)
+            QDialog.keyPressEvent(self, a0)
 
     def addTab(self, attribute_name, title, widget):
         self._tabs.addTab(widget, title)
@@ -293,11 +302,11 @@ class CustomizePlotDialog(QDialog):
     def __getitem__(self, item) -> "CustomizationView":
         return self._tab_map[item]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[QWidget]:
         for attribute_name in self._tab_order:
             yield self._tab_map[attribute_name]
 
-    def setUndoRedoCopyState(self, undo, redo, copy=False):
+    def setUndoRedoCopyState(self, undo: bool, redo: bool, copy: bool = False) -> None:
         self._undo_button.setEnabled(undo)
         self._redo_button.setEnabled(redo)
         self._copy_from_button.setEnabled(copy)

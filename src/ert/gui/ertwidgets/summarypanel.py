@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -18,14 +18,14 @@ if TYPE_CHECKING:
 
 
 class SummaryTemplate:
-    def __init__(self, title):
+    def __init__(self, title: str) -> None:
         super().__init__()
 
         self.text = ""
         self.__finished = False
         self.startGroup(title)
 
-    def startGroup(self, title):
+    def startGroup(self, title: str) -> None:
         if not self.__finished:
             style = (
                 "display: inline-block; width: 150px; vertical-align: top; float: left"
@@ -33,21 +33,21 @@ class SummaryTemplate:
             self.text += f'<div style="{style}">\n'
             self.addTitle(title)
 
-    def addTitle(self, title):
+    def addTitle(self, title: str) -> None:
         if not self.__finished:
             style = "font-size: 16px; font-weight: bold;"
             self.text += f'<div style="{style}">{title}</div>'
 
-    def addRow(self, value):
+    def addRow(self, value: Any) -> None:
         if not self.__finished:
             style = "text-indent: 5px;"
             self.text += f'<div style="{style}">{value}</div>'
 
-    def endGroup(self):
+    def endGroup(self) -> None:
         if not self.__finished:
             self.text += "</div></br>\n"
 
-    def getText(self):
+    def getText(self) -> str:
         if not self.__finished:
             self.__finished = True
             self.endGroup()
@@ -63,8 +63,8 @@ class SummaryPanel(QFrame):
         self.setMinimumHeight(150)
 
         widget = QWidget()
-        self.layout = QHBoxLayout()
-        widget.setLayout(self.layout)
+        widget_layout = QHBoxLayout()
+        widget.setLayout(widget_layout)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -76,7 +76,7 @@ class SummaryPanel(QFrame):
         self.setLayout(layout)
         self.updateSummary()
 
-    def updateSummary(self):
+    def updateSummary(self) -> None:
         summary = ErtSummary(self.ert.ert_config)
 
         forward_model_list = summary.getForwardModels()
@@ -108,15 +108,15 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-    def addColumn(self, text):
+    def addColumn(self, text: str) -> None:
         layout = QVBoxLayout()
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
-        text_widget.setTextFormat(Qt.RichText)
+        text_widget.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(text_widget)
         layout.addStretch(1)
 
-        self.layout.addLayout(layout)
+        self.layout().addLayout(layout)  # type: ignore
 
     @staticmethod
     def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:

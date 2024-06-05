@@ -80,7 +80,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             self.simulationConfigurationChanged
         )
 
-    def isConfigurationValid(self):
+    def isConfigurationValid(self) -> bool:
         self.blockSignals(True)
         self._name_field.validateString()
         self._ensemble_name_field.validateString()
@@ -91,7 +91,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             and self._ensemble_name_field.isValid()
         )
 
-    def get_experiment_arguments(self):
+    def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ENSEMBLE_EXPERIMENT_MODE,
             current_ensemble=self._ensemble_name_field.get_text,

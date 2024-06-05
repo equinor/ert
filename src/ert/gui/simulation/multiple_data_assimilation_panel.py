@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 
 from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel, QLineEdit
@@ -135,11 +135,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._experiment_name_field.clear()
             self._experiment_name_field.setEnabled(True)
 
-    def restart_run_toggled(self):
+    def restart_run_toggled(self) -> None:
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
         self._ensemble_selector.setEnabled(self._restart_box.isChecked())
 
-    def _createInputForWeights(self, layout):
+    def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
         self._relative_iteration_weights_box = StringBox(
             relative_iteration_weights_model,
@@ -154,7 +154,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         normalized_weights_widget = ActiveLabel(normalized_weights_model)
         layout.addRow("Normalized weights:", normalized_weights_widget)
 
-        def updateVisualizationOfNormalizedWeights():
+        def updateVisualizationOfNormalizedWeights() -> None:
             self.weights_valid = False
 
             if self._relative_iteration_weights_box.isValid():
@@ -179,7 +179,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         updateVisualizationOfNormalizedWeights()  # To normalize the default weights
 
-    def isConfigurationValid(self):
+    def isConfigurationValid(self) -> bool:
         return (
             self._target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
@@ -187,7 +187,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self.weights_valid
         )
 
-    def get_experiment_arguments(self):
+    def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ES_MDA_MODE,
             target_ensemble=self._target_ensemble_format_model.getValue(),
@@ -206,10 +206,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ),
         )
 
-    def setWeights(self, weights):
+    def setWeights(self, weights: Any) -> None:
         self.weights = str(weights)
 
-    def _realizations_from_fs(self):
+    def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         if ensemble:
             mask = ensemble.get_realization_mask_with_parameters()

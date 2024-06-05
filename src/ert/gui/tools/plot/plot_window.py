@@ -48,7 +48,7 @@ from qtpy.QtWidgets import (
 )
 
 
-def open_error_dialog(title: str, content: str):
+def open_error_dialog(title: str, content: str) -> None:
     qd = QDialog()
     qd.setModal(True)
     qd.setSizeGripEnabled(True)
@@ -255,7 +255,9 @@ class PlotWindow(QMainWindow):
                 plot_context, ensemble_to_data_map, observations, std_dev_images
             )
 
-    def _updateCustomizer(self, plot_widget: PlotWidget, preferred_x_axis_format: str):
+    def _updateCustomizer(
+        self, plot_widget: PlotWidget, preferred_x_axis_format: str
+    ) -> None:
         x_axis_type = PlotContext.UNKNOWN_AXIS
         y_axis_type = PlotContext.UNKNOWN_AXIS
 
@@ -276,7 +278,7 @@ class PlotWindow(QMainWindow):
     def getSelectedKey(self) -> Optional[PlotApiKeyDefinition]:
         return self._data_type_keys_widget.getSelectedItem()
 
-    def addPlotWidget(self, name, plotter, enabled=True):
+    def addPlotWidget(self, name, plotter, enabled=True) -> None:
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
@@ -287,11 +289,11 @@ class PlotWindow(QMainWindow):
 
     def addDock(
         self,
-        name,
-        widget,
-        area=Qt.LeftDockWidgetArea,
-        allowed_areas=Qt.AllDockWidgetAreas,
-    ):
+        name: str,
+        widget: QWidget,
+        area: Qt.DockWidgetArea = Qt.DockWidgetArea.LeftDockWidgetArea,
+        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
+    ) -> QDockWidget:
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
@@ -304,7 +306,7 @@ class PlotWindow(QMainWindow):
         return dock_widget
 
     @showWaitCursorWhileWaiting
-    def keySelected(self):
+    def keySelected(self) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
             return
@@ -344,5 +346,5 @@ class PlotWindow(QMainWindow):
 
         self.updatePlot()
 
-    def toggleCustomizeDialog(self):
+    def toggleCustomizeDialog(self) -> None:
         self._plot_customizer.toggleCustomizationDialog()

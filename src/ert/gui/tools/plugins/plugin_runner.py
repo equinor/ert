@@ -1,5 +1,5 @@
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 from _ert.threading import ErtThread
 from ert.config import CancelPluginException
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class PluginRunner:
-    def __init__(self, plugin: "Plugin"):
+    def __init__(self, plugin: "Plugin") -> None:
         super().__init__()
 
         self.__plugin = plugin
@@ -23,7 +23,7 @@ class PluginRunner:
         self._runner = WorkflowJobRunner(plugin.getWorkflowJob())
         self.poll_thread = None
 
-    def run(self):
+    def run(self) -> None:
         try:
             plugin = self.__plugin
 
@@ -55,12 +55,14 @@ class PluginRunner:
         except CancelPluginException:
             print("Plugin cancelled before execution!")
 
-    def __runWorkflowJob(self, plugin, arguments):
+    def __runWorkflowJob(
+        self, plugin: "Plugin", arguments: Optional[List[Any]]
+    ) -> None:
         self.__result = self._runner.run(
             plugin.ert(), plugin.storage, plugin.ensemble, arguments
         )
 
-    def __pollRunner(self, dialog):
+    def __pollRunner(self, dialog: ProcessJobDialog) -> None:
         self.wait()
 
         details = ""
@@ -97,13 +99,13 @@ class PluginRunner:
     def isCancelled(self) -> bool:
         return self._runner.isCancelled()
 
-    def cancel(self):
+    def cancel(self) -> None:
         if self.isRunning():
             self._runner.cancel()
 
-    def wait(self):
+    def wait(self) -> None:
         while self.isRunning():
             time.sleep(1)
 
-    def setPluginFinishedCallback(self, callback):
+    def setPluginFinishedCallback(self, callback: Callable[[], None]) -> None:
         self.__plugin_finished_callback = callback

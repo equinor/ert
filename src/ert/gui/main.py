@@ -13,7 +13,7 @@ else:
 
 from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
-from qtpy.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication, QWidget
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
@@ -42,7 +42,7 @@ from ert.storage.local_storage import local_storage_set_ert_config
 from .suggestor import Suggestor
 
 
-def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
+def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -62,7 +62,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
             args, log_handler, plugin_manager
         )
 
-        def show_window():
+        def show_window() -> int:
             window.show()
             window.activateWindow()
             window.raise_()
@@ -76,6 +76,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
 
         with StorageService.init_service(project=os.path.abspath(ens_path)):
             return show_window()
+    return -1
 
 
 def _start_initial_gui_window(
@@ -190,7 +191,7 @@ def _start_initial_gui_window(
         )
 
 
-def _check_locale():
+def _check_locale() -> None:
     # There seems to be a setlocale() call deep down in the initialization of
     # QApplication, if the user has set the LC_NUMERIC environment variables to
     # a locale with decimalpoint different from "." the application will fail
@@ -208,13 +209,13 @@ decimalpoint.\n"""  # noqa
         warnings.warn(msg, category=ConfigWarning, stacklevel=1)
 
 
-def _clicked_help_button(menu_label: str, link: str):
+def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
 
 
-def _clicked_about_button(about_dialog):
+def _clicked_about_button(about_dialog: QWidget) -> None:
     logger = logging.getLogger(__name__)
     logger.info("Pressed help button About")
     about_dialog.show()

@@ -1,4 +1,4 @@
-import typing
+from typing import List, Optional, Union, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -11,23 +11,25 @@ from qtpy.QtCore import (
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
+default_index = QModelIndex()
+
 
 class RealListModel(QAbstractProxyModel):
     def __init__(
         self,
-        parent: typing.Optional[QObject],
+        parent: Optional[QObject],
         iter_: int,
     ) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
 
-    def get_iter(self):
+    def get_iter(self) -> int:
         return self._iter
 
     iter_changed = Signal(int)
 
     @Slot(int)
-    def setIter(self, iter_: int):
+    def setIter(self, iter_: int) -> None:
         self._disconnect()
         self.modelAboutToBeReset.emit()
         self._iter: int = iter_
@@ -35,7 +37,7 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.iter_changed.emit(iter_)
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -47,7 +49,7 @@ class RealListModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
         source_model.modelReset.disconnect(self.modelReset)
 
-    def _connect(self):
+    def _connect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -88,8 +90,14 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(iter_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> QObject | None: ...
+
+    def parent(
+        self, child: QModelIndex = default_index
+    ) -> Optional[Union[QModelIndex, QObject]]:
         return QModelIndex()
 
     def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
@@ -130,8 +138,8 @@ class RealListModel(QAbstractProxyModel):
         return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
 
     def _source_data_changed(
-        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: typing.List[int]
-    ):
+        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
+    ) -> None:
         if top_left.internalPointer() is None:
             return
         if not top_left.data(IsRealizationRole):
@@ -144,14 +152,16 @@ class RealListModel(QAbstractProxyModel):
 
     def _source_rows_about_to_be_inserted(
         self, parent: QModelIndex, start: int, end: int
-    ):
+    ) -> None:
         if not parent.isValid():
             return
         if not self._accept_index(parent):
             return
         self.beginInsertRows(self.mapFromSource(parent), start, end)
 
-    def _source_rows_inserted(self, parent: QModelIndex, _start: int, _end: int):
+    def _source_rows_inserted(
+        self, parent: QModelIndex, _start: int, _end: int
+    ) -> None:
         if not parent.isValid():
             return
         if not self._accept_index(parent):

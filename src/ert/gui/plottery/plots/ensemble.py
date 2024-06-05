@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
+=======
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict
+>>>>>>> 9d906a5cfe (Type check ert.gui)
 
 from ert.gui.plottery.plots.history import plotHistory
 from ert.gui.tools.plot.plot_api import EnsembleObject
@@ -10,22 +16,23 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 2
 
     def plot(
         self,
-        figure,
-        plot_context: "PlotContext",
+        figure: Figure,
+        plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-        observation_data,
-        _,
-    ):
+        observation_data: pd.DataFrame,
+        std_dev_images: Dict[str, bytes],
+    ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 
@@ -63,12 +70,12 @@ class EnsemblePlot:
 
     @staticmethod
     def _plotLines(
-        axes: "Axes",
-        plot_config: "PlotConfig",
-        data: "pd.DataFrame",
+        axes: Axes,
+        plot_config: PlotConfig,
+        data: pd.DataFrame,
         ensemble_label: str,
-        is_date_supported,
-    ):
+        is_date_supported: bool,
+    ) -> None:
         style = plot_config.defaultStyle()
 
         if len(data) == 1 and not style.marker:

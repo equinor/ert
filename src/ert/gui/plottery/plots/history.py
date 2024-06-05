@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ert.gui.plottery import PlotContext
 
 
-def plotHistory(plot_context: "PlotContext", axes: "Axes"):
+def plotHistory(plot_context: "PlotContext", axes: "Axes") -> None:
     plot_config = plot_context.plotConfig()
 
     if (

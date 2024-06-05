@@ -103,13 +103,13 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
             self.analysis_config.set_num_iterations(iteration_count)
             self.notifier.emitErtChange()
 
-    def isConfigurationValid(self):
+    def isConfigurationValid(self) -> bool:
         return (
             self._iterated_target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 
-    def get_experiment_arguments(self):
+    def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
             target_ensemble=self._iterated_target_ensemble_format_model.getValue(),

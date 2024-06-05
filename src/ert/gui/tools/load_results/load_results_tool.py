@@ -1,3 +1,5 @@
+from typing import Any
+
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QPushButton
 
@@ -10,7 +12,7 @@ from ert.libres_facade import LibresFacade
 
 
 class LoadResultsTool(Tool):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier) -> None:
         self.facade = facade
         super().__init__(
             "Load results manually",
@@ -20,7 +22,7 @@ class LoadResultsTool(Tool):
         self._dialog = None
         self._notifier = notifier
 
-    def trigger(self):
+    def trigger(self) -> None:
         if self._import_widget is None:
             self._import_widget = LoadResultsPanel(self.facade, self._notifier)
         self._dialog = ClosableDialog(
@@ -35,7 +37,7 @@ class LoadResultsTool(Tool):
         self._dialog.exec_()
 
     @showWaitCursorWhileWaiting
-    def load(self, _):
+    def load(self, _: Any) -> None:
         self._dialog.disableCloseButton()
         self._dialog.toggleButton(caption="Load", enabled=False)
         self._import_widget.load()

@@ -7,11 +7,12 @@ from ._builder import (
 )
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
-from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
+from .event import EEEvent, EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
 from .snapshot import PartialSnapshot, Snapshot
 
 __all__ = (
+    "EEEvent",
     "EndEvent",
     "Ensemble",
     "EnsembleBuilder",

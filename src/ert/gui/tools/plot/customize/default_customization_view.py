@@ -27,7 +27,7 @@ class DefaultCustomizationView(CustomizationView):
     history = WidgetProperty()
     observations = WidgetProperty()
 
-    def __init__(self):
+    def __init__(self) -> None:
         CustomizationView.__init__(self)
 
         self.addLineEdit(
@@ -57,7 +57,7 @@ class DefaultCustomizationView(CustomizationView):
             "observations", "Observations", "Toggle observations visibility."
         )
 
-    def applyCustomization(self, plot_config: "PlotConfig"):
+    def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setTitle(self.title)
 
         plot_config.setXLabel(self.x_label)
@@ -68,7 +68,7 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setHistoryEnabled(self.history)
         plot_config.setObservationsEnabled(self.observations)
 
-    def revertCustomization(self, plot_config: "PlotConfig"):
+    def revertCustomization(self, plot_config: "PlotConfig") -> None:
         if not plot_config.isUnnamed():
             self.title = plot_config.title()
         else:

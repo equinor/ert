@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -20,6 +20,8 @@ from ert.gui.model.snapshot import (
     NodeRole,
 )
 
+default_index = QModelIndex()
+
 
 class JobListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
@@ -36,7 +38,7 @@ class JobListProxyModel(QAbstractProxyModel):
         self._real = real
 
     @Slot(int, int)
-    def set_real(self, iter_: int, real: int):
+    def set_real(self, iter_: int, real: int) -> None:
         """Called when the user clicks a specific realization in the run_dialog window."""
         self._disconnect()
         self.modelAboutToBeReset.emit()
@@ -45,7 +47,7 @@ class JobListProxyModel(QAbstractProxyModel):
         self.modelReset.emit()
         self._connect()
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -53,7 +55,7 @@ class JobListProxyModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
         source_model.modelReset.disconnect(self.modelReset)
 
-    def _connect(self):
+    def _connect(self) -> None:
         source_model = self.sourceModel()
         if source_model is None:
             return
@@ -94,8 +96,7 @@ class JobListProxyModel(QAbstractProxyModel):
             return section
         return QVariant()
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         return len(COLUMNS[NodeType.REAL])
 
     def rowCount(self, parent=None) -> int:
@@ -108,8 +109,14 @@ class JobListProxyModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(source_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> QObject | None: ...
+
+    def parent(
+        self, child: QModelIndex = default_index
+    ) -> Optional[Union[QModelIndex, QObject]]:
         return QModelIndex()
 
     def index(self, row: int, column: int, parent=None) -> QModelIndex:
@@ -144,7 +151,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
-    ):
+    ) -> None:
         if not self._accept_index(top_left):
             return
         proxy_top_left = self.mapFromSource(top_left)
@@ -172,8 +179,8 @@ class JobListProxyModel(QAbstractProxyModel):
             index = index.parent()
         return True
 
-    def get_iter(self):
+    def get_iter(self) -> int:
         return self._iter
 
-    def get_real(self):
+    def get_real(self) -> int:
         return self._real

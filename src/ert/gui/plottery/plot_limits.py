@@ -1,20 +1,27 @@
 import datetime
+from typing import Any, Tuple, Type, Union
 
 
 class limit_property:
-    def __init__(self, attribute_name, types, minimum=None, maximum=None):
+    def __init__(
+        self,
+        attribute_name: str,
+        types: Union[Type[Any], Tuple[Type[Any], ...]],
+        minimum: Any = None,
+        maximum: Any = None,
+    ) -> None:
         super().__init__()
         self._types = types
         self._maximum = maximum
         self._minimum = minimum
         self._attribute_name = attribute_name
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any) -> Any:
         if not hasattr(instance, f"_{self._attribute_name}"):
             setattr(instance, f"_{self._attribute_name}", None)
         return getattr(instance, f"_{self._attribute_name}")
 
-    def __set__(self, instance, value):
+    def __set__(self, instance: Any, value: Any) -> Any:
         if value is not None:
             if not isinstance(value, self._types):
                 raise TypeError(
@@ -35,17 +42,19 @@ class limit_property:
 
 
 class limits_property:
-    def __init__(self, minimum_attribute_name, maximum_attribute_name):
+    def __init__(
+        self, minimum_attribute_name: str, maximum_attribute_name: str
+    ) -> None:
         super().__init__()
         self._minimum_attribute_name = minimum_attribute_name
         self._maximum_attribute_name = maximum_attribute_name
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any) -> Any:
         return getattr(instance, f"{self._minimum_attribute_name}"), getattr(
             instance, f"{self._maximum_attribute_name}"
         )
 
-    def __set__(self, instance, value):
+    def __set__(self, instance: Any, value: Any) -> Any:
         setattr(instance, f"_{self._minimum_attribute_name}", value[0])
         setattr(instance, f"_{self._maximum_attribute_name}", value[1])
 
@@ -106,7 +115,7 @@ class PlotLimits:
 
         return equality
 
-    def copyLimitsFrom(self, other: "PlotLimits"):
+    def copyLimitsFrom(self, other: "PlotLimits") -> None:
         self.value_limits = other.value_limits
         self.density_limits = other.density_limits
         self.depth_limits = other.depth_limits

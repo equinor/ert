@@ -32,6 +32,6 @@ class ExportMisfitDataJob(ErtScript):
         if realizations.size == 0 or misfit.empty:
             raise StorageError("No responses loaded")
 
-        misfit.columns = [val.split(":")[1] for val in misfit.columns]
+        misfit.columns = [val.split(":")[1] for val in misfit.columns]  # type: ignore
         misfit = misfit.drop("TOTAL", axis=1)
         misfit.to_hdf(target_file, key="misfit", mode="w")

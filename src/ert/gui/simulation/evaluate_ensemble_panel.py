@@ -76,7 +76,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             realizations=self._active_realizations_field.text(),
         )
 
-    def _realizations_from_fs(self):
+    def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         if ensemble:
             parameters = ensemble.get_realization_mask_with_parameters()

@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (
     QDialogButtonBox,
     QHBoxLayout,
     QHeaderView,
+    QKeyEvent,
     QLabel,
     QMessageBox,
     QProgressBar,
@@ -24,6 +25,7 @@ from qtpy.QtWidgets import (
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
+    EEEvent,
     EndEvent,
     EvaluatorServerConfig,
     FullSnapshotEvent,
@@ -295,7 +297,7 @@ class RunDialog(QDialog):
         elif self.killJobs() != QMessageBox.Yes:
             QCloseEvent.ignore()
 
-    def run_experiment(self):
+    def run_experiment(self) -> None:
         self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
@@ -305,7 +307,7 @@ class RunDialog(QDialog):
             port_range = range(49152, 51819)
         evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
 
-        def run():
+        def run() -> None:
             self._run_model.start_simulations_thread(
                 evaluator_server_config=evaluator_server_config,
             )
@@ -331,7 +333,7 @@ class RunDialog(QDialog):
         simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
 
-    def killJobs(self):
+    def killJobs(self) -> None:
         msg = "Are you sure you want to terminate the currently running experiment?"
         kill_job = QMessageBox.question(
             self, "Terminate experiment", msg, QMessageBox.Yes | QMessageBox.No
@@ -364,11 +366,11 @@ class RunDialog(QDialog):
             )
             self.fail_msg_box.exec_()
 
-    def _show_done_button(self):
+    def _show_done_button(self) -> None:
         self.done_button.setHidden(False)
 
     @Slot()
-    def _on_ticker(self):
+    def _on_ticker(self) -> None:
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
@@ -381,7 +383,7 @@ class RunDialog(QDialog):
             )
 
     @Slot(object)
-    def _on_event(self, event: object):
+    def _on_event(self, event: EEEvent) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._ticker.stop()
@@ -445,12 +447,12 @@ class RunDialog(QDialog):
         return None
 
     @staticmethod
-    def validate_percentage_range(progress: int):
+    def validate_percentage_range(progress: int) -> None:
         if not 0 <= progress <= 100:
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
 
-    def restart_failed_realizations(self):
+    def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Information)
         msg.setText(
@@ -470,7 +472,7 @@ class RunDialog(QDialog):
             self.run_experiment()
 
     @Slot()
-    def toggle_detailed_progress(self):
+    def toggle_detailed_progress(self) -> None:
         if self._isDetailedDialog:
             self._setSimpleDialog()
         else:
@@ -478,15 +480,15 @@ class RunDialog(QDialog):
 
         self.adjustSize()
 
-    def _on_finished(self):
+    def _on_finished(self) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
 
-    def keyPressEvent(self, q_key_event):
-        if q_key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.close()
         else:
-            QDialog.keyPressEvent(self, q_key_event)
+            QDialog.keyPressEvent(self, a0)
 
 
 # Cannot use a non-static method here as

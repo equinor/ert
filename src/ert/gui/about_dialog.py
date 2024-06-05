@@ -1,19 +1,30 @@
+from typing import Optional
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 import ert.gui as ert_gui
 
 
 class AboutDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent: Optional[QWidget]) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle("About")
         self.setModal(True)
         self.setFixedSize(QSize(600, 480))
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         main_layout = QVBoxLayout()
 
@@ -23,18 +34,18 @@ class AboutDialog(QDialog):
 
         self.setLayout(main_layout)
 
-    def createTopLayout(self):
+    def createTopLayout(self) -> QHBoxLayout:
         top_layout = QHBoxLayout()
         top_layout.addLayout(self.createInfoLayout(), 1)
 
         return top_layout
 
     @staticmethod
-    def createInfoLayout():
+    def createInfoLayout() -> QVBoxLayout:
         info_layout = QVBoxLayout()
 
         ert = QLabel()
-        ert.setAlignment(Qt.AlignHCenter)
+        ert.setAlignment(Qt.Alignment.AlignHCenter)
 
         title_font = QFont()
         title_font.setPointSize(40)
@@ -44,13 +55,13 @@ class AboutDialog(QDialog):
         info_layout.addWidget(ert)
         info_layout.addStretch(1)
         ert_title = QLabel()
-        ert_title.setAlignment(Qt.AlignHCenter)
+        ert_title.setAlignment(Qt.Alignment.AlignHCenter)
         ert_title.setText("Ensemble based Reservoir Tool")
         info_layout.addWidget(ert_title)
 
         version = QLabel()
 
-        version.setAlignment(Qt.AlignHCenter)
+        version.setAlignment(Qt.Alignment.AlignHCenter)
         version.setText(f"ert version:{ert_gui.__version__}")
         info_layout.addWidget(version)
 
@@ -59,7 +70,7 @@ class AboutDialog(QDialog):
         return info_layout
 
     @staticmethod
-    def createGplLayout():
+    def createGplLayout() -> QVBoxLayout:
         gpl = QLabel()
         gpl.setText(
             'ERT is free software: you can redistribute it and/or modify \
@@ -80,7 +91,7 @@ class AboutDialog(QDialog):
         gpl_layout.addWidget(gpl)
         return gpl_layout
 
-    def createButtonLayout(self):
+    def createButtonLayout(self) -> QHBoxLayout:
         button_layout = QHBoxLayout()
 
         close_button = QPushButton("Close")

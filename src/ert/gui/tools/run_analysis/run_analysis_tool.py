@@ -1,6 +1,6 @@
 import uuid
 from contextlib import contextmanager
-from typing import Optional
+from typing import Iterator, Optional
 
 import numpy as np
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
@@ -34,14 +34,14 @@ class Analyse(QObject):
         ert: EnKFMain,
         target_ensemble: Ensemble,
         source_ensemble: Ensemble,
-    ):
+    ) -> None:
         QObject.__init__(self)
         self._ert = ert
         self._target_ensemble = target_ensemble
         self._source_ensemble = source_ensemble
 
     @Slot()
-    def run(self):
+    def run(self) -> None:
         """Runs analysis using target and source ensembles. Returns whether
         the analysis was successful."""
         error: Optional[str] = None
@@ -82,7 +82,7 @@ class Analyse(QObject):
 
 
 class RunAnalysisTool(Tool):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier) -> None:
         super().__init__("Run analysis", QIcon("img:formula.svg"))
         self.ert = ert
         self.notifier = notifier
@@ -91,7 +91,7 @@ class RunAnalysisTool(Tool):
         self._thread: Optional[QThread] = None
         self._analyse: Optional[Analyse] = None
 
-    def trigger(self):
+    def trigger(self) -> None:
         if self._run_widget is None:
             self._run_widget = RunAnalysisPanel(
                 self.ert.ert_config.analysis_config.es_module,
@@ -110,7 +110,7 @@ class RunAnalysisTool(Tool):
             self._run_widget.target_ensemble_text.clear()
             self._dialog.show()
 
-    def run(self):
+    def run(self) -> None:
         target: str = self._run_widget.target_ensemble()
         if len(target.strip()) == 0:
             self._report_empty_target()
@@ -124,7 +124,7 @@ class RunAnalysisTool(Tool):
             self._enable_dialog(True)
             QMessageBox.critical(None, "Error", str(e))
 
-    def _on_finished(self, error: Optional[str], ensemble_name: str):
+    def _on_finished(self, error: Optional[str], ensemble_name: str) -> None:
         self._enable_dialog(True)
 
         if not error:
@@ -145,7 +145,7 @@ class RunAnalysisTool(Tool):
         self.notifier.ertChanged.emit()
         self._dialog.accept()
 
-    def _init_and_start_thread(self):
+    def _init_and_start_thread(self) -> None:
         self._thread = QThread()
 
         self._analyse.moveToThread(self._thread)
@@ -161,17 +161,17 @@ class RunAnalysisTool(Tool):
         self._thread.start()
 
     @staticmethod
-    def _report_empty_target():
+    def _report_empty_target() -> None:
         QMessageBox.warning(None, "Invalid target", "Target ensemble can not be empty")
 
-    def _enable_dialog(self, enable: bool):
+    def _enable_dialog(self, enable: bool) -> None:
         self._dialog.enable_buttons(enable)
         if enable:
             QApplication.restoreOverrideCursor()
         else:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
-    def _init_analyse(self, source_ensemble: Ensemble, target: str):
+    def _init_analyse(self, source_ensemble: Ensemble, target: str) -> None:
         target_ensemble = self.notifier.storage.create_ensemble(
             source_ensemble.experiment_id,
             name=target,
@@ -188,7 +188,7 @@ class RunAnalysisTool(Tool):
 
 
 @contextmanager
-def add_context_to_error(msg: str):
+def add_context_to_error(msg: str) -> Iterator[None]:
     try:
         yield
     except Exception as e:

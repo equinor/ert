@@ -1,15 +1,27 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout
+from qtpy.QtGui import QKeyEvent
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+
+if TYPE_CHECKING:
+    from qtpy.QtWidgets import QT_SLOT
 
 
 class ClosableDialog(QDialog):
-    def __init__(self, title, widget, parent=None):
+    def __init__(
+        self, title: Optional[str], widget: QWidget, parent: Optional[QWidget] = None
+    ) -> None:
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowFlags.CustomizeWindowHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         layout = QVBoxLayout()
         layout.addWidget(widget, stretch=1)
@@ -26,23 +38,25 @@ class ClosableDialog(QDialog):
 
         self.setLayout(layout)
 
-    def disableCloseButton(self):
+    def disableCloseButton(self) -> None:
         self.close_button.setEnabled(False)
 
-    def enableCloseButton(self):
+    def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, q_key_event):
-        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
+    def keyPressEvent(self, q_key_event: Optional[QKeyEvent]) -> None:
+        if self.close_button.isEnabled() or (
+            q_key_event and q_key_event.key() != Qt.Key.Key_Escape
+        ):
             QDialog.keyPressEvent(self, q_key_event)
 
-    def addButton(self, caption, listener):
+    def addButton(self, caption: str, listener: QT_SLOT) -> None:
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
         self.__button_layout.insertWidget(1, button)
         button.clicked.connect(listener)
 
-    def toggleButton(self, caption, enabled):
+    def toggleButton(self, caption: str, enabled: bool) -> None:
         button = self.findChild(QPushButton, str(caption).capitalize())
         if button is not None:
             button.setEnabled(enabled)

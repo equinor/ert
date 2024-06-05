@@ -1,4 +1,4 @@
-from typing import List
+from typing import Collection, List, Optional, Union
 
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.validation import ActiveRange, mask_to_rangestring
@@ -11,7 +11,7 @@ class ActiveRealizationsModel(ValueModel):
         ValueModel.__init__(self, self.getDefaultValue())
         self._custom = False
 
-    def setValue(self, value: str):
+    def setValue(self, value: Optional[str]) -> None:
         if not value or not value.strip() or value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
@@ -19,10 +19,10 @@ class ActiveRealizationsModel(ValueModel):
             self._custom = True
             ValueModel.setValue(self, value)
 
-    def setValueFromMask(self, mask):
+    def setValueFromMask(self, mask: Collection[Union[bool, int]]) -> None:
         self.setValue(mask_to_rangestring(mask))
 
-    def getDefaultValue(self):
+    def getDefaultValue(self) -> Optional[str]:
         if self.show_default:
             size = self.ensemble_size
             return f"0-{size-1:d}"

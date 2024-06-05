@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import pandas as pd
 
@@ -9,27 +11,32 @@ from .plot_tools import PlotTools
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class DistributionPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: dict[str, DataFrame],
+        _observation_data: DataFrame,
+        std_dev_images: Any,
+    ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotDistribution(
-    figure: "Figure",
-    plot_context: "PlotContext",
+    figure: Figure,
+    plot_context: PlotContext,
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
     _observation_data: pd.DataFrame,
-):
+) -> None:
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
 
@@ -82,27 +89,27 @@ def _plotDistribution(
     data: pd.DataFrame,
     label: str,
     index: int,
-    previous_data,
-):
-    data = pd.Series(dtype="float64") if data.empty else data[0]
-
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
-
+    previous_data: pd.DataFrame,
+) -> None:
+    _data = pd.Series(dtype="float64") if data.empty else data[0]
+    if xlabel := plot_config.xLabel():
+        axes.set_xlabel(xlabel)
+    if ylabel := plot_config.yLabel():
+        axes.set_ylabel(ylabel)
     style = plot_config.distributionStyle()
 
-    if data.dtype == "object":
+    if _data.dtype == "object":
         try:
-            data = pd.to_numeric(data, errors="coerce")
+            _data = pd.to_numeric(_data, errors="coerce")
         except AttributeError:
-            data = data.convert_objects(convert_numeric=True)
+            _data = _data.convert_objects(convert_numeric=True)
 
-    if data.dtype == "object":
+    if _data.dtype == "object":
         dots = []
     else:
         dots = axes.plot(
-            [index] * len(data),
-            data,
+            [index] * len(_data),
+            _data,
             color=style.color,
             alpha=style.alpha,
             marker=style.marker,
@@ -113,7 +120,7 @@ def _plotDistribution(
         if plot_config.isDistributionLineEnabled() and previous_data is not None:
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
-            y = [previous_data[0], data]
+            y = [previous_data[0], _data]
             axes.plot(
                 x,
                 y,

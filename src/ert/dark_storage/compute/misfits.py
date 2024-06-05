@@ -27,9 +27,9 @@ def calculate_misfits_from_pandas(
     misfits_dict = {}
     for realization_index in reponses_dict:
         misfits_dict[realization_index] = _calculate_misfit(
-            observation["values"],
-            reponses_dict[realization_index].loc[:, observation.index].values.flatten(),
-            observation["errors"],
+            observation["values"],  # type: ignore
+            reponses_dict[realization_index].loc[:, observation.index].values.flatten(),  # type: ignore
+            observation["errors"],  # type: ignore
         )
 
     df = pd.DataFrame(data=misfits_dict, index=observation.index)
