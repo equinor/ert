@@ -179,16 +179,16 @@ class _EnsembleWidget(QWidget):
             return
 
         observation_label = selected.data(0, Qt.ItemDataRole.DisplayRole)
-        observations_dict = self._ensemble.experiment.observations
 
         self._figure.clear()
         ax = self._figure.add_subplot(111)
         ax.set_title(observation_name)
         ax.grid(True)
 
-        observation_ds = observations_dict[observation_name]
-
-        response_name = observation_ds.attrs["response"]
+        response_name, response_type = self._ensemble.experiment.response_info_for_obs(
+            observation_name
+        )
+        observation_ds = self._ensemble.experiment.get_single_obs_ds(observation_name)
         response_ds = self._ensemble.load_responses(
             response_name,
         )
@@ -255,40 +255,42 @@ class _EnsembleWidget(QWidget):
             self._figure.clear()
             self._canvas.draw()
 
-            observations_dict = self._ensemble.experiment.observations
-            for obs_name, obs_ds in observations_dict.items():
-                response_name = obs_ds.attrs["response"]
-                if response_name == "summary":
-                    name = obs_ds.name.data[0]
-                else:
-                    name = response_name
+            exp = self._ensemble.experiment
+            for obs_name in exp.observation_keys:
+                response_name, response_type = exp.response_info_for_obs(obs_name)
+                obs_ds = exp.get_single_obs_ds(obs_name)
 
                 match_list = self._observations_tree_widget.findItems(
-                    name, Qt.MatchFlag.MatchExactly
+                    response_name, Qt.MatchFlag.MatchExactly
                 )
                 if len(match_list) == 0:
-                    root = QTreeWidgetItem(self._observations_tree_widget, [name])
+                    root = QTreeWidgetItem(
+                        self._observations_tree_widget, [response_name]
+                    )
                 else:
                     root = match_list[0]
 
                 if "time" in obs_ds.coords:
-                    for t in obs_ds.time:
+                    for t in obs_ds.dropna("time").time:
                         QTreeWidgetItem(
                             root,
-                            [str(np.datetime_as_string(t.values, unit="D")), obs_name],
+                            [
+                                str(np.datetime_as_string(t.values, unit="D")),
+                                obs_name,
+                            ],
                         )
                 elif "index" in obs_ds.coords:
-                    for t in obs_ds.index:
+                    for t in obs_ds.dropna("index").index:
                         QTreeWidgetItem(root, [str(t.data), obs_name])
 
                 self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
 
-            for i in range(self._observations_tree_widget.topLevelItemCount()):
-                if self._observations_tree_widget.topLevelItem(i).childCount() > 0:
-                    self._observations_tree_widget.setCurrentItem(
-                        self._observations_tree_widget.topLevelItem(i).child(0)
-                    )
-                    break
+        for i in range(self._observations_tree_widget.topLevelItemCount()):
+            if self._observations_tree_widget.topLevelItem(i).childCount() > 0:
+                self._observations_tree_widget.setCurrentItem(
+                    self._observations_tree_widget.topLevelItem(i).child(0)
+                )
+                break
 
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
