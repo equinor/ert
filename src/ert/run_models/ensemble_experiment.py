@@ -11,7 +11,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
 from ert.storage import Storage
 
-from .base_run_model import BaseRunModel, StatusEvents
+from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
@@ -83,7 +83,7 @@ class EnsembleExperiment(BaseRunModel):
         phase_count = iteration + 1
         self.setPhaseCount(phase_count)
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
-
+        self._validate_results(prior_context)
         self.setPhase(phase_count, "Simulations completed.")
 
         return prior_context
@@ -101,3 +101,27 @@ class EnsembleExperiment(BaseRunModel):
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         run_paths = self.run_paths.get_paths(active_realizations, 0)
         return any(Path(run_path).exists() for run_path in run_paths)
+
+    def _validate_results(self, prior_context: RunContext) -> None:
+        # Validate that each observation has a response
+        if prior_context.ensemble.experiment.observation_keys:
+            try:
+                observations_and_responses = (
+                    prior_context.ensemble.get_observations_and_responses(
+                        [*prior_context.ensemble.experiment.observation_keys]
+                    )
+                )
+            except KeyError as e:
+                # Exit early if some observations are pointing to non-existing responses
+                raise ErtRunError("No active observations for update step") from e
+
+            missing_responses = np.count_nonzero(
+                np.isnan(observations_and_responses.responses())
+            )
+            if missing_responses != 0:
+                obs_idx = np.unique(
+                    np.nonzero(np.isnan(observations_and_responses.responses()))[0]
+                )
+                raise ErtRunError(
+                    f"Missing observations {observations_and_responses.observation_keys()[obs_idx]}"
+                )
