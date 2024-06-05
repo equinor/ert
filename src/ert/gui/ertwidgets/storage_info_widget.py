@@ -1,5 +1,6 @@
 import json
 from enum import IntEnum
+from typing import Optional
 
 import numpy as np
 import seaborn as sns
@@ -45,9 +46,9 @@ class _EnsembleWidgetTabs(IntEnum):
 
 
 class _ExperimentWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
-        self._experiment = None
+        self._experiment: Optional[Experiment] = None
 
         self._responses_text_edit = QTextEdit()
         self._responses_text_edit.setReadOnly(True)
@@ -111,9 +112,9 @@ class _ExperimentWidget(QWidget):
 
 
 class _EnsembleWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
-        self._ensemble = None
+        self._ensemble: Optional[Ensemble] = None
 
         info_frame = QFrame()
         self._name_label = QLabel()
@@ -301,7 +302,7 @@ class _EnsembleWidget(QWidget):
 
 
 class _RealizationWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
 
         info_frame = QFrame()
@@ -355,7 +356,7 @@ class _RealizationWidget(QWidget):
 
 
 class StorageInfoWidget(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
 
         self._experiment_widget = _ExperimentWidget()
@@ -391,6 +392,6 @@ class StorageInfoWidget(QWidget):
         self._experiment_widget.setExperiment(experiment)
 
     @Slot(Ensemble, int)
-    def setRealization(self, ensemble: Ensemble, realization: int):
+    def setRealization(self, ensemble: Ensemble, realization: int) -> None:
         self._content_layout.setCurrentIndex(_WidgetType.REALIZATION_WIDGET)
         self._realization_widget.setRealization(ensemble, realization)

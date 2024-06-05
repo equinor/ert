@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List
 
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QHBoxLayout
@@ -19,7 +19,7 @@ class StyleCustomizationView(CustomizationView):
     color_cycle = WidgetProperty()
     observs_color = WidgetProperty()
 
-    def __init__(self):
+    def __init__(self) -> None:
         CustomizationView.__init__(self)
 
         layout = QHBoxLayout()
@@ -65,10 +65,10 @@ class StyleCustomizationView(CustomizationView):
             StyleCustomizationView.setObservationsColor,
         )
 
-    def getObservationsColor(self):
+    def getObservationsColor(self) -> str:
         return str(self._observs_color_box.color.name())
 
-    def setObservationsColor(self, name):
+    def setObservationsColor(self, name: str) -> None:
         self._observs_color_box.color = name
 
     @staticmethod
@@ -77,27 +77,27 @@ class StyleCustomizationView(CustomizationView):
         color_box.setToolTip(name)
         return color_box
 
-    def getColorCycle(self):
+    def getColorCycle(self) -> List[str]:
         colors = []
         for color_box in self._color_boxes:
             colors.append(str(color_box.color.name()))
 
         return colors
 
-    def setColorCycle(self, color_cycle):
+    def setColorCycle(self, color_cycle: Iterable[str]) -> None:
         for index, color in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]
                 color_box.color = color
 
-    def applyCustomization(self, plot_config: "PlotConfig"):
+    def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setDefaultStyle(self.default_style)
         plot_config.setHistoryStyle(self.history_style)
         plot_config.setObservationsStyle(self.observs_style)
         plot_config.setObservationsColor(self.observs_color)
         plot_config.setLineColorCycle(self.color_cycle)
 
-    def revertCustomization(self, plot_config: "PlotConfig"):
+    def revertCustomization(self, plot_config: "PlotConfig") -> None:
         self.default_style = plot_config.defaultStyle()
         self.history_style = plot_config.historyStyle()
         self.observs_style = plot_config.observationsStyle()

@@ -106,7 +106,7 @@ class PlotLimits:
 
         return equality
 
-    def copyLimitsFrom(self, other: "PlotLimits"):
+    def copyLimitsFrom(self, other: "PlotLimits") -> None:
         self.value_limits = other.value_limits
         self.density_limits = other.density_limits
         self.depth_limits = other.depth_limits

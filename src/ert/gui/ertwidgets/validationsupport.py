@@ -1,8 +1,15 @@
 import html
+from typing import Optional
 
 from qtpy.QtCore import QObject, QPoint, Qt, Signal
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QFrame,
+    QLabel,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class ErrorPopup(QWidget):
@@ -60,12 +67,12 @@ class ValidationSupport(QObject):
 
     validationChanged = Signal(bool)
 
-    def __init__(self, validation_target: QWidget):
+    def __init__(self, validation_target: QWidget) -> None:
         QObject.__init__(self)
 
         self._validation_target = validation_target
-        self._validation_message = None
-        self._validation_type = None
+        self._validation_message: Optional[str] = None
+        self._validation_type: Optional[str] = None
         self._error_popup = ErrorPopup()
 
         self._originalEnterEvent = validation_target.enterEvent
@@ -96,7 +103,9 @@ class ValidationSupport(QObject):
 
         validation_target.hideEvent = hideEvent
 
-    def setValidationMessage(self, message: str, validation_type=WARNING):
+    def setValidationMessage(
+        self, message: str, validation_type: str = WARNING
+    ) -> None:
         """Add a warning or information icon to the widget with a tooltip"""
         message = message.strip()
         if not message:
@@ -117,5 +126,5 @@ class ValidationSupport(QObject):
                 )
             self.validationChanged.emit(False)
 
-    def isValid(self):
+    def isValid(self) -> bool:
         return self._validation_message is None

@@ -23,7 +23,7 @@ class RunAnalysisPanel(QWidget):
         layout.addRow("Source ensemble", self.source_ensemble_selector)
         self.setLayout(layout)
 
-    def target_ensemble(self):
+    def target_ensemble(self) -> str:
         return str(self.target_ensemble_text.text())
 
     def source_ensemble(self):

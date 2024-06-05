@@ -94,8 +94,8 @@ class PlotWidget(QWidget):
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
         ],
-        parent=None,
-    ):
+        parent: Optional[QWidget] = None,
+    ) -> None:
         QWidget.__init__(self, parent)
 
         self._name = name

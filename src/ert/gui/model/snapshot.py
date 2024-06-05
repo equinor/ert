@@ -5,7 +5,7 @@ from contextlib import ExitStack
 from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union
 
 from dateutil import tz
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
@@ -79,7 +79,7 @@ _QCOLORS = {
 
 
 def _estimate_duration(
-    start_time: datetime.datetime, end_time: datetime.datetime = None
+    start_time: datetime.datetime, end_time: Optional[datetime.datetime] = None
 ) -> datetime.timedelta:
     timezone = None
     if start_time.tzname() is not None:
@@ -90,7 +90,7 @@ def _estimate_duration(
 
 
 class SnapshotModel(QAbstractItemModel):
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
         self.root: RootNode = RootNode(0)
 
@@ -161,7 +161,7 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
+    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int) -> None:
         metadata = partial.metadata
         if not metadata:
             logger.debug("no metadata in partial, ignoring partial")
@@ -272,7 +272,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: int):
+    def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             iter_,
@@ -557,7 +557,7 @@ class SnapshotModel(QAbstractItemModel):
         else:
             return self.createIndex(row, column, child_item)
 
-    def reset(self):
+    def reset(self) -> None:
         self.modelAboutToBeReset.emit()
         self.root = RootNode(0)
         self.modelReset.emit()

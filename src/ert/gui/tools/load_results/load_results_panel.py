@@ -56,7 +56,7 @@ class LoadResultsPanel(QWidget):
 
         self.setLayout(layout)
 
-    def readCurrentRunPath(self):
+    def readCurrentRunPath(self) -> str:
         current_ensemble = self._notifier.current_ensemble_name
         run_path = self._facade.run_path
         run_path = run_path.replace("<ERTCASE>", current_ensemble)

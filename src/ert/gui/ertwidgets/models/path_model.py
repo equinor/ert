@@ -4,13 +4,13 @@ from ert.gui.ertwidgets.models.valuemodel import ValueModel
 class PathModel(ValueModel):
     def __init__(
         self,
-        default_path,
-        is_required=True,
-        must_be_a_directory=False,
-        must_be_a_file=True,
-        must_exist=False,
-        must_be_absolute=False,
-        must_be_executable=False,
+        default_path: str,
+        is_required: bool = True,
+        must_be_a_directory: bool = False,
+        must_be_a_file: bool = True,
+        must_exist: bool = False,
+        must_be_absolute: bool = False,
+        must_be_executable: bool = False,
     ):
         ValueModel.__init__(self, default_path)
 
@@ -42,5 +42,5 @@ class PathModel(ValueModel):
     def getPath(self) -> str:
         return self.getValue()
 
-    def setPath(self, value: str):
+    def setPath(self, value: str) -> None:
         self.setValue(value)

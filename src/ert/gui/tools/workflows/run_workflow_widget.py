@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QMovie
@@ -64,10 +64,9 @@ class RunWorkflowWidget(QWidget):
         self.workflowFailed.connect(self.workflowFinishedWithFail)
         self.workflowKilled.connect(self.workflowStoppedByUser)
 
-        self._workflow_runner = None
-        """:type: WorkflowRunner"""
+        self._workflow_runner: Optional[WorkflowRunner] = None
 
-    def createSpinWidget(self):
+    def createSpinWidget(self) -> QWidget:
         widget = QWidget()
         layout = QHBoxLayout()
 
@@ -86,14 +85,14 @@ class RunWorkflowWidget(QWidget):
         processing_label = QLabel(
             f"Processing workflow '{self.getCurrentWorkflowName()}'"
         )
-        layout.addWidget(processing_label, Qt.AlignBottom)
+        layout.addWidget(processing_label, Qt.Alignment.AlignBottom)
 
         widget.setLayout(layout)
 
         return widget
 
-    def cancelWorkflow(self):
-        if self._workflow_runner.isRunning():
+    def cancelWorkflow(self) -> None:
+        if self._workflow_runner is not None and self._workflow_runner.isRunning():
             cancel = QMessageBox.question(
                 self,
                 "Confirm cancel",
@@ -105,11 +104,11 @@ class RunWorkflowWidget(QWidget):
                 self._workflow_runner.cancel()
                 self._running_workflow_dialog.disableCloseButton()
 
-    def getCurrentWorkflowName(self):
+    def getCurrentWorkflowName(self) -> List[str]:
         index = self._workflow_combo.currentIndex()
         return (sorted(self.ert.ert_config.workflows.keys(), key=str.lower))[index]
 
-    def startWorkflow(self):
+    def startWorkflow(self) -> None:
         self._running_workflow_dialog = WorkflowDialog(
             "Running workflow", self.createSpinWidget(), self
         )
@@ -135,7 +134,7 @@ class RunWorkflowWidget(QWidget):
 
         self._running_workflow_dialog.show()
 
-    def runWorkflow(self):
+    def runWorkflow(self) -> None:
         while self._workflow_runner.isRunning():
             time.sleep(2)
 
@@ -153,7 +152,7 @@ class RunWorkflowWidget(QWidget):
             else:
                 self.workflowFailed.emit()
 
-    def workflowFinished(self, failed_jobs):
+    def workflowFinished(self, failed_jobs: Iterable[str]) -> None:
         workflow_name = self.getCurrentWorkflowName()
         jobs_msg = "successfully!"
         if failed_jobs:

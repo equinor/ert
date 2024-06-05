@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from typing import TYPE_CHECKING
 
@@ -5,10 +7,12 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
 
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.plottery import PlotConfig, PlotContext
 
 
-def plotObservations(observation_data, plot_context, axes):
+def plotObservations(
+    observation_data: DataFrame, plot_context: PlotContext, axes: Axes
+) -> None:
     key = plot_context.key()
     config = plot_context.plotConfig()
     ensemble_list = plot_context.ensembles()
@@ -23,8 +27,8 @@ def plotObservations(observation_data, plot_context, axes):
 
 
 def _plotObservations(
-    axes: "Axes", plot_config: "PlotConfig", data: "DataFrame", value_column: str
-):
+    axes: Axes, plot_config: PlotConfig, data: DataFrame, value_column: str
+) -> None:
     """
     Observations are always plotted on top. z-order set to 1000
 
@@ -36,7 +40,7 @@ def _plotObservations(
     style = plot_config.observationsStyle()
 
     # adjusting the top and bottom bar, according to the line width/thickness
-    def cap_size(line_with):
+    def cap_size(line_with: float) -> float:
         return 0 if line_with == 0 else math.log(line_with, 1.2) + 3
 
     # line style set to 'off' toggles errorbar visibility

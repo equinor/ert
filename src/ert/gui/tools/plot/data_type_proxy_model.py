@@ -41,7 +41,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
     def sourceModel(self) -> "DataTypeKeysListModel":
         return QSortFilterProxyModel.sourceModel(self)
 
-    def setFilterOnMetadata(self, key, value, visible):
+    def setFilterOnMetadata(self, key: str, value: str, visible: bool) -> None:
         if key not in self._metadata_filters:
             self._metadata_filters[key] = {}
 

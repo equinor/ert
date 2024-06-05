@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qtpy.QtCore import (
     Qt,
     Signal,
@@ -8,6 +10,7 @@ from qtpy.QtWidgets import (
     QGridLayout,
     QLabel,
     QLineEdit,
+    QWidget,
 )
 
 
@@ -17,8 +20,8 @@ class CreateExperimentDialog(QDialog):
     def __init__(
         self,
         title: str = "Create new experiment",
-        parent=None,
-    ):
+        parent: Optional[QWidget] = None,
+    ) -> None:
         QDialog.__init__(self, parent=parent)
         self.setModal(True)
         self.setWindowTitle(title)
@@ -51,7 +54,7 @@ class CreateExperimentDialog(QDialog):
         )
         self._ok_button.setEnabled(False)
 
-        def enableOkButton():
+        def enableOkButton() -> None:
             self._ok_button.setEnabled(
                 len(self._experiment_edit.text()) != 0
                 and len(self._ensemble_edit.text()) != 0

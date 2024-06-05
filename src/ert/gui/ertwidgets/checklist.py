@@ -72,7 +72,7 @@ class CheckList(QWidget):
 
         self.modelChanged()
 
-    def _createCheckButtons(self):
+    def _createCheckButtons(self) -> None:
         self._checkAllButton = QToolButton()
         self._checkAllButton.setIcon(QIcon("img:check.svg"))
         self._checkAllButton.setIconSize(QSize(16, 16))
@@ -94,7 +94,7 @@ class CheckList(QWidget):
         else:
             raise AssertionError("Unhandled checkstate!")
 
-    def modelChanged(self):
+    def modelChanged(self) -> None:
         self._list.clear()
 
         items = self._model.getList()
@@ -112,7 +112,7 @@ class CheckList(QWidget):
 
         self.filterList(self._search_box.filter())
 
-    def filterList(self, _filter: str):
+    def filterList(self, _filter: str) -> None:
         _filter = _filter.lower()
 
         for index in range(0, self._list.count()):
@@ -124,7 +124,7 @@ class CheckList(QWidget):
             else:
                 item.setHidden(True)
 
-    def checkAll(self):
+    def checkAll(self) -> None:
         """
         Checks all visible items in the list.
         """
@@ -133,13 +133,13 @@ class CheckList(QWidget):
             if not item.isHidden():
                 self._model.selectValue(str(item.text()))
 
-    def uncheckAll(self):
+    def uncheckAll(self) -> None:
         """
         Unchecks all items in the list, visible or not
         """
         self._model.unselectAll()
 
-    def checkSelected(self):
+    def checkSelected(self) -> None:
         items = []
         for item in self._list.selectedItems():
             items.append(str(item.text()))
@@ -147,7 +147,7 @@ class CheckList(QWidget):
         for item in items:
             self._model.selectValue(item)
 
-    def uncheckSelected(self):
+    def uncheckSelected(self) -> None:
         items = []
         for item in self._list.selectedItems():
             items.append(str(item.text()))

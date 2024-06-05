@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import functools
 import webbrowser
-from typing import Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from qtpy.QtCore import QSettings, Qt, Signal
 from qtpy.QtWidgets import (
@@ -16,6 +18,9 @@ from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.shared.plugins import ErtPluginManager
 
+if TYPE_CHECKING:
+    from ert.gui.tools import Tool
+
 
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
@@ -25,7 +30,7 @@ class ErtMainWindow(QMainWindow):
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
-        self.tools = {}
+        self.tools: Dict[str, Tool] = {}
 
         self.setWindowTitle(f"ERT - {config_file}")
 
@@ -70,7 +75,7 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu.addAction(dock_widget.toggleViewAction())
         return dock_widget
 
-    def addTool(self, tool):
+    def addTool(self, tool: Tool) -> None:
         tool.setParent(self)
         self.tools[tool.getName()] = tool
         self.toolbar.addAction(tool.getAction())
@@ -94,7 +99,7 @@ class ErtMainWindow(QMainWindow):
         show_about.setMenuRole(QAction.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
-    def __saveSettings(self):
+    def __saveSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
@@ -110,7 +115,7 @@ class ErtMainWindow(QMainWindow):
             self.close_signal.emit()
             QMainWindow.closeEvent(self, event)
 
-    def __fetchSettings(self):
+    def __fetchSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")
         geo = settings.value("geometry")
         if geo:
@@ -119,7 +124,7 @@ class ErtMainWindow(QMainWindow):
         if wnd:
             self.restoreState(wnd)
 
-    def setWidget(self, widget):
+    def setWidget(self, widget: QWidget) -> None:
         self.__main_widget = widget
         actions = widget.getActions()
         for action in actions:
@@ -127,6 +132,6 @@ class ErtMainWindow(QMainWindow):
 
         self.central_layout.addWidget(widget)
 
-    def __showAboutMessage(self):
+    def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()

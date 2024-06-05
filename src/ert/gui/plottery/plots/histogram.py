@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from math import ceil, floor, log10, sqrt
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy
 import pandas as pd
@@ -11,27 +13,32 @@ from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
 
 class HistogramPlot:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dimensionality = 1
 
     @staticmethod
     def plot(
-        figure, plot_context, ensemble_to_data_map, _observation_data, std_dev_images
-    ):
+        figure: Figure,
+        plot_context: PlotContext,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        _observation_data: Any,
+        std_dev_images: Any,
+    ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map, _observation_data)
 
 
 def plotHistogram(
-    figure,
-    plot_context: "PlotContext",
+    figure: Figure,
+    plot_context: PlotContext,
     ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-    _observation_data,
-):
+    _observation_data: Any,
+) -> None:
     config = plot_context.plotConfig()
 
     ensemble_list = plot_context.ensembles()
@@ -214,7 +221,7 @@ def _plotHistogram(
     plot_config.addLegendItem(label, rectangle)
 
 
-def _histogramLogBins(bin_count, minimum=None, maximum=None):
+def _histogramLogBins(bin_count: int, minimum: float, maximum: float):
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 

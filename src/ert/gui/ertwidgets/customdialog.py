@@ -8,6 +8,7 @@ from qtpy.QtWidgets import (
     QFormLayout,
     QLabel,
     QLayout,
+    QPushButton,
     QWidget,
 )
 
@@ -41,7 +42,7 @@ class CustomDialog(QDialog):
         self._layout.addRow(label)
         self._layout.addRow(self.createSpace(10))
 
-        self.ok_button = None
+        self.ok_button: Optional[QPushButton] = None
 
         self.setLayout(self._layout)
 
@@ -92,7 +93,7 @@ class CustomDialog(QDialog):
 
         self._layout.addRow(f"{label}:", option_widget)
 
-    def addWidget(self, widget: Union[QWidget, QLayout, None], label: str = ""):
+    def addWidget(self, widget: Union[QWidget, QLayout, None], label: str = "") -> None:
         if not label.endswith(":"):
             label = f"{label}:"
         self._layout.addRow(label, widget)

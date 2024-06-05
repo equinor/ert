@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import functools
 import logging
 import webbrowser
-from typing import Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 from PyQt5.QtGui import QCursor
 from qtpy.QtCore import Qt
@@ -19,10 +21,13 @@ from qtpy.QtWidgets import (
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
+if TYPE_CHECKING:
+    from ert.config import ErrorInfo
+
 logger = logging.getLogger(__name__)
 
 
-def _clicked_help_button(menu_label: str, link: str):
+def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
@@ -92,12 +97,12 @@ QPushButton:hover {{
 class Suggestor(QWidget):
     def __init__(
         self,
-        errors,
-        warnings,
-        deprecations,
-        continue_action=Optional[Callable[[], None]],
+        errors: List[ErrorInfo],
+        warnings: List[ErrorInfo],
+        deprecations: List[ErrorInfo],
+        continue_action: Optional[Callable[[], None]],
         help_links: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         super().__init__()
         self._continue_action = continue_action
         self.__layout = QVBoxLayout()
@@ -128,7 +133,7 @@ class Suggestor(QWidget):
             self._help_panel(help_links if help_links is not None else {})
         )
 
-    def _help_panel(self, help_links: Dict[str, str]):
+    def _help_panel(self, help_links: Dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
         help_button_frame.setContentsMargins(0, 0, 0, 0)
         help_button_frame.setStyleSheet(
@@ -171,7 +176,12 @@ class Suggestor(QWidget):
 
         return help_button_frame
 
-    def _problem_area(self, errors, warnings, deprecations):
+    def _problem_area(
+        self,
+        errors: List[ErrorInfo],
+        warnings: List[ErrorInfo],
+        deprecations: List[ErrorInfo],
+    ) -> QWidget:
         problem_area = QWidget(parent=self)
         problem_area.setContentsMargins(0, 0, 0, 0)
         area_layout = QVBoxLayout()
@@ -181,8 +191,8 @@ class Suggestor(QWidget):
         area_layout.addWidget(self._action_buttons())
         return problem_area
 
-    def _action_buttons(self):
-        def run_pressed():
+    def _action_buttons(self) -> QWidget:
+        def run_pressed() -> None:
             assert self._continue_action
             self._continue_action()
             self.close()
@@ -210,7 +220,12 @@ class Suggestor(QWidget):
         buttons.setLayout(buttons_layout)
         return buttons
 
-    def _messages(self, errors, warnings, deprecations):
+    def _messages(
+        self,
+        errors: List[ErrorInfo],
+        warnings: List[ErrorInfo],
+        deprecations: List[ErrorInfo],
+    ) -> QScrollArea:
         CARD_WIDTH = 450
         CARD_HEIGHT = 220
         PADDING = 24

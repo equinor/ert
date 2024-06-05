@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, List, Optional
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
@@ -26,11 +28,11 @@ class PlotContext:
 
     def __init__(
         self,
-        plot_config,
+        plot_config: PlotConfig,
         ensembles: List[EnsembleObject],
-        key,
+        key: str,
         layer: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__()
         self._key = key
         self._ensembles = ensembles
@@ -40,8 +42,8 @@ class PlotContext:
         self._layer: Optional[int] = layer
 
         self._date_support_active = True
-        self._x_axis = None
-        self._y_axis = None
+        self._x_axis: Optional[str] = None
+        self._y_axis: Optional[str] = None
 
     def plotConfig(self) -> "PlotConfig":
         return self._plot_config
@@ -52,7 +54,7 @@ class PlotContext:
     def key(self) -> str:
         return self._key
 
-    def deactivateDateSupport(self):
+    def deactivateDateSupport(self) -> None:
         self._date_support_active = False
 
     def isDateSupportActive(self) -> bool:
@@ -63,11 +65,11 @@ class PlotContext:
         return self._layer
 
     @property
-    def x_axis(self) -> str:
+    def x_axis(self) -> Optional[str]:
         return self._x_axis
 
     @x_axis.setter
-    def x_axis(self, value: str):
+    def x_axis(self, value: str) -> None:
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
@@ -75,11 +77,11 @@ class PlotContext:
         self._x_axis = value
 
     @property
-    def y_axis(self) -> str:
+    def y_axis(self) -> Optional[str]:
         return self._y_axis
 
     @y_axis.setter
-    def y_axis(self, value: str):
+    def y_axis(self, value: str) -> None:
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
@@ -87,9 +89,9 @@ class PlotContext:
         self._y_axis = value
 
     @property
-    def log_scale(self):
+    def log_scale(self) -> bool:
         return self._log_scale
 
     @log_scale.setter
-    def log_scale(self, value):
+    def log_scale(self, value: bool) -> None:
         self._log_scale = value

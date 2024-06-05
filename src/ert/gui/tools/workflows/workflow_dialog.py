@@ -1,11 +1,22 @@
+from typing import Optional
+
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLayout, QPushButton, QVBoxLayout
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class WorkflowDialog(QDialog):
     closeButtonPressed = Signal()
 
-    def __init__(self, title, widget, parent=None):
+    def __init__(
+        self, title: str, widget: QWidget, parent: Optional[QWidget] = None
+    ) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle(title)
@@ -28,10 +39,10 @@ class WorkflowDialog(QDialog):
 
         self.setLayout(layout)
 
-    def disableCloseButton(self):
+    def disableCloseButton(self) -> None:
         self.close_button.setEnabled(False)
 
-    def enableCloseButton(self):
+    def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
     def keyPressEvent(self, q_key_event):

@@ -1,3 +1,5 @@
+from typing import List
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -33,7 +35,7 @@ class AutoCompleteLineEdit(QLineEdit):
         extra_text += ", "
         self.setText(self.text() + extra_text)
 
-    def textUnderCursor(self):
+    def textUnderCursor(self) -> str:
         text = self.text()
         text_under_cursor = ""
         i = self.cursorPosition() - 1
@@ -69,7 +71,7 @@ class ListEditBox(QWidget):
     NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item or * (for all)."
     DEFAULT_MSG = "A list of comma separated ensemble names or * for all."
 
-    def __init__(self, possible_items):
+    def __init__(self, possible_items: List[str]) -> None:
         QWidget.__init__(self)
 
         self._editing = True
@@ -105,12 +107,12 @@ class ListEditBox(QWidget):
 
         self.validateList()
 
-    def getListText(self):
+    def getListText(self) -> str:
         text = str(self._list_edit_line.text())
         text = "".join(text.split())
         return text
 
-    def getItems(self):
+    def getItems(self) -> List[str]:
         text = self.getListText()
         items = text.split(",")
 
@@ -119,7 +121,7 @@ class ListEditBox(QWidget):
 
         return [item for item in items if len(item) > 0]
 
-    def validateList(self):
+    def validateList(self) -> None:
         """Called whenever the list is modified"""
         palette = self._list_edit_line.palette()
 
@@ -150,7 +152,7 @@ class ListEditBox(QWidget):
         if valid:
             self._list_edit_line.setToolTip(ListEditBox.DEFAULT_MSG)
 
-    def addChoice(self):
+    def addChoice(self) -> None:
         if len(self._possible_items) == 0:
             QMessageBox.information(
                 self, "No items", "No items available for selection!"
@@ -176,8 +178,8 @@ class ListEditBox(QWidget):
 
                 self._list_edit_line.setText(text)
 
-    def getValidationSupport(self):
+    def getValidationSupport(self) -> ValidationSupport:
         return self._validation_support
 
-    def isValid(self):
+    def isValid(self) -> bool:
         return self._validation_support.isValid()

@@ -1,6 +1,6 @@
-from typing import List, cast
+from typing import Any, List, Optional, cast
 
-from qtpy.QtCore import QObject, Qt, Signal, Slot
+from qtpy.QtCore import Qt, Signal, Slot
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -17,7 +17,9 @@ class StatusDialog(QDialog):
     close = Signal()
     run = Signal()
 
-    def __init__(self, title: str, widget: QWidget, parent: QObject = None):
+    def __init__(
+        self, title: str, widget: QWidget, parent: Optional[QWidget] = None
+    ) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle(title)
@@ -55,20 +57,18 @@ class StatusDialog(QDialog):
         if self._close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
             QDialog.keyPressEvent(self, q_key_event)
 
-    def enable_button(self, caption, enabled: bool = True):
-        button = cast(
-            QPushButton, self.findChild(QPushButton, str(caption).capitalize())
-        )
+    def enable_button(self, caption: Any, enabled: bool = True) -> None:
+        button = self.findChild(QPushButton, str(caption).capitalize())
         if button is not None:
             button.setEnabled(enabled)
 
-    def enable_buttons(self, enabled: bool = True):
+    def enable_buttons(self, enabled: bool = True) -> None:
         buttons = cast(List[QPushButton], self.findChildren(QPushButton))
         for button in buttons:
             button.setEnabled(enabled)
 
     @Slot(RunModelEvent)
-    def progress_update(self, event: RunModelEvent):
+    def progress_update(self, event: RunModelEvent) -> None:
         if isinstance(event, RunModelStatusEvent):
             self._status_bar.showMessage(f"{event.msg}")
         elif isinstance(event, RunModelTimeEvent):
@@ -77,5 +77,5 @@ class StatusDialog(QDialog):
             )
 
     @Slot()
-    def clear_status(self):
+    def clear_status(self) -> None:
         self._status_bar.clearMessage()

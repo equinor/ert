@@ -1,12 +1,14 @@
+from typing import Optional
+
 from qtpy.QtCore import QSize
-from qtpy.QtGui import QPainter
+from qtpy.QtGui import QColor, QPainter
 from qtpy.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 
 class LegendMarker(QWidget):
     """A widget that shows a colored box"""
 
-    def __init__(self, color):
+    def __init__(self, color: QColor):
         QWidget.__init__(self)
 
         self.setMaximumSize(QSize(12, 12))
@@ -31,7 +33,7 @@ class LegendMarker(QWidget):
 class Legend(QWidget):
     """Combines a LegendMarker with a label"""
 
-    def __init__(self, legend, color):
+    def __init__(self, legend: Optional[str], color: QColor):
         QWidget.__init__(self)
 
         self.setMinimumWidth(140)
