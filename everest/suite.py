@@ -72,6 +72,18 @@ SIMULATION_COLUMNS = {
     "evaluations.scaled_objectives": "Scaled-Objective",
     "evaluations.scaled_constraints": "Scaled-Constraint",
 }
+PERTURBATIONS_COLUMNS = {
+    "result_id": "ID",
+    "batch_id": "Batch",
+    "realization": "Realization",
+    "evaluations.perturbed_evaluation_ids": "Simulation",
+    "evaluations.unscaled_perturbed_variables": "Control",
+    "evaluations.perturbed_objectives": "Objective",
+    "evaluations.perturbed_constraints": "Constraint",
+    "evaluations.perturbed_variables": "Scaled-Control",
+    "evaluations.scaled_perturbed_objectives": "Scaled-Objective",
+    "evaluations.scaled_perturbed_constraints": "Scaled-Constraint",
+}
 MIN_HEADER_LEN = 3
 
 
@@ -547,7 +559,12 @@ class _EverestWorkflow(object):
         simulations_report = ResultsTable(
             columns=SIMULATION_COLUMNS,
             path=Path(ropt_output_folder) / "simulations.txt",
-            filters={"evaluations.evaluation_ids": lambda x: x >= 0},
+            min_header_len=MIN_HEADER_LEN,
+        )
+        perturbations_report = ResultsTable(
+            columns=PERTURBATIONS_COLUMNS,
+            path=Path(ropt_output_folder) / "perturbations.txt",
+            table_type="gradients",
             min_header_len=MIN_HEADER_LEN,
         )
 
@@ -555,7 +572,12 @@ class _EverestWorkflow(object):
             EventType.FINISHED_EVALUATION,
             partial(
                 _handle_reporter_event,
-                reporters=[results_report, gradient_report, simulations_report],
+                reporters=[
+                    results_report,
+                    gradient_report,
+                    simulations_report,
+                    perturbations_report,
+                ],
             ),
         )
 
