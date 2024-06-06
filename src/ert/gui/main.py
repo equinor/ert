@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
 import warnings
 import webbrowser
 from signal import SIG_DFL, SIGINT, signal
-from typing import Optional, cast
+from typing import TYPE_CHECKING, List, Optional, Tuple, cast
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -13,7 +15,7 @@ else:
 
 from PyQt5.QtGui import QIcon
 from qtpy.QtCore import QDir, QLocale, Qt
-from qtpy.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication, QWidget
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import EnKFMain
@@ -41,8 +43,11 @@ from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
 
+if TYPE_CHECKING:
+    from ert.config import ParameterConfig
 
-def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
+
+def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -76,11 +81,14 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None):
 
         with StorageService.init_service(project=os.path.abspath(ens_path)):
             return show_window()
+    return -1
 
 
 def _start_initial_gui_window(
-    args, log_handler, plugin_manager: Optional[ErtPluginManager] = None
-):
+    args: Namespace,
+    log_handler: GUILogHandler,
+    plugin_manager: Optional[ErtPluginManager] = None,
+) -> Tuple[QWidget, Optional[str], Optional[int], Optional[List[ParameterConfig]]]:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
@@ -106,13 +114,13 @@ def _start_initial_gui_window(
             ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
             config_warnings = [
-                w.message.info
+                cast(ConfigWarning, w.message).info
                 for w in all_warnings
                 if w.category == ConfigWarning
                 and not cast(ConfigWarning, w.message).info.is_deprecation
             ]
             deprecations = [
-                w.message.info
+                cast(ConfigWarning, w.message).info
                 for w in all_warnings
                 if w.category == ConfigWarning
                 and cast(ConfigWarning, w.message).info.is_deprecation
@@ -136,13 +144,13 @@ def _start_initial_gui_window(
                 None,
             )
     config_warnings = [
-        w.message.info
+        cast(ConfigWarning, w.message).info
         for w in all_warnings
         if w.category == ConfigWarning
         and not cast(ConfigWarning, w.message).info.is_deprecation
     ]
     deprecations = [
-        w.message.info
+        cast(ConfigWarning, w.message).info
         for w in all_warnings
         if w.category == ConfigWarning
         and cast(ConfigWarning, w.message).info.is_deprecation
@@ -161,7 +169,7 @@ def _start_initial_gui_window(
     _main_window = _setup_main_window(ert, args, log_handler, storage, plugin_manager)
     if deprecations or config_warnings:
 
-        def continue_action():
+        def continue_action() -> None:
             _main_window.show()
             _main_window.activateWindow()
             _main_window.raise_()
@@ -214,7 +222,7 @@ def _clicked_help_button(menu_label: str, link: str) -> None:
     webbrowser.open(link)
 
 
-def _clicked_about_button(about_dialog):
+def _clicked_about_button(about_dialog: QWidget) -> None:
     logger = logging.getLogger(__name__)
     logger.info("Pressed help button About")
     about_dialog.show()
@@ -242,7 +250,9 @@ def _setup_main_window(
     )
 
     window.addDock(
-        "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
+        "Configuration summary",
+        SummaryPanel(ert),
+        area=Qt.DockWidgetArea.BottomDockWidgetArea,
     )
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(ert, window.notifier))

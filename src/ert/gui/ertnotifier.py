@@ -24,7 +24,7 @@ class ErtNotifier(QObject):
     @property
     def storage(self) -> Storage:
         assert self.is_storage_available
-        return self._storage
+        return self._storage  # type: ignore
 
     @property
     def config_file(self) -> str:

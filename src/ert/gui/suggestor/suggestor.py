@@ -22,7 +22,7 @@ from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
 if TYPE_CHECKING:
-    from ert.config import ErrorInfo
+    from ert.config import ErrorInfo, WarningInfo
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +98,8 @@ class Suggestor(QWidget):
     def __init__(
         self,
         errors: List[ErrorInfo],
-        warnings: List[ErrorInfo],
-        deprecations: List[ErrorInfo],
+        warnings: List[WarningInfo],
+        deprecations: List[WarningInfo],
         continue_action: Optional[Callable[[], None]],
         help_links: Optional[Dict[str, str]] = None,
     ) -> None:

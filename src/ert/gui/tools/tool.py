@@ -37,7 +37,7 @@ class Tool:
     def trigger(self):
         raise NotImplementedError()
 
-    def setParent(self, parent):
+    def setParent(self, parent: Optional[QObject]) -> None:
         self.__parent = parent
         self.__action.setParent(parent)
 
