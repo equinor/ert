@@ -151,5 +151,6 @@ async def test_job_run_sends_expected_events(
         realization.run_arg.runpath,
         name=realization.run_arg.job_name,
         runpath=Path(realization.run_arg.runpath),
+        num_cpu=realization.num_cpu,
     )
     assert scheduler.driver.submit.call_count == max_submit

@@ -176,8 +176,8 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
         return
 
     num_cpu = 2
-    driver = LsfDriver(num_cpu=num_cpu)
-    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
+    driver = LsfDriver()
+    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name, num_cpu=num_cpu)
     job_id = driver._iens2jobid[0]
     await poll(driver, {0})
 

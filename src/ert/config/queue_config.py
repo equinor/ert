@@ -48,7 +48,6 @@ class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 1
     submit_sleep: float = 0.0
-    num_cpu: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
@@ -66,7 +65,6 @@ class QueueConfig:
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 1)
         submit_sleep: float = config_dict.get("SUBMIT_SLEEP", 0.0)
-        num_cpu: int = config_dict.get("NUM_CPU", 1)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
@@ -110,7 +108,6 @@ class QueueConfig:
             job_script,
             max_submit,
             submit_sleep,
-            num_cpu,
             selected_queue_system,
             queue_options,
         )
@@ -120,7 +117,6 @@ class QueueConfig:
             self.job_script,
             self.max_submit,
             self.submit_sleep,
-            self.num_cpu,
             QueueSystem.LOCAL,
             self.queue_options,
         )
