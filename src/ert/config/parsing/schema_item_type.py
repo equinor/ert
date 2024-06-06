@@ -4,6 +4,7 @@ from ert.enum_shim import StrEnum
 class SchemaItemType(StrEnum):
     STRING = "STRING"
     INT = "INT"
+    POSITIVE_INT = "POSITIVE_INT"
     FLOAT = "FLOAT"
     PATH = "PATH"
     EXISTING_PATH = "EXISTING_PATH"

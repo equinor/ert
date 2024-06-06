@@ -104,6 +104,10 @@ class Scheduler:
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
 
         self._cancelled = False
+        if max_submit < 0:
+            raise ValueError(
+                "max_submit needs to be a positive number. The zero value can be used internally for testing purposes only!"
+            )
         self._max_submit = max_submit
         self._max_running = max_running
 
