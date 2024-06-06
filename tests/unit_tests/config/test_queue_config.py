@@ -272,3 +272,20 @@ def test_multiple_max_submit_keywords(tmp_path):
     config_path.write_text("NUM_REALIZATIONS 1\nMAX_SUBMIT 10\nMAX_SUBMIT 42\n")
     config = ErtConfig.from_file(config_path)
     assert config.queue_config.max_submit == 42
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "max_submit_value, error_msg",
+    [
+        (-1, "must have a positive integer value as argument"),
+        (0, "must have a positive integer value as argument"),
+        (1.5, "must have an integer value as argument"),
+    ],
+)
+def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
+    with open("file.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"MAX_SUBMIT {max_submit_value}\n")
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        ErtConfig.from_file("file.ert")
