@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Tuple
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -14,6 +14,7 @@ from qtpy.QtWidgets import (
 
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
+from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
@@ -57,16 +58,18 @@ def createRow(*widgets: CheckList) -> QHBoxLayout:
 
 
 class EnsembleInitializationConfigurationPanel(QTabWidget):
-    @showWaitCursorWhileWaiting
-    def __init__(
-        self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int
-    ) -> None:
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int):
         QTabWidget.__init__(self)
         self.ert_config = config
         self.ensemble_size = ensemble_size
         self.notifier = notifier
         self._addCreateNewEnsembleTab()
         self._addInitializeFromScratchTab()
+        self.installEventFilter(self)
+
+        self.setWindowTitle("Manage experiments")
+        self.setMinimumWidth(850)
+        self.setMinimumHeight(250)
 
     def _addCreateNewEnsembleTab(self) -> None:
         panel = QWidget()
@@ -79,7 +82,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self._storage_info_widget = StorageInfoWidget()
 
         layout.addWidget(storage_widget)
-        layout.addWidget(self._storage_info_widget)
+        layout.addWidget(self._storage_info_widget, stretch=1)
         panel.setLayout(layout)
 
         storage_widget.onSelectExperiment.connect(
@@ -135,8 +138,12 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         initialize_button.clicked.connect(target_ensemble.populate)
 
         layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
-
         layout.addSpacing(10)
-
         panel.setLayout(layout)
+
         self.addTab(panel, "Initialize from scratch")
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if event.type() == QEvent.Type.Close:
+            self.notifier.emitErtChange()
+        return super().eventFilter(watched, event)

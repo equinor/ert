@@ -39,6 +39,9 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
+from ert.gui.tools.manage_experiments.manage_experiments_tool import (
+    ManageExperimentsTool,
+)
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,
@@ -53,7 +56,6 @@ from .conftest import (
     get_child,
     load_results_manually,
     wait_for_child,
-    with_manage_tool,
 )
 
 
@@ -421,49 +423,49 @@ def test_that_the_manage_experiments_tool_can_be_used(
 ):
     gui = esmda_has_run
 
-    # Click on "Manage Experiments" in the main window
-    def handle_dialog(dialog, experiments_panel):
-        # Open the tab
-        experiments_panel.setCurrentIndex(0)
-        current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_ensemble_tab"
+    manage_tool = gui.tools["Manage experiments"]
+    manage_tool.trigger()
 
-        storage_widget = get_child(current_tab, StorageWidget)
-        tree_view = get_child(storage_widget, QTreeView)
-        tree_view.expandAll()
+    assert isinstance(manage_tool, ManageExperimentsTool)
+    experiments_panel = manage_tool._ensemble_management_widget
 
-        # The storage view should contain the expected experiments and ensembles
-        # Two experiments. The first experiment with one ensemble the second with four
-        assert tree_view.model().rowCount() == 2
-        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
-        assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
+    # Open the tab
+    experiments_panel.setCurrentIndex(0)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "create_new_ensemble_tab"
 
-        def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
-            dialog._experiment_edit.setText("my-experiment")
-            dialog._ensemble_edit.setText("_new_ensemble_")
-            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
+    storage_widget = get_child(current_tab, StorageWidget)
+    tree_view = get_child(storage_widget, QTreeView)
+    tree_view.expandAll()
 
-        QTimer.singleShot(1000, handle_add_dialog)
-        create_widget = get_child(storage_widget, AddWidget)
-        qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+    # The storage view should contain the expected experiments and ensembles
+    # Two experiments. The first experiment with one ensemble the second with four
+    assert tree_view.model().rowCount() == 2
+    assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+    assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
 
-        # Go to the "initialize from scratch" panel
-        experiments_panel.setCurrentIndex(1)
-        current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "initialize_from_scratch_panel"
+    def handle_add_dialog():
+        dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+        dialog._experiment_edit.setText("my-experiment")
+        dialog._ensemble_edit.setText("_new_ensemble_")
+        qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
-        # click on "initialize"
-        initialize_button = get_child(
-            current_tab,
-            QPushButton,
-            name="initialize_from_scratch_button",
-        )
-        qtbot.mouseClick(initialize_button, Qt.LeftButton)
+    QTimer.singleShot(1000, handle_add_dialog)
+    create_widget = get_child(storage_widget, AddWidget)
+    qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
 
-        dialog.close()
+    # Go to the "initialize from scratch" panel
+    experiments_panel.setCurrentIndex(1)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "initialize_from_scratch_panel"
 
-    with_manage_tool(gui, qtbot, handle_dialog)
+    # click on "initialize"
+    initialize_button = get_child(
+        current_tab,
+        QPushButton,
+        name="initialize_from_scratch_button",
+    )
+    qtbot.mouseClick(initialize_button, Qt.LeftButton)
 
 
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
@@ -541,52 +543,52 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 ):
     gui = opened_main_window_clean
 
-    # Click on "Manage Experiments"
-    def handle_dialog(dialog, experiments_panel):
-        # Open the create new ensembles tab
-        experiments_panel.setCurrentIndex(0)
-        current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_ensemble_tab"
+    manage_tool = gui.tools["Manage experiments"]
+    manage_tool.trigger()
 
-        storage_widget = get_child(current_tab, StorageWidget)
-        tree_view = get_child(storage_widget, QTreeView)
-        tree_view.expandAll()
+    assert isinstance(manage_tool, ManageExperimentsTool)
+    experiments_panel = manage_tool._ensemble_management_widget
 
-        assert tree_view.model().rowCount() == 0
+    # Open the create new ensembles tab
+    experiments_panel.setCurrentIndex(0)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "create_new_ensemble_tab"
 
-        def handle_add_dialog():
-            dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
-            dialog._experiment_edit.setText("my-experiment")
-            dialog._ensemble_edit.setText("_new_ensemble_")
-            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
+    storage_widget = get_child(current_tab, StorageWidget)
+    tree_view = get_child(storage_widget, QTreeView)
+    tree_view.expandAll()
 
-        QTimer.singleShot(1000, handle_add_dialog)
-        create_widget = get_child(storage_widget, AddWidget)
-        qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
+    assert tree_view.model().rowCount() == 0
 
-        assert tree_view.model().rowCount() == 1
-        assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
-        assert "_new_ensemble_" in tree_view.model().index(
-            0, 0, tree_view.model().index(0, 0)
-        ).data(0)
+    def handle_add_dialog():
+        dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+        dialog._experiment_edit.setText("my-experiment")
+        dialog._ensemble_edit.setText("_new_ensemble_")
+        qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
-        # Go to the "initialize from scratch" panel
-        experiments_panel.setCurrentIndex(1)
-        current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "initialize_from_scratch_panel"
-        combo_box = get_child(current_tab, EnsembleSelector)
+    QTimer.singleShot(1000, handle_add_dialog)
+    create_widget = get_child(storage_widget, AddWidget)
+    qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
 
-        assert combo_box.currentText().startswith("_new_ensemble_")
+    assert tree_view.model().rowCount() == 1
+    assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
+    assert "_new_ensemble_" in tree_view.model().index(
+        0, 0, tree_view.model().index(0, 0)
+    ).data(0)
 
-        # click on "initialize"
-        initialize_button = get_child(
-            current_tab, QPushButton, name="initialize_from_scratch_button"
-        )
-        qtbot.mouseClick(initialize_button, Qt.LeftButton)
+    # Go to the "initialize from scratch" panel
+    experiments_panel.setCurrentIndex(1)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "initialize_from_scratch_panel"
+    combo_box = get_child(current_tab, EnsembleSelector)
 
-        dialog.close()
+    assert combo_box.currentText().startswith("_new_ensemble_")
 
-    with_manage_tool(gui, qtbot, handle_dialog)
+    # click on "initialize"
+    initialize_button = get_child(
+        current_tab, QPushButton, name="initialize_from_scratch_button"
+    )
+    qtbot.mouseClick(initialize_button, Qt.LeftButton)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -17,10 +17,13 @@ from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.tools.manage_experiments.manage_experiments_tool import (
+    ManageExperimentsTool,
+)
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
 
-from .conftest import get_child, wait_for_child, with_manage_tool
+from .conftest import get_child, wait_for_child
 
 
 def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot):
@@ -71,22 +74,25 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
     analysis_tool.trigger()
 
     # Open the manage experiments dialog
-    def handle_manage_dialog(dialog, cases_panel):
-        # In the "create new case" tab, it should now contain "iter-1"
-        cases_panel.setCurrentIndex(0)
-        current_tab = cases_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_ensemble_tab"
-        storage_widget = get_child(current_tab, StorageWidget)
-        tree_view = get_child(storage_widget, QTreeView)
-        tree_view.expandAll()
+    manage_tool = gui.tools["Manage experiments"]
+    manage_tool.trigger()
 
-        model = tree_view.model()
-        assert model is not None and model.rowCount() == 2
-        assert "iter-1" in model.index(1, 0, model.index(1, 0)).data(0)
+    assert isinstance(manage_tool, ManageExperimentsTool)
+    experiments_panel = manage_tool._ensemble_management_widget
 
-        dialog.close()
+    # In the "create new case" tab, it should now contain "iter-1"
+    experiments_panel.setCurrentIndex(0)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "create_new_ensemble_tab"
+    storage_widget = get_child(current_tab, StorageWidget)
+    tree_view = get_child(storage_widget, QTreeView)
+    tree_view.expandAll()
 
-    with_manage_tool(gui, qtbot, handle_manage_dialog)
+    model = tree_view.model()
+    assert model is not None and model.rowCount() == 2
+    assert "iter-1" in model.index(1, 0, model.index(1, 0)).data(0)
+
+    experiments_panel.close()
 
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")

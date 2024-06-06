@@ -43,24 +43,13 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
-from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
-    EnsembleInitializationConfigurationPanel,
+from ert.gui.tools.manage_experiments.manage_experiments_tool import (
+    ManageExperimentsTool,
 )
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import Storage, open_storage
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
-
-
-def with_manage_tool(gui, qtbot: QtBot, callback) -> None:
-    def handle_manage_dialog():
-        dialog = wait_for_child(gui, qtbot, ClosableDialog, name="manage-experiments")
-        cases_panel = get_child(dialog, EnsembleInitializationConfigurationPanel)
-        callback(dialog, cases_panel)
-
-    QTimer.singleShot(1000, handle_manage_dialog)
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
 
 
 @pytest.fixture
@@ -548,27 +537,29 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
 def add_experiment_manually(
     qtbot, gui, experiment_name="My experiment", ensemble_name="default"
 ):
-    def handle_dialog(dialog, experiments_panel):
-        # Open the create new experiment tab
-        experiments_panel.setCurrentIndex(0)
-        current_tab = experiments_panel.currentWidget()
-        assert current_tab.objectName() == "create_new_ensemble_tab"
-        storage_widget = get_child(current_tab, StorageWidget)
-        add_widget = get_child(storage_widget, AddWidget)
+    manage_tool = gui.tools["Manage experiments"]
+    manage_tool.trigger()
 
-        def handle_add_dialog():
-            dialog = wait_for_child(gui, qtbot, CreateExperimentDialog)
-            dialog._experiment_edit.setText(experiment_name)
-            dialog._ensemble_edit.setText(ensemble_name)
+    assert isinstance(manage_tool, ManageExperimentsTool)
+    experiments_panel = manage_tool._ensemble_management_widget
 
-            qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
+    # Open the create new experiment tab
+    experiments_panel.setCurrentIndex(0)
+    current_tab = experiments_panel.currentWidget()
+    assert current_tab.objectName() == "create_new_ensemble_tab"
+    storage_widget = get_child(current_tab, StorageWidget)
 
-        QTimer.singleShot(1000, handle_add_dialog)
-        qtbot.mouseClick(add_widget.addButton, Qt.MouseButton.LeftButton)
+    def handle_add_dialog():
+        dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+        dialog._experiment_edit.setText(experiment_name)
+        dialog._ensemble_edit.setText(ensemble_name)
+        qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
-        dialog.close()
+    QTimer.singleShot(1000, handle_add_dialog)
+    add_widget = get_child(storage_widget, AddWidget)
+    qtbot.mouseClick(add_widget.addButton, Qt.MouseButton.LeftButton)
 
-    with_manage_tool(gui, qtbot, handle_dialog)
+    experiments_panel.close()
 
 
 V = TypeVar("V")
