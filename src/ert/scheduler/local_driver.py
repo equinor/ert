@@ -32,6 +32,7 @@ class LocalDriver(Driver):
         *args: str,
         name: str = "dummy",
         runpath: Optional[Path] = None,
+        num_cpu: Optional[int] = 1,
     ) -> None:
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
         with suppress(KeyError):

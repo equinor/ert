@@ -173,6 +173,7 @@ class OpenPBSDriver(Driver):
         *args: str,
         name: str = "dummy",
         runpath: Optional[Path] = None,
+        num_cpu: Optional[int] = 1,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
