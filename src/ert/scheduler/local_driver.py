@@ -81,7 +81,7 @@ class LocalDriver(Driver):
         returncode = 0
         try:
             returncode = await self._wait(proc)
-            logger.debug(f"Realization {iens} finished with {returncode=}")
+            logger.info(f"Realization {iens} finished with {returncode=}")
         except asyncio.CancelledError:
             returncode = await self._kill(proc)
         finally:

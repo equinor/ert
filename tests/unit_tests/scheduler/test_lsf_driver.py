@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import stat
 import time
@@ -363,6 +364,7 @@ async def test_kill(
     expected_logged_error,
     caplog,
 ):
+    caplog.set_level(logging.INFO)
     monkeypatch.chdir(tmp_path)
     bin_path = Path("bin")
     bin_path.mkdir()
