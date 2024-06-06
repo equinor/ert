@@ -7,6 +7,7 @@ from .config_schema_item import (
     float_keyword,
     int_keyword,
     path_keyword,
+    positive_int_keyword,
     single_arg_keyword,
     string_keyword,
 )
@@ -278,8 +279,8 @@ class ConfigSchemaDict(SchemaItemDict):
 def init_site_config_schema() -> ConfigSchemaDict:
     schema = ConfigSchemaDict()
     for item in [
-        int_keyword(ConfigKeys.MAX_SUBMIT),
-        int_keyword(ConfigKeys.NUM_CPU),
+        positive_int_keyword(ConfigKeys.MAX_SUBMIT),
+        positive_int_keyword(ConfigKeys.NUM_CPU),
         queue_system_keyword(True),
         queue_option_keyword(),
         job_script_keyword(),
@@ -342,8 +343,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),
         path_keyword(ConfigKeys.RUNPATH_FILE),
-        int_keyword(ConfigKeys.MAX_SUBMIT),
-        int_keyword(ConfigKeys.NUM_CPU),
+        positive_int_keyword(ConfigKeys.MAX_SUBMIT),
+        positive_int_keyword(ConfigKeys.NUM_CPU),
         queue_system_keyword(False),
         queue_option_keyword(),
         job_script_keyword(),
