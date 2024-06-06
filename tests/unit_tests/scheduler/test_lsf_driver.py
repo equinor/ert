@@ -544,6 +544,7 @@ async def test_that_bsub_will_retry_and_fail(
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
+        (0, "void"),
         (FLAKY_SSH_RETURNCODE, ""),
     ],
 )
