@@ -104,8 +104,9 @@ class _ExperimentWidget(QWidget):
             json.dumps(experiment.parameter_info, indent=4)
         )
         html = "<table>"
-        for obs_name in experiment.observations:
-            html += f"<tr><td>{obs_name}</td></tr>"
+        for obs_name in experiment.observation_keys:
+            response, response_type = experiment.response_info_for_obs(obs_name)
+            html += f"<tr><td>{obs_name} on response key {response} (type: {response_type})</td></tr>"
         html += "</table>"
         self._observations_text_edit.setHtml(html)
 
