@@ -264,6 +264,7 @@ class LsfDriver(Driver):
         logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
         process_success, process_message = await self._execute_with_retry(
             bsub_with_args,
+            retry_on_empty_stdout=True,
             retry_codes=(FLAKY_SSH_RETURNCODE,),
             retries=self._bsub_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
@@ -441,6 +442,7 @@ class LsfDriver(Driver):
             retry_codes=(FLAKY_SSH_RETURNCODE,),
             retries=3,
             retry_interval=self._sleep_time_between_cmd_retries,
+            log_to_debug=False,
         )
 
         if success:
