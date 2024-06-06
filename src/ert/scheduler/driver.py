@@ -71,6 +71,7 @@ class Driver(ABC):
     @staticmethod
     async def _execute_with_retry(
         cmd_with_args: List[str],
+        retry_on_empty_stdout: Optional[bool] = False,
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),
         stdin: Optional[bytes] = None,
@@ -99,12 +100,19 @@ class Driver(ABC):
                 f'error: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
             )
             if process.returncode == 0:
-                if log_to_debug:
-                    _logger.debug(
-                        f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                if retry_on_empty_stdout and not stdout:
+                    _logger.warning(
+                        f'Command "{shlex.join(cmd_with_args)}" gave exit code 0 but empty stdout, '
+                        "will retry. "
+                        f'stderr: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
                     )
-                return True, stdout.decode(errors="ignore").strip()
-            if exit_on_msgs and any(
+                else:
+                    if log_to_debug:
+                        _logger.debug(
+                            f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                        )
+                    return True, stdout.decode(errors="ignore").strip()
+            elif exit_on_msgs and any(
                 exit_on_msg in stderr.decode(errors="ignore")
                 for exit_on_msg in exit_on_msgs
             ):
