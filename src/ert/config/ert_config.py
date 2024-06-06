@@ -10,6 +10,7 @@ from fnmatch import fnmatch
 from functools import cached_property
 from os import path
 from pathlib import Path
+import subprocess
 from typing import (
     Any,
     ClassVar,
@@ -434,6 +435,23 @@ class ErtConfig:
                     filename=config_file,
                 ).set_context_keyword(config_dict[ConfigKeys.SUMMARY][0][0])
             )
+
+        sumo_jobs = ["SUMO_UPLOAD", "SUMO_UPLOAD_CONFIG", "SIM2SUMO"]
+
+        if any(
+            item[0] in sumo_jobs
+            for item in config_dict[ConfigKeys.FORWARD_MODEL]
+        ):
+            return_code = subprocess.call("sumo_login -m silent", shell=True)
+
+            if return_code != 0:
+                errors.append(
+                    ErrorInfo(
+                        message="Your config uses Sumo, "
+                        "run sumo_login to authenticate.",
+                    )
+                )
+
         return errors
 
     @classmethod
