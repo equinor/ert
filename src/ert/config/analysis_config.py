@@ -40,6 +40,7 @@ class AnalysisConfig:
     ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
+    design_matrix: Optional[Path] = None
 
     @no_type_check
     @classmethod
@@ -189,6 +190,7 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_module=es_settings,
             ies_module=ies_settings,
+            design_matrix=config_dict.get(ConfigKeys.DESIGN_MATRIX, None),
         )
         return config
 

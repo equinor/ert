@@ -48,7 +48,10 @@ def _value_export_txt(
     with path.open("w") as f:
         for key, param_map in values.items():
             for param, value in param_map.items():
-                print(f"{key}:{param} {value:g}", file=f)
+                if isinstance(value, float):
+                    print(f"{key}:{param} {value:g}", file=f)
+                else:
+                    print(f"{key}:{param} {value}", file=f)
 
 
 def _value_export_json(

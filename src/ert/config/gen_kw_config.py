@@ -90,6 +90,9 @@ class GenKwConfig(ParameterConfig):
                 )
         self._validate()
 
+    def __contains__(self, item):
+        return item in [v.name for v in self.transform_function_definitions]
+
     def __len__(self) -> int:
         return len(self.transform_functions)
 

@@ -6,6 +6,7 @@ RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 OBS_CONFIG observations
 REALIZATION_MEMORY 50mb
 
+DESIGN_MATRIX design_matrix.xlsx
 NUM_REALIZATIONS 100
 MIN_REALIZATIONS 1
 
