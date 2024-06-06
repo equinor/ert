@@ -43,6 +43,7 @@ class AnalysisConfig:
         update_log_path: Union[str, Path] = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
+        design_matrix: Optional[Path] = None,
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
@@ -51,6 +52,7 @@ class AnalysisConfig:
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
+        self.design_matrix = design_matrix
 
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         observation_settings: Dict[str, Any] = {
@@ -162,6 +164,7 @@ class AnalysisConfig:
     def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
         num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
         min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
+
         if "%" in min_realization_str:
             try:
                 min_realization = ceil(
@@ -203,6 +206,7 @@ class AnalysisConfig:
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             analysis_iter_config=AnalysisIterConfig(**config_dict),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
+            design_matrix=config_dict.get(ConfigKeys.DESIGN_MATRIX, None),
         )
         return config
 

@@ -348,6 +348,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         positive_int_keyword(ConfigKeys.NUM_CPU),
         positive_int_keyword(ConfigKeys.MAX_RUNNING),
         string_keyword(ConfigKeys.REALIZATION_MEMORY),
+        path_keyword(ConfigKeys.DESIGN_MATRIX),
         queue_system_keyword(False),
         queue_option_keyword(),
         job_script_keyword(),

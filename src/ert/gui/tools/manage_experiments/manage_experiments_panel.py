@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
+from qtpy import QtCore
 from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
     QHBoxLayout,
@@ -10,6 +11,7 @@ from qtpy.QtWidgets import (
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    QTableView
 )
 
 from ert.enkf_main import sample_prior
@@ -19,13 +21,46 @@ from ert.gui.ertwidgets import (
     SelectableListModel,
     showWaitCursorWhileWaiting,
 )
+from .design_matrix import read_design_matrix, initialize_parameters
 
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
+from ...ertwidgets.create_experiment_dialog import CreateExperimentDialog
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
+
+
+class DFModel(QtCore.QAbstractTableModel):
+    def __init__(self, data, parent=None):
+        QtCore.QAbstractTableModel.__init__(self, parent)
+        self._df = data
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid() and role == Qt.DisplayRole:
+            return QtCore.QVariant(str(self._df.iloc[index.row()][index.column()]))
+        return QtCore.QVariant()
+
+    def rowCount(self, parent=None):
+        return len(self._df.values)
+
+    def columnCount(self, parent=None):
+        return self._df.columns.size
+
+    def headerData(self, col, orientation, role=None):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return "\n".join(self._df.columns[col])
+
+
+def createRow(*widgets: CheckList) -> QHBoxLayout:
+    row = QHBoxLayout()
+
+    for widget in widgets:
+        row.addWidget(widget)
+
+    row.addStretch()
+    return row
 
 
 class ManageExperimentsPanel(QTabWidget):
@@ -39,6 +74,8 @@ class ManageExperimentsPanel(QTabWidget):
         self._add_initialize_from_scratch_tab()
 
         self.installEventFilter(self)
+        if self.ert_config.analysis_config.design_matrix:
+            self._add_initialize_from_design_matrix_tab()
 
         self.setWindowTitle("Manage experiments")
         self.setMinimumWidth(850)
@@ -141,3 +178,46 @@ class ManageExperimentsPanel(QTabWidget):
         if a1 is not None and a1.type() == QEvent.Type.Close:
             self.notifier.emitErtChange()
         return super().eventFilter(a0, a1)
+
+    def _add_initialize_from_design_matrix_tab(self):
+        panel = QWidget()
+        panel.setObjectName("initialize_from_design_matrix_panel")
+        layout = QVBoxLayout()
+
+        design_matrix = read_design_matrix(
+            self.ert_config,
+            self.ert_config.analysis_config.design_matrix,
+        )
+        view = QTableView()
+        self.pandas_model = DFModel(design_matrix)
+        view.setModel(self.pandas_model)
+        layout.addWidget(view)
+
+        initialize_button = QPushButton("Initialize")
+        initialize_button.setObjectName("initialize_from_design_button")
+        initialize_button.setMinimumWidth(75)
+        initialize_button.setMaximumWidth(150)
+
+        @showWaitCursorWhileWaiting
+        def initializeFromDesignMatrix(_):
+            create_experiment_dialog = CreateExperimentDialog(parent=self, notifier=self.notifier)
+            create_experiment_dialog.show()
+            if create_experiment_dialog.exec_():
+                ensemble = initialize_parameters(
+                    self.pandas_model._df,
+                    self.notifier.storage,
+                    self.ert_config,
+                    exp_name=create_experiment_dialog.experiment_name,
+                    ens_name=create_experiment_dialog.ensemble_name,
+                )
+                self.notifier.set_current_ensemble(ensemble)
+                self.notifier.ertChanged.emit()
+
+        initialize_button.clicked.connect(initializeFromDesignMatrix)
+
+        layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
+
+        layout.addSpacing(10)
+
+        panel.setLayout(layout)
+        self.addTab(panel, "Initialize from design matrix")
