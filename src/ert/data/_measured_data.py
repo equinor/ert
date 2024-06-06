@@ -38,8 +38,18 @@ class MeasuredData:
         if index_lists is not None and len(index_lists) != len(keys):
             raise ValueError("index list must be same length as observations keys")
 
+        observations_and_responses_df = (
+            ensemble.get_observations_and_responses(keys)
+            .to_dataframe()
+            .sort_values(by=["obs_name", "key_index"])
+        )
+
         self._set_data(
-            ensemble.get_observations_and_responses(keys).to_long_dataframe().T
+            observations_and_responses_df.rename(
+                columns={"observations": "OBS", "errors": "STD"}
+            )
+            .set_index(["obs_name", "key_index"])
+            .transpose()
         )
         self._set_data(self.filter_on_column_index(keys, index_lists))
 

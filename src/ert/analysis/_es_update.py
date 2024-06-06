@@ -22,6 +22,7 @@ from typing import (
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import pandas as pd
 import psutil
 from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
@@ -34,6 +35,7 @@ from ert.config import (
 
 from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
+from ..storage.local_ensemble import ObservedResponses
 from . import misfit_preprocessor
 from .event import (
     AnalysisDataEvent,
@@ -160,51 +162,45 @@ def _load_observations_and_responses(
     auto_scale_observations: Optional[List[ObservationGroups]],
     progress_callback: Callable[[AnalysisEvent], None],
 ) -> Tuple[
-    npt.NDArray[np.float_],
-    Tuple[
-        npt.NDArray[np.float_],
-        npt.NDArray[np.float_],
-        List[ObservationAndResponseSnapshot],
-    ],
+    pd.DataFrame,
+    List[ObservationAndResponseSnapshot],
 ]:
     try:
-        observations_and_responses = ensemble.get_observations_and_responses(
-            [*selected_observations], iens_active_index
+        observed_responses = ensemble.get_observations_and_responses(
+            list(selected_observations), iens_active_index
         )
+
     except KeyError as e:
         # Exit early if some observations are pointing to non-existing responses
         raise ErtAnalysisError("No active observations for update step") from e
-
-    responses = observations_and_responses.responses()
-    observations = observations_and_responses.observations()
-    errors = observations_and_responses.errors()
-    observation_keys = observations_and_responses.observation_keys()
-    indexes = observations_and_responses.index()
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
     # solving inverse problems.
     # `global_std_scaling` is 1.0 for ES.
-    scaling = np.sqrt(global_std_scaling) * np.ones_like(errors)
-    scaled_errors = errors * scaling
+    scaling = np.sqrt(global_std_scaling) * np.ones_like(observed_responses.errors)
+    scaled_errors = observed_responses.errors * scaling
 
     # Identifies non-outlier observations based on responses.
-    ens_mean = responses.mean(axis=1)
-    ens_std = responses.std(ddof=0, axis=1)
+    ens_mean = observed_responses.responses.mean(axis=1)
+    ens_std = observed_responses.responses.std(ddof=0, axis=1)
     ens_std_mask = ens_std > std_cutoff
-    ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
+    ens_mean_mask = abs(observed_responses.observations - ens_mean) <= alpha * (
+        ens_std + scaled_errors
+    )
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     if auto_scale_observations:
         for input_group in auto_scale_observations:
-            group = _expand_wildcards(observation_keys, input_group)
+            group = _expand_wildcards(observed_responses.obs_names, input_group)
             logger.info(f"Scaling observation group: {group}")
-            obs_group_mask = np.isin(observation_keys, group) & obs_mask
+            obs_group_mask = np.isin(observed_responses.obs_names, group) & obs_mask
             if not any(obs_group_mask):
                 logger.error(f"No observations active for group: {input_group}")
                 continue
             scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                responses[obs_group_mask], scaled_errors[obs_group_mask]
+                observed_responses.responses[obs_group_mask],
+                scaled_errors[obs_group_mask],
             )
             scaling[obs_group_mask] *= scaling_factors
             progress_callback(
@@ -220,8 +216,8 @@ def _load_observations_and_responses(
                         ],
                         data=np.array(
                             (
-                                observation_keys[obs_group_mask],
-                                indexes[obs_group_mask],
+                                observed_responses.obs_names[obs_group_mask],
+                                observed_responses.key_index[obs_group_mask],
                                 clusters,
                                 nr_components.astype(int),
                                 scaling_factors,
@@ -243,15 +239,15 @@ def _load_observations_and_responses(
         response_std_mask,
         index,
     ) in zip(
-        observation_keys,
-        observations,
-        errors,
+        observed_responses.obs_names,
+        observed_responses.observations,
+        observed_responses.errors,
         scaling,
         ens_mean,
         ens_std,
         ens_mean_mask,
         ens_std_mask,
-        indexes,
+        observed_responses.key_index,
     ):
         update_snapshot.append(
             ObservationAndResponseSnapshot(
@@ -267,12 +263,24 @@ def _load_observations_and_responses(
             )
         )
 
-    for missing_obs in observation_keys[~obs_mask]:
+    for missing_obs in observed_responses.obs_names[~obs_mask]:
         logger.warning(f"Deactivating observation: {missing_obs}")
 
-    return responses[obs_mask], (
-        observations[obs_mask],
-        scaled_errors[obs_mask],
+    filtered_observed_responses = ObservedResponses(
+        responses=observed_responses.responses[obs_mask],
+        errors=scaled_errors[obs_mask],
+        observations=observed_responses.observations[obs_mask],
+        obs_names=observed_responses.obs_names[obs_mask],
+        key_index=observed_responses.key_index[obs_mask],
+    )
+
+    # We sort the S-matrix by observation name to preserve
+    # deterministic ordering so that snapshot
+    # tests keep producing the same results.
+    return (
+        filtered_observed_responses.to_dataframe()
+        .sort_values(["obs_name", "key_index"])
+        .reset_index(drop=True),
         update_snapshot,
     )
 
@@ -411,13 +419,10 @@ def analysis_ES(
         return TimedIterator(iterable, progress_callback)
 
     progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
+
     (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
+        observed_responses_df,
+        update_snapshot,
     ) = _load_observations_and_responses(
         source_ensemble,
         alpha,
@@ -428,7 +433,12 @@ def analysis_ES(
         auto_scale_observations,
         progress_callback,
     )
-    num_obs = len(observation_values)
+    observation_errors = observed_responses_df["errors"].to_numpy()
+    observation_values = observed_responses_df["observations"].to_numpy()
+    S = observed_responses_df[
+        [f"{i}" for i in range(ensemble_size) if f"{i}" in observed_responses_df]
+    ].to_numpy()
+    num_obs = len(observed_responses_df)
 
     smoother_snapshot.update_step_snapshots = update_snapshot
 
@@ -592,12 +602,8 @@ def analysis_IES(
     progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
 
     (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
+        observed_responses_df,
+        update_snapshot,
     ) = _load_observations_and_responses(
         source_ensemble,
         alpha,
@@ -608,6 +614,16 @@ def analysis_IES(
         auto_scale_observations,
         progress_callback,
     )
+
+    observation_errors = observed_responses_df["errors"].to_numpy()
+    observation_values = observed_responses_df["observations"].to_numpy()
+    S = observed_responses_df[
+        [
+            f"{i}"
+            for i in range(target_ensemble.ensemble_size)
+            if f"{i}" in observed_responses_df
+        ]
+    ].to_numpy()
 
     smoother_snapshot.update_step_snapshots = update_snapshot
     if len(observation_values) == 0:
@@ -732,7 +748,9 @@ def _write_update_report(
             + "\n"
         )
         fout.write("-" * 150 + "\n")
-        for nr, step in enumerate(update_step):
+        for nr, step in enumerate(
+            sorted(update_step, key=lambda step: (step.obs_name, step.index))
+        ):
             obs_std = (
                 f"{step.obs_std:.3f}"
                 if step.obs_scaling == 1

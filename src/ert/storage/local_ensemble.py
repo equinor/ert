@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import glob
 import json
 import logging
@@ -10,7 +11,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Dict,
     Iterable,
     List,
@@ -60,59 +60,30 @@ class _Failure(BaseModel):
     time: datetime
 
 
-class ObservationsAndResponsesData:
-    def __init__(self, observations_and_responses: npt.NDArray[Any]) -> None:
-        self._observations_and_responses = observations_and_responses
+@dataclasses.dataclass
+class ObservedResponses:
+    obs_names: npt.NDArray[np.str_]
+    key_index: npt.NDArray[np.str_]
+    observations: npt.NDArray[np.float_]
+    errors: npt.NDArray[np.float_]
+    responses: npt.NDArray[np.float_]
 
-    def to_long_dataframe(self) -> pd.DataFrame:
-        cols = [
-            "key_index",
-            "name",
-            "OBS",
-            "STD",
-            *range(self._observations_and_responses.shape[1] - 4),
-        ]
-        return (
-            pd.DataFrame(self._observations_and_responses, columns=cols)
-            .set_index(["name", "key_index"])
-            .astype(float)
+    def to_dataframe(self) -> pd.DataFrame:
+        df_observations = pd.DataFrame(
+            {
+                "obs_name": self.obs_names,
+                "key_index": self.key_index,
+                "observations": self.observations,
+                "errors": self.errors,
+            }
         )
 
-    def index(self) -> npt.NDArray[np.str_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observation primary key.
-        """
-        return self._observations_and_responses[:, 0].astype(str)
+        df_responses = pd.DataFrame(
+            self.responses,
+            columns=[f"{i}" for i in range(self.responses.shape[1])],
+        )
 
-    def observation_keys(self) -> npt.NDArray[np.str_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observation name.
-        """
-        return self._observations_and_responses[:, 1].astype(str)
-
-    def errors(self) -> npt.NDArray[np.float_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the std. error of the observed value.
-        """
-        return self._observations_and_responses[:, 3].astype(float)
-
-    def observations(self) -> npt.NDArray[np.float_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observed value.
-        """
-        return self._observations_and_responses[:, 2].astype(float)
-
-    def responses(self) -> npt.NDArray[np.float_]:
-        """
-        Extracts a ndarray with the shape (num_obs, num_reals).
-        Each cell holds the response value corresponding to the observation/realization
-        indicated by the index.
-        """
-        return self._observations_and_responses[:, 4:].astype(float)
+        return pd.concat([df_observations, df_responses], axis=1)
 
 
 class LocalEnsemble(BaseMode):
@@ -1108,7 +1079,7 @@ class LocalEnsemble(BaseMode):
         self,
         observation_keys: List[str],
         active_realizations: Optional[npt.NDArray[np.int_]] = None,
-    ) -> ObservationsAndResponsesData:
+    ) -> ObservedResponses:
         """Return data grouped by observation name, showing the
         observation + std values, and accompanying simulated values per realization.
 
@@ -1120,7 +1091,7 @@ class LocalEnsemble(BaseMode):
         name     key_index                             ...
         POLY_OBS [0, 0]      2.145705  0.6   3.721637  ...  0.862469   2.625992
                  [2, 0]      8.769220  1.4   6.419814  ...  1.304883   4.650068
-                 [4, 0]     12.388015  3.0  12.796416  ...  2.535165   8.349348
+                 [4, 0]     12.388015  3.0  12.796416  ...  2.535165   8.349348m
                  [6, 0]     25.600465  5.4  22.851445  ...  4.553314  13.723831
                  [8, 0]     42.352048  8.6  36.584901  ...  7.359332  20.773518
 
@@ -1129,7 +1100,7 @@ class LocalEnsemble(BaseMode):
             active_realizations: List of active realization indices
         """
 
-        long_nps = []
+        long_dfs = []
         reals_with_responses_mask = self.get_realization_with_responses()
         if active_realizations is not None:
             reals_with_responses_mask = np.intersect1d(
@@ -1169,7 +1140,7 @@ class LocalEnsemble(BaseMode):
                         responses_matching_obs, join="left"
                     )
 
-                    response_vals_per_real = (
+                    response_vals_per_real: npt.NDArray[np.float_] = (
                         combined["values"].stack(key=index).values.T
                     )
 
@@ -1182,12 +1153,12 @@ class LocalEnsemble(BaseMode):
                             )
                             for x in combined[index].coords.to_index()
                         ]
-                    ).reshape(-1, 1)
-                    obs_vals_1d = combined["observations"].data.reshape(-1, 1)
-                    std_vals_1d = combined["std"].data.reshape(-1, 1)
+                    ).reshape((-1,))
+                    obs_vals_1d = combined["observations"].data.reshape((-1,))
+                    std_vals_1d = combined["std"].data.reshape((-1,))
 
                     num_obs_names = len(obs_vals_1d)
-                    obs_names_1d = np.full((len(std_vals_1d), 1), obs_name)
+                    obs_names_1d = np.full((len(std_vals_1d),), obs_name)
 
                     if (
                         len(key_index_1d) != num_obs_names
@@ -1214,19 +1185,35 @@ class LocalEnsemble(BaseMode):
                             f"={response_vals_per_real.shape[1]}"
                         )
 
-                    combined_np_long = np.concatenate(
+                    responses_df = pd.DataFrame(
+                        response_vals_per_real,
+                        columns=[*range(response_vals_per_real.shape[1])],
+                        dtype="float",
+                    )
+
+                    combined_df_long = pd.concat(
                         [
-                            key_index_1d,
-                            obs_names_1d,
-                            obs_vals_1d,
-                            std_vals_1d,
-                            response_vals_per_real,
+                            pd.DataFrame(
+                                {
+                                    "obs_name": obs_names_1d,
+                                    "key_index": key_index_1d,
+                                }
+                            ),
+                            pd.DataFrame(
+                                {
+                                    "observations": obs_vals_1d,
+                                    "errors": std_vals_1d,
+                                },
+                                dtype="float",
+                            ),
+                            responses_df,
                         ],
                         axis=1,
                     )
-                    long_nps.append(combined_np_long)
 
-        if not long_nps:
+                    long_dfs.append(combined_df_long)
+
+        if not long_dfs:
             msg = (
                 "No observation: "
                 + (", ".join(observation_keys) if observation_keys is not None else "*")
@@ -1235,10 +1222,18 @@ class LocalEnsemble(BaseMode):
             raise KeyError(msg)
 
         # Ensure sorting by obs_name->key_index
-        long_np = np.concatenate(long_nps)
-        sorted_long_np = long_np[np.lexsort((long_np[:, 0], long_np[:, 1]))]
+        long_df = pd.concat(long_dfs)
+        long_df.set_index(["obs_name", "key_index"], verify_integrity=True)
 
-        return ObservationsAndResponsesData(sorted_long_np)
+        return ObservedResponses(
+            obs_names=long_df["obs_name"].to_numpy(),
+            key_index=long_df["key_index"].to_numpy(),
+            observations=long_df["observations"].to_numpy(),
+            errors=long_df["errors"].to_numpy(),
+            responses=long_df[
+                [i for i in range(self.ensemble_size) if i in long_df.columns]
+            ].to_numpy(),
+        )
 
     @staticmethod
     def _ensure_correct_coordinate_order(ds: xr.Dataset) -> xr.Dataset:

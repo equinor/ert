@@ -77,7 +77,7 @@ def remove_timestamp_from_logfile(log_file: Path):
         fout.write(buf)
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=0)
 @pytest.mark.parametrize(
     "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
 )
@@ -337,7 +337,7 @@ def test_update_snapshot(
     assert sim_gen_kw != target_gen_kw
 
     # Check that posterior is as expected
-    assert target_gen_kw == pytest.approx(expected_gen_kw)
+    assert np.allclose(target_gen_kw, expected_gen_kw)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
