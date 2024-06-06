@@ -12,9 +12,9 @@ from ropt.config.plan import EvaluatorStepConfig
 from ropt.exceptions import ConfigError
 from ropt.optimization import BasicStep, Plan, PlanContext
 from ropt.plugins.optimization_steps.evaluator import DefaultEvaluatorStep
-from ropt.plugins.optimization_steps.protocol import (
-    OptimizationStepsPluginProtocol,
-    OptimizationStepsProtocol,
+from ropt.plugins.optimization_steps.base import (
+    OptimizationStepsPlugin,
+    OptimizationSteps,
 )
 from ropt.results import FunctionResults, convert_to_maximize
 
@@ -144,7 +144,7 @@ class EnsembleEvaluationStep(DefaultEvaluatorStep):
                 json.dump(evaluation_results, fp)
 
 
-class EverestPlanSteps(OptimizationStepsProtocol):
+class EverestPlanSteps(OptimizationSteps):
     def __init__(
         self, context: PlanContext, plan: Plan, ever_config: EverestConfig
     ) -> None:
@@ -175,7 +175,7 @@ class EverestPlanSteps(OptimizationStepsProtocol):
         raise ConfigError(msg)
 
 
-class EverestPlanStepPlugin(OptimizationStepsPluginProtocol):
+class EverestPlanStepPlugin(OptimizationStepsPlugin):
     def __init__(self, ever_config: EverestConfig):
         self._ever_config = ever_config
 
