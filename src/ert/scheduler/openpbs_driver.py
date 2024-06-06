@@ -225,7 +225,7 @@ class OpenPBSDriver(Driver):
             return
 
         if iens not in self._iens2jobid:
-            logger.error(f"PBS kill failed due to missing jobid for realization {iens}")
+            logger.info(f"PBS kill failed due to missing jobid for realization {iens}")
             return
 
         job_id = self._iens2jobid[iens]
