@@ -5,6 +5,7 @@ import webbrowser
 from typing import TYPE_CHECKING, Dict, Optional
 
 from qtpy.QtCore import QSettings, Qt, Signal
+from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
     QAction,
     QDockWidget,
@@ -35,7 +36,7 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(f"ERT - {config_file}")
 
         self.plugin_manager = plugin_manager
-        self.__main_widget = None
+        self.__main_widget: Optional[QWidget] = None
 
         self.central_widget = QWidget()
         self.central_layout = QVBoxLayout()
@@ -43,28 +44,37 @@ class ErtMainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        self.toolbar = self.addToolBar("Tools")
+        toolbar = self.addToolBar("Tools")
+        assert toolbar is not None
+        self.toolbar = toolbar
         self.toolbar.setObjectName("Toolbar")
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
-        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
-        self.setCorner(Qt.BottomLeftCorner, Qt.BottomDockWidgetArea)
+        self.setCorner(Qt.Corner.TopLeftCorner, Qt.DockWidgetArea.LeftDockWidgetArea)
+        self.setCorner(
+            Qt.Corner.BottomLeftCorner, Qt.DockWidgetArea.BottomDockWidgetArea
+        )
 
-        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
-        self.setCorner(Qt.BottomRightCorner, Qt.BottomDockWidgetArea)
-        self.__view_menu = None
-        self.__help_menu = None
+        self.setCorner(Qt.Corner.TopRightCorner, Qt.DockWidgetArea.RightDockWidgetArea)
+        self.setCorner(
+            Qt.Corner.BottomRightCorner, Qt.DockWidgetArea.BottomDockWidgetArea
+        )
 
-        self.__createMenu()
+        menuBar = self.menuBar()
+        assert menuBar is not None
+        view_menu = menuBar.addMenu("&View")
+        assert view_menu is not None
+        self.__view_menu = view_menu
+        self.__add_help_menu()
         self.__fetchSettings()
 
     def addDock(
         self,
-        name,
-        widget,
-        area=Qt.RightDockWidgetArea,
-        allowed_areas=Qt.AllDockWidgetAreas,
-    ):
+        name: str,
+        widget: Optional[QWidget],
+        area: Qt.DockWidgetArea = Qt.DockWidgetArea.RightDockWidgetArea,
+        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
+    ) -> QDockWidget:
         dock_widget = QDockWidget(name)
         dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
@@ -82,21 +92,26 @@ class ErtMainWindow(QMainWindow):
 
         if tool.isPopupMenu():
             tool_button = self.toolbar.widgetForAction(tool.getAction())
+            assert tool_button is not None
             tool_button.setPopupMode(QToolButton.InstantPopup)
 
-    def __createMenu(self):
-        self.__view_menu = self.menuBar().addMenu("&View")
-        self.__help_menu = self.menuBar().addMenu("&Help")
+    def __add_help_menu(self) -> None:
+        menuBar = self.menuBar()
+        assert menuBar is not None
+        help_menu = menuBar.addMenu("&Help")
+        assert help_menu is not None
 
         help_links = self.plugin_manager.get_help_links() if self.plugin_manager else {}
 
         for menu_label, link in help_links.items():
-            help_link_item = self.__help_menu.addAction(menu_label)
-            help_link_item.setMenuRole(QAction.ApplicationSpecificRole)
-            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
+            help_link_item = help_menu.addAction(menu_label)
+            assert help_link_item is not None
+            help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
+            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))  # type: ignore
 
-        show_about = self.__help_menu.addAction("About")
-        show_about.setMenuRole(QAction.ApplicationSpecificRole)
+        show_about = help_menu.addAction("About")
+        assert show_about is not None
+        show_about.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         show_about.triggered.connect(self.__showAboutMessage)
 
     def __saveSettings(self) -> None:
@@ -104,16 +119,16 @@ class ErtMainWindow(QMainWindow):
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
 
-    def closeEvent(self, event):
+    def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
         # Use QT settings saving mechanism
         # settings stored in ~/.config/Equinor/ErtGui.conf
 
-        if self.notifier.is_simulation_running:
-            event.ignore()
+        if closeEvent is not None and self.notifier.is_simulation_running:
+            closeEvent.ignore()
         else:
             self.__saveSettings()
             self.close_signal.emit()
-            QMainWindow.closeEvent(self, event)
+            QMainWindow.closeEvent(self, closeEvent)
 
     def __fetchSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")

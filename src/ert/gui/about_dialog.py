@@ -21,8 +21,10 @@ class AboutDialog(QDialog):
         self.setWindowTitle("About")
         self.setModal(True)
         self.setFixedSize(QSize(600, 480))
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags.WindowContextHelpButtonHint
+        )
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowFlags.WindowCloseButtonHint)
 
         main_layout = QVBoxLayout()
 
@@ -43,7 +45,7 @@ class AboutDialog(QDialog):
         info_layout = QVBoxLayout()
 
         ert = QLabel()
-        ert.setAlignment(Qt.AlignHCenter)
+        ert.setAlignment(Qt.Alignment.AlignHCenter)
 
         title_font = QFont()
         title_font.setPointSize(40)
@@ -53,13 +55,13 @@ class AboutDialog(QDialog):
         info_layout.addWidget(ert)
         info_layout.addStretch(1)
         ert_title = QLabel()
-        ert_title.setAlignment(Qt.AlignHCenter)
+        ert_title.setAlignment(Qt.Alignment.AlignHCenter)
         ert_title.setText("Ensemble based Reservoir Tool")
         info_layout.addWidget(ert_title)
 
         version = QLabel()
 
-        version.setAlignment(Qt.AlignHCenter)
+        version.setAlignment(Qt.Alignment.AlignHCenter)
         version.setText(f"ert version:{ert_gui.__version__}")
         info_layout.addWidget(version)
 

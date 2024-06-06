@@ -25,6 +25,7 @@ from .parsing import (
     ErrorInfo,
     HookRuntime,
     QueueSystem,
+    WarningInfo,
 )
 from .queue_config import (
     QueueConfig,
@@ -51,6 +52,7 @@ __all__ = [
     "ConfigValidationError",
     "ConfigWarning",
     "ErrorInfo",
+    "WarningInfo",
     "EnsembleConfig",
     "ErtConfig",
     "ErtPlugin",
