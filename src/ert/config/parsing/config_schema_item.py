@@ -92,6 +92,21 @@ class SchemaItem:
                     f"{self.kw!r} must have a boolean value as argument {index + 1!r}",
                     token,
                 )
+        if val_type == SchemaItemType.POSITIVE_INT:
+            try:
+                val = int(token)
+            except ValueError as e:
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have an integer value as argument {index + 1!r}",
+                    token,
+                ) from e
+            if val > 0:
+                return ContextInt(val, token, keyword)
+            else:
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive integer value as argument {index + 1!r}",
+                    token,
+                )
         if val_type == SchemaItemType.INT:
             try:
                 return ContextInt(int(token), token, keyword)
@@ -242,6 +257,10 @@ def float_keyword(keyword: str) -> SchemaItem:
 
 def int_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.INT])
+
+
+def positive_int_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.POSITIVE_INT])
 
 
 def string_keyword(keyword: str) -> SchemaItem:
