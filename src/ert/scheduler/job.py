@@ -100,6 +100,7 @@ class Job:
                 self.real.iens,
                 self.real.job_script,
                 self.real.run_arg.runpath,
+                num_cpu=self.real.num_cpu,
                 name=self.real.run_arg.job_name,
                 runpath=Path(self.real.run_arg.runpath),
             )

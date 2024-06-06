@@ -35,6 +35,7 @@ class Driver(ABC):
         *args: str,
         name: str = "dummy",
         runpath: Optional[Path] = None,
+        num_cpu: Optional[int] = 1,
     ) -> None:
         """Submit a program to execute on the cluster.
 
@@ -44,6 +45,7 @@ class Driver(ABC):
           args: List of arguments to send to the program.
           cwd: Working directory.
           name: Name of job as submitted to compute cluster
+          num_cpu: Number of CPU-cores to allocate
         """
 
     @abstractmethod

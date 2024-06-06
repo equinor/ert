@@ -215,8 +215,8 @@ async def test_submit_with_resource_requirement():
 
 @pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_num_cpu():
-    driver = LsfDriver(num_cpu=4)
-    await driver.submit(0, "sleep")
+    driver = LsfDriver()
+    await driver.submit(0, "sleep", num_cpu=4)
     assert "-n 4" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
