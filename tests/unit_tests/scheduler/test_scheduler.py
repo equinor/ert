@@ -598,6 +598,7 @@ async def test_scheduler_publishes_to_websocket(
         driver, [realization], ee_uri=f"ws://127.0.0.1:{unused_tcp_port}"
     )
     await sch.execute()
+
     # publisher_done is set only if CLOSE_PUBLISHER_SENTINEL was received
     assert sch._publisher_done.is_set()
 
@@ -610,6 +611,29 @@ async def test_scheduler_publishes_to_websocket(
     assert (
         sch._events.empty()
     ), "Schedulers internal event queue must be empty before finish"
+
+
+async def test_scheduler_finish_when_evaluator_quits_prematurely(
+    mock_driver, realization, unused_tcp_port, caplog
+):
+    set_when_done = asyncio.Event()
+
+    websocket_server_task = asyncio.create_task(
+        _mock_ws(set_when_done, None, unused_tcp_port)
+    )
+
+    driver = mock_driver()
+    sch = scheduler.Scheduler(
+        driver, [realization], ee_uri=f"ws://127.0.0.1:{unused_tcp_port}"
+    )
+    scheduler._queue_timeout = 0.1
+    set_when_done.set()
+    await sch.execute()
+
+    await websocket_server_task
+
+    assert sch._events.qsize() == 6  # we expect 5 events + the sentinel object
+    assert "6 items left unprocessed in the queue!" in caplog.text
 
 
 @pytest.mark.timeout(5)
