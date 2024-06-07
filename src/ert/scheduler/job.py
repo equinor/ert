@@ -89,6 +89,7 @@ class Job:
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
+        await self._send(State.WAITING)
         await sem.acquire()
         timeout_task: Optional[asyncio.Task[None]] = None
 

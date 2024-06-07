@@ -66,7 +66,7 @@ async def test_happy_path(
 
     assert mock_ws_task.done()
 
-    first_expected_queue_event_type = "SUBMITTED" if using_scheduler else "WAITING"
+    first_expected_queue_event_type = "WAITING"
 
     for received_event, expected_type, expected_queue_event_type in zip(
         [mock_ws_task.result()[0], mock_ws_task.result()[-1]],
