@@ -135,11 +135,11 @@ class Scheduler:
                 task.cancel()
         _, pending = await asyncio.wait(
             self._job_tasks.values(),
-            timeout=15.0,
+            timeout=30.0,
             return_when=asyncio.ALL_COMPLETED,
         )
         for task in pending:
-            logger.error(f"Task {task.get_name()} was not killed properly!")
+            logger.debug(f"Task {task.get_name()} was not killed properly!")
 
     async def _update_avg_job_runtime(self) -> None:
         while True:
