@@ -120,6 +120,8 @@ class Scheduler:
         self._ee_cert = ee_cert
         self._ee_token = ee_token
         self._publisher_done = asyncio.Event()
+        # this timeout makes sure we won't wait for the queue and the sentinel indefinitely
+        self._queue_timeout: float = 10.0
         self._consumer_started = asyncio.Event()
         self.checksum: Dict[str, Dict[str, Any]] = {}
         self.checksum_listener: Optional[asyncio.Task[None]] = None
@@ -271,8 +273,8 @@ class Scheduler:
                         event = await self._events.get()
                     if event == CLOSE_PUBLISHER_SENTINEL:
                         self._publisher_done.set()
-                        return
-                    await conn.send(event)
+                    else:
+                        await conn.send(event)
                     event = None
                     self._events.task_done()
             except ConnectionClosed:
@@ -316,8 +318,18 @@ class Scheduler:
 
             if not self.is_active():
                 if self._ee_uri is not None:
-                    await self._events.put(CLOSE_PUBLISHER_SENTINEL)
-                    await self._publisher_done.wait()
+                    try:
+                        await self._events.put(CLOSE_PUBLISHER_SENTINEL)
+                        await asyncio.wait_for(
+                            self._publisher_done.wait(), timeout=self._queue_timeout
+                        )
+                        await asyncio.wait_for(
+                            self._events.join(), timeout=self._queue_timeout
+                        )
+                    except asyncio.TimeoutError:
+                        logger.error(
+                            f"{self._events.qsize()} items left unprocessed in the queue!"
+                        )
                 for task in self._job_tasks.values():
                     if task.cancelled():
                         continue
