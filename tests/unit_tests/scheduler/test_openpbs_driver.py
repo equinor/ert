@@ -180,7 +180,7 @@ async def test_num_nodes_default():
 @pytest.mark.usefixtures("capturing_qsub")
 async def test_num_cpus_per_node():
     driver = OpenPBSDriver(num_cpus_per_node=2)
-    await driver.submit(0, "sleep")
+    await driver.submit(0, "sleep", num_cpu=2)
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
@@ -285,24 +285,58 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
     assert was_started == started_expected
 
 
+@given(words, st.integers(min_value=1), words)
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
+    driver = OpenPBSDriver(
+        memory_per_job=memory_per_job if memory_per_job else None,
+        cluster_label=cluster_label if cluster_label else None,
+    )
+    await driver.submit(0, "sleep", num_cpu=num_cpu)
+    resources = parse_resource_string(
+        Path("captured_qsub_args").read_text(encoding="utf-8")
+    )
+    assert resources.get("mem", "") == memory_per_job
+    assert resources.get("select", "1") == "1"
+    assert resources.get("ncpus", "1") == str(num_cpu)
+
+    if cluster_label:
+        # cluster_label is not a key-value thing in the resource list,
+        # the parser in this test handles that specially
+        assert resources.get(cluster_label) == "_present_"
+
+    assert len(resources) == sum(
+        [
+            bool(memory_per_job),
+            num_cpu > 1,
+            bool(cluster_label),
+        ]
+    ), "Unknown or missing resources in resource string"
+
+
 @given(words, st.integers(min_value=0), st.integers(min_value=0), words)
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_full_resource_string(
+async def test_full_resource_string_deprecated_options(
     memory_per_job, num_nodes, num_cpus_per_node, cluster_label
 ):
+    """Test deprecated queue options to the driver.
+
+    Remove this test function altogether when NUM_CPUS_PER_NODE and NUM_NODES
+    support is removed"""
     driver = OpenPBSDriver(
         memory_per_job=memory_per_job if memory_per_job else None,
         num_nodes=num_nodes if num_nodes > 0 else None,
         num_cpus_per_node=num_cpus_per_node if num_cpus_per_node > 0 else None,
         cluster_label=cluster_label if cluster_label else None,
     )
-    await driver.submit(0, "sleep")
+    num_cpu = (num_nodes or 1) * (num_cpus_per_node or 1)
+    await driver.submit(0, "sleep", num_cpu=num_cpu)
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
     assert resources.get("mem", "") == memory_per_job
     assert resources.get("select", "0") == str(num_nodes)
-    assert resources.get("ncpus", "0") == str(num_cpus_per_node)
+    assert resources.get("ncpus", "1") == str(num_cpu)
     # "0" here is a test implementation detail, not related to driver
     if cluster_label:
         # cluster_label is not a key-value thing in the resource list,
@@ -312,11 +346,11 @@ async def test_full_resource_string(
     assert len(resources) == sum(
         [
             bool(memory_per_job),
-            bool(num_cpus_per_node),
+            num_cpu > 1,
             bool(num_nodes),
             bool(cluster_label),
         ]
-    ), "Unknown resources injected in resource string"
+    ), "Unknown or missing resources in resource string"
 
 
 @pytest.mark.parametrize(

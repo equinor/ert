@@ -292,23 +292,12 @@ The following is a list of all queue-specific configuration options:
 .. _torque_nodes_cpus:
 .. topic:: NUM_NODES, NUM_CPUS_PER_NODE
 
-  When using TORQUE/PBS systems, you can specify how many nodes a single job should
-  use, and how many CPUs per node. These options are called ``NUM_NODES`` and
-  ``NUM_CPUS_PER_NODE``. The default setup in ERT will use one node and
-  one CPU.
+  The support for running a job over multiple nodes is deprecated in Ert,
+  but was previously accomplished by setting NUM_NODES to a number larger
+  than 1.
 
-  If the numbers specified is higher than supported by the cluster (e.g. use 32
-  CPUs, but no node has more than 16), the job will not start.
-
-  If you wish to increase this number, the program running will usually also
-  have to be told to correspondingly use more processing units (e.g. for
-  ECLIPSE, use the keyword ``PARALLEL``).
-
-  The following should allow 3 × 8 = 24 CPUs for processing realizations::
-
-    QUEUE_SYSTEM TORQUE
-    QUEUE_OPTION TORQUE NUM_NODES 3
-    QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE 8
+  NUM_CPUS_PER_NODE is deprecated, instead please use NUM_CPU to specify the
+  number of CPU cores to reserve on a single compute node.
 
 .. _torque_memory_per_job:
 .. topic:: MEMORY_PER_JOB

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ert.config.parsing.queue_system import QueueSystem
 from ert.scheduler.driver import Driver
@@ -21,6 +21,8 @@ def create_driver(config: QueueConfig) -> Driver:
             key: value
             for key, value in config.queue_options.get(QueueSystem.TORQUE, [])
         }
+        num_nodes: Optional[str] = queue_config.get("NUM_NODES")
+        num_cpus_per_node: Optional[str] = queue_config.get("NUM_CPUS_PER_NODE")
         return OpenPBSDriver(
             qsub_cmd=queue_config.get("QSUB_CMD"),
             qstat_cmd=queue_config.get("QSTAT_CMD"),
@@ -28,8 +30,8 @@ def create_driver(config: QueueConfig) -> Driver:
             queue_name=queue_config.get("QUEUE"),
             keep_qsub_output=queue_config.get("KEEP_QSUB_OUTPUT", "0"),
             memory_per_job=queue_config.get("MEMORY_PER_JOB"),
-            num_nodes=int(queue_config.get("NUM_NODES", 1)),
-            num_cpus_per_node=int(queue_config.get("NUM_CPUS_PER_NODE", 1)),
+            num_nodes=int(num_nodes) if num_nodes else None,
+            num_cpus_per_node=int(num_cpus_per_node) if num_cpus_per_node else None,
             cluster_label=queue_config.get("CLUSTER_LABEL"),
             job_prefix=queue_config.get("JOB_PREFIX"),
         )

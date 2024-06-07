@@ -158,6 +158,9 @@ def _check_num_cpu_requirement(
     torque_options = _option_list_to_dict(queue_system_options)
     num_nodes_str = torque_options.get("NUM_NODES", [""])[-1]
     num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[-1]
+    if not num_nodes_str and not num_cpus_per_node_str:
+        # NUM_CPU will take precedence when deprecated options are not set
+        return
     num_nodes = int(num_nodes_str) if num_nodes_str else 1
     num_cpus_per_node = int(num_cpus_per_node_str) if num_cpus_per_node_str else 1
     if num_cpu != num_nodes * num_cpus_per_node:
