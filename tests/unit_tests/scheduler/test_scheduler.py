@@ -583,7 +583,7 @@ async def test_scheduler_publishes_to_websocket(
     await websocket_server_task
     assert [
         json.loads(event)["data"]["queue_event_type"] for event in events_received
-    ] == ["SUBMITTED", "PENDING", "RUNNING", "SUCCESS"]
+    ] == ["WAITING", "SUBMITTED", "PENDING", "RUNNING", "SUCCESS"]
 
     assert (
         sch._events.empty()

@@ -75,7 +75,8 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     await job_task
 
     await assert_scheduler_events(
-        scheduler, [State.SUBMITTING, State.PENDING, State.ABORTING, State.ABORTED]
+        scheduler,
+        [State.WAITING, State.SUBMITTING, State.PENDING, State.ABORTING, State.ABORTED],
     )
     scheduler.driver.kill.assert_called_with(job.iens)
     scheduler.driver.kill.assert_called_once()
@@ -142,7 +143,7 @@ async def test_job_run_sends_expected_events(
 
     await assert_scheduler_events(
         scheduler,
-        [State.SUBMITTING, State.PENDING, State.RUNNING] * max_submit
+        [State.WAITING, State.SUBMITTING, State.PENDING, State.RUNNING] * max_submit
         + [expected_final_event],
     )
     scheduler.driver.submit.assert_called_with(
