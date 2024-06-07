@@ -458,6 +458,10 @@ class LocalStorage(BaseMode):
                 block_fs.migrate(self.path)
                 self._acquire_lock()
                 self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
+            elif version > _LOCAL_STORAGE_VERSION:
+                raise RuntimeError(
+                    f"Cannot migrate storage '{self.path}'. Storage version {version} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH"
+                )
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(enumerate([to2, to3, to4, to5, to6], start=1))
                 for from_version, migration in migrations[version - 1 :]:
@@ -475,11 +479,16 @@ class LocalStorage(BaseMode):
                     # so that they are refreshed, and no
                     # longer pointing to an outdated
                     # value of the old non-migrated storage
-                    del exp.observations
-                    del exp.observation_keys
+                    if exp.observations:
+                        del exp.observations
+                    if exp.observation_keys:
+                        del exp.observation_keys
 
-        except Exception as err:  # pylint: disable=broad-exception-caught
-            logger.error(f"Migrating storage at {self.path} failed with {err}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error(
+                f"Migrating storage at {self.path} failed with: {e}", stack_info=True
+            )
+            raise e
 
 
 def _storage_version(path: Path) -> Optional[int]:
