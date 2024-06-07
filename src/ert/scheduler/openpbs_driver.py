@@ -142,16 +142,35 @@ class OpenPBSDriver(Driver):
         self._finished_job_ids: Set[str] = set()
         self._finished_iens: Set[int] = set()
 
-        self._resources = self._resource_strings()
+        if self._num_nodes is not None and self._num_nodes > 1:
+            logger.warning(
+                "OpenPBSDriver initialized with num_nodes > 1, "
+                "this behaviour is deprecated and will be removed"
+            )
 
-    def _resource_strings(self) -> List[str]:
+        if self._num_cpus_per_node is not None and self._num_cpus_per_node > 1:
+            logger.warning(
+                "OpenPBSDriver initialized with num_cpus_per_node, "
+                "this behaviour is deprecated and will be removed. "
+                "Use NUM_CPU in the config instead."
+            )
+
+    def _build_resource_string(self, num_cpu: int = 1) -> List[str]:
         resource_specifiers: List[str] = []
 
         cpu_resources: List[str] = []
         if self._num_nodes is not None:
             cpu_resources += [f"select={self._num_nodes}"]
         if self._num_cpus_per_node is not None:
-            cpu_resources += [f"ncpus={self._num_cpus_per_node}"]
+            num_nodes = self._num_nodes or 1
+            if num_cpu != self._num_cpus_per_node * num_nodes:
+                raise ValueError(
+                    f"NUM_CPUS_PER_NODE ({self._num_cpus_per_node}) must be equal "
+                    f"to NUM_CPU ({num_cpu}). "
+                    "Please remove NUM_CPUS_PER_NODE from the configuration"
+                )
+        if num_cpu > 1:
+            cpu_resources += [f"ncpus={num_cpu}"]
         if self._memory_per_job is not None:
             cpu_resources += [f"mem={self._memory_per_job}"]
         if cpu_resources:
@@ -195,7 +214,7 @@ class OpenPBSDriver(Driver):
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
             *arg_keep_qsub_output,
-            *self._resources,
+            *self._build_resource_string(num_cpu=num_cpu or 1),
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
 

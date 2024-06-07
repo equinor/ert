@@ -212,4 +212,16 @@ deprecated_keywords_list = [
         "the future. Please remove the configuration line.",
         check=lambda line: "LSF_SERVER" in line,
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="NUM_CPUS_PER_NODE as QUEUE_OPTION to Torque is deprecated and will removed in "
+        "the future. Replace by NUM_CPU.",
+        check=lambda line: "NUM_CPUS_PER_NODE" in line,
+    ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="NUM_NODES as QUEUE_OPTION to Torque is deprecated and will removed in "
+        "the future. Replace by NUM_CPU on a single compute node.",
+        check=lambda line: "NUM_NODES" in line,
+    ),
 ]

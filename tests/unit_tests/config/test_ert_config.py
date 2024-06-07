@@ -623,11 +623,14 @@ def test_num_cpu_vs_torque_queue_cpu_configuration(
     num_nodes = str(num_nodes_int) if num_nodes_int > 0 else ""
     num_cpus_per_node = str(num_cpus_per_node_int) if num_cpus_per_node_int > 0 else ""
 
-    expected_error = (
-        "product .* must be equal"
-        if (num_cpu_int or 1) != (num_nodes_int or 1) * (num_cpus_per_node_int or 1)
-        else None
-    )
+    if num_nodes or num_cpus_per_node:
+        expected_error = (
+            "product .* must be equal"
+            if (num_cpu_int or 1) != (num_nodes_int or 1) * (num_cpus_per_node_int or 1)
+            else None
+        )
+    else:
+        expected_error = None
 
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
