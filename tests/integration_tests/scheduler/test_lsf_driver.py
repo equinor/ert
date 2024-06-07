@@ -276,7 +276,14 @@ async def test_kill_before_submit_is_finished(
         assert returncode == SIGNAL_OFFSET + SIGTERM
 
     await poll(driver, {0}, finished=finished)
-
     assert "ERROR" not in str(caplog.text)
+
+    # In case the return value of the killed job is correct but the submitted
+    # shell script is still running for whatever reason, a file called
+    # "survived" will appear on disk. Wait for it, and then ensure it is not
+    # there.
+    assert test_grace_time > job_kill_window, "Wrong test setup"
     await asyncio.sleep(test_grace_time)
-    assert not Path("survived").exists(), "Job should have been killed"
+    assert not Path(
+        "survived"
+    ).exists(), "The process children of the job should also have been killed"
