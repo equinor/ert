@@ -6,6 +6,7 @@ import random
 import re
 import stat
 import string
+import sys
 from pathlib import Path
 
 import pytest
@@ -224,16 +225,29 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     assert job_id in driver._bhist_cache
 
 
-async def test_kill_before_submit_is_finished(tmp_path, monkeypatch, caplog):
-    print("")
+async def test_kill_before_submit_is_finished(
+    tmp_path, monkeypatch, caplog, pytestconfig
+):
     os.chdir(tmp_path)
+
+    if pytestconfig.getoption("lsf"):
+        # Allow more time when tested on a real compute cluster to avoid false positives.
+        job_kill_window = 10
+        test_grace_time = 20
+    elif sys.platform.startswith("darwin"):
+        # Mitigate flakiness on low-power test nodes
+        job_kill_window = 5
+        test_grace_time = 10
+    else:
+        job_kill_window = 1
+        test_grace_time = 2
 
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bsub_path = bin_path / "slow_bsub"
     bsub_path.write_text(
-        "#!/bin/sh\nsleep 0.05\nbsub $@",
+        "#!/bin/sh\nsleep 0.1\nbsub $@",
         encoding="utf-8",
     )
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
@@ -250,11 +264,11 @@ async def test_kill_before_submit_is_finished(tmp_path, monkeypatch, caplog):
             0,
             "sh",
             "-c",
-            f"sleep 1; touch {tmp_path}/survived",
+            f"sleep {job_kill_window}; touch {tmp_path}/survived",
         )
     )
-    await asyncio.sleep(0.01)  # allow submit task to start executing
-    await driver.kill(0)
+    await asyncio.sleep(0.01)  # Allow submit task to start executing
+    await driver.kill(0)  # This will wait until the submit is done and then kill
 
     async def finished(iens: int, returncode: int):
         SIGTERM = 15
@@ -264,5 +278,5 @@ async def test_kill_before_submit_is_finished(tmp_path, monkeypatch, caplog):
     await poll(driver, {0}, finished=finished)
 
     assert "ERROR" not in str(caplog.text)
-    await asyncio.sleep(3)
+    await asyncio.sleep(test_grace_time)
     assert not Path("survived").exists(), "Job should have been killed"
