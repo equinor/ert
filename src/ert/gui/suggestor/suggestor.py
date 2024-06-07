@@ -179,8 +179,8 @@ class Suggestor(QWidget):
     def _problem_area(
         self,
         errors: List[ErrorInfo],
-        warnings: List[ErrorInfo],
-        deprecations: List[ErrorInfo],
+        warnings: List[WarningInfo],
+        deprecations: List[WarningInfo],
     ) -> QWidget:
         problem_area = QWidget(parent=self)
         problem_area.setContentsMargins(0, 0, 0, 0)
@@ -210,7 +210,7 @@ class Suggestor(QWidget):
 
         run.setObjectName("run_ert_button")
         run.pressed.connect(run_pressed)
-        give_up.pressed.connect(self.close)
+        give_up.pressed.connect(self.close)  # type: ignore
         buttons = QWidget(parent=self)
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)
@@ -223,8 +223,8 @@ class Suggestor(QWidget):
     def _messages(
         self,
         errors: List[ErrorInfo],
-        warnings: List[ErrorInfo],
-        deprecations: List[ErrorInfo],
+        warnings: List[WarningInfo],
+        deprecations: List[WarningInfo],
     ) -> QScrollArea:
         CARD_WIDTH = 450
         CARD_HEIGHT = 220
