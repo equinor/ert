@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
 
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.find_ert_info import find_ert_info
 from ert.shared.plugins import ErtPluginManager
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ class ErtMainWindow(QMainWindow):
         self.notifier = ErtNotifier(config_file)
         self.tools: Dict[str, Tool] = {}
 
-        self.setWindowTitle(f"ERT - {config_file}")
+        self.setWindowTitle(f"ERT - {config_file} - ({find_ert_info()})")
 
         self.plugin_manager = plugin_manager
         self.__main_widget = None

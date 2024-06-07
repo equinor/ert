@@ -104,7 +104,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
         for i in range(combo_box.count()):
             assert combo_box.model().item(i).isEnabled()
 
-        assert gui.windowTitle() == "ERT - poly.ert"
+        assert gui.windowTitle().startswith("ERT - poly.ert")
 
 
 @pytest.mark.usefixtures("set_site_config")
@@ -126,7 +126,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
         for i in range(3, 5):
             assert not combo_box.model().item(i).isEnabled()
 
-        assert gui.windowTitle() == "ERT - config.ert"
+        assert gui.windowTitle().startswith("ERT - config.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -153,7 +153,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         for i in range(3, 5):
             assert not combo_box.model().item(i).isEnabled()
 
-        assert gui.windowTitle() == "ERT - poly-no-gen-kw.ert"
+        assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config", "using_scheduler")
@@ -249,7 +249,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "ERT - poly.ert"
+        assert gui.windowTitle().startswith("ERT - poly.ert")
         run_workflow_button = gui.tools["Run workflow"]
         assert not run_workflow_button.isEnabled()
 
@@ -275,7 +275,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
 
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "ERT - config.ert"
+        assert gui.windowTitle().startswith("ERT - config.ert")
         run_workflow_button = gui.tools["Run workflow"]
         assert run_workflow_button.isEnabled()
 
@@ -286,7 +286,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "ERT - poly.ert"
+        assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         combo_box.setCurrentIndex(4)
@@ -335,7 +335,7 @@ def test_that_ert_changes_to_config_directory(qtbot):
     args.config = "test_data/snake_oil_surface.ert"
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
-        assert gui.windowTitle() == "ERT - snake_oil_surface.ert"
+        assert gui.windowTitle().startswith("ERT - snake_oil_surface.ert")
 
 
 @pytest.mark.usefixtures("using_scheduler")
@@ -689,7 +689,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-        assert gui.windowTitle() == "ERT - poly.ert"
+        assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 6

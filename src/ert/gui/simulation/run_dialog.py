@@ -53,6 +53,7 @@ from ert.run_models import (
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import byte_with_unit, format_running_time
 
+from ..find_ert_info import find_ert_info
 from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
 from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
@@ -77,7 +78,7 @@ class RunDialog(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowTitle(f"Experiment - {config_file}")
+        self.setWindowTitle(f"Experiment - {config_file} ({find_ert_info()})")
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
