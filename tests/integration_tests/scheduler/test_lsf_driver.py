@@ -13,6 +13,7 @@ import pytest
 
 from ert.scheduler import LsfDriver
 from ert.scheduler.driver import SIGNAL_OFFSET
+from ert.scheduler.lsf_driver import LSF_FAILED_JOB
 from tests.utils import poll
 
 from .conftest import mock_bin
@@ -273,7 +274,9 @@ async def test_kill_before_submit_is_finished(
     async def finished(iens: int, returncode: int):
         SIGTERM = 15
         assert iens == 0
-        assert returncode == SIGNAL_OFFSET + SIGTERM
+        # If the kill is issued before the job really starts, you will not
+        # get SIGTERM but rather LSF_FAILED_JOB. We should accept both.
+        assert returncode in (SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
 
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)
