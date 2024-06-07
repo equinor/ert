@@ -372,12 +372,11 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
-        current_memory_usage = self._snapshot_model.root.data.current_memory_usage
         maximum_memory_usage = self._snapshot_model.root.data.max_memory_usage
 
-        if current_memory_usage and maximum_memory_usage:
+        if maximum_memory_usage:
             self.memory_usage.setText(
-                f"Memory Usage: [Current: {byte_with_unit(current_memory_usage)}, Max: {byte_with_unit(maximum_memory_usage)}]"
+                f"Maximal realization memory usage: {byte_with_unit(maximum_memory_usage)}"
             )
 
     @Slot(object)
