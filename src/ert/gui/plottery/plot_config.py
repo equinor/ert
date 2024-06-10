@@ -11,7 +11,13 @@ class PlotConfig:
     # The plot_settings input argument is an internalisation of the (quite few) plot
     # policy settings which can be set in the configuration file.
 
-    def __init__(self, plot_settings=None, title="Unnamed", x_label=None, y_label=None):
+    def __init__(
+        self,
+        plot_settings: Optional[dict[str, Any]] = None,
+        title: str = "Unnamed",
+        x_label: Optional[str] = None,
+        y_label: Optional[str] = None,
+    ):
         self._title = title
         self._plot_settings = plot_settings
         if self._plot_settings is None:
@@ -25,8 +31,8 @@ class PlotConfig:
         # ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33",
         #  "#a65628", "#f781bf" ,"#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"]
 
-        self._legend_items = []
-        self._legend_labels = []
+        self._legend_items: list[Any] = []
+        self._legend_labels: list[str] = []
 
         self._x_label = x_label
         self._y_label = y_label
@@ -62,7 +68,7 @@ class PlotConfig:
             name="Distribution lines", line_style="-", alpha=0.25, width=1.0
         )
         self._distribution_line_style.setEnabled(False)
-        self._current_color = None
+        self._current_color: Optional[str] = None
 
         self._legend_enabled = True
         self._grid_enabled = True
@@ -80,12 +86,13 @@ class PlotConfig:
 
     def currentColor(self) -> str:
         if self._current_color is None:
-            self.nextColor()
+            return self.nextColor()
 
         return self._current_color
 
-    def nextColor(self):
-        self._current_color = next(self._line_color_cycle)
+    def nextColor(self) -> str:
+        color = next(self._line_color_cycle)
+        self._current_color = color
         return self._current_color
 
     def setLineColorCycle(self, color_list: List[str]) -> None:
@@ -150,7 +157,7 @@ class PlotConfig:
     def yLabel(self) -> Optional[str]:
         return self._y_label
 
-    def legendItems(self):
+    def legendItems(self) -> List[Any]:
         return self._legend_items
 
     def legendLabels(self) -> List[str]:
@@ -183,10 +190,10 @@ class PlotConfig:
     def setDistributionLineEnabled(self, enabled: bool) -> None:
         self._distribution_line_style.setEnabled(enabled)
 
-    def setStandardDeviationFactor(self, value: float) -> None:
+    def setStandardDeviationFactor(self, value: int) -> None:
         self._std_dev_factor = value
 
-    def getStandardDeviationFactor(self) -> float:
+    def getStandardDeviationFactor(self) -> int:
         return self._std_dev_factor
 
     def setLegendEnabled(self, enabled: bool) -> None:

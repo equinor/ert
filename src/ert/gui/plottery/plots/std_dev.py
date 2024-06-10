@@ -2,10 +2,13 @@ import io
 from typing import Any, Dict
 
 import matplotlib.pyplot as plt
+import pandas as pd
+from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ert.gui.plottery import PlotContext
+from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class StdDevPlot:
@@ -16,8 +19,8 @@ class StdDevPlot:
         self,
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map,
-        _observation_data,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        observation_data: pd.DataFrame,
         std_dev_images: Dict[str, bytes],
     ) -> None:
         ensemble_count = len(plot_context.ensembles())
@@ -45,11 +48,13 @@ class StdDevPlot:
                     self._colorbar(p)
 
     @staticmethod
-    def _colorbar(mappable) -> Any:
+    def _colorbar(mappable: QuadMesh) -> Any:
         # https://joseph-long.com/writing/colorbars/
         last_axes = plt.gca()
         ax = mappable.axes
+        assert ax is not None
         fig = ax.figure
+        assert fig is not None
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         cbar = fig.colorbar(mappable, cax=cax)

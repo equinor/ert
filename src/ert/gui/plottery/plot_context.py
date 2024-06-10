@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, List, Optional
 from ert.gui.tools.plot.plot_api import EnsembleObject
 
 if TYPE_CHECKING:
+    from pandas import DataFrame
+
     from ert.gui.plottery import PlotConfig
 
 
@@ -35,7 +37,7 @@ class PlotContext:
         self._key = key
         self._ensembles = ensembles
         self._plot_config = plot_config
-        self.history_data = None
+        self.history_data: Optional[DataFrame] = None
         self._log_scale = False
         self._layer: Optional[int] = layer
 

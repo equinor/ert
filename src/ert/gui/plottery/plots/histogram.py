@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import ceil, floor, log10, sqrt
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 import numpy
 import pandas as pd
@@ -14,6 +14,7 @@ from .plot_tools import PlotTools
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from numpy.typing import NDArray
 
     from ert.gui.plottery import PlotContext, PlotStyle
 
@@ -101,8 +102,8 @@ def plotHistogram(
         else:
             current_min = data[ensemble.name].min()
             current_max = data[ensemble.name].max()
-            minimum = current_min if minimum is None else min(minimum, current_min)
-            maximum = current_max if maximum is None else max(maximum, current_max)
+            minimum = current_min if minimum is None else min(minimum, current_min)  # type: ignore
+            maximum = current_max if maximum is None else max(maximum, current_max)  # type: ignore
             max_element_count = max(max_element_count, len(data[ensemble.name].index))
 
     bin_count = int(ceil(sqrt(max_element_count)))
@@ -193,11 +194,12 @@ def _plotHistogram(
     minimum: Optional[float] = None,
     maximum: Optional[float] = None,
 ) -> Rectangle:
+    bins: Union[Sequence[float], int]
     if minimum is not None and maximum is not None:
         if use_log_scale:
-            bins = _histogramLogBins(bin_count, minimum, maximum)
+            bins = _histogramLogBins(bin_count, minimum, maximum)  # type: ignore
         else:
-            bins = numpy.linspace(minimum, maximum, bin_count)
+            bins = numpy.linspace(minimum, maximum, bin_count)  # type: ignore
 
         if minimum == maximum:
             minimum -= 0.5
@@ -214,7 +216,9 @@ def _plotHistogram(
     )  # creates rectangle patch for legend use.'
 
 
-def _histogramLogBins(bin_count: int, minimum: float, maximum: float):
+def _histogramLogBins(
+    bin_count: int, minimum: float, maximum: float
+) -> NDArray[numpy.floating[Any]]:
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 

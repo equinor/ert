@@ -25,11 +25,11 @@ class GaussianKDEPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[str, pd.DataFrame],
-        _observation_data: Any,
-        std_dev_images: Any,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        observation_data: pd.DataFrame,
+        std_dev_images: Dict[str, bytes],
     ) -> None:
-        plotGaussianKDE(figure, plot_context, ensemble_to_data_map, _observation_data)
+        plotGaussianKDE(figure, plot_context, ensemble_to_data_map, observation_data)
 
 
 def plotGaussianKDE(

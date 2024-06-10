@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
+from typing import TYPE_CHECKING, Dict, List, TypedDict
 
 import pandas as pd
 from matplotlib.lines import Line2D
@@ -43,12 +43,12 @@ class CrossEnsembleStatisticsPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[str, DataFrame],
-        _observation_data: DataFrame,
-        std_dev_images: Any,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        observation_data: pd.DataFrame,
+        std_dev_images: Dict[str, bytes],
     ) -> None:
         plotCrossEnsembleStatistics(
-            figure, plot_context, ensemble_to_data_map, _observation_data
+            figure, plot_context, ensemble_to_data_map, observation_data
         )
 
 
@@ -161,24 +161,24 @@ def _addStatisticsLegend(
             plot_config.addLegendItem(style.name, line)
 
 
-def _assertNumeric(data):
-    data = data[0]
-    if data.dtype == "object":
+def _assertNumeric(data: pd.DataFrame) -> pd.Series:
+    data_series = data[0]
+    if data_series.dtype == "object":
         try:
-            data = pd.to_numeric(data, errors="coerce")
+            data_series = pd.to_numeric(data_series, errors="coerce")
         except AttributeError:
-            data = data.convert_objects(convert_numeric=True)
+            data_series = data_series.convert_objects(convert_numeric=True)
 
-    if data.dtype == "object":
-        data = None
-    return data
+    if data_series.dtype == "object":
+        data_series = None
+    return data_series
 
 
 def _plotCrossEnsembleStatistics(
     axes: "Axes", plot_config: "PlotConfig", data: CcsData, index: int
-):
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
+) -> None:
+    axes.set_xlabel(plot_config.xLabel())  # type: ignore
+    axes.set_ylabel(plot_config.yLabel())  # type: ignore
 
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():

@@ -175,7 +175,7 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, ensemble_name, key) -> pd.DataFrame:
+    def observations_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given ensemble. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
@@ -213,7 +213,7 @@ class PlotApi:
             }
             return pd.DataFrame(data_struct).T
 
-    def history_data(self, key, ensembles: Optional[List[str]]) -> pd.DataFrame:
+    def history_data(self, key: str, ensembles: Optional[List[str]]) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
