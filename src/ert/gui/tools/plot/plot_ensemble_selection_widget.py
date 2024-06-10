@@ -56,7 +56,7 @@ class EnsembleSelectListWidget(QListWidget):
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
         self.setToolTip(
-            "Select/deselect [1,5] or reorder plots\nOrder determines draw order and color"
+            "Toggle up to 5 plots or reorder by drag & drop\nOrder determines draw order and color"
         )
 
     def get_checked_ensembles(self) -> List[EnsembleObject]:
