@@ -58,7 +58,7 @@ def plotHistogram(
     ensemble_count = len(ensemble_list)
 
     plot_context.x_axis = plot_context.VALUE_AXIS
-    plot_context.Y_axis = plot_context.COUNT_AXIS
+    plot_context.y_axis = plot_context.COUNT_AXIS
 
     if config.xLabel() is None:
         config.setXLabel("Value")
