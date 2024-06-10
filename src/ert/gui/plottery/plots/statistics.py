@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from ert.gui.tools.plot.plot_api import EnsembleObject
+
 
 class StatisticsPlot:
     def __init__(self) -> None:
@@ -26,10 +28,10 @@ class StatisticsPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map,
-        _observation_data,
-        std_dev_images,
-    ):
+        ensemble_to_data_map: Dict[EnsembleObject, DataFrame],
+        _observation_data: DataFrame,
+        std_dev_images: Dict[str, bytes],
+    ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
 

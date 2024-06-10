@@ -232,7 +232,7 @@ class PlotWindow(QMainWindow):
                 try:
                     plot_context.history_data = self._api.history_data(
                         key,
-                        plot_context.ensembles(),
+                        [e.name for e in plot_context.ensembles()],
                     )
 
                 except (RequestError, TimeoutError) as e:

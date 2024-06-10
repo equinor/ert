@@ -46,23 +46,7 @@ class PlotStyle:
         self._enabled = enabled
 
     def isVisible(self) -> bool:
-        return self.line_style or self.marker
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
-
-    @property
-    def color(self) -> str:
-        return self._color
-
-    @color.setter
-    def color(self, color):
-        self._color = color
+        return bool(self.line_style or self.marker)
 
     @property
     def alpha(self) -> float:

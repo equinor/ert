@@ -136,8 +136,8 @@ class PlotWidget(QWidget):
         self,
         plot_context: "PlotContext",
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
-        observations: Optional[pd.DataFrame] = None,
-        std_dev_images: Optional[bytes] = None,
+        observations: pd.DataFrame,
+        std_dev_images: Dict[str, bytes],
     ):
         self.resetPlot()
         try:

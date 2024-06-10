@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import pandas as pd
 
@@ -11,7 +11,6 @@ from .plot_tools import PlotTools
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
-    from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig, PlotContext
 
@@ -24,11 +23,11 @@ class DistributionPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: dict[str, DataFrame],
-        _observation_data: DataFrame,
-        std_dev_images: Any,
+        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        observation_data: pd.DataFrame,
+        std_dev_images: Dict[str, bytes],
     ) -> None:
-        plotDistribution(figure, plot_context, ensemble_to_data_map, _observation_data)
+        plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)
 
 
 def plotDistribution(
@@ -89,12 +88,12 @@ def _plotDistribution(
     data: pd.DataFrame,
     label: str,
     index: int,
-    previous_data,
-):
+    previous_data: Optional[pd.DataFrame],
+) -> None:
     data = pd.Series(dtype="float64") if data.empty else data[0]
 
-    axes.set_xlabel(plot_config.xLabel())
-    axes.set_ylabel(plot_config.yLabel())
+    axes.set_xlabel(plot_config.xLabel())  # type: ignore
+    axes.set_ylabel(plot_config.yLabel())  # type: ignore
 
     style = plot_config.distributionStyle()
 
