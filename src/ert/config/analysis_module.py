@@ -1,22 +1,11 @@
 import logging
 import math
-from typing import TYPE_CHECKING, Optional, Type, TypedDict, Union
+from typing import Optional, Union
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 from typing_extensions import Annotated, Literal
 
 logger = logging.getLogger(__name__)
-
-
-if TYPE_CHECKING:
-
-    class VariableInfo(TypedDict):
-        type: Union[Type[float], Type[int]]
-        min: float
-        value: Union[float, int]
-        max: float
-        step: float
-        labelname: str
 
 
 DEFAULT_IES_MAX_STEPLENGTH = 0.60
