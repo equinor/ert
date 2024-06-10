@@ -43,17 +43,15 @@ def plotHistogram(
 
     ensemble_list = plot_context.ensembles()
     if not ensemble_list:
-        # ???
         dummy_ensemble_name = "default"
-        ensemble_list = [dummy_ensemble_name]
-        ensemble_to_data_map = {
-            EnsembleObject(
-                name=dummy_ensemble_name,
-                hidden=False,
-                id="id",
-                experiment_name="default",
-            ): pd.DataFrame()
-        }
+        dummy_ensemble_object = EnsembleObject(
+            name=dummy_ensemble_name,
+            hidden=False,
+            id="id",
+            experiment_name="default",
+        )
+        ensemble_list = [dummy_ensemble_object]
+        ensemble_to_data_map = {dummy_ensemble_object: pd.DataFrame()}
 
     ensemble_count = len(ensemble_list)
 
@@ -76,7 +74,7 @@ def plotHistogram(
     categorical = False
     for ensemble, datas in ensemble_to_data_map.items():
         if datas.empty:
-            data[ensemble] = pd.Series(dtype="float64")
+            data[ensemble.name] = pd.Series(dtype="float64")
             continue
 
         data[ensemble.name] = datas[0]
