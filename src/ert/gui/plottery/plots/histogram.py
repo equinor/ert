@@ -202,14 +202,14 @@ def _plotHistogram(
             bins = _histogramLogBins(bin_count, minimum, maximum)
         else:
             bins = numpy.linspace(minimum, maximum, bin_count)
+
+        if minimum == maximum:
+            minimum -= 0.5
+            maximum += 0.5
     else:
         bins = bin_count
 
     axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
-
-    if minimum == maximum:
-        minimum -= 0.5
-        maximum += 0.5
 
     axes.set_xlim(minimum, maximum)
 
