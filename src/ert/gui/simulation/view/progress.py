@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, Slot
@@ -38,20 +40,15 @@ class ProgressView(QWidget):
         layout.addWidget(self._progress_bar)
 
         self.setLayout(layout)
-
         self.setFixedHeight(30)
 
     def setModel(self, model) -> None:
         self._progress_tree_view.setModel(model)
 
     @Slot(bool)
-    def setIndeterminate(self, b: bool) -> None:
-        if b:
-            self._progress_bar.setVisible(True)
-            self._progress_tree_view.setVisible(False)
-        else:
-            self._progress_bar.setVisible(False)
-            self._progress_tree_view.setVisible(True)
+    def setIndeterminate(self, enable: bool) -> None:
+        self._progress_bar.setVisible(enable)
+        self._progress_tree_view.setVisible(not enable)
 
 
 class ProgressDelegate(QStyledItemDelegate):
@@ -65,32 +62,26 @@ class ProgressDelegate(QStyledItemDelegate):
         if data is None:
             return
 
-        nr_reals = data["nr_reals"]
-        status = data["status"]
+        nr_reals: int = data["nr_reals"]
+        status: dict[str, int] = data["status"]
         delta = option.rect.width() / nr_reals if nr_reals else 1
 
         painter.save()
-
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-
         painter.fillRect(option.rect, self.background_color)
 
         i = 0
+        y = option.rect.y()
+        h = option.rect.height()
+
         for state, color_ref in REAL_STATE_TO_COLOR.items():
-            if state not in status:
-                continue
-
-            state_progress = status[state]
-            x = math.ceil(option.rect.x() + i * delta)
-            y = option.rect.y()
-            w = math.ceil(state_progress * delta)
-            h = option.rect.height()
-            color = QColor(*color_ref)
-
-            painter.fillRect(x, y, w, h, color)
-
-            i += state_progress
+            if state in status:
+                state_progress = status[state]
+                x = math.ceil(option.rect.x() + i * delta)
+                w = math.ceil(state_progress * delta)
+                painter.fillRect(x, y, w, h, QColor(*color_ref))
+                i += state_progress
 
         painter.restore()
 

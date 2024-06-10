@@ -394,29 +394,14 @@ class RunDialog(QDialog):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
             self._progress_view.setIndeterminate(event.indeterminate)
-            progress = int(event.progress * 100)
-            self.validate_percentage_range(progress)
-            self._total_progress_bar.setValue(progress)
-            self._total_progress_label.setText(
-                _TOTAL_PROGRESS_TEMPLATE.format(
-                    total_progress=progress, phase_name=event.phase_name
-                )
-            )
+            self.update_total_progress(event.progress, event.phase_name)
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
                 )
             self._progress_view.setIndeterminate(event.indeterminate)
-            progress = int(event.progress * 100)
-            self.validate_percentage_range(progress)
-            self._total_progress_bar.setValue(progress)
-            self._total_progress_label.setText(
-                _TOTAL_PROGRESS_TEMPLATE.format(
-                    total_progress=progress, phase_name=event.phase_name
-                )
-            )
-
+            self.update_total_progress(event.progress, event.phase_name)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
@@ -460,11 +445,17 @@ class RunDialog(QDialog):
                 return widget
         return None
 
-    @staticmethod
-    def validate_percentage_range(progress: int) -> None:
-        if not 0 <= progress <= 100:
+    def update_total_progress(self, progress_value: float, phase_name: str) -> None:
+        progress = int(progress_value * 100)
+        if not (0 <= progress <= 100):
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
+        self._total_progress_bar.setValue(progress)
+        self._total_progress_label.setText(
+            _TOTAL_PROGRESS_TEMPLATE.format(
+                total_progress=progress, phase_name=phase_name
+            )
+        )
 
     def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)

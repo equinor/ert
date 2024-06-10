@@ -27,11 +27,8 @@ class LegendDelegate(QStyledItemDelegate):
     @staticmethod
     def paint(painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         data = index.data(ProgressRole)
-        nr_reals = 0
-        status = {}
-        if data:
-            nr_reals = data["nr_reals"]
-            status = data["status"]
+        nr_reals = data["nr_reals"] if data else 0
+        status = data["status"] if data else {}
 
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -43,27 +40,19 @@ class LegendDelegate(QStyledItemDelegate):
         )
 
         total_states = len(REAL_STATE_TO_COLOR.items())
-        d = math.ceil(option.rect.width() / total_states)
-        x_pos = 0
+        delta = math.ceil(option.rect.width() / total_states)
+        x_offset = 0
+        y = option.rect.y() + 5
+        h = option.rect.height()
+        w = delta - 25
+
         for state, color_ref in REAL_STATE_TO_COLOR.items():
-            state_progress = status.get(state, 0)
-
-            x = x_pos
-            y = option.rect.y()
-            w = d
-            h = option.rect.height()
-            margin = 5
-
+            x = x_offset
             painter.setBrush(QColor(*color_ref))
-            painter.drawRect(x, y + margin, 20, 20)
-            painter.drawText(
-                x + 25,
-                y + margin,
-                w - 25,
-                h,
-                Qt.AlignLeft,
-                f"{state} ({state_progress}/{nr_reals})",
-            )
-            x_pos += d
+            painter.drawRect(x, y, 20, 20)
+            state_progress = status.get(state, 0)
+            text = f"{state} ({state_progress}/{nr_reals})"
+            painter.drawText(x + 25, y, w, h, Qt.AlignLeft, text)
+            x_offset += delta
 
         painter.restore()

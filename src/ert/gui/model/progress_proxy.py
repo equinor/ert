@@ -13,7 +13,7 @@ class ProgressProxyModel(QAbstractItemModel):
     ) -> None:
         QAbstractItemModel.__init__(self, parent)
         self._source_model: QAbstractItemModel = source_model
-        self._progress: Optional[Dict[Union[str, dict], int]] = None
+        self._progress: Optional[Dict[str, Union[dict, int]]] = None
         self._connect()
 
     def _connect(self) -> None:
