@@ -78,7 +78,7 @@ class RunDialog(QDialog):
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowTitle(f"Experiment - {config_file} ({find_ert_info()})")
+        self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
