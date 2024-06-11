@@ -337,7 +337,7 @@ def test_update_snapshot(
     assert sim_gen_kw != target_gen_kw
 
     # Check that posterior is as expected
-    assert np.allclose(target_gen_kw, expected_gen_kw)
+    assert target_gen_kw == pytest.approx(expected_gen_kw)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -436,7 +436,7 @@ def analysis_ES(
     observation_errors = observed_responses_df["errors"].to_numpy()
     observation_values = observed_responses_df["observations"].to_numpy()
     S = observed_responses_df[
-        [f"{i}" for i in range(ensemble_size) if f"{i}" in observed_responses_df]
+        [i for i in range(ensemble_size) if i in observed_responses_df]
     ].to_numpy()
     num_obs = len(observed_responses_df)
 
@@ -618,11 +618,7 @@ def analysis_IES(
     observation_errors = observed_responses_df["errors"].to_numpy()
     observation_values = observed_responses_df["observations"].to_numpy()
     S = observed_responses_df[
-        [
-            f"{i}"
-            for i in range(target_ensemble.ensemble_size)
-            if f"{i}" in observed_responses_df
-        ]
+        [i for i in range(target_ensemble.ensemble_size) if i in observed_responses_df]
     ].to_numpy()
 
     smoother_snapshot.update_step_snapshots = update_snapshot

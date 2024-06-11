@@ -80,7 +80,7 @@ class ObservedResponses:
 
         df_responses = pd.DataFrame(
             self.responses,
-            columns=[f"{i}" for i in range(self.responses.shape[1])],
+            columns=[i for i in range(self.responses.shape[1])],
         )
 
         return pd.concat([df_observations, df_responses], axis=1)
@@ -1077,7 +1077,7 @@ class LocalEnsemble(BaseMode):
 
     def get_observations_and_responses(
         self,
-        observation_keys: List[str],
+        observation_keys: Iterable[str],
         active_realizations: Optional[npt.NDArray[np.int_]] = None,
     ) -> ObservedResponses:
         """Return data grouped by observation name, showing the
@@ -1091,7 +1091,7 @@ class LocalEnsemble(BaseMode):
         name     key_index                             ...
         POLY_OBS [0, 0]      2.145705  0.6   3.721637  ...  0.862469   2.625992
                  [2, 0]      8.769220  1.4   6.419814  ...  1.304883   4.650068
-                 [4, 0]     12.388015  3.0  12.796416  ...  2.535165   8.349348m
+                 [4, 0]     12.388015  3.0  12.796416  ...  2.535165   8.349348
                  [6, 0]     25.600465  5.4  22.851445  ...  4.553314  13.723831
                  [8, 0]     42.352048  8.6  36.584901  ...  7.359332  20.773518
 
