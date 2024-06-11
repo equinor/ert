@@ -85,7 +85,7 @@ class RunWorkflowWidget(QWidget):
         processing_label = QLabel(
             f"Processing workflow '{self.getCurrentWorkflowName()}'"
         )
-        layout.addWidget(processing_label, Qt.Alignment.AlignBottom)
+        layout.addWidget(processing_label, Qt.AlignmentFlag.AlignBottom)
 
         widget.setLayout(layout)
 
