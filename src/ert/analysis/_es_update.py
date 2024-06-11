@@ -274,7 +274,7 @@ def _load_observations_and_responses(
         key_index=observed_responses.key_index[obs_mask],
     )
 
-    # We sort the S-matrix by observation name to preserve
+    # We sort the responses by observation name to preserve
     # deterministic ordering so that snapshot
     # tests keep producing the same results.
     return (
