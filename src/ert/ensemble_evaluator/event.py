@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 from .snapshot import PartialSnapshot, Snapshot
 
@@ -10,6 +10,8 @@ class _UpdateEvent:
     current_phase: int
     total_phases: int
     progress: float
+    realization_count: int
+    status_count: Dict[str, int]
     iteration: int
 
 

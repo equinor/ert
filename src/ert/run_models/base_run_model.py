@@ -6,6 +6,7 @@ import os
 import shutil
 import time
 import uuid
+from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
@@ -421,34 +422,32 @@ class BaseRunModel:
                 f"MIN_REALIZATIONS to allow (more) failures in your experiments."
             )
 
-    def _progress(self) -> float:
-        """Fraction of completed iterations over total iterations"""
+    def _current_status(self) -> tuple[dict[str, int], float, int]:
+        current_iter = max(list(self._iter_snapshot.keys()))
+        done_realizations = 0
+        all_realizations = self._iter_snapshot[current_iter].reals
+        current_progress = 0.0
+        status: dict[str, int] = defaultdict(int)
+        realization_count = len(all_realizations)
 
-        if self.isFinished():
-            return 1.0
-        elif not self._iter_snapshot:
-            return 0.0
-        else:
-            # Calculate completed realizations
-            current_iter = max(list(self._iter_snapshot.keys()))
-            done_reals = 0
-            all_reals = self._iter_snapshot[current_iter].reals
-            if not all_reals:
-                # Empty ensemble or all realizations deactivated
-                return 1.0
-            for real in all_reals.values():
+        if all_realizations:
+            for real in all_realizations.values():
+                status[str(real.status)] += 1
+
                 if real.status in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
                 ]:
-                    done_reals += 1
-            real_progress = float(done_reals) / len(all_reals)
+                    done_realizations += 1
 
-            return (
-                (current_iter + real_progress) / self.phaseCount()
+            realization_progress = float(done_realizations) / len(all_realizations)
+            current_progress = (
+                (current_iter + realization_progress) / self.phaseCount()
                 if self.phaseCount() != 1
-                else real_progress
+                else realization_progress
             )
+
+        return status, current_progress, realization_count
 
     def send_end_event(self) -> None:
         self.send_event(
@@ -463,12 +462,15 @@ class BaseRunModel:
             iter_ = event.data["iter"]
             snapshot = Snapshot(event.data)
             self._iter_snapshot[iter_] = snapshot
+            status, current_progress, realization_count = self._current_status()
             self.send_event(
                 FullSnapshotEvent(
                     phase_name=self.getPhaseName(),
                     current_phase=self.currentPhase(),
                     total_phases=self.phaseCount(),
-                    progress=self._progress(),
+                    progress=current_progress,
+                    realization_count=realization_count,
+                    status_count=status,
                     iteration=iter_,
                     snapshot=copy.deepcopy(snapshot),
                 )
@@ -482,12 +484,15 @@ class BaseRunModel:
                 )
             partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(event)
             self._iter_snapshot[iter_].merge_event(partial)
+            status, current_progress, realization_count = self._current_status()
             self.send_event(
                 SnapshotUpdateEvent(
                     phase_name=self.getPhaseName(),
                     current_phase=self.currentPhase(),
                     total_phases=self.phaseCount(),
-                    progress=self._progress(),
+                    progress=current_progress,
+                    realization_count=realization_count,
+                    status_count=status,
                     iteration=iter_,
                     partial_snapshot=partial,
                 )

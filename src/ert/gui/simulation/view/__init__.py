@@ -1,6 +1,5 @@
-from .legend import LegendView
-from .progress import ProgressView
+from .progress_widget import ProgressWidget
 from .realization import RealizationWidget
 from .update import UpdateWidget
 
-__all__ = ["LegendView", "ProgressView", "RealizationWidget", "UpdateWidget"]
+__all__ = ["ProgressWidget", "RealizationWidget", "UpdateWidget"]
