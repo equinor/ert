@@ -24,10 +24,12 @@ def create_scheduler():
 
 
 @pytest.fixture
-def realization():
+def realization(storage):
     run_arg = RunArg(
         run_id="",
-        ensemble_storage=MagicMock(),
+        ensemble_storage=storage.create_experiment().create_ensemble(
+            name="default", ensemble_size=1
+        ),
         iens=0,
         itr=0,
         runpath="test_runpath",
@@ -154,4 +156,12 @@ async def test_job_run_sends_expected_events(
         runpath=Path(realization.run_arg.runpath),
         num_cpu=realization.num_cpu,
     )
+    assert scheduler.driver.submit.call_count == max_submit
+    runtime_infos = realization.run_arg.ensemble_storage.get_runtime_infos(
+        realization.iens
+    )
+    assert len(runtime_infos) == max_submit
+    for runtime in runtime_infos:
+        assert runtime.final_time >= runtime.start_time
+
     assert scheduler.driver.submit.call_count == max_submit
