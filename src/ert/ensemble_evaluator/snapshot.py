@@ -90,25 +90,35 @@ class SnapshotMetadata(TypedDict, total=False):
     sorted_forward_model_ids: DefaultDict[RealId, List[FmStepId]]
 
 
-def _filter_nones(some_dict: Dict[str, Any]) -> Dict[str, Any]:
-    return {key: value for key, value in some_dict.items() if value is not None}
+class RealizationState(TypedDict, total=False):
+    active: bool
+    status: str
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+
+
+class ForwardModelState(TypedDict, total=False):
+    status: str
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    index: str
+    current_memory_usage: str
+    max_memory_usage: str
+    name: str
+    error: str
+    stdout: str
+    stderr: str
 
 
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
-        self._realization_states: Dict[
-            str, Dict[str, Union[bool, datetime.datetime, str]]
-        ] = defaultdict(dict)
-        """A shallow dictionary of realization states. The key is a string with
-        realization number, pointing to a dict with keys active (bool),
-        start_time (datetime), end_time (datetime) and status (str)."""
+        self._realization_states: DefaultDict[RealId, RealizationState] = defaultdict(
+            lambda: RealizationState()
+        )
 
-        self._forward_model_states: Dict[
-            Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
-        ] = defaultdict(dict)
-        """A shallow dictionary of forward_model states. The key is a tuple of two
-        strings with realization id and forward_model id, pointing to a dict with
-        the same members as the ForwardModel."""
+        self._forward_model_states: DefaultDict[
+            Tuple[RealId, FmStepId], ForwardModelState
+        ] = defaultdict(lambda: ForwardModelState())
 
         self._ensemble_state: Optional[str] = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
@@ -137,11 +147,12 @@ class PartialSnapshot:
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
     ) -> "PartialSnapshot":
-        self._realization_states[real_id].update(
-            _filter_nones(
-                {"status": status, "start_time": start_time, "end_time": end_time}
-            )
-        )
+        self._realization_states[real_id]["status"] = status
+        if start_time:
+            self._realization_states[real_id]["start_time"] = start_time
+        if end_time:
+            self._realization_states[real_id]["end_time"] = end_time
+
         return self
 
     def update_forward_model(
@@ -150,15 +161,50 @@ class PartialSnapshot:
         forward_model_id: str,
         forward_model: "ForwardModel",
     ) -> "PartialSnapshot":
-        forward_model_update = _filter_nones(forward_model.model_dump())
-
-        self._forward_model_states[(real_id, forward_model_id)].update(
-            forward_model_update
-        )
-        if self._snapshot:
-            self._snapshot._my_partial._forward_model_states[
-                (real_id, forward_model_id)
-            ].update(forward_model_update)
+        if forward_model.status is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["status"] = (
+                forward_model.status
+            )
+        if forward_model.start_time is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["start_time"] = (
+                forward_model.start_time
+            )
+        if forward_model.end_time is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["end_time"] = (
+                forward_model.end_time
+            )
+        if forward_model.index is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["index"] = (
+                forward_model.index
+            )
+        if forward_model.current_memory_usage is not None:
+            self._forward_model_states[(real_id, forward_model_id)][
+                "current_memory_usage"
+            ] = forward_model.current_memory_usage
+        if forward_model.max_memory_usage is not None:
+            self._forward_model_states[(real_id, forward_model_id)][
+                "max_memory_usage"
+            ] = forward_model.max_memory_usage
+        if forward_model.name is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["name"] = (
+                forward_model.name
+            )
+        if forward_model.error is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["error"] = (
+                forward_model.error
+            )
+        if forward_model.stdout is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["stdout"] = (
+                forward_model.stdout
+            )
+        if forward_model.stderr is not None:
+            self._forward_model_states[(real_id, forward_model_id)]["stderr"] = (
+                forward_model.stderr
+            )
+        if self._snapshot is not None:
+            self._snapshot._my_partial.update_forward_model(
+                real_id, forward_model_id, forward_model
+            )
         return self
 
     def get_all_forward_models(
@@ -399,7 +445,7 @@ class Snapshot:
         return [
             int(real_idx)
             for real_idx, real_data in self._my_partial._realization_states.items()
-            if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
+            if real_data["status"] == state.REALIZATION_STATE_FINISHED
         ]
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
@@ -499,14 +545,16 @@ def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
     if "status" in data:
         partial._ensemble_state = data["status"]
     for real_id, realization_data in data.get("reals", {}).items():
-        partial._realization_states[real_id] = _filter_nones(
-            {
-                "status": realization_data.get("status"),
-                "active": realization_data.get("active"),
-                "start_time": realization_data.get("start_time"),
-                "end_time": realization_data.get("end_time"),
-            }
-        )
+        partial._realization_states[real_id] = RealizationState()
+        if status := realization_data.get("status"):
+            partial._realization_states[real_id]["status"] = status
+        if active := realization_data.get("active"):
+            partial._realization_states[real_id]["active"] = active
+        if start_time := realization_data.get("start_time"):
+            partial._realization_states[real_id]["start_time"] = start_time
+        if end_time := realization_data.get("end_time"):
+            partial._realization_states[real_id]["end_time"] = end_time
+
         for forward_model_id, job in realization_data.get("forward_models", {}).items():
             forward_model_idx = (real_id, forward_model_id)
             partial._forward_model_states[forward_model_idx] = job
