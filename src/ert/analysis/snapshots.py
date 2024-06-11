@@ -82,6 +82,8 @@ class SmootherSnapshot(BaseModel):
                     step.get_status(),
                 ]
             )
+        data.sort(key=lambda x: (x[0], x[1]))
+
         return data
 
     @property
