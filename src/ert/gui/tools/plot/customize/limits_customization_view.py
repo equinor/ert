@@ -1,3 +1,4 @@
+from copy import copy
 from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtGui import QDoubleValidator, QIntValidator
@@ -154,13 +155,11 @@ class LimitsWidget:
     @property
     def limits(self) -> PlotLimits:
         self._updateLimits()
-        limits = PlotLimits()
-        limits.copyLimitsFrom(self._limits)
-        return limits
+        return copy(self._limits)
 
     @limits.setter
     def limits(self, value: PlotLimits) -> None:
-        self._limits.copyLimitsFrom(value)
+        self._limits = copy(value)
         self._updateWidgets()
 
     def _updateWidgets(self) -> None:

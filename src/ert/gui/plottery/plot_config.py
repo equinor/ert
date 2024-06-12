@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+from copy import copy
 from typing import Any, List, Optional
 
 from ert.gui.plottery import PlotLimits, PlotStyle
@@ -234,13 +235,11 @@ class PlotConfig:
 
     @property
     def limits(self) -> PlotLimits:
-        limits = PlotLimits()
-        limits.copyLimitsFrom(self._limits)
-        return limits
+        return copy(self._limits)
 
     @limits.setter
     def limits(self, value: PlotLimits) -> None:
-        self._limits.copyLimitsFrom(value)
+        self._limits = copy(value)
 
     def copyConfigFrom(self, other: "PlotConfig") -> None:
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
@@ -287,7 +286,7 @@ class PlotConfig:
         self._x_label = other._x_label
         self._y_label = other._y_label
 
-        self._limits.copyLimitsFrom(other._limits)
+        self._limits = copy(other._limits)
 
         if other._title is not None:
             self._title = other._title
