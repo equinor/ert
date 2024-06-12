@@ -31,12 +31,6 @@ def flow_config_path():
 
 @hook_implementation
 @plugin_response(plugin_name="dummy")
-def rms_config_path():
-    return "/dummy/path/rms_config.yml"
-
-
-@hook_implementation
-@plugin_response(plugin_name="dummy")
 def installable_jobs():
     return {"job1": "/dummy/path/job1", "job2": "/dummy/path/job2"}
 

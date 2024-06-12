@@ -16,7 +16,6 @@ def test_no_plugins():
     assert pm.get_flow_config_path() is None
     assert pm.get_ecl100_config_path() is None
     assert pm.get_ecl300_config_path() is None
-    assert pm.get_rms_config_path() is None
 
     assert len(pm.get_installable_jobs()) > 0
     assert len(pm._get_config_workflow_jobs()) > 0
@@ -37,7 +36,6 @@ def test_with_plugins():
         "test2": "test",
     }
     assert pm.get_flow_config_path() == "/dummy/path/flow_config.yml"
-    assert pm.get_rms_config_path() == "/dummy/path/rms_config.yml"
     assert pm.get_ecl100_config_path() == "/dummy/path/ecl100_config.yml"
     assert pm.get_ecl300_config_path() == "/dummy/path/ecl300_config.yml"
 

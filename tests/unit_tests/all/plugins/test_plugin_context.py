@@ -11,7 +11,6 @@ env_vars = [
     "ECL100_SITE_CONFIG",
     "ECL300_SITE_CONFIG",
     "FLOW_SITE_CONFIG",
-    "RMS_SITE_CONFIG",
     "ERT_SITE_CONFIG",
 ]
 
@@ -25,8 +24,6 @@ def test_no_plugins(monkeypatch):
             _ = os.environ["ECL300_SITE_CONFIG"]
         with pytest.raises(KeyError):
             _ = os.environ["FLOW_SITE_CONFIG"]
-        with pytest.raises(KeyError):
-            _ = os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
         with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
@@ -51,8 +48,6 @@ def test_with_plugins(monkeypatch):
             _ = os.environ["ECL300_SITE_CONFIG"]
         with pytest.raises(KeyError):
             _ = os.environ["FLOW_SITE_CONFIG"]
-        with pytest.raises(KeyError):
-            _ = os.environ["RMS_SITE_CONFIG"]
 
         assert os.path.isfile(os.environ["ERT_SITE_CONFIG"])
         with open(os.environ["ERT_SITE_CONFIG"], encoding="utf-8") as f:
