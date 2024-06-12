@@ -138,7 +138,9 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
         enumerated_weights = list(enumerate(weights))
-        weights_to_run = enumerated_weights[prior.iteration :]
+        starting_iteration = prior.iteration + 1
+        self._simulation_arguments.start_iteration = starting_iteration
+        weights_to_run = enumerated_weights[max(starting_iteration - 1, 0) :]
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
@@ -194,6 +196,9 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhase(iteration_count + 1, "Experiment completed.")
 
         return prior_context
+
+    def set_start_iteration(self, start_iteration: int) -> None:
+        self._simulation_arguments.start_iteration = start_iteration
 
     def update(
         self,

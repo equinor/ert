@@ -618,7 +618,7 @@ class BaseRunModel:
         number_of_iterations = self._simulation_arguments.num_iterations
         active_mask = self._simulation_arguments.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        for iteration in range(start_iteration, number_of_iterations):
+        for iteration in range(start_iteration, start_iteration + number_of_iterations):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 

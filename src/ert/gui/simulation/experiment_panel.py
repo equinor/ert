@@ -166,14 +166,16 @@ class ExperimentPanel(QWidget):
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
         return self.get_experiment_arguments().experiment_name
 
-    def run_experiment(self) -> None:
-        args = self.get_experiment_arguments()
+    def run_experiment(self):
+        args = self.getSimulationArguments()
+        is_restart_run = False
         if args.mode == ES_MDA_MODE:
             if args.restart_run:
                 message = (
                     "Are you sure you want to restart from ensemble"
                     f" '{self._notifier.current_ensemble_name}'?"
                 )
+                is_restart_run = True
             else:
                 message = (
                     "Are you sure you want to use "
@@ -218,6 +220,9 @@ class ExperimentPanel(QWidget):
             QApplication.restoreOverrideCursor()
 
             delete_runpath_checkbox = None
+
+            if is_restart_run:
+                model.set_start_iteration(self._notifier.current_ensemble.iteration + 1)
 
             if not abort and model.check_if_runpath_exists():
                 msg_box = QMessageBox(self)
