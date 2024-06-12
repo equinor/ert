@@ -102,6 +102,7 @@ def test_migrate_summary(data, forecast, time_map, tmp_path):
             ]
         )
         ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
+        ensemble._refresh_realization_states()
 
         bf._migrate_summary(ensemble, forecast, time_map)
         ensemble.unify_responses()

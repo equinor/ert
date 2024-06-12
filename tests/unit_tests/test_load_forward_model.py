@@ -291,5 +291,6 @@ def test_that_the_states_are_set_correctly():
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
     facade.load_from_forward_model(new_ensemble, realizations, 0)
+    new_ensemble._refresh_realization_states()
     assert not new_ensemble.is_initalized()
     assert new_ensemble.has_data()
