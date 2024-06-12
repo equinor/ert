@@ -11,7 +11,6 @@ class PlotLimits:
     index_limits: Tuple[Optional[int], Optional[int]] = (None, None)
     count_limits: Tuple[Optional[int], Optional[int]] = (None, None)
     density_limits: Tuple[Optional[Num], Optional[Num]] = (None, None)
-    depth_limits: Tuple[Optional[Num], Optional[Num]] = (None, None)
     date_limits: Tuple[Optional[date], Optional[date]] = (None, None)
 
     @property
@@ -77,22 +76,6 @@ class PlotLimits:
     @density_maximum.setter
     def density_maximum(self, value: Optional[Num]) -> None:
         self.density_limits = (self.density_limits[0], value)
-
-    @property
-    def depth_minimum(self) -> Optional[Num]:
-        return self.depth_limits[0]
-
-    @depth_minimum.setter
-    def depth_minimum(self, value: Optional[Num]) -> None:
-        self.depth_limits = (value, self.depth_limits[1])
-
-    @property
-    def depth_maximum(self) -> Optional[Num]:
-        return self.depth_limits[1]
-
-    @depth_maximum.setter
-    def depth_maximum(self, value: Optional[Num]) -> None:
-        self.depth_limits = (self.depth_limits[0], value)
 
     @property
     def date_minimum(self) -> Optional[date]:

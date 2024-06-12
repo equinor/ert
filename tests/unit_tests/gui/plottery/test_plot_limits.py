@@ -22,10 +22,6 @@ def test_plot_limits_construction():
     assert plot_limits.density_maximum is None
     assert plot_limits.density_limits == (None, None)
 
-    assert plot_limits.depth_minimum is None
-    assert plot_limits.depth_maximum is None
-    assert plot_limits.depth_limits == (None, None)
-
     assert plot_limits.date_minimum is None
     assert plot_limits.date_maximum is None
     assert plot_limits.date_limits == (None, None)
@@ -33,7 +29,7 @@ def test_plot_limits_construction():
 
 def test_plot_limits():
     plot_limits = PlotLimits()
-    limit_names = ["value", "index", "count", "density", "depth", "date"]
+    limit_names = ["value", "index", "count", "density", "date"]
 
     positive_floats = [1.0, 1.5, 3.1415, 1e10, 5.2e-7]
     negative_floats = [-1.0, -1.5, -3.1415, -1e10, -5.2e-7]
@@ -45,7 +41,6 @@ def test_plot_limits():
     setter_should_succeed_values = {
         "value": positive_floats + negative_floats + positive_ints + negative_ints,
         "index": positive_ints,
-        "depth": positive_floats + positive_ints,
         "count": positive_ints,
         "density": positive_floats + positive_ints,
         "date": dates,
@@ -81,7 +76,6 @@ def test_copy_plot_limits():
     plot_limits.value_limits = 1, 2
     plot_limits.index_limits = 3, 4
     plot_limits.count_limits = 5, 6
-    plot_limits.depth_limits = 7, 8
     plot_limits.density_limits = 9, 10
     plot_limits.date_limits = (
         datetime.date(1999, 1, 1),
@@ -95,7 +89,6 @@ def test_copy_plot_limits():
     assert copy_of_plot_limits.value_limits == (1, 2)
     assert copy_of_plot_limits.index_limits == (3, 4)
     assert copy_of_plot_limits.count_limits == (5, 6)
-    assert copy_of_plot_limits.depth_limits == (7, 8)
     assert copy_of_plot_limits.density_limits == (9, 10)
     assert copy_of_plot_limits.date_limits == (
         datetime.date(1999, 1, 1),
