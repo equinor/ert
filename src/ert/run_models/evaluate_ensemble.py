@@ -53,7 +53,7 @@ class EvaluateEnsemble(BaseRunModel):
     ) -> RunContext:
         self.setPhaseName("Running evaluate experiment...")
 
-        ensemble_id = self.simulation_arguments.current_ensemble
+        ensemble_id = self.simulation_arguments.ensemble_id
         ensemble_uuid = UUID(ensemble_id)
         ensemble = self._storage.get_ensemble(ensemble_uuid)
         assert isinstance(ensemble, Ensemble)

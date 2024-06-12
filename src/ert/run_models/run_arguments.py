@@ -13,8 +13,7 @@ class SimulationArguments:
 
 @dataclass
 class SingleTestRunArguments(SimulationArguments):
-    current_ensemble: str = "prior"
-    target_ensemble: Optional[str] = None
+    ensemble_name: str = "prior"
     ensemble_type: str = "Single test"
 
     def __post_init__(self) -> None:
@@ -28,8 +27,7 @@ class SingleTestRunArguments(SimulationArguments):
 class EnsembleExperimentRunArguments(SimulationArguments):
     active_realizations: List[bool]
     experiment_name: str
-    current_ensemble: str = "prior"
-    target_ensemble: Optional[str] = None
+    ensemble_name: str = "prior"
     ensemble_type: str = "Ensemble experiment"
 
     def __post_init__(self) -> None:
@@ -41,7 +39,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 @dataclass
 class EvaluateEnsembleRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_ensemble: str
+    ensemble_id: str
     ensemble_type: str = "Evaluate ensemble"
 
     def __post_init__(self) -> None:
@@ -54,7 +52,6 @@ class EvaluateEnsembleRunArguments(SimulationArguments):
 @dataclass
 class ESRunArguments(SimulationArguments):
     active_realizations: List[bool]
-    current_ensemble: str
     target_ensemble: str
     ensemble_type: str = "ES"
 
@@ -86,7 +83,6 @@ class SIESRunArguments(SimulationArguments):
     num_iterations: int
     num_retries_per_iter: int
 
-    current_ensemble = None
     ensemble_type: str = "IES"
     iter_num = 0
     prev_successful_realizations = 0

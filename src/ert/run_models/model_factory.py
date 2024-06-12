@@ -91,7 +91,7 @@ def _setup_single_test_run(
     return SingleTestRun(
         SingleTestRunArguments(
             random_seed=config.random_seed,
-            current_ensemble=args.current_ensemble,
+            ensemble_name=args.current_ensemble,
             minimum_required_realizations=1,
             ensemble_size=1,
             stop_long_running=config.analysis_config.stop_long_running,
@@ -126,7 +126,7 @@ def _setup_ensemble_experiment(
         EnsembleExperimentRunArguments(
             random_seed=config.random_seed,
             active_realizations=active_realizations.tolist(),
-            current_ensemble=args.current_ensemble,
+            ensemble_name=args.current_ensemble,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
@@ -160,7 +160,7 @@ def _setup_evaluate_ensemble(
         EvaluateEnsembleRunArguments(
             random_seed=config.random_seed,
             active_realizations=active_realizations.tolist(),
-            current_ensemble=args.ensemble_id,
+            ensemble_id=args.ensemble_id,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
@@ -186,7 +186,6 @@ def _setup_ensemble_smoother(
             active_realizations=_realizations(
                 args, config.model_config.num_realizations
             ).tolist(),
-            current_ensemble=args.current_ensemble,
             target_ensemble=args.target_ensemble,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,

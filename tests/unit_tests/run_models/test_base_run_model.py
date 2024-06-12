@@ -143,7 +143,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     simulation_arguments = EnsembleExperimentRunArguments(
         random_seed=None,
         active_realizations=active_realizations,
-        current_ensemble="Case_Name",
+        ensemble_name="Case_Name",
         target_ensemble=None,
         minimum_required_realizations=0,
         ensemble_size=1,
