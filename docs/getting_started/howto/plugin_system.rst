@@ -135,8 +135,8 @@ Minimal example:
    from ert import ErtScript
    from ert.shared.plugins.plugin_manager import hook_implementation
 
-   class MyJob(ErtScript)
-       def run()
+   class MyJob(ErtScript):
+       def run(self):
            print("Hello World")
 
    @hook_implementation
@@ -151,8 +151,8 @@ Full example:
    from ert import ErtScript
    from ert.shared.plugins.plugin_manager import hook_implementation
 
-   class MyJob(ErtScript)
-       def run()
+   class MyJob(ErtScript):
+       def run(self):
            print("Hello World")
 
    @hook_implementation
