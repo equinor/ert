@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from qtpy.QtCore import QModelIndex, QSize, Qt, Slot
+from qtpy.QtCore import QModelIndex, QSize, Qt
 from qtpy.QtGui import QColor, QPainter
 from qtpy.QtWidgets import (
     QProgressBar,
@@ -45,10 +45,9 @@ class ProgressView(QWidget):
     def setModel(self, model) -> None:
         self._progress_tree_view.setModel(model)
 
-    @Slot(bool)
-    def setIndeterminate(self, enable: bool) -> None:
-        self._progress_bar.setVisible(enable)
-        self._progress_tree_view.setVisible(not enable)
+    def set_active_progress(self, enable: bool = True) -> None:
+        self._progress_bar.setVisible(not enable)
+        self._progress_tree_view.setVisible(enable)
 
 
 class ProgressDelegate(QStyledItemDelegate):

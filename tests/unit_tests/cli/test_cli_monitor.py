@@ -71,7 +71,6 @@ def test_print_progress():
         current_phase=0,
         total_phases=2,
         progress=0.5,
-        indeterminate=False,
         iteration=0,
     )
 

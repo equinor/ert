@@ -51,7 +51,7 @@ class EvaluateEnsemble(BaseRunModel):
         self,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        self.setPhaseName("Running evaluate experiment...", indeterminate=False)
+        self.setPhaseName("Running evaluate experiment...")
 
         ensemble_id = self.simulation_arguments.current_ensemble
         ensemble_uuid = UUID(ensemble_id)

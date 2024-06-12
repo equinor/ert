@@ -53,7 +53,7 @@ class EnsembleExperiment(BaseRunModel):
         self,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> RunContext:
-        self.setPhaseName(self.run_message(), indeterminate=False)
+        self.setPhaseName(self.run_message())
         experiment = self._storage.create_experiment(
             name=self.simulation_arguments.experiment_name,
             parameters=self.ert_config.ensemble_config.parameter_configuration,

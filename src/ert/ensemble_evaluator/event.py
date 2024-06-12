@@ -10,7 +10,6 @@ class _UpdateEvent:
     current_phase: int
     total_phases: int
     progress: float
-    indeterminate: bool
     iteration: int
 
 

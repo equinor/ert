@@ -35,13 +35,7 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.progress_proxy import ProgressProxyModel
-from ert.gui.model.snapshot import (
-    COLUMNS,
-    FileRole,
-    IterNum,
-    RealIens,
-    SnapshotModel,
-)
+from ert.gui.model.snapshot import COLUMNS, FileRole, IterNum, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
@@ -112,7 +106,7 @@ class RunDialog(QDialog):
 
         self._progress_view = ProgressView(self)
         self._progress_view.setModel(progress_proxy_model)
-        self._progress_view.setIndeterminate(True)
+        self._progress_view.set_active_progress(False)
 
         legend_view = LegendView(self)
         legend_view.setModel(progress_proxy_model)
@@ -356,12 +350,7 @@ class RunDialog(QDialog):
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
-        self._total_progress_bar.setValue(100)
-        self._total_progress_label.setText(
-            _TOTAL_PROGRESS_TEMPLATE.format(
-                total_progress=100, phase_name=self._run_model.getPhaseName()
-            )
-        )
+        self.update_total_progress(1.0, self._run_model.getPhaseName())
         self._notifier.set_is_simulation_running(False)
         if failed:
             self.fail_msg_box = ErtMessageBox(
@@ -393,14 +382,14 @@ class RunDialog(QDialog):
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
-            self._progress_view.setIndeterminate(event.indeterminate)
+            self._progress_view.set_active_progress()
             self.update_total_progress(event.progress, event.phase_name)
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
                 )
-            self._progress_view.setIndeterminate(event.indeterminate)
+            self._progress_view.set_active_progress()
             self.update_total_progress(event.progress, event.phase_name)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration

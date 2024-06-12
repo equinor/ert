@@ -80,7 +80,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         log_msg = f"Running ES-MDA with normalized weights {weights}"
         logger.info(log_msg)
-        self.setPhaseName(log_msg, indeterminate=True)
+        self.setPhaseName(log_msg)
 
         restart_run = self._simulation_arguments.restart_run
         target_ensemble_format = self._simulation_arguments.target_ensemble
@@ -189,7 +189,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self._evaluate_and_postprocess(posterior_context, evaluator_server_config)
             prior_context = posterior_context
 
-        self.setPhaseName("Post processing...", indeterminate=True)
+        self.setPhaseName("Post processing...")
 
         self.setPhase(iteration_count + 1, "Experiment completed.")
 
@@ -204,7 +204,7 @@ class MultipleDataAssimilation(BaseRunModel):
         next_iteration = prior_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
-        self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
+        self.setPhase(self.currentPhase() + 1, phase_string)
         try:
             return smoother_update(
                 prior_context.ensemble,
