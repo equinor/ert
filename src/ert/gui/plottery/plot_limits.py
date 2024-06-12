@@ -1,115 +1,111 @@
-import datetime
+from dataclasses import dataclass
+from datetime import date
+from typing import Optional, Tuple, Union
+
+Num = Union[float, int]
 
 
-class limit_property:
-    def __init__(self, attribute_name, types, minimum=None, maximum=None):
-        super().__init__()
-        self._types = types
-        self._maximum = maximum
-        self._minimum = minimum
-        self._attribute_name = attribute_name
-
-    def __get__(self, instance, owner):
-        if not hasattr(instance, f"_{self._attribute_name}"):
-            setattr(instance, f"_{self._attribute_name}", None)
-        return getattr(instance, f"_{self._attribute_name}")
-
-    def __set__(self, instance, value):
-        if value is not None:
-            if not isinstance(value, self._types):
-                raise TypeError(
-                    f"Value not (one) of type(s): {self._types}: {repr(value)}"
-                )
-            if self._minimum is not None and value < self._minimum:
-                raise ValueError(
-                    f"Value can not be less than {self._minimum:f}: "
-                    f"{value:f} < {self._minimum:f}"
-                )
-            if self._maximum is not None and value > self._maximum:
-                raise ValueError(
-                    f"Value can not be larger than {self._maximum:f}: "
-                    f"{value:f} > {self._maximum:f}"
-                )
-
-        setattr(instance, f"_{self._attribute_name}", value)
-
-
-class limits_property:
-    def __init__(self, minimum_attribute_name, maximum_attribute_name):
-        super().__init__()
-        self._minimum_attribute_name = minimum_attribute_name
-        self._maximum_attribute_name = maximum_attribute_name
-
-    def __get__(self, instance, owner):
-        return getattr(instance, f"{self._minimum_attribute_name}"), getattr(
-            instance, f"{self._maximum_attribute_name}"
-        )
-
-    def __set__(self, instance, value):
-        setattr(instance, f"_{self._minimum_attribute_name}", value[0])
-        setattr(instance, f"_{self._maximum_attribute_name}", value[1])
-
-
+@dataclass
 class PlotLimits:
-    value_minimum = limit_property("value_minimum", (float, int))
-    """ :type: float """
-    value_maximum = limit_property("value_maximum", (float, int))
-    """ :type: float """
-    value_limits = limits_property("value_minimum", "value_maximum")
-    """ :type: (float, float) """
+    value_limits: Tuple[Optional[Num], Optional[Num]] = (None, None)
+    index_limits: Tuple[Optional[int], Optional[int]] = (None, None)
+    count_limits: Tuple[Optional[int], Optional[int]] = (None, None)
+    density_limits: Tuple[Optional[Num], Optional[Num]] = (None, None)
+    depth_limits: Tuple[Optional[Num], Optional[Num]] = (None, None)
+    date_limits: Tuple[Optional[date], Optional[date]] = (None, None)
 
-    index_minimum = limit_property("index_minimum", int, minimum=0)
-    """ :type: int """
-    index_maximum = limit_property("index_maximum", int, minimum=0)
-    """ :type: int """
-    index_limits = limits_property("index_minimum", "index_maximum")
-    """ :type: (int, int) """
+    @property
+    def value_minimum(self) -> Optional[Num]:
+        return self.value_limits[0]
 
-    count_minimum = limit_property("count_minimum", int, minimum=0)
-    """ :type: int """
-    count_maximum = limit_property("count_maximum", int, minimum=0)
-    """ :type: int """
-    count_limits = limits_property("count_minimum", "count_maximum")
-    """ :type: (int, int) """
+    @value_minimum.setter
+    def value_minimum(self, value: Optional[Num]) -> None:
+        self.value_limits = (value, self.value_limits[1])
 
-    density_minimum = limit_property("density_minimum", (float, int), minimum=0.0)
-    """ :type: float """
-    density_maximum = limit_property("density_maximum", (float, int), minimum=0.0)
-    """ :type: float """
-    density_limits = limits_property("density_minimum", "density_maximum")
-    """ :type: (float, float) """
+    @property
+    def value_maximum(self) -> Optional[Num]:
+        return self.value_limits[1]
 
-    depth_minimum = limit_property("depth_minimum", (float, int), minimum=0.0)
-    """ :type: float """
-    depth_maximum = limit_property("depth_maximum", (float, int), minimum=0.0)
-    """ :type: float """
-    depth_limits = limits_property("depth_minimum", "depth_maximum")
-    """ :type: tuple[float, float] """
+    @value_maximum.setter
+    def value_maximum(self, value: Optional[Num]) -> None:
+        self.value_limits = (self.value_limits[0], value)
 
-    date_minimum = limit_property("date_minimum", (datetime.date, datetime.datetime))
-    """ :type: datetime.datetime or datetime.date """
-    date_maximum = limit_property("date_maximum", (datetime.date, datetime.datetime))
-    """ :type: datetime.datetime or datetime.date """
-    date_limits = limits_property("date_minimum", "date_maximum")
-    """ :type: tuple[datetime.datetime|datetime.date,
-    datetime.datetime|datetime.date] """
+    @property
+    def count_minimum(self) -> Optional[int]:
+        return self.count_limits[0]
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, PlotLimits):
-            return False
-        equality = self.value_limits == other.value_limits
-        equality = equality and self.index_limits == other.index_limits
-        equality = equality and self.count_limits == other.count_limits
-        equality = equality and self.depth_limits == other.depth_limits
-        equality = equality and self.date_limits == other.date_limits
-        equality = equality and self.density_limits == other.density_limits
+    @count_minimum.setter
+    def count_minimum(self, value: Optional[int]) -> None:
+        self.count_limits = (value, self.count_limits[1])
 
-        return equality
+    @property
+    def count_maximum(self) -> Optional[int]:
+        return self.count_limits[1]
 
-    def copyLimitsFrom(self, other: "PlotLimits") -> None:
-        self.value_limits = other.value_limits
-        self.density_limits = other.density_limits
-        self.depth_limits = other.depth_limits
-        self.index_limits = other.index_limits
-        self.date_limits = other.date_limits
-        self.count_limits = other.count_limits
+    @count_maximum.setter
+    def count_maximum(self, value: Optional[int]) -> None:
+        self.count_limits = (self.count_limits[0], value)
+
+    @property
+    def index_minimum(self) -> Optional[int]:
+        return self.index_limits[0]
+
+    @index_minimum.setter
+    def index_minimum(self, value: Optional[int]) -> None:
+        self.index_limits = (value, self.index_limits[1])
+
+    @property
+    def index_maximum(self) -> Optional[int]:
+        return self.index_limits[1]
+
+    @index_maximum.setter
+    def index_maximum(self, value: Optional[int]) -> None:
+        self.index_limits = (self.index_limits[0], value)
+
+    @property
+    def density_minimum(self) -> Optional[Num]:
+        return self.density_limits[0]
+
+    @density_minimum.setter
+    def density_minimum(self, value: Optional[Num]) -> None:
+        self.density_limits = (value, self.density_limits[1])
+
+    @property
+    def density_maximum(self) -> Optional[Num]:
+        return self.density_limits[1]
+
+    @density_maximum.setter
+    def density_maximum(self, value: Optional[Num]) -> None:
+        self.density_limits = (self.density_limits[0], value)
+
+    @property
+    def depth_minimum(self) -> Optional[Num]:
+        return self.depth_limits[0]
+
+    @depth_minimum.setter
+    def depth_minimum(self, value: Optional[Num]) -> None:
+        self.depth_limits = (value, self.depth_limits[1])
+
+    @property
+    def depth_maximum(self) -> Optional[Num]:
+        return self.depth_limits[1]
+
+    @depth_maximum.setter
+    def depth_maximum(self, value: Optional[Num]) -> None:
+        self.depth_limits = (self.depth_limits[0], value)
+
+    @property
+    def date_minimum(self) -> Optional[date]:
+        return self.date_limits[0]
+
+    @date_minimum.setter
+    def date_minimum(self, value: Optional[date]) -> None:
+        self.date_limits = (value, self.date_limits[1])
+
+    @property
+    def date_maximum(self) -> Optional[date]:
+        return self.date_limits[1]
+
+    @date_maximum.setter
+    def date_maximum(self, value: Optional[date]) -> None:
+        self.date_limits = (self.date_limits[0], value)

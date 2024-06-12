@@ -1,6 +1,5 @@
 import datetime
-
-import pytest
+from copy import copy
 
 from ert.gui.plottery import PlotLimits
 
@@ -36,31 +35,12 @@ def test_plot_limits():
     plot_limits = PlotLimits()
     limit_names = ["value", "index", "count", "density", "depth", "date"]
 
-    non_numbers = [
-        "string",
-        datetime.date(2001, 1, 1),
-        "3.0",
-        "1e-5",
-        "-5.5",
-        "-.5",
-    ]
-
     positive_floats = [1.0, 1.5, 3.1415, 1e10, 5.2e-7]
     negative_floats = [-1.0, -1.5, -3.1415, -1e10, -5.2e-7]
     positive_ints = [1, 5, 1000]
     negative_ints = [-1, -5, -1000]
 
-    non_dates = ["string", "3.4", "2001-01-01", datetime.time()]
-    dates = [datetime.date(2001, 1, 1), datetime.datetime(2010, 3, 3)]
-
-    setter_should_fail_values = {
-        "value": non_numbers + dates,
-        "index": non_numbers + positive_floats + negative_floats + dates,
-        "depth": non_numbers + negative_floats + negative_ints + negative_ints,
-        "count": non_numbers + negative_ints + negative_floats + positive_floats,
-        "density": non_numbers + negative_floats + negative_ints,
-        "date": non_dates,
-    }
+    dates = [datetime.date(2001, 1, 1), datetime.date(2010, 3, 3)]
 
     setter_should_succeed_values = {
         "value": positive_floats + negative_floats + positive_ints + negative_ints,
@@ -79,18 +59,6 @@ def test_plot_limits():
         setattr(plot_limits, f"{attribute_name}_minimum", None)
         setattr(plot_limits, f"{attribute_name}_maximum", None)
         setattr(plot_limits, f"{attribute_name}_limits", (None, None))
-
-        with pytest.raises(TypeError):
-            setattr(plot_limits, f"{attribute_name}_limits", None)
-
-        for value in setter_should_fail_values[attribute_name]:
-            with pytest.raises((TypeError, ValueError)):
-                setattr(plot_limits, f"{attribute_name}_minimum", value)
-
-            with pytest.raises((TypeError, ValueError)):
-                setattr(plot_limits, f"{attribute_name}_maximum", value)
-
-            assert getattr(plot_limits, f"{attribute_name}_limits") == (None, None)
 
         for value in setter_should_succeed_values[attribute_name]:
             setattr(plot_limits, f"{attribute_name}_minimum", value)
@@ -115,11 +83,12 @@ def test_copy_plot_limits():
     plot_limits.count_limits = 5, 6
     plot_limits.depth_limits = 7, 8
     plot_limits.density_limits = 9, 10
-    plot_limits.date_limits = datetime.date(1999, 1, 1), datetime.date(1999, 12, 31)
+    plot_limits.date_limits = (
+        datetime.date(1999, 1, 1),
+        datetime.date(1999, 12, 31),
+    )
 
-    copy_of_plot_limits = PlotLimits()
-
-    copy_of_plot_limits.copyLimitsFrom(plot_limits)
+    copy_of_plot_limits = copy(plot_limits)
 
     assert copy_of_plot_limits == plot_limits
 
