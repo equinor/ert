@@ -35,8 +35,6 @@ class PlotTools:
             return limits.date_limits
         elif axis_name == plot_context.DENSITY_AXIS:
             return limits.density_limits
-        elif axis_name == plot_context.DEPTH_AXIS:
-            return limits.depth_limits
         elif axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 
@@ -55,8 +53,6 @@ class PlotTools:
             return limits.date_limits
         elif axis_name == plot_context.DENSITY_AXIS:
             return limits.density_limits
-        elif axis_name == plot_context.DEPTH_AXIS:
-            return limits.depth_limits
         elif axis_name == plot_context.INDEX_AXIS:
             return limits.index_limits
 

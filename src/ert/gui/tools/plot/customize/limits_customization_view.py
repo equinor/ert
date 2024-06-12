@@ -38,7 +38,6 @@ class LimitsStack(StackedInput):
     FLOAT_AXIS = [
         PlotContext.VALUE_AXIS,
         PlotContext.DENSITY_AXIS,
-        PlotContext.DEPTH_AXIS,
     ]
     INT_AXIS = [PlotContext.INDEX_AXIS, PlotContext.COUNT_AXIS]
     NUMBER_AXIS = FLOAT_AXIS + INT_AXIS
@@ -52,10 +51,6 @@ class LimitsStack(StackedInput):
         self.addInput(PlotContext.DATE_AXIS, CustomDateEdit())
         self.addInput(
             PlotContext.DENSITY_AXIS,
-            self.createDoubleLineEdit(minimum=0, placeholder="Default value"),
-        )
-        self.addInput(
-            PlotContext.DEPTH_AXIS,
             self.createDoubleLineEdit(minimum=0, placeholder="Default value"),
         )
         self.addInput(
@@ -169,11 +164,6 @@ class LimitsWidget:
         self._y_minimum_stack.setValue(PlotContext.DATE_AXIS, limits.date_minimum)
         self._y_maximum_stack.setValue(PlotContext.DATE_AXIS, limits.date_maximum)
 
-        self._x_minimum_stack.setValue(PlotContext.DEPTH_AXIS, limits.depth_minimum)
-        self._x_maximum_stack.setValue(PlotContext.DEPTH_AXIS, limits.depth_maximum)
-        self._y_minimum_stack.setValue(PlotContext.DEPTH_AXIS, limits.depth_minimum)
-        self._y_maximum_stack.setValue(PlotContext.DEPTH_AXIS, limits.depth_maximum)
-
         self._x_minimum_stack.setValue(PlotContext.DENSITY_AXIS, limits.density_minimum)
         self._x_maximum_stack.setValue(PlotContext.DENSITY_AXIS, limits.density_maximum)
         self._y_minimum_stack.setValue(PlotContext.DENSITY_AXIS, limits.density_minimum)
@@ -210,8 +200,6 @@ class LimitsWidget:
             self._limits.count_limits = minimum, maximum
         elif axis_name == PlotContext.DENSITY_AXIS:
             self._limits.density_limits = minimum, maximum
-        elif axis_name == PlotContext.DEPTH_AXIS:
-            self._limits.depth_limits = minimum, maximum
         elif axis_name == PlotContext.DATE_AXIS:
             self._limits.date_limits = minimum, maximum
         elif axis_name == PlotContext.INDEX_AXIS:

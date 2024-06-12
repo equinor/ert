@@ -80,7 +80,6 @@ def test_plot_config():
 
     limits = PlotLimits()
     limits.count_limits = 1, 2
-    limits.depth_limits = 3, 4
     limits.density_limits = 5, 6
     limits.date_limits = datetime.date(2005, 2, 5), datetime.date(2006, 2, 6)
     limits.index_limits = 7, 8

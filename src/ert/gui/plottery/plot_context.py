@@ -15,13 +15,11 @@ class PlotContext:
     INDEX_AXIS = "INDEX"
     COUNT_AXIS = "COUNT"
     DENSITY_AXIS = "DENSITY"
-    DEPTH_AXIS = "DEPTH"
     AXIS_TYPES = [
         UNKNOWN_AXIS,
         COUNT_AXIS,
         DATE_AXIS,
         DENSITY_AXIS,
-        DEPTH_AXIS,
         INDEX_AXIS,
         VALUE_AXIS,
     ]
