@@ -590,47 +590,6 @@ The SURFACE keyword can be used to work with surface from RMS in the irap
 format.
 For detailed description and examples see :ref:`here <surface>`.
 
-**Regarding templates:**
-
-You may supply the arguments TEMPLATE:/template/file and KEY:MaGiCKEY. The
-template file is an arbitrary existing text file, and KEY is a magic string
-found in this file. When ERT is running the magic string is replaced with
-parameter data when the ECLIPSE_FILE is written to the directory where the
-simulation is run from. Consider for example the following configuration:
-
-::
-
-	TEMPLATE:/some/file   KEY:Magic123
-
-The template file can look like this (only the Magic123 is special):
-
-::
-
-   Header line1
-   Header line2
-   ============
-   Magic123
-   ============
-   Footer line1
-   Footer line2
-
-When ERT is running the string Magic123 is replaced with parameter values, and
-the resulting file will look like this:
-
-::
-
-	Header line1
-	Header line2
-	============
-	1.6723
-	5.9731
-	4.8881
-	.....
-	============
-	Footer line1
-	Footer line2
-
-
 Simulated data
 --------------
 
