@@ -42,18 +42,6 @@ disk area such that data from one script can be dumped on disk and picked up by
 the next job. More on the current and future data model and run environment of
 the forward model can be found in the :doc:`forward_model`.
 
-Template model
-~~~~~~~~~~~~~~
-
-ERT's domain is to facilitate modelling work under uncertainty. In particular,
-multiple of the input variables to the forward model have an uncertainty
-attached to them. We call these variables the *parameters* of the model and let
-each parameter be represented by a probability distribution. The model we
-obtain by combining the forward model and parameter distributions is referred
-to as the *template model*. Notice that the template model is not a
-deterministic model any more, but a model that tries to capture the uncertainty
-of your current knowledge.
-
 Realisation
 ~~~~~~~~~~~
 
