@@ -6,7 +6,7 @@ import os
 import shutil
 import time
 import uuid
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
 from typing import (
@@ -638,8 +638,6 @@ class BaseRunModel:
                 shutil.rmtree(run_path)
 
     def validate(self) -> None:
-        errors = []
-
         active_mask = self._simulation_arguments.active_realizations
         active_realizations_count = len(
             [i for i in range(len(active_mask)) if active_mask[i]]
@@ -650,46 +648,9 @@ class BaseRunModel:
         if active_realizations_count < min_realization_count:
             raise ValueError(
                 f"Number of active realizations ({active_realizations_count}) is less "
-                f"than the specified MIN_REALIZATIONS in the config file "
+                f"than the specified MIN_REALIZATIONS"
                 f"({min_realization_count})"
             )
-
-        current_ensemble = self._simulation_arguments.current_ensemble
-        target_ensemble = self._simulation_arguments.target_ensemble
-
-        if current_ensemble is not None:
-            with suppress(KeyError):
-                ensemble = self._storage.get_ensemble_by_name(current_ensemble)
-                if ensemble.ensemble_size != self._simulation_arguments.ensemble_size:
-                    errors.append(
-                        f"- Existing ensemble: '{current_ensemble}' was created with a "
-                        f"different ensemble size than the one specified in the ert "
-                        f"configuration file \n ({ensemble.ensemble_size} "
-                        f" != {self._simulation_arguments.ensemble_size})"
-                    )
-        if target_ensemble is not None:
-            if target_ensemble == current_ensemble:
-                errors.append(
-                    f"- Target ensemble and current ensemble can not have the same name. "
-                    f"They were both: {current_ensemble}"
-                )
-
-            if "%d" in target_ensemble:
-                num_iterations = self._simulation_arguments.num_iterations
-                for i in range(num_iterations):
-                    with suppress(KeyError):
-                        self._storage.get_ensemble_by_name(
-                            target_ensemble % i  # noqa: S001
-                        )
-                        errors.append(
-                            f"- Target ensemble: {target_ensemble % i} exists"  # noqa: S001
-                        )
-            else:
-                with suppress(KeyError):
-                    self._storage.get_ensemble_by_name(target_ensemble)
-                    errors.append(f"- Target ensemble: {target_ensemble} exists")
-        if errors:
-            raise ValueError("\n".join(errors))
 
     def _evaluate_and_postprocess(
         self,
