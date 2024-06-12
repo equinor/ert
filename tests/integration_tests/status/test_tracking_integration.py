@@ -111,8 +111,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "",
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "poly_runpath_file",
                 "--realizations",
                 "0,1",
                 "poly.ert",
@@ -128,8 +126,6 @@ def check_expression(original, path_expression, expected, msg_start):
             '    import os\n    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)',  # noqa 501
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--target-case",
-                "poly_runpath_file",
                 "--realizations",
                 "0,1",
                 "poly.ert",

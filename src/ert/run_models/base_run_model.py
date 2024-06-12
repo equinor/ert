@@ -142,6 +142,8 @@ class BaseRunModel:
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
         phase_count: int = 1,
+        number_of_iterations: int = 1,
+        start_iteration: int = 0,
     ):
         """
 
@@ -164,7 +166,9 @@ class BaseRunModel:
         self._exception: Optional[Exception] = None
         self._error_messages: MutableSequence[str] = []
         self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: List[bool] = []
+        self._initial_realizations_mask: List[bool] = copy.copy(
+            simulation_arguments.active_realizations
+        )
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
@@ -174,11 +178,11 @@ class BaseRunModel:
         self.reset()
         # mapping from iteration number to ensemble id
         self._iter_map: Dict[int, str] = {}
-        self.validate()
         self._context_env_keys: List[str] = []
-        self.random_seed: int = _seed_sequence(self._simulation_arguments.random_seed)
+        self.random_seed: int = _seed_sequence(simulation_arguments.random_seed)
         self.rng = np.random.default_rng(self.random_seed)
         self.substitution_list = config.substitution_list
+
         self.run_paths = Runpaths(
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
@@ -188,6 +192,15 @@ class BaseRunModel:
         self._iter_snapshot: Dict[int, Snapshot] = {}
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
+        # This holds state about the run model
+        self.minimum_required_realizations = (
+            simulation_arguments.minimum_required_realizations
+        )
+        self.prev_successful_realizations: int = 0
+        self.active_realizations = copy.copy(simulation_arguments.active_realizations)
+        self.number_of_iterations = number_of_iterations
+        self.start_iteration = start_iteration
+        self.validate()
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
@@ -253,10 +266,8 @@ class BaseRunModel:
 
     def restart(self) -> None:
         active_realizations = self._create_mask_from_failed_realizations()
-        self._simulation_arguments.active_realizations = active_realizations
-        self._simulation_arguments.prev_successful_realizations += (
-            self._count_successful_realizations()
-        )
+        self.active_realizations = active_realizations
+        self.prev_successful_realizations += self._count_successful_realizations()
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -317,9 +328,6 @@ class BaseRunModel:
             self.stop_time = None
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
-                self._initial_realizations_mask = (
-                    self._simulation_arguments.active_realizations
-                )
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                 )
@@ -567,7 +575,7 @@ class BaseRunModel:
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
             self._simulation_arguments.stop_long_running,
-            self._simulation_arguments.minimum_required_realizations,
+            self.minimum_required_realizations,
         )
 
         for iens, run_arg in enumerate(run_context):
@@ -585,11 +593,10 @@ class BaseRunModel:
     @property
     def paths(self) -> List[str]:
         run_paths = []
-        start_iteration = getattr(self._simulation_arguments, "start_iteration", 0)
-        number_of_iterations = self._simulation_arguments.num_iterations
-        active_mask = self._simulation_arguments.active_realizations
+        number_of_iterations = self.number_of_iterations
+        active_mask = self.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        for iteration in range(start_iteration, number_of_iterations):
+        for iteration in range(self.start_iteration, number_of_iterations):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 
@@ -609,12 +616,12 @@ class BaseRunModel:
                 shutil.rmtree(run_path)
 
     def validate(self) -> None:
-        active_mask = self._simulation_arguments.active_realizations
+        active_mask = self.active_realizations
         active_realizations_count = len(
             [i for i in range(len(active_mask)) if active_mask[i]]
         )
 
-        min_realization_count = self._simulation_arguments.minimum_required_realizations
+        min_realization_count = self.minimum_required_realizations
 
         if active_realizations_count < min_realization_count:
             raise ValueError(

@@ -129,7 +129,7 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
             "--disable-monitor",
             "poly-no-gen-kw.ert",
             "--target-case",
-            "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d",
+            "testcase-%d",
         )
 
 
@@ -256,7 +256,7 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
             "--realizations",
             "0-19",
             "--target-case",
-            "testcase" if mode is ENSEMBLE_SMOOTHER_MODE else "testcase-%d",
+            "testcase-%d",
         )
 
 
@@ -606,7 +606,7 @@ def test_ensemble_evaluator():
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
         "--target-case",
-        "poly_runpath_file",
+        "poly_runpath_file_%d",
         "--realizations",
         "1,2,4,8,16,32,64",
         "poly.ert",
@@ -650,7 +650,9 @@ def test_es_mda(snapshot):
 @pytest.mark.parametrize(
     "mode, target",
     [
-        pytest.param(ENSEMBLE_SMOOTHER_MODE, "target", id=f"{ENSEMBLE_SMOOTHER_MODE}"),
+        pytest.param(
+            ENSEMBLE_SMOOTHER_MODE, "target_%d", id=f"{ENSEMBLE_SMOOTHER_MODE}"
+        ),
         pytest.param(
             ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
             "iter-%d",
@@ -680,8 +682,6 @@ def test_ensemble_evaluator_disable_monitoring():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
-        "--target-case",
-        "poly_runpath_file",
         "--realizations",
         "1,2,4,8,16,32,64",
         "poly.ert",
@@ -869,13 +869,13 @@ def test_exclude_parameter_from_update():
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
         "--target-case",
-        "iter-1",
+        "iter-%d",
         "--realizations",
         "0-5",
         "poly.ert",
     )
     with open_storage("storage", "r") as storage:
-        prior = storage.get_ensemble_by_name("default")
+        prior = storage.get_ensemble_by_name("iter-0")
         posterior = storage.get_ensemble_by_name("iter-1")
         assert prior.load_parameters(
             "ANOTHER_KW", tuple(range(5))

@@ -30,7 +30,7 @@ from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
     from ert.run_models.run_arguments import (
-        RunArgumentsType,
+        SimulationArguments,
     )
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
@@ -102,7 +102,7 @@ class LocalExperiment(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[RunArgumentsType] = None,
+        simulation_arguments: Optional[SimulationArguments] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         """
@@ -122,7 +122,7 @@ class LocalExperiment(BaseMode):
             List of response configurations.
         observations : dict of str: xr.Dataset, optional
             Observations dictionary.
-        simulation_arguments : RunArgumentsType, optional
+        simulation_arguments : SimulationArguments, optional
             Simulation arguments for the experiment.
         name : str, optional
             Experiment name. Defaults to current date if None.

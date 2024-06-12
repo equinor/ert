@@ -90,27 +90,20 @@ def test_argparse_exec_ensemble_experiment_faulty_realizations():
         )
 
 
-def test_argparse_exec_ensemble_smoother_valid_case():
-    parsed = ert_parser(
-        None,
-        [ENSEMBLE_SMOOTHER_MODE, "--target-case", "some_case", "path/to/config.ert"],
-    )
-    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
-    assert parsed.target_ensemble == "some_case"
-    assert parsed.func.__name__ == "run_cli"
-
-
-def test_argparse_exec_iterative_ensemble_smoother_valid_case():
+@pytest.mark.parametrize(
+    "mode", [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_SMOOTHER_MODE]
+)
+def test_argparse_exec_smoother_valid_case(mode):
     parsed = ert_parser(
         None,
         [
-            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+            mode,
             "--target-case",
             "some_case_%d",
             "path/to/config.ert",
         ],
     )
-    assert parsed.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE
+    assert parsed.mode == mode
     assert parsed.target_ensemble == "some_case_%d"
     assert parsed.func.__name__ == "run_cli"
 
@@ -156,23 +149,6 @@ def test_argparse_exec_workflow():
     parsed = ert_parser(None, [WORKFLOW_MODE, "workflow_name", "path/to/config.ert"])
     assert parsed.mode == WORKFLOW_MODE
     assert parsed.name == "workflow_name"
-    assert parsed.func.__name__ == "run_cli"
-
-
-def test_argparse_exec_ensemble_smoother_current_ensemble():
-    parsed = ert_parser(
-        None,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--current-case",
-            "test_case",
-            "--target-case",
-            "test_case_smoother",
-            "path/to/config.ert",
-        ],
-    )
-    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
-    assert parsed.current_ensemble == "test_case"
     assert parsed.func.__name__ == "run_cli"
 
 

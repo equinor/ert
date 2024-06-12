@@ -45,6 +45,7 @@ class EnsembleSmoother(BaseRunModel):
             queue_config,
             status_queue,
             phase_count=2,
+            number_of_iterations=2,
         )
         self.es_settings = es_settings
         self.update_settings = update_settings
@@ -62,7 +63,7 @@ class EnsembleSmoother(BaseRunModel):
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg)
-        ensemble_format = self._simulation_arguments.target_ensemble
+        ensemble_format = self.simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
@@ -81,9 +82,7 @@ class EnsembleSmoother(BaseRunModel):
         prior_context = RunContext(
             ensemble=prior,
             runpaths=self.run_paths,
-            initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
-            ),
+            initial_mask=np.array(self.active_realizations, dtype=bool),
             iteration=0,
         )
 

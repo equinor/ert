@@ -60,8 +60,6 @@ def test_setup_single_test_run(poly_case, storage):
         MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model.simulation_arguments.ensemble_id == "current-ensemble"
-    assert model.simulation_arguments.target_ensemble is None
     assert model._storage == storage
     assert model.ert_config == poly_case
 
@@ -79,8 +77,6 @@ def test_setup_single_test_run_with_ensemble(poly_case, storage):
         MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model.simulation_arguments.ensemble_id == "current-ensemble"
-    assert model.simulation_arguments.target_ensemble is None
     assert model._storage == storage
     assert model.ert_config == poly_case
 
@@ -117,10 +113,8 @@ def test_setup_ensemble_smoother(poly_case, storage):
         poly_case, storage, args, MagicMock(), MagicMock()
     )
     assert isinstance(model, EnsembleSmoother)
-    assert model.simulation_arguments.current_ensemble == "default"
-    assert model.simulation_arguments.target_ensemble == "test_case"
     assert (
-        model.simulation_arguments.active_realizations
+        model.active_realizations
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
 
@@ -133,6 +127,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
         restart_run=False,
         prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
         experiment_name=None,
+        starting_iteration=0,
     )
 
     model = model_factory._setup_multiple_data_assimilation(
@@ -141,7 +136,7 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
     assert isinstance(model, MultipleDataAssimilation)
     assert model.simulation_arguments.weights == "6,4,2"
     assert (
-        model.simulation_arguments.active_realizations
+        model.active_realizations
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
     )
     assert model.simulation_arguments.target_ensemble == "test_case_%d"
@@ -155,7 +150,6 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
 def test_setup_iterative_ensemble_smoother(poly_case, storage):
     args = Namespace(
         realizations="0-4,7,8",
-        current_ensemble="default",
         target_ensemble="test_case_%d",
         num_iterations="10",
         experiment_name=None,
@@ -167,8 +161,8 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     assert isinstance(model, IteratedEnsembleSmoother)
     assert model.simulation_arguments.target_ensemble == "test_case_%d"
     assert (
-        model.simulation_arguments.active_realizations
+        model.active_realizations
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
-    assert model.simulation_arguments.num_iterations == 10
+    assert model.simulation_arguments.number_of_iterations == 10
     assert poly_case.analysis_config.num_iterations == 10

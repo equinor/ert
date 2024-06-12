@@ -45,6 +45,9 @@ class MultipleDataAssimilation(BaseRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        self.weights = MultipleDataAssimilation.default_weights
+        self.es_settings = es_settings
+        self.update_settings = update_settings
         super().__init__(
             simulation_arguments,
             config,
@@ -52,10 +55,9 @@ class MultipleDataAssimilation(BaseRunModel):
             queue_config,
             status_queue,
             phase_count=2,
+            number_of_iterations=len(self.weights),
+            start_iteration=simulation_arguments.starting_iteration,
         )
-        self.weights = MultipleDataAssimilation.default_weights
-        self.es_settings = es_settings
-        self.update_settings = update_settings
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -93,11 +95,17 @@ class MultipleDataAssimilation(BaseRunModel):
                 prior_context = RunContext(
                     ensemble=prior,
                     runpaths=self.run_paths,
-                    initial_mask=np.array(
-                        self._simulation_arguments.active_realizations, dtype=bool
-                    ),
+                    initial_mask=np.array(self.active_realizations, dtype=bool),
                     iteration=prior.iteration,
                 )
+                self.prev_successful_realizations = (
+                    prior.get_realization_mask_without_failure().sum()
+                )
+                if self.start_iteration != prior.iteration + 1:
+                    raise ValueError(
+                        f"Experiment misconfigured, got starting iteration: {self.start_iteration},"
+                        f"restart iteration = {prior.iteration + 1}"
+                    )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
                     f"Prior ensemble with ID: {id} does not exists"
@@ -122,9 +130,7 @@ class MultipleDataAssimilation(BaseRunModel):
             prior_context = RunContext(
                 ensemble=prior,
                 runpaths=self.run_paths,
-                initial_mask=np.array(
-                    self._simulation_arguments.active_realizations, dtype=bool
-                ),
+                initial_mask=np.array(self.active_realizations, dtype=bool),
                 iteration=prior.iteration,
             )
             sample_prior(
@@ -185,7 +191,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...")
 
-        self.setPhase(iteration_count + 1, "Experiment completed.")
+        self.setPhase(self.number_of_iterations + 1, "Experiment completed.")
 
         return prior_context
 

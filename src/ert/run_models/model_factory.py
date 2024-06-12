@@ -96,6 +96,7 @@ def _setup_single_test_run(
             ensemble_size=1,
             stop_long_running=config.analysis_config.stop_long_running,
             experiment_name=args.experiment_name,
+            active_realizations=[True],
         ),
         config,
         storage,
@@ -239,6 +240,9 @@ def _setup_multiple_data_assimilation(
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble_id=prior_ensemble,
+            starting_iteration=storage.get_ensemble(prior_ensemble).iteration + 1
+            if restart_run
+            else 0,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
@@ -267,7 +271,7 @@ def _setup_iterative_ensemble_smoother(
                 args, config.model_config.num_realizations
             ).tolist(),
             target_ensemble=_iterative_ensemble_format(config, args),
-            num_iterations=_num_iterations(config, args),
+            number_of_iterations=_num_iterations(config, args),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             num_retries_per_iter=config.analysis_config.num_retries_per_iter,

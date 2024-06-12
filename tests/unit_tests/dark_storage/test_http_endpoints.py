@@ -28,7 +28,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     ensemble_json = resp.json()
 
     assert ensemble_json["experiment_id"] == experiment_json[0]["id"]
-    assert ensemble_json["userdata"]["name"] in ("alpha", "beta")
+    assert ensemble_json["userdata"]["name"] in ("iter-0", "iter-1")
     assert ensemble_json["userdata"]["experiment_name"] == experiment_json[0]["name"]
 
 
@@ -45,7 +45,7 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
 
     assert len(ensembles_json) == 2
     assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] in ("alpha", "beta")
+    assert ensembles_json[0]["userdata"]["name"] in ("iter-0", "iter-1")
 
 
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
@@ -72,13 +72,13 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
 
     # Make sure the order is correct
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id1}")
-    if resp.json()["userdata"]["name"] == "beta":
-        # First ensemble is 'beta', switch it so it is 'alpha'
+    if resp.json()["userdata"]["name"] == "iter-1":
+        # First ensemble is 'iter-1', switch it so it is 'iter-0'
         ensemble_id1, ensemble_id2 = ensemble_id2, ensemble_id1
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id1}")
     ensemble_json = resp.json()
-    assert ensemble_json["userdata"]["name"] == "alpha", (
+    assert ensemble_json["userdata"]["name"] == "iter-0", (
         f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
         f"ensemble_json: {json.dumps(ensemble_json, indent=1)}"
     )
@@ -86,7 +86,7 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id2}")
     ensemble_json2 = resp.json()
 
-    assert ensemble_json2["userdata"]["name"] == "beta", (
+    assert ensemble_json2["userdata"]["name"] == "iter-1", (
         f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
         f"ensemble_json2: {json.dumps(ensemble_json2, indent=1)}"
     )

@@ -387,20 +387,18 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         alternative_option="--current-ensemble",
         dest="current_ensemble",
         default="default",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --current-ensemble instead.",
+        help="Deprecated: This argument is deprecated and has no effect.",
     )
     ensemble_smoother_parser.add_argument(
         "--current-ensemble",
         type=valid_name,
         default="default",
-        help="Name of the ensemble where the results for the experiment "
-        "using the prior parameters will be stored.",
+        help="This argument is deprecated and has no effect.",
     )
     ensemble_smoother_parser.add_argument(
         "--target-case",
-        type=valid_name,
-        default="posterior",
+        type=valid_name_format,
+        default="iter-%d",
         action=DeprecatedAction,
         alternative_option="--target-ensemble",
         dest="target_ensemble",
@@ -409,8 +407,8 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     )
     ensemble_smoother_parser.add_argument(
         "--target-ensemble",
-        type=valid_name,
-        default="posterior",
+        type=valid_name_format,
+        default="iter-%d",
         dest="target_ensemble",
         help="Name of the ensemble where the results for the "
         "updated parameters will be stored.",

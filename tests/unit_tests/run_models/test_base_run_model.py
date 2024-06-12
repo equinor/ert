@@ -8,8 +8,6 @@ from ert.config import ErtConfig, ModelConfig
 from ert.run_context import RunContext
 from ert.run_models import BaseRunModel
 from ert.run_models.run_arguments import (
-    EnsembleExperimentRunArguments,
-    ESMDARunArguments,
     SimulationArguments,
 )
 from ert.runpaths import Runpaths
@@ -24,6 +22,7 @@ def base_arguments():
         ensemble_size=1,
         stop_long_running=False,
         experiment_name="no-name",
+        active_realizations=[True],
     )
 
 
@@ -103,28 +102,29 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    simulation_arguments = ESMDARunArguments(
+    simulation_arguments = SimulationArguments(
         random_seed=None,
         active_realizations=active_mask,
-        prior_ensemble_id="",
-        target_ensemble=None,
-        weights="1,1,1",
-        restart_run=False,
-        start_iteration=start_iteration,
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
         experiment_name="no-name",
     )
-    simulation_arguments.num_iterations = number_of_iterations
-
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = SubstitutionList()
     config = MagicMock()
     config.model_config = model_config
     config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, config, None, None, None)
+    brm = BaseRunModel(
+        simulation_arguments,
+        config,
+        None,
+        None,
+        None,
+        start_iteration=start_iteration,
+        number_of_iterations=number_of_iterations,
+    )
     brm.facade = MagicMock(
         run_path=run_path,
     )
@@ -140,11 +140,9 @@ def test_check_if_runpath_exists(
     "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
 )
 def test_delete_run_path(run_path_format, active_realizations):
-    simulation_arguments = EnsembleExperimentRunArguments(
+    simulation_arguments = SimulationArguments(
         random_seed=None,
         active_realizations=active_realizations,
-        ensemble_name="Case_Name",
-        target_ensemble=None,
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,
@@ -167,16 +165,14 @@ def test_delete_run_path(run_path_format, active_realizations):
     share_path = Path("share")
     os.makedirs(share_path)
     model_config = ModelConfig(runpath_format_string=run_path_format)
-    subs_list = SubstitutionList()
-    storage = MagicMock()
-    ensemble = MagicMock()
-    ensemble.ensemble_size = 1
-    storage.get_ensemble_by_name.return_value = ensemble
+    subs_list = SubstitutionList({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
     config = MagicMock()
     config.model_config = model_config
     config.substitution_list = subs_list
 
-    brm = BaseRunModel(simulation_arguments, config, storage, None, None)
+    brm = BaseRunModel(
+        simulation_arguments, config, MagicMock(), MagicMock(), MagicMock()
+    )
     brm.rm_run_path()
     assert not any(path.exists() for path in expected_removed)
     assert all(path.parent.exists() for path in expected_removed)

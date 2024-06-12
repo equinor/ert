@@ -43,14 +43,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        super().__init__(
-            simulation_arguments,
-            config,
-            storage,
-            queue_config,
-            status_queue,
-            phase_count=2,
-        )
         self.support_restart = False
         self.analysis_config = analysis_config
         self.update_settings = update_settings
@@ -60,6 +52,16 @@ class IteratedEnsembleSmoother(BaseRunModel):
             min_steplength=analysis_config.ies_min_steplength,
             max_steplength=analysis_config.ies_max_steplength,
             halflife=analysis_config.ies_dec_steplength,
+        )
+
+        super().__init__(
+            simulation_arguments,
+            config,
+            storage,
+            queue_config,
+            status_queue,
+            phase_count=2,
+            number_of_iterations=simulation_arguments.number_of_iterations,
         )
 
         # Initialize sies_smoother to None
@@ -111,7 +113,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        iteration_count = self.simulation_arguments.num_iterations
+        iteration_count = self.number_of_iterations
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
 
@@ -138,9 +140,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
 
-        initial_mask = np.array(
-            self._simulation_arguments.active_realizations, dtype=bool
-        )
+        initial_mask = np.array(self.active_realizations, dtype=bool)
         prior_context = RunContext(
             ensemble=prior,
             runpaths=self.run_paths,

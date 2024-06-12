@@ -120,15 +120,11 @@ if __name__ == "__main__":
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
             "--disable-monitor",
-            "--current-case",
-            "prior",
-            "--target-case",
-            "smoother_update",
             "config.ert",
         )
         with open_storage(tmpdir / "storage") as storage:
-            prior = storage.get_ensemble_by_name("prior")
-            posterior = storage.get_ensemble_by_name("smoother_update")
+            prior = storage.get_ensemble_by_name("iter-0")
+            posterior = storage.get_ensemble_by_name("iter-1")
             prior_param = (
                 prior.load_parameters("MY_PARAM", list(range(5)))["values"]
                 .values.reshape(5, 2 * 3)
@@ -271,9 +267,5 @@ def run_poly():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
-        "--current-case",
-        "prior",
-        "--target-case",
-        "smoother_update",
         "config.ert",
     )
