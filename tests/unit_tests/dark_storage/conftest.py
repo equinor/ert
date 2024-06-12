@@ -33,10 +33,6 @@ def poly_example_tmp_dir_shared(
             [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--disable-monitor",
-                "--current-case",
-                "alpha",
-                "--target-case",
-                "beta",
                 "--realizations",
                 "1,2,4",
                 "poly.ert",

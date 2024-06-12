@@ -37,7 +37,7 @@ from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
-    from ert.run_models.run_arguments import RunArgumentsType
+    from ert.run_models.run_arguments import SimulationArguments
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class LocalStorage(BaseMode):
 
         return self._experiments[uuid]
 
-    def get_ensemble(self, uuid: UUID) -> LocalEnsemble:
+    def get_ensemble(self, uuid: Union[UUID, str]) -> LocalEnsemble:
         """
         Retrieves an ensemble by UUID.
 
@@ -160,7 +160,8 @@ class LocalStorage(BaseMode):
         local_ensemble : LocalEnsemble
             The ensemble associated with the given UUID.
         """
-
+        if isinstance(uuid, str):
+            uuid = UUID(uuid)
         return self._ensembles[uuid]
 
     def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
@@ -297,7 +298,7 @@ class LocalStorage(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[RunArgumentsType] = None,
+        simulation_arguments: Optional[SimulationArguments] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         """
@@ -311,7 +312,7 @@ class LocalStorage(BaseMode):
             The responses for the experiment.
         observations : dict of str to Dataset, optional
             The observations for the experiment.
-        simulation_arguments : RunArgumentsType, optional
+        simulation_arguments : SimulationArguments, optional
             The simulation arguments for the experiment.
         name : str, optional
             The name of the experiment.

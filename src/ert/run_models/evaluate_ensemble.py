@@ -65,9 +65,7 @@ class EvaluateEnsemble(BaseRunModel):
         prior_context = RunContext(
             ensemble=ensemble,
             runpaths=self.run_paths,
-            initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
-            ),
+            initial_mask=np.array(self.active_realizations, dtype=bool),
             iteration=ensemble.iteration,
         )
 

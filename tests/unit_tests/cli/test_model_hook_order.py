@@ -94,6 +94,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         ensemble_size=1,
         stop_long_running=False,
         experiment_name="no-name",
+        starting_iteration=0,
     )
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
@@ -138,7 +139,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         random_seed=None,
         active_realizations=[True],
         target_ensemble="target_%d",
-        num_iterations=1,
+        number_of_iterations=1,
         num_retries_per_iter=1,
         minimum_required_realizations=0,
         ensemble_size=1,

@@ -72,9 +72,7 @@ class EnsembleExperiment(BaseRunModel):
         prior_context = RunContext(
             ensemble=ensemble,
             runpaths=self.run_paths,
-            initial_mask=np.array(
-                self._simulation_arguments.active_realizations, dtype=bool
-            ),
+            initial_mask=np.array(self.active_realizations, dtype=bool),
         )
         sample_prior(
             prior_context.ensemble,
@@ -100,7 +98,7 @@ class EnsembleExperiment(BaseRunModel):
         return "Ensemble experiment"
 
     def check_if_runpath_exists(self) -> bool:
-        active_mask = self._simulation_arguments.active_realizations
+        active_mask = self.active_realizations
         active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
         run_paths = self.run_paths.get_paths(active_realizations, 0)
         return any(Path(run_path).exists() for run_path in run_paths)

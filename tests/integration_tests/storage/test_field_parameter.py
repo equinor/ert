@@ -106,16 +106,12 @@ if __name__ == "__main__":
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
             "--disable-monitor",
-            "--current-case",
-            "prior",
-            "--target-case",
-            "smoother_update",
             "config.ert",
         )
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path, mode="w") as storage:
-            prior = storage.get_ensemble_by_name("prior")
-            posterior = storage.get_ensemble_by_name("smoother_update")
+            prior = storage.get_ensemble_by_name("iter-0")
+            posterior = storage.get_ensemble_by_name("iter-1")
 
             prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
             assert len(prior_result.x) == NCOL
@@ -237,16 +233,12 @@ if __name__ == "__main__":
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
             "--disable-monitor",
-            "--current-case",
-            "prior",
-            "--target-case",
-            "smoother_update",
             "config.ert",
         )
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path) as storage:
-            prior = storage.get_ensemble_by_name("prior")
-            posterior = storage.get_ensemble_by_name("smoother_update")
+            prior = storage.get_ensemble_by_name("iter-0")
+            posterior = storage.get_ensemble_by_name("iter-1")
 
             prior_result = prior.load_parameters("MY_PARAM", list(range(realizations)))[
                 "values"

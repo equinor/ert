@@ -26,6 +26,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
         ensemble_size=1,
         stop_long_running=True,
         experiment_name="no-name",
+        starting_iteration=0,
     )
     ens_mock = MagicMock()
     ens_mock.iteration = 0

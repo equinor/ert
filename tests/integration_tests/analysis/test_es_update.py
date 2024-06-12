@@ -68,19 +68,15 @@ def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
-        "--current-case",
-        "default",
-        "--target-case",
-        "target",
         "--realizations",
         "1-50",
         "poly.ert",
     )
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
-        prior_ensemble = storage.get_ensemble_by_name("default")
+        prior_ensemble = storage.get_ensemble_by_name("iter-0")
         df_default = prior_ensemble.load_all_gen_kw_data()
-        posterior_ensemble = storage.get_ensemble_by_name("target")
+        posterior_ensemble = storage.get_ensemble_by_name("iter-1")
         df_target = posterior_ensemble.load_all_gen_kw_data()
 
         # The std for the ensemble should decrease
@@ -144,16 +140,14 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
         "snake_oil_surface.ert",
-        "--target-case",
-        "es_udpate",
     )
 
     ert_config = ErtConfig.from_file("snake_oil_surface.ert")
 
     storage = open_storage(ert_config.ens_path)
 
-    ens_prior = storage.get_ensemble_by_name("default")
-    ens_posterior = storage.get_ensemble_by_name("es_udpate")
+    ens_prior = storage.get_ensemble_by_name("iter-0")
+    ens_posterior = storage.get_ensemble_by_name("iter-1")
 
     # Check that surfaces defined in INIT_FILES are not changed by ERT
     surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
@@ -184,15 +178,13 @@ def test_update_multiple_param():
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
         "snake_oil.ert",
-        "--target-case",
-        "posterior",
     )
 
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    prior_ensemble = storage.get_ensemble_by_name("default")
-    posterior_ensemble = storage.get_ensemble_by_name("posterior")
+    prior_ensemble = storage.get_ensemble_by_name("iter-0")
+    posterior_ensemble = storage.get_ensemble_by_name("iter-1")
 
     prior_array = _all_parameters(prior_ensemble, list(range(10)))
     posterior_array = _all_parameters(posterior_ensemble, list(range(10)))
@@ -482,15 +474,13 @@ def test_that_update_works_with_failed_realizations():
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
         "poly.ert",
-        "--target-case",
-        "posterior",
     )
 
     ert_config = ErtConfig.from_file("poly.ert")
 
     with open_storage(ert_config.ens_path) as storage:
-        prior = storage.get_ensemble_by_name("default")
-        posterior = storage.get_ensemble_by_name("posterior")
+        prior = storage.get_ensemble_by_name("iter-0")
+        posterior = storage.get_ensemble_by_name("iter-1")
 
         assert all(
             posterior.get_ensemble_state()[idx]
