@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.cli import model_factory
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,
@@ -12,6 +11,7 @@ from ert.run_models import (
     IteratedEnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
+    model_factory,
 )
 
 
