@@ -135,11 +135,6 @@ class ErtPluginManager(pluggy.PluginManager):
             hook=self.hook.flow_config_path, config_name="flow"
         )
 
-    def get_rms_config_path(self) -> Optional[str]:
-        return ErtPluginManager._evaluate_config_hook(
-            hook=self.hook.rms_config_path, config_name="rms"
-        )
-
     def _site_config_lines(self) -> List[str]:
         try:
             plugin_responses = self.hook.site_config_lines()
@@ -171,7 +166,6 @@ class ErtPluginManager(pluggy.PluginManager):
             "ECL100_SITE_CONFIG": self.get_ecl100_config_path(),
             "ECL300_SITE_CONFIG": self.get_ecl300_config_path(),
             "FLOW_SITE_CONFIG": self.get_flow_config_path(),
-            "RMS_SITE_CONFIG": self.get_rms_config_path(),
         }
         config_lines = [
             f"SETENV {env_var} {env_value}"

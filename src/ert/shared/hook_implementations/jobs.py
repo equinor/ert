@@ -51,9 +51,6 @@ def _get_job_category(job_name: str) -> str:
     if job_name in {"ECLIPSE100", "ECLIPSE300", "FLOW"}:
         return "simulators.reservoir"
 
-    if job_name == "RMS":
-        return "modelling.reservoir"
-
     if job_name == "TEMPLATE_RENDER":
         return "utility.templating"
 

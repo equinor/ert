@@ -27,10 +27,3 @@ def flow_config_path() -> PluginResponse[str]:  # type: ignore
     """
     :return: Path to flow config file
     """
-
-
-@hook_specification(firstresult=True)
-def rms_config_path() -> PluginResponse[str]:  # type: ignore
-    """
-    :return: Path to flow config file
-    """
