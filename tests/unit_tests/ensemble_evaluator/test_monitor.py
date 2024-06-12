@@ -64,9 +64,11 @@ async def test_unexpected_close(unused_tcp_port):
     )
 
     set_when_done = asyncio.Event()
+    socket_closed = asyncio.Event()
 
     async def mock_ws_event_handler(websocket):
         await websocket.close()
+        socket_closed.set()
 
     websocket_server_task = asyncio.create_task(
         _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
@@ -76,6 +78,7 @@ async def test_unexpected_close(unused_tcp_port):
         # but no attempt on resubmitting
         # since connection closed via websocket.close
         with pytest.raises(ConnectionClosedOK):
+            await socket_closed.wait()
             await monitor.signal_done()
 
     set_when_done.set()
