@@ -62,6 +62,7 @@ class EnsembleSmoother(BaseRunModel):
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg)
+        ensemble_format = self._simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
@@ -71,11 +72,10 @@ class EnsembleSmoother(BaseRunModel):
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-        prior_name = self._simulation_arguments.current_ensemble
         prior = self._storage.create_ensemble(
             experiment,
             ensemble_size=self._simulation_arguments.ensemble_size,
-            name=prior_name,
+            name=ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_context = RunContext(
@@ -114,13 +114,12 @@ class EnsembleSmoother(BaseRunModel):
                 msg="Creating posterior ensemble..",
             )
         )
-        target_ensemble_format = self._simulation_arguments.target_ensemble
         posterior_context = RunContext(
             ensemble=self._storage.create_ensemble(
                 experiment,
                 ensemble_size=prior.ensemble_size,
                 iteration=1,
-                name=target_ensemble_format,
+                name=ensemble_format % 1,
                 prior_ensemble=prior,
             ),
             runpaths=self.run_paths,

@@ -52,8 +52,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     minimum_args = ESRunArguments(
         random_seed=None,
         active_realizations=[True],
-        current_ensemble="default",
-        target_ensemble="smooth",
+        target_ensemble="smooth_%d",
         minimum_required_realizations=0,
         ensemble_size=1,
         stop_long_running=False,

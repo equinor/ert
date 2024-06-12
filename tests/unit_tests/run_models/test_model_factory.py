@@ -60,7 +60,7 @@ def test_setup_single_test_run(poly_case, storage):
         MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model.simulation_arguments.current_ensemble == "current-ensemble"
+    assert model.simulation_arguments.ensemble_id == "current-ensemble"
     assert model.simulation_arguments.target_ensemble is None
     assert model._storage == storage
     assert model.ert_config == poly_case
@@ -79,7 +79,7 @@ def test_setup_single_test_run_with_ensemble(poly_case, storage):
         MagicMock(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model.simulation_arguments.current_ensemble == "current-ensemble"
+    assert model.simulation_arguments.ensemble_id == "current-ensemble"
     assert model.simulation_arguments.target_ensemble is None
     assert model._storage == storage
     assert model.ert_config == poly_case

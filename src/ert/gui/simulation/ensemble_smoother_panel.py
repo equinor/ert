@@ -26,7 +26,6 @@ class Arguments:
     mode: str
     target_ensemble: str
     realizations: str
-    current_ensemble: str
     experiment_name: str
 
 
@@ -94,8 +93,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     def get_experiment_arguments(self) -> Arguments:
         arguments = Arguments(
             mode=ENSEMBLE_SMOOTHER_MODE,
-            current_ensemble=self._ensemble_format_model.getValue() % 0,
-            target_ensemble=self._ensemble_format_model.getValue() % 1,
+            target_ensemble=self._ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
             experiment_name=(
                 self._name_field.text()

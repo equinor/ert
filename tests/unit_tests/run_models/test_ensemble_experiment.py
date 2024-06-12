@@ -26,7 +26,7 @@ def test_check_if_runpath_exists(
     simulation_arguments = EnsembleExperimentRunArguments(
         random_seed=None,
         active_realizations=active_mask,
-        current_ensemble=None,
+        ensemble_name=None,
         target_ensemble=None,
         minimum_required_realizations=0,
         ensemble_size=1,

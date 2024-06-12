@@ -80,7 +80,7 @@ event_logger = logging.getLogger("ert.event_log")
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.ensemble_evaluator import Ensemble as EEEnsemble
-    from ert.run_models.run_arguments import RunArgumentsType
+    from ert.run_models.run_arguments import SimulationArguments
 
 StatusEvents = Union[
     FullSnapshotEvent,
@@ -136,7 +136,7 @@ def captured_logs(
 class BaseRunModel:
     def __init__(
         self,
-        simulation_arguments: RunArgumentsType,
+        simulation_arguments: SimulationArguments,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -185,11 +185,6 @@ class BaseRunModel:
             filename=str(config.runpath_file),
             substitution_list=self.substitution_list,
         )
-        if hasattr(self._simulation_arguments, "current_ensemble"):
-            current_ensemble = self._simulation_arguments.current_ensemble
-            if current_ensemble is not None:
-                self.run_paths.set_ert_ensemble(current_ensemble)
-
         self._iter_snapshot: Dict[int, Snapshot] = {}
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
@@ -240,7 +235,7 @@ class BaseRunModel:
         return self._queue_config.queue_system
 
     @property
-    def simulation_arguments(self) -> RunArgumentsType:
+    def simulation_arguments(self) -> SimulationArguments:
         return self._simulation_arguments
 
     @property
