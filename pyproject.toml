@@ -152,11 +152,9 @@ markers = [
     "out_of_memory",
     "quick_only",
     "requires_eclipse",
-    "requires_lsf",
     "requires_window_manager",
     "script",
     "slow",
-    "unstable",
 ]
 log_cli = "false"
 asyncio_mode = "auto"
