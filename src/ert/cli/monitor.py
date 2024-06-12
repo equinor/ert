@@ -141,10 +141,6 @@ class Monitor:
             )
 
     def _print_progress(self, event: SnapshotUpdateEvent) -> None:
-        if event.indeterminate:
-            # indeterminate, no progress to be shown
-            return
-
         current_phase = min(event.total_phases, event.current_phase + 1)
         if self._start_time is not None:
             elapsed = datetime.now() - self._start_time

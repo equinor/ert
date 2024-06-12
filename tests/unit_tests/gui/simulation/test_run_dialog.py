@@ -126,7 +126,6 @@ def test_large_snapshot(
             total_phases=1,
             progress=0.5,
             iteration=0,
-            indeterminate=False,
         ),
         FullSnapshotEvent(
             snapshot=large_snapshot,
@@ -135,7 +134,6 @@ def test_large_snapshot(
             total_phases=1,
             progress=0.5,
             iteration=1,
-            indeterminate=False,
         ),
         EndEvent(failed=False, failed_msg=""),
     ]
@@ -178,7 +176,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.25,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -191,7 +188,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.5,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 EndEvent(failed=False, failed_msg=""),
             ],
@@ -218,7 +214,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.25,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -231,7 +226,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.5,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 EndEvent(failed=False, failed_msg=""),
             ],
@@ -262,7 +256,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.25,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -281,7 +274,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.5,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -299,7 +291,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.5,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 EndEvent(failed=False, failed_msg=""),
             ],
@@ -324,7 +315,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.25,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 FullSnapshotEvent(
                     snapshot=(
@@ -342,7 +332,6 @@ def test_large_snapshot(
                     total_phases=1,
                     progress=0.5,
                     iteration=1,
-                    indeterminate=False,
                 ),
                 EndEvent(failed=False, failed_msg=""),
             ],
@@ -438,7 +427,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     total_phases=1,
                     progress=0.25,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -458,7 +446,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     total_phases=1,
                     progress=0.5,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
@@ -478,7 +465,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     total_phases=1,
                     progress=1,
                     iteration=0,
-                    indeterminate=False,
                 ),
                 EndEvent(failed=False, failed_msg=""),
             ],

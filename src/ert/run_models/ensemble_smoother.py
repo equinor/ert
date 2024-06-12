@@ -66,7 +66,7 @@ class EnsembleSmoother(BaseRunModel):
 
         log_msg = "Running ES"
         logger.info(log_msg)
-        self.setPhaseName(log_msg, indeterminate=True)
+        self.setPhaseName(log_msg)
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,

@@ -82,9 +82,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
-        self.setPhaseName("Analyzing...", indeterminate=True)
-
-        self.setPhaseName("Pre processing update...", indeterminate=True)
+        self.setPhaseName("Pre processing update...")
         self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
             smoother_snapshot, self.sies_smoother = iterative_smoother_update(
@@ -107,7 +105,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 f"Update algorithm failed with the following error: {e}"
             ) from e
 
-        self.setPhaseName("Post processing update...", indeterminate=True)
+        self.setPhaseName("Post processing update...")
         self.ert.runWorkflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
     def run_experiment(
@@ -126,7 +124,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             f'iteration{"s" if (iteration_count != 1) else ""}.'
         )
         logger.info(log_msg)
-        self.setPhaseName(log_msg, indeterminate=True)
+        self.setPhaseName(log_msg)
 
         target_ensemble_format = self._simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(

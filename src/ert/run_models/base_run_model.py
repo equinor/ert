@@ -158,7 +158,6 @@ class BaseRunModel:
 
         self.start_time: Optional[int] = None
         self.stop_time: Optional[int] = None
-        self._indeterminate: bool = False
         self._failed: bool = False
         self._exception: Optional[Exception] = None
         self._error_messages: MutableSequence[str] = []
@@ -356,18 +355,11 @@ class BaseRunModel:
     def currentPhase(self) -> int:
         return self._phase
 
-    def setPhaseName(
-        self, phase_name: str, indeterminate: Optional[bool] = None
-    ) -> None:
+    def setPhaseName(self, phase_name: str) -> None:
         self._phase_name = phase_name
-        self.setIndeterminate(indeterminate)
 
     def getPhaseName(self) -> str:
         return self._phase_name
-
-    def setIndeterminate(self, indeterminate: Optional[bool]) -> None:
-        if indeterminate is not None:
-            self._indeterminate = indeterminate
 
     def isFinished(self) -> bool:
         return self._phase == self._phase_count or self.hasRunFailed()
@@ -395,16 +387,13 @@ class BaseRunModel:
         self.stop_time = int(time.time())
         self.send_end_event()
 
-    def setPhase(
-        self, phase: int, phase_name: str, indeterminate: Optional[bool] = None
-    ) -> None:
-        self.setPhaseName(phase_name)
+    def setPhase(self, phase: int, phase_name: str) -> None:
         if not 0 <= phase <= self._phase_count:
             raise ValueError(
                 f"Phase must be integer between (inclusive) 0 and {self._phase_count}"
             )
 
-        self.setIndeterminate(indeterminate)
+        self.setPhaseName(phase_name)
 
         if phase == self._phase_count:
             self._simulationEnded()
@@ -417,9 +406,6 @@ class BaseRunModel:
         elif self.stop_time is None:
             return time.time() - self.start_time
         return self.stop_time - self.start_time
-
-    def isIndeterminate(self) -> bool:
-        return not self.isFinished() and self._indeterminate
 
     @staticmethod
     def checkHaveSufficientRealizations(
@@ -482,7 +468,6 @@ class BaseRunModel:
                     phase_name=self.getPhaseName(),
                     current_phase=self.currentPhase(),
                     total_phases=self.phaseCount(),
-                    indeterminate=self.isIndeterminate(),
                     progress=self._progress(),
                     iteration=iter_,
                     snapshot=copy.deepcopy(snapshot),
@@ -502,7 +487,6 @@ class BaseRunModel:
                     phase_name=self.getPhaseName(),
                     current_phase=self.currentPhase(),
                     total_phases=self.phaseCount(),
-                    indeterminate=self.isIndeterminate(),
                     progress=self._progress(),
                     iteration=iter_,
                     partial_snapshot=partial,
@@ -699,17 +683,17 @@ class BaseRunModel:
         iteration = run_context.iteration
 
         phase_string = f"Running simulation for iteration: {iteration}"
-        self.setPhase(iteration, phase_string, indeterminate=False)
+        self.setPhase(iteration, phase_string)
         create_run_path(run_context, self.ert_config)
 
         phase_string = f"Pre processing for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
+        self.setPhaseName(phase_string)
         self.ert.runWorkflows(
             HookRuntime.PRE_SIMULATION, self._storage, run_context.ensemble
         )
 
         phase_string = f"Running forecast for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=False)
+        self.setPhaseName(phase_string)
 
         successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
@@ -745,7 +729,7 @@ class BaseRunModel:
         event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
 
         phase_string = f"Post processing for iteration: {iteration}"
-        self.setPhaseName(phase_string, indeterminate=True)
+        self.setPhaseName(phase_string)
         self.ert.runWorkflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.ensemble
         )
