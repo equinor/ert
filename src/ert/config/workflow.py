@@ -47,10 +47,27 @@ class Workflow:
         for job_name in parsed_workflow_job_names:
             for instructions in config_dict[job_name]:  # type: ignore
                 job_name_with_context = instructions.keyword_token  # type: ignore
-                if job_name not in job_dict:
+                job = job_dict.get(job_name)
+                if job is None:
                     errors.append(
                         ErrorInfo(
-                            f"Job with name: {job_name}" f" is not recognized"
+                            f"Job with name: {job_name} is not recognized"
+                        ).set_context(job_name_with_context)
+                    )
+                    continue
+                elif job.min_args is not None and job.min_args > len(instructions):
+                    errors.append(
+                        ErrorInfo(
+                            f"Job with name: {job_name} does not have enough arguments, "
+                            f"expected at least: {job.min_args}, got: {instructions}"
+                        ).set_context(job_name_with_context)
+                    )
+                    continue
+                elif job.max_args is not None and job.max_args < len(instructions):
+                    errors.append(
+                        ErrorInfo(
+                            f"Job with name: {job_name} has too many arguments, "
+                            f"expected at most: {job.min_args}, got: {instructions}"
                         ).set_context(job_name_with_context)
                     )
                     continue

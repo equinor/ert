@@ -1,4 +1,5 @@
 import os
+from contextlib import ExitStack as does_not_raise
 
 import pytest
 from hypothesis import given, strategies
@@ -8,6 +9,18 @@ from ert.job_queue import WorkflowRunner
 from ert.substitution_list import SubstitutionList
 
 from .workflow_common import WorkflowCommon
+
+
+def get_workflow_job(name):
+    return WorkflowJob(
+        name=name,
+        internal=False,
+        min_args=None,
+        max_args=None,
+        arg_types=[],
+        executable=None,
+        script=None,
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -112,17 +125,21 @@ def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("\n".join(order))
 
+    foo = get_workflow_job("foo")
+    bar = get_workflow_job("bar")
+    baz = get_workflow_job("baz")
+
     wf = Workflow.from_file(
         src_file="workflow",
         context=None,
         job_dict={
-            "foo": "foo",
-            "bar": "bar",
-            "baz": "baz",
+            "foo": foo,
+            "bar": bar,
+            "baz": baz,
         },
     )
 
-    assert [x[0] for x in wf.cmd_list] == order
+    assert [x[0].name for x in wf.cmd_list] == order
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -141,19 +158,23 @@ def test_that_multiple_workflow_jobs_with_redefines_are_ordered_correctly():
             )
         )
 
+    foo = get_workflow_job("foo")
+    bar = get_workflow_job("bar")
+    baz = get_workflow_job("baz")
+
     wf = Workflow.from_file(
         src_file="workflow",
         context=None,
         job_dict={
-            "foo": "foo",
-            "bar": "bar",
-            "baz": "baz",
+            "foo": foo,
+            "bar": bar,
+            "baz": baz,
         },
     )
 
     commands = [(name, args[0]) for (name, args) in wf.cmd_list]
 
-    assert commands == [("foo", "1"), ("bar", "1"), ("foo", "3"), ("baz", "3")]
+    assert commands == [(foo, "1"), (bar, "1"), (foo, "3"), (baz, "3")]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -174,7 +195,51 @@ def test_that_unknown_jobs_gives_error():
         Workflow.from_file(
             src_file="workflow",
             context=None,
+            job_dict={"boo": get_workflow_job("boo")},
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "config, expectation",
+    [
+        (
+            "WORKFLOW",
+            pytest.raises(ConfigValidationError, match="not have enough arguments"),
+        ),
+        (
+            "WORKFLOW arg_1",
+            does_not_raise(),
+        ),
+        (
+            "WORKFLOW arg_1 arg_2",
+            does_not_raise(),
+        ),
+        (
+            "WORKFLOW arg_1 arg_2 arg_3",
+            pytest.raises(ConfigValidationError, match="too many arguments"),
+        ),
+    ],
+)
+@pytest.mark.parametrize("min_args, max_args", [(1, 2), (None, None)])
+def test_args_validation(config, expectation, min_args, max_args):
+    with open("workflow", "w", encoding="utf-8") as f:
+        f.write(config)
+    if min_args is None and max_args is None:
+        expectation = does_not_raise()
+    with expectation:
+        Workflow.from_file(
+            src_file="workflow",
+            context=None,
             job_dict={
-                "boo": "boo",
+                "WORKFLOW": WorkflowJob(
+                    name="WORKFLOW",
+                    internal=False,
+                    min_args=min_args,
+                    max_args=max_args,
+                    arg_types=[],
+                    executable=None,
+                    script=None,
+                ),
             },
         )
