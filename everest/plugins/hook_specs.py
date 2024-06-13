@@ -60,14 +60,6 @@ def flow_config_path():
     """
 
 
-@hookspec(firstresult=True)
-def rms_config_path():
-    """
-    :return: Path to flow config file
-    :rtype: PluginResponse with data as str
-    """
-
-
 @hookspec
 def get_forward_models():
     """

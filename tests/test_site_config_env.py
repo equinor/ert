@@ -44,11 +44,6 @@ class DummyPlugin:
     def flow_config_path(self):
         return "dummy/flow_config_path"
 
-    @hookimpl
-    @plugin_response(plugin_name="Dummy")  # pylint: disable=no-value-for-parameter
-    def rms_config_path(self):
-        return "dummy/rms_config_path"
-
 
 @pytest.fixture
 def mocked_env(mocker):
@@ -68,7 +63,6 @@ expected_env_lines = [
     "SETENV ECL100_SITE_CONFIG dummy/ecl100_config_path",
     "SETENV ECL300_SITE_CONFIG dummy/ecl300_config_path",
     "SETENV FLOW_SITE_CONFIG dummy/flow_config_path",
-    "SETENV RMS_SITE_CONFIG dummy/rms_config_path",
     "",
 ]
 
