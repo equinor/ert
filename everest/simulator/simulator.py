@@ -105,6 +105,7 @@ class Simulator(BatchSimulator):
         )
         ensemble = []
         cached = {}
+        assert metadata.config.realizations.names is not None
         realization_ids = [
             metadata.config.realizations.names[realization]
             for realization in metadata.realizations
@@ -119,6 +120,7 @@ class Simulator(BatchSimulator):
 
             if active[sim_idx]:
                 controls: DefaultDict[str, Any] = defaultdict(dict)
+                assert metadata.config.variables.names is not None
                 for control_name, control_value in zip(
                     metadata.config.variables.names, control_values[sim_idx, :]
                 ):
@@ -142,11 +144,13 @@ class Simulator(BatchSimulator):
                 result[fnc_name] = result[alias]
 
         names = metadata.config.objective_functions.names
+        assert names is not None
         objectives = self._get_active_results(results, names, control_values, active)
 
         constraints = None
         if metadata.config.nonlinear_constraints is not None:
             names = metadata.config.nonlinear_constraints.names
+            assert names is not None
             constraints = self._get_active_results(
                 results, names, control_values, active
             )

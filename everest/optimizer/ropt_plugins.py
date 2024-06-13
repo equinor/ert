@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from ert.config import ErtConfig
 from ert.enkf_main import EnKFMain
@@ -116,7 +116,7 @@ class EnsembleEvaluationStep(DefaultEvaluatorStep):
     def process(self, results: FunctionResults) -> None:
         if self._config.results is not None:
             # ropt is a minimizer, so we fix the results for Everest:
-            results = convert_to_maximize(results)
+            results = cast(FunctionResults, convert_to_maximize(results))
 
             # Get some results to store:
             enopt_config = self._plan.enopt_config
