@@ -27,7 +27,7 @@ from everest.strings import EVEREST
 try:
     from progressbar import AdaptiveETA, Bar, Percentage, ProgressBar, Timer
 except ImportError:
-    ProgressBar = None
+    ProgressBar = None  # type: ignore
 
 
 def export_with_progress(config, export_ecl=True):

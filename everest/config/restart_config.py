@@ -36,5 +36,4 @@ exclude results that violate a constraint.
 
     model_config = ConfigDict(
         extra="forbid",
-        metadata={"doc": """Configure optimization restarts."""},
     )

@@ -208,5 +208,4 @@ sampler to use the same perturbations for each realization.
 
     model_config = ConfigDict(
         extra="forbid",
-        metadata={"doc": """Specification for the control configuration"""},
     )

@@ -3,7 +3,7 @@ import os
 import tempfile
 from itertools import chain
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import ValidationError
 
@@ -14,6 +14,9 @@ from everest.util.forward_models import (
 )
 
 from .install_job_config import InstallJobConfig
+
+if TYPE_CHECKING:
+    from pydantic_core import ErrorDetails
 
 
 class InstallDataContext:
@@ -150,7 +153,7 @@ def check_writeable_path(path_source: str, config_path: Path):
         raise ValueError(f"User does not have write access to {path}")
 
 
-def _error_loc(error_dict: dict) -> str:
+def _error_loc(error_dict: "ErrorDetails") -> str:
     return " -> ".join(
         str(e) for e in error_dict["loc"] if e is not None and e != "__root__"
     )

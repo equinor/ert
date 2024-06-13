@@ -68,8 +68,16 @@ being violated.
     )
     cvar: Optional[CVaRConfig] = Field(
         default=None,
-        description="""If this CVaR config is present,
-        the optimizer will use CVaR estimation accordingly""",
+        description="""Directs the optimizer to use CVaR estimation.
+
+When this section is present Everest will use Conditional Value at Risk (CVaR)
+to minimize risk. Effectively this means that at each iteration the objective
+and constraint functions will be calculated as the mean over the sub-set of the
+realizations that perform worst. The size of this set is specified as an
+absolute number or as a percentile value. These options are selected by setting
+either the **number_of_realizations** option, or the **percentile** option,
+which are mutually exclusive.
+""",
     )
     max_batch_num: Optional[int] = Field(
         default=None,

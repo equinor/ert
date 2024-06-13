@@ -23,11 +23,6 @@ consider this as the earliest possible drill date.
     )
     model_config = ConfigDict(
         extra="forbid",
-        metadata={
-            "doc": """
-    Specification of a well
-    """,
-        },
     )
 
     @field_validator("drill_time")

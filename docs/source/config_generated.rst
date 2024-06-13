@@ -425,8 +425,15 @@ Optimizer options
 **cvar (optional)**
     Type: *Optional[CVaRConfig]*
 
-    If this CVaR config is present,
-    the optimizer will use CVaR estimation accordingly
+    Directs the optimizer to use CVaR estimation.
+
+    When this section is present Everest will use Conditional Value at Risk (CVaR)
+    to minimize risk. Effectively this means that at each iteration the objective
+    and constraint functions will be calculated as the mean over the sub-set of the
+    realizations that perform worst. The size of this set is specified as an
+    absolute number or as a percentile value. These options are selected by setting
+    either the **number_of_realizations** option, or the **percentile** option,
+    which are mutually exclusive.
 
     **number_of_realizations (optional)**
         Type: *Optional[int]*
@@ -1205,7 +1212,20 @@ server (optional)
 -----------------
 Type: *Optional[ServerConfig]*
 
-Configuration of the Everest server
+Defines Everest server settings, i.e., which queue system,
+queue name and queue options are used for the everest server.
+The main reason for changing this section is situations where everest
+times out because it can not add the server to the queue.
+This makes it possible to reduce the resource requirements as they tend to
+be low compared with the forward model.
+
+Queue system and queue name defaults to the same as simulator, and the
+server should not need to be configured by most users.
+This is also true for the --include-host and --exclude-host options
+that are used by the SLURM driver.
+
+Note that changing values in this section has no impact on the resource
+requirements of the forward models.
 
 **name (optional)**
     Type: *Optional[str]*
