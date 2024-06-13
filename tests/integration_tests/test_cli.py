@@ -137,10 +137,7 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
 def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
     with pytest.raises(
         ErtCliError,
-        match=(
-            "Operation halted: ES-MDA requires weights to proceed. "
-            "Please provide appropriate weights and try again."
-        ),
+        match="Invalid weights: 0",
     ):
         run_cli(
             ES_MDA_MODE,
