@@ -62,7 +62,8 @@ class RealListModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
         source_model.modelReset.connect(self.modelReset)
 
-    def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
+    @override
+    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()

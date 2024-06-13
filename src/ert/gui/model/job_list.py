@@ -73,7 +73,8 @@ class JobListProxyModel(QAbstractProxyModel):
         source_parent = self.mapToSource(start).parent()
         return source_parent
 
-    def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
+    @override
+    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()
