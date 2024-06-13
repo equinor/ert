@@ -20,7 +20,6 @@ class PluginSiteConfigEnv:
             ("ECL100_SITE_CONFIG", self.pm.hook.ecl100_config_path()),
             ("ECL300_SITE_CONFIG", self.pm.hook.ecl300_config_path()),
             ("FLOW_SITE_CONFIG", self.pm.hook.flow_config_path()),
-            ("RMS_SITE_CONFIG", self.pm.hook.rms_config_path()),
         ]
         config_lines = [
             "SETENV {} {}".format(env_var, env_value.data)

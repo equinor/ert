@@ -52,11 +52,6 @@ def flow_config_path():
 
 
 @hookimpl
-def rms_config_path():
-    return None
-
-
-@hookimpl
 def get_forward_models():
     return None
 
