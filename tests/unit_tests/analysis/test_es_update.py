@@ -677,7 +677,8 @@ def test_temporary_parameter_storage_with_inactive_fields(
 
     grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
     mask = grid.get_actnum()
-    mask_list = np.random.choice([True, False], shape.nx * shape.ny * shape.nz)
+    rng = np.random.default_rng()
+    mask_list = rng.choice([True, False], shape.nx * shape.ny * shape.nz)
     mask.values = mask_list
     grid.set_actnum(mask)
     grid.to_file("MY_EGRID.EGRID", "egrid")
@@ -705,14 +706,13 @@ def test_temporary_parameter_storage_with_inactive_fields(
         iteration=0,
         name="prior",
     )
-
     fields = [
         xr.Dataset(
             {
                 "values": (
                     ["x", "y", "z"],
                     np.ma.MaskedArray(
-                        data=np.random.rand(shape.nx, shape.ny, shape.nz),
+                        data=rng.random(size=(shape.nx, shape.ny, shape.nz)),
                         fill_value=np.nan,
                         mask=[~mask_list],
                     ).filled(),

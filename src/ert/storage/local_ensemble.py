@@ -92,21 +92,21 @@ class ObservationsAndResponsesData:
         """
         return self._observations_and_responses[:, 1].astype(str)
 
-    def errors(self) -> npt.NDArray[np.float_]:
+    def errors(self) -> npt.NDArray[np.float64]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the std. error of the observed value.
         """
         return self._observations_and_responses[:, 3].astype(float)
 
-    def observations(self) -> npt.NDArray[np.float_]:
+    def observations(self) -> npt.NDArray[np.float64]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observed value.
         """
         return self._observations_and_responses[:, 2].astype(float)
 
-    def responses(self) -> npt.NDArray[np.float_]:
+    def responses(self) -> npt.NDArray[np.float64]:
         """
         Extracts a ndarray with the shape (num_obs, num_reals).
         Each cell holds the response value corresponding to the observation/realization
@@ -802,7 +802,7 @@ class LocalEnsemble(BaseMode):
     @require_write
     def save_cross_correlations(
         self,
-        cross_correlations: npt.NDArray[np.float_],
+        cross_correlations: npt.NDArray[np.float64],
         param_group: str,
         parameter_names: List[str],
     ) -> None:

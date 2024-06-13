@@ -100,7 +100,7 @@ class TimedIterator(Generic[T]):
 def _all_parameters(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float_]:
+) -> npt.NDArray[np.float64]:
     """Return all parameters in assimilation problem"""
 
     param_groups = list(ensemble.experiment.parameter_configuration.keys())
@@ -115,7 +115,7 @@ def _all_parameters(
 
 def _save_param_ensemble_array_to_disk(
     ensemble: Ensemble,
-    param_ensemble_array: npt.NDArray[np.float_],
+    param_ensemble_array: npt.NDArray[np.float64],
     param_group: str,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
@@ -132,7 +132,7 @@ def _load_param_ensemble_array(
     ensemble: Ensemble,
     param_group: str,
     iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float_]:
+) -> npt.NDArray[np.float64]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
     return config_node.load_parameters(ensemble, param_group, iens_active_index)
 
@@ -156,10 +156,10 @@ def _load_observations_and_responses(
     auto_scale_observations: Optional[List[ObservationGroups]],
     progress_callback: Callable[[AnalysisEvent], None],
 ) -> Tuple[
-    npt.NDArray[np.float_],
+    npt.NDArray[np.float64],
     Tuple[
-        npt.NDArray[np.float_],
-        npt.NDArray[np.float_],
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
         List[ObservationAndResponseSnapshot],
     ],
 ]:
@@ -473,8 +473,8 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     def correlation_callback(
-        cross_correlations_of_batch: npt.NDArray[np.float_],
-        cross_correlations_accumulator: List[npt.NDArray[np.float_]],
+        cross_correlations_of_batch: npt.NDArray[np.float64],
+        cross_correlations_accumulator: List[npt.NDArray[np.float64]],
     ) -> None:
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
@@ -495,7 +495,7 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
-            cross_correlations: List[npt.NDArray[np.float_]] = []
+            cross_correlations: List[npt.NDArray[np.float64]] = []
             for param_batch_idx in batches:
                 X_local = param_ensemble_array[param_batch_idx, :]
                 if isinstance(config_node, GenKwConfig):

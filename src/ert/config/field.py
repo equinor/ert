@@ -184,7 +184,7 @@ class Field(ParameterConfig):
         ensemble: Ensemble,
         group: str,
         realization: int,
-        data: npt.NDArray[np.float_],
+        data: npt.NDArray[np.float64],
     ) -> None:
         ma = np.ma.MaskedArray(  # type: ignore
             data=np.zeros(self.mask.size),
@@ -198,7 +198,7 @@ class Field(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(

@@ -14,7 +14,7 @@ from hypothesis.extra.numpy import array_shapes, arrays
 from ert.field_utils.roff_io import export_roff, import_roff
 
 
-@pytest.mark.parametrize("infty_val", [np.nan, np.infty, -np.infty])
+@pytest.mark.parametrize("infty_val", [np.nan, np.inf, -np.inf])
 def test_that_attempting_to_export_infty_fails(infty_val):
     with pytest.raises(
         ValueError,

@@ -38,7 +38,7 @@ def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
 
 
 def get_nr_primary_components(
-    responses: npt.NDArray[np.float_], threshold: float
+    responses: npt.NDArray[np.float64], threshold: float
 ) -> int:
     """
     Takes a matrix, does PCA and calculates the cumulative variance ratio
@@ -53,7 +53,7 @@ def get_nr_primary_components(
 
 
 def cluster_responses(
-    responses: npt.NDArray[np.float_],
+    responses: npt.NDArray[np.float64],
     nr_components: int,
 ) -> npt.NDArray[np.int_]:
     """
@@ -68,9 +68,9 @@ def cluster_responses(
 
 
 def main(
-    responses: npt.NDArray[np.float_],
-    obs_errors: npt.NDArray[np.float_],
-) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+    responses: npt.NDArray[np.float64],
+    obs_errors: npt.NDArray[np.float64],
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     logger.info("Scaling observation errors based on response correlations")
     scale_factors = np.ones(len(obs_errors))
     nr_components = np.ones(len(obs_errors), dtype=int)
