@@ -158,18 +158,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self.weights_valid = False
 
             if self._relative_iteration_weights_box.isValid():
-                weights = MultipleDataAssimilation.parseWeights(
-                    relative_iteration_weights_model.getValue()
-                )
-                normalized_weights = MultipleDataAssimilation.normalizeWeights(weights)
-                normalized_weights_model.setValue(
-                    ", ".join(f"{x:.2f}" for x in normalized_weights)
-                )
-
-                if not weights:
-                    normalized_weights_model.setValue("The weights are invalid!")
-                else:
+                try:
+                    normalized_weights = MultipleDataAssimilation.parse_weights(
+                        relative_iteration_weights_model.getValue()
+                    )
+                    normalized_weights_model.setValue(
+                        ", ".join(f"{x:.2f}" for x in normalized_weights)
+                    )
                     self.weights_valid = True
+                except ValueError:
+                    normalized_weights_model.setValue("The weights are invalid!")
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
