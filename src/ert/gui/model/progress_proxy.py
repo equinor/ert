@@ -1,7 +1,7 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
 
@@ -54,8 +54,12 @@ class ProgressProxyModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(row, column, None)
 
-    @staticmethod
-    def parent(_index: QModelIndex) -> QModelIndex:
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
     @staticmethod

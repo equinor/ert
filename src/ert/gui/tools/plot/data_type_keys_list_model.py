@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QColor, QIcon
 from typing_extensions import override
 
@@ -22,8 +22,12 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)
 
-    @staticmethod
-    def parent(index=None):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
     def rowCount(self, parent=None, *args, **kwargs):

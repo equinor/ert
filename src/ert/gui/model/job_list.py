@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -111,8 +111,12 @@ class JobListProxyModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(source_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
     def index(self, row: int, column: int, parent=None) -> QModelIndex:

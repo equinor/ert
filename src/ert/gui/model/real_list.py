@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -92,8 +92,12 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(iter_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
     def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:

@@ -1,11 +1,12 @@
 from enum import IntEnum
-from typing import Any, List
+from typing import Any, List, Optional, overload
 from uuid import UUID
 
 import humanize
 from qtpy.QtCore import (
     QAbstractItemModel,
     QModelIndex,
+    QObject,
     Qt,
     Slot,
 )
@@ -180,11 +181,16 @@ class StorageModel(QAbstractItemModel):
         else:
             return len(self._children)
 
-    def parent(self, index: QModelIndex) -> QModelIndex:
-        if not index.isValid():
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+        if not child.isValid():
             return QModelIndex()
 
-        child_item = index.internalPointer()
+        child_item = child.internalPointer()
         parentItem = child_item._parent
 
         if parentItem == self:

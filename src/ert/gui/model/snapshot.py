@@ -2,7 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Dict, Final, List, Mapping, Optional, Sequence, Union
+from typing import Dict, Final, List, Mapping, Optional, Sequence, Union, overload
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
@@ -346,11 +346,16 @@ class SnapshotModel(QAbstractItemModel):
 
         return len(parent_item.children)
 
-    def parent(self, index: QModelIndex):
-        if not index.isValid():
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+        if not child.isValid():
             return QModelIndex()
 
-        parent_item = index.internalPointer().parent
+        parent_item = child.internalPointer().parent
         if parent_item == self.root:
             return QModelIndex()
 
