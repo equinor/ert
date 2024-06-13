@@ -10,6 +10,7 @@ from qtpy.QtGui import QColor, QFont
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator.snapshot import RealizationSnapshot
 from ert.gui.model.node import Node, NodeType
 from ert.shared.status.utils import byte_with_unit
 
@@ -166,7 +167,8 @@ class SnapshotModel(QAbstractItemModel):
             return
 
         job_infos = partial.get_all_forward_models()
-        if not partial.reals and not job_infos:
+        reals = partial.reals
+        if not reals and not job_infos:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
 
@@ -183,9 +185,12 @@ class SnapshotModel(QAbstractItemModel):
 
             reals_changed: List[int] = []
 
-            for real_id in partial.get_real_ids():
+            for idx in job_infos:
+                real_id = idx[0]
+                if real_id not in reals:
+                    reals[real_id] = RealizationSnapshot()
+            for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
-                real = partial.get_real(real_id)
                 if real and real.status:
                     real_node.data[ids.STATUS] = real.status
                 for real_forward_model_id, color in (
@@ -205,7 +210,7 @@ class SnapshotModel(QAbstractItemModel):
             for (
                 real_id,
                 forward_model_id,
-            ), job in partial.get_all_forward_models().items():
+            ), job in job_infos.items():
                 real_node = iter_node.children[real_id]
                 job_node = real_node.children[forward_model_id]
 
