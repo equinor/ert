@@ -88,7 +88,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
-        self._ensemble_selector = EnsembleSelector(notifier)
         self._realizations_from_fs()
         layout.addRow("Active realizations:", self._active_realizations_field)
 
@@ -97,6 +96,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._restart_box.toggled.connect(self.restart_run_toggled)
         self._restart_box.toggled.connect(self.update_experiment_edit)
 
+        self._ensemble_selector = EnsembleSelector(notifier)
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
         layout.addRow("Restart run:", self._restart_box)
 

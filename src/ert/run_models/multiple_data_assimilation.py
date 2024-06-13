@@ -57,6 +57,54 @@ class MultipleDataAssimilation(BaseRunModel):
         self.es_settings = es_settings
         self.update_settings = update_settings
 
+    def set_environment_variables(self, ensemble: Ensemble) -> None:
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble.experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
+
+    def initialize_from_existing_experiment(self) -> RunContext:
+        try:
+            ensemble_id = UUID(self._simulation_arguments.prior_ensemble_id)
+            prior = self._storage.get_ensemble(ensemble_id)
+            self.set_environment_variables(prior)
+            return RunContext(
+                ensemble=prior,
+                runpaths=self.run_paths,
+                initial_mask=np.array(
+                    self._simulation_arguments.active_realizations, dtype=bool
+                ),
+                iteration=prior.iteration,
+            )
+
+        except (KeyError, ValueError) as err:
+            raise ErtRunError(
+                f"Prior ensemble with ID: {self._simulation_arguments.prior_ensemble_id} does not exist"
+            ) from err
+
+    def initialize_from_new_experiment(self) -> RunContext:
+        experiment = self._storage.create_experiment(
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            observations=self.ert_config.observations.datasets,
+            responses=self.ert_config.ensemble_config.response_configuration,
+            simulation_arguments=self._simulation_arguments,
+            name=self._simulation_arguments.experiment_name,
+        )
+
+        prior = self._storage.create_ensemble(
+            experiment,
+            ensemble_size=self._simulation_arguments.ensemble_size,
+            iteration=0,
+            name=self._simulation_arguments.target_ensemble % 0,
+        )
+        self.set_environment_variables(prior)
+        return RunContext(
+            ensemble=prior,
+            runpaths=self.run_paths,
+            initial_mask=np.array(
+                self._simulation_arguments.active_realizations, dtype=bool
+            ),
+            iteration=prior.iteration,
+        )
+
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
@@ -86,59 +134,18 @@ class MultipleDataAssimilation(BaseRunModel):
         target_ensemble_format = self._simulation_arguments.target_ensemble
 
         if restart_run:
-            id = self._simulation_arguments.prior_ensemble_id
-            try:
-                ensemble_id = UUID(id)
-                prior = self._storage.get_ensemble(ensemble_id)
-                experiment = prior.experiment
-                self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-                assert isinstance(prior, Ensemble)
-                prior_context = RunContext(
-                    ensemble=prior,
-                    runpaths=self.run_paths,
-                    initial_mask=np.array(
-                        self._simulation_arguments.active_realizations, dtype=bool
-                    ),
-                    iteration=prior.iteration,
-                )
-            except (KeyError, ValueError) as err:
-                raise ErtRunError(
-                    f"Prior ensemble with ID: {id} does not exists"
-                ) from err
+            prior_context = self.initialize_from_existing_experiment()
         else:
-            experiment = self._storage.create_experiment(
-                parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations.datasets,
-                responses=self.ert_config.ensemble_config.response_configuration,
-                simulation_arguments=self._simulation_arguments,
-                name=self._simulation_arguments.experiment_name,
-            )
-
-            prior = self._storage.create_ensemble(
-                experiment,
-                ensemble_size=self._simulation_arguments.ensemble_size,
-                iteration=0,
-                name=target_ensemble_format % 0,
-            )
-            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-            prior_context = RunContext(
-                ensemble=prior,
-                runpaths=self.run_paths,
-                initial_mask=np.array(
-                    self._simulation_arguments.active_realizations, dtype=bool
-                ),
-                iteration=prior.iteration,
-            )
+            prior_context = self.initialize_from_new_experiment()
             sample_prior(
                 prior_context.ensemble,
                 prior_context.active_realizations,
                 random_seed=self.random_seed,
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
+
         enumerated_weights = list(enumerate(weights))
-        weights_to_run = enumerated_weights[prior.iteration :]
+        weights_to_run = enumerated_weights[prior_context.ensemble.iteration :]
 
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
@@ -150,9 +157,11 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             if is_first_iteration:
                 self.ert.runWorkflows(
-                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior
+                    HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
                 )
-            self.ert.runWorkflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+            self.ert.runWorkflows(
+                HookRuntime.PRE_UPDATE, self._storage, prior_context.ensemble
+            )
 
             self.send_event(
                 RunModelStatusEvent(
@@ -163,7 +172,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             posterior_context = RunContext(
                 ensemble=self._storage.create_ensemble(
-                    experiment,
+                    prior_context.ensemble.experiment,
                     name=target_ensemble_format % (iteration + 1),  # noqa
                     ensemble_size=prior_context.ensemble.ensemble_size,
                     iteration=iteration + 1,
