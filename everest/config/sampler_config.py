@@ -45,22 +45,4 @@ This dict of values is passed unchanged to the selected method in the backend.
 
     model_config = ConfigDict(
         extra="forbid",
-        metadata={
-            "doc": """
-A sampler specification section applies to a group of controls, or to an
-individual control. Sampler specifications are not required, with the following
-behavior, if no sampler sections are provided, a normal distribution is used.
-
-If at least one control group or variable has a sampler specification, only the
-groups or variables with a sampler specification are perturbed.
-Controls/variables that do not have a sampler section will not be perturbed at
-all. If that is not desired, make sure to specify a sampler for each control
-group and/or variable (or none at all to use a normal distribution for each
-control).
-
-Within the sampler section, the *shared* keyword can be used to direct the sampler
-to use the same perturbations for each realization.
-
-""",
-        },
     )

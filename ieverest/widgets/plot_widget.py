@@ -2,20 +2,11 @@
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from qtpy import QT_VERSION
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import (
+    NavigationToolbar2QT as NavigationToolbar,
+)
 from qtpy.QtWidgets import QVBoxLayout, QWidget
-
-if QT_VERSION.startswith("4."):
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt4agg import (
-        NavigationToolbar2QT as NavigationToolbar,
-    )
-else:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt5agg import (
-        NavigationToolbar2QT as NavigationToolbar,
-    )
-
 
 sns.set_style("whitegrid")
 

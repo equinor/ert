@@ -258,7 +258,10 @@ class _SimulatorCache:
         # Brute-force search, premature optimization is the root of all evil:
         for cached_vector, cache_id in self._keys.get(real_id, []):
             if np.allclose(
-                control_vector, cached_vector, rtol=0.0, atol=np.finfo(np.float32).eps
+                control_vector,
+                cached_vector,
+                rtol=0.0,
+                atol=float(np.finfo(np.float32).eps),
             ):
                 return cache_id
         return None

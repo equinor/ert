@@ -62,7 +62,9 @@ def parse_field_info(field_infos: Dict[str, FieldInfo]):
         annotation = str(dict(model_field.__repr_args__()).get("annotation"))
         parsed_subfields = None
         try:
-            if hasattr(model_field.annotation, "model_fields"):
+            if model_field.annotation is not None and hasattr(
+                model_field.annotation, "model_fields"
+            ):
                 subfields = model_field.annotation.model_fields
                 parsed_subfields = parse_field_info(subfields)
             elif "everest.config" in str(model_field.annotation):

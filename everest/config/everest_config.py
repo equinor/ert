@@ -5,7 +5,7 @@ import shutil
 from argparse import ArgumentParser
 from io import StringIO
 from pathlib import Path
-from typing import Iterable, List, Literal, Optional, Protocol, no_type_check
+from typing import TYPE_CHECKING, List, Literal, Optional, Protocol, no_type_check
 
 from ert.config import ErtConfig
 from pydantic import (
@@ -16,7 +16,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic.v1.error_wrappers import ErrorWrapper
 from ruamel.yaml import YAML, YAMLError
 
 from everest.config.install_template_config import InstallTemplateConfig
@@ -60,6 +59,9 @@ from .simulator_config import SimulatorConfig
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
+if TYPE_CHECKING:
+    from pydantic_core import ErrorDetails
+
 
 def _dummy_ert_config():
     site_config = ErtConfig.read_site_config()
@@ -71,15 +73,6 @@ def _dummy_ert_config():
 def get_system_installed_jobs():
     """Returns list of all system installed job names"""
     return list(_dummy_ert_config().installed_forward_model_steps.keys())
-
-
-def handle_errors(errors: Iterable[str], loc: Optional[str] = None) -> None:
-    if not errors:  # Note: python3.11 ExceptionGroup will solve this nicely
-        return
-    raise ValidationError(
-        (ErrorWrapper(ValueError(msg), loc=loc) for msg in errors),
-        model=EverestConfig,
-    )
 
 
 # Makes property.setter work
@@ -179,7 +172,22 @@ and environment variables are exposed in the form 'os.NAME', for example:
 """,
     )
     server: Optional[ServerConfig] = Field(
-        default=None, description="Configuration of the Everest server"
+        default=None,
+        description="""Defines Everest server settings, i.e., which queue system,
+            queue name and queue options are used for the everest server.
+            The main reason for changing this section is situations where everest
+            times out because it can not add the server to the queue.
+            This makes it possible to reduce the resource requirements as they tend to
+            be low compared with the forward model.
+
+            Queue system and queue name defaults to the same as simulator, and the
+            server should not need to be configured by most users.
+            This is also true for the --include-host and --exclude-host options
+            that are used by the SLURM driver.
+
+            Note that changing values in this section has no impact on the resource
+            requirements of the forward models.
+""",
     )
     simulator: Optional[SimulatorConfig] = Field(
         default=None, description="Simulation settings"
@@ -549,7 +557,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             raise ValueError(f"no such file or directory {expanded_path}")
         return config_path
 
-    def copy(self) -> "EverestConfig":
+    def copy(self) -> "EverestConfig":  # type: ignore
         return EverestConfig.model_validate(self.model_dump(exclude_none=True))
 
     @property
@@ -752,7 +760,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return EverestConfig.model_validate({**defaults, **kwargs})
 
     @staticmethod
-    def lint_config_dict(config: dict) -> List[dict]:
+    def lint_config_dict(config: dict) -> List["ErrorDetails"]:
         try:
             EverestConfig.model_validate(config)
             return []

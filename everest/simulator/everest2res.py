@@ -211,7 +211,7 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
     return ever_jobs
 
 
-def _job_to_dict(job: Union[dict, InstallJobConfig]) -> dict:
+def _job_to_dict(job: Union[dict, InstallJobConfig]) -> Union[dict, InstallJobConfig]:
     if type(job) is InstallJobConfig:
         return job.model_dump(exclude_none=True)
     return job
