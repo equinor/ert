@@ -39,8 +39,8 @@ class ProgressProxyModel(QAbstractItemModel):
             return 0
         return 1
 
-    @staticmethod
-    def rowCount(parent: QModelIndex = None) -> int:
+    @override
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():

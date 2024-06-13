@@ -173,7 +173,8 @@ class StorageModel(QAbstractItemModel):
     def columnCount(self, parent: QModelIndex = default_index) -> int:
         return _NUM_COLUMNS
 
-    def rowCount(self, parent: QModelIndex) -> int:
+    @override
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         if parent.isValid():
             if isinstance(parent.internalPointer(), RealizationModel):
                 return 0

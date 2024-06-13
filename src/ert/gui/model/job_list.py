@@ -101,7 +101,7 @@ class JobListProxyModel(QAbstractProxyModel):
     def columnCount(self, parent: QModelIndex = default_index) -> int:
         return len(COLUMNS[NodeType.REAL])
 
-    def rowCount(self, parent=None) -> int:
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():

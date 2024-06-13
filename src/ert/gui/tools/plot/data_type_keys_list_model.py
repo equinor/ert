@@ -33,7 +33,8 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
-    def rowCount(self, parent=None, *args, **kwargs):
+    @override
+    def rowCount(self, parent: QModelIndex = default_index) -> int:
         return len(self._keys)
 
     @override
