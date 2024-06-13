@@ -45,7 +45,7 @@ class MultipleDataAssimilation(BaseRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.weights = MultipleDataAssimilation.default_weights
+        self.weights = self.parse_weights(simulation_arguments.weights)
         self.es_settings = es_settings
         self.update_settings = update_settings
         super().__init__(
@@ -62,21 +62,9 @@ class MultipleDataAssimilation(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        weights = self.parseWeights(self._simulation_arguments.weights)
+        self.setPhaseCount(self.number_of_iterations + 1)
 
-        if not weights:
-            raise ErtRunError(
-                "Operation halted: ES-MDA requires weights to proceed. "
-                "Please provide appropriate weights and try again."
-            )
-
-        iteration_count = len(weights)
-
-        weights = self.normalizeWeights(weights)
-
-        self.setPhaseCount(iteration_count + 1)
-
-        log_msg = f"Running ES-MDA with normalized weights {weights}"
+        log_msg = f"Running ES-MDA with normalized weights {self.weights}"
         logger.info(log_msg)
         self.setPhaseName(log_msg)
 
@@ -139,7 +127,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 random_seed=self.random_seed,
             )
             self._evaluate_and_postprocess(prior_context, evaluator_server_config)
-        enumerated_weights = list(enumerate(weights))
+        enumerated_weights = list(enumerate(self.weights))
         weights_to_run = enumerated_weights[prior.iteration :]
 
         for iteration, weight in weights_to_run:
@@ -228,28 +216,19 @@ class MultipleDataAssimilation(BaseRunModel):
             ) from e
 
     @staticmethod
-    def normalizeWeights(weights: List[float]) -> List[float]:
-        """Scale weights such that their reciprocals sum to 1.0,
-        i.e., sum(1.0 / x for x in weights) == 1.0.
-        See for example Equation 38 of evensen2018 - Analysis of iterative
-        ensemble smoothers for solving inverse problems.
+    def parse_weights(weights: str) -> List[float]:
+        """Parse weights string and scale weights such that their reciprocals sum
+        to 1.0, i.e., sum(1.0 / x for x in weights) == 1.0. See for example Equation
+        38 of evensen2018 - Analysis of iterative ensemble
+        smoothers for solving inverse problems.
         """
         if not weights:
-            return []
-        weights = [weight for weight in weights if abs(weight) != 0.0]
-
-        length = sum(1.0 / x for x in weights)
-        return [x * length for x in weights]
-
-    @staticmethod
-    def parseWeights(weights: str) -> List[float]:
-        if not weights:
-            return []
+            raise ValueError(f"Must provide weights, got {weights}")
 
         elements = weights.split(",")
         elements = [element.strip() for element in elements if element.strip()]
 
-        result = []
+        result: List[float] = []
         for element in elements:
             try:
                 f = float(element)
@@ -259,8 +238,11 @@ class MultipleDataAssimilation(BaseRunModel):
                     result.append(f)
             except ValueError as e:
                 raise ValueError(f"Warning: cannot parse weight {element}") from e
+        if not result:
+            raise ValueError(f"Invalid weights: {weights}")
 
-        return result
+        length = sum(1.0 / x for x in result)
+        return [x * length for x in result]
 
     @classmethod
     def name(cls) -> str:
