@@ -83,8 +83,13 @@ class JobListProxyModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    @staticmethod
-    def headerData(section: int, orientation: Qt.Orientation, role: Qt.UserRole) -> Any:
+    @override
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role != Qt.DisplayRole:
             return QVariant()
         if orientation == Qt.Horizontal:

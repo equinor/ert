@@ -199,8 +199,13 @@ class StorageModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    @staticmethod
-    def headerData(section: int, orientation: int, role: int) -> Any:
+    @override
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role != Qt.ItemDataRole.DisplayRole:
             return None
 
