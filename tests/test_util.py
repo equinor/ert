@@ -31,7 +31,7 @@ def test_loadwells():
 @skipif_no_opm
 def test_loadgroups():
     groups = util.read_groupnames(EGG_DATA)
-    assert set(["FIELD", "PRODUC", "INJECT"]) == set(groups)
+    assert {"FIELD", "PRODUC", "INJECT"} == set(groups)
 
 
 @hide_opm

@@ -20,21 +20,13 @@ class EverestDataAPI:
 
     @property
     def batches(self):
-        batch_ids = list(
-            set([opt.batch_id for opt in self._snapshot.optimization_data])
-        )
+        batch_ids = list({opt.batch_id for opt in self._snapshot.optimization_data})
         return sorted(batch_ids)
 
     @property
     def accepted_batches(self):
         batch_ids = list(
-            set(
-                [
-                    opt.batch_id
-                    for opt in self._snapshot.optimization_data
-                    if opt.merit_flag
-                ]
-            )
+            {opt.batch_id for opt in self._snapshot.optimization_data if opt.merit_flag}
         )
         return sorted(batch_ids)
 

@@ -407,19 +407,19 @@ def test_ropt_integration(mock_get_optimization_output_dir):
     for name in expected_control_names:
         assert expected_control_constraint == api.input_constraint(name)
 
-    for name in set([c["control"] for c in api.control_values]):
+    for name in {c["control"] for c in api.control_values}:
         assert name in expected_control_names
 
     for value in [c["value"] for c in api.control_values]:
         assert value in expected_control_values
 
     expected_batches = [0, 1, 2]
-    assert expected_batches == list(set([c["batch"] for c in api.control_values]))
+    assert expected_batches == list({c["batch"] for c in api.control_values})
 
-    for name in set([f["function"] for f in api.objective_values]):
+    for name in {f["function"] for f in api.objective_values}:
         assert name in expected_objective_names
 
-    result = list(set([f["batch"] for f in api.objective_values]))
+    result = list({f["batch"] for f in api.objective_values})
 
     assert expected_batches == result
 
@@ -441,9 +441,14 @@ def test_get_summary_keys(_, _1, _2, _3, _4, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values()
     # Check some data frame properties.
-    assert set(summary_values.columns) == set(
-        ["realization", "simulation", "batch", "date", "key1", "key2"]
-    )
+    assert set(summary_values.columns) == {
+        "realization",
+        "simulation",
+        "batch",
+        "date",
+        "key1",
+        "key2",
+    }
     assert summary_values.shape[0] == len(_realizations) * len(_batch_ids) * len(_dates)
     assert set(summary_values["batch"]) == set(_batch_ids)
     assert set(summary_values["realization"]) == set(_realizations)
@@ -465,9 +470,14 @@ def test_get_summary_keys_gradient(_, _1, _2, _3, _4, api):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api.summary_values()
     # Check some data frame properties.
-    assert set(summary_values.columns) == set(
-        ["realization", "simulation", "batch", "date", "key1", "key2"]
-    )
+    assert set(summary_values.columns) == {
+        "realization",
+        "simulation",
+        "batch",
+        "date",
+        "key1",
+        "key2",
+    }
     assert summary_values.shape[0] == len(_simulations) * len(_batch_ids) * len(_dates)
     assert set(summary_values["batch"]) == set(_batch_ids)
     assert set(summary_values["realization"]) == set(_realizations)
@@ -488,9 +498,14 @@ def test_get_summary_keys_single_batch(_, _1, _2, _3, _4, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values(batches=[2])
     # Check some data frame properties.
-    assert set(summary_values.columns) == set(
-        ["realization", "simulation", "batch", "date", "key1", "key2"]
-    )
+    assert set(summary_values.columns) == {
+        "realization",
+        "simulation",
+        "batch",
+        "date",
+        "key1",
+        "key2",
+    }
     assert summary_values.shape[0] == len(_realizations) * len(_dates)
     assert summary_values["batch"].iloc[0] == 2
     assert set(summary_values["realization"]) == set(_realizations)
@@ -513,9 +528,13 @@ def test_get_summary_keys_single_key(_, _1, _2, _3, _4, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values(keys=["key2"])
     # Check some data frame properties.
-    assert set(summary_values.columns) == set(
-        ["realization", "simulation", "batch", "date", "key2"]
-    )
+    assert set(summary_values.columns) == {
+        "realization",
+        "simulation",
+        "batch",
+        "date",
+        "key2",
+    }
     assert summary_values.shape[0] == len(_realizations) * len(_batch_ids) * len(_dates)
     assert set(summary_values["batch"]) == set(_batch_ids)
     assert set(summary_values["realization"]) == set(_realizations)

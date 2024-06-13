@@ -50,9 +50,9 @@ def test_config_branch_entry(get_opt_output_dir_mock):
         if opt_data.batch_id == batch_id:
             opt_controls = opt_data.controls
 
-    new_controls_initial_guesses = set(
-        [var[CK.INITIAL_GUESS] for var in new_controls[0][CK.VARIABLES]]
-    )
-    opt_control_val_for_batch_id = set([v for k, v in opt_controls.items()])
+    new_controls_initial_guesses = {
+        var[CK.INITIAL_GUESS] for var in new_controls[0][CK.VARIABLES]
+    }
+    opt_control_val_for_batch_id = {v for k, v in opt_controls.items()}
 
     assert new_controls_initial_guesses == opt_control_val_for_batch_id

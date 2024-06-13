@@ -238,4 +238,4 @@ def test_everserver_status_max_batch_num(*args):
     snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
         filter_out_gradient=False, batches=None
     )
-    assert set(data.batch for data in snapshot.simulation_data) == {0}
+    assert {data.batch for data in snapshot.simulation_data} == {0}
