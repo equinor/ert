@@ -547,7 +547,10 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if not self.hasIndex(row, column, parent):

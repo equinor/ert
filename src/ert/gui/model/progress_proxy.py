@@ -47,7 +47,10 @@ class ProgressProxyModel(QAbstractItemModel):
             return 0
         return 1
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():

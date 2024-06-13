@@ -212,7 +212,10 @@ class StorageModel(QAbstractItemModel):
 
         return index.internalPointer().data(index, role)
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         parentItem = parent.internalPointer() if parent.isValid() else self
         try:
             childItem = parentItem._children[row]

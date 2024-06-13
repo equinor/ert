@@ -19,7 +19,10 @@ class DataTypeKeysListModel(QAbstractItemModel):
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")
 
-    def index(self, row, column, parent=None, *args, **kwargs):
+    @override
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         return self.createIndex(row, column)
 
     @overload

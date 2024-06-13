@@ -100,7 +100,10 @@ class RealListModel(QAbstractProxyModel):
     def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: QModelIndex = default_index
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
