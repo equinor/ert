@@ -112,7 +112,8 @@ class RealListModel(QAbstractProxyModel):
         ret_index = self.createIndex(row, column, real_index.data(NodeRole))
         return ret_index
 
-    def hasChildren(self, parent: QModelIndex) -> bool:
+    @override
+    def hasChildren(self, parent: QModelIndex = default_index) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.

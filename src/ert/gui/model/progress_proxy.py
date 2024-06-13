@@ -65,8 +65,8 @@ class ProgressProxyModel(QAbstractItemModel):
     def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
         return QModelIndex()
 
-    @staticmethod
-    def hasChildren(parent: QModelIndex) -> bool:
+    @override
+    def hasChildren(self, parent: QModelIndex = default_index) -> bool:
         return not parent.isValid()
 
     @override
