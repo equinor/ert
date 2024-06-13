@@ -175,6 +175,7 @@ select = [
   "SIM", # flake-8-simplify
   "F",   # pyflakes
   "PL",  # pylint
+  "NPY", # numpy specific rules
 ]
 preview = true
 ignore = ["PLW2901", # redefined-loop-name

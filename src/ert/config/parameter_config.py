@@ -91,7 +91,7 @@ class ParameterConfig(ABC):
         ensemble: Ensemble,
         group: str,
         realization: int,
-        data: npt.NDArray[np.float_],
+        data: npt.NDArray[np.float64],
     ) -> None:
         """
         Save the parameter in internal storage for the given ensemble
@@ -100,7 +100,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         """
         Load the parameter from internal storage for the given ensemble.
         Must return array of shape (number of parameters, number of realizations).

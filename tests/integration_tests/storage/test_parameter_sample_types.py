@@ -145,9 +145,8 @@ if __name__ == "__main__":
                 np.cov(posterior_param[:3])
             )
 
-        realizations_to_test = np.random.choice(
-            range(ensemble_size), size=2, replace=False
-        )
+        rng = np.random.default_rng()
+        realizations_to_test = rng.choice(range(ensemble_size), size=2, replace=False)
         surf = xtgeo.surface_from_file(
             f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
             fformat="irap_ascii",

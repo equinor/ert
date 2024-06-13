@@ -97,13 +97,13 @@ class ExtParamConfig(ParameterConfig):
         ensemble: Ensemble,
         group: str,
         realization: int,
-        data: npt.NDArray[np.float_],
+        data: npt.NDArray[np.float64],
     ) -> None:
         raise NotImplementedError()
 
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         raise NotImplementedError()
 
     @staticmethod

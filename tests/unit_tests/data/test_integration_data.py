@@ -129,7 +129,8 @@ def test_no_storage(obs_key, expected_msg, storage):
 
 def create_summary_observation():
     observations = ""
-    values = np.random.uniform(0, 1.5, 200)
+    rng = np.random.default_rng()
+    values = rng.uniform(0, 1.5, 200)
     errors = values * 0.1
     for restart, (value, error) in enumerate(zip(values, errors)):
         observations += f"""

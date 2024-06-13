@@ -310,7 +310,7 @@ class GenKwConfig(ParameterConfig):
         ensemble: Ensemble,
         group: str,
         realization: int,
-        data: npt.NDArray[np.float_],
+        data: npt.NDArray[np.float64],
     ) -> None:
         ds = xr.Dataset(
             {
@@ -327,7 +327,7 @@ class GenKwConfig(ParameterConfig):
     @staticmethod
     def load_parameters(
         ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         return ensemble.load_parameters(group, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:

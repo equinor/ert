@@ -146,7 +146,7 @@ class SurfaceConfig(ParameterConfig):
         ensemble: Ensemble,
         group: str,
         realization: int,
-        data: npt.NDArray[np.float_],
+        data: npt.NDArray[np.float64],
     ) -> None:
         ds = xr.Dataset(
             {
@@ -161,7 +161,7 @@ class SurfaceConfig(ParameterConfig):
     @staticmethod
     def load_parameters(
         ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float_]:
+    ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T

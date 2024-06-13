@@ -162,7 +162,8 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         NLAY = 6
         grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
         mask = grid.get_actnum()
-        mask_list = np.random.choice([True, False], NCOL * NROW * NLAY)
+        rng = np.random.default_rng()
+        mask_list = rng.choice([True, False], NCOL * NROW * NLAY)
 
         # make sure we filter out the 'c' parameter
         for i in range(NLAY):
