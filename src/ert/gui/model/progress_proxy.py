@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Union, overload
+from typing import Any, Dict, List, Optional, Union, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -69,7 +69,8 @@ class ProgressProxyModel(QAbstractItemModel):
     def hasChildren(parent: QModelIndex) -> bool:
         return not parent.isValid()
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
 

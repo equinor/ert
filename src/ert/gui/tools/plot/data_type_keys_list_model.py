@@ -1,4 +1,4 @@
-from typing import List, Optional, overload
+from typing import Any, List, Optional, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QColor, QIcon
@@ -41,7 +41,8 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def columnCount(self, parent: QModelIndex = default_index) -> int:
         return 1
 
-    def data(self, index, role=None):
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

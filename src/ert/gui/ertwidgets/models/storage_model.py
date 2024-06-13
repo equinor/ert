@@ -206,8 +206,8 @@ class StorageModel(QAbstractItemModel):
 
         return _COLUMN_TEXT[_Column(section)]
 
-    @staticmethod
-    def data(index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 

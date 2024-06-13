@@ -2,7 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Dict, Final, List, Mapping, Optional, Sequence, Union, overload
+from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union, overload
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
@@ -361,7 +361,8 @@ class SnapshotModel(QAbstractItemModel):
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole):
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
 
