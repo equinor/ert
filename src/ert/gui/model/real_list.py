@@ -8,8 +8,11 @@ from qtpy.QtCore import (
     Signal,
     Slot,
 )
+from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
+
+default_index = QModelIndex()
 
 
 class RealListModel(QAbstractProxyModel):
@@ -68,7 +71,8 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():

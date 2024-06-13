@@ -2,8 +2,11 @@ from typing import List, Optional
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 from qtpy.QtGui import QColor, QIcon
+from typing_extensions import override
 
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
+default_index = QModelIndex()
 
 
 class DataTypeKeysListModel(QAbstractItemModel):
@@ -26,8 +29,8 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._keys)
 
-    @staticmethod
-    def columnCount(QModelIndex_parent=None, *args, **kwargs):
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         return 1
 
     def data(self, index, role=None):

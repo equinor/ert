@@ -3,8 +3,11 @@ from typing import Dict, List, Optional, Union
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
+
+default_index = QModelIndex()
 
 
 class ProgressProxyModel(QAbstractItemModel):
@@ -28,8 +31,8 @@ class ProgressProxyModel(QAbstractItemModel):
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None) -> int:
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():

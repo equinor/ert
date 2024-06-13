@@ -10,6 +10,7 @@ from qtpy.QtCore import (
     Slot,
 )
 from qtpy.QtWidgets import QApplication
+from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
 
@@ -26,6 +27,8 @@ _COLUMN_TEXT = {
     1: "Created at",
     2: "Type",
 }
+
+default_index = QModelIndex()
 
 
 class RealizationModel:
@@ -165,8 +168,8 @@ class StorageModel(QAbstractItemModel):
 
             self._children.append(ex)
 
-    @staticmethod
-    def columnCount(parent: QModelIndex) -> int:
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         return _NUM_COLUMNS
 
     def rowCount(self, parent: QModelIndex) -> int:

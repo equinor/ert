@@ -7,6 +7,7 @@ from typing import Dict, Final, List, Mapping, Optional, Sequence, Union
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
@@ -72,6 +73,8 @@ _QCOLORS = {
     state.COLOR_FINISHED: QColor(*state.COLOR_FINISHED),
     state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
 }
+
+default_index = QModelIndex()
 
 
 def _estimate_duration(
@@ -315,8 +318,8 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_node = parent.internalPointer()

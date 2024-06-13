@@ -9,6 +9,7 @@ from qtpy.QtCore import (
     QVariant,
     Slot,
 )
+from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.node import NodeType
@@ -19,6 +20,8 @@ from ert.gui.model.snapshot import (
     IsRealizationRole,
     NodeRole,
 )
+
+default_index = QModelIndex()
 
 
 class JobListProxyModel(QAbstractProxyModel):
@@ -94,8 +97,8 @@ class JobListProxyModel(QAbstractProxyModel):
             return section
         return QVariant()
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    @override
+    def columnCount(self, parent: QModelIndex = default_index) -> int:
         return len(COLUMNS[NodeType.REAL])
 
     def rowCount(self, parent=None) -> int:
