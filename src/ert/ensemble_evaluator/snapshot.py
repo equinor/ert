@@ -176,7 +176,7 @@ class PartialSnapshot:
         return {}
 
     @property
-    def reals(self) -> Mapping[str, "RealizationSnapshot"]:
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
         return {
             real_id: RealizationSnapshot(**real_data)
             for real_id, real_data in self._realization_states.items()
