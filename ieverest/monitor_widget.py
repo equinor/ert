@@ -88,8 +88,6 @@ class MonitorWidget(QWidget):
             wdg.status = status
             self.batches_wdg.layout().insertWidget(0, wdg)
 
-        return None
-
     def reset(self):
         """Clear the content of the widget
 

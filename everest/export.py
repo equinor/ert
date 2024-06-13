@@ -73,7 +73,7 @@ def _valid_batches(batches: List[int], config: EverestConfig):
     snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
         filter_out_gradient=False, batches=None
     )
-    available_batches = set([data.batch for data in snapshot.simulation_data])
+    available_batches = {data.batch for data in snapshot.simulation_data}
     valid_batches = [batch for batch in batches if batch in available_batches]
     return valid_batches
 
@@ -164,7 +164,7 @@ def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] =
     res_workflow = EnKFMain(ert_config)
     if batch_ids is None:
         metadata = _metadata(config)
-        batch_ids = set([data[MetaDataColumnNames.BATCH] for data in metadata])
+        batch_ids = {data[MetaDataColumnNames.BATCH] for data in metadata}
 
     internal_keys: Set = set()
     with open_storage(res_workflow.ert_config.ens_path, "r") as storage:
@@ -322,7 +322,7 @@ def _load_simulation_data(
                 f"batch_{batch}"
             ).load_all_summary_data()
 
-        batches = set([elem[MetaDataColumnNames.BATCH] for elem in metadata])
+        batches = {elem[MetaDataColumnNames.BATCH] for elem in metadata}
         batch_data = []
         for idx, batch in enumerate(batches):
             progress_callback(float(idx) / len(batches))

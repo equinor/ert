@@ -122,7 +122,7 @@ def test_everexport_entry_batches(mocked_func, validate_export_mock):
         batches = (
             config.export.batches if config.export is not None else None
         ) or False
-        return set(batches) == set([0, 2])
+        return set(batches) == {0, 2}
 
     if ProgressBar:  # different calls if ProgressBar available or not
         mocked_func.assert_called_once_with(

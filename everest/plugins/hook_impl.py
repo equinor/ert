@@ -6,7 +6,6 @@ from everest.plugins import hookimpl
 @hookimpl
 def visualize_data(api):
     print("No visualization plugin installed!")
-    return None
 
 
 @hookimpl

@@ -19,7 +19,7 @@ def get_job_status(job_info):
     if len(job_info) == 0:
         return JOB_WAITING
 
-    states = set([fm.get("status") for fm in job_info])
+    states = {fm.get("status") for fm in job_info}
 
     # at least one failure -> failure
     if JOB_FAILURE in states:
@@ -30,7 +30,7 @@ def get_job_status(job_info):
         return JOB_RUNNING
 
     # no failure nor running, at least one not recognized -> unknown (None)
-    if len(states - set([JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING])) > 0:
+    if len(states - {JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING}) > 0:
         return None
 
     # no fail/run/unknown, at least one waiting -> waiting

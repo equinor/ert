@@ -680,7 +680,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             json_string = f.read()
 
         data = json.loads(json_string)
-        if set(data.keys()) != set(["host", "port", "cert", "auth"]):
+        if set(data.keys()) != {"host", "port", "cert", "auth"}:
             raise RuntimeError("Malformed hostfile")
 
         return data
