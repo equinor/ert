@@ -174,6 +174,7 @@ class PlotWindow(QMainWindow):
         key = key_def.key
 
         plot_widget = self._central_tab.currentWidget()
+        assert plot_widget is not None
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
             selected_ensembles = (
@@ -193,7 +194,7 @@ class PlotWindow(QMainWindow):
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
-                        selected_ensembles[0], key
+                        selected_ensembles[0].name, key
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
@@ -232,7 +233,7 @@ class PlotWindow(QMainWindow):
                 try:
                     plot_context.history_data = self._api.history_data(
                         key,
-                        plot_context.ensembles(),
+                        [e.name for e in plot_context.ensembles()],
                     )
 
                 except (RequestError, TimeoutError) as e:
