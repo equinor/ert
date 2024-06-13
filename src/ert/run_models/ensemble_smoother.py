@@ -59,11 +59,6 @@ class EnsembleSmoother(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        self.checkHaveSufficientRealizations(
-            self._simulation_arguments.active_realizations.count(True),
-            self._simulation_arguments.minimum_required_realizations,
-        )
-
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg)

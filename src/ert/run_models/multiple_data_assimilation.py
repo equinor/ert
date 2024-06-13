@@ -60,10 +60,6 @@ class MultipleDataAssimilation(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        self.checkHaveSufficientRealizations(
-            self._simulation_arguments.active_realizations.count(True),
-            self._simulation_arguments.minimum_required_realizations,
-        )
         weights = self.parseWeights(self._simulation_arguments.weights)
 
         if not weights:
