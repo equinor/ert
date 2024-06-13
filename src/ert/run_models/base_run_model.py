@@ -409,20 +409,6 @@ class BaseRunModel:
             return time.time() - self.start_time
         return self.stop_time - self.start_time
 
-    @staticmethod
-    def checkHaveSufficientRealizations(
-        num_successful_realizations: int, minimum_realizations: int
-    ) -> None:
-        if num_successful_realizations == 0:
-            raise ErtRunError("Experiment failed! All realizations failed!")
-        if num_successful_realizations < minimum_realizations:
-            raise ErtRunError(
-                f"Too many realizations have failed! Number of successful realizations:"
-                f" {num_successful_realizations}, expected minimal number of successful"
-                f" realizations: {minimum_realizations}\n You can add/adjust "
-                f"MIN_REALIZATIONS to allow (more) failures in your experiments."
-            )
-
     def _current_status(self) -> tuple[dict[str, int], float, int]:
         current_iter = max(list(self._iter_snapshot.keys()))
         done_realizations = 0
@@ -679,16 +665,10 @@ class BaseRunModel:
         )
         for iens in failed_realizations:
             run_context.deactivate_realization(iens)
+            self.active_realizations[iens] = False
 
         num_successful_realizations = len(successful_realizations)
-        num_successful_realizations += (
-            self._simulation_arguments.prev_successful_realizations
-        )
-        self.checkHaveSufficientRealizations(
-            num_successful_realizations,
-            self._simulation_arguments.minimum_required_realizations,
-        )
-
+        self.validate()
         event_logger.info(
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
         )

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import override
 
 from ert.config import ErtConfig
-from ert.run_models import EnsembleExperiment, ErtRunError
+from ert.run_models import EnsembleExperiment
 
 if TYPE_CHECKING:
     from queue import SimpleQueue
@@ -28,14 +28,6 @@ class SingleTestRun(EnsembleExperiment):
         super().__init__(
             simulation_arguments, config, storage, local_queue_config, status_queue
         )
-
-    @staticmethod
-    def checkHaveSufficientRealizations(
-        num_successful_realizations: int, _: int
-    ) -> None:
-        # Should only have one successful realization
-        if num_successful_realizations != 1:
-            raise ErtRunError("Experiment failed!")
 
     @override
     @classmethod
