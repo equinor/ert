@@ -38,6 +38,7 @@ from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelStep,
     ForwardModelStepJSON,
+    ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
 from .model_config import ModelConfig
@@ -133,17 +134,17 @@ class ErtConfig:
 
     @staticmethod
     def with_plugins(
-        forward_model_step_classes: List[Type[ForwardModelStep]],
+        forward_model_step_classes: List[Type[ForwardModelStepPlugin]],
     ) -> Type["ErtConfig"]:
-        preinstalled_fm_steps: Dict[str, ForwardModelStep] = {}
+        preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
 
         class ErtConfigWithPlugins(ErtConfig):
-            PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = (
-                preinstalled_fm_steps
-            )
+            PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
+                Dict[str, ForwardModelStepPlugin]
+            ] = preinstalled_fm_steps
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
