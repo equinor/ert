@@ -175,7 +175,6 @@ class BaseRunModel:
         self.facade = LibresFacade(self.ert_config)
         self._storage = storage
         self._simulation_arguments = simulation_arguments
-        self.reset()
         self._context_env_keys: List[str] = []
         self.random_seed: int = _seed_sequence(simulation_arguments.random_seed)
         self.rng = np.random.default_rng(self.random_seed)
