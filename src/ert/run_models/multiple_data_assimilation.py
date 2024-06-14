@@ -86,9 +86,6 @@ class MultipleDataAssimilation(BaseRunModel):
                     initial_mask=np.array(self.active_realizations, dtype=bool),
                     iteration=prior.iteration,
                 )
-                self.prev_successful_realizations = (
-                    prior.get_realization_mask_without_failure().sum()
-                )
                 if self.start_iteration != prior.iteration + 1:
                     raise ValueError(
                         f"Experiment misconfigured, got starting iteration: {self.start_iteration},"

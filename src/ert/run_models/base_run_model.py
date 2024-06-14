@@ -196,7 +196,6 @@ class BaseRunModel:
         self.minimum_required_realizations = (
             simulation_arguments.minimum_required_realizations
         )
-        self.prev_successful_realizations: int = 0
         self.active_realizations = copy.copy(simulation_arguments.active_realizations)
         self.number_of_iterations = number_of_iterations
         self.start_iteration = start_iteration
@@ -267,7 +266,6 @@ class BaseRunModel:
     def restart(self) -> None:
         active_realizations = self._create_mask_from_failed_realizations()
         self.active_realizations = active_realizations
-        self.prev_successful_realizations += self._count_successful_realizations()
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
