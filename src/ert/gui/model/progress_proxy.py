@@ -10,11 +10,11 @@ from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
 
 class ProgressProxyModel(QAbstractItemModel):
     def __init__(
-        self, source_model: QAbstractItemModel, parent: QModelIndex = None
+        self, source_model: QAbstractItemModel, parent: Optional[QModelIndex] = None
     ) -> None:
         QAbstractItemModel.__init__(self, parent)
         self._source_model: QAbstractItemModel = source_model
-        self._progress: Optional[Dict[str, Union[dict, int]]] = None
+        self._progress: Optional[Dict[str, Union[dict[Any, Any], int]]] = None
         self._connect()
 
     def _connect(self) -> None:
@@ -74,31 +74,39 @@ class ProgressProxyModel(QAbstractItemModel):
         if not index.isValid():
             return QVariant()
 
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignCenter
 
         if role == ProgressRole:
             return self._progress
 
-        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+        if role in (
+            Qt.ItemDataRole.StatusTipRole,
+            Qt.ItemDataRole.WhatsThisRole,
+            Qt.ItemDataRole.ToolTipRole,
+        ):
             return ""
 
-        if role == Qt.SizeHintRole:
+        if role == Qt.ItemDataRole.SizeHintRole:
             return QSize(30, 30)
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             return QFont()
 
-        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+        if role in (
+            Qt.ItemDataRole.BackgroundRole,
+            Qt.ItemDataRole.ForegroundRole,
+            Qt.ItemDataRole.DecorationRole,
+        ):
             return QColor()
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return ""
 
         return QVariant()
 
     def _recalculate_progress(self, iter_: int) -> None:
-        status_counts = defaultdict(int)
+        status_counts: Dict[Any, int] = defaultdict(int)
         nr_reals: int = 0
         current_iter_index = self._source_model.index(iter_, 0, QModelIndex())
         if current_iter_index.internalPointer() is None:

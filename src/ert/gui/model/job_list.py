@@ -88,16 +88,16 @@ class JobListProxyModel(QAbstractProxyModel):
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
     ) -> Any:
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
             header = COLUMNS[NodeType.REAL][section]
             if header in [ids.STDOUT, ids.STDERR]:
                 return header.upper()
             if header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 header = header.replace("_", " ")
             return header.capitalize()
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             return section
         return QVariant()
 
@@ -140,6 +140,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if not proxyIndex.isValid():
             return QModelIndex()
         source_model = self.sourceModel()
+        assert source_model is not None
         iter_index = source_model.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid() or not source_model.hasChildren(iter_index):
             return QModelIndex()
