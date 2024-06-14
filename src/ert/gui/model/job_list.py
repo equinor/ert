@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -9,6 +9,7 @@ from qtpy.QtCore import (
     QVariant,
     Slot,
 )
+from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.node import NodeType
@@ -70,7 +71,8 @@ class JobListProxyModel(QAbstractProxyModel):
         source_parent = self.mapToSource(start).parent()
         return source_parent
 
-    def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
+    @override
+    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()
@@ -79,26 +81,31 @@ class JobListProxyModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    @staticmethod
-    def headerData(section: int, orientation: Qt.Orientation, role: Qt.UserRole) -> Any:
-        if role != Qt.DisplayRole:
+    @override
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
+        if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
-        if orientation == Qt.Horizontal:
+        if orientation == Qt.Orientation.Horizontal:
             header = COLUMNS[NodeType.REAL][section]
             if header in [ids.STDOUT, ids.STDERR]:
                 return header.upper()
             if header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 header = header.replace("_", " ")
             return header.capitalize()
-        if orientation == Qt.Vertical:
+        if orientation == Qt.Orientation.Vertical:
             return section
         return QVariant()
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return len(COLUMNS[NodeType.REAL])
 
-    def rowCount(self, parent=None) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -106,13 +113,22 @@ class JobListProxyModel(QAbstractProxyModel):
         source_index = self._get_source_parent_index()
         if not source_index.isValid():
             return 0
-        return self.sourceModel().rowCount(source_index)
+        source_model = self.sourceModel()
+        assert source_model is not None
+        return source_model.rowCount(source_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent=None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -124,6 +140,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if not proxyIndex.isValid():
             return QModelIndex()
         source_model = self.sourceModel()
+        assert source_model is not None
         iter_index = source_model.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid() or not source_model.hasChildren(iter_index):
             return QModelIndex()

@@ -1,15 +1,17 @@
 from enum import IntEnum
-from typing import Any, List
+from typing import Any, List, Optional, overload
 from uuid import UUID
 
 import humanize
 from qtpy.QtCore import (
     QAbstractItemModel,
     QModelIndex,
+    QObject,
     Qt,
     Slot,
 )
 from qtpy.QtWidgets import QApplication
+from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
 
@@ -165,11 +167,14 @@ class StorageModel(QAbstractItemModel):
 
             self._children.append(ex)
 
-    @staticmethod
-    def columnCount(parent: QModelIndex) -> int:
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return _NUM_COLUMNS
 
-    def rowCount(self, parent: QModelIndex) -> int:
+    @override
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             if isinstance(parent.internalPointer(), RealizationModel):
                 return 0
@@ -177,11 +182,16 @@ class StorageModel(QAbstractItemModel):
         else:
             return len(self._children)
 
-    def parent(self, index: QModelIndex) -> QModelIndex:
-        if not index.isValid():
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+        if child is None or not child.isValid():
             return QModelIndex()
 
-        child_item = index.internalPointer()
+        child_item = child.internalPointer()
         parentItem = child_item._parent
 
         if parentItem == self:
@@ -189,21 +199,31 @@ class StorageModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    @staticmethod
-    def headerData(section: int, orientation: int, role: int) -> Any:
+    @override
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role != Qt.ItemDataRole.DisplayRole:
             return None
 
         return _COLUMN_TEXT[_Column(section)]
 
-    @staticmethod
-    def data(index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 
         return index.internalPointer().data(index, role)
 
-    def index(self, row: int, column: int, parent: QModelIndex) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
+        if parent is None:
+            parent = QModelIndex()
         parentItem = parent.internalPointer() if parent.isValid() else self
         try:
             childItem = parentItem._children[row]

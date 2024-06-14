@@ -1,7 +1,8 @@
-from typing import List, Optional
+from typing import Any, List, Optional, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QColor, QIcon
+from typing_extensions import override
 
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
@@ -16,21 +17,30 @@ class DataTypeKeysListModel(QAbstractItemModel):
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")
 
-    def index(self, row, column, parent=None, *args, **kwargs):
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
         return self.createIndex(row, column)
 
-    @staticmethod
-    def parent(index=None):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
-    def rowCount(self, parent=None, *args, **kwargs):
+    @override
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         return len(self._keys)
 
-    @staticmethod
-    def columnCount(QModelIndex_parent=None, *args, **kwargs):
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return 1
 
-    def data(self, index, role=None):
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

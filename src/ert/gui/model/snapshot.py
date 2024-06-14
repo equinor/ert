@@ -2,11 +2,12 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Dict, Final, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union, overload
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
@@ -315,8 +316,8 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None):
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_node = parent.internalPointer()
@@ -333,7 +334,7 @@ class SnapshotModel(QAbstractItemModel):
                 count = len(COLUMNS[NodeType.JOB])
         return count
 
-    def rowCount(self, parent: QModelIndex = None):
+    def rowCount(self, parent: Optional[QModelIndex] = None):
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -343,17 +344,23 @@ class SnapshotModel(QAbstractItemModel):
 
         return len(parent_item.children)
 
-    def parent(self, index: QModelIndex):
-        if not index.isValid():
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+        if child is None or not child.isValid():
             return QModelIndex()
 
-        parent_item = index.internalPointer().parent
+        parent_item = child.internalPointer().parent
         if parent_item == self.root:
             return QModelIndex()
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole):
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
 
@@ -539,7 +546,10 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if not self.hasIndex(row, column, parent):

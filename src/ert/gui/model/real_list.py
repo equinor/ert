@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -8,6 +8,7 @@ from qtpy.QtCore import (
     Signal,
     Slot,
 )
+from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
@@ -19,7 +20,7 @@ class RealListModel(QAbstractProxyModel):
         iter_: int,
     ) -> None:
         super().__init__(parent=parent)
-        self._iter = iter_
+        self._iter: int = iter_
 
     def get_iter(self) -> int:
         return self._iter
@@ -30,7 +31,7 @@ class RealListModel(QAbstractProxyModel):
     def setIter(self, iter_: int) -> None:
         self._disconnect()
         self.modelAboutToBeReset.emit()
-        self._iter: int = iter_
+        self._iter = iter_
         self.modelReset.emit()
         self._connect()
         self.iter_changed.emit(iter_)
@@ -59,7 +60,8 @@ class RealListModel(QAbstractProxyModel):
         source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
         source_model.modelReset.connect(self.modelReset)
 
-    def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
+    @override
+    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()
@@ -68,31 +70,43 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return 0
-        iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
+        source_model = self.sourceModel()
+        assert source_model is not None
+        iter_index = source_model.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid():
             return 0
-        return self.sourceModel().columnCount(iter_index)
+        return source_model.columnCount(iter_index)
 
-    def rowCount(self, parent: QModelIndex = None) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return 0
-        iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
+        source_model = self.sourceModel()
+        assert source_model is not None
+        iter_index = source_model.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid():
             return 0
-        return self.sourceModel().rowCount(iter_index)
+        return source_model.rowCount(iter_index)
 
-    @staticmethod
-    def parent(_index: QModelIndex):
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -101,18 +115,24 @@ class RealListModel(QAbstractProxyModel):
         ret_index = self.createIndex(row, column, real_index.data(NodeRole))
         return ret_index
 
-    def hasChildren(self, parent: QModelIndex) -> bool:
+    @override
+    def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return False
-        return self.sourceModel().hasChildren(self.mapToSource(parent))
+        source_model = self.sourceModel()
+        assert source_model is not None
+        return source_model.hasChildren(self.mapToSource(parent))
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
             return QModelIndex()
         sm = self.sourceModel()
+        assert sm is not None
         iter_index = sm.index(self._iter, 0, QModelIndex())
         if not iter_index.isValid() or not sm.hasChildren(iter_index):
             return QModelIndex()

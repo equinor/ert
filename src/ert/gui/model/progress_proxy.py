@@ -1,19 +1,20 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
 
 
 class ProgressProxyModel(QAbstractItemModel):
     def __init__(
-        self, source_model: QAbstractItemModel, parent: QModelIndex = None
+        self, source_model: QAbstractItemModel, parent: Optional[QModelIndex] = None
     ) -> None:
         QAbstractItemModel.__init__(self, parent)
         self._source_model: QAbstractItemModel = source_model
-        self._progress: Optional[Dict[str, Union[dict, int]]] = None
+        self._progress: Optional[Dict[str, Union[dict[Any, Any], int]]] = None
         self._connect()
 
     def _connect(self) -> None:
@@ -28,66 +29,84 @@ class ProgressProxyModel(QAbstractItemModel):
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
 
-    @staticmethod
-    def columnCount(parent: QModelIndex = None) -> int:
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return 0
         return 1
 
-    @staticmethod
-    def rowCount(parent: QModelIndex = None) -> int:
+    @override
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return 0
         return 1
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    @override
+    def index(
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
+    ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
             return QModelIndex()
         return self.createIndex(row, column, None)
 
-    @staticmethod
-    def parent(_index: QModelIndex) -> QModelIndex:
+    @overload
+    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    @overload
+    def parent(self) -> Optional[QObject]: ...
+    @override
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
-    @staticmethod
-    def hasChildren(parent: QModelIndex) -> bool:
+    @override
+    def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
+        if parent is None:
+            return QModelIndex().isValid()
         return not parent.isValid()
 
-    def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
+    @override
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
 
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignCenter
 
         if role == ProgressRole:
             return self._progress
 
-        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+        if role in (
+            Qt.ItemDataRole.StatusTipRole,
+            Qt.ItemDataRole.WhatsThisRole,
+            Qt.ItemDataRole.ToolTipRole,
+        ):
             return ""
 
-        if role == Qt.SizeHintRole:
+        if role == Qt.ItemDataRole.SizeHintRole:
             return QSize(30, 30)
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             return QFont()
 
-        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+        if role in (
+            Qt.ItemDataRole.BackgroundRole,
+            Qt.ItemDataRole.ForegroundRole,
+            Qt.ItemDataRole.DecorationRole,
+        ):
             return QColor()
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return ""
 
         return QVariant()
 
     def _recalculate_progress(self, iter_: int) -> None:
-        status_counts = defaultdict(int)
+        status_counts: Dict[Any, int] = defaultdict(int)
         nr_reals: int = 0
         current_iter_index = self._source_model.index(iter_, 0, QModelIndex())
         if current_iter_index.internalPointer() is None:
