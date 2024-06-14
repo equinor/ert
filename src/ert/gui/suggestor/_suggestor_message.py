@@ -8,9 +8,10 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QSizePolicy,
+    QVBoxLayout,
     QWidget,
 )
-from typing_extensions import Self
+from typing_extensions import Any, Self
 
 from ._colors import (
     BLUE_BACKGROUND,
@@ -54,35 +55,96 @@ class SuggestorMessage(QWidget):
         self.setGraphicsEffect(shadowEffect)
         self.setContentsMargins(0, 0, 0, 0)
 
-        self.icon = icon
-        message = message.replace("<", "&lt;").replace(">", "&gt;")
+        self._icon = icon
+        self._message = message.replace("<", "&lt;").replace(">", "&gt;")
+        self._locations = locations
+        self._header = header
+        self._text_color = text_color
 
-        location_paragraph = ""
-        if locations:
-            location_paragraph = locations[0]
-            if len(locations) > 1:
-                location_paragraph += f" and {len(locations) - 1} more"
+        self._hbox = QHBoxLayout()
+        self._hbox.setContentsMargins(16, 16, 16, 16)
+        self._hbox.addWidget(self._icon, alignment=Qt.AlignmentFlag.AlignTop)
+        self.setLayout(self._hbox)
 
-        self.lbl = QLabel(
-            '<div style="font-size: 16px; line-height: 24px;">'
-            + f'<b style="color: {text_color}">'
-            + header
-            + "</b>"
-            + message
-            + "<p>"
-            + location_paragraph
-            + "</p>"
-            + "</div>"
-        )
+        self.lbl = QLabel(self._collapsed_text())
+        self.lbl.setOpenExternalLinks(False)
         self.lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lbl.setWordWrap(True)
+        self._expanded = False
+        if len(self._locations) > 1:
+            self._expand_collapse_label = QLabel(self._expand_link())
+            self._expand_collapse_label.setOpenExternalLinks(False)
+            self._expand_collapse_label.linkActivated.connect(self._toggle_expand)
 
-        self.hbox = QHBoxLayout()
-        self.hbox.setContentsMargins(16, 16, 16, 16)
-        self.hbox.addWidget(self.icon, alignment=Qt.AlignmentFlag.AlignTop)
-        self.hbox.addWidget(self.lbl, alignment=Qt.AlignmentFlag.AlignTop)
-        self.setLayout(self.hbox)
+            self._vbox = QWidget()
+            layout = QVBoxLayout()
+            self._vbox.setLayout(layout)
+            layout.addWidget(self.lbl)
+            layout.addWidget(self._expand_collapse_label)
+            self._hbox.addWidget(self._vbox, alignment=Qt.AlignmentFlag.AlignTop)
+        else:
+            self._expand_collapse_label = QLabel()
+            self._hbox.addWidget(self.lbl, alignment=Qt.AlignmentFlag.AlignTop)
+
+    def _collapsed_text(self) -> str:
+        location_paragraph = ""
+        if self._locations:
+            location_paragraph = self._locations[0]
+            location_paragraph = (
+                "<p>"
+                + f'<b style="color: {self._text_color}"> location: </b>'
+                + location_paragraph
+                + "</p>"
+            )
+
+        return (
+            '<div style="font-size: 16px; line-height: 24px;">'
+            + f'<b style="color: {self._text_color}">'
+            + self._header
+            + "</b>"
+            + self._message
+            + location_paragraph
+            + "</div>"
+        )
+
+    def _toggle_expand(self, _link: Any) -> None:
+        if self._expanded:
+            self.lbl.setText(self._collapsed_text())
+            self._expand_collapse_label.setText(self._expand_link())
+            self._expanded = False
+        else:
+            self.lbl.setText(self._expanded_text())
+            self._expand_collapse_label.setText(self._hide_link())
+            self._expanded = True
+
+    def _hide_link(self) -> str:
+        return " <a href=#morelocations>show less</a>"
+
+    def _expand_link(self) -> str:
+        return f" <a href=#morelocations>and {len(self._locations) - 1} more</a>"
+
+    def _expanded_text(self) -> str:
+        location_paragraphs = ""
+        first = True
+        for loc in self._locations:
+            if first:
+                location_paragraphs += (
+                    f'<p><b style="color: {self._text_color}">location:</b>{loc}</p>'
+                )
+                first = False
+            else:
+                location_paragraphs += f"<p>{loc}</p>"
+
+        return (
+            '<div style="font-size: 16px; line-height: 24px;">'
+            + f'<b style="color: {self._text_color}">'
+            + self._header
+            + "</b>"
+            + self._message
+            + location_paragraphs
+            + "</div>"
+        )
 
     @classmethod
     def error_msg(cls, message: str, locations: list[str]) -> Self:
