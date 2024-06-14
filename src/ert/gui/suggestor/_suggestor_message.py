@@ -36,7 +36,7 @@ class SuggestorMessage(QWidget):
         bg_color: str,
         icon: QWidget,
         message: str,
-        location: str,
+        locations: list[str],
     ) -> None:
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
@@ -56,6 +56,13 @@ class SuggestorMessage(QWidget):
 
         self.icon = icon
         message = message.replace("<", "&lt;").replace(">", "&gt;")
+
+        location_paragraph = ""
+        if locations:
+            location_paragraph = locations[0]
+            if len(locations) > 1:
+                location_paragraph += f" and {len(locations) - 1} more"
+
         self.lbl = QLabel(
             '<div style="font-size: 16px; line-height: 24px;">'
             + f'<b style="color: {text_color}">'
@@ -63,7 +70,7 @@ class SuggestorMessage(QWidget):
             + "</b>"
             + message
             + "<p>"
-            + location
+            + location_paragraph
             + "</p>"
             + "</div>"
         )
@@ -78,29 +85,29 @@ class SuggestorMessage(QWidget):
         self.setLayout(self.hbox)
 
     @classmethod
-    def error_msg(cls, message: str, location: str) -> Self:
+    def error_msg(cls, message: str, locations: list[str]) -> Self:
         return cls(
-            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), message, location
+            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), message, locations
         )
 
     @classmethod
-    def warning_msg(cls, message: str, location: str) -> Self:
+    def warning_msg(cls, message: str, locations: list[str]) -> Self:
         return cls(
             "Warning: ",
             YELLOW_TEXT,
             YELLOW_BACKGROUND,
             _svg_icon("warning"),
             message,
-            location,
+            locations,
         )
 
     @classmethod
-    def deprecation_msg(cls, message: str, location: str) -> Self:
+    def deprecation_msg(cls, message: str, locations: list[str]) -> Self:
         return cls(
             "Deprecation: ",
             BLUE_TEXT,
             BLUE_BACKGROUND,
             _svg_icon("bell"),
             message,
-            location,
+            locations,
         )
