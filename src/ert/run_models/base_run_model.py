@@ -283,14 +283,6 @@ class BaseRunModel:
             # If all realisations fail
             return [True] * len(self._initial_realizations_mask)
 
-    def _count_successful_realizations(self) -> int:
-        """
-        Counts the realizations completed in the previous ensemble run
-        :return:
-        """
-        completed = self._completed_realizations_mask
-        return completed.count(True)
-
     def set_env_key(self, key: str, value: str) -> None:
         """
         Will set an environment variable that will be available until the
