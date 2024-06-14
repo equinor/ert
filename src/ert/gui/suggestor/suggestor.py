@@ -241,20 +241,26 @@ class Suggestor(QWidget):
         column = 0
         row = 0
         num = 0
-        for msg in errors:
-            suggest_layout.addWidget(SuggestorMessage.error_msg(msg), row, column)
+        for err in errors:
+            suggest_layout.addWidget(
+                SuggestorMessage.error_msg(err.message, err.location()), row, column
+            )
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS
             num += 1
-        for msg in warnings:
-            suggest_layout.addWidget(SuggestorMessage.warning_msg(msg), row, column)
+        for w in warnings:
+            suggest_layout.addWidget(
+                SuggestorMessage.warning_msg(w.message, w.location()), row, column
+            )
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS
             num += 1
-        for msg in deprecations:
-            suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg), row, column)
+        for d in deprecations:
+            suggest_layout.addWidget(
+                SuggestorMessage.deprecation_msg(d.message, d.location()), row, column
+            )
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from PyQt5 import QtSvg
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
@@ -23,9 +21,6 @@ from ._colors import (
     YELLOW_TEXT,
 )
 
-if TYPE_CHECKING:
-    from ert.config import ErrorInfo, WarningInfo
-
 
 def _svg_icon(image_name: str) -> QtSvg.QSvgWidget:
     widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
@@ -40,7 +35,8 @@ class SuggestorMessage(QWidget):
         text_color: str,
         bg_color: str,
         icon: QWidget,
-        info: ErrorInfo,
+        message: str,
+        location: str,
     ) -> None:
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
@@ -59,15 +55,15 @@ class SuggestorMessage(QWidget):
         self.setContentsMargins(0, 0, 0, 0)
 
         self.icon = icon
-        info.message = info.message.replace("<", "&lt;").replace(">", "&gt;")
+        message = message.replace("<", "&lt;").replace(">", "&gt;")
         self.lbl = QLabel(
             '<div style="font-size: 16px; line-height: 24px;">'
             + f'<b style="color: {text_color}">'
             + header
             + "</b>"
-            + info.message
+            + message
             + "<p>"
-            + info.location()
+            + location
             + "</p>"
             + "</div>"
         )
@@ -82,15 +78,29 @@ class SuggestorMessage(QWidget):
         self.setLayout(self.hbox)
 
     @classmethod
-    def error_msg(cls, info: ErrorInfo) -> Self:
-        return cls("Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), info)
-
-    @classmethod
-    def warning_msg(cls, info: WarningInfo) -> Self:
+    def error_msg(cls, message: str, location: str) -> Self:
         return cls(
-            "Warning: ", YELLOW_TEXT, YELLOW_BACKGROUND, _svg_icon("warning"), info
+            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), message, location
         )
 
     @classmethod
-    def deprecation_msg(cls, info: WarningInfo) -> Self:
-        return cls("Deprecation: ", BLUE_TEXT, BLUE_BACKGROUND, _svg_icon("bell"), info)
+    def warning_msg(cls, message: str, location: str) -> Self:
+        return cls(
+            "Warning: ",
+            YELLOW_TEXT,
+            YELLOW_BACKGROUND,
+            _svg_icon("warning"),
+            message,
+            location,
+        )
+
+    @classmethod
+    def deprecation_msg(cls, message: str, location: str) -> Self:
+        return cls(
+            "Deprecation: ",
+            BLUE_TEXT,
+            BLUE_BACKGROUND,
+            _svg_icon("bell"),
+            message,
+            location,
+        )
