@@ -66,8 +66,8 @@ class ObservationsAndResponsesData:
 
     def to_long_dataframe(self) -> pd.DataFrame:
         cols = [
-            "key_index",
             "name",
+            "key_index",
             "OBS",
             "STD",
             *range(self._observations_and_responses.shape[1] - 4),
@@ -83,14 +83,14 @@ class ObservationsAndResponsesData:
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observation primary key.
         """
-        return self._observations_and_responses[:, 0].astype(str)
+        return self._observations_and_responses[:, 1].astype(str)
 
     def observation_keys(self) -> npt.NDArray[np.str_]:
         """
         Extracts a ndarray with the shape (num_obs,).
         Each cell holds the observation name.
         """
-        return self._observations_and_responses[:, 1].astype(str)
+        return self._observations_and_responses[:, 0].astype(str)
 
     def errors(self) -> npt.NDArray[np.float_]:
         """
@@ -1216,8 +1216,8 @@ class LocalEnsemble(BaseMode):
 
                     combined_np_long = np.concatenate(
                         [
-                            key_index_1d,
                             obs_names_1d,
+                            key_index_1d,
                             obs_vals_1d,
                             std_vals_1d,
                             response_vals_per_real,
@@ -1236,7 +1236,7 @@ class LocalEnsemble(BaseMode):
 
         # Ensure sorting by obs_name->key_index
         long_np = np.concatenate(long_nps)
-        sorted_long_np = long_np[np.lexsort((long_np[:, 0], long_np[:, 1]))]
+        sorted_long_np = long_np[np.lexsort((long_np[:, 1], long_np[:, 0]))]
 
         return ObservationsAndResponsesData(sorted_long_np)
 
