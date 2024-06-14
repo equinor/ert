@@ -2,7 +2,7 @@ import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
-from typing import Any, Dict, Final, List, Mapping, Optional, Sequence, Union, overload
+from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
 from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
@@ -207,7 +207,7 @@ class SnapshotModel(QAbstractItemModel):
                     ]
                 reals_changed.append(real_node.row())
 
-            jobs_changed_by_real: Mapping[str, Sequence[int]] = defaultdict(list)
+            jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
 
             for (
                 real_id,
