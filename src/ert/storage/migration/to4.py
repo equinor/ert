@@ -25,6 +25,7 @@ def migrate(path: Path) -> None:
                 for obs_name, single_obs_ds in multi_obs_ds.groupby(
                     "obs_name", squeeze=True
                 ):
+                    single_obs_ds = single_obs_ds.dropna("name", how="all")
                     if response_type == "summary":
                         single_obs_ds.drop("obs_name").to_netcdf(
                             output_path / obs_name, engine="scipy"
