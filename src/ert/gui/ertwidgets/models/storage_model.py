@@ -29,8 +29,6 @@ _COLUMN_TEXT = {
     2: "Type",
 }
 
-default_index = QModelIndex()
-
 
 class RealizationModel:
     def __init__(self, realization: int, parent: Any) -> None:
@@ -170,11 +168,13 @@ class StorageModel(QAbstractItemModel):
             self._children.append(ex)
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return _NUM_COLUMNS
 
     @override
-    def rowCount(self, parent: QModelIndex = default_index) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             if isinstance(parent.internalPointer(), RealizationModel):
                 return 0
@@ -187,8 +187,8 @@ class StorageModel(QAbstractItemModel):
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
-        if not child.isValid():
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+        if child is None or not child.isValid():
             return QModelIndex()
 
         child_item = child.internalPointer()
@@ -220,8 +220,10 @@ class StorageModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
+        if parent is None:
+            parent = QModelIndex()
         parentItem = parent.internalPointer() if parent.isValid() else self
         try:
             childItem = parentItem._children[row]

@@ -12,8 +12,6 @@ from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
-default_index = QModelIndex()
-
 
 class RealListModel(QAbstractProxyModel):
     def __init__(
@@ -73,7 +71,7 @@ class RealListModel(QAbstractProxyModel):
         self.endResetModel()
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -83,7 +81,7 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().columnCount(iter_index)
 
-    def rowCount(self, parent: QModelIndex = default_index) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -98,12 +96,12 @@ class RealListModel(QAbstractProxyModel):
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
@@ -114,10 +112,12 @@ class RealListModel(QAbstractProxyModel):
         return ret_index
 
     @override
-    def hasChildren(self, parent: QModelIndex = default_index) -> bool:
+    def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return False
         return self.sourceModel().hasChildren(self.mapToSource(parent))

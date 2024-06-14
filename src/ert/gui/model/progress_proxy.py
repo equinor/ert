@@ -7,8 +7,6 @@ from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
 
-default_index = QModelIndex()
-
 
 class ProgressProxyModel(QAbstractItemModel):
     def __init__(
@@ -32,7 +30,7 @@ class ProgressProxyModel(QAbstractItemModel):
             self._recalculate_progress(last_iter)
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -40,7 +38,7 @@ class ProgressProxyModel(QAbstractItemModel):
         return 1
 
     @override
-    def rowCount(self, parent: QModelIndex = default_index) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -49,7 +47,7 @@ class ProgressProxyModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
@@ -62,11 +60,13 @@ class ProgressProxyModel(QAbstractItemModel):
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
     @override
-    def hasChildren(self, parent: QModelIndex = default_index) -> bool:
+    def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
+        if parent is None:
+            return QModelIndex().isValid()
         return not parent.isValid()
 
     @override

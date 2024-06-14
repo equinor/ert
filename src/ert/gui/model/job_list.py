@@ -21,8 +21,6 @@ from ert.gui.model.snapshot import (
     NodeRole,
 )
 
-default_index = QModelIndex()
-
 
 class JobListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
@@ -104,10 +102,10 @@ class JobListProxyModel(QAbstractProxyModel):
         return QVariant()
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return len(COLUMNS[NodeType.REAL])
 
-    def rowCount(self, parent: QModelIndex = default_index) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -115,19 +113,21 @@ class JobListProxyModel(QAbstractProxyModel):
         source_index = self._get_source_parent_index()
         if not source_index.isValid():
             return 0
-        return self.sourceModel().rowCount(source_index)
+        source_model = self.sourceModel()
+        assert source_model is not None
+        return source_model.rowCount(source_index)
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()

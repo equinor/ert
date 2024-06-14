@@ -6,8 +6,6 @@ from typing_extensions import override
 
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
-default_index = QModelIndex()
-
 
 class DataTypeKeysListModel(QAbstractItemModel):
     DEFAULT_DATA_TYPE = QColor(255, 255, 255)
@@ -21,7 +19,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
         return self.createIndex(row, column)
 
@@ -30,15 +28,15 @@ class DataTypeKeysListModel(QAbstractItemModel):
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
         return QModelIndex()
 
     @override
-    def rowCount(self, parent: QModelIndex = default_index) -> int:
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         return len(self._keys)
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return 1
 
     @override

@@ -74,8 +74,6 @@ _QCOLORS = {
     state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
 }
 
-default_index = QModelIndex()
-
 
 def _estimate_duration(
     start_time: datetime.datetime, end_time: Optional[datetime.datetime] = None
@@ -319,7 +317,7 @@ class SnapshotModel(QAbstractItemModel):
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     @override
-    def columnCount(self, parent: QModelIndex = default_index) -> int:
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_node = parent.internalPointer()
@@ -336,7 +334,7 @@ class SnapshotModel(QAbstractItemModel):
                 count = len(COLUMNS[NodeType.JOB])
         return count
 
-    def rowCount(self, parent: QModelIndex = None):
+    def rowCount(self, parent: Optional[QModelIndex] = None):
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -351,8 +349,8 @@ class SnapshotModel(QAbstractItemModel):
     @overload
     def parent(self) -> Optional[QObject]: ...
     @override
-    def parent(self, child: QModelIndex = default_index) -> Optional[QObject]:
-        if not child.isValid():
+    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+        if child is None or not child.isValid():
             return QModelIndex()
 
         parent_item = child.internalPointer().parent
@@ -550,7 +548,7 @@ class SnapshotModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex = default_index
+        self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
