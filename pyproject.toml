@@ -176,12 +176,33 @@ select = [
   "F",   # pyflakes
   "PL",  # pylint
 ]
+preview = true
 ignore = ["PLW2901", # redefined-loop-name
           "PLR2004", # magic-value-comparison
           "PLR0915", # too-many-statements
           "PLR0912", # too-many-branches
           "PLR5501", # collapsible-else-if
-          "PLR0911",  # too-many-return-statements
+          "PLR0911", # too-many-return-statements
+          "PLC2701", # import-private-name
+          "PLR6201", # literal-membership
+          "PLR0914", # too-many-locals
+          "F841", # unused-variable
+          "PLW1514", # unspecified-encoding
+          "PLR6104", # non-augmented-assignment
+          "PLR6301", # no-self-use
+          "PLW1641", # eq-without-hash
+          "PLC0415", # import-outside-toplevel
+          "PLR0904", # too-many-public-methods
+          "PLR1702", # too-many-nested-blocks
+          "SIM103", # needless-bool
+          "PLW3201", # bad-dunder-method-name
+          "PLR1704", # redefined-argument-from-local
+          "PLC1901", # compare-to-empty-string
+          "SIM300", # yoda-conditions
+          "PLW0128", # redeclared-assigned-name
+          "PLW0108", # unnecessary-lambda
+          "PLR1730", # if-stmt-min-max
+          "PLC2801", # unnecessary-dunder-call
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
