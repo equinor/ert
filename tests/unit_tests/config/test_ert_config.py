@@ -346,11 +346,11 @@ def test_that_parsing_workflows_gives_expected():
     assert "HIDDEN_PRINT" in ert_config.workflow_jobs
     assert "print_uber" in ert_config.workflow_jobs
 
-    assert [
+    assert list(ert_config.workflows.keys()) == [
         "magic_print",
         "no_print",
         "some_print",
-    ] == list(ert_config.workflows.keys())
+    ]
 
     assert len(ert_config.hooked_workflows[HookRuntime.PRE_UPDATE]) == 1
     assert len(ert_config.hooked_workflows[HookRuntime.POST_UPDATE]) == 1
