@@ -1292,8 +1292,9 @@ class LocalEnsemble(BaseMode):
 
     def unify_responses(self, key: Optional[str] = None) -> None:
         if key is None:
-            for key in self.experiment.response_configuration:
-                self.unify_responses(key)
+            for response_key in self.experiment.response_configuration:
+                self.unify_responses(response_key)
+                key = response_key
 
         gen_data_keys = {
             k

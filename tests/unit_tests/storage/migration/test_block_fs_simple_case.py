@@ -104,14 +104,14 @@ def test_migrate_case(data, storage, enspath):
         assert set(real_group.groups) == {"FIELD", "SURFACE"}
 
         # Compare FIELDs
-        for key, data in real_group["FIELD"].groups.items():
-            expect = np.array(data["VALUES"]).ravel()
+        for key, field_data in real_group["FIELD"].groups.items():
+            expect = np.array(field_data["VALUES"]).ravel()
             actual = ensemble.load_parameters(key, [real_index])["values"]
             assert list(expect) == list(actual.values.ravel()), f"FIELD {key}"
 
         # Compare SURFACEs
-        for key, data in real_group["SURFACE"].groups.items():
-            expect = sorted_surface(data)
+        for key, surf_data in real_group["SURFACE"].groups.items():
+            expect = sorted_surface(surf_data)
             actual = ensemble.load_parameters(key, real_index)["values"].values.ravel()
             assert list(expect) == list(actual), f"SURFACE {key}"
 
