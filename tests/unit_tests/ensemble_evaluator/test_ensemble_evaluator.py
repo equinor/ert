@@ -88,7 +88,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
             try:
                 assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
                 assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
-                assert snapshot.get_job("0", "0").error == ""
+                assert not snapshot.get_job("0", "0").error
                 return True
             except AssertionError:
                 return False
