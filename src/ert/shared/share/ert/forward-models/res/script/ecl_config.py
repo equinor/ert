@@ -256,8 +256,4 @@ class EclrunConfig:
         if self.run_env is None:
             return False
 
-        ecl_run_versions = self._get_available_eclrun_versions()
-        if self.version not in ecl_run_versions:
-            return False
-
-        return True
+        return self.version in self._get_available_eclrun_versions()
