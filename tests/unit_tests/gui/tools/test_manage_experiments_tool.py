@@ -142,11 +142,11 @@ def test_experiment_view(
 
     experiment_widget = tool._storage_info_widget._content_layout.currentWidget()
     assert isinstance(experiment_widget, _ExperimentWidget)
-    assert experiment_widget._name_label.text() != ""
-    assert experiment_widget._uuid_label.text() != ""
-    assert experiment_widget._parameters_text_edit.toPlainText() != ""
-    assert experiment_widget._responses_text_edit.toPlainText() != ""
-    assert experiment_widget._observations_text_edit.toPlainText() != ""
+    assert experiment_widget._name_label.text()
+    assert experiment_widget._uuid_label.text()
+    assert experiment_widget._parameters_text_edit.toPlainText()
+    assert experiment_widget._responses_text_edit.toPlainText()
+    assert experiment_widget._observations_text_edit.toPlainText()
 
 
 def test_ensemble_view(
@@ -176,12 +176,12 @@ def test_ensemble_view(
 
     ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
     assert isinstance(ensemble_widget, _EnsembleWidget)
-    assert ensemble_widget._name_label.text() != ""
-    assert ensemble_widget._uuid_label.text() != ""
-    assert ensemble_widget._state_text_edit.toPlainText() == ""
+    assert ensemble_widget._name_label.text()
+    assert ensemble_widget._uuid_label.text()
+    assert not ensemble_widget._state_text_edit.toPlainText()
 
     ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
-    assert ensemble_widget._state_text_edit.toPlainText() != ""
+    assert ensemble_widget._state_text_edit.toPlainText()
 
     ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
     ensemble_widget._observations_tree_widget.expandAll()

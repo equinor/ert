@@ -197,7 +197,6 @@ ignore = ["PLW2901", # redefined-loop-name
           "SIM103", # needless-bool
           "PLW3201", # bad-dunder-method-name
           "PLR1704", # redefined-argument-from-local
-          "PLC1901", # compare-to-empty-string
           "SIM300", # yoda-conditions
           "PLW0128", # redeclared-assigned-name
           "PLW0108", # unnecessary-lambda

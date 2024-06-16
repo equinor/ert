@@ -26,5 +26,5 @@ def test_validate_name(qtbot):
     assert dialog.param_name.toolTip() == "Name must be unique!"
 
     dialog.validateName("unique_name")
-    assert dialog.param_name.toolTip() == ""
+    assert not dialog.param_name.toolTip()
     assert dialog.ok_button.isEnabled()

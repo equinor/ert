@@ -189,7 +189,7 @@ def _split_line(line: str) -> Iterator[str]:
                 inside_str = False
             # start of str
             else:
-                if value != "":
+                if value:
                     yield value
                 value = ""
                 inside_str = char
