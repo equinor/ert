@@ -143,7 +143,7 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     prior_ensemble_cutoff1, posterior_ensemble_cutoff1 = run_cli_ES_with_case(
         "poly_localization_cutoff1.ert"
     )
-    posterior_ensemble_cutoff2, posterior_ensemble_cutoff2 = run_cli_ES_with_case(
+    _, posterior_ensemble_cutoff2 = run_cli_ES_with_case(
         "poly_localization_cutoff2.ert"
     )
 
