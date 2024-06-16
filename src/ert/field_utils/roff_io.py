@@ -73,11 +73,7 @@ def import_roff(
         return all(val is not None for v in looking_for.values() for val in v.values())
 
     def should_skip_parameter(key: Tuple[str, str]) -> bool:
-        if key[0] == "name":
-            if name is None or key[1] == name:
-                return False
-            return True
-        return False
+        return key[0] == "name" and name is not None and key[1] != name
 
     with roffio.lazy_read(filelike) as tag_generator:
         for tag, keys in tag_generator:

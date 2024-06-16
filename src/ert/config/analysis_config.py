@@ -297,6 +297,4 @@ class AnalysisConfig:
         if self._analysis_iter_config != other._analysis_iter_config:
             return False
 
-        if self.minimum_required_realizations != other.minimum_required_realizations:
-            return False
-        return True
+        return self.minimum_required_realizations == other.minimum_required_realizations
