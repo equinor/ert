@@ -3,7 +3,8 @@ from __future__ import annotations
 import functools
 import logging
 import webbrowser
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional
+from collections import defaultdict
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
 
 from PyQt5.QtGui import QCursor
 from qtpy.QtCore import Qt
@@ -31,6 +32,13 @@ def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
     webbrowser.open(link)
+
+
+def _combine_messages(infos: Sequence[ErrorInfo]) -> list[tuple[str, list[str]]]:
+    combined = defaultdict(list)
+    for info in infos:
+        combined[info.message].append(info.location())
+    return list(combined.items())
 
 
 LIGHT_GREY = "#f7f7f7"
@@ -232,6 +240,7 @@ class Suggestor(QWidget):
         NUM_COLUMNS = 2
 
         suggest_msgs = QWidget(parent=self)
+        suggest_msgs.setObjectName("suggestor_messages")
         suggest_msgs.setContentsMargins(0, 0, 16, 0)
         suggest_layout = QGridLayout()
         suggest_layout.setContentsMargins(0, 0, 0, 0)
@@ -241,20 +250,24 @@ class Suggestor(QWidget):
         column = 0
         row = 0
         num = 0
-        for msg in errors:
-            suggest_layout.addWidget(SuggestorMessage.error_msg(msg), row, column)
+        for combined in _combine_messages(errors):
+            suggest_layout.addWidget(SuggestorMessage.error_msg(*combined), row, column)
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS
             num += 1
-        for msg in warnings:
-            suggest_layout.addWidget(SuggestorMessage.warning_msg(msg), row, column)
+        for combined in _combine_messages(warnings):
+            suggest_layout.addWidget(
+                SuggestorMessage.warning_msg(*combined), row, column
+            )
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS
             num += 1
-        for msg in deprecations:
-            suggest_layout.addWidget(SuggestorMessage.deprecation_msg(msg), row, column)
+        for combined in _combine_messages(deprecations):
+            suggest_layout.addWidget(
+                SuggestorMessage.deprecation_msg(*combined), row, column
+            )
             if column:
                 row += 1
             column = (column + 1) % NUM_COLUMNS
