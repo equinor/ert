@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class FeatureScheduler:
     _DEFAULTS = {
         "LOCAL": True,
-        "LSF": False,
+        "LSF": True,
         "SLURM": False,
         "TORQUE": True,
     }

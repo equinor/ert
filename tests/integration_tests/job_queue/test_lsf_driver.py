@@ -180,6 +180,7 @@ def test_run_mocked_lsf_queue():
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
         "--disable-monitor",
+        "--disable-scheduler",
         "poly.ert",
     )
     log = Path("bsub_log").read_text(encoding="utf-8")
