@@ -44,8 +44,9 @@ class CreateExperimentDialog(QDialog):
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        self._ok_button = buttons.button(QDialogButtonBox.Ok)
-        assert self._ok_button
+        ok_button = buttons.button(QDialogButtonBox.Ok)
+        assert ok_button
+        self._ok_button = ok_button
 
         self._ok_button.clicked.connect(
             lambda: self.onDone.emit(

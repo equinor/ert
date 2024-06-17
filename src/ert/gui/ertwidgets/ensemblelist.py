@@ -110,5 +110,5 @@ class EnsembleList(QWidget):
             item = QListWidgetItem(
                 f"{ensemble.name} - {ensemble.started_at} ({ensemble.id})"
             )
-            item.setData(Qt.UserRole, ensemble)
+            item.setData(Qt.ItemDataRole.UserRole, ensemble)
             self._list.addItem(item)

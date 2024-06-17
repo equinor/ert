@@ -75,7 +75,7 @@ class StringBox(QLineEdit):
 
     def stringBoxChanged(self) -> None:
         """Called whenever the contents of the editline changes."""
-        text = self.text()
+        text: Optional[str] = self.text()
         if not text:
             text = None
 
@@ -95,7 +95,7 @@ class StringBox(QLineEdit):
     def model(self) -> TextModel:
         return self._model
 
-    def setValidator(self, validator):
+    def setValidator(self, validator: ArgumentDefinition) -> None:  # type: ignore
         self._validator = validator
 
     def getValidationSupport(self) -> ValidationSupport:

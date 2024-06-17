@@ -51,7 +51,7 @@ class RealizationModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role) -> Any:
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
 
@@ -78,7 +78,7 @@ class EnsembleModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role) -> Any:
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
 
@@ -111,7 +111,9 @@ class ExperimentModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role=Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         if not index.isValid():
             return None
 

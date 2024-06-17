@@ -63,8 +63,8 @@ class SummaryPanel(QFrame):
         self.setMinimumHeight(150)
 
         widget = QWidget()
-        self.layout = QHBoxLayout()
-        widget.setLayout(self.layout)
+        self._layout = QHBoxLayout()
+        widget.setLayout(self._layout)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -112,11 +112,11 @@ class SummaryPanel(QFrame):
         layout = QVBoxLayout()
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
-        text_widget.setTextFormat(Qt.RichText)
+        text_widget.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(text_widget)
         layout.addStretch(1)
 
-        self.layout.addLayout(layout)
+        self._layout.addLayout(layout)
 
     @staticmethod
     def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:

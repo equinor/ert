@@ -22,8 +22,8 @@ class ErrorPopup(QWidget):
         "</html>"
     )
 
-    def __init__(self):
-        QWidget.__init__(self, None, Qt.ToolTip)
+    def __init__(self) -> None:
+        QWidget.__init__(self, None, Qt.WindowType.ToolTip)
         self.resize(300, 50)
 
         self.setContentsMargins(0, 0, 0, 0)
@@ -35,12 +35,12 @@ class ErrorPopup(QWidget):
         self._error_widget.setFrameStyle(QFrame.Box)
         self._error_widget.setWordWrap(True)
         self._error_widget.setScaledContents(True)
-        self._error_widget.setTextFormat(Qt.RichText)
+        self._error_widget.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self._error_widget)
 
         self.setLayout(layout)
 
-    def presentError(self, widget, error):
+    def presentError(self, widget: QWidget, error: str) -> None:
         assert isinstance(widget, QWidget)
 
         self._error_widget.setText(ErrorPopup.error_template % html.escape(error))

@@ -128,11 +128,11 @@ class PathChooser(QWidget):
         current_directory = self.getPath()
 
         if self._model.pathMustBeAFile():
-            current_directory: tuple[str, str] = QFileDialog.getOpenFileName(
+            current_directory = QFileDialog.getOpenFileName(
                 self, "Select a file path", current_directory
             )[0]
         else:
-            current_directory: str = QFileDialog.getExistingDirectory(
+            current_directory = QFileDialog.getExistingDirectory(
                 self, "Select a directory", current_directory
             )
 
