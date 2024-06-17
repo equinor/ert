@@ -16,8 +16,11 @@ from qtpy.QtWidgets import (
 from .file_update_worker import FileUpdateWorker
 
 
-def calculate_screen_size_based_height():
-    screen_height = QApplication.primaryScreen().geometry().height()
+def calculate_screen_size_based_height() -> int:
+    screen = QApplication.primaryScreen()
+    if screen is None:
+        return 1024
+    screen_height = screen.geometry().height()
     max_ratio_of_screen = 1.0 / 3.0
     return floor(screen_height * max_ratio_of_screen)
 

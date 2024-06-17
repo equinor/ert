@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 
 
@@ -39,7 +41,7 @@ class PathModel(ValueModel):
     def pathMustBeAbsolute(self) -> bool:
         return self._path_must_be_absolute
 
-    def getPath(self) -> str:
+    def getPath(self) -> Optional[str]:
         return self.getValue()
 
     def setPath(self, value: str) -> None:

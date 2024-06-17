@@ -2,13 +2,14 @@
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QApplication
+from typing import Callable, Any
 
 
-def showWaitCursorWhileWaiting(func):
+def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
     """A function decorator to show the wait cursor while the function is working."""
 
-    def wrapper(*arg):
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+    def wrapper(*arg: Any) -> Any:
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
         try:
             res = func(*arg)
             return res

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from qtpy.QtCore import QSize
-from qtpy.QtGui import QColor, QPainter
+from qtpy.QtGui import QColor, QPainter, QPaintEvent
 from qtpy.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 
@@ -16,8 +16,7 @@ class LegendMarker(QWidget):
 
         self.color = color
 
-    def paintEvent(self, paintevent):
-        """Paints the box"""
+    def paintEvent(self, a0: Optional[QPaintEvent]) -> None:
         painter = QPainter(self)
 
         rect = self.contentsRect()

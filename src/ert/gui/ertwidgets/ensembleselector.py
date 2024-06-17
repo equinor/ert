@@ -81,7 +81,7 @@ class EnsembleSelector(QComboBox):
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
         if self._show_only_undefined:
-            ensemble_list = (
+            ensembles = (
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
                 if all(
@@ -90,8 +90,8 @@ class EnsembleSelector(QComboBox):
                 )
             )
         else:
-            ensemble_list = self.notifier.storage.ensembles
-        ensemble_list = list(ensemble_list)
+            ensembles = self.notifier.storage.ensembles
+        ensemble_list = list(ensembles)
         if self._show_only_no_children:
             parents = [
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent

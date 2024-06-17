@@ -82,8 +82,8 @@ class StorageWidget(QWidget):
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
         selection_model = QItemSelectionModel(proxy_model)
+        selection_model.currentChanged.connect(self._currentChanged)
         self._tree_view.setSelectionModel(selection_model)
-        self._tree_view.selectionModel().currentChanged.connect(self._currentChanged)
         self._tree_view.setColumnWidth(0, 225)
         self._tree_view.setColumnWidth(1, 125)
         self._tree_view.setColumnWidth(2, 100)
@@ -98,7 +98,7 @@ class StorageWidget(QWidget):
         self.setLayout(layout)
 
     def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
-        idx = self._tree_view.model().mapToSource(selected)
+        idx = self._tree_view.model().mapToSource(selected)  # type: ignore
         cls = idx.internalPointer()
 
         if isinstance(cls, EnsembleModel):

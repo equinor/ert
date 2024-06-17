@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, Optional
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QFocusEvent, QKeyEvent
 from qtpy.QtWidgets import QLineEdit
 
 
@@ -54,17 +54,17 @@ class SearchBox(QLineEdit):
         if not self.text():
             self.presentSearch()
 
-    def focusInEvent(self, focus_event):
-        QLineEdit.focusInEvent(self, focus_event)
+    def focusInEvent(self, a0: Optional[QFocusEvent]) -> None:
+        QLineEdit.focusInEvent(self, a0)
         self.enterSearch()
 
-    def focusOutEvent(self, focus_event):
-        QLineEdit.focusOutEvent(self, focus_event)
+    def focusOutEvent(self, a0: Optional[QFocusEvent]) -> None:
+        QLineEdit.focusOutEvent(self, a0)
         self.exitSearch()
 
-    def keyPressEvent(self, key_event):
-        if key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() != Qt.Key.Key_Escape:
             self.clear()
             self.clearFocus()
         else:
-            QLineEdit.keyPressEvent(self, key_event)
+            QLineEdit.keyPressEvent(self, a0)

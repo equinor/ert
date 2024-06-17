@@ -35,21 +35,25 @@ class ValidatedDialog(QDialog):
 
         self.unique_names = unique_names
 
-        self.layout = QFormLayout()
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self._layout = QFormLayout()
+        self._layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         label = QLabel(description)
-        label.setAlignment(Qt.AlignHCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        self.layout.addRow(self.createSpace(5))
-        self.layout.addRow(label)
-        self.layout.addRow(self.createSpace(10))
+        self._layout.addRow(self.createSpace(5))
+        self._layout.addRow(label)
+        self._layout.addRow(self.createSpace(10))
 
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Orientation.Horizontal,
+            self,
         )
         self.cancel_button = buttons.button(QDialogButtonBox.Cancel)
-        self.ok_button = buttons.button(QDialogButtonBox.Ok)
+        ok_button = buttons.button(QDialogButtonBox.Ok)
+        assert ok_button is not None
+        self.ok_button = ok_button
         self.ok_button.setEnabled(False)
 
         self.param_name = QLineEdit(self)
@@ -59,16 +63,16 @@ class ValidatedDialog(QDialog):
             self.param_name.backgroundRole()
         )
 
-        self.layout.addRow("Name:", self.param_name)
+        self._layout.addRow("Name:", self.param_name)
 
-        self.layout.addRow(self.createSpace(10))
+        self._layout.addRow(self.createSpace(10))
 
-        self.layout.addRow(buttons)
+        self._layout.addRow(buttons)
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
-        self.setLayout(self.layout)
+        self.setLayout(self._layout)
 
     def notValid(self, msg: Optional[str]) -> None:
         """Called when the name is not valid."""

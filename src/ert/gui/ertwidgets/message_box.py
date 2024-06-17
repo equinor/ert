@@ -28,8 +28,8 @@ class ErtMessageBox(QDialog):
         super().__init__(parent)
         self.box = QDialogButtonBox(
             QDialogButtonBox.Ok,
-            centerButtons=True,
         )
+        self.box.setCenterButtons(True)
         self.box.accepted.connect(self.accept)
 
         self.details_text = QTextEdit()
@@ -39,7 +39,9 @@ class ErtMessageBox(QDialog):
 
         self.label_text = QLabel(text)
         self.label_icon = QLabel()
-        icon = self.style().standardIcon(QStyle.SP_MessageBoxCritical)
+        style = self.style()
+        assert style is not None
+        icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
         self.label_icon.setPixmap(icon.pixmap(32))
 
         lay = QGridLayout(self)

@@ -30,7 +30,7 @@ class AnalysisModuleEdit(QWidget):
         variables_popup_button.clicked.connect(self.showVariablesPopup)
         variables_popup_button.setMaximumSize(20, 20)
 
-        layout.addWidget(variables_popup_button, 0, Qt.AlignLeft)
+        layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
         layout.addStretch()
 
@@ -40,5 +40,9 @@ class AnalysisModuleEdit(QWidget):
         variable_dialog = AnalysisModuleVariablesPanel(
             self.analysis_module, self.ensemble_size
         )
-        dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
+        dialog = ClosableDialog(
+            "Edit variables",
+            variable_dialog,
+            self.parent(),  # type: ignore
+        )
         dialog.exec_()
