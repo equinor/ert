@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy as np
 import seaborn as sns
+import xarray as xr
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
@@ -193,9 +194,12 @@ class _EnsembleWidget(QWidget):
             observation_name
         )
         observation_ds = ensemble.experiment.get_single_obs_ds(observation_name)
-        response_ds = ensemble.load_responses(
-            response_name,
-        )
+        try:
+            response_ds = ensemble.load_responses(
+                response_name,
+            )
+        except KeyError:
+            response_ds = xr.Dataset()
 
         # check if the response is empty
         if bool(response_ds.dims):
