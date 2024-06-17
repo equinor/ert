@@ -439,8 +439,8 @@ def minimal_case(tmpdir):
         yield
 
 
-def test_shell_script_jobs_availability(minimal_case):
-    ert_config = ErtConfig.from_file("config.ert")
+def test_shell_script_jobs_availability(ErtConfigWithPlugins, minimal_case):
+    ert_config = ErtConfigWithPlugins.from_file("config.ert")
     fm_shell_jobs = {}
     for fm_step in ert_config.installed_forward_model_steps.values():
         exe = fm_step.executable

@@ -17,7 +17,7 @@ def test_no_plugins():
     assert pm.get_ecl100_config_path() is None
     assert pm.get_ecl300_config_path() is None
 
-    assert len(pm.get_installable_jobs()) > 0
+    assert len(pm.forward_model_steps) > 0
     assert len(pm._get_config_workflow_jobs()) > 0
 
     assert pm._site_config_lines() == [
