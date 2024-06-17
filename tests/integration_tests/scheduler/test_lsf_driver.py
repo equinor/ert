@@ -275,8 +275,10 @@ async def test_kill_before_submit_is_finished(
         SIGTERM = 15
         assert iens == 0
         # If the kill is issued before the job really starts, you will not
-        # get SIGTERM but rather LSF_FAILED_JOB. We should accept both.
-        assert returncode in (SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
+        # get SIGTERM but rather LSF_FAILED_JOB. Whether SIGNAL_OFFSET is
+        # added or not depends on various shell configurations and is a
+        # detail we do not want to track.
+        assert returncode in (SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
 
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)
