@@ -91,11 +91,10 @@ class SuggestorMessage(QWidget):
         if self._expanded:
             self.lbl.setText(self._collapsed_text())
             self._expand_collapse_label.setText(self._expand_link())
-            self._expanded = False
         else:
             self.lbl.setText(self._expanded_text())
             self._expand_collapse_label.setText(self._hide_link())
-            self._expanded = True
+        self._expanded = not self._expanded
 
     def _hide_link(self) -> str:
         return " <a href=#morelocations>show less</a>"
