@@ -87,27 +87,6 @@ class SuggestorMessage(QWidget):
             self._expand_collapse_label = QLabel()
             self._hbox.addWidget(self.lbl, alignment=Qt.AlignmentFlag.AlignTop)
 
-    def _collapsed_text(self) -> str:
-        location_paragraph = ""
-        if self._locations:
-            location_paragraph = self._locations[0]
-            location_paragraph = (
-                "<p>"
-                + f'<b style="color: {self._text_color}"> location: </b>'
-                + location_paragraph
-                + "</p>"
-            )
-
-        return (
-            '<div style="font-size: 16px; line-height: 24px;">'
-            + f'<b style="color: {self._text_color}">'
-            + self._header
-            + "</b>"
-            + self._message
-            + location_paragraph
-            + "</div>"
-        )
-
     def _toggle_expand(self, _link: Any) -> None:
         if self._expanded:
             self.lbl.setText(self._collapsed_text())
@@ -124,6 +103,19 @@ class SuggestorMessage(QWidget):
     def _expand_link(self) -> str:
         return f" <a href=#morelocations>and {len(self._locations) - 1} more</a>"
 
+    def _collapsed_text(self) -> str:
+        location_paragraph = ""
+        if self._locations:
+            location_paragraph = self._locations[0]
+            location_paragraph = (
+                "<p>"
+                + f'<b style="color: {self._text_color}"> location: </b>'
+                + location_paragraph
+                + "</p>"
+            )
+
+        return self._text(location_paragraph)
+
     def _expanded_text(self) -> str:
         location_paragraphs = ""
         first = True
@@ -136,13 +128,16 @@ class SuggestorMessage(QWidget):
             else:
                 location_paragraphs += f"<p>{loc}</p>"
 
+        return self._text(location_paragraphs)
+
+    def _text(self, location: str) -> str:
         return (
             '<div style="font-size: 16px; line-height: 24px;">'
             + f'<b style="color: {self._text_color}">'
             + self._header
             + "</b>"
             + self._message
-            + location_paragraphs
+            + location
             + "</div>"
         )
 
