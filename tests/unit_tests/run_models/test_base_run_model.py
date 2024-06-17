@@ -4,13 +4,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import ModelConfig
+from ert.config import ErtConfig, ModelConfig
+from ert.run_context import RunContext
 from ert.run_models import BaseRunModel
 from ert.run_models.run_arguments import (
     EnsembleExperimentRunArguments,
     ESMDARunArguments,
     SimulationArguments,
 )
+from ert.runpaths import Runpaths
 from ert.substitution_list import SubstitutionList
 
 
@@ -180,3 +182,35 @@ def test_delete_run_path(run_path_format, active_realizations):
     assert all(path.parent.exists() for path in expected_removed)
     assert all(path.exists() for path in expected_remaining)
     assert share_path.exists()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_num_cpu_is_propagated_from_config_to_ensemble(base_arguments, storage):
+    # Given NUM_CPU in the config file has a special value
+    Path("num_cpu_config.ert").write_text(
+        "NUM_REALIZATIONS 2\nNUM_CPU 42", encoding="utf-8"
+    )
+
+    # Set up a BaseRunModel object from the config file above:
+    config = ErtConfig.from_file("num_cpu_config.ert")
+    BaseRunModel.validate = MagicMock()
+    brm = BaseRunModel(
+        simulation_arguments=base_arguments,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        status_queue=None,
+    )
+    run_context = RunContext(
+        storage.create_experiment().create_ensemble(name="test", ensemble_size=2),
+        Runpaths("real-%d", "", ""),
+        initial_mask=[True, True],
+    )
+
+    # Instead of running the BaseRunModel, we only test its implementation detail which is to
+    # use _build_ensemble() just prior to running
+    ensemble = brm._build_ensemble(run_context)
+
+    # Assert the built ensemble has the correct NUM_CPU information
+    assert ensemble.reals[0].num_cpu == 42
+    assert ensemble.reals[1].num_cpu == 42
