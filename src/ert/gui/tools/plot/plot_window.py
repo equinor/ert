@@ -1,12 +1,12 @@
 import logging
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt, Slot
-from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
+from qtpy.QtWidgets import QDockWidget, QMainWindow, QMessageBox, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.plottery import PlotConfig, PlotContext
@@ -68,7 +68,16 @@ def open_error_dialog(title: str, content: str) -> None:
     restore_text()
 
     def copy_text() -> None:
-        QApplication.clipboard().setText(content)
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(text)
+        else:
+            QMessageBox.critical(
+                None,
+                "Error",
+                "Cannot copy text to clipboard because your system does not have a clipboard",
+                QMessageBox.Ok,
+            )
         copy_button.setIcon(QIcon("img:check.svg"))
 
         restore_timer.start(1000)
@@ -87,7 +96,7 @@ def open_error_dialog(title: str, content: str) -> None:
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, config_file, parent):
+    def __init__(self, config_file: str, parent: Optional[QWidget]):
         QMainWindow.__init__(self, parent)
         t = time.perf_counter()
 
@@ -132,7 +141,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
         self.addPlotWidget(STD_DEV, StdDevPlot())
         self._central_tab.currentChanged.connect(self.currentTabChanged)
-        self._prev_tab_widget = None
+        self._prev_tab_widget: Optional[QWidget] = None
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
@@ -160,11 +169,11 @@ class PlotWindow(QMainWindow):
         logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
 
     @Slot(int)
-    def currentTabChanged(self, index) -> None:
+    def currentTabChanged(self, index: Any) -> None:
         self.updatePlot()
 
     @Slot(int)
-    def layerIndexChanged(self, index) -> None:
+    def layerIndexChanged(self, index: Optional[int]) -> None:
         self.updatePlot(index)
 
     def updatePlot(self, layer: Optional[int] = None) -> None:
@@ -279,7 +288,20 @@ class PlotWindow(QMainWindow):
     def getSelectedKey(self) -> Optional[PlotApiKeyDefinition]:
         return self._data_type_keys_widget.getSelectedItem()
 
-    def addPlotWidget(self, name, plotter, enabled=True) -> None:
+    def addPlotWidget(
+        self,
+        name: str,
+        plotter: Union[
+            EnsemblePlot,
+            StatisticsPlot,
+            HistogramPlot,
+            GaussianKDEPlot,
+            DistributionPlot,
+            CrossEnsembleStatisticsPlot,
+            StdDevPlot,
+        ],
+        enabled: bool = True,
+    ) -> None:
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from qtpy.QtWidgets import (
     QComboBox,
@@ -137,17 +137,14 @@ class StyleChooser(QWidget):
         )
         self._layout = layout
 
-    def getItemSizes(self):
-        line_style_combo_width = self._layout.itemAt(0).sizeHint().width()
-        thickness_spinner_width = self._layout.itemAt(1).sizeHint().width()
-        marker_combo_width = self._layout.itemAt(2).sizeHint().width()
-        size_spinner_width = self._layout.itemAt(3).sizeHint().width()
-        return (
-            line_style_combo_width,
-            thickness_spinner_width,
-            marker_combo_width,
-            size_spinner_width,
-        )
+    def getItemSizes(self) -> Tuple[int, ...]:
+        def _iter() -> Iterator[int]:
+            for i in range(4):
+                item = self._layout.itemAt(i)
+                assert item is not None
+                yield item.sizeHint().width()
+
+        return tuple(_iter())
 
     def _findLineStyleIndex(self, line_style: str) -> int:
         for index, style in enumerate(self._styles):
@@ -185,7 +182,7 @@ class StyleChooser(QWidget):
         self._style.width = thickness
         self._style.size = size
 
-    def setStyle(self, style: PlotStyle):
+    def setStyle(self, style: PlotStyle) -> None:  # type: ignore
         self._style.copyStyleFrom(style)
         self._updateLineStyleAndMarker(
             style.line_style, style.marker, style.width, style.size

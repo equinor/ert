@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, no_type_check
 from weakref import ref
 
 from qtpy.QtGui import QIcon
@@ -30,6 +30,7 @@ class ExportTool(Tool):
         )
         self.setEnabled(self.__exporter.is_valid())
 
+    @no_type_check
     def trigger(self) -> None:
         if self.__export_widget is None:
             self.__export_widget = ref(ExportPanel(self.parent()))
@@ -42,7 +43,7 @@ class ExportTool(Tool):
         self.__dialog().addButton("Export", self.export)
         self.__dialog().show()
 
-    def _run_export(self, params):
+    def _run_export(self, params: dict[str, Any]) -> None:
         try:
             self.__exporter.run_export(params)
             QMessageBox.information(
@@ -57,6 +58,7 @@ class ExportTool(Tool):
                 QMessageBox.Ok,
             )
 
+    @no_type_check
     def export(self) -> None:
         self.__export_widget().export()
         self.__dialog().accept()

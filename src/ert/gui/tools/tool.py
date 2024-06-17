@@ -34,7 +34,7 @@ class Tool:
     def getName(self) -> str:
         return self.__name
 
-    def trigger(self):
+    def trigger(self) -> None:
         raise NotImplementedError()
 
     def setParent(self, parent: Optional[QObject]) -> None:

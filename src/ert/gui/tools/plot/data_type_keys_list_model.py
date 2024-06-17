@@ -48,14 +48,14 @@ class DataTypeKeysListModel(QAbstractItemModel):
             row = index.row()
             item = items[row]
 
-            if role == Qt.DisplayRole:
+            if role == Qt.ItemDataRole.DisplayRole:
                 return item.key
-            elif role == Qt.BackgroundRole and item.observations:
+            elif role == Qt.ItemDataRole.BackgroundRole and item.observations:
                 return self.HAS_OBSERVATIONS
 
         return None
 
-    def itemAt(self, index) -> Optional[PlotApiKeyDefinition]:
+    def itemAt(self, index: QModelIndex) -> Optional[PlotApiKeyDefinition]:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

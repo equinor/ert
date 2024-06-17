@@ -113,7 +113,7 @@ class RunAnalysisTool(Tool):
             self._dialog = StatusDialog(
                 "Run analysis",
                 self._run_widget,
-                self.parent(),
+                self.parent(),  # type: ignore
             )
             self._dialog.run.connect(self.run)
             self._dialog.exec_()
@@ -122,6 +122,7 @@ class RunAnalysisTool(Tool):
             self._dialog.show()
 
     def run(self) -> None:
+        assert self._run_widget is not None
         target: str = self._run_widget.target_ensemble()
         if len(target.strip()) == 0:
             self._report_empty_target()
@@ -154,11 +155,13 @@ class RunAnalysisTool(Tool):
             return
 
         self.notifier.ertChanged.emit()
+        assert self._dialog is not None
         self._dialog.accept()
 
     def _init_and_start_thread(self) -> None:
         self._thread = QThread()
 
+        assert self._analyse is not None
         self._analyse.moveToThread(self._thread)
         self._thread.started.connect(self._analyse.run)
         self._analyse.finished.connect(self._thread.quit)
@@ -166,6 +169,7 @@ class RunAnalysisTool(Tool):
         self._thread.finished.connect(self._thread.deleteLater)
 
         self._analyse.finished.connect(self._on_finished)
+        assert self._dialog is not None
         self._analyse.finished.connect(self._dialog.clear_status)
         self._analyse.progress_update.connect(self._dialog.progress_update)
 
@@ -176,6 +180,7 @@ class RunAnalysisTool(Tool):
         QMessageBox.warning(None, "Invalid target", "Target ensemble can not be empty")
 
     def _enable_dialog(self, enable: bool) -> None:
+        assert self._dialog is not None
         self._dialog.enable_buttons(enable)
         if enable:
             QApplication.restoreOverrideCursor()

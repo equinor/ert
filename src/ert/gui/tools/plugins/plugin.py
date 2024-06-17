@@ -10,10 +10,11 @@ if TYPE_CHECKING:
 
     from ert.config import ErtPlugin, WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
+    from ert.storage import Ensemble, LocalStorage
 
 
 class Plugin:
-    def __init__(self, notifier: "ErtNotifier", workflow_job: "WorkflowJob"):
+    def __init__(self, notifier: ErtNotifier, workflow_job: WorkflowJob):
         self.__notifier = notifier
         self.__workflow_job = workflow_job
         self.__parent_window: Optional[QWidget] = None
@@ -22,10 +23,10 @@ class Plugin:
         self.__name = script.getName()
         self.__description = script.getDescription()
 
-    def __loadPlugin(self) -> "ErtPlugin":
-        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
+    def __loadPlugin(self) -> ErtPlugin:
+        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)  # type: ignore
         script = script_obj()
-        return script
+        return script  # type: ignore
 
     def getName(self) -> str:
         return self.__name
@@ -59,11 +60,11 @@ class Plugin:
         raise NotImplementedError("No such property")
 
     @property
-    def storage(self):
+    def storage(self) -> LocalStorage:
         return self.__notifier.storage
 
     @property
-    def ensemble(self):
+    def ensemble(self) -> Optional[Ensemble]:
         return self.__notifier.current_ensemble
 
     def getWorkflowJob(self) -> WorkflowJob:

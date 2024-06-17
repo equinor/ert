@@ -3,7 +3,10 @@ import traceback
 from typing import TYPE_CHECKING, Dict, Optional, Union
 
 import pandas as pd
-from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
+from matplotlib.backends.backend_qt5agg import (  # type: ignore
+    FigureCanvas,
+    NavigationToolbar2QT,
+)
 from matplotlib.figure import Figure
 from qtpy.QtCore import QStringListModel, Qt, Signal, Slot
 from qtpy.QtGui import QIcon
@@ -32,8 +35,13 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     customizationTriggered = Signal()
     layerIndexChanged = Signal(int)
 
-    def __init__(self, canvas, parent, coordinates=True):
-        super().__init__(canvas, parent, coordinates)
+    def __init__(
+        self,
+        canvas: FigureCanvas,
+        parent: Optional[QWidget],
+        coordinates: bool = True,
+    ) -> None:
+        super().__init__(canvas, parent, coordinates)  # type: ignore
 
         gear = QIcon("img:edit.svg")
         customize_action = QAction(gear, "Customize", self)
@@ -100,13 +108,11 @@ class PlotWidget(QWidget):
 
         self._name = name
         self._plotter = plotter
-        """:type: list of functions """
-
         self._figure = Figure()
         self._figure.set_layout_engine("tight")
         self._canvas = FigureCanvas(self._figure)
         self._canvas.setParent(self)
-        self._canvas.setFocusPolicy(Qt.StrongFocus)
+        self._canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self._canvas.setFocus()
 
         vbox = QVBoxLayout()
@@ -138,7 +144,7 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: Dict[str, bytes],
-    ):
+    ) -> None:
         self.resetPlot()
         try:
             self._plotter.plot(
@@ -153,7 +159,8 @@ class PlotWidget(QWidget):
             exc_type, exc_value, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
             traceback.print_tb(exc_tb)
-            sys.stderr.write(f"Exception type: {exc_type.__name__}\n")
+            if exc_type is not None:
+                sys.stderr.write(f"Exception type: {exc_type.__name__}\n")
             sys.stderr.write(f"{e}\n")
             sys.stderr.write("-" * 80 + "\n")
             sys.stderr.write(

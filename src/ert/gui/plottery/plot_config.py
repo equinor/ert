@@ -14,7 +14,7 @@ class PlotConfig:
     def __init__(
         self,
         plot_settings: Optional[dict[str, Any]] = None,
-        title: str = "Unnamed",
+        title: Optional[str] = "Unnamed",
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
     ):
@@ -109,7 +109,7 @@ class PlotConfig:
     def title(self) -> str:
         return self._title if self._title is not None else "Unnamed"
 
-    def setTitle(self, title: str) -> None:
+    def setTitle(self, title: Optional[str]) -> None:
         self._title = title
 
     def isUnnamed(self) -> bool:

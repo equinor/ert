@@ -16,7 +16,7 @@ from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 
 
 class ProgressWidget(QFrame):
-    def __init__(self):
+    def __init__(self) -> None:
         QWidget.__init__(self)
         self.setFixedHeight(60)
 
@@ -45,9 +45,9 @@ class ProgressWidget(QFrame):
         self._horizontal_legend_layout.setContentsMargins(0, 0, 0, 0)
         self._horizontal_legend_layout.setSpacing(0)
 
-        self._status = {}
+        self._status: dict[str, int] = {}
         self._realization_count = 0
-        self._progress_label_map = {}
+        self._progress_label_map: dict[str, QLabel] = {}
         self._legend_map_text = {}
 
         for state, color in REAL_STATE_TO_COLOR.items():
@@ -71,7 +71,7 @@ class ProgressWidget(QFrame):
             self._legend_map_text[state] = label
             self._horizontal_legend_layout.addWidget(label)
 
-    def repaint_components(self):
+    def repaint_components(self) -> None:
         if self._realization_count > 0:
             full_width = self.width()
             self._waiting_progress_bar.setVisible(False)
@@ -92,5 +92,5 @@ class ProgressWidget(QFrame):
         self._realization_count = realization_count
         self.repaint_components()
 
-    def resizeEvent(self, a0: Any, event: Any = None):
+    def resizeEvent(self, a0: Any, event: Any = None) -> None:
         self.repaint_components()

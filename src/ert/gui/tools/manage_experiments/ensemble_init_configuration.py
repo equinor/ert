@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
@@ -118,7 +118,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initializeFromScratch(_) -> None:
+        def initializeFromScratch(_: Any) -> None:
             parameters = parameter_model.getSelectedItems()
             sample_prior(
                 ensemble=target_ensemble.currentData(),
@@ -143,7 +143,7 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(panel, "Initialize from scratch")
 
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if event.type() == QEvent.Type.Close:
+    def eventFilter(self, a0: Optional[QObject], a1: Optional[QEvent]) -> bool:
+        if a1 is not None and a1.type() == QEvent.Type.Close:
             self.notifier.emitErtChange()
-        return super().eventFilter(watched, event)
+        return super().eventFilter(a0, a1)

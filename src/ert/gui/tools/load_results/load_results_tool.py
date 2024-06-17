@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QPushButton
@@ -18,15 +18,17 @@ class LoadResultsTool(Tool):
             "Load results manually",
             QIcon("img:upload.svg"),
         )
-        self._import_widget = None
-        self._dialog = None
+        self._import_widget: Optional[LoadResultsPanel] = None
+        self._dialog: Optional[ClosableDialog] = None
         self._notifier = notifier
 
     def trigger(self) -> None:
         if self._import_widget is None:
             self._import_widget = LoadResultsPanel(self.facade, self._notifier)
         self._dialog = ClosableDialog(
-            "Load results manually", self._import_widget, self.parent()
+            "Load results manually",
+            self._import_widget,
+            self.parent(),  # type: ignore
         )
         self._dialog.setObjectName("load_results_manually_tool")
         self._dialog.addButton("Load", self.load)
@@ -38,6 +40,8 @@ class LoadResultsTool(Tool):
 
     @showWaitCursorWhileWaiting
     def load(self, _: Any) -> None:
+        assert self._dialog is not None
+        assert self._import_widget is not None
         self._dialog.disableCloseButton()
         self._dialog.toggleButton(caption="Load", enabled=False)
         self._import_widget.load()

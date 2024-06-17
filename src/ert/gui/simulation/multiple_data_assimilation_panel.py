@@ -48,10 +48,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
-        run_path,
+        run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
-    ):
+    ) -> None:
         ExperimentConfigPanel.__init__(self, MultipleDataAssimilation)
         self.notifier = notifier
 
@@ -79,8 +79,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             analysis_config, notifier
         )
         self._target_ensemble_format_field = StringBox(
-            self._target_ensemble_format_model,
-            self._target_ensemble_format_model.getDefaultValue(),
+            self._target_ensemble_format_model,  # type: ignore
+            self._target_ensemble_format_model.getDefaultValue(),  # type: ignore
             True,
         )
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
@@ -97,7 +97,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            self._active_realizations_model, "config/simulation/active_realizations"
+            self._active_realizations_model,  # type: ignore
+            "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         self._ensemble_selector = EnsembleSelector(notifier)
@@ -166,7 +167,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
         self._relative_iteration_weights_box = StringBox(
-            relative_iteration_weights_model,
+            relative_iteration_weights_model,  # type: ignore
             continuous_update=True,
         )
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
@@ -184,7 +185,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             if self._relative_iteration_weights_box.isValid():
                 try:
                     normalized_weights = MultipleDataAssimilation.parse_weights(
-                        relative_iteration_weights_model.getValue()
+                        relative_iteration_weights_model.getValue()  # type: ignore
                     )
                     normalized_weights_model.setValue(
                         ", ".join(f"{x:.2f}" for x in normalized_weights)
@@ -212,9 +213,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ES_MDA_MODE,
-            target_ensemble=self._target_ensemble_format_model.getValue(),
+            target_ensemble=self._target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
-            weights=self.weights,
+            weights=self.weights,  # type: ignore
             restart_run=self._restart_box.isChecked(),
             prior_ensemble_id=(
                 str(self._ensemble_selector.selected_ensemble.id)
@@ -231,4 +232,4 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         ensemble = self._ensemble_selector.selected_ensemble
         if ensemble:
             mask = ensemble.get_realization_mask_with_parameters()
-            self._active_realizations_field.model.setValueFromMask(mask)
+            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore

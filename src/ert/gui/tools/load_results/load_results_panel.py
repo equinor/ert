@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from qtpy.QtWidgets import QFormLayout, QMessageBox, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -41,14 +43,16 @@ class LoadResultsPanel(QWidget):
             self._facade.get_ensemble_size()
         )
         self._active_realizations_field = StringBox(
-            self._active_realizations_model, "load_results_manually/Realizations"
+            self._active_realizations_model,  # type: ignore
+            "load_results_manually/Realizations",
         )
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        self._iterations_model = ValueModel(0)
+        self._iterations_model = ValueModel(0)  # type: ignore
         self._iterations_field = StringBox(
-            self._iterations_model, "load_results_manually/iterations"
+            self._iterations_model,  # type: ignore
+            "load_results_manually/iterations",
         )
         self._iterations_field.setValidator(IntegerArgument(from_value=0))
         layout.addRow("Iteration to load:", self._iterations_field)
@@ -69,7 +73,7 @@ class LoadResultsPanel(QWidget):
         try:
             if iteration is None:
                 iteration = ""
-            iteration = int(iteration)
+            iteration_int = int(iteration)
         except ValueError:
             QMessageBox.warning(
                 self,
@@ -80,10 +84,12 @@ class LoadResultsPanel(QWidget):
                 ),
             )
             return False
-        messages = []
+        messages: list[str] = []
         with captured_logs(messages):
             loaded = self._facade.load_from_forward_model(
-                selected_ensemble, realizations, iteration
+                selected_ensemble,  # type: ignore
+                realizations,  # type: ignore
+                iteration_int,
             )
 
         if loaded == realizations.count(True):

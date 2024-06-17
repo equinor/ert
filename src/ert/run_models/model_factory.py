@@ -16,16 +16,15 @@ from ert.mode_definitions import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.run_models import (
-    BaseRunModel,
-    EnsembleExperiment,
-    EnsembleSmoother,
-    IteratedEnsembleSmoother,
-    MultipleDataAssimilation,
-    SingleTestRun,
-)
-from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.run_models.run_arguments import (
+from ert.validation import ActiveRange
+
+from .base_run_model import BaseRunModel
+from .ensemble_experiment import EnsembleExperiment
+from .ensemble_smoother import EnsembleSmoother
+from .evaluate_ensemble import EvaluateEnsemble
+from .iterated_ensemble_smoother import IteratedEnsembleSmoother
+from .multiple_data_assimilation import MultipleDataAssimilation
+from .run_arguments import (
     EnsembleExperimentRunArguments,
     ESMDARunArguments,
     ESRunArguments,
@@ -33,7 +32,7 @@ from ert.run_models.run_arguments import (
     SIESRunArguments,
     SingleTestRunArguments,
 )
-from ert.validation import ActiveRange
+from .single_test_run import SingleTestRun
 
 if TYPE_CHECKING:
     import numpy.typing as npt

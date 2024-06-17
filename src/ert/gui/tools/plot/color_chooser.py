@@ -1,5 +1,7 @@
+from typing import Optional
+
 from qtpy.QtCore import QRect, QSize, Signal
-from qtpy.QtGui import QColor, QPainter
+from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import QColorDialog, QFrame
 
 
@@ -17,7 +19,7 @@ class ColorBox(QFrame):
         self._tile_colors = [QColor(255, 255, 255), QColor(200, 200, 255)]
         self._color = color
 
-    def paintEvent(self, paint_event):
+    def paintEvent(self, a0: Optional[QPaintEvent]) -> None:
         """Paints the box"""
         painter = QPainter(self)
         rect = self.contentsRect()
@@ -35,9 +37,9 @@ class ColorBox(QFrame):
         painter.restore()
         painter.fillRect(rect, self._color)
 
-        QFrame.paintEvent(self, paint_event)
+        QFrame.paintEvent(self, a0)
 
-    def mouseReleaseEvent(self, QMouseEvent):
+    def mouseReleaseEvent(self, a0: Optional[QMouseEvent]) -> None:
         color = QColorDialog.getColor(
             self._color, self, "Select color", QColorDialog.ShowAlphaChannel
         )

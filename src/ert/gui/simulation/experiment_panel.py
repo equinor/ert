@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from queue import SimpleQueue
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, List, Type
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon
@@ -26,9 +28,8 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
 )
-from ert.run_models.model_factory import create_model
+from ert.run_models import BaseRunModel, StatusEvents, create_model
 
-from ...config import ErtConfig
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -37,6 +38,9 @@ from .iterated_ensemble_smoother_panel import IteratedEnsembleSmootherPanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
 from .single_test_run_panel import SingleTestRunPanel
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
 EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
@@ -85,7 +89,7 @@ class ExperimentPanel(QWidget):
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
@@ -100,7 +104,7 @@ class ExperimentPanel(QWidget):
 
         layout.addWidget(self._experiment_stack)
 
-        self._experiment_widgets = OrderedDict()
+        self._experiment_widgets: dict[Type[BaseRunModel], QWidget] = OrderedDict()
         self.addExperimentConfigPanel(
             SingleTestRunPanel(run_path, notifier),
             True,
@@ -114,7 +118,7 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        experiment_type_valid = (
+        experiment_type_valid = bool(
             config.ensemble_config.parameter_configs and config.observations
         )
         analysis_config = config.analysis_config
@@ -137,7 +141,9 @@ class ExperimentPanel(QWidget):
 
         self.setLayout(layout)
 
-    def addExperimentConfigPanel(self, panel, mode_enabled: bool) -> None:
+    def addExperimentConfigPanel(
+        self, panel: ExperimentConfigPanel, mode_enabled: bool
+    ) -> None:
         assert isinstance(panel, ExperimentConfigPanel)
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
@@ -146,10 +152,11 @@ class ExperimentPanel(QWidget):
 
         if not mode_enabled:
             item_count = self._experiment_type_combo.count() - 1
-            sim_item = self._experiment_type_combo.model().item(item_count)
+            combo_model = self._experiment_type_combo.model()
+            sim_item = self._experiment_type_combo.model().item(item_count)  # type: ignore
             sim_item.setEnabled(False)
             sim_item.setToolTip("Both observations and parameters must be defined")
-            sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
+            sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))  # type: ignore
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
@@ -158,12 +165,12 @@ class ExperimentPanel(QWidget):
     def getActions() -> List[QAction]:
         return []
 
-    def get_current_experiment_type(self):
+    def get_current_experiment_type(self) -> Any:
         return self._experiment_type_combo.itemData(
             self._experiment_type_combo.currentIndex(), Qt.ItemDataRole.UserRole
         )
 
-    def get_experiment_arguments(self) -> Dict[str, Any]:
+    def get_experiment_arguments(self) -> Any:
         simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
         args = simulation_widget.get_experiment_arguments()
         return args
@@ -205,7 +212,7 @@ class ExperimentPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            event_queue = SimpleQueue()
+            event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
             try:
                 model = create_model(
                     self.config,
@@ -250,7 +257,7 @@ class ExperimentPanel(QWidget):
                 msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                 msg_box.setDefaultButton(QMessageBox.No)
 
-                msg_box.setWindowModality(Qt.ApplicationModal)
+                msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
 
                 msg_box_res = msg_box.exec()
 
@@ -263,7 +270,7 @@ class ExperimentPanel(QWidget):
 
             delete_runpath = (
                 delete_runpath_checkbox is not None
-                and delete_runpath_checkbox.checkState() == Qt.Checked
+                and delete_runpath_checkbox.checkState() == Qt.CheckState.Checked
             )
             if not abort and delete_runpath:
                 QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -280,7 +287,7 @@ class ExperimentPanel(QWidget):
                     )
                     msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                     msg_box.setDefaultButton(QMessageBox.No)
-                    msg_box.setWindowModality(Qt.ApplicationModal)
+                    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
                     msg_box_res = msg_box.exec()
                     abort = msg_box_res == QMessageBox.No
                 QApplication.restoreOverrideCursor()
@@ -291,7 +298,7 @@ class ExperimentPanel(QWidget):
                     model,
                     event_queue,
                     self._notifier,
-                    self.parent(),
+                    self.parent(),  # type: ignore
                     output_path=self.config.analysis_config.log_path,
                 )
                 self.run_button.setEnabled(False)

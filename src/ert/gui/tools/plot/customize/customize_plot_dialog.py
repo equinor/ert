@@ -1,7 +1,9 @@
-from typing import TYPE_CHECKING, Iterator, List, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Union
 
 from qtpy.QtCore import QObject, Qt, Signal
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QKeyEvent
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -27,19 +29,21 @@ from .statistics_customization_view import StatisticsCustomizationView
 from .style_customization_view import StyleCustomizationView
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot import CustomizationView
+    from ert.gui.tools.plot.customize import CustomizationView
 
 
 class PlotCustomizer(QObject):
     settingsChanged = Signal()
 
-    def __init__(self, parent, key_defs: List[PlotApiKeyDefinition]):
+    def __init__(
+        self, parent: Optional[QWidget], key_defs: List[PlotApiKeyDefinition]
+    ) -> None:
         super().__init__()
 
         self._plot_config_key = None
         self._previous_key = None
         self.default_plot_settings = None
-        self._plot_configs = {
+        self._plot_configs: dict[Optional[str], PlotConfigHistory] = {
             None: PlotConfigHistory(
                 "No_Key_Selected", PlotConfig(plot_settings=None, title=None)
             )
@@ -118,7 +122,7 @@ class PlotCustomizer(QObject):
     def isCopyPossible(self) -> bool:
         return len(self._plot_configs) > 2
 
-    def copyCustomizationTo(self, keys: Optional[str]) -> None:
+    def copyCustomizationTo(self, keys: Iterable[str]) -> None:
         """copies the plotconfig of the current key, to a set of other keys"""
         history = self._getPlotConfigHistory()
 
@@ -137,7 +141,7 @@ class PlotCustomizer(QObject):
 
         self._emitChangedSignal(emit=True)
 
-    def copyCustomization(self, key):
+    def copyCustomization(self, key: Optional[str]) -> None:
         key = str(key)
         if self.isCopyPossible():
             source_config = self._plot_configs[key].getPlotConfig()
@@ -172,7 +176,9 @@ class PlotCustomizer(QObject):
     def getPlotConfig(self) -> PlotConfig:
         return self._getPlotConfigHistory().getPlotConfig()
 
-    def setAxisTypes(self, x_axis_type, y_axis_type):
+    def setAxisTypes(
+        self, x_axis_type: Optional[str], y_axis_type: Optional[str]
+    ) -> None:
         self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
 
 
@@ -184,24 +190,32 @@ class CustomizePlotDialog(QDialog):
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
 
-    def __init__(self, title, parent, key_defs: List[PlotApiKeyDefinition], key=""):
+    def __init__(
+        self,
+        title: Optional[str],
+        parent: Optional[QWidget],
+        key_defs: List[PlotApiKeyDefinition],
+        key: Optional[str] = "",
+    ) -> None:
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
 
         self.current_key = key
         self._key_defs = key_defs
 
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)  # type: ignore
 
-        self._tab_map = {}
-        self._tab_order = []
+        self._tab_map: dict[str, QWidget] = {}
+        self._tab_order: list[str] = []
 
         layout = QVBoxLayout()
 
         self._tabs = QTabWidget()
         layout.addWidget(self._tabs)
-        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
+        layout.setSizeConstraint(
+            QLayout.SizeConstraint.SetFixedSize
+        )  # not resizable!!!
 
         self._button_layout = QHBoxLayout()
 
@@ -278,21 +292,21 @@ class CustomizePlotDialog(QDialog):
     def keySelected(self, list_widget_item: QListWidgetItem) -> None:
         self.copySettings.emit(str(list_widget_item.text()))
 
-    def currentPlotKeyChanged(self, new_key):
+    def currentPlotKeyChanged(self, new_key: Optional[str]) -> None:
         self.current_key = new_key
 
-    def keyPressEvent(self, q_key_event):
-        if q_key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.hide()
         else:
-            QDialog.keyPressEvent(self, q_key_event)
+            QDialog.keyPressEvent(self, a0)
 
-    def addTab(self, attribute_name, title, widget):
+    def addTab(self, attribute_name: str, title: str, widget: QWidget) -> None:
         self._tabs.addTab(widget, title)
         self._tab_map[attribute_name] = widget
         self._tab_order.append(attribute_name)
 
-    def __getitem__(self, item) -> "CustomizationView":
+    def __getitem__(self, item: str) -> "CustomizationView":
         return self._tab_map[item]
 
     def __iter__(self) -> Iterator[QWidget]:

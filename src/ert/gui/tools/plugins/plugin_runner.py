@@ -11,22 +11,25 @@ from .process_job_dialog import ProcessJobDialog
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
+    from ert.storage import LocalStorage
 
     from .plugin import Plugin
 
 
 class PluginRunner:
-    def __init__(self, plugin: "Plugin", ert_config: ErtConfig, storage) -> None:
+    def __init__(
+        self, plugin: "Plugin", ert_config: ErtConfig, storage: LocalStorage
+    ) -> None:
         super().__init__()
         self.ert_config = ert_config
         self.storage = storage
         self.__plugin = plugin
 
-        self.__plugin_finished_callback = lambda: None
+        self.__plugin_finished_callback: Callable[[], None] = lambda: None
 
         self.__result = None
         self._runner = WorkflowJobRunner(plugin.getWorkflowJob())
-        self.poll_thread = None
+        self.poll_thread: Optional[ErtThread] = None
 
     def run(self) -> None:
         try:
@@ -68,7 +71,7 @@ class PluginRunner:
 
     def __runWorkflowJob(
         self, arguments: Optional[List[Any]], fixtures: Dict[str, Any]
-    ):
+    ) -> None:
         self.__result = self._runner.run(arguments, fixtures=fixtures)
 
     def __pollRunner(self, dialog: ProcessJobDialog) -> None:

@@ -1,7 +1,17 @@
 import math
-from typing import Final
+from typing import Any, Final, Optional, Tuple
 
-from qtpy.QtCore import QEvent, QModelIndex, QPoint, QRect, QSize, Qt, Signal
+from qtpy.QtCore import (
+    QAbstractItemModel,
+    QEvent,
+    QModelIndex,
+    QObject,
+    QPoint,
+    QRect,
+    QSize,
+    Qt,
+    Signal,
+)
 from qtpy.QtGui import QColor, QColorConstants, QImage, QPainter, QPen
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -29,7 +39,7 @@ COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
 
 class RealizationWidget(QWidget):
-    def __init__(self, _it: int, parent=None) -> None:
+    def __init__(self, _it: int, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
 
         self._iter = _it
@@ -50,9 +60,10 @@ class RealizationWidget(QWidget):
         self._real_view.setResizeMode(QListView.Adjust)
         self._real_view.setUniformItemSizes(True)
 
-        self._real_view.currentChanged = lambda current, _: self.currentChanged.emit(
-            current
-        )
+        def _emit_change(current: QModelIndex, previous: Any) -> None:
+            self.currentChanged.emit(current)
+
+        self._real_view.currentChanged = _emit_change  # type: ignore
 
         layout = QVBoxLayout()
         layout.addWidget(self._real_view)
@@ -62,12 +73,12 @@ class RealizationWidget(QWidget):
     # Signal when the user selects another real
     currentChanged = Signal(QModelIndex)
 
-    def setSnapshotModel(self, model) -> None:
+    def setSnapshotModel(self, model: QAbstractItemModel) -> None:
         self._real_list_model = RealListModel(self, self._iter)
         self._real_list_model.setSourceModel(model)
 
         self._real_view.setModel(self._real_list_model)
-        self._real_view.model().setIter(self._iter)
+        self._real_list_model.setIter(self._iter)
 
     def clearSelection(self) -> None:
         self._real_view.clearSelection()
@@ -78,16 +89,23 @@ _image_cache = {}
 
 
 class RealizationDelegate(QStyledItemDelegate):
-    def __init__(self, width, height, parent=None) -> None:
+    def __init__(self, width: int, height: int, parent: QObject) -> None:
         super().__init__(parent)
         self._size = QSize(width, height)
-        self.parent().installEventFilter(self)
+        parent.installEventFilter(self)
         self.job_rect_margin = 10
         self.adjustment_point_for_job_rect_margin = QPoint(
             -2 * self.job_rect_margin, -2 * self.job_rect_margin
         )
 
-    def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(
+        self,
+        painter: Optional[QPainter],
+        option: QStyleOptionViewItem,
+        index: QModelIndex,
+    ) -> None:
+        if painter is None:
+            return
         text = index.data(RealLabelHint)
         colors = tuple(index.data(RealJobColorHint))
         queue_color = index.data(RealStatusColorHint)
@@ -101,7 +119,7 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawRect(option.rect)
 
         margin = 0
-        if option.state & QStyle.State_Selected:
+        if option.state & QStyle.StateFlag.State_Selected:
             margin = 5
 
         realization_status_rect = QRect(
@@ -135,12 +153,14 @@ class RealizationDelegate(QStyledItemDelegate):
         text_pen = QPen()
         text_pen.setColor(QColorConstants.Black)
         painter.setPen(text_pen)
-        painter.drawText(option.rect, Qt.AlignCenter, text)
+        painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, text)
 
         painter.restore()
 
     @staticmethod
-    def _paint_inner_grid(painter: QPainter, rect: QRect, colors) -> None:
+    def _paint_inner_grid(
+        painter: QPainter, rect: QRect, colors: Tuple[QColor]
+    ) -> None:
         job_nr = len(colors)
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0
@@ -153,7 +173,7 @@ class RealizationDelegate(QStyledItemDelegate):
             for y in range(grid_dim):
                 for x in range(grid_dim):
                     color = QColorConstants.Gray if k >= job_nr else colors[k]
-                    foreground_image.setPixel(x, y, color.rgb())
+                    foreground_image.setPixel(x, y, color.rgb())  # type: ignore
                     k += 1
             _image_cache[colors_hash] = foreground_image
         else:
@@ -166,10 +186,10 @@ class RealizationDelegate(QStyledItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, watched, event: QEvent):
-        if event.type() == QEvent.Type.ToolTip:
-            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
-            parent: RealizationWidget = self.parent()
+    def eventFilter(self, object: Optional[QObject], event: Optional[QEvent]) -> bool:
+        if event.type() == QEvent.Type.ToolTip:  # type: ignore
+            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
+            parent: RealizationWidget = self.parent()  # type: ignore
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():
@@ -184,4 +204,4 @@ class RealizationDelegate(QStyledItemDelegate):
                     QToolTip.showText(view.mapToGlobal(mouse_pos), txt)
                     return True
 
-        return super().eventFilter(watched, event)
+        return super().eventFilter(object, event)

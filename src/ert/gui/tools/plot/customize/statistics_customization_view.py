@@ -35,7 +35,7 @@ class StatisticsCustomizationView(CustomizationView):
         self.addRow("Presets", self.createPresets())
         self.addSpacing(10)
         layout = QHBoxLayout()
-        self.addRow("", layout)
+        self.addRow("", layout)  # type: ignore
         self.addStyleChooser(
             "mean_style", "Mean", "Line and marker style for the mean line."
         )

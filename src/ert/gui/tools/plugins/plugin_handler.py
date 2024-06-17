@@ -1,8 +1,12 @@
-from typing import TYPE_CHECKING, Iterator, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterator, List, Optional
 
 from .plugin import Plugin
 
 if TYPE_CHECKING:
+    from qtpy.QtWidgets import QWidget
+
     from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
 
@@ -10,9 +14,9 @@ if TYPE_CHECKING:
 class PluginHandler:
     def __init__(
         self,
-        notifier: "ErtNotifier",
-        plugin_jobs: List["WorkflowJob"],
-        parent_window,
+        notifier: ErtNotifier,
+        plugin_jobs: List[WorkflowJob],
+        parent_window: Optional[QWidget],
     ):
         self.__plugins = []
 
@@ -32,8 +36,8 @@ class PluginHandler:
             yield self.__plugins[index]
             index += 1
 
-    def __getitem__(self, index) -> Plugin:
+    def __getitem__(self, index: int) -> Plugin:
         return self.__plugins[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.__plugins)

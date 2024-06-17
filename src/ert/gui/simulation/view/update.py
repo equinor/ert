@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import time
+from datetime import timedelta
 from typing import Optional
 
 import humanize
@@ -16,6 +17,7 @@ from qtpy.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QProgressBar,
     QTableWidget,
     QTableWidgetItem,
@@ -45,22 +47,34 @@ class UpdateLogTable(QTableWidget):
         self.setRowCount(len(data.data))
         self.setHorizontalHeaderLabels(data.header)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        horizontal_header = self.horizontalHeader()
+        assert horizontal_header is not None
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeToContents)
         self.setSortingEnabled(True)
         for i, row in enumerate(data.data):
             for j, val in enumerate(row):
                 self.setItem(i, j, QTableWidgetItem(str(val)))
 
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        if event.matches(QKeySequence.Copy):
+    def keyPressEvent(self, e: Optional[QKeyEvent]) -> None:
+        if e is not None and e.matches(QKeySequence.Copy):
             stream = str()
             for i in self.selectedIndexes():
-                stream += self.itemFromIndex(i).text()
+                item = self.itemFromIndex(i)
+                assert item is not None
+                stream += item.text()
                 stream += "\n" if i.column() == self.columnCount() - 1 else "\t"
             clipboard = QApplication.clipboard()
-            clipboard.setText(stream)
+            if clipboard is not None:
+                clipboard.setText(stream)
+            else:
+                QMessageBox.critical(
+                    None,
+                    "Error",
+                    "Cannot copy text to clipboard because your system does not have a clipboard",
+                    QMessageBox.Ok,
+                )
         else:
-            super().keyPressEvent(event)
+            super().keyPressEvent(e)
 
 
 class UpdateWidget(QWidget):
@@ -112,7 +126,7 @@ class UpdateWidget(QWidget):
     def _insert_status_message(self, message: str) -> None:
         item = QListWidgetItem()
         item.setText(message)
-        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+        item.setFlags(item.flags() & ~Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled))
         self._msg_list.addItem(item)
 
     def _insert_table_tab(
@@ -126,7 +140,6 @@ class UpdateWidget(QWidget):
 
         table = UpdateLogTable(data)
         table.setObjectName("CSV_" + name)
-
         layout.addWidget(table)
 
         if data.extra:
@@ -148,7 +161,7 @@ class UpdateWidget(QWidget):
     @Slot(RunModelUpdateEndEvent)
     def end(self, event: RunModelUpdateEndEvent) -> None:
         self._progress_msg.setText(
-            f"Update completed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
+            f"Update completed ({humanize.precisedelta(timedelta(seconds=time.perf_counter() - self._start_time))})"
         )
         self._progress_bar.setStyleSheet(
             f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FINISHED).name()}; }}"
@@ -178,7 +191,7 @@ class UpdateWidget(QWidget):
             self._insert_status_message(f"Error: {event.error_msg}")
 
         self._progress_msg.setText(
-            f"Update failed ({humanize.precisedelta(time.perf_counter() - self._start_time)})"
+            f"Update failed ({humanize.precisedelta(timedelta(seconds=time.perf_counter() - self._start_time))})"
         )
         self._progress_bar.setStyleSheet(
             f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FAILED).name()}; }}"
@@ -187,4 +200,5 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        self._insert_table_tab("Report", event.data)
+        if (d := event.data) is not None:
+            self._insert_table_tab("Report", d)

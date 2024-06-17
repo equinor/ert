@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import QMovie, QTextCursor, QTextOption
+from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -43,6 +45,7 @@ from ert.run_models import (
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
+    StatusEvents,
 )
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import byte_with_unit, format_running_time
@@ -65,16 +68,16 @@ class RunDialog(QDialog):
         self,
         config_file: str,
         run_model: BaseRunModel,
-        event_queue: SimpleQueue,
+        event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
-        parent=None,
+        parent: Optional[QWidget] = None,
         output_path: Optional[Path] = None,
     ):
         QDialog.__init__(self, parent)
         self.output_path = output_path
-        self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWindowFlags(Qt.Window)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setWindowFlags(Qt.WindowType.Window)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
         self._snapshot_model = SnapshotModel(self)
@@ -117,15 +120,17 @@ class RunDialog(QDialog):
         self._job_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self._job_view.clicked.connect(self._job_clicked)
         self._job_view.setModel(self._job_model)
-        self._job_view.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
-        )
-        self._job_view.verticalHeader().setMinimumWidth(20)
+        horizontal_header = self._job_view.horizontalHeader()
+        assert horizontal_header is not None
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        vertical_header = self._job_view.horizontalHeader()
+        assert vertical_header is not None
+        vertical_header.setMinimumWidth(20)
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
-        self.plot_tool = PlotTool(config_file, self.parent())
+        self.plot_tool = PlotTool(config_file, self.parent())  # type: ignore
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(True)
@@ -176,7 +181,7 @@ class RunDialog(QDialog):
 
         self.setLayout(layout)
 
-        self.kill_button.clicked.connect(self.killJobs)
+        self.kill_button.clicked.connect(self.killJobs)  # type: ignore
         self.done_button.clicked.connect(self.accept)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.show_details_button.clicked.connect(self.toggle_detailed_progress)
@@ -230,7 +235,7 @@ class RunDialog(QDialog):
             )
 
     @Slot(QModelIndex)
-    def _job_clicked(self, index):
+    def _job_clicked(self, index: QModelIndex) -> None:
         if not index.isValid():
             return
         selected_file = index.data(FileRole)
@@ -259,7 +264,7 @@ class RunDialog(QDialog):
                 error_textedit.appendPlainText(index.data())
                 layout.addWidget(error_textedit)
 
-                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)  # type: ignore
+                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
                 dialog_button.accepted.connect(error_dialog.accept)
                 layout.addWidget(dialog_button)
                 error_dialog.resize(700, 300)
@@ -267,22 +272,22 @@ class RunDialog(QDialog):
                 error_dialog.exec_()
 
     @Slot(QModelIndex)
-    def _select_real(self, index):
+    def _select_real(self, index: QModelIndex) -> None:
         real = index.row()
-        iter_ = index.model().get_iter()
+        iter_ = index.model().get_iter()  # type: ignore
         self._job_model.set_real(iter_, real)
         self._job_label.setText(
             f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
 
-    def closeEvent(self, QCloseEvent):
+    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if self._run_model.isFinished():
             self.simulation_done.emit(
                 self._run_model.hasRunFailed(), self._run_model.getFailMessage()
             )
             self.accept()
         elif self.killJobs() != QMessageBox.Yes:
-            QCloseEvent.ignore()
+            QCloseEvent.ignore()  # type: ignore
 
     def run_experiment(self) -> None:
         self._run_model.reset()
@@ -320,7 +325,7 @@ class RunDialog(QDialog):
         simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
 
-    def killJobs(self) -> None:
+    def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
         kill_job = QMessageBox.question(
             self, "Terminate experiment", msg, QMessageBox.Yes | QMessageBox.No
@@ -335,7 +340,7 @@ class RunDialog(QDialog):
         return kill_job
 
     @Slot(bool, str)
-    def _on_simulation_done(self, failed, failed_msg):
+    def _on_simulation_done(self, failed: bool, failed_msg: str) -> None:
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
@@ -364,7 +369,7 @@ class RunDialog(QDialog):
             )
 
     @Slot(object)
-    def _on_event(self, event: object):
+    def _on_event(self, event: object) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.failed_msg)
             self._ticker.stop()
@@ -421,12 +426,12 @@ class RunDialog(QDialog):
                     name, event.data, self.output_path / str(event.run_id)
                 )
 
-    def _get_update_widget(self, iteration: int) -> Optional[UpdateWidget]:
+    def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(0, self._tab_widget.count()):
             widget = self._tab_widget.widget(i)
             if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
                 return widget
-        return None
+        raise ValueError("Could not find UpdateWidget")
 
     def update_total_progress(self, progress_value: float, phase_name: str) -> None:
         progress = int(progress_value * 100)
@@ -468,21 +473,21 @@ class RunDialog(QDialog):
 
         self.adjustSize()
 
-    def _on_finished(self):
+    def _on_finished(self) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
 
-    def keyPressEvent(self, q_key_event):
-        if q_key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() != Qt.Key.Key_Escape:
             self.close()
         else:
-            QDialog.keyPressEvent(self, q_key_event)
+            QDialog.keyPressEvent(self, a0)
 
 
 # Cannot use a non-static method here as
 # it is called when the object is destroyed
 # https://stackoverflow.com/questions/16842955
-def _stop_worker(run_dialog) -> None:
+def _stop_worker(run_dialog: RunDialog) -> None:
     if run_dialog._worker_thread.isRunning():
         run_dialog._worker.stop()
         run_dialog._worker_thread.wait(3000)
