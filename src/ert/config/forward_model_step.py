@@ -1,10 +1,13 @@
 import logging
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import (
     Dict,
     List,
+    Literal,
     Optional,
     TypedDict,
+    Union,
 )
 
 from typing_extensions import NotRequired, Unpack
@@ -76,9 +79,27 @@ class ForwardModelStepOptions(TypedDict, total=False):
     target_file: NotRequired[str]
     error_file: NotRequired[str]
     max_running_minutes: NotRequired[int]
-    environment: NotRequired[Dict[str, str]]
-    exec_env: NotRequired[Dict[str, str]]
-    default_mapping: NotRequired[Dict[str, str]]
+    environment: NotRequired[Dict[str, Union[str, int]]]
+    exec_env: NotRequired[Dict[str, Union[str, int]]]
+    default_mapping: NotRequired[Dict[str, Union[str, int]]]
+
+
+@dataclass
+class ForwardModelStepDocumentation:
+    config_file: Optional[str] = field(default=None)
+    source_package: str = field(default="ert")
+    source_function_name: str = field(default="ert")
+    description: str = field(default="No description")
+    examples: str = field(default="No examples")
+    category: Union[
+        Literal[
+            "utility.file_system",
+            "simulators.reservoir",
+            "modelling.reservoir",
+            "utility.templating",
+        ],
+        str,
+    ] = field(default="Uncategorized")
 
 
 @dataclass
@@ -135,9 +156,9 @@ class ForwardModelStep:
     arglist: List[str] = field(default_factory=list)
     required_keywords: List[str] = field(default_factory=list)
     arg_types: List[SchemaItemType] = field(default_factory=list)
-    environment: Dict[str, str] = field(default_factory=dict)
-    exec_env: Dict[str, str] = field(default_factory=dict)
-    default_mapping: Dict[str, str] = field(default_factory=dict)
+    environment: Dict[str, Union[int, str]] = field(default_factory=dict)
+    exec_env: Dict[str, Union[int, str]] = field(default_factory=dict)
+    default_mapping: Dict[str, Union[int, str]] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
 
@@ -229,3 +250,10 @@ class ForwardModelStepPlugin(ForwardModelStep):
             private_args=SubstitutionList(),
             help_text="",
         )
+
+    @staticmethod
+    @abstractmethod
+    def documentation() -> Optional[ForwardModelStepDocumentation]:
+        """
+        Returns the documentation for the plugin forward model
+        """
