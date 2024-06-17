@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 import pluggy
 
 from ert.config.forward_model_step import (
+    ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
 )
 from ert.shared.plugins.workflow_config import WorkflowConfigs
@@ -54,7 +55,7 @@ V = TypeVar("V")
 class JobDoc(TypedDict):
     description: str
     examples: Optional[str]
-    config_file: str
+    config_file: Optional[str]
     parser: Optional[Callable[[], ArgumentParser]]
     source_package: str
     category: str
@@ -279,6 +280,19 @@ class ErtPluginManager(pluggy.PluginManager):
                 )
             )
         return job_docs
+
+    def get_documentation_for_forward_model_steps(
+        self,
+    ) -> Dict[str, ForwardModelStepDocumentation]:
+        return {
+            # Implementations of plugin fm step take no __init__ args
+            # (name, command)
+            # but mypy expects the subclasses to take in same arguments upon
+            # initializations
+            fm_step().name: fm_step.documentation()  # type: ignore
+            for fm_step in self.forward_model_steps
+            if fm_step.documentation() is not None
+        }
 
     def get_documentation_for_workflows(self) -> Dict[str, JobDoc]:
         workflow_config = self.get_ertscript_workflows()

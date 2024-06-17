@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from argparse import ArgumentParser
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import docutils.statemachine
 from docutils import nodes
@@ -10,6 +10,7 @@ from docutils.statemachine import StringList
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
 
+from ert.config.forward_model_step import ForwardModelStepDocumentation
 from ert.shared.plugins import ErtPluginManager, JobDoc
 
 
@@ -20,7 +21,7 @@ class _ForwardModelDocumentation:
         category: str,
         job_source: str,
         description: str,
-        job_config_file: str,
+        job_config_file: Optional[str],
         parser: Optional[Callable[[], ArgumentParser]],
         examples: Optional[str] = "",
     ) -> None:
@@ -37,10 +38,12 @@ class _ForwardModelDocumentation:
             section_id=self.name + "-job-config", title="Job configuration used by ERT"
         )
 
-        with open(self.job_config_file, encoding="utf-8") as fh:
-            job_config_text = fh.read()
-        job_config_text_node = nodes.literal_block(text=job_config_text)
-        config_section_node.append(job_config_text_node)
+        if self.job_config_file:
+            with open(self.job_config_file, encoding="utf-8") as fh:
+                job_config_text = fh.read()
+            job_config_text_node = nodes.literal_block(text=job_config_text)
+            config_section_node.append(job_config_text_node)
+
         return config_section_node
 
     def _create_job_details(self) -> nodes.definition_list:
@@ -99,8 +102,9 @@ class _ForwardModelDocumentation:
             node.append(parser_section_node)
 
         # Add forward model config file
-        config_section_node = self._create_job_config_section()
-        node.append(config_section_node)
+        if self.job_config_file:
+            config_section_node = self._create_job_config_section()
+            node.append(config_section_node)
 
         return node
 
@@ -122,7 +126,9 @@ class _ErtDocumentation(SphinxDirective):
 
     @staticmethod
     def _divide_into_categories(
-        jobs: Dict[str, JobDoc],
+        jobs: Union[
+            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
+        ],
     ) -> Dict[str, Dict[str, List[_ForwardModelDocumentation]]]:
         categories: Dict[str, Dict[str, List[_ForwardModelDocumentation]]] = (
             defaultdict(lambda: defaultdict(list))
@@ -135,6 +141,16 @@ class _ErtDocumentation(SphinxDirective):
             # job names are skipped.
             if job_name.islower():
                 continue
+
+            if isinstance(docs, ForwardModelStepDocumentation):
+                docs = {
+                    "description": docs.description,
+                    "examples": docs.examples,
+                    "config_file": docs.config_file,
+                    "parser": None,
+                    "source_package": docs.source_package,
+                    "category": docs.category,
+                }
 
             category = docs.get(
                 "category",
@@ -183,7 +199,12 @@ class _ErtDocumentation(SphinxDirective):
         return node
 
     def _generate_job_documentation(
-        self, jobs: Dict[str, JobDoc], section_id: str, title: str
+        self,
+        jobs: Union[
+            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
+        ],
+        section_id: str,
+        title: str,
     ) -> List[nodes.section]:
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
 
@@ -242,7 +263,10 @@ def _create_section_with_title(section_id: str, title: str) -> nodes.section:
 
 class ErtForwardModelDocumentation(_ErtDocumentation):
     pm = ErtPluginManager()
-    _JOBS = pm.get_documentation_for_jobs()
+    _JOBS = {
+        **pm.get_documentation_for_jobs(),
+        **pm.get_documentation_for_forward_model_steps(),
+    }
     _TITLE = "Pre-configured forward models"
     _SECTION_ID = "ert-forward-models"
 
