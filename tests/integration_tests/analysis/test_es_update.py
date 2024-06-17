@@ -39,20 +39,22 @@ def uniform_parameter():
 
 @pytest.fixture
 def obs():
+    observations = np.array([1.0, 1.0, 1.0])
+    errors = np.array([0.1, 1.0, 10.0])
     return xr.Dataset(
         {
             "observations": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[1.0, 1.0, 1.0]]]],
+                ["name", "obs_name", "index", "report_step"],
+                np.reshape(observations, (1, 1, 3, 1)),
             ),
             "std": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[0.1, 1.0, 10.0]]]],
+                ["name", "obs_name", "index", "report_step"],
+                np.reshape(errors, (1, 1, 3, 1)),
             ),
         },
         coords={
+            "name": ["RESPONSE"],
             "obs_name": ["OBSERVATION"],
-            "name": ["RESPONSE"],  # Has to correspond to actual response name
             "index": [0, 1, 2],
             "report_step": [0],
         },
