@@ -162,6 +162,26 @@ async def test_job_run_sends_expected_events(
     assert scheduler.driver.submit.call_count == max_submit
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.asyncio
+async def test_num_cpu_is_propagated_to_driver(realization: Realization):
+    realization.num_cpu = 8
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+    job.started.set()
+    job.returncode.set_result(0)
+    await job_run_task
+    scheduler.driver.submit.assert_called_with(
+        realization.iens,
+        realization.job_script,
+        realization.run_arg.runpath,
+        name=realization.run_arg.job_name,
+        runpath=Path(realization.run_arg.runpath),
+        num_cpu=8,
+    )
+
+
 @pytest.mark.asyncio
 async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     realization: Realization, monkeypatch
