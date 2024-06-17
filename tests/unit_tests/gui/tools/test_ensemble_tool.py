@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.storage_info_widget import _EnsembleWidget
+from ert.gui.ertwidgets.storage_info_widget import _EnsembleWidget, _EnsembleWidgetTabs
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
     EnsembleInitializationConfigurationPanel,
@@ -53,6 +53,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
         responses=config.ensemble_config.response_configuration,
+        observations=config.observations.datasets,
         name="my-experiment",
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations, name="default"
@@ -93,3 +94,18 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ensemble_widget._currentTabChanged(1)
     assert "INITIALIZED" in html_edit.toPlainText()
     assert not "RealizationStorageState.INITIALIZED" in html_edit.toPlainText()
+
+    # select the observation
+    storage_info_widget = tool._storage_info_widget
+    storage_info_widget._ensemble_widget._tab_widget.setCurrentIndex(
+        _EnsembleWidgetTabs.OBSERVATIONS_TAB
+    )
+    observation_tree = storage_info_widget._ensemble_widget._observations_tree_widget
+    model_index = observation_tree.model().index(
+        0, 0, observation_tree.model().index(0, 0)
+    )
+    observation_tree.setCurrentIndex(model_index)
+    assert (
+        storage_info_widget._ensemble_widget._figure.axes[0].title.get_text()
+        == "POLY_OBS"
+    )
