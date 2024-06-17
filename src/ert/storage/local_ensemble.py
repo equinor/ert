@@ -1170,6 +1170,9 @@ class LocalEnsemble(BaseMode):
                         responses_matching_obs, join="left"
                     )
 
+                    if np.isnan(combined["values"]).any():
+                        raise ValueError("Missing responses detected.")
+
                     response_vals_per_real = (
                         combined["values"].stack(key=index).values.T
                     )
@@ -1184,25 +1187,10 @@ class LocalEnsemble(BaseMode):
                             for x in combined[index].coords.to_index()
                         ]
                     ).reshape(-1, 1)
-                    obs_vals_1d = combined["observations"].data.reshape(-1, 1)
-                    std_vals_1d = combined["std"].data.reshape(-1, 1)
+                    obs_vals_1d = combined["observations"].data
+                    std_vals_1d = combined["std"].data
 
-                    num_obs_names = len(obs_vals_1d)
                     obs_names_1d = np.full((len(std_vals_1d), 1), obs_name)
-
-                    if (
-                        len(key_index_1d) != num_obs_names
-                        or len(response_vals_per_real) != num_obs_names
-                        or len(obs_names_1d) != num_obs_names
-                        or len(std_vals_1d) != num_obs_names
-                    ):
-                        raise IndexError(
-                            "Axis 0 misalignment, expected axis0 length to "
-                            f"correspond to observation names {num_obs_names}. Got:\n"
-                            f"len(response_vals_per_real)={len(response_vals_per_real)}\n"
-                            f"len(obs_names_1d)={len(obs_names_1d)}\n"
-                            f"len(std_vals_1d)={len(std_vals_1d)}"
-                        )
 
                     if response_vals_per_real.shape[1] != len(
                         reals_with_responses_mask
