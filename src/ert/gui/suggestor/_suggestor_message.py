@@ -107,10 +107,7 @@ class SuggestorMessage(QWidget):
         if self._locations:
             location_paragraph = self._locations[0]
             location_paragraph = (
-                "<p>"
-                + f'<b style="color: {self._text_color}"> location: </b>'
-                + location_paragraph
-                + "</p>"
+                "<p>" + self._color_bold("location: ") + location_paragraph + "</p>"
             )
 
         return self._text(location_paragraph)
@@ -120,9 +117,7 @@ class SuggestorMessage(QWidget):
         first = True
         for loc in self._locations:
             if first:
-                location_paragraphs += (
-                    f'<p><b style="color: {self._text_color}">location:</b>{loc}</p>'
-                )
+                location_paragraphs += f'<p>{self._color_bold("location:")}{loc}</p>'
                 first = False
             else:
                 location_paragraphs += f"<p>{loc}</p>"
@@ -132,13 +127,14 @@ class SuggestorMessage(QWidget):
     def _text(self, location: str) -> str:
         return (
             '<div style="font-size: 16px; line-height: 24px;">'
-            + f'<b style="color: {self._text_color}">'
-            + self._header
-            + "</b>"
+            + self._color_bold(self._header)
             + self._message
             + location
             + "</div>"
         )
+
+    def _color_bold(self, text: str) -> str:
+        return f'<b style="color: {self._text_color}">{text}</b>'
 
     @classmethod
     def error_msg(cls, message: str, locations: list[str]) -> Self:
