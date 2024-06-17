@@ -47,20 +47,22 @@ def uniform_parameter():
 
 @pytest.fixture
 def obs():
+    observations = np.array([1.0, 1.0, 1.0])
+    errors = np.array([0.1, 1.0, 10.0])
     return xr.Dataset(
         {
             "observations": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[1.0, 1.0, 1.0]]]],
+                ["name", "obs_name", "index", "report_step"],
+                np.reshape(observations, (1, 1, 3, 1)),
             ),
             "std": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[0.1, 1.0, 10.0]]]],
+                ["name", "obs_name", "index", "report_step"],
+                np.reshape(errors, (1, 1, 3, 1)),
             ),
         },
         coords={
+            "name": ["RESPONSE"],
             "obs_name": ["OBSERVATION"],
-            "name": ["RESPONSE"],  # Has to correspond to actual response name
             "index": [0, 1, 2],
             "report_step": [0],
         },
@@ -517,18 +519,17 @@ def test_and_benchmark_adaptive_localization_with_fields(
     obs = xr.Dataset(
         {
             "observations": (
-                ["report_step", "index"],
-                observations.reshape((1, num_observations)),
+                ["index", "report_step"],
+                observations.reshape((num_observations, 1)),
             ),
             "std": (
-                ["report_step", "index"],
-                observation_noise.reshape(1, num_observations),
+                ["index", "report_step"],
+                observation_noise.reshape(num_observations, 1),
             ),
         },
         coords={"report_step": [0], "index": np.arange(len(observations))},
         attrs={"response": "gen_data"},
     )
-
     obs = obs.expand_dims({"obs_name": ["OBSERVATION"]})
     obs = obs.expand_dims({"name": ["RESPONSE"]})
 
