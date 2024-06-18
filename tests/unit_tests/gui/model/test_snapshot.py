@@ -1,20 +1,17 @@
 import pytest
 from pytestqt.qt_compat import qt_api
-from qtpy.QtCore import QModelIndex, Qt
+from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
 from ert.ensemble_evaluator.state import (
     COLOR_FAILED,
-    COLOR_FINISHED,
     COLOR_PENDING,
     COLOR_RUNNING,
-    COLOR_WAITING,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
     FORWARD_MODEL_STATE_RUNNING,
     FORWARD_MODEL_STATE_START,
-    REALIZATION_STATE_WAITING,
 )
 from ert.gui.model.snapshot import RealJobColorHint, RealStatusColorHint, SnapshotModel
 
@@ -52,84 +49,67 @@ def test_realization_sort_order(full_snapshot):
         )
 
 
-def test_realization_state_matches_display_color(full_snapshot):
+def test_realization_state_is_overridden_by_queue_finalized_state(fail_snapshot):
+    model = SnapshotModel()
+    model._add_snapshot(SnapshotModel.prerender(fail_snapshot), 0)
+
+    partial = PartialSnapshot(fail_snapshot)
+    partial.update_forward_model(
+        "0", "0", ForwardModel(status=FORWARD_MODEL_STATE_FINISHED)
+    )
+
+    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    first_real = model.index(0, 0, model.index(0, 0))
+
+    queue_color = model.data(first_real, RealStatusColorHint)
+    assert queue_color == QColor(*COLOR_FAILED)
+    color, done_count, full_count = model.data(first_real, RealJobColorHint)
+    assert color == QColor(*COLOR_FAILED)
+    assert done_count == 1
+    assert full_count == 1
+
+
+@pytest.mark.parametrize(
+    "first_state, second_state, expected_color",
+    [
+        (
+            FORWARD_MODEL_STATE_FINISHED,
+            FORWARD_MODEL_STATE_START,
+            QColor(*COLOR_PENDING),
+        ),
+        (
+            FORWARD_MODEL_STATE_FINISHED,
+            FORWARD_MODEL_STATE_RUNNING,
+            QColor(*COLOR_RUNNING),
+        ),
+        (
+            FORWARD_MODEL_STATE_FINISHED,
+            FORWARD_MODEL_STATE_FAILURE,
+            QColor(*COLOR_FAILED),
+        ),
+        (
+            FORWARD_MODEL_STATE_RUNNING,
+            FORWARD_MODEL_STATE_START,
+            QColor(*COLOR_RUNNING),
+        ),
+        (
+            FORWARD_MODEL_STATE_FAILURE,
+            FORWARD_MODEL_STATE_START,
+            QColor(*COLOR_FAILED),
+        ),
+    ],
+)
+def test_display_color_changes_to_more_important_state(
+    first_state, second_state, expected_color, full_snapshot
+):
     model = SnapshotModel()
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
 
     partial = PartialSnapshot(full_snapshot)
-    partial.update_forward_model(
-        "0", "0", ForwardModel(status=FORWARD_MODEL_STATE_FINISHED)
-    )
-    partial.update_forward_model(
-        "0", "1", ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
-    )
-    partial.update_forward_model(
-        "0", "2", ForwardModel(status=FORWARD_MODEL_STATE_RUNNING)
-    )
+    partial.update_forward_model("0", "0", ForwardModel(status=first_state))
+    partial.update_forward_model("0", "1", ForwardModel(status=second_state))
     model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
     first_real = model.index(0, 0, model.index(0, 0))
 
-    queue_color = model.data(first_real, RealStatusColorHint)
-    assert queue_color.name() == QColor(*COLOR_RUNNING).name()
-
-    colors = model.data(first_real, RealJobColorHint)
-    color_list = [
-        QColor(*COLOR_FINISHED).name(),
-        QColor(*COLOR_FAILED).name(),
-        QColor(*COLOR_RUNNING).name(),
-        QColor(*COLOR_PENDING).name(),
-    ]
-    status_list = [
-        FORWARD_MODEL_STATE_FINISHED,
-        FORWARD_MODEL_STATE_FAILURE,
-        FORWARD_MODEL_STATE_RUNNING,
-        FORWARD_MODEL_STATE_START,
-    ]
-
-    for i in range(4):
-        assert colors[i].name() == color_list[i]
-
-        # verify forward_model coloring and status texts
-        status = model.data(model.index(i, 2, first_real), Qt.DisplayRole)
-        color = model.data(model.index(i, 2, first_real), Qt.BackgroundRole)
-        assert status == status_list[i]
-        assert color.name() == color_list[i]
-
-
-@pytest.mark.parametrize(
-    "forward_model_state, expected_states, expected_colors",
-    [
-        (
-            FORWARD_MODEL_STATE_FINISHED,
-            [FORWARD_MODEL_STATE_FINISHED, REALIZATION_STATE_WAITING],
-            [QColor(*COLOR_FINISHED).name(), QColor(*COLOR_WAITING).name()],
-        ),
-        (
-            FORWARD_MODEL_STATE_RUNNING,
-            [FORWARD_MODEL_STATE_RUNNING, FORWARD_MODEL_STATE_START],
-            [QColor(*COLOR_RUNNING).name(), QColor(*COLOR_PENDING).name()],
-        ),
-    ],
-)
-def test_display_color_changes_when_realization_state_is_not_running(
-    forward_model_state, expected_states, expected_colors, waiting_snapshot
-):
-    model = SnapshotModel()
-    model._add_snapshot(SnapshotModel.prerender(waiting_snapshot), 0)
-
-    partial = PartialSnapshot(waiting_snapshot)
-    partial.update_forward_model("0", "0", ForwardModel(status=forward_model_state))
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
-    first_real = model.index(0, 0, model.index(0, 0))
-
-    queue_color = model.data(first_real, RealStatusColorHint)
-    # the queue has to have state 'WAIT' if fm states is to show `Waiting`
-    assert queue_color.name() == QColor(*COLOR_WAITING).name()
-    colors = model.data(first_real, RealJobColorHint)
-
-    for i in range(2):
-        assert colors[i].name() == expected_colors[i]
-        status = model.data(model.index(i, 2, first_real), Qt.DisplayRole)
-        color = model.data(model.index(i, 2, first_real), Qt.BackgroundRole)
-        assert status == expected_states[i]
-        assert color.name() == expected_colors[i]
+    color, _, _ = model.data(first_real, RealJobColorHint)
+    assert color == expected_color

@@ -24,18 +24,9 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.ensemble_evaluator import state
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import (
-    MemoryUsageRole,
-    RealJobColorHint,
-    RealLabelHint,
-    RealStatusColorHint,
-)
+from ert.gui.model.snapshot import MemoryUsageRole, RealJobColorHint, RealLabelHint
 from ert.shared.status.utils import byte_with_unit
-
-COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
-COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
 
 class RealizationWidget(QWidget):
@@ -43,15 +34,12 @@ class RealizationWidget(QWidget):
         super().__init__(parent)
 
         self._iter = _it
-        self._delegateWidth = 70
-        self._delegateHeight = 70
+        self._delegate_size = QSize(70, 70)
 
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.IconMode)
-        self._real_view.setGridSize(QSize(self._delegateWidth, self._delegateHeight))
-        real_delegate = RealizationDelegate(
-            self._delegateWidth, self._delegateHeight, self
-        )
+        self._real_view.setGridSize(self._delegate_size)
+        real_delegate = RealizationDelegate(self._delegate_size, self)
         self._real_view.setMouseTracking(True)
         self._real_view.setItemDelegate(real_delegate)
         self._real_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -84,19 +72,12 @@ class RealizationWidget(QWidget):
         self._real_view.clearSelection()
 
 
-# This singleton is shared among all instances of RealizationDelegate
-_image_cache = {}
-
-
 class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, width: int, height: int, parent: QObject) -> None:
         super().__init__(parent)
-        self._size = QSize(width, height)
-        parent.installEventFilter(self)
-        self.job_rect_margin = 10
-        self.adjustment_point_for_job_rect_margin = QPoint(
-            -2 * self.job_rect_margin, -2 * self.job_rect_margin
-        )
+        self._size = size
+        self.parent().installEventFilter(self)
+        self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
 
     def paint(
         self,
@@ -107,81 +88,25 @@ class RealizationDelegate(QStyledItemDelegate):
         if painter is None:
             return
         text = index.data(RealLabelHint)
-        colors = tuple(index.data(RealJobColorHint))
-        queue_color = index.data(RealStatusColorHint)
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing, False)
-        painter.setRenderHint(QPainter.TextAntialiasing, True)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, False)
+        selected_color, finished_count, total_count = tuple(
+            index.data(RealJobColorHint)
+        )
 
-        painter.setBrush(QColorConstants.Blue)
-        painter.setPen(QPen(QColorConstants.Black, 1))
+        painter.save()
+        painter.setRenderHint(QPainter.TextAntialiasing, True)
+
+        if option.state & QStyle.State_Selected:
+            selected_color = selected_color.lighter(125)
+
+        painter.setBrush(selected_color)
         painter.drawRect(option.rect)
 
-        margin = 0
-        if option.state & QStyle.StateFlag.State_Selected:
-            margin = 5
-
-        realization_status_rect = QRect(
-            option.rect.x() + margin,
-            option.rect.y() + margin,
-            option.rect.width() - (margin * 2),
-            option.rect.height() - (margin * 2),
-        )
-
-        # if jobs are running, realization status is guaranteed running
-        realization_status_color = (
-            COLOR_RUNNING if COLOR_RUNNING in colors else queue_color
-        )
-
-        painter.setBrush(realization_status_color)
-        painter.drawRect(realization_status_rect)
-
-        job_rect = QRect(
-            option.rect.x() + self.job_rect_margin,
-            option.rect.y() + self.job_rect_margin,
-            option.rect.width() - (self.job_rect_margin * 2),
-            option.rect.height() - (self.job_rect_margin * 2),
-        )
-
-        if realization_status_color == COLOR_FINISHED:
-            painter.setPen(QPen(QColorConstants.Gray, 1))
-            painter.drawRect(job_rect)
-        else:
-            self._paint_inner_grid(painter, job_rect, colors)
-
-        text_pen = QPen()
-        text_pen.setColor(QColorConstants.Black)
-        painter.setPen(text_pen)
-        painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, text)
-
+        painter.setPen(QPen(QColorConstants.Black))
+        percentage_done = int((finished_count * 100.0) / total_count)
+        painter.drawText(option.rect, Qt.AlignCenter, f"{percentage_done} %")
+        adj_rect = option.rect.adjusted(2, 1, 0, 0)
+        painter.drawText(adj_rect, Qt.AlignTop, text)
         painter.restore()
-
-    @staticmethod
-    def _paint_inner_grid(
-        painter: QPainter, rect: QRect, colors: Tuple[QColor]
-    ) -> None:
-        job_nr = len(colors)
-        grid_dim = math.ceil(math.sqrt(job_nr))
-        k = 0
-
-        colors_hash = hash(tuple(color.name() for color in colors))
-        if colors_hash not in _image_cache:
-            foreground_image = QImage(grid_dim, grid_dim, QImage.Format_ARGB32)
-            foreground_image.fill(QColorConstants.Gray)
-
-            for y in range(grid_dim):
-                for x in range(grid_dim):
-                    color = QColorConstants.Gray if k >= job_nr else colors[k]
-                    foreground_image.setPixel(x, y, color.rgb())  # type: ignore
-                    k += 1
-            _image_cache[colors_hash] = foreground_image
-        else:
-            foreground_image = _image_cache[colors_hash]
-
-        painter.setPen(QPen(QColorConstants.Gray, 2))
-        painter.drawRect(rect)
-        painter.drawImage(rect, foreground_image)
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size

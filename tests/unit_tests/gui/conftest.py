@@ -29,9 +29,9 @@ from ert.ensemble_evaluator.snapshot import (
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     FORWARD_MODEL_STATE_START,
+    REALIZATION_STATE_FAILED,
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_UNKNOWN,
-    REALIZATION_STATE_WAITING,
 )
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
@@ -380,9 +380,9 @@ def full_snapshot() -> Snapshot:
 
 
 @pytest.fixture()
-def waiting_snapshot() -> Snapshot:
+def fail_snapshot() -> Snapshot:
     real = RealizationSnapshot(
-        status=REALIZATION_STATE_WAITING,
+        status=REALIZATION_STATE_FAILED,
         active=True,
         forward_models={
             "0": ForwardModel(
@@ -396,19 +396,7 @@ def waiting_snapshot() -> Snapshot:
                 stderr="std_err_file",
                 current_memory_usage="123",
                 max_memory_usage="312",
-            ),
-            "1": ForwardModel(
-                start_time=dt.now(),
-                end_time=None,
-                name="poly_postval",
-                index="1",
-                status=FORWARD_MODEL_STATE_START,
-                error="error",
-                stdout="std_out_file",
-                stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
-            ),
+            )
         },
     )
     snapshot = SnapshotDict(
