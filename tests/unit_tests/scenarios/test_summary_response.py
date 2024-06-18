@@ -226,8 +226,8 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert isinstance(fopr_1, pd.DataFrame)
     assert fopr_1.loc["OBS"].iloc[0] == 0.9
     assert fopr_1.loc["STD"].iloc[0] == 0.05
-    assert fopr_1.loc[0].iloc[0] == -1.6038368
-    assert fopr_1.loc[1].iloc[0] == 0.064099915
+    assert fopr_1.loc[0].iloc[0] == -1.6038367748260498
+    assert fopr_1.loc[1].iloc[0] == 0.06409991532564163
     assert pd.isna(fopr_1.loc[2].iloc[0])
 
     fopr_2 = measured_data.data["FOPR_2"]

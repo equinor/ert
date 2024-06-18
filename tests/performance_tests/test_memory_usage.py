@@ -69,8 +69,8 @@ def test_that_observations_and_responses_is_always_ordered(poly_template):
         ds = prior_ens.get_observations_and_responses(
             prior_ens.experiment.observation_keys
         )
-        np_ds = ds._observations_and_responses
-        assert np.all(np_ds[np.lexsort((np_ds[:, 1], np_ds[:, 0]))] == np_ds)
+        df = ds._observations_and_responses
+        np.all(df.sort_values(["name", "key_index"]) == df)
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
