@@ -238,7 +238,7 @@ class Scheduler:
                             self.checksum.update(event.data)
                     except DataUnmarshallerError:
                         logger.error(
-                            "Scheduler checksum consumer reviced unknown message"
+                            "Scheduler checksum consumer received unknown message"
                         )
             except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
                 self._consumer_started.clear()
