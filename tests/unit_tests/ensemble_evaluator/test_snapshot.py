@@ -65,7 +65,9 @@ def test_snapshot_merge(snapshot: Snapshot):
         name="forward_model1",
     )
 
-    assert snapshot.get_job(real_id="9", forward_model_id="0").status == "Running"
+    assert (
+        snapshot.get_job(real_id="9", forward_model_id="0").get("status") == "Running"
+    )
     assert snapshot.get_job(real_id="9", forward_model_id="0") == ForwardModel(
         status="Running",
         index="0",

@@ -11,14 +11,14 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TypedDict,
     Union,
 )
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from qtpy.QtGui import QColor
+from typing_extensions import TypedDict
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
@@ -97,18 +97,18 @@ def _filter_nones(some_dict: Dict[str, Any]) -> Dict[str, Any]:
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
         self._realization_states: Dict[
-            str, Dict[str, Union[bool, datetime.datetime, str]]
+            str,
+            Dict[str, Union[bool, datetime.datetime, str, Dict[str, "ForwardModel"]]],
         ] = defaultdict(dict)
         """A shallow dictionary of realization states. The key is a string with
         realization number, pointing to a dict with keys active (bool),
         start_time (datetime), end_time (datetime) and status (str)."""
 
-        self._forward_model_states: Dict[
-            Tuple[str, str], Dict[str, Union[str, datetime.datetime]]
-        ] = defaultdict(dict)
+        self._forward_model_states: Dict[Tuple[str, str], "ForwardModel"] = defaultdict(
+            lambda: ForwardModel()
+        )
         """A shallow dictionary of forward_model states. The key is a tuple of two
-        strings with realization id and forward_model id, pointing to a dict with
-        the same members as the ForwardModel."""
+        strings with realization id and forward_model id, pointing to a ForwardModel."""
 
         self._ensemble_state: Optional[str] = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
@@ -150,15 +150,11 @@ class PartialSnapshot:
         forward_model_id: str,
         forward_model: "ForwardModel",
     ) -> "PartialSnapshot":
-        forward_model_update = _filter_nones(forward_model.model_dump())
-
-        self._forward_model_states[(real_id, forward_model_id)].update(
-            forward_model_update
-        )
+        self._forward_model_states[(real_id, forward_model_id)].update(forward_model)
         if self._snapshot:
             self._snapshot._my_partial._forward_model_states[
                 (real_id, forward_model_id)
-            ].update(forward_model_update)
+            ].update(forward_model)
         return self
 
     def get_all_forward_models(
@@ -213,17 +209,15 @@ class PartialSnapshot:
         if self._realization_states:
             _dict["reals"] = self._realization_states
 
-        for fm_tuple, fm_values_dict in self._forward_model_states.items():
-            real_id = fm_tuple[0]
+        for (real_id, fm_id), fm_values_dict in self._forward_model_states.items():
             if "reals" not in _dict:
                 _dict["reals"] = {}
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
             if "forward_models" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["forward_models"] = {}
+                _dict["reals"][real_id]["forward_models"] = ForwardModel()
 
-            forward_model_id = fm_tuple[1]
-            _dict["reals"][real_id]["forward_models"][forward_model_id] = fm_values_dict
+            _dict["reals"][real_id]["forward_models"][fm_id] = fm_values_dict
 
         return _dict
 
@@ -274,7 +268,10 @@ class PartialSnapshot:
                 ) in self._snapshot.get_forward_models_for_real(
                     _get_real_id(e_source)
                 ).items():
-                    if forward_model.status != state.FORWARD_MODEL_STATE_FINISHED:
+                    if (
+                        forward_model.get(ids.STATUS)
+                        != state.FORWARD_MODEL_STATE_FINISHED
+                    ):
                         real_id = _get_real_id(e_source)
                         forward_model_idx = (real_id, forward_model_id)
                         if forward_model_idx not in self._forward_model_states:
@@ -282,7 +279,7 @@ class PartialSnapshot:
                         self._forward_model_states[forward_model_idx].update(
                             {
                                 "status": state.FORWARD_MODEL_STATE_FAILURE,
-                                "end_time": end_time,  # type: ignore
+                                "end_time": end_time,
                                 "error": "The run is cancelled due to "
                                 "reaching MAX_RUNTIME",
                             }
@@ -305,25 +302,24 @@ class PartialSnapshot:
                 if event.data is not None:
                     error = event.data.get(ids.ERROR_MSG)
 
-            fm_dict = {
-                ids.STATUS: status,
-                ids.START_TIME: start_time,
-                ids.END_TIME: end_time,
-                ids.INDEX: _get_forward_model_index(e_source),
-                ids.ERROR: error,
-            }
+            fm = ForwardModel(
+                status=status,
+                start_time=start_time,
+                end_time=end_time,
+                index=_get_forward_model_index(e_source),
+                error=error,
+            )
+
             if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
-                fm_dict[ids.CURRENT_MEMORY_USAGE] = event.data.get(
-                    ids.CURRENT_MEMORY_USAGE
-                )
-                fm_dict[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
+                fm[ids.CURRENT_MEMORY_USAGE] = event.data.get(ids.CURRENT_MEMORY_USAGE)
+                fm[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
             if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                fm_dict[ids.STDOUT] = event.data.get(ids.STDOUT)
-                fm_dict[ids.STDERR] = event.data.get(ids.STDERR)
+                fm[ids.STDOUT] = event.data.get(ids.STDOUT)
+                fm[ids.STDERR] = event.data.get(ids.STDERR)
             self.update_forward_model(
                 _get_real_id(e_source),
                 _get_forward_model_id(e_source),
-                ForwardModel(**fm_dict),
+                fm,
             )
 
         elif e_type in ids.EVGROUP_ENSEMBLE:
@@ -363,17 +359,16 @@ class Snapshot:
     def get_all_forward_models(
         self,
     ) -> Mapping[Tuple[str, str], "ForwardModel"]:
-        return {
-            idx: ForwardModel(**forward_model_state)
-            for idx, forward_model_state in self._my_partial._forward_model_states.items()
-        }
+        return self._my_partial._forward_model_states.copy()
 
     def get_forward_model_status_for_all_reals(
         self,
-    ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
+    ) -> Mapping[Tuple[str, str], str]:
         return {
             idx: forward_model_state["status"]
             for idx, forward_model_state in self._my_partial._forward_model_states.items()
+            if "status" in forward_model_state
+            and forward_model_state["status"] is not None
         }
 
     @property
@@ -382,18 +377,18 @@ class Snapshot:
 
     def get_forward_models_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
         return {
-            forward_model_idx[1]: ForwardModel(**forward_model_data)
-            for forward_model_idx, forward_model_data in self._my_partial._forward_model_states.items()
-            if forward_model_idx[0] == real_id
+            fm_idx[1]: forward_model_data.copy()
+            for fm_idx, forward_model_data in self._my_partial._forward_model_states.items()
+            if fm_idx[0] == real_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._my_partial._realization_states[real_id])
 
     def get_job(self, real_id: str, forward_model_id: str) -> "ForwardModel":
-        return ForwardModel(
-            **self._my_partial._forward_model_states[(real_id, forward_model_id)]
-        )
+        return self._my_partial._forward_model_states[
+            (real_id, forward_model_id)
+        ].copy()
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
@@ -415,18 +410,17 @@ class Snapshot:
         return self._my_partial.to_dict()
 
 
-class ForwardModel(BaseModel):
-    model_config = ConfigDict(coerce_numbers_to_str=True)
+class ForwardModel(TypedDict, total=False):
     status: Optional[str]
-    start_time: Optional[datetime.datetime] = None
-    end_time: Optional[datetime.datetime] = None
-    index: Optional[str] = None
-    current_memory_usage: Optional[str] = None
-    max_memory_usage: Optional[str] = None
-    name: Optional[str] = None
-    error: Optional[str] = None
-    stdout: Optional[str] = None
-    stderr: Optional[str] = None
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
+    index: Optional[str]
+    current_memory_usage: Optional[str]
+    max_memory_usage: Optional[str]
+    name: Optional[str]
+    error: Optional[str]
+    stdout: Optional[str]
+    stderr: Optional[str]
 
 
 class RealizationSnapshot(BaseModel):
@@ -479,15 +473,19 @@ class SnapshotBuilder(BaseModel):
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
         self.forward_models[forward_model_id] = ForwardModel(
-            status=status,
-            index=index,
-            start_time=start_time,
-            end_time=end_time,
-            name=name,
-            stdout=stdout,
-            stderr=stderr,
-            current_memory_usage=current_memory_usage,
-            max_memory_usage=max_memory_usage,
+            **_filter_nones(  # type: ignore
+                {
+                    ids.STATUS: status,
+                    ids.INDEX: index,
+                    ids.START_TIME: start_time,
+                    ids.END_TIME: end_time,
+                    ids.NAME: name,
+                    ids.STDOUT: stdout,
+                    ids.STDERR: stderr,
+                    ids.CURRENT_MEMORY_USAGE: current_memory_usage,
+                    ids.MAX_MEMORY_USAGE: max_memory_usage,
+                }
+            )
         )
         return self
 

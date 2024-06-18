@@ -27,6 +27,7 @@ from websockets.legacy.server import WebSocketServerProtocol
 
 from _ert.async_utils import new_event_loop
 from _ert.threading import ErtThread
+from ert.ensemble_evaluator import identifiers as ids
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 from ._builder import Ensemble
@@ -136,7 +137,7 @@ class EnsembleEvaluator:
             with self._snapshot_mutex:
                 max_memory_usage = -1
                 for job in self.ensemble.snapshot.get_all_forward_models().values():
-                    memory_usage = job.max_memory_usage or "-1"
+                    memory_usage = job[ids.MAX_MEMORY_USAGE] or "-1"
                     max_memory_usage = max(int(memory_usage), max_memory_usage)
                 logger.info(
                     f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
