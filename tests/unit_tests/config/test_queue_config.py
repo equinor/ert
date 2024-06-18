@@ -30,6 +30,38 @@ def test_stop_long_running_is_set_from_corresponding_keyword(value):
     assert QueueConfig(stop_long_running=value).stop_long_running == value
 
 
+@pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
+def test_project_code_is_set_when_forward_model_contains_selected_simulator(
+    queue_system,
+):
+    queue_config = QueueConfig.from_dict(
+        {
+            ConfigKeys.FORWARD_MODEL: [("FLOW",), ("RMS",)],
+            ConfigKeys.QUEUE_SYSTEM: queue_system,
+        }
+    )
+    project_code = queue_config.queue_options_as_dict.get("PROJECT_CODE")
+
+    assert project_code is not None
+    assert "flow" in project_code and "rms" in project_code
+
+
+@pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
+def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
+    queue_config = QueueConfig.from_dict(
+        {
+            ConfigKeys.FORWARD_MODEL: [("FLOW",), ("RMS",)],
+            ConfigKeys.QUEUE_SYSTEM: queue_system,
+            "QUEUE_OPTION": [
+                (queue_system, "PROJECT_CODE", "test_code"),
+            ],
+        }
+    )
+    project_code = queue_config.queue_options_as_dict.get("PROJECT_CODE")
+
+    assert project_code == "test_code"
+
+
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(st.integers(min_value=1, max_value=300))
 def test_that_default_max_running_is_unlimited(num_real):

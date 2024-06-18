@@ -42,6 +42,7 @@ OPENPBS_DRIVER_OPTIONS: List[str] = [
     "MEMORY_PER_JOB",
     "NUM_CPUS_PER_NODE",
     "NUM_NODES",
+    "PROJECT_CODE",
     "QDEL_CMD",
     "QSTAT_CMD",
     "QSTAT_OPTIONS",
@@ -56,6 +57,7 @@ SLURM_DRIVER_OPTIONS: List[str] = [
     "MEMORY",
     "MEMORY_PER_CPU",
     "PARTITION",
+    "PROJECT_CODE",
     "SBATCH",
     "SCANCEL",
     "SCONTROL",
@@ -112,6 +114,25 @@ class QueueConfig:
             ):
                 submit_sleep = float(values[0])
 
+        project_code_is_set = next(
+            (
+                True
+                for key, _ in queue_options[selected_queue_system]
+                if key == "PROJECT_CODE"
+            ),
+            False,
+        )
+        if selected_queue_system != QueueSystem.LOCAL and not project_code_is_set:
+            tags = {
+                fm[0].lower()
+                for fm in config_dict.get("FORWARD_MODEL", [])
+                if fm[0] in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
+            }
+            if tags:
+                queue_options[selected_queue_system].append(
+                    ("PROJECT_CODE", "+".join(tags))
+                )
+
         for queue_system, queue_system_settings in queue_options.items():
             if queue_system_settings:
                 _validate_queue_driver_settings(
@@ -159,6 +180,10 @@ class QueueConfig:
             if key == "MAX_RUNNING":
                 max_running = int(val)
         return max_running
+
+    @property
+    def queue_options_as_dict(self) -> Dict[str, str]:
+        return dict(self.queue_options.get(self.queue_system, []))
 
 
 def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
@@ -250,6 +275,7 @@ queue_string_options: Mapping[str, List[str]] = {
         "PARTITION",
         "INCLUDE_HOST",
         "EXCLUDE_HOST",
+        "PROJECT_CODE",
     ],
     "TORQUE": [
         "QSUB_CMD",
@@ -260,6 +286,7 @@ queue_string_options: Mapping[str, List[str]] = {
         "CLUSTER_LABEL",
         "JOB_PREFIX",
         "DEBUG_OUTPUT",
+        "PROJECT_CODE",
     ],
     "LOCAL": [],
 }
