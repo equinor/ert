@@ -3,17 +3,17 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
-from PyQt5.QtGui import QTextCursor, QTextOption
-from PyQt5.QtWidgets import QAbstractItemView, QPlainTextEdit
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import QMovie
+from qtpy.QtGui import QMovie, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
     QMessageBox,
+    QPlainTextEdit,
     QProgressBar,
     QPushButton,
     QTableView,
