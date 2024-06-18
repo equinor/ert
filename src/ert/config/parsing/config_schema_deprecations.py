@@ -196,17 +196,14 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION to the TORQUE system will be ignored "
-        "when using the scheduler, and it is not recommended to use this QUEUE_OPTION. "
-        "It has been used in the past to set the time ERT will wait before giving "
-        "up on hanging backend (TORQUE/PBS) when submitting jobs or job status querying.",
+        message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION is ignored. "
+        "Please remove the line.",
         check=lambda line: "QUEUE_QUERY_TIMEOUT" in line,
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="QSTAT_OPTIONS as QUEUE_OPTION to the TORQUE system will be ignored "
-        "when using the scheduler, and it is not recommended to use this QUEUE_OPTION. "
-        "It has been used in the past to supply options to the qstat command.",
+        message="QSTAT_OPTIONS as QUEUE_OPTION to the TORQUE is ignored. "
+        "Please remove the line.",
         check=lambda line: "QSTAT_OPTIONS" in line,
     ),
     DeprecationInfo(
