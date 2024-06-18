@@ -34,7 +34,6 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.progress_proxy import ProgressProxyModel
 from ert.gui.model.snapshot import COLUMNS, FileRole, IterNum, RealIens, SnapshotModel
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
@@ -52,7 +51,7 @@ from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
 from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
-from .view import LegendView, ProgressView, RealizationWidget, UpdateWidget
+from .view import ProgressWidget, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
@@ -89,8 +88,6 @@ class RunDialog(QDialog):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
-        progress_proxy_model = ProgressProxyModel(self._snapshot_model, parent=self)
-
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
                 total_progress=0, phase_name=run_model.getPhaseName()
@@ -103,13 +100,7 @@ class RunDialog(QDialog):
         self._total_progress_bar.setTextVisible(False)
 
         self._iteration_progress_label = QLabel(self)
-
-        self._progress_view = ProgressView(self)
-        self._progress_view.setModel(progress_proxy_model)
-        self._progress_view.set_active_progress(False)
-
-        legend_view = LegendView(self)
-        legend_view.setModel(progress_proxy_model)
+        self._progress_widget = ProgressWidget()
 
         self._tab_widget = QTabWidget(self)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
@@ -177,8 +168,7 @@ class RunDialog(QDialog):
         layout.addWidget(self._total_progress_label)
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)
-        layout.addWidget(self._progress_view)
-        layout.addWidget(legend_view)
+        layout.addWidget(self._progress_widget)
         layout.addWidget(self._tab_widget)
         layout.addWidget(self._job_label)
         layout.addWidget(self._job_view)
@@ -382,14 +372,18 @@ class RunDialog(QDialog):
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
-            self._progress_view.set_active_progress()
             self.update_total_progress(event.progress, event.phase_name)
+            self._progress_widget.update_progress(
+                event.status_count, event.realization_count
+            )
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
                 )
-            self._progress_view.set_active_progress()
+            self._progress_widget.update_progress(
+                event.status_count, event.realization_count
+            )
             self.update_total_progress(event.progress, event.phase_name)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration

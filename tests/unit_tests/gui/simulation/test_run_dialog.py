@@ -125,6 +125,8 @@ def test_large_snapshot(
             current_phase=0,
             total_phases=1,
             progress=0.5,
+            realization_count=4,
+            status_count={"Finished": 2, "Unknown": 2},
             iteration=0,
         ),
         FullSnapshotEvent(
@@ -133,6 +135,8 @@ def test_large_snapshot(
             current_phase=0,
             total_phases=1,
             progress=0.5,
+            realization_count=4,
+            status_count={"Finished": 2, "Unknown": 2},
             iteration=1,
         ),
         EndEvent(failed=False, failed_msg=""),
@@ -175,6 +179,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
@@ -187,6 +193,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
                 EndEvent(failed=False, failed_msg=""),
@@ -213,6 +221,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
@@ -225,6 +235,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
                 EndEvent(failed=False, failed_msg=""),
@@ -255,12 +267,13 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
                     partial_snapshot=PartialSnapshot(
                         SnapshotBuilder()
-                        # .add_step(status=state.STEP_STATE_SUCCESS)
                         .add_forward_model(
                             forward_model_id="0",
                             index="0",
@@ -273,6 +286,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
@@ -290,6 +305,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                     iteration=0,
                 ),
                 EndEvent(failed=False, failed_msg=""),
@@ -314,6 +331,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.25,
+                    realization_count=4,
+                    status_count={"Pending": 1, "Unknown": 3},
                     iteration=0,
                 ),
                 FullSnapshotEvent(
@@ -331,6 +350,8 @@ def test_large_snapshot(
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=1,
                 ),
                 EndEvent(failed=False, failed_msg=""),
@@ -426,6 +447,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     current_phase=0,
                     total_phases=1,
                     progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
@@ -435,8 +458,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                             forward_model_id="0",
                             index="0",
                             status=state.FORWARD_MODEL_STATE_RUNNING,
-                            current_memory_usage=45000,
-                            max_memory_usage=55000,
+                            current_memory_usage="45000",
+                            max_memory_usage="55000",
                             name="job_0",
                         )
                         .build(["0"], status=state.REALIZATION_STATE_RUNNING)
@@ -445,6 +468,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     current_phase=0,
                     total_phases=1,
                     progress=0.5,
+                    realization_count=4,
+                    status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                     iteration=0,
                 ),
                 SnapshotUpdateEvent(
@@ -455,8 +480,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                             index="0",
                             status=state.FORWARD_MODEL_STATE_FINISHED,
                             name="job_0",
-                            current_memory_usage=50000,
-                            max_memory_usage=60000,
+                            current_memory_usage="50000",
+                            max_memory_usage="60000",
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FINISHED)
                     ),
@@ -464,6 +489,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                     current_phase=0,
                     total_phases=1,
                     progress=1,
+                    realization_count=4,
+                    status_count={"Finished": 4},
                     iteration=0,
                 ),
                 EndEvent(failed=False, failed_msg=""),

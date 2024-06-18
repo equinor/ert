@@ -71,6 +71,8 @@ def test_print_progress():
         current_phase=0,
         total_phases=2,
         progress=0.5,
+        realization_count=100,
+        status_count={"Finished": 50, "Waiting": 50},
         iteration=0,
     )
 
