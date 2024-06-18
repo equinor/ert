@@ -53,8 +53,10 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
 
         def is_completed_snapshot(snapshot: Snapshot) -> bool:
             try:
-                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FAILURE
-                assert snapshot.get_job("0", "0").error == "error"
+                assert (
+                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_FAILURE
+                )
+                assert snapshot.get_job("0", "0")["error"] == "error"
                 return True
             except AssertionError:
                 return False
@@ -87,8 +89,10 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
         def check_if_final_snapshot_is_complete(snapshot: Snapshot) -> bool:
             try:
                 assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_FINISHED
-                assert not snapshot.get_job("0", "0").error
+                assert (
+                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+                )
+                assert not snapshot.get_job("0", "0")["error"]
                 return True
             except AssertionError:
                 return False
@@ -153,9 +157,15 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
 
         def check_if_all_fm_running(snapshot: Snapshot) -> bool:
             try:
-                assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-                assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_RUNNING
-                assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_RUNNING
+                assert (
+                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+                )
+                assert (
+                    snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+                )
+                assert (
+                    snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_RUNNING
+                )
                 return True
             except AssertionError:
                 return False
@@ -199,13 +209,16 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
         try:
             assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
             assert (
-                final_snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
+                final_snapshot.get_job("0", "0")["status"]
+                == FORWARD_MODEL_STATE_RUNNING
             )
             assert (
-                final_snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
+                final_snapshot.get_job("1", "0")["status"]
+                == FORWARD_MODEL_STATE_FINISHED
             )
             assert (
-                final_snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+                final_snapshot.get_job("1", "1")["status"]
+                == FORWARD_MODEL_STATE_FAILURE
             )
             return True
         except AssertionError:
@@ -287,9 +300,9 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             )
             evt = await events.__anext__()
             snapshot = Snapshot(evt.data)
-            assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
-            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-            assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+            assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+            assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
 
         # a second monitor connects
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
@@ -298,9 +311,9 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-            assert snapshot.get_job("1", "0").status == FORWARD_MODEL_STATE_FINISHED
-            assert snapshot.get_job("0", "0").status == FORWARD_MODEL_STATE_RUNNING
-            assert snapshot.get_job("1", "1").status == FORWARD_MODEL_STATE_FAILURE
+            assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+            assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+            assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
 
             # one monitor requests that server exit
             await monitor.signal_cancel()

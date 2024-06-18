@@ -91,7 +91,10 @@ def test_run_and_cancel_legacy_ensemble(
                         if cancel:
                             await mon.signal_cancel()
                             cancel = False
-                        if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                        if (
+                            event is not None
+                            and event["type"] == identifiers.EVTYPE_EE_TERMINATED
+                        ):
                             terminated_event = True
             return terminated_event
 

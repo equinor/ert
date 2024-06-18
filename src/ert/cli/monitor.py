@@ -15,6 +15,7 @@ from ert.ensemble_evaluator import (
     Snapshot,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,
@@ -109,9 +110,10 @@ class Monitor:
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
                 for job in real.forward_models.values():
-                    if job.status == FORWARD_MODEL_STATE_FAILURE:
-                        result = failed_jobs.get(job.error, 0)
-                        failed_jobs[job.error] = result + 1
+                    if job.get(ids.STATUS) == FORWARD_MODEL_STATE_FAILURE:
+                        err = job.get(ids.ERROR)
+                        result = failed_jobs.get(err, 0)
+                        failed_jobs[err] = result + 1
         for error, number_of_jobs in failed_jobs.items():
             print(f"{number_of_jobs} jobs failed due to the error: {error}")
 

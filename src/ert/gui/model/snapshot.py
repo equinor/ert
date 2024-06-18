@@ -218,39 +218,21 @@ class SnapshotModel(QAbstractItemModel):
 
                 jobs_changed_by_real[real_id].append(job_node.row())
 
-                if job.status:
-                    job_node.data.status = job.status
-                if job.start_time:
-                    job_node.data.start_time = job.start_time
-                if job.end_time:
-                    job_node.data.end_time = job.end_time
-                if job.stdout:
-                    job_node.data.stdout = job.stdout
-                if job.stderr:
-                    job_node.data.stderr = job.stderr
-                if job.index:
-                    job_node.data.index = job.index
-                if job.current_memory_usage:
-                    job_node.data.current_memory_usage = job.current_memory_usage
-                    real_node.data.current_memory_usage = int(
-                        float(job.current_memory_usage)
-                    )
-                    self.root.data.current_memory_usage = int(
-                        float(job.current_memory_usage)
-                    )
-                if job.max_memory_usage:
-                    job_node.data.max_memory_usage = job.max_memory_usage
-                    real_node.data.max_memory_usage = max(
-                        real_node.data.max_memory_usage or -1,
-                        int(float(job.max_memory_usage)),
-                    )
-                    self.root.data.max_memory_usage = max(
-                        self.root.data.max_memory_usage or -1,
-                        int(float(job.max_memory_usage)),
-                    )
+                job_node.data.update(job)
+                if (
+                    "current_memory_usage" in job
+                    and job["current_memory_usage"] is not None
+                ):
+                    cur_mem_usage = int(float(job["current_memory_usage"]))
+                    real_node.data.current_memory_usage = cur_mem_usage
+                    self.root.data.current_memory_usage = cur_mem_usage
+                if "max_memory_usage" in job and job["max_memory_usage"] is not None:
+                    max_mem_usage = int(float(job["max_memory_usage"]))
+                    real_node.data.max_memory_usage = max_mem_usage
+                    self.root.data.max_memory_usage = max_mem_usage
 
                 # Errors may be unset as the queue restarts the job
-                job_node.data.error = job.error if job.error else ""
+                job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
 
             for real_idx, changed_jobs in jobs_changed_by_real.items():
                 real_node = iter_node.children[real_idx]
@@ -487,18 +469,18 @@ class SnapshotModel(QAbstractItemModel):
             data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: Optional[str] = getattr(data, data_name)
+                _bytes: Optional[str] = data[data_name]
                 if _bytes:
                     return byte_with_unit(float(_bytes))
 
             if data_name in [ids.STDOUT, ids.STDERR]:
-                return "OPEN" if getattr(node.data, data_name) else QVariant()
+                return "OPEN" if data_name in node.data else QVariant()
 
             if data_name in [DURATION]:
-                start_time = node.data.start_time
+                start_time = node.data[ids.START_TIME]
                 if start_time is None:
                     return QVariant()
-                delta = _estimate_duration(start_time, end_time=node.data.end_time)
+                delta = _estimate_duration(start_time, end_time=node.data[ids.END_TIME])
                 # There is no method for truncating microseconds, so we remove them
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
@@ -508,7 +490,7 @@ class SnapshotModel(QAbstractItemModel):
                 COLOR_RUNNING
                 in real.data.forward_model_step_status_color_by_id.values()
             ):
-                return getattr(node.data, data_name)
+                return node.data[data_name]
 
             # if queue system status is WAIT, jobs should indicate WAIT
             if (
@@ -518,16 +500,12 @@ class SnapshotModel(QAbstractItemModel):
                 == COLOR_PENDING
             ):
                 return str("Waiting")
-            return getattr(node.data, data_name)
+            return node.data[data_name]
 
         if role == FileRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
-                return (
-                    getattr(node.data, data_name)
-                    if getattr(node.data, data_name)
-                    else QVariant()
-                )
+                return node.data.get(data_name, QVariant())
 
         if role == RealIens:
             return node.parent.id_
@@ -539,11 +517,13 @@ class SnapshotModel(QAbstractItemModel):
             data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None
             if data_name == ids.ERROR:
-                data = node.data.error
+                data = node.data[ids.ERROR]
             elif data_name == DURATION:
-                start_time = node.data.start_time
+                start_time = node.data[ids.START_TIME]
                 if start_time is not None:
-                    delta = _estimate_duration(start_time, end_time=node.data.end_time)
+                    delta = _estimate_duration(
+                        start_time, end_time=node.data[ids.END_TIME]
+                    )
                     data = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
             if data is not None:
                 return str(data)
