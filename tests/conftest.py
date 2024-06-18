@@ -360,6 +360,12 @@ def pytest_collection_modifyitems(config, items):
             if "out_of_memory" in item.keywords:
                 item.add_marker(skip_oom)
 
+    if not config.getoption("--lsf"):
+        skip_lsf = pytest.mark.skip("Skipping lsf test, add --lsf to include.")
+        for item in items:
+            if "requires_lsf" in item.keywords:
+                item.add_marker(skip_lsf)
+
 
 def _run_snake_oil(source_root):
     shutil.copytree(os.path.join(source_root, "test-data", "snake_oil"), "test_data")

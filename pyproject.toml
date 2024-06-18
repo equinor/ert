@@ -155,6 +155,7 @@ markers = [
     "requires_window_manager",
     "script",
     "slow",
+    "requires_lsf",
 ]
 log_cli = "false"
 asyncio_mode = "auto"
