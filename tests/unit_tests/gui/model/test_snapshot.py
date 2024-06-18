@@ -1,7 +1,6 @@
 import pytest
-from PyQt5.QtCore import Qt
 from pytestqt.qt_compat import qt_api
-from qtpy.QtCore import QModelIndex
+from qtpy.QtCore import QModelIndex, Qt
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot

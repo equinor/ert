@@ -6,8 +6,8 @@ import webbrowser
 from collections import defaultdict
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
 
-from PyQt5.QtGui import QCursor
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import (
     QFrame,
     QGridLayout,

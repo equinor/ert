@@ -1,12 +1,12 @@
 from typing import List
 
-from PyQt5.QtCore import QSize
-from PyQt5.QtGui import QBrush, QColor, QCursor, QIcon, QPainter, QPen
-from PyQt5.QtWidgets import QAbstractItemView, QStyledItemDelegate
-from qtpy.QtCore import Qt, Signal
+from qtpy.QtCore import QSize, Qt, Signal
+from qtpy.QtGui import QBrush, QColor, QCursor, QIcon, QPainter, QPen
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QListWidget,
     QListWidgetItem,
+    QStyledItemDelegate,
     QVBoxLayout,
     QWidget,
 )
