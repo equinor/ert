@@ -102,7 +102,9 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawRect(option.rect)
 
         painter.setPen(QPen(QColorConstants.Black))
-        percentage_done = int((finished_count * 100.0) / total_count)
+        percentage_done = int(
+            (finished_count * 100.0) / (total_count if total_count > 0 else 1)
+        )
         painter.drawText(option.rect, Qt.AlignCenter, f"{percentage_done} %")
         adj_rect = option.rect.adjusted(2, 1, 0, 0)
         painter.drawText(adj_rect, Qt.AlignTop, text)
