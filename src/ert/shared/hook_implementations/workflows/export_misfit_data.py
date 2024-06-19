@@ -1,7 +1,15 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List
+
+import pandas as pd
 
 from ert import ErtScript
 from ert.exceptions import StorageError
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
+    from ert.storage import Ensemble
 
 
 class ExportMisfitDataJob(ErtScript):
@@ -15,23 +23,19 @@ class ExportMisfitDataJob(ErtScript):
     ((response_value - observation_data) / observation_std)**2
     """
 
-    def run(self, target_file: Optional[str] = None) -> None:
-        ert = self.ert()
+    def run(
+        self, ert_config: ErtConfig, ensemble: Ensemble, workflow_args: List[Any]
+    ) -> None:
+        target_file = "misfit.hdf" if not workflow_args else workflow_args[0]
 
-        if target_file is None:
-            target_file = "misfit.hdf"
-        if self.ensemble is None:
-            raise StorageError("No responses loaded")
-
-        realizations = self.ensemble.get_realization_with_responses()
+        realizations = ensemble.get_realization_with_responses()
 
         from ert import LibresFacade
 
-        facade = LibresFacade(ert)
-        misfit = facade.load_all_misfit_data(self.ensemble)
+        facade = LibresFacade(ert_config)
+        misfit = facade.load_all_misfit_data(ensemble)
         if realizations.size == 0 or misfit.empty:
             raise StorageError("No responses loaded")
-
-        misfit.columns = [val.split(":")[1] for val in misfit.columns]
+        misfit.columns = pd.Index([val.split(":")[1] for val in misfit.columns])
         misfit = misfit.drop("TOTAL", axis=1)
         misfit.to_hdf(target_file, key="misfit", mode="w")

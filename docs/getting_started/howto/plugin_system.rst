@@ -120,6 +120,8 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
    def installable_workflow_jobs() -> Dict[str, str]:
       return {"<path_to_workflow_job_config_file>": "CSV_EXPORT"}
 
+.. _legacy_ert_workflow_jobs:
+
 2. **Using the legacy_ertscript_workflow hook**
 
 The second approach does not require creating a workflow job configuration file up-front,

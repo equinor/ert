@@ -1,4 +1,3 @@
 """
-Dark Storage is an API towards data provided by the legacy EnKFMain object and
-the `storage/` directory.
+Dark Storage is an API towards data provided the `storage/` directory.
 """

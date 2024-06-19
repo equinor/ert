@@ -20,9 +20,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.enkf_main import EnKFMain
 from ert.gui.ertnotifier import ErtNotifier
-from ert.libres_facade import LibresFacade
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -30,6 +28,7 @@ from ert.mode_definitions import (
 )
 from ert.run_models.model_factory import create_model
 
+from ...config import ErtConfig
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -44,12 +43,17 @@ EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
 
 
 class ExperimentPanel(QWidget):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
+    def __init__(
+        self,
+        config: ErtConfig,
+        notifier: ErtNotifier,
+        config_file: str,
+        ensemble_size: int,
+    ):
         QWidget.__init__(self)
         self._notifier = notifier
-        self.ert = ert
-        self.facade = LibresFacade(ert)
-        ensemble_size = self.facade.get_ensemble_size()
+        self.config = config
+        run_path = config.model_config.runpath_format_string
         self._config_file = config_file
 
         self.setObjectName("experiment_panel")
@@ -94,38 +98,35 @@ class ExperimentPanel(QWidget):
 
         self._experiment_widgets = OrderedDict()
         self.addExperimentConfigPanel(
-            SingleTestRunPanel(self.facade.run_path, notifier),
+            SingleTestRunPanel(run_path, notifier),
             True,
         )
         self.addExperimentConfigPanel(
-            EnsembleExperimentPanel(ensemble_size, self.facade.run_path, notifier),
+            EnsembleExperimentPanel(ensemble_size, run_path, notifier),
             True,
         )
         self.addExperimentConfigPanel(
-            EvaluateEnsemblePanel(ensemble_size, self.facade.run_path, notifier),
+            EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
             True,
         )
 
-        config = self.facade.config
         experiment_type_valid = (
             config.ensemble_config.parameter_configs and config.observations
         )
-        analysis_config = self.facade.config.analysis_config
+        analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
-            ),
+            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
+                analysis_config, run_path, notifier, ensemble_size
             ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
             IteratedEnsembleSmootherPanel(
-                analysis_config, self.facade.run_path, notifier, ensemble_size
+                analysis_config, run_path, notifier, ensemble_size
             ),
             experiment_type_valid,
         )
@@ -199,11 +200,10 @@ class ExperimentPanel(QWidget):
         ):
             abort = False
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            config = self.facade.config
             event_queue = SimpleQueue()
             try:
                 model = create_model(
-                    config,
+                    self.config,
                     self._notifier.storage,
                     args,
                     event_queue,
@@ -287,7 +287,7 @@ class ExperimentPanel(QWidget):
                     event_queue,
                     self._notifier,
                     self.parent(),
-                    output_path=self.ert.ert_config.analysis_config.log_path,
+                    output_path=self.config.analysis_config.log_path,
                 )
                 self.run_button.setEnabled(False)
                 self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)

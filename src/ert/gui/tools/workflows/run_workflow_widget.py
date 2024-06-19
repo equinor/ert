@@ -21,6 +21,7 @@ from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.job_queue import WorkflowRunner
 
 if TYPE_CHECKING:
+    from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
 
 
@@ -29,8 +30,8 @@ class RunWorkflowWidget(QWidget):
     workflowFailed = Signal()
     workflowKilled = Signal()
 
-    def __init__(self, ert, notifier: ErtNotifier):
-        self.ert = ert
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
+        self.config = config
         self.storage = notifier.storage
         self.notifier = notifier
         QWidget.__init__(self)
@@ -38,9 +39,7 @@ class RunWorkflowWidget(QWidget):
         layout = QFormLayout()
 
         self._workflow_combo = QComboBox()
-        self._workflow_combo.addItems(
-            sorted(ert.ert_config.workflows.keys(), key=str.lower)
-        )
+        self._workflow_combo.addItems(sorted(config.workflows.keys(), key=str.lower))
 
         layout.addRow("Workflow", self._workflow_combo)
 
@@ -106,7 +105,7 @@ class RunWorkflowWidget(QWidget):
 
     def getCurrentWorkflowName(self) -> List[str]:
         index = self._workflow_combo.currentIndex()
-        return (sorted(self.ert.ert_config.workflows.keys(), key=str.lower))[index]
+        return (sorted(self.config.workflows.keys(), key=str.lower))[index]
 
     def startWorkflow(self) -> None:
         self._running_workflow_dialog = WorkflowDialog(
@@ -121,12 +120,12 @@ class RunWorkflowWidget(QWidget):
             should_raise=False,
         )
 
-        workflow = self.ert.ert_config.workflows[self.getCurrentWorkflowName()]
+        workflow = self.config.workflows[self.getCurrentWorkflowName()]
         self._workflow_runner = WorkflowRunner(
             workflow,
-            self.ert,
             storage=self.storage,
             ensemble=self.source_ensemble_selector.currentData(),
+            ert_config=self.config,
         )
         self._workflow_runner.run()
 

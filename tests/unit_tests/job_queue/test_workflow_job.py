@@ -33,15 +33,13 @@ def test_arguments():
     assert job.max_args == 2
     assert job.argument_types() == [float, float]
 
-    assert WorkflowJobRunner(job).run(None, None, None, [1, 2.5])
+    assert WorkflowJobRunner(job).run([1, 2.5])
 
     with pytest.raises(ValueError, match="requires at least 2 arguments"):
-        WorkflowJobRunner(job).run(None, None, None, [1])
+        WorkflowJobRunner(job).run([1])
 
     with pytest.raises(ValueError, match="can only have 2 arguments"):
-        WorkflowJobRunner(job).run(
-            None, None, None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"]
-        )
+        WorkflowJobRunner(job).run(["x %d %f %d %s", 1, 2.5, True, "y", "nada"])
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -57,7 +55,7 @@ def test_run_external_job():
     argTypes = job.argument_types()
     assert argTypes == [str, str]
     runner = WorkflowJobRunner(job)
-    assert runner.run(None, None, None, ["test", "text"]) is None
+    assert runner.run(["test", "text"]) is None
     assert runner.stdoutdata() == "Hello World\n"
 
     with open("test", "r", encoding="utf-8") as f:
@@ -76,7 +74,7 @@ def test_error_handling_external_job():
     assert not job.internal
     job.argument_types()
     runner = WorkflowJobRunner(job)
-    assert runner.run(None, None, None, []) is None
+    assert runner.run([]) is None
     assert runner.stderrdata().startswith("Traceback")
 
 
@@ -89,7 +87,7 @@ def test_run_internal_script():
         config_file="subtract_script_job",
     )
 
-    result = WorkflowJobRunner(job).run(None, None, None, ["1", "2"])
+    result = WorkflowJobRunner(job).run(["1", "2"])
 
     assert result == -1
 

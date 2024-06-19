@@ -43,10 +43,11 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
-    ert_mock = MagicMock()
+    run_wfs_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     minimum_args = ESRunArguments(
         random_seed=None,
@@ -67,14 +68,13 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         MagicMock(),
         MagicMock(),
     )
-    test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
     ]
-    assert ert_mock.runWorkflows.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == expected_calls
 
 
 @pytest.mark.usefixtures("patch_base_run_model")
@@ -96,11 +96,12 @@ def test_hook_call_order_es_mda(monkeypatch):
         stop_long_running=False,
         experiment_name="no-name",
     )
+    run_wfs_mock = MagicMock()
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
     monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
-    ert_mock = MagicMock()
     ens_mock = MagicMock()
     ens_mock.iteration = 0
     storage_mock = MagicMock()
@@ -114,15 +115,13 @@ def test_hook_call_order_es_mda(monkeypatch):
         update_settings=MagicMock(),
         status_queue=MagicMock(),
     )
-    ert_mock.runWorkflows = MagicMock()
-    test_class.ert = ert_mock
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
     ]
-    assert ert_mock.runWorkflows.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == expected_calls
 
 
 @pytest.mark.usefixtures("patch_base_run_model")
@@ -131,9 +130,10 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     The goal of this test is to assert that the hook call order is the same
     across different models.
     """
-    ert_mock = MagicMock()
+    run_wfs_mock = MagicMock()
     monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     minimum_args = SIESRunArguments(
         random_seed=None,
@@ -156,7 +156,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         MagicMock(),
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
-    test_class.ert = ert_mock
 
     # Mock the return values of iterative_smoother_update
     # Mock the iteration property of IteratedEnsembleSmoother
@@ -173,4 +172,4 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     expected_calls = [
         call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
     ]
-    assert ert_mock.runWorkflows.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == expected_calls

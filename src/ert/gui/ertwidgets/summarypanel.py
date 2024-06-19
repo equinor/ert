@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, List, Tuple
 
 from qtpy.QtCore import Qt
@@ -14,7 +16,7 @@ from qtpy.QtWidgets import (
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 if TYPE_CHECKING:
-    from ert.enkf_main import EnKFMain
+    from ert.config import ErtConfig
 
 
 class SummaryTemplate:
@@ -55,8 +57,8 @@ class SummaryTemplate:
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, ert: "EnKFMain"):
-        self.ert = ert
+    def __init__(self, config: ErtConfig):
+        self.config = config
         QFrame.__init__(self)
 
         self.setMinimumWidth(250)
@@ -77,7 +79,7 @@ class SummaryPanel(QFrame):
         self.updateSummary()
 
     def updateSummary(self) -> None:
-        summary = ErtSummary(self.ert.ert_config)
+        summary = ErtSummary(self.config)
 
         forward_model_list = summary.getForwardModels()
         plural_s = ""

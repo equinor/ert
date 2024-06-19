@@ -10,13 +10,19 @@ from ert.gui.tools import Tool
 from .plugin_runner import PluginRunner
 
 if TYPE_CHECKING:
+    from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
 
     from .plugin_handler import PluginHandler
 
 
 class PluginsTool(Tool):
-    def __init__(self, plugin_handler: PluginHandler, notifier: ErtNotifier) -> None:
+    def __init__(
+        self,
+        plugin_handler: PluginHandler,
+        notifier: ErtNotifier,
+        ert_config: ErtConfig,
+    ) -> None:
         enabled = len(plugin_handler) > 0
         self.notifier = notifier
         super().__init__(
@@ -30,7 +36,7 @@ class PluginsTool(Tool):
 
         menu = QMenu()
         for plugin in plugin_handler:
-            plugin_runner = PluginRunner(plugin)
+            plugin_runner = PluginRunner(plugin, ert_config, notifier.storage)
             plugin_runner.setPluginFinishedCallback(self.trigger)
 
             self.__plugins[plugin] = plugin_runner

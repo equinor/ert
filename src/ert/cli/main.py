@@ -12,7 +12,6 @@ from _ert.threading import ErtThread
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -57,7 +56,6 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     for fm_step in ert_config.forward_model_steps:
         logger.info("Config contains forward model step %s", fm_step.name)
 
-    ert = EnKFMain(ert_config)
     if not ert_config.observation_keys and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
@@ -82,7 +80,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     storage = open_storage(ert_config.ens_path, "w")
 
     if args.mode == WORKFLOW_MODE:
-        execute_workflow(ert, storage, args.name)
+        execute_workflow(ert_config, storage, args.name)
         return
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()

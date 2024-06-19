@@ -81,18 +81,21 @@ class CSVExportJob(ErtPlugin):
 
     def run(
         self,
-        output_file,
-        ensemble_list=None,
-        design_matrix_path=None,
-        infer_iteration=True,
-        drop_const_cols=False,
+        ert_config,
+        storage,
+        workflow_args,
     ):
+        output_file = workflow_args[0]
+        ensemble_list = None if len(workflow_args) < 2 else workflow_args[1]
+        design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
+        _ = True if len(workflow_args) < 4 else workflow_args[3]
+        drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
         ensembles = []
-        facade = LibresFacade(self.ert())
+        facade = LibresFacade(ert_config)
 
         if ensemble_list is not None:
             if ensemble_list.strip() == "*":
-                ensembles = self.getAllEnsembleList()
+                ensembles = self.getAllEnsembleList(storage)
             else:
                 ensembles = ensemble_list.split(",")
 
@@ -157,7 +160,7 @@ class CSVExportJob(ErtPlugin):
         )
         return export_info
 
-    def getArguments(self, parent=None):
+    def getArguments(self, parent, ert_config, storage):
         from ert.gui.ertwidgets.customdialog import CustomDialog
         from ert.gui.ertwidgets.listeditbox import ListEditBox
         from ert.gui.ertwidgets.models.path_model import PathModel
@@ -166,21 +169,18 @@ class CSVExportJob(ErtPlugin):
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)
 
-        default_csv_output_path = self.get_context_value(
-            "<CSV_OUTPUT_PATH>", default="output.csv"
-        )
+        subs_list = ert_config.substitution_list
+        default_csv_output_path = subs_list.get("<CSV_OUTPUT_PATH>", "output.csv")
         output_path_model = PathModel(default_csv_output_path)
         output_path_chooser = PathChooser(output_path_model)
 
-        design_matrix_default = self.get_context_value(
-            "<DESIGN_MATRIX_PATH>", default=""
-        )
+        design_matrix_default = subs_list.get("<DESIGN_MATRIX_PATH>", "")
         design_matrix_path_model = PathModel(
             design_matrix_default, is_required=False, must_exist=True
         )
         design_matrix_path_chooser = PathChooser(design_matrix_path_model)
 
-        list_edit = ListEditBox(self.getAllEnsembleList())
+        list_edit = ListEditBox(self.getAllEnsembleList(storage))
 
         infer_iteration_check = QCheckBox()
         infer_iteration_check.setChecked(True)
@@ -219,14 +219,9 @@ class CSVExportJob(ErtPlugin):
 
         raise CancelPluginException("User cancelled!")
 
-    def get_context_value(self, name, default):
-        context = self.ert().ert_config.substitution_list
-        if name in context:
-            return context[name]
-        return default
-
-    def getAllEnsembleList(self):
+    @staticmethod
+    def getAllEnsembleList(storage):
         all_ensemble_list = [
-            ensemble.name for ensemble in self.storage.ensembles if ensemble.has_data()
+            ensemble.name for ensemble in storage.ensembles if ensemble.has_data()
         ]
         return all_ensemble_list

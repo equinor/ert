@@ -5,7 +5,6 @@ import pytest
 
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.shared.plugins.plugin_manager import ErtPluginContext
 
 
@@ -20,7 +19,6 @@ def test_executing_workflow(storage):
             file_handle.write("LOAD_WORKFLOW test_wf")
 
         rc = ErtConfig.from_file(config_file)
-        ert = EnKFMain(rc)
         args = Namespace(name="test_wf")
-        execute_workflow(ert, storage, args.name)
+        execute_workflow(rc, storage, args.name)
         assert os.path.isfile(".ert_runpath_list")

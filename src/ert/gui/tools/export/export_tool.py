@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 from weakref import ref
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMessageBox
 
-from ert.enkf_main import EnKFMain
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
+
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
@@ -13,11 +18,16 @@ from ert.shared.exporter import Exporter
 
 
 class ExportTool(Tool):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
         super().__init__("Export data", QIcon("img:share.svg"))
         self.__export_widget = None
         self.__dialog = None
-        self.__exporter = Exporter(ert, notifier)
+        self.__exporter = Exporter(
+            config.workflow_jobs.get("CSV_EXPORT2"),
+            config.workflow_jobs.get("EXPORT_RUNPATH"),
+            notifier,
+            config.runpath_file,
+        )
         self.setEnabled(self.__exporter.is_valid())
 
     def trigger(self) -> None:

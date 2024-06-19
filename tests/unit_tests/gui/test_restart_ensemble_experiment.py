@@ -77,8 +77,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert (
-        list_model.rowCount()
-        == experiment_panel.ert.ert_config.model_config.num_realizations
+        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
     )
 
     # Check we have failed realizations

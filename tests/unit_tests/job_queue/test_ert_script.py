@@ -7,14 +7,9 @@ from .workflow_common import WorkflowCommon
 # ruff: noqa: PLR6301
 
 
-class ReturnErtScript(ErtScript):
-    def run(self):
-        return self.ert()
-
-
 class AddScript(ErtScript):
-    def run(self, arg1, arg2):
-        return arg1 + arg2
+    def run(self, *arg):
+        return arg[0] + arg[1]
 
 
 class NoneScript(ErtScript):
@@ -27,21 +22,15 @@ class FailingScript(ErtScript):
         raise UserWarning("Custom user warning")
 
 
-def test_ert_script_return_ert():
-    script = ReturnErtScript("ert", storage=None)
-    result = script.initializeAndRun([], [])
-    assert result == "ert"
-
-
 def test_failing_ert_script_provide_user_warning():
-    script = FailingScript("ert", storage=None)
+    script = FailingScript()
     result = script.initializeAndRun([], [])
     assert script.hasFailed()
     assert result == "Custom user warning"
 
 
 def test_ert_script_add():
-    script = AddScript("ert", storage=None)
+    script = AddScript()
 
     result = script.initializeAndRun([int, int], ["5", "4"])
 
@@ -66,7 +55,7 @@ def test_ert_script_from_file():
 
     script_object = ErtScript.loadScriptFromFile("subtract_script.py")
 
-    script = script_object("ert", storage=None)
+    script = script_object()
     result = script.initializeAndRun([int, int], ["1", "2"])
     assert result == -1
 
@@ -80,6 +69,6 @@ def test_ert_script_from_file():
 
 def test_none_ert_script():
     # Check if None is not converted to string "None"
-    script = NoneScript("ert", storage=None)
+    script = NoneScript()
 
     script.initializeAndRun([str], [None])

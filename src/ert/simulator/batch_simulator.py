@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 import numpy as np
 
 from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
-from ert.enkf_main import EnKFMain
 
 from .batch_simulator_context import BatchContext
 
@@ -89,7 +88,6 @@ class BatchSimulator:
             raise ValueError("The first argument must be valid ErtConfig instance")
 
         self.ert_config = ert_config
-        self.ert = EnKFMain(self.ert_config)
         self.control_keys = set(controls.keys())
         self.result_keys = set(results)
         self.callback = callback
@@ -250,7 +248,7 @@ class BatchSimulator:
         itr = 0
         mask = np.full(len(case_data), True, dtype=bool)
         sim_context = BatchContext(
-            self.result_keys, self.ert, ensemble, mask, itr, case_data
+            self.result_keys, self.ert_config, ensemble, mask, itr, case_data
         )
 
         if self.callback:

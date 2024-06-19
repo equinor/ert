@@ -46,8 +46,8 @@ class WorkflowCommon:
             f.write("from ert import ErtScript\n")
             f.write("\n")
             f.write("class SubtractScript(ErtScript):\n")
-            f.write("    def run(self, arg1, arg2):\n")
-            f.write("        return arg1 - arg2\n")
+            f.write("    def run(self, *argv):\n")
+            f.write("        return argv[0] - argv[1]\n")
 
         with open("subtract_script_job", "w", encoding="utf-8") as f:
             f.write("INTERNAL True\n")
@@ -68,7 +68,8 @@ class WorkflowCommon:
             f.write("        with open(filename, 'w') as f:\n")
             f.write("            f.write(content)\n")
             f.write("\n")
-            f.write("    def run(self, number, wait_time):\n")
+            f.write("    def run(self, *argv):\n")
+            f.write("        number, wait_time = argv\n")
             f.write("        self.dump('wait_started_%d' % number, 'text')\n")
             f.write("        start = time.time()\n")
             f.write("        diff = 0\n")
