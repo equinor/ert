@@ -290,15 +290,12 @@ class LibresFacade:
         )
 
     @classmethod
-    def from_config_file(
-        cls, config_file: str, read_only: bool = False
-    ) -> "LibresFacade":
+    def from_config_file(cls, config_file: str) -> "LibresFacade":
         with ErtPluginContext() as ctx:
             return cls(
                 EnKFMain(
                     ErtConfig.with_plugins(
                         forward_model_step_classes=ctx.plugin_manager.forward_model_steps
                     ).from_file(config_file),
-                    read_only,
                 )
             )

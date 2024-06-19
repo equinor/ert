@@ -126,7 +126,7 @@ def _seed_sequence(seed: Optional[int]) -> int:
 
 
 class EnKFMain:
-    def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
+    def __init__(self, config: "ErtConfig") -> None:
         self.ert_config = config
         self.update_configuration = None
 
