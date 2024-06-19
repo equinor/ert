@@ -581,8 +581,7 @@ class BaseRunModel:
     def paths(self) -> List[str]:
         run_paths = []
         number_of_iterations = self.number_of_iterations
-        active_mask = self.active_realizations
-        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
+        active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(self.start_iteration, number_of_iterations):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
@@ -603,11 +602,7 @@ class BaseRunModel:
                 shutil.rmtree(run_path)
 
     def validate(self) -> None:
-        active_mask = self.active_realizations
-        active_realizations_count = len(
-            [i for i in range(len(active_mask)) if active_mask[i]]
-        )
-
+        active_realizations_count = self.active_realizations.count(True)
         min_realization_count = self.minimum_required_realizations
 
         if active_realizations_count < min_realization_count:
