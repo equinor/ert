@@ -4,7 +4,6 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional, cast
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.job_queue import WorkflowRunner
 from ert.storage import open_storage
 from pydantic import BaseModel, ConfigDict
@@ -62,10 +61,10 @@ class WorkflowJob(BasicStep):
         try:
             workflows = self._ert_dict.get("LOAD_WORKFLOW", [])
             self._ert_dict["LOAD_WORKFLOW"] = workflows + [(file_name, workflow_name)]
-            ert = EnKFMain(ErtConfig.from_dict(config_dict=self._ert_dict))
-            with open_storage(ert.ert_config.ens_path, "w") as storage:
-                workflow = ert.ert_config.workflows[workflow_name]
-                runner = WorkflowRunner(workflow, ert, storage)
+            ert_config = ErtConfig.from_dict(config_dict=self._ert_dict)
+            with open_storage(ert_config.ens_path, "w") as storage:
+                workflow = ert_config.workflows[workflow_name]
+                runner = WorkflowRunner(workflow, storage, None, ert_config)
                 runner.run_blocking()
                 if not all(v["completed"] for v in runner.workflowReport().values()):
                     raise RuntimeError("workflow job failed")

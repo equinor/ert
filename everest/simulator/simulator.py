@@ -6,6 +6,7 @@ from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 from ert.config import ErtConfig, HookRuntime
+from ert.job_queue import WorkflowRunner
 from ert.simulator import BatchSimulator
 from ert.storage import open_storage
 from numpy import float64
@@ -137,7 +138,12 @@ class Simulator(BatchSimulator):
 
             # Pre-simulation workflows are run by sim_context, but
             # post-stimulation workflows are not, do it here:
-            self.ert.runWorkflows(HookRuntime.POST_SIMULATION, storage)
+            for workflow in self.ert_config.hooked_workflows[
+                HookRuntime.POST_SIMULATION
+            ]:
+                WorkflowRunner(
+                    workflow, storage, None, ert_config=self.ert_config
+                ).run_blocking()
 
         for fnc_name, alias in self._function_aliases.items():
             for result in results:
