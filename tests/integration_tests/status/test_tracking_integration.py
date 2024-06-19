@@ -13,7 +13,6 @@ from resdata.summary import Summary
 
 from _ert.threading import ErtThread
 from ert.__main__ import ert_parser
-from ert.cli.model_factory import create_model
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import (
@@ -32,6 +31,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
+from ert.run_models.model_factory import create_model
 from ert.shared.feature_toggling import FeatureScheduler
 
 
