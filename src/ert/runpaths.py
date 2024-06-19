@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from ert.substitution_list import SubstitutionList
 
@@ -44,7 +44,7 @@ class Runpaths:
         self._substitution_list["<ERT-CASE>"] = ensemble_name
         self._substitution_list["<ERTCASE>"] = ensemble_name
 
-    def get_paths(self, realizations: List[int], iteration: int) -> List[str]:
+    def get_paths(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [
             self._substitution_list.substitute_real_iter(
                 self._runpath_format, realization, iteration
