@@ -42,6 +42,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 class EvaluateEnsembleRunArguments(SimulationArguments):
     active_realizations: List[bool]
     current_ensemble: str
+    start_iteration: int
     ensemble_type: str = "Evaluate ensemble"
 
     def __post_init__(self) -> None:
