@@ -8,7 +8,6 @@ import shutil
 from functools import partial
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -157,7 +156,6 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     ert_config = everest2res(ever_config, site_config=ErtConfig.read_site_config())
     orig_path = ert_config["ENSPATH"]
     ert_config = ErtConfig.from_dict(config_dict=ert_config)
-    ert = EnKFMain(ert_config)
 
     # load information about batches from previous run
     df = export(ever_config, export_ecl=False)
@@ -171,7 +169,7 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
 
     # internalize one batch at a time
     for batch_id, group in groups:
-        _internalize_batch(ert, batch_id, group)
+        _internalize_batch(ert_config, batch_id, group)
 
 
 def _internalize_batch(ert, batch_id, batch_data):

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from ert.enkf_main import EnKFMain
+from ert.config import ErtConfig
 from everest import MetaDataColumnNames as MDCN
 from everest import export
 from everest.bin.everload_script import everload_entry
@@ -49,7 +49,7 @@ def get_config(cache_dir):
 def assertInternalizeCalls(batch_ids, mocked_internalize):
     for b_id in batch_ids:
         mocked_internalize.test_assert_called_with(
-            satisfy_type(EnKFMain), b_id, satisfy_type(pd.DataFrame)
+            satisfy_type(ErtConfig), b_id, satisfy_type(pd.DataFrame)
         )
 
 

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.storage import open_storage
 from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
@@ -161,13 +160,12 @@ def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] =
     ert_config = ErtConfig.from_dict(
         everest2res(config, site_config=ErtConfig.read_site_config())
     )
-    res_workflow = EnKFMain(ert_config)
     if batch_ids is None:
         metadata = _metadata(config)
         batch_ids = {data[MetaDataColumnNames.BATCH] for data in metadata}
 
     internal_keys: Set = set()
-    with open_storage(res_workflow.ert_config.ens_path, "r") as storage:
+    with open_storage(ert_config.ens_path, "r") as storage:
         for batch_id in batch_ids:
             ensemble = storage.get_ensemble_by_name("batch_{}".format(batch_id))
             if not internal_keys:
