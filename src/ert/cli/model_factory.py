@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, Tuple
+from uuid import UUID
 
 import numpy as np
 
@@ -165,6 +166,7 @@ def _setup_evaluate_ensemble(
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
             experiment_name=None,
+            start_iteration=args.start_iteration,
         ),
         config,
         storage,
@@ -244,6 +246,9 @@ def _setup_multiple_data_assimilation(
             ensemble_size=config.model_config.num_realizations,
             stop_long_running=config.analysis_config.stop_long_running,
             experiment_name=args.experiment_name,
+            start_iteration=storage.get_ensemble(UUID(prior_ensemble)).iteration + 1
+            if restart_run
+            else 0,
         ),
         config,
         storage,

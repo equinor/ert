@@ -1,10 +1,13 @@
 import dataclasses
 from argparse import Namespace
 from unittest.mock import MagicMock
+from uuid import uuid1
 
 import pytest
 
+import ert.run_models.base_run_model
 from ert.cli import model_factory
+from ert.config import ErtConfig
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,
@@ -170,3 +173,40 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     )
     assert model.simulation_arguments.num_iterations == 10
     assert poly_case.analysis_config.num_iterations == 10
+
+
+@pytest.mark.parametrize(
+    "restart_from_iteration, expected_path",
+    [
+        [0, ["realization-0/iter-1", "realization-0/iter-2", "realization-0/iter-3"]],
+        [1, ["realization-0/iter-2", "realization-0/iter-3"]],
+        [2, ["realization-0/iter-3"]],
+        [3, []],
+    ],
+)
+def test_multiple_data_assimilation_restart_paths(
+    tmp_path, monkeypatch, restart_from_iteration, expected_path
+):
+    monkeypatch.chdir(tmp_path)
+    args = Namespace(
+        realizations="0",
+        weights="6,4,2",
+        target_ensemble="restart_case_%d",
+        restart_run=True,
+        prior_ensemble=str(uuid1()),
+        experiment_name=None,
+    )
+    monkeypatch.setattr(
+        ert.run_models.base_run_model.BaseRunModel, "validate", MagicMock()
+    )
+    storage_mock = MagicMock()
+    ensemble_mock = MagicMock()
+    ensemble_mock.iteration = restart_from_iteration
+    config = ErtConfig()
+    storage_mock.get_ensemble.return_value = ensemble_mock
+    model = model_factory._setup_multiple_data_assimilation(
+        config, storage_mock, args, MagicMock(), MagicMock()
+    )
+    base_path = tmp_path / "simulations"
+    expected_path = [str(base_path / expected) for expected in expected_path]
+    assert model.paths == expected_path

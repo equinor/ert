@@ -89,7 +89,7 @@ def run_cli(args: Namespace, _: Any = None) -> None:
             status_queue,
         )
     except ValueError as e:
-        raise ErtCliError(e) from e
+        raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
 
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
         args.port_range = range(49152, 51819)

@@ -20,6 +20,7 @@ class Arguments:
     mode: str
     realizations: str
     ensemble_name: str
+    start_iteration: int
 
 
 class EvaluateEnsemblePanel(SimulationConfigPanel):
@@ -70,10 +71,12 @@ class EvaluateEnsemblePanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self) -> Arguments:
+        ensemble_id = self._ensemble_selector.selected_ensemble.id
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_name=self._ensemble_selector.currentText(),
             realizations=self._active_realizations_field.text(),
+            start_iteration=self.notifier.storage.get_ensemble(ensemble_id).iteration,
         )
 
     def _realizations_from_fs(self):
