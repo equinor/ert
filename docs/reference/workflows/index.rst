@@ -27,7 +27,7 @@ can be of two fundamentally different types - *external* and *internal*.
    :hidden:
    :caption: Workflows
 
-   external
+   workflows
    configuring_jobs
    complete_workflows
    added_workflow_jobs
