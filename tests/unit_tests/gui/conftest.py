@@ -19,7 +19,6 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
     RealizationSnapshot,
@@ -104,7 +103,6 @@ def _open_main_window(
     path,
 ) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
     config = ErtConfig.from_file(path / "poly.ert")
-    poly_case = EnKFMain(config)
 
     args_mock = Mock()
     args_mock.config = "poly.ert"
@@ -113,7 +111,7 @@ def _open_main_window(
     # RuntimeError: wrapped C/C++ object of type GUILogHandler
     handler = GUILogHandler()
     with open_storage(config.ens_path, mode="w") as storage:
-        gui = _setup_main_window(poly_case, args_mock, handler, storage)
+        gui = _setup_main_window(config, args_mock, handler, storage)
         yield gui, storage, config
         gui.close()
 
@@ -307,7 +305,7 @@ def run_experiment_fixture(request):
         list_model = realization_widget._real_view.model()
         assert (
             list_model.rowCount()
-            == experiment_panel.ert.ert_config.model_config.num_realizations
+            == experiment_panel.config.model_config.num_realizations
         )
 
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)

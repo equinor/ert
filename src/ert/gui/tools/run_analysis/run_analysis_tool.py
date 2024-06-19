@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import functools
 import uuid
 from contextlib import contextmanager
-from typing import Iterator, Optional
+from typing import TYPE_CHECKING, Iterator, Optional
 
 import numpy as np
 from qtpy.QtCore import QObject, Qt, QThread, Signal, Slot
@@ -10,13 +12,16 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
-from ert.enkf_main import EnKFMain, _seed_sequence
+from ert.enkf_main import _seed_sequence
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.statusdialog import StatusDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
 from ert.run_models.event import RunModelEvent, RunModelStatusEvent, RunModelTimeEvent
 from ert.storage import Ensemble
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 
 class Analyse(QObject):
@@ -32,12 +37,12 @@ class Analyse(QObject):
 
     def __init__(
         self,
-        ert: EnKFMain,
+        ert_config: ErtConfig,
         target_ensemble: Ensemble,
         source_ensemble: Ensemble,
     ) -> None:
         QObject.__init__(self)
-        self._ert = ert
+        self._ert_config = ert_config
         self._target_ensemble = target_ensemble
         self._source_ensemble = source_ensemble
 
@@ -46,7 +51,7 @@ class Analyse(QObject):
         """Runs analysis using target and source ensembles. Returns whether
         the analysis was successful."""
         error: Optional[str] = None
-        config = self._ert.ert_config
+        config = self._ert_config
         rng = np.random.default_rng(_seed_sequence(config.random_seed))
         update_settings = config.analysis_config.observation_settings
         update_id = uuid.uuid4()
@@ -88,9 +93,9 @@ class Analyse(QObject):
 
 
 class RunAnalysisTool(Tool):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier) -> None:
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         super().__init__("Run analysis", QIcon("img:formula.svg"))
-        self.ert = ert
+        self.ert_config = config
         self.notifier = notifier
         self._run_widget: Optional[RunAnalysisPanel] = None
         self._dialog: Optional[StatusDialog] = None
@@ -100,8 +105,8 @@ class RunAnalysisTool(Tool):
     def trigger(self) -> None:
         if self._run_widget is None:
             self._run_widget = RunAnalysisPanel(
-                self.ert.ert_config.analysis_config.es_module,
-                self.ert.ert_config.model_config.num_realizations,
+                self.ert_config.analysis_config.es_module,
+                self.ert_config.model_config.num_realizations,
                 self.notifier,
             )
         if self._dialog is None:
@@ -187,7 +192,7 @@ class RunAnalysisTool(Tool):
         )
 
         self._analyse = Analyse(
-            self.ert,
+            self.ert_config,
             target_ensemble,
             source_ensemble,
         )

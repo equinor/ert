@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional
+import inspect
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ert import ErtScript
 
@@ -8,15 +9,11 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from ert.config import ErtPlugin, WorkflowJob
-    from ert.enkf_main import EnKFMain
     from ert.gui.ertnotifier import ErtNotifier
 
 
 class Plugin:
-    def __init__(
-        self, ert: "EnKFMain", notifier: "ErtNotifier", workflow_job: "WorkflowJob"
-    ):
-        self.__ert = ert
+    def __init__(self, notifier: "ErtNotifier", workflow_job: "WorkflowJob"):
         self.__notifier = notifier
         self.__workflow_job = workflow_job
         self.__parent_window: Optional[QWidget] = None
@@ -27,11 +24,7 @@ class Plugin:
 
     def __loadPlugin(self) -> "ErtPlugin":
         script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)
-        script = script_obj(
-            self.__ert,
-            self.__notifier._storage,
-            ensemble=self.__notifier.current_ensemble,
-        )
+        script = script_obj()
         return script
 
     def getName(self) -> str:
@@ -40,13 +33,21 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self) -> List[Any]:
+    def getArguments(self, fixtures: Dict[str, Any]) -> List[Any]:
         """
         Returns a list of arguments. Either from GUI or from arbitrary code.
         If the user for example cancels in the GUI a CancelPluginException is raised.
         """
         script = self.__loadPlugin()
-        return script.getArguments(self.__parent_window)
+        fixtures["parent"] = self.__parent_window
+        func_args = inspect.signature(script.getArguments).parameters
+        arguments = script.insert_fixtures(func_args, fixtures)
+
+        # Part of deprecation
+        script._ert = fixtures.get("ert_config")
+        script._ensemble = fixtures.get("ensemble")
+        script._storage = fixtures.get("storage")
+        return script.getArguments(*arguments)
 
     def setParentWindow(self, parent_window: Optional[QWidget]) -> None:
         self.__parent_window = parent_window
@@ -54,8 +55,8 @@ class Plugin:
     def getParentWindow(self) -> Optional[QWidget]:
         return self.__parent_window
 
-    def ert(self) -> EnKFMain:
-        return self.__ert
+    def ert(self) -> None:
+        raise NotImplementedError("No such property")
 
     @property
     def storage(self):

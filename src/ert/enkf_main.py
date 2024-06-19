@@ -12,7 +12,6 @@ import numpy as np
 from numpy.random import SeedSequence
 
 from .config import ParameterConfig
-from .job_queue import WorkflowRunner
 from .run_context import RunContext
 from .runpaths import Runpaths
 from .substitution_list import SubstitutionList
@@ -20,8 +19,8 @@ from .substitution_list import SubstitutionList
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from .config import ErtConfig, HookRuntime
-    from .storage import Ensemble, Storage
+    from .config import ErtConfig
+    from .storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -123,24 +122,6 @@ def _seed_sequence(seed: Optional[int]) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
-
-
-class EnKFMain:
-    def __init__(self, config: "ErtConfig", read_only: bool = False) -> None:
-        self.ert_config = config
-        self.update_configuration = None
-
-    def __repr__(self) -> str:
-        return f"EnKFMain(size: {self.ert_config.model_config.num_realizations}, config: {self.ert_config})"
-
-    def runWorkflows(
-        self,
-        runtime: HookRuntime,
-        storage: Optional[Storage] = None,
-        ensemble: Optional[Ensemble] = None,
-    ) -> None:
-        for workflow in self.ert_config.hooked_workflows[runtime]:
-            WorkflowRunner(workflow, self, storage, ensemble).run_blocking()
 
 
 def sample_prior(

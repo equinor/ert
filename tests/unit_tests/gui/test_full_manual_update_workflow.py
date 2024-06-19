@@ -108,7 +108,7 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
     assert not all(active_reals)
     assert active_reals == rangestring_to_mask(
         experiment_panel.get_experiment_arguments().realizations,
-        analysis_tool.ert.ert_config.model_config.num_realizations,
+        analysis_tool.ert_config.model_config.num_realizations,
     )
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")

@@ -32,9 +32,8 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
 )
 from ert.config import ErtConfig, HookRuntime, QueueSystem
-from ert.enkf_main import EnKFMain, _seed_sequence, create_run_path
+from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
-    Ensemble,
     EnsembleBuilder,
     EnsembleEvaluator,
     EvaluatorServerConfig,
@@ -64,8 +63,9 @@ from ert.libres_facade import LibresFacade
 from ert.mode_definitions import MODULE_MODE
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
-from ert.storage import Storage
+from ert.storage import Ensemble, Storage
 
+from ..job_queue import WorkflowRunner
 from .event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -79,6 +79,7 @@ event_logger = logging.getLogger("ert.event_log")
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
+    from ert.ensemble_evaluator import Ensemble as EEEnsemble
     from ert.run_models.run_arguments import RunArgumentsType
 
 StatusEvents = Union[
@@ -167,8 +168,7 @@ class BaseRunModel:
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
-        self.ert = EnKFMain(config)
-        self.facade = LibresFacade(self.ert)
+        self.facade = LibresFacade(self.ert_config)
         self._storage = storage
         self._simulation_arguments = simulation_arguments
         self.reset()
@@ -581,7 +581,7 @@ class BaseRunModel:
     def _build_ensemble(
         self,
         run_context: RunContext,
-    ) -> "Ensemble":
+    ) -> EEEnsemble:
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
             self._simulation_arguments.stop_long_running,
@@ -641,6 +641,14 @@ class BaseRunModel:
                 f"({min_realization_count})"
             )
 
+    def run_workflows(
+        self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
+    ) -> None:
+        for workflow in self.ert_config.hooked_workflows[runtime]:
+            WorkflowRunner(
+                workflow, storage, ensemble, ert_config=self.ert_config
+            ).run_blocking()
+
     def _evaluate_and_postprocess(
         self,
         run_context: RunContext,
@@ -654,7 +662,7 @@ class BaseRunModel:
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.PRE_SIMULATION, self._storage, run_context.ensemble
         )
 
@@ -696,7 +704,7 @@ class BaseRunModel:
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.ert.runWorkflows(
+        self.run_workflows(
             HookRuntime.POST_SIMULATION, self._storage, run_context.ensemble
         )
 

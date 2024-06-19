@@ -63,7 +63,7 @@ def test_workflow_thread_cancel_external():
 
     assert len(workflow) == 3
 
-    workflow_runner = WorkflowRunner(workflow, ert=None)
+    workflow_runner = WorkflowRunner(workflow)
 
     assert not workflow_runner.isRunning()
 
@@ -94,7 +94,7 @@ def test_workflow_failed_job():
     )
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow, ert=None)
+    workflow_runner = WorkflowRunner(workflow)
 
     assert not workflow_runner.isRunning()
     with patch.object(
@@ -123,7 +123,7 @@ def test_workflow_success():
 
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow, ert=None)
+    workflow_runner = WorkflowRunner(workflow)
 
     assert not workflow_runner.isRunning()
     with workflow_runner:

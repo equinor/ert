@@ -8,7 +8,6 @@ import pytest
 from qtpy.QtCore import Qt, QTimer
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
@@ -38,7 +37,6 @@ def _open_main_window(
         config = ErtConfig.with_plugins(
             ctx.plugin_manager.forward_model_steps
         ).from_file(path / "config.ert")
-        enkf_main = EnKFMain(config)
 
         args_mock = Mock()
         args_mock.config = "config.ert"
@@ -47,7 +45,7 @@ def _open_main_window(
         # RuntimeError: wrapped C/C++ object of type GUILogHandler
         handler = GUILogHandler()
         with open_storage(config.ens_path, mode="w") as storage:
-            gui = _setup_main_window(enkf_main, args_mock, handler, storage)
+            gui = _setup_main_window(config, args_mock, handler, storage)
             yield gui, storage, config
             gui.close()
 

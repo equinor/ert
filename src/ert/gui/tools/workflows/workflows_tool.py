@@ -9,15 +9,15 @@ from ert.gui.tools import Tool
 from ert.gui.tools.workflows import RunWorkflowWidget
 
 if TYPE_CHECKING:
-    from ert.enkf_main import EnKFMain
+    from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
 
 
 class WorkflowsTool(Tool):
-    def __init__(self, ert: EnKFMain, notifier: ErtNotifier) -> None:
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         self.notifier = notifier
-        self.ert = ert
-        enabled = len(ert.ert_config.workflows) > 0
+        self.config = config
+        enabled = len(config.workflows) > 0
         super().__init__(
             "Run workflow",
             QIcon("img:playlist_play.svg"),
@@ -25,7 +25,7 @@ class WorkflowsTool(Tool):
         )
 
     def trigger(self) -> None:
-        run_workflow_widget = RunWorkflowWidget(self.ert, self.notifier)
+        run_workflow_widget = RunWorkflowWidget(self.config, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
         self.notifier.emitErtChange()  # workflow may have added new cases.

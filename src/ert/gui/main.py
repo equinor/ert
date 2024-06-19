@@ -18,7 +18,6 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets import SummaryPanel
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import ExperimentPanel
@@ -111,7 +110,6 @@ def _start_initial_gui_window(
             ).from_file(args.config)
 
             local_storage_set_ert_config(ert_config)
-            ert = EnKFMain(ert_config)
         except ConfigValidationError as error:
             config_warnings = [
                 cast(ConfigWarning, w.message).info
@@ -166,7 +164,9 @@ def _start_initial_gui_window(
     for msg in config_warnings:
         logger.info("Warning shown in gui '%s'", msg)
     storage = open_storage(ert_config.ens_path, mode="w")
-    _main_window = _setup_main_window(ert, args, log_handler, storage, plugin_manager)
+    _main_window = _setup_main_window(
+        ert_config, args, log_handler, storage, plugin_manager
+    )
     if deprecations or config_warnings:
 
         def continue_action() -> None:
@@ -229,41 +229,44 @@ def _clicked_about_button(about_dialog: QWidget) -> None:
 
 
 def _setup_main_window(
-    ert: EnKFMain,
+    config: ErtConfig,
     args: Namespace,
     log_handler: GUILogHandler,
     storage: Storage,
     plugin_manager: Optional[ErtPluginManager] = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
-    facade = LibresFacade(ert)
+    facade = LibresFacade(config)
     config_file = args.config
-    config = ert.ert_config
     window = ErtMainWindow(config_file, plugin_manager)
     window.notifier.set_storage(storage)
-    window.setWidget(ExperimentPanel(ert, window.notifier, config_file))
+    window.setWidget(
+        ExperimentPanel(
+            config, window.notifier, config_file, facade.get_ensemble_size()
+        )
+    )
+
     plugin_handler = PluginHandler(
-        ert,
         window.notifier,
-        [wfj for wfj in ert.ert_config.workflow_jobs.values() if wfj.is_plugin()],
+        [wfj for wfj in config.workflow_jobs.values() if wfj.is_plugin()],
         window,
     )
 
     window.addDock(
         "Configuration summary",
-        SummaryPanel(ert),
+        SummaryPanel(config),
         area=Qt.DockWidgetArea.BottomDockWidgetArea,
     )
     window.addTool(PlotTool(config_file, window))
-    window.addTool(ExportTool(ert, window.notifier))
-    window.addTool(WorkflowsTool(ert, window.notifier))
+    window.addTool(ExportTool(config, window.notifier))
+    window.addTool(WorkflowsTool(config, window.notifier))
     window.addTool(
         ManageExperimentsTool(
             config, window.notifier, config.model_config.num_realizations
         )
     )
-    window.addTool(PluginsTool(plugin_handler, window.notifier))
-    window.addTool(RunAnalysisTool(ert, window.notifier))
+    window.addTool(PluginsTool(plugin_handler, window.notifier, config))
+    window.addTool(RunAnalysisTool(config, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)

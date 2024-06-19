@@ -15,9 +15,7 @@ from ert.shared.plugins import ErtPluginManager
     reason="https://github.com/equinor/ert/issues/7533",
 )
 def test_export_misfit(snake_oil_case_storage, snake_oil_default_storage, snapshot):
-    ExportMisfitDataJob(
-        snake_oil_case_storage, storage=None, ensemble=snake_oil_default_storage
-    ).run()
+    ExportMisfitDataJob().run(snake_oil_case_storage, snake_oil_default_storage, [])
     result = pd.read_hdf("misfit.hdf").round(10)
     snapshot.assert_match(
         result.to_csv(),
@@ -27,7 +25,7 @@ def test_export_misfit(snake_oil_case_storage, snake_oil_default_storage, snapsh
 
 def test_export_misfit_no_responses_in_storage(poly_case, new_ensemble):
     with pytest.raises(StorageError, match="No responses loaded"):
-        ExportMisfitDataJob(poly_case, storage=None, ensemble=new_ensemble).run()
+        ExportMisfitDataJob().run(poly_case, new_ensemble, [])
 
 
 def test_export_misfit_data_job_is_loaded():

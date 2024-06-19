@@ -8,7 +8,6 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QMessageBox
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
@@ -85,8 +84,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ), open_storage(ert_config.ens_path, mode="w") as storage:
-        enkf_main = EnKFMain(ert_config)
-        gui = _setup_main_window(enkf_main, args, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args, GUILogHandler(), storage)
         qtbot.addWidget(gui)
 
         add_experiment_manually(qtbot, gui)

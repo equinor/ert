@@ -1,8 +1,13 @@
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from ert.config import ErtScript
 from ert.runpaths import Runpaths
 from ert.validation import rangestring_to_mask
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 
 class ExportRunpathJob(ErtScript):
@@ -28,25 +33,32 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, *args: str) -> None:
-        _args = " ".join(args).split()  # Make sure args is a list of words
-        config = self.ert().ert_config
+    def run(self, ert_config: ErtConfig, workflow_args: List[Any]) -> None:
+        _args = " ".join(workflow_args).split()  # Make sure args is a list of words
         run_paths = Runpaths(
-            jobname_format=config.model_config.jobname_format_string,
-            runpath_format=config.model_config.runpath_format_string,
-            filename=str(config.runpath_file),
-            substitution_list=config.substitution_list,
+            jobname_format=ert_config.model_config.jobname_format_string,
+            runpath_format=ert_config.model_config.runpath_format_string,
+            filename=str(ert_config.runpath_file),
+            substitution_list=ert_config.substitution_list,
         )
-        run_paths.write_runpath_list(*self.get_ranges(_args))
+        run_paths.write_runpath_list(
+            *self.get_ranges(
+                _args,
+                ert_config.analysis_config.num_iterations,
+                ert_config.model_config.num_realizations,
+            )
+        )
 
-    def get_ranges(self, args: List[str]) -> Tuple[List[int], List[int]]:
-        realizations_rangestring, iterations_rangestring = self._get_rangestrings(args)
+    def get_ranges(
+        self, args: List[str], number_of_iterations: int, number_of_realizations: int
+    ) -> Tuple[List[int], List[int]]:
+        realizations_rangestring, iterations_rangestring = self._get_rangestrings(
+            args, number_of_realizations
+        )
         return (
+            self._list_from_rangestring(iterations_rangestring, number_of_iterations),
             self._list_from_rangestring(
-                iterations_rangestring, self.number_of_iterations
-            ),
-            self._list_from_rangestring(
-                realizations_rangestring, self.number_of_realizations
+                realizations_rangestring, number_of_realizations
             ),
         )
 
@@ -58,21 +70,15 @@ class ExportRunpathJob(ErtScript):
             mask = rangestring_to_mask(rangestring, size)
             return [i for i, flag in enumerate(mask) if flag]
 
-    def _get_rangestrings(self, args: List[str]) -> Tuple[str, str]:
+    def _get_rangestrings(
+        self, args: List[str], number_of_realizations: int
+    ) -> Tuple[str, str]:
         if not args:
             return (
-                f"0-{self.number_of_realizations-1}",
+                f"0-{number_of_realizations-1}",
                 "0-0",  # weird default behavior, kept for backwards compatability
             )
         if "|" not in args:
             raise ValueError("Expected | in EXPORT_RUNPATH arguments")
         delimiter = args.index("|")
         return " ".join(args[:delimiter]), " ".join(args[delimiter + 1 :])
-
-    @property
-    def number_of_realizations(self) -> int:
-        return self.ert().ert_config.model_config.num_realizations
-
-    @property
-    def number_of_iterations(self) -> int:
-        return self.ert().ert_config.analysis_config.num_iterations

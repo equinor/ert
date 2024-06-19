@@ -12,7 +12,6 @@ from qtpy.QtWidgets import (
 )
 
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -66,7 +65,6 @@ def _open_main_window(
         fh.writelines(config)
 
     config = ErtConfig.from_file(path / "config.ert")
-    poly_case = EnKFMain(config)
 
     args_mock = Mock()
     args_mock.config = "config.ert"
@@ -75,7 +73,7 @@ def _open_main_window(
     # RuntimeError: wrapped C/C++ object of type GUILogHandler
     handler = GUILogHandler()
     with open_storage(config.ens_path, mode="w") as storage:
-        gui = _setup_main_window(poly_case, args_mock, handler, storage)
+        gui = _setup_main_window(config, args_mock, handler, storage)
         yield gui, storage, config
         gui.close()
 

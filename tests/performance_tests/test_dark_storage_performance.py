@@ -7,7 +7,6 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.dark_storage.endpoints import ensembles, experiments, records
-from ert.enkf_main import EnKFMain
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -127,8 +126,7 @@ def test_direct_dark_performance(
 
     with template_config["folder"].as_cwd():
         config = ErtConfig.from_file("poly.ert")
-        ert = EnKFMain(config)
-        enkf_facade = LibresFacade(ert)
+        enkf_facade = LibresFacade(config)
         storage = open_storage(enkf_facade.enspath)
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None
@@ -164,8 +162,7 @@ def test_direct_dark_performance_with_storage(
 
     with template_config["folder"].as_cwd():
         config = ErtConfig.from_file("poly.ert")
-        ert = EnKFMain(config)
-        enkf_facade = LibresFacade(ert)
+        enkf_facade = LibresFacade(config)
         storage = open_storage(enkf_facade.enspath)
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None

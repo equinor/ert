@@ -103,11 +103,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     def run(
         self,
-        output_file,
-        trajectory_path,
-        ensemble_list=None,
-        infer_iteration=True,
-        drop_const_cols=False,
+        storage,
+        workflow_args,
     ):
         """The run method will export the RFT's for all wells and all ensembles.
 
@@ -119,6 +116,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
              or $trajectory_path/$WELL_R.txt
 
         """
+        output_file = workflow_args[0]
+        trajectory_path = workflow_args[1]
+        ensemble_list = None if len(workflow_args) < 3 else workflow_args[2]
+        _ = True if len(workflow_args) < 4 else workflow_args[3]
+        drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
+
         wells = set()
 
         ensemble_names = []
@@ -134,7 +137,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             ensemble_data = []
 
             try:
-                ensemble = self.storage.get_ensemble_by_name(ensemble_name)
+                ensemble = storage.get_ensemble_by_name(ensemble_name)
             except KeyError as exc:
                 raise UserWarning(
                     f"The ensemble '{ensemble_name}' does not exist!"
@@ -233,7 +236,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         return export_info
 
-    def getArguments(self, parent=None):
+    def getArguments(self, parent, storage):
         from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
         from ert.gui.ertwidgets.models.path_model import PathModel
 
@@ -251,7 +254,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         trajectory_chooser = PathChooser(trajectory_model)
         trajectory_chooser.setObjectName("trajectory_chooser")
 
-        all_ensemble_list = [ensemble.name for ensemble in self.storage.ensembles]
+        all_ensemble_list = [ensemble.name for ensemble in storage.ensembles]
         list_edit = ListEditBox(all_ensemble_list)
         list_edit.setObjectName("list_of_ensembles")
 

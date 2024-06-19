@@ -11,7 +11,6 @@ from qtpy.QtWidgets import QToolButton
 
 import ert
 from ert.config import ErtConfig
-from ert.enkf_main import EnKFMain
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
     EndEvent,
@@ -385,11 +384,10 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
     args_mock.config = str(config_file)
 
     ert_config = ErtConfig.from_file(str(config_file))
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
@@ -551,11 +549,10 @@ def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
@@ -576,7 +573,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    enkf_main = EnKFMain(ert_config)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ), patch.object(
@@ -584,7 +580,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         "run_experiment",
         MagicMock(side_effect=ValueError("I failed :(")),
     ):
-        gui = _setup_main_window(enkf_main, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 

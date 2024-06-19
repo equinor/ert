@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import warnings
 from multiprocessing.pool import ThreadPool
 from typing import (
     TYPE_CHECKING,
@@ -13,7 +14,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
 )
 
 import numpy as np
@@ -31,7 +31,7 @@ from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
 
-from .enkf_main import EnKFMain, ensemble_context
+from .enkf_main import ensemble_context
 from .shared.plugins import ErtPluginContext
 
 _logger = logging.getLogger(__name__)
@@ -60,16 +60,8 @@ class LibresFacade:
     commonly used in other project. It is part of the public interface of ert,
     and as such changes here should not be taken lightly."""
 
-    def __init__(self, enkf_main: Union[EnKFMain, ErtConfig]):
-        # EnKFMain is more or less just a facade for the configuration at this
-        # point, so in the process of removing it altogether it is easier
-        # if we allow the facade to created with both EnKFMain and ErtConfig
-        if isinstance(enkf_main, EnKFMain):
-            self._enkf_main = enkf_main
-            self.config: ErtConfig = enkf_main.ert_config
-        else:
-            self._enkf_main = EnKFMain(enkf_main)
-            self.config = enkf_main
+    def __init__(self, ert_config: ErtConfig, _: Any = None):
+        self.config = ert_config
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
         self.update_configuration = None
 
@@ -283,10 +275,20 @@ class LibresFacade:
         storage: Storage,
         ensemble: Ensemble,
         *args: Optional[Any],
-        **kwargs: Optional[Any],
     ) -> Any:
-        return ertscript(self._enkf_main, storage, ensemble=ensemble).run(
-            *args, **kwargs
+        warnings.warn(
+            "run_ertscript is deprecated, use the workflow runner",
+            DeprecationWarning,
+            stacklevel=1,
+        )
+        return ertscript().initializeAndRun(
+            [],
+            argument_values=args,
+            fixtures={
+                "ert_config": self.config,
+                "ensemble": ensemble,
+                "storage": storage,
+            },
         )
 
     @classmethod
@@ -295,10 +297,8 @@ class LibresFacade:
     ) -> "LibresFacade":
         with ErtPluginContext() as ctx:
             return cls(
-                EnKFMain(
-                    ErtConfig.with_plugins(
-                        forward_model_step_classes=ctx.plugin_manager.forward_model_steps
-                    ).from_file(config_file),
-                    read_only,
-                )
+                ErtConfig.with_plugins(
+                    forward_model_step_classes=ctx.plugin_manager.forward_model_steps
+                ).from_file(config_file),
+                read_only,
             )
