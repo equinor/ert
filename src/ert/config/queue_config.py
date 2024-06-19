@@ -83,12 +83,12 @@ class QueueConfig:
             ):
                 submit_sleep = float(values[0])
 
-        for queue_system_val in queue_options:
-            if queue_options[queue_system_val]:
+        for queue_system, queue_system_settings in queue_options.items():
+            if queue_system_settings:
                 _validate_queue_driver_settings(
-                    queue_options[queue_system_val],
-                    QueueSystem(queue_system_val).name,
-                    throw_error=(queue_system_val == selected_queue_system),
+                    queue_system_settings,
+                    QueueSystem(queue_system).name,
+                    throw_error=(queue_system == selected_queue_system),
                 )
 
         if (

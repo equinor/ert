@@ -272,11 +272,11 @@ class ErtPluginManager(pluggy.PluginManager):
                 self.hook.installable_jobs(), include_plugin_data=True
             ).items()
         }
-        for k in job_docs:
-            job_docs[k].update(
+        for key, value in job_docs.items():
+            value.update(
                 ErtPluginManager._evaluate_job_doc_hook(
                     self.hook.job_documentation,
-                    k,
+                    key,
                 )
             )
         return job_docs
