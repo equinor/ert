@@ -73,6 +73,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 @dataclass
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
+    realization_memory: int = 0
     max_submit: int = 1
     submit_sleep: float = 0.0
     queue_system: QueueSystem = QueueSystem.LOCAL
@@ -91,10 +92,14 @@ class QueueConfig:
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
         job_script = job_script or "job_dispatch.py"
+        realization_memory: int = _parse_realization_memory_str(
+            config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
+        )
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         submit_sleep: float = config_dict.get(ConfigKeys.SUBMIT_SLEEP, 0.0)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
+
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
@@ -118,6 +123,7 @@ class QueueConfig:
                     queue_system_settings,
                     QueueSystem(queue_system).name,
                     throw_error=(queue_system == selected_queue_system),
+                    realization_memory=realization_memory,
                 )
 
         if (
@@ -133,8 +139,10 @@ class QueueConfig:
                 config_dict.get("NUM_CPU", 1),
                 queue_options[selected_queue_system],
             )
+
         return QueueConfig(
             job_script,
+            realization_memory,
             max_submit,
             submit_sleep,
             selected_queue_system,
@@ -145,6 +153,7 @@ class QueueConfig:
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
             self.job_script,
+            self.realization_memory,
             self.max_submit,
             self.submit_sleep,
             QueueSystem.LOCAL,
@@ -199,6 +208,30 @@ def _check_num_cpu_requirement(
             f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({num_nodes}) "
             f"and NUM_CPUS_PER_NODE ({num_cpus_per_node}) must be equal."
         )
+
+
+def _parse_realization_memory_str(realization_memory_str: str) -> int:
+    if "-" in realization_memory_str:
+        raise ConfigValidationError(
+            f"Negative memory does not make sense in {realization_memory_str}"
+        )
+
+    if realization_memory_str.isdigit():
+        return int(realization_memory_str)
+    multipliers = {
+        "b": 1,
+        "k": 1024,
+        "m": 1024**2,
+        "g": 1024**3,
+        "t": 1024**4,
+        "p": 1024**5,
+    }
+    match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
+    if match is None or match.group(2).lower() not in multipliers:
+        raise ConfigValidationError(
+            f"Could not understand byte unit in {realization_memory_str} {match}"
+        )
+    return int(match.group(1)) * multipliers[match.group(2).lower()]
 
 
 queue_memory_options: Mapping[str, List[str]] = {
@@ -319,13 +352,23 @@ def throw_error_or_warning(
 
 
 def _validate_queue_driver_settings(
-    queue_system_options: List[Tuple[str, str]], queue_type: str, throw_error: bool
+    queue_system_options: List[Tuple[str, str]],
+    queue_type: str,
+    throw_error: bool,
+    realization_memory: int,
 ) -> None:
     for option_name, option_value in queue_system_options:
         if not option_value:  # This is equivalent to the option not being set
             continue
         elif option_name in queue_memory_options[queue_type]:
             option_format = queue_memory_usage_formats[queue_type]
+
+            if realization_memory:
+                throw_error_or_warning(
+                    f"Do not specify both REALIZATION_MEMORY and {queue_type} option {option_name}",
+                    option_value,
+                    throw_error,
+                )
 
             if not option_format.validate(str(option_value)):
                 throw_error_or_warning(
