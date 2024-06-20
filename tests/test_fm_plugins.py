@@ -1,10 +1,37 @@
 import logging
 from itertools import chain
+from typing import Callable, Iterator, Sequence, Type
 
+import pluggy
 import pytest
-from everest.plugins import hookimpl
-from everest.plugins.hook_manager import EverestPluginManager
+from everest.plugins import hook_impl, hook_specs, hookimpl
+from everest.strings import EVEREST
 from everest.util.forward_models import collect_forward_models
+from pydantic import BaseModel
+
+
+class MockPluginManager(pluggy.PluginManager):
+    """A testing plugin manager"""
+
+    def __init__(self):
+        super().__init__(EVEREST)
+        self.add_hookspecs(hook_specs)
+
+
+@pytest.fixture
+def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
+    pm = MockPluginManager()
+
+    def register_plugin_hooks(*plugins) -> MockPluginManager:
+        if not plugins:
+            pm.register(hook_impl)
+            pm.load_setuptools_entrypoints(EVEREST)
+        else:
+            for plugin in plugins:
+                pm.register(plugin)
+        return pm
+
+    yield register_plugin_hooks
 
 
 def test_jobs():
@@ -13,16 +40,16 @@ def test_jobs():
         assert "path" in job
 
 
-def test_everest_models_jobs():
+def test_everest_models_jobs(plugin_manager):
     pytest.importorskip("everest_models")
-    pm = EverestPluginManager()
+    pm = plugin_manager()
     assert any(
-        hook.plugin_name.startswith("everest-models")
+        hook.plugin_name.startswith(EVEREST)
         for hook in pm.hook.get_forward_models.get_hookimpls()
     )
 
 
-def test_multiple_plugins():
+def test_multiple_plugins(plugin_manager):
     _JOBS = [
         {"name": "job1", "path": "/some/path1"},
         {"name": "job2", "path": "/some/path2"},
@@ -38,28 +65,59 @@ def test_multiple_plugins():
         def get_forward_models(self):
             return [_JOBS[1]]
 
-    pm = EverestPluginManager()
-    pm.register(Plugin1())
-    pm.register(Plugin2())
+    pm = plugin_manager(Plugin1(), Plugin2())
 
     jobs = list(chain.from_iterable(pm.hook.get_forward_models()))
     for value in _JOBS:
         assert value in jobs
 
 
-def test_add_logging_handle():
-    pm = EverestPluginManager()
-    hook_log_handles = pm.hook.add_log_handle_to_root()
+def test_parse_forward_model_schema(plugin_manager):
+    class Model(BaseModel):
+        content: str
+
+    class Plugin:
+        @hookimpl
+        def parse_forward_model_schema(self, path: str, schema: Type[BaseModel]):
+            return schema.model_validate({"content": path})
+
+    pm = plugin_manager(Plugin())
+
+    assert next(
+        chain.from_iterable(
+            pm.hook.parse_forward_model_schema(path="/path/to/config.yml", schema=Model)
+        )
+    ) == ("content", "/path/to/config.yml")
+
+
+def test_lint_forward_model_hook(plugin_manager):
+    class Plugin:
+        @hookimpl
+        def lint_forward_model(self, job: str, args: Sequence[str]):
+            return [[f"Mocked error message: {job} -> {args}"]]
+
+    pm = plugin_manager(Plugin())
+
+    assert (
+        next(
+            chain.from_iterable(
+                pm.hook.lint_forward_model(
+                    job="some_forward_model",
+                    args=["--config", "path/to/somewhere"],
+                )
+            )
+        )
+        == "Mocked error message: some_forward_model -> ['--config', 'path/to/somewhere']"
+    )
+
+
+def test_add_logging_handle(plugin_manager):
     handle = logging.StreamHandler()
 
-    class Plugin1:
+    class Plugin:
         @hookimpl
         def add_log_handle_to_root(self):
             return handle
 
-    if not hook_log_handles:
-        pm.register(Plugin1())
-        assert pm.hook.add_log_handle_to_root() == [handle]
-    else:
-        assert len(hook_log_handles) == 1
-        assert type(hook_log_handles[0]).__name__ == "FMUAzureLogHandler"
+    pm = plugin_manager(Plugin())
+    assert pm.hook.add_log_handle_to_root() == [handle]

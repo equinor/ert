@@ -56,6 +56,16 @@ def get_forward_models():
 
 
 @hookimpl
+def lint_forward_model():
+    return None
+
+
+@hookimpl
+def parse_forward_model_schema(path, schema):
+    return None
+
+
+@hookimpl
 def get_forward_models_schemas():
     return None
 

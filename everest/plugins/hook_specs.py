@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Sequence, Type, TypeVar
 
 from everest.plugins import hookspec
 
@@ -66,6 +66,13 @@ def get_forward_models():
     Return a list of dicts detailing the names and paths to forward models.
 
     Example [{"name": "job1", "path":"path1"}, {"name": "job2", "path":"path2"}]
+    """
+
+
+@hookspec(firstresult=True)
+def lint_forward_model(job: str, args: Sequence[str]):
+    """
+    Return a error string, if forward model job failed to lint.
     """
 
 
