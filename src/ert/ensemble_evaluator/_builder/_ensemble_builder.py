@@ -22,8 +22,7 @@ class EnsembleBuilder:
         self._reals: List[RealizationBuilder] = []
         self._forward_model: Optional[RealizationBuilder] = None
         self._size: int = 0
-        self._legacy_dependencies: Optional["QueueConfig"] = None
-        self.stop_long_running = False
+        self.queue_config: Optional["QueueConfig"] = None
         self.num_required_realizations = 0
         self._custom_port_range: Optional[range] = None
         self._max_running = 10000
@@ -53,11 +52,9 @@ class EnsembleBuilder:
     def set_legacy_dependencies(
         self,
         queue_config: QueueConfig,
-        stop_long_running: bool,
         num_required_realizations: int,
     ) -> Self:
-        self._legacy_dependencies = queue_config
-        self.stop_long_running = stop_long_running
+        self.queue_config = queue_config
         self.num_required_realizations = num_required_realizations
         return self
 
@@ -92,7 +89,7 @@ class EnsembleBuilder:
             real_builders = self._reals
 
         # legacy has dummy IO, so no need to build an IO map
-        if not self._legacy_dependencies:
+        if not self.queue_config:
             raise ValueError("missing legacy dependencies")
 
         reals = [builder.build() for builder in real_builders]
@@ -100,8 +97,7 @@ class EnsembleBuilder:
         return LegacyEnsemble(
             reals,
             {},
-            self._legacy_dependencies,
-            self.stop_long_running,
+            self.queue_config,
             self.num_required_realizations,
             id_=self._id,
         )

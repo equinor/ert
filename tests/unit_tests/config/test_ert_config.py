@@ -1194,7 +1194,7 @@ def test_that_boolean_values_can_be_any_case(val, expected):
         fh.write(test_config_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.analysis_config.stop_long_running == expected
+    assert ert_config.queue_config.stop_long_running == expected
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

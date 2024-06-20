@@ -224,22 +224,6 @@ def test_max_runtime_is_set_from_corresponding_keyword(value):
     assert AnalysisConfig(max_runtime=value).max_runtime == value
 
 
-def test_default_stop_long_running_is_false():
-    assert not AnalysisConfig.from_dict({}).stop_long_running
-    assert not AnalysisConfig().stop_long_running
-
-
-@pytest.mark.parametrize("value", [True, False])
-def test_stop_long_running_is_set_from_corresponding_keyword(value):
-    assert (
-        AnalysisConfig.from_dict(
-            {ConfigKeys.STOP_LONG_RUNNING: value}
-        ).stop_long_running
-        == value
-    )
-    assert AnalysisConfig(stop_long_running=value).stop_long_running == value
-
-
 @given(st.integers(min_value=1))
 def test_default_min_realization_is_all_realizations(value):
     assert (

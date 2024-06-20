@@ -12,6 +12,7 @@ from ert import _clib
 
 from .parsing import (
     ConfigDict,
+    ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
     MaybeWithContext,
@@ -52,6 +53,7 @@ class QueueConfig:
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
     )
+    stop_long_running: bool = False
 
     @no_type_check
     @classmethod
@@ -65,6 +67,7 @@ class QueueConfig:
         job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get("MAX_SUBMIT", 1)
         submit_sleep: float = config_dict.get("SUBMIT_SLEEP", 0.0)
+        stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
@@ -110,6 +113,7 @@ class QueueConfig:
             submit_sleep,
             selected_queue_system,
             queue_options,
+            stop_long_running=stop_long_running,
         )
 
     def create_local_copy(self) -> QueueConfig:
@@ -119,6 +123,7 @@ class QueueConfig:
             self.submit_sleep,
             QueueSystem.LOCAL,
             self.queue_options,
+            stop_long_running=self.stop_long_running,
         )
 
     @property

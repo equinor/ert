@@ -20,7 +20,6 @@ def base_arguments():
         random_seed=1234,
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
         active_realizations=[True],
     )
@@ -105,7 +104,6 @@ def test_check_if_runpath_exists(
         active_realizations=active_mask,
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
     )
     model_config = ModelConfig(runpath_format_string=run_path)
@@ -143,7 +141,6 @@ def test_delete_run_path(run_path_format, active_realizations):
         active_realizations=active_realizations,
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
     )
     expected_remaining = []

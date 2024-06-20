@@ -29,7 +29,6 @@ def test_check_if_runpath_exists(
         ensemble_name="Some_name",
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
     )
 

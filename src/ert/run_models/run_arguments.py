@@ -7,7 +7,6 @@ class SimulationArguments:
     random_seed: Optional[int]
     minimum_required_realizations: int
     ensemble_size: int
-    stop_long_running: bool
     experiment_name: Optional[str]
     active_realizations: List[bool]
 

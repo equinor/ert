@@ -51,7 +51,6 @@ class LegacyEnsemble(Ensemble):
         reals: List[Realization],
         metadata: Dict[str, Any],
         queue_config: QueueConfig,
-        stop_long_running: bool,
         min_required_realizations: int,
         id_: str,
     ) -> None:
@@ -59,7 +58,6 @@ class LegacyEnsemble(Ensemble):
 
         self._queue_config = queue_config
         self._job_queue: Optional[_KillAllJobs] = None
-        self.stop_long_running = stop_long_running
         self.min_required_realizations = min_required_realizations
         self._config: Optional[EvaluatorServerConfig] = None
 
@@ -227,7 +225,9 @@ class LegacyEnsemble(Ensemble):
             )
 
             min_required_realizations = (
-                self.min_required_realizations if self.stop_long_running else 0
+                self.min_required_realizations
+                if self._queue_config.stop_long_running
+                else 0
             )
 
             queue.add_dispatch_information_to_jobs_file()
