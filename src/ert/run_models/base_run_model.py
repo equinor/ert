@@ -174,7 +174,7 @@ class BaseRunModel:
         self.ert_config = config
         self.facade = LibresFacade(self.ert_config)
         self._storage = storage
-        self._simulation_arguments = simulation_arguments
+        self.simulation_arguments = simulation_arguments
         self._context_env_keys: List[str] = []
         self.random_seed: int = _seed_sequence(simulation_arguments.random_seed)
         self.rng = np.random.default_rng(self.random_seed)
@@ -242,10 +242,6 @@ class BaseRunModel:
     @property
     def queue_system(self) -> QueueSystem:
         return self._queue_config.queue_system
-
-    @property
-    def simulation_arguments(self) -> SimulationArguments:
-        return self._simulation_arguments
 
     @property
     def _ensemble_size(self) -> int:

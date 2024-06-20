@@ -31,7 +31,7 @@ logger = logging.getLogger(__file__)
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
-    _simulation_arguments: SIESRunArguments
+    simulation_arguments: SIESRunArguments
 
     def __init__(
         self,
@@ -124,17 +124,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg)
 
-        target_ensemble_format = self._simulation_arguments.target_ensemble
+        target_ensemble_format = self.simulation_arguments.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
-            simulation_arguments=self._simulation_arguments,
-            name=self._simulation_arguments.experiment_name,
+            simulation_arguments=self.simulation_arguments,
+            name=self.simulation_arguments.experiment_name,
         )
         prior = self._storage.create_ensemble(
             experiment=experiment,
-            ensemble_size=self._simulation_arguments.ensemble_size,
+            ensemble_size=self.simulation_arguments.ensemble_size,
             name=target_ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -190,7 +190,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
             )
             update_success = False
-            for _iteration in range(self._simulation_arguments.num_retries_per_iter):
+            for _iteration in range(self.simulation_arguments.num_retries_per_iter):
                 self.analyzeStep(
                     prior_storage=prior_context.ensemble,
                     posterior_storage=posterior_context.ensemble,
@@ -214,7 +214,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     (
                         "Iterated ensemble smoother stopped: "
                         "maximum number of iteration retries "
-                        f"({self._simulation_arguments.num_retries_per_iter} retries) reached "
+                        f"({self.simulation_arguments.num_retries_per_iter} retries) reached "
                         f"for iteration {current_iter}"
                     )
                 )

@@ -88,13 +88,16 @@ def _setup_single_test_run(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> SingleTestRun:
+    experiment_name = args.experiment_name
+    if experiment_name is None:
+        experiment_name = "single-test-run"
     return SingleTestRun(
         SingleTestRunArguments(
             random_seed=config.random_seed,
             ensemble_name=args.current_ensemble,
             minimum_required_realizations=1,
             ensemble_size=1,
-            experiment_name=args.experiment_name,
+            experiment_name=experiment_name,
             active_realizations=[True],
         ),
         config,

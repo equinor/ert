@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
     from ert.run_models.run_arguments import (
         EnsembleExperimentRunArguments,
-        SingleTestRunArguments,
     )
 
 
@@ -28,14 +27,11 @@ class EnsembleExperiment(BaseRunModel):
     will always sample parameters.
     """
 
-    _simulation_arguments: Union[SingleTestRunArguments, EnsembleExperimentRunArguments]
+    simulation_arguments: EnsembleExperimentRunArguments
 
     def __init__(
         self,
-        simulation_arguments: Union[
-            SingleTestRunArguments,
-            EnsembleExperimentRunArguments,
-        ],
+        simulation_arguments: EnsembleExperimentRunArguments,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -58,13 +54,13 @@ class EnsembleExperiment(BaseRunModel):
             name=self.simulation_arguments.experiment_name,
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
-            simulation_arguments=self._simulation_arguments,
+            simulation_arguments=self.simulation_arguments,
             responses=self.ert_config.ensemble_config.response_configuration,
         )
         ensemble = self._storage.create_ensemble(
             experiment,
-            name=self._simulation_arguments.ensemble_name,
-            ensemble_size=self._simulation_arguments.ensemble_size,
+            name=self.simulation_arguments.ensemble_name,
+            ensemble_size=self.simulation_arguments.ensemble_size,
         )
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))

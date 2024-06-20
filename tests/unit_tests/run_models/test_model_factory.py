@@ -100,7 +100,7 @@ def test_setup_ensemble_experiment(poly_case, storage):
     )
     assert isinstance(model, EnsembleExperiment)
 
-    sim_args_as_dict = dataclasses.asdict(model._simulation_arguments)
+    sim_args_as_dict = dataclasses.asdict(model.simulation_arguments)
     assert "active_realizations" in sim_args_as_dict
 
 
