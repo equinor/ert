@@ -2,7 +2,7 @@ from collections import OrderedDict
 from queue import SimpleQueue
 from typing import Any, Dict, List
 
-from qtpy.QtCore import QSize, Qt
+from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QAction,
@@ -43,6 +43,8 @@ EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
 
 
 class ExperimentPanel(QWidget):
+    experiment_type_changed = Signal(ExperimentConfigPanel)
+
     def __init__(
         self,
         config: ErtConfig,
@@ -68,9 +70,11 @@ class ExperimentPanel(QWidget):
 
         experiment_type_layout = QHBoxLayout()
         experiment_type_layout.addSpacing(10)
-        experiment_type_layout.addWidget(QLabel("Experiment type:"), 0, Qt.AlignVCenter)
         experiment_type_layout.addWidget(
-            self._experiment_type_combo, 0, Qt.AlignVCenter
+            QLabel("Experiment type:"), 0, Qt.AlignmentFlag.AlignVCenter
+        )
+        experiment_type_layout.addWidget(
+            self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
 
         experiment_type_layout.addSpacing(20)
@@ -148,6 +152,7 @@ class ExperimentPanel(QWidget):
             sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
+        self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
     @staticmethod
     def getActions() -> List[QAction]:
@@ -155,7 +160,7 @@ class ExperimentPanel(QWidget):
 
     def get_current_experiment_type(self):
         return self._experiment_type_combo.itemData(
-            self._experiment_type_combo.currentIndex(), Qt.UserRole
+            self._experiment_type_combo.currentIndex(), Qt.ItemDataRole.UserRole
         )
 
     def get_experiment_arguments(self) -> Dict[str, Any]:
@@ -308,6 +313,7 @@ class ExperimentPanel(QWidget):
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
+            self.experiment_type_changed.emit(widget)
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]

@@ -68,7 +68,7 @@ def test_run_path_deleted_error(
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        simulation_settings._name_field.setText("new_experiment_name")
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
         run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
@@ -117,7 +117,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        simulation_settings._name_field.setText("new_experiment_name")
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
         run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
@@ -164,7 +164,7 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
         simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        simulation_settings._name_field.setText("new_experiment_name")
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
 
         # Click start simulation and agree to the message
         run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QWidget
 
 
@@ -17,10 +17,12 @@ class ExperimentConfigPanel(QWidget):
     def get_experiment_type(self):
         return self.__simulation_model
 
-    @staticmethod
-    def isConfigurationValid() -> bool:
+    def isConfigurationValid(self) -> bool:
         return True
 
-    @staticmethod
-    def get_experiment_arguments() -> Dict[str, Any]:
+    def get_experiment_arguments(self) -> Dict[str, Any]:
         return {}
+
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget):
+        pass

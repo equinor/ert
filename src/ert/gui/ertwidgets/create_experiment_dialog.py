@@ -13,12 +13,17 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets import StringBox, TextModel
+from ert.validation.range_string_argument import NotInStorage
+
 
 class CreateExperimentDialog(QDialog):
     onDone = Signal(str, str)
 
     def __init__(
         self,
+        notifier: ErtNotifier,
         title: str = "Create new experiment",
         parent: Optional[QWidget] = None,
     ) -> None:
@@ -30,8 +35,13 @@ class CreateExperimentDialog(QDialog):
         layout = QGridLayout()
 
         experiment_label = QLabel("Experiment name:")
-        self._experiment_edit = QLineEdit()
-        self._experiment_edit.setPlaceholderText("My experiment")
+        self._experiment_edit = StringBox(
+            TextModel(""),
+            placeholder_text="My experiment",
+        )
+        self._experiment_edit.setValidator(
+            NotInStorage(notifier.storage, "experiments")
+        )
 
         ensemble_label = QLabel("Ensemble name:")
         self._ensemble_edit = QLineEdit()

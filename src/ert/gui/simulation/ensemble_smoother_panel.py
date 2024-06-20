@@ -3,17 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QFormLayout, QLabel, QLineEdit
+from qtpy.QtCore import Slot
+from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit
+from ert.gui.ertwidgets import AnalysisModuleEdit, StringBox, TextModel
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
-from ert.gui.ertwidgets.stringbox import StringBox
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
+from ert.validation.range_string_argument import NotInStorage
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -43,10 +44,17 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         self.setObjectName("ensemble_smoother_panel")
 
-        self._name_field = QLineEdit()
-        self._name_field.setPlaceholderText(ENSEMBLE_SMOOTHER_MODE)
-        self._name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._name_field)
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text=self.notifier.storage.get_unique_experiment_name(
+                ENSEMBLE_SMOOTHER_MODE
+            ),
+        )
+        self._experiment_name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._experiment_name_field)
+        self._experiment_name_field.setValidator(
+            NotInStorage(self.notifier.storage, "experiments")
+        )
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -84,6 +92,18 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             self.simulationConfigurationChanged
         )
 
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    @Slot(ExperimentConfigPanel)
+    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+        if isinstance(w, EnsembleSmootherPanel):
+            self._update_experiment_name_placeholder()
+
+    def _update_experiment_name_placeholder(self) -> None:
+        self._experiment_name_field.setPlaceholderText(
+            self.notifier.storage.get_unique_experiment_name(ENSEMBLE_SMOOTHER_MODE)
+        )
+
     def isConfigurationValid(self) -> bool:
         return (
             self._ensemble_format_field.isValid()
@@ -95,10 +115,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             mode=ENSEMBLE_SMOOTHER_MODE,
             target_ensemble=self._ensemble_format_model.getValue(),
             realizations=self._active_realizations_field.text(),
-            experiment_name=(
-                self._name_field.text()
-                if self._name_field.text()
-                else self._name_field.placeholderText()
-            ),
+            experiment_name=self._experiment_name_field.get_text,
         )
         return arguments

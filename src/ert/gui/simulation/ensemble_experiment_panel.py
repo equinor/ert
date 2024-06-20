@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from qtpy import QtCore
+from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -35,14 +36,18 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         lab.setAlignment(QtCore.Qt.AlignLeft)
         layout.addRow(lab)
 
-        self._name_field = StringBox(
-            TextModel(""), placeholder_text="ensemble-experiment"
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text=self.notifier.storage.get_unique_experiment_name(
+                ENSEMBLE_EXPERIMENT_MODE
+            ),
         )
-        self._name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._name_field)
-        self._name_field.setValidator(
+        self._experiment_name_field.setMinimumWidth(250)
+        layout.addRow("Experiment name:", self._experiment_name_field)
+        self._experiment_name_field.setValidator(
             NotInStorage(self.notifier.storage, "experiments")
         )
+
         self._ensemble_name_field = StringBox(
             TextModel(""), placeholder_text="ensemble"
         )
@@ -73,21 +78,33 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._name_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._ensemble_name_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
 
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    @Slot(ExperimentConfigPanel)
+    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+        if isinstance(w, EnsembleExperimentPanel):
+            self._update_experiment_name_placeholder()
+
+    def _update_experiment_name_placeholder(self) -> None:
+        self._experiment_name_field.setPlaceholderText(
+            self.notifier.storage.get_unique_experiment_name(ENSEMBLE_EXPERIMENT_MODE)
+        )
+
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)
-        self._name_field.validateString()
+        self._experiment_name_field.validateString()
         self._ensemble_name_field.validateString()
         self.blockSignals(False)
         return (
             self._active_realizations_field.isValid()
-            and self._name_field.isValid()
+            and self._experiment_name_field.isValid()
             and self._ensemble_name_field.isValid()
         )
 
@@ -96,5 +113,5 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             mode=ENSEMBLE_EXPERIMENT_MODE,
             current_ensemble=self._ensemble_name_field.get_text,
             realizations=self._active_realizations_field.text(),
-            experiment_name=self._name_field.get_text,
+            experiment_name=self._experiment_name_field.get_text,
         )
