@@ -9,7 +9,7 @@ import pytest
 
 import ert.storage
 import ert.storage.migration.block_fs as bf
-from ert.config import ErtConfig, GenKwConfig
+from ert.config import ErtConfig, GenDataConfig, GenKwConfig
 from ert.config.summary_config import SummaryConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
@@ -124,7 +124,7 @@ def test_migrate_gen_data(data, forecast, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
             responses=[
-                SummaryConfig(name=name, input_file="some_file", keys=["some_key"])
+                GenDataConfig(name=name, input_file="some_file")
                 for name in (
                     "SNAKE_OIL_WPR_DIFF",
                     "SNAKE_OIL_OPR_DIFF",
