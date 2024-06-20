@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import copy
 import logging
 from typing import TYPE_CHECKING, List, Optional
 
 from typing_extensions import Self
 
 from ._legacy import LegacyEnsemble
-from ._realization import RealizationBuilder
+from ._realization import Realization
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -19,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 class EnsembleBuilder:
     def __init__(self) -> None:
-        self._reals: List[RealizationBuilder] = []
-        self._forward_model: Optional[RealizationBuilder] = None
+        self._reals: List[Realization] = []
         self._size: int = 0
         self._legacy_dependencies: Optional["QueueConfig"] = None
         self.stop_long_running = False
@@ -29,18 +27,7 @@ class EnsembleBuilder:
         self._max_running = 10000
         self._id: Optional[str] = None
 
-    def set_forward_model(self, forward_model: RealizationBuilder) -> Self:
-        if self._reals:
-            raise ValueError(
-                "Cannot set forward model when realizations are already specified"
-            )
-        self._forward_model = forward_model
-        return self
-
-    def add_realization(self, real: RealizationBuilder) -> Self:
-        if self._forward_model:
-            raise ValueError("Cannot add realization when forward model is specified")
-
+    def add_realization(self, real: Realization) -> Self:
         self._reals.append(real)
         return self
 
@@ -74,31 +61,18 @@ class EnsembleBuilder:
         return self
 
     def build(self) -> Ensemble:
-        if not (self._reals or self._forward_model):
-            raise ValueError("Either forward model or realizations needs to be set")
+        if not self._reals:
+            raise ValueError("Realizations must be added upfront")
 
         if self._id is None:
             raise ValueError("ID must be set prior to building")
-
-        real_builders: List[RealizationBuilder] = []
-        if self._forward_model:
-            # duplicate the original forward model into realizations
-            for i in range(self._size):
-                logger.debug(f"made deep-copied real {i}")
-                real = copy.deepcopy(self._forward_model)
-                real.set_iens(i)
-                real_builders.append(real)
-        else:
-            real_builders = self._reals
 
         # legacy has dummy IO, so no need to build an IO map
         if not self._legacy_dependencies:
             raise ValueError("missing legacy dependencies")
 
-        reals = [builder.build() for builder in real_builders]
-
         return LegacyEnsemble(
-            reals,
+            self._reals,
             {},
             self._legacy_dependencies,
             self.stop_long_running,

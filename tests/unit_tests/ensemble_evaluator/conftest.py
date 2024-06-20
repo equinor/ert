@@ -124,15 +124,14 @@ def make_ensemble_builder(queue_config):
                     )
 
                 builder.add_realization(
-                    ert.ensemble_evaluator.RealizationBuilder()
-                    .active(True)
-                    .set_iens(iens)
-                    .set_forward_models(forward_model_list)
-                    .set_job_script("job_dispatch.py")
-                    .set_max_runtime(10)
-                    .set_num_cpu(1)
-                    .set_run_arg(
-                        RunArg(
+                    ert.ensemble_evaluator.Realization(
+                        active=True,
+                        iens=iens,
+                        forward_models=forward_model_list,
+                        job_script="job_dispatch.py",
+                        max_runtime=10,
+                        num_cpu=1,
+                        run_arg=RunArg(
                             str(iens),
                             MagicMock(spec=Ensemble),
                             iens,

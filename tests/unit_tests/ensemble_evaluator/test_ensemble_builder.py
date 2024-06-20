@@ -5,7 +5,7 @@ import pytest
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.ensemble_evaluator._builder import (
     EnsembleBuilder,
-    RealizationBuilder,
+    Realization,
 )
 
 
@@ -16,14 +16,15 @@ def test_build_ensemble(active_real):
         EnsembleBuilder()
         .set_legacy_dependencies(QueueConfig(queue_system=QueueSystem.LOCAL), False, 0)
         .add_realization(
-            RealizationBuilder()
-            .set_iens(2)
-            .set_run_arg(MagicMock())
-            .set_num_cpu(1)
-            .set_max_runtime(0)
-            .set_job_script("job_script")
-            .set_forward_models([ForwardModelStep("echo_command", "")])
-            .active(active_real)
+            Realization(
+                iens=2,
+                run_arg=MagicMock(),
+                num_cpu=1,
+                max_runtime=0,
+                job_script="job_script",
+                forward_models=[ForwardModelStep("echo_command", "")],
+                active=active_real,
+            )
         )
         .set_id("1")
     )
