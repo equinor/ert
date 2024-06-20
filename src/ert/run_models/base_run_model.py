@@ -582,7 +582,9 @@ class BaseRunModel:
         run_paths = []
         number_of_iterations = self.number_of_iterations
         active_realizations = np.where(self.active_realizations)[0]
-        for iteration in range(self.start_iteration, number_of_iterations):
+        for iteration in range(
+            self.start_iteration, self.start_iteration + number_of_iterations
+        ):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 
