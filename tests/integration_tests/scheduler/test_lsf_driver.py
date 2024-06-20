@@ -201,6 +201,37 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_submit_with_realization_memory(pytestconfig, job_name):
+    if not pytestconfig.getoption("lsf"):
+        pytest.skip("Mocked LSF driver does not provide bhist")
+
+    realization_memory_bytes = 1024 * 1024
+    driver = LsfDriver()
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo test>test",
+        name=job_name,
+        realization_memory=realization_memory_bytes,
+    )
+    job_id = driver._iens2jobid[0]
+    await poll(driver, {0})
+
+    process = await asyncio.create_subprocess_exec(
+        "bhist",
+        "-l",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await process.communicate()
+    assert "rusage[mem=1]" in stdout.decode(encoding="utf-8")
+
+    assert Path("test").read_text(encoding="utf-8") == "test\n"
+
+
 async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()

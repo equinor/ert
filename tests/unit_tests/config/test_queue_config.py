@@ -99,19 +99,129 @@ def test_that_invalid_queue_option_raises_validation_error(
 @st.composite
 def memory_with_unit(draw):
     memory_value = draw(st.integers(min_value=1, max_value=10000))
-    unit = draw(st.sampled_from(["gb", "mb"]))
+    unit = draw(
+        st.sampled_from(["gb", "mb", "tb", "pb", "Kb", "Gb", "Mb", "Pb", "b", "B", ""])
+    )
     return f"{memory_value}{unit}"
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@pytest.mark.parametrize("memory_with_unit_str", ["gb", "mb", "1 gb"])
-def test_that_invalid_memory_pr_job_raises_validation_error(memory_with_unit_str):
+@given(memory_with_unit())
+def test_supported_memory_units_to_realization_memory(
+    memory_with_unit,
+):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {memory_with_unit_str}")
+        f.write(f"REALIZATION_MEMORY {memory_with_unit}\n")
+
+    assert ErtConfig.from_file(filename).queue_config.realization_memory > 0
+
+
+@pytest.mark.parametrize(
+    "memory_spec, expected_bytes",
+    [
+        ("1", 1),
+        ("1b", 1),
+        ("10b", 10),
+        ("10kb", 10 * 1024),
+        ("10mb", 10 * 1024**2),
+        ("10gb", 10 * 1024**3),
+        ("10Mb", 10 * 1024**2),
+        ("10Gb", 10 * 1024**3),
+        ("10Tb", 10 * 1024**4),
+        ("10Pb", 10 * 1024**5),
+    ],
+)
+def test_realization_memory_unit_support(memory_spec: str, expected_bytes, tmpdir):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"REALIZATION_MEMORY {memory_spec}\n")
+
+    assert (
+        ErtConfig.from_file(filename).queue_config.realization_memory == expected_bytes
+    )
+
+
+@pytest.mark.parametrize("invalid_memory_spec", ["-1", "-1b", "b", "4ub"])
+def test_invalid_realization_memory(invalid_memory_spec: str, tmpdir):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"REALIZATION_MEMORY {invalid_memory_spec}\n")
+
     with pytest.raises(ConfigValidationError):
+        ErtConfig.from_file(filename)
+
+
+def test_conflicting_realization_slurm_memory(tmpdir):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("REALIZATION_MEMORY 10Mb\n")
+        f.write("QUEUE_SYSTEM SLURM\n")
+        f.write("QUEUE_OPTION SLURM MEMORY 20m\n")
+
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
+        ErtConfig.from_file(filename)
+
+
+def test_conflicting_realization_slurm_memory_per_cpu(tmpdir):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("REALIZATION_MEMORY 10Mb\n")
+        f.write("QUEUE_SYSTEM SLURM\n")
+        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 20m\n")
+
+    with pytest.raises(ConfigValidationError):
+        ErtConfig.from_file(filename)
+
+
+def test_conflicting_realization_openpbs_memory_per_job(tmpdir):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("REALIZATION_MEMORY 10Mb\n")
+        f.write("QUEUE_SYSTEM TORQUE\n")
+        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20m\n")
+
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
+        ErtConfig.from_file(filename)
+
+
+def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only_warns(
+    tmpdir,
+):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("REALIZATION_MEMORY 10Mb\n")
+        f.write("QUEUE_SYSTEM SLURM\n")
+        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20m\n")
+
+    with pytest.warns(ConfigWarning):
+        ErtConfig.from_file(filename)
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.parametrize("torque_memory_with_unit_str", ["gb", "mb", "1 gb"])
+def test_that_invalid_memory_pr_job_raises_validation_error(
+    torque_memory_with_unit_str, tmpdir
+):
+    filename = tmpdir / "config.ert"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("QUEUE_SYSTEM TORQUE\n")
+        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {torque_memory_with_unit_str}")
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
         ErtConfig.from_file(filename)
 
 
@@ -185,7 +295,11 @@ def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_
         f.write(f"QUEUE_OPTION {queue_system} {queue_option} {queue_value}\n")
 
     with pytest.raises(ConfigValidationError, match=err_msg):
-        ErtConfig.from_file(filename)
+        if queue_system == "TORQUE":
+            with pytest.warns(ConfigWarning, match="deprecated"):
+                ErtConfig.from_file(filename)
+        else:
+            ErtConfig.from_file(filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -233,7 +347,8 @@ def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
         f.write("QUEUE_SYSTEM SLURM\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
 
-    ErtConfig.from_file(filename)
+    with pytest.warns(ConfigWarning, match="deprecated"):
+        ErtConfig.from_file(filename)
 
 
 @pytest.mark.parametrize(
@@ -249,7 +364,8 @@ def test_that_torque_queue_mem_options_are_corrected(mem_per_job):
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
 
     with pytest.raises(ConfigValidationError) as e:
-        ert_config = ErtConfig.from_file(filename)
+        with pytest.warns(ConfigWarning, match="deprecated"):
+            ert_config = ErtConfig.from_file(filename)
         torque_opts = ert_config.queue_config.queue_options[QueueSystem.TORQUE]
         assert torque_opts[0][1] == mem_per_job
 

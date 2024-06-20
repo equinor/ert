@@ -533,6 +533,7 @@ class BaseRunModel:
                     run_arg=run_arg,
                     num_cpu=self.ert_config.preferred_num_cpu,
                     job_script=self.ert_config.queue_config.job_script,
+                    realization_memory=self.ert_config.queue_config.realization_memory,
                 )
             )
         return EEEnsemble(

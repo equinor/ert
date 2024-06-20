@@ -148,8 +148,29 @@ queue_memory_options: Mapping[str, List[str]] = {
 
 
 @dataclass
+class QueueMemoryStringFormat:
+    suffixes: List[str]
+
+    def validate(self, mem_str_format: str) -> bool:
+        return (
+            re.match(
+                r"\d+(" + "|".join(self.suffixes) + ")$",
+                mem_str_format,
+            )
+            is not None
+        )
+
+
+queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
+    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
+    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
+}
+
+
+@dataclass
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
+    realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
@@ -165,6 +186,9 @@ class QueueConfig:
         )
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
+        )
+        realization_memory: int = _parse_realization_memory_str(
+            config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
         )
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
@@ -197,9 +221,13 @@ class QueueConfig:
                 queue_options[selected_queue_system].append(
                     ("PROJECT_CODE", "+".join(tags))
                 )
-        _check_queue_option_settings(selected_queue_system, queue_options, config_dict)
+        _check_queue_option_settings(
+            selected_queue_system, queue_options, config_dict, realization_memory
+        )
+
         return QueueConfig(
             job_script,
+            realization_memory,
             max_submit,
             selected_queue_system,
             queue_options,
@@ -209,6 +237,7 @@ class QueueConfig:
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
             self.job_script,
+            self.realization_memory,
             self.max_submit,
             QueueSystem.LOCAL,
             self.queue_options,
@@ -234,36 +263,18 @@ class QueueConfig:
         return dict(self.queue_options.get(self.queue_system, []))
 
 
-@dataclass
-class QueueMemoryStringFormat:
-    suffixes: List[str]
-
-    def validate(self, mem_str_format: str) -> bool:
-        return (
-            re.match(
-                r"\d+(" + "|".join(self.suffixes) + ")$",
-                mem_str_format,
-            )
-            is not None
-        )
-
-
-queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
-    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
-    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
-}
-
-
 @no_type_check
 def _check_queue_option_settings(
     selected_queue_system: QueueSystem,
     queue_options: List[Tuple[str, str]],
     config_dict: ConfigDict,
+    realization_memory: int,
 ) -> None:
     for queue_system, queue_system_settings in queue_options.items():
         if queue_system_settings:
             _validate_queue_driver_settings(
                 queue_system_settings,
+                realization_memory,
                 QueueSystem(queue_system).name,
                 throw_error=(queue_system == selected_queue_system),
             )
@@ -323,6 +334,30 @@ def _check_num_cpu_requirement(
         )
 
 
+def _parse_realization_memory_str(realization_memory_str: str) -> int:
+    if "-" in realization_memory_str:
+        raise ConfigValidationError(
+            f"Negative memory does not make sense in {realization_memory_str}"
+        )
+
+    if realization_memory_str.isdigit():
+        return int(realization_memory_str)
+    multipliers = {
+        "b": 1,
+        "k": 1024,
+        "m": 1024**2,
+        "g": 1024**3,
+        "t": 1024**4,
+        "p": 1024**5,
+    }
+    match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
+    if match is None or match.group(2).lower() not in multipliers:
+        raise ConfigValidationError(
+            f"Could not understand byte unit in {realization_memory_str} {match}"
+        )
+    return int(match.group(1)) * multipliers[match.group(2).lower()]
+
+
 def throw_error_or_warning(
     error_msg: str, option_value: MaybeWithContext, throw_error: bool
 ) -> None:
@@ -342,13 +377,23 @@ def throw_error_or_warning(
 
 
 def _validate_queue_driver_settings(
-    queue_system_options: List[Tuple[str, str]], queue_type: str, throw_error: bool
+    queue_system_options: List[Tuple[str, str]],
+    realization_memory: int,
+    queue_type: str,
+    throw_error: bool,
 ) -> None:
     for option_name, option_value in queue_system_options:
         if not option_value:  # This is equivalent to the option not being set
             continue
         elif option_name in queue_memory_options[queue_type]:
             option_format = queue_memory_usage_formats[queue_type]
+
+            if realization_memory:
+                throw_error_or_warning(
+                    f"Do not specify both REALIZATION_MEMORY and {queue_type} option {option_name}",
+                    option_value,
+                    throw_error,
+                )
 
             if not option_format.validate(str(option_value)):
                 throw_error_or_warning(

@@ -277,6 +277,31 @@ of resources TORQUE wants to allocate (number_of_nodes \* cpus_per_node). See
 For the local queue system, ``NUM_CPU`` is ignored.
 
 
+REALIZATION_MEMORY
+------------------
+.. _realization_memory:
+
+
+This keyword is set right in your configuration file:
+
+.. code-block:: none
+
+  REALIZATION_MEMORY 12Gb
+
+and this information is propagated to the queue system as the amount of memory to
+reserve/book for a realization to complete. It is up to the configuration of
+the queuing system how to treat this information, but usually it will stop more
+realizations being assigned to a compute node if the compute nodes memory is already
+fully booked.
+
+Setting this number lower than the peak memory consumption of each realization puts
+the realization at risk of being killed in an out-of-memory situation. Setting this
+number higher than needed will give longer wait times in the queue.
+
+For the local queue system, this keyword has no effect. In that scenario, you
+can use MAX_RUNNING to choke the memory consumption.
+
+
 DATA_KW
 -------
 .. _data_kw:

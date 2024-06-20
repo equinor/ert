@@ -232,6 +232,13 @@ async def test_submit_with_num_cpu():
     assert "-n 4" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.usefixtures("capturing_bsub")
+async def test_submit_with_realization_memory():
+    driver = LsfDriver()
+    await driver.submit(0, "sleep", realization_memory=1024**2)
+    assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
+
+
 @pytest.mark.parametrize(
     "bsub_script, expectation",
     [
@@ -602,76 +609,127 @@ async def test_that_bsub_will_retry_and_succeed(
 
 
 @pytest.mark.parametrize(
-    "resource_requirement, exclude_hosts, expected_string",
+    "resource_requirement, exclude_hosts, realization_memory, expected_string",
     [
-        pytest.param(None, None, "", id="None input"),
+        pytest.param(None, None, None, "", id="None input"),
+        pytest.param(None, None, 0, "", id="zero_realization_memory_is_None"),
         pytest.param(
             "rusage[mem=50]",
             [],
+            None,
             "rusage[mem=50]",
             id="resource_requirement_without_select_and_no_excluded_hosts",
         ),
         pytest.param(
             None,
+            [],
+            1024 * 1024,
+            "rusage[mem=1]",
+            id="None_resource_string_with_realization_memory",
+        ),
+        pytest.param(
+            None,
             ["linrgs12-foo", "linrgs13-bar"],
+            None,
             "select[hname!='linrgs12-foo' && hname!='linrgs13-bar']",
             id="None_resource_string_with_excluded_hosts",
         ),
         pytest.param(
             "rusage[mem=50]",
             ["linrgs12-foo"],
+            None,
             "rusage[mem=50] select[hname!='linrgs12-foo']",
             id="resource_requirement_and_excluded_hosts",
         ),
         pytest.param(
+            "rusage[somethingelse=50]",
+            [],
+            10 * 1024**2,
+            "rusage[mem=10,somethingelse=50]",
+            id="resource_requirement_without_mem",
+        ),
+        pytest.param(
+            "select[location=='cloud']",
+            [],
+            10 * 1024**2,
+            "select[location=='cloud'] rusage[mem=10]",
+            id="select_and_realization_memory",
+        ),
+        pytest.param(
             "select[location=='cloud']",
             ["linrgs12-foo", "linrgs13-bar"],
+            None,
             "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar']",
             id="existing_select",
         ),
         pytest.param(
+            "select[location=='cloud']",
+            ["linrgs12-foo", "linrgs13-bar"],
+            20 * 1024**3,
+            "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar'] rusage[mem=20480]",
+            id="multiple_selects_with_realization_memory",
+        ),
+        pytest.param(
             None,
             [""],
+            None,
             "",
             id="None_resource_requirement_with_empty_string_in_excluded_hosts",
         ),
         pytest.param(
             "rusage[mem=50]",
             [""],
+            None,
             "rusage[mem=50]",
             id="resource_requirement_and_empty_string_in_excluded_hosts",
         ),
         pytest.param(
             "select[location=='cloud']",
             [""],
+            None,
             "select[location=='cloud']",
             id="select_in_resource_requirement_and_empty_string_in_excluded_hosts",
         ),
         pytest.param(
             "select[location=='cloud'] rusage[mem=7000]",
             [""],
+            None,
             "select[location=='cloud'] rusage[mem=7000]",
             id="select_and_rusage_in_resource_requirement_empty_excluded_hosts",
         ),
         pytest.param(
             "select[location=='cloud'] rusage[mem=7000]",
             ["rogue_host"],
+            None,
             "select[location=='cloud' && hname!='rogue_host'] rusage[mem=7000]",
             id="select_and_rusage_in_resource_requirement_one_excluded_hosts",
         ),
         pytest.param(
             "rusage[mem=7000] select[location=='cloud']",
             ["rogue_host"],
+            None,
             "rusage[mem=7000] select[location=='cloud' && hname!='rogue_host']",
             id="rusage_and_select_resource_requirement_one_excluded_hosts",
+        ),
+        pytest.param(
+            "select[location=='cloud'] rusage[mem=7000]",
+            ["rogue_host"],
+            6000 * 1024**2,
+            "select[location=='cloud' && hname!='rogue_host'] rusage[mem=6000]",
+            id="select_and_rusage_in_resource_requirement_one_excluded_hosts",
         ),
     ],
 )
 def test_build_resource_requirement_string(
-    resource_requirement: Optional[str], exclude_hosts: List[str], expected_string: str
+    resource_requirement: Optional[str],
+    exclude_hosts: List[str],
+    realization_memory: Optional[int],
+    expected_string: str,
 ):
     assert (
-        build_resource_requirement_string(exclude_hosts, resource_requirement)
+        build_resource_requirement_string(
+            exclude_hosts, realization_memory or 0, resource_requirement or ""
+        )
         == expected_string
     )
 

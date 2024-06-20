@@ -127,13 +127,54 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
 
 
 def build_resource_requirement_string(
-    exclude_hosts: Sequence[str], resource_requirement: Optional[str]
+    exclude_hosts: Sequence[str],
+    realization_memory: int,
+    resource_requirement: str = "",
 ) -> str:
+    """Merge Ert-supported resource requirements with arbitrary user supplied resources
+
+    Ert support a list of hosts to exclude via its config system, and also
+    a specification of memory. In addition Ert supports an arbitrary resource
+    requirement string, which could itself specify the same things. If the resource
+    spec for memory is specified in the argument resource_requirement, the value from
+    realization_memory argument will override.
+
+    Args:
+        exclude_hosts: List of hostnames to exclude
+        realization_memory: Memory amount to reserve in bytes
+
+    Returns:
+        Resource specification string to be added to -R option to bsub.
+
+    """
     exclude_clauses = (
         [f"hname!='{host_name}'" for host_name in exclude_hosts if host_name]
         if exclude_hosts
         else []
     )
+
+    if realization_memory:
+        # Assume MB is default. Only LSF9 supports units.
+        mem_string = f"mem={realization_memory // 1024**2}"
+        if "rusage" in resource_requirement:
+            if "mem=" in resource_requirement:
+                # Modify in-place
+                resource_requirement = re.sub(
+                    r"mem=\d+[KMBTEZ]?[B]?",
+                    mem_string,
+                    resource_requirement,
+                )
+            else:
+                # Inject mem= in front
+                resource_requirement = re.sub(
+                    r"rusage\[",
+                    f"rusage[{mem_string},",
+                    resource_requirement,
+                )
+        else:
+            resource_requirement = (
+                f"{resource_requirement} rusage[{mem_string}]".strip()
+            )
 
     if not resource_requirement:
         return f"select[{' && '.join(exclude_clauses)}]" if exclude_clauses else ""
@@ -150,7 +191,6 @@ def build_resource_requirement_string(
     if exclude_clauses:
         return f"{resource_requirement} select[{' && '.join(exclude_clauses)}]"
 
-    # Return the original resource uequirement if no exclusions are needed.
     return resource_requirement
 
 
@@ -243,6 +283,7 @@ class LsfDriver(Driver):
         name: str = "dummy",
         runpath: Optional[Path] = None,
         num_cpu: Optional[int] = 1,
+        realization_memory: Optional[int] = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
@@ -276,7 +317,9 @@ class LsfDriver(Driver):
             + ["-o", str(runpath / (name + ".LSF-stdout"))]
             + ["-e", str(runpath / (name + ".LSF-stderr"))]
             + ["-n", str(num_cpu)]
-            + self._build_resource_requirement_arg()
+            + self._build_resource_requirement_arg(
+                realization_memory=realization_memory or 0
+            )
             + ["-J", name, str(script_path), str(runpath)]
         )
 
@@ -550,9 +593,11 @@ class LsfDriver(Driver):
         self._bhist_cache_timestamp = time.time()
         return _parse_jobs_dict(jobs)
 
-    def _build_resource_requirement_arg(self) -> List[str]:
+    def _build_resource_requirement_arg(self, realization_memory: int) -> List[str]:
         resource_requirement_string = build_resource_requirement_string(
-            self._exclude_hosts, self._resource_requirement
+            self._exclude_hosts,
+            realization_memory,
+            self._resource_requirement or "",
         )
         return (
             ["-R", resource_requirement_string] if resource_requirement_string else []
