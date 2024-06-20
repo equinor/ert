@@ -12,16 +12,16 @@ class SimulationArguments:
 
 
 @dataclass
-class SingleTestRunArguments(SimulationArguments):
-    ensemble_name: str = "prior"
-    ensemble_type: str = "Single test"
-
-
-@dataclass
 class EnsembleExperimentRunArguments(SimulationArguments):
     experiment_name: str
     ensemble_name: str = "prior"
     ensemble_type: str = "Ensemble experiment"
+
+
+@dataclass
+class SingleTestRunArguments(EnsembleExperimentRunArguments):
+    ensemble_name: str = "prior"
+    ensemble_type: str = "Single test"
 
 
 @dataclass

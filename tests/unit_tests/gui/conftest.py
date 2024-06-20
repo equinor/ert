@@ -476,7 +476,7 @@ def runmodel(active_realizations) -> Mock:
     brm.hasRunFailed = Mock(return_value=False)
     brm.getFailMessage = Mock(return_value="")
     brm.support_restart = True
-    brm._simulation_arguments = {"active_realizations": active_realizations}
+    brm.simulation_arguments = {"active_realizations": active_realizations}
     brm.has_failed_realizations = lambda: False
     return brm
 

@@ -33,7 +33,7 @@ class MultipleDataAssimilation(BaseRunModel):
     """
 
     default_weights = "4, 2, 1"
-    _simulation_arguments: ESMDARunArguments
+    simulation_arguments: ESMDARunArguments
 
     def __init__(
         self,
@@ -76,11 +76,11 @@ class MultipleDataAssimilation(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg)
 
-        restart_run = self._simulation_arguments.restart_run
-        target_ensemble_format = self._simulation_arguments.target_ensemble
+        restart_run = self.simulation_arguments.restart_run
+        target_ensemble_format = self.simulation_arguments.target_ensemble
 
         if restart_run:
-            id = self._simulation_arguments.prior_ensemble_id
+            id = self.simulation_arguments.prior_ensemble_id
             try:
                 ensemble_id = UUID(id)
                 prior = self._storage.get_ensemble(ensemble_id)
@@ -108,13 +108,13 @@ class MultipleDataAssimilation(BaseRunModel):
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 observations=self.ert_config.observations.datasets,
                 responses=self.ert_config.ensemble_config.response_configuration,
-                simulation_arguments=self._simulation_arguments,
-                name=self._simulation_arguments.experiment_name,
+                simulation_arguments=self.simulation_arguments,
+                name=self.simulation_arguments.experiment_name,
             )
 
             prior = self._storage.create_ensemble(
                 experiment,
-                ensemble_size=self._simulation_arguments.ensemble_size,
+                ensemble_size=self.simulation_arguments.ensemble_size,
                 iteration=0,
                 name=target_ensemble_format % 0,
             )

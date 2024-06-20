@@ -28,6 +28,8 @@ logger = logging.getLogger(__file__)
 
 
 class EnsembleSmoother(BaseRunModel):
+    simulation_arguments: ESRunArguments
+
     def __init__(
         self,
         simulation_arguments: ESRunArguments,
@@ -51,12 +53,6 @@ class EnsembleSmoother(BaseRunModel):
         self.update_settings = update_settings
         self.support_restart = False
 
-    @property
-    def simulation_arguments(self) -> ESRunArguments:
-        args = self._simulation_arguments
-        assert isinstance(args, ESRunArguments)
-        return args
-
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
@@ -68,14 +64,14 @@ class EnsembleSmoother(BaseRunModel):
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
-            simulation_arguments=self._simulation_arguments,
-            name=self._simulation_arguments.experiment_name,
+            simulation_arguments=self.simulation_arguments,
+            name=self.simulation_arguments.experiment_name,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         prior = self._storage.create_ensemble(
             experiment,
-            ensemble_size=self._simulation_arguments.ensemble_size,
+            ensemble_size=self.simulation_arguments.ensemble_size,
             name=ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))

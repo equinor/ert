@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
 
 class SingleTestRun(EnsembleExperiment):
+    simulation_arguments: SingleTestRunArguments
+
     def __init__(
         self,
         simulation_arguments: SingleTestRunArguments,

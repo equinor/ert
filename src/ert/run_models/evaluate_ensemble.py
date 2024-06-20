@@ -31,6 +31,8 @@ class EvaluateEnsemble(BaseRunModel):
     reflect any changes to the user configuration on disk.
     """
 
+    simulation_arguments: EvaluateEnsembleRunArguments
+
     def __init__(
         self,
         simulation_arguments: EvaluateEnsembleRunArguments,
@@ -77,11 +79,6 @@ class EvaluateEnsemble(BaseRunModel):
         self.setPhase(phase_count, "Simulations completed.")
 
         return prior_context
-
-    @property
-    def simulation_arguments(self) -> EvaluateEnsembleRunArguments:
-        assert isinstance(self._simulation_arguments, EvaluateEnsembleRunArguments)
-        return self._simulation_arguments
 
     @classmethod
     def name(cls) -> str:
