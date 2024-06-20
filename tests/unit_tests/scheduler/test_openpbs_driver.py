@@ -314,6 +314,23 @@ async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
     ), "Unknown or missing resources in resource string"
 
 
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_submit_with_realization_memory():
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep", realization_memory=1024**2)
+    resources = parse_resource_string(
+        Path("captured_qsub_args").read_text(encoding="utf-8")
+    )
+    assert resources.get("mem", "") == "1mb"
+
+
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_submit_with_realization_memory_and_memory_per_job():
+    driver = OpenPBSDriver(memory_per_job="1")
+    with pytest.raises(ValueError, match="Overspecified memory"):
+        await driver.submit(0, "sleep", realization_memory=1)
+
+
 @given(words, st.integers(min_value=0), st.integers(min_value=0), words)
 @pytest.mark.usefixtures("capturing_qsub")
 async def test_full_resource_string_deprecated_options(

@@ -86,6 +86,34 @@ async def test_memory_is_set(memory_in_mb):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
+@given(memory_in_bytes=st.integers(min_value=1))
+async def test_realization_memoryt(memory_in_bytes):
+    driver = SlurmDriver(realization_memory=memory_in_bytes)
+    await driver.submit(0, "sleep", name="myjobname")
+    assert f"--mem={memory_in_bytes // 1024**2}M" in Path(
+        "captured_sbatch_args"
+    ).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "memory_value, realization_memory_value, expectation",
+    [
+        # Emptry string for memory is equivalent to zero integer for realiation_memory
+        ("", 1, does_not_raise()),
+        ("1mb", 0, does_not_raise()),
+        ("1mb", 1, pytest.raises(ValueError)),
+        ("0", 1, pytest.raises(ValueError)),
+    ],
+)
+async def test_overspecified_memory_allocation(
+    memory_value, realization_memory_value, expectation
+):
+    # Emptry string for memory is equivalent to zero integer for realiation_memory
+    with expectation:
+        SlurmDriver(memory=memory_value, realization_memory=realization_memory_value)
+
+
+@pytest.mark.usefixtures("capturing_sbatch")
 @given(memory_per_cpu_in_mb=st.integers(min_value=1))
 async def test_memory_per_cpu_is_set(memory_per_cpu_in_mb):
     driver = SlurmDriver(memory_per_cpu=f"{memory_per_cpu_in_mb}mb")

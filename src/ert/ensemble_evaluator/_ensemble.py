@@ -307,3 +307,4 @@ class Realization:
     run_arg: "RunArg"
     num_cpu: int
     job_script: str
+    realization_memory: int  # Memory to reserve/book, in bytes

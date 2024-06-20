@@ -183,7 +183,9 @@ class OpenPBSDriver(Driver):
                 "Use NUM_CPU in the config instead."
             )
 
-    def _build_resource_string(self, num_cpu: int = 1) -> List[str]:
+    def _build_resource_string(
+        self, num_cpu: int = 1, realization_memory: int = 0
+    ) -> List[str]:
         resource_specifiers: List[str] = []
 
         cpu_resources: List[str] = []
@@ -199,8 +201,15 @@ class OpenPBSDriver(Driver):
                 )
         if num_cpu > 1:
             cpu_resources += [f"ncpus={num_cpu}"]
+        if self._memory_per_job is not None and realization_memory > 0:
+            raise ValueError(
+                "Overspecified memory pr job. "
+                "Do not specify both memory_per_job and realization_memory"
+            )
         if self._memory_per_job is not None:
             cpu_resources += [f"mem={self._memory_per_job}"]
+        elif realization_memory > 0:
+            cpu_resources += [f"mem={realization_memory // 1024**2 }mb"]
         if cpu_resources:
             resource_specifiers.append(":".join(cpu_resources))
 
@@ -221,6 +230,7 @@ class OpenPBSDriver(Driver):
         name: str = "dummy",
         runpath: Optional[Path] = None,
         num_cpu: Optional[int] = 1,
+        realization_memory: Optional[int] = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
@@ -244,7 +254,9 @@ class OpenPBSDriver(Driver):
             *arg_queue_name,
             *arg_project_code,
             *arg_keep_qsub_output,
-            *self._build_resource_string(num_cpu=num_cpu or 1),
+            *self._build_resource_string(
+                num_cpu=num_cpu or 1, realization_memory=realization_memory or 0
+            ),
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
 

@@ -70,6 +70,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
         run_arg=run_arg,
         num_cpu=1,
         job_script=str(shutil.which("job_dispatch.py")),
+        realization_memory=0,
     )
     return realization
 

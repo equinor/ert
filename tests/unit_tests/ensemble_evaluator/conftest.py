@@ -128,6 +128,7 @@ def make_ensemble(queue_config):
                             str(run_path),
                             f"job_name_{iens}",
                         ),
+                        realization_memory=0,
                     )
                 )
 

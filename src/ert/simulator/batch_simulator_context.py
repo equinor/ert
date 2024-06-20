@@ -67,6 +67,7 @@ async def _submit_and_run_jobqueue(
             run_arg=run_arg,
             num_cpu=ert_config.preferred_num_cpu,
             job_script=ert_config.queue_config.job_script,
+            realization_memory=ert_config.queue_config.realization_memory,
         )
         scheduler.set_realization(realization)
 

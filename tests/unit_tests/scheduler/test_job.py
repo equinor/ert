@@ -46,6 +46,7 @@ def realization():
         run_arg=run_arg,
         num_cpu=1,
         job_script=str(shutil.which("job_dispatch.py")),
+        realization_memory=0,
     )
     return realization
 
@@ -159,6 +160,7 @@ async def test_job_run_sends_expected_events(
         name=realization.run_arg.job_name,
         runpath=Path(realization.run_arg.runpath),
         num_cpu=realization.num_cpu,
+        realization_memory=0,
     )
     assert scheduler.driver.submit.call_count == max_submit
 
@@ -180,6 +182,28 @@ async def test_num_cpu_is_propagated_to_driver(realization: Realization):
         name=realization.run_arg.job_name,
         runpath=Path(realization.run_arg.runpath),
         num_cpu=8,
+        realization_memory=0,
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.asyncio
+async def test_realization_memory_is_propagated_to_driver(realization: Realization):
+    realization.realization_memory = 8 * 1024**2
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+    job.started.set()
+    job.returncode.set_result(0)
+    await job_run_task
+    scheduler.driver.submit.assert_called_with(
+        realization.iens,
+        realization.job_script,
+        realization.run_arg.runpath,
+        num_cpu=1,
+        realization_memory=8 * 1024**2,
+        name=realization.run_arg.job_name,
+        runpath=Path(realization.run_arg.runpath),
     )
 
 

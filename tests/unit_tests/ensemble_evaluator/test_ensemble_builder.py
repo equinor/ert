@@ -18,6 +18,7 @@ def test_build_ensemble(active_real):
                 job_script="job_script",
                 forward_models=[ForwardModelStep("echo_command", "")],
                 active=active_real,
+                realization_memory=0,
             )
         ],
         {},

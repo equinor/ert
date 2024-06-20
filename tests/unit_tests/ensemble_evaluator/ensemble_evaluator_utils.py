@@ -64,6 +64,7 @@ class TestEnsemble(Ensemble):
                 num_cpu=0,
                 run_arg=None,
                 job_script=None,
+                realization_memory=0,
             )
             for real_no in range(0, reals)
         ]
