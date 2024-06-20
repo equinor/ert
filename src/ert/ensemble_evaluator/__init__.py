@@ -3,7 +3,6 @@ from ._builder import (
     EnsembleBuilder,
     ForwardModelStep,
     Realization,
-    RealizationBuilder,
 )
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
@@ -22,7 +21,6 @@ __all__ = (
     "Monitor",
     "PartialSnapshot",
     "Realization",
-    "RealizationBuilder",
     "Snapshot",
     "SnapshotUpdateEvent",
 )
