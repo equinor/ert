@@ -172,12 +172,11 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
         _internalize_batch(ert_config, batch_id, group)
 
 
-def _internalize_batch(ert, batch_id, batch_data):
-    facade = LibresFacade(ert)
+def _internalize_batch(ert_config, batch_id, batch_data):
+    facade = LibresFacade(ert_config)
     batch_name = "batch_{}".format(batch_id)
     batch_size = batch_data.shape[0]
-    ert.addDataKW("<CASE_NAME>", batch_name)
-    with open_storage(ert.enspath, "w") as storage:
+    with open_storage(facade.enspath, "w") as storage:
         file_system = storage.get_ensemble_by_name(batch_name)
         # Everest artificially inflates the ensemble size as it is not possible to
         # add after the fact, therefore a batch is much smaller than the overall
@@ -185,7 +184,7 @@ def _internalize_batch(ert, batch_id, batch_data):
         realizations = [True] * batch_size + [False] * (
             facade.get_ensemble_size() - batch_size
         )
-        ert.load_from_forward_model(file_system, realizations, 0)
+        facade.load_from_forward_model(file_system, realizations, 0)
 
 
 if __name__ == "__main__":

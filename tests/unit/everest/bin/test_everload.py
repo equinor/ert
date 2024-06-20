@@ -14,7 +14,6 @@ from tests.utils import (
     capture_streams,
     create_cached_mocked_test_case,
     relpath,
-    satisfy_type,
     tmpdir,
 )
 
@@ -47,10 +46,11 @@ def get_config(cache_dir):
 
 
 def assertInternalizeCalls(batch_ids, mocked_internalize):
-    for b_id in batch_ids:
-        mocked_internalize.test_assert_called_with(
-            satisfy_type(ErtConfig), b_id, satisfy_type(pd.DataFrame)
-        )
+    for i, b_id in enumerate(batch_ids):
+        config, bid, data = mocked_internalize.call_args_list[i].args
+        assert isinstance(config, ErtConfig)
+        assert isinstance(data, pd.DataFrame)
+        assert bid == b_id
 
 
 def assertBackup(config: EverestConfig):

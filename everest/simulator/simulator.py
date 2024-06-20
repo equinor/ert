@@ -104,7 +104,7 @@ class Simulator(BatchSimulator):
                 dtype=np.bool_,
             )
         )
-        ensemble = []
+        case_data = []
         cached = {}
         assert metadata.config.realizations.names is not None
         realization_ids = [
@@ -126,11 +126,11 @@ class Simulator(BatchSimulator):
                     metadata.config.variables.names, control_values[sim_idx, :]
                 ):
                     self._add_control(controls, control_name, control_value)
-                ensemble.append((real_id, controls))
+                case_data.append((real_id, controls))
 
         with open_storage(self._ert_config.ens_path, "w") as storage:
             sim_context = BatchSimulator.start(
-                self, f"batch_{self._batch}", ensemble, storage
+                self, f"batch_{self._batch}", case_data, storage
             )
             while sim_context.running():
                 time.sleep(0.2)
@@ -138,11 +138,12 @@ class Simulator(BatchSimulator):
 
             # Pre-simulation workflows are run by sim_context, but
             # post-stimulation workflows are not, do it here:
+            ensemble = sim_context.get_ensemble()
             for workflow in self.ert_config.hooked_workflows[
                 HookRuntime.POST_SIMULATION
             ]:
                 WorkflowRunner(
-                    workflow, storage, None, ert_config=self.ert_config
+                    workflow, storage, ensemble, ert_config=self.ert_config
                 ).run_blocking()
 
         for fnc_name, alias in self._function_aliases.items():

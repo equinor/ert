@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 import pandas as pd
 from ert.config import ErtConfig
-from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 from seba_sqlite.snapshot import SebaSnapshot
 
@@ -163,9 +162,8 @@ class EverestDataAPI:
                 self._config, site_config=ErtConfig.read_site_config()
             )
         )
-        facade = LibresFacade(ert_config)
         data_frames = []
-        storage = open_storage(facade.enspath, "r")
+        storage = open_storage(ert_config.ens_path, "r")
         for batch_id in batches:
             summary = storage.get_ensemble_by_name(
                 f"batch_{batch_id}"
