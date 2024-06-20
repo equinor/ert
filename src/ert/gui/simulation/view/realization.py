@@ -34,7 +34,7 @@ class RealizationWidget(QWidget):
         super().__init__(parent)
 
         self._iter = _it
-        self._delegate_size = QSize(70, 70)
+        self._delegate_size = QSize(100, 100)
 
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.IconMode)
@@ -94,20 +94,50 @@ class RealizationDelegate(QStyledItemDelegate):
 
         painter.save()
         painter.setRenderHint(QPainter.TextAntialiasing, True)
+        painter.setRenderHint(QPainter.Antialiasing, True)
 
         if option.state & QStyle.State_Selected:
             selected_color = selected_color.lighter(125)
 
         painter.setBrush(selected_color)
-        painter.drawRect(option.rect)
-
-        painter.setPen(QPen(QColorConstants.Black))
         percentage_done = int(
             (finished_count * 100.0) / (total_count if total_count > 0 else 1)
         )
+
+        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
+
+        first_step = -int(percentage_done * 57.6)
+
+        painter.setBrush(QColor(QColorConstants.LightGray).lighter(120))
+        painter.drawEllipse(adjusted_rect)
+
+        # progress_color = QColorConstants.Blue
+        # progress_color = progress_color.lighter(150)
+
+        pcolor = QColor(5, 183, 250)
+
+        painter.setBrush(pcolor)
+        # painter.setBrush(selected_color)
+
+        if percentage_done != 0:
+            if percentage_done != 100:
+                painter.drawPie(adjusted_rect, int(5760 / 4), first_step)
+            else:
+                painter.drawEllipse(adjusted_rect)
+
+        painter.setBrush(selected_color)
+        # painter.setBrush(QColorConstants.White)
+
+        adjusted_rect = option.rect.adjusted(10, 10, -10, -10)
+        painter.drawEllipse(adjusted_rect)
+
+        painter.setBrush(selected_color)
+
+        painter.setPen(QPen(QColorConstants.Black))
+
         painter.drawText(option.rect, Qt.AlignCenter, f"{percentage_done} %")
-        adj_rect = option.rect.adjusted(2, 1, 0, 0)
-        painter.drawText(adj_rect, Qt.AlignTop, text)
+        adj_rect = option.rect.adjusted(0, 20, 0, 0)
+        painter.drawText(adj_rect, Qt.AlignHCenter, text)
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
