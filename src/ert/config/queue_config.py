@@ -65,8 +65,8 @@ class QueueConfig:
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
         job_script = job_script or "job_dispatch.py"
-        max_submit: int = config_dict.get("MAX_SUBMIT", 1)
-        submit_sleep: float = config_dict.get("SUBMIT_SLEEP", 0.0)
+        max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
+        submit_sleep: float = config_dict.get(ConfigKeys.SUBMIT_SLEEP, 0.0)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
