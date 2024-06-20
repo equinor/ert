@@ -319,6 +319,7 @@ class BaseRunModel:
     ) -> None:
         try:
             self.start_time = int(time.time())
+            self.stop_time = None
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
                 self._initial_realizations_mask = (
