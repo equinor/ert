@@ -48,6 +48,14 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = self.parse_weights(simulation_arguments.weights)
         self.es_settings = es_settings
         self.update_settings = update_settings
+        if simulation_arguments.starting_iteration == 0:
+            # If a regular run we also need to account for the prior
+            number_of_iterations = len(self.weights) + 1
+        else:
+            number_of_iterations = len(
+                self.weights[simulation_arguments.starting_iteration - 1 :]
+            )
+
         super().__init__(
             simulation_arguments,
             config,
@@ -55,7 +63,7 @@ class MultipleDataAssimilation(BaseRunModel):
             queue_config,
             status_queue,
             phase_count=2,
-            number_of_iterations=len(self.weights),
+            number_of_iterations=number_of_iterations,
             start_iteration=simulation_arguments.starting_iteration,
         )
 
