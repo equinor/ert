@@ -4,15 +4,20 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List
 
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel, QLineEdit
+from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import ActiveLabel, AnalysisModuleEdit, EnsembleSelector
+from ert.gui.ertwidgets import (
+    ActiveLabel,
+    AnalysisModuleEdit,
+    EnsembleSelector,
+    StringBox,
+    TextModel,
+)
 from ert.gui.ertwidgets.copyablelabel import CopyableLabel
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert.gui.ertwidgets.stringbox import StringBox
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
@@ -20,6 +25,7 @@ from ert.validation import (
     ProperNameFormatArgument,
     RangeStringArgument,
 )
+from ert.validation.range_string_argument import NotInStorage
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -52,11 +58,17 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout = QFormLayout()
         self.setObjectName("ES_MDA_panel")
 
-        self._experiment_name_field = QLineEdit()
-        self._experiment_name_field.setPlaceholderText("es_mda")
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text=self.notifier.storage.get_unique_experiment_name(
+                ES_MDA_MODE
+            ),
+        )
         self._experiment_name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._experiment_name_field)
-
+        self._experiment_name_field.setValidator(
+            NotInStorage(self.notifier.storage, "experiments")
+        )
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -116,6 +128,18 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
 
         self.setLayout(layout)
+
+        self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    @Slot(ExperimentConfigPanel)
+    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+        if isinstance(w, MultipleDataAssimilationPanel):
+            self._update_experiment_name_placeholder()
+
+    def _update_experiment_name_placeholder(self) -> None:
+        self._experiment_name_field.setPlaceholderText(
+            self.notifier.storage.get_unique_experiment_name(ES_MDA_MODE)
+        )
 
     @Slot()
     def update_experiment_name(self) -> None:
@@ -197,11 +221,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 if self._restart_box.isChecked()
                 else ""
             ),
-            experiment_name=(
-                self._experiment_name_field.text()
-                if self._experiment_name_field.text()
-                else self._experiment_name_field.placeholderText()
-            ),
+            experiment_name=self._experiment_name_field.get_text,
         )
 
     def setWeights(self, weights: Any) -> None:

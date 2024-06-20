@@ -5,7 +5,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
-from unittest.mock import patch
+from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import UUID
 
 import hypothesis.strategies as st
@@ -336,6 +336,38 @@ def test_remove_and_add_response_from_storage(
     gen_data_ds.to_netcdf(prior_ens._path / "gen_data.nc")
     resp = prior_ens.load_responses("SNAKE_OIL_GPR_DIFF")
     assert resp.equals(gpr_diff_ds)
+
+
+def test_get_unique_experiment_name(snake_oil_storage):
+    with patch(
+        "ert.storage.local_storage.LocalStorage.experiments", new_callable=PropertyMock
+    ) as experiments:
+        # Its not possible to do MagicMock(name="experiment_name") therefore the workaround below
+        names = [
+            "experiment",
+            "experiment_1",
+            "experiment_8",
+            "_d_e_",
+            "___name__0___",
+            "__name__1",
+            "default",
+        ]
+        experiment_list = [MagicMock() for _ in range(len(names))]
+        for k, v in zip(experiment_list, names):
+            k.name = v
+        experiments.return_value = experiment_list
+
+        assert snake_oil_storage.get_unique_experiment_name("_d_e_") == "_d_e__0"
+        assert (
+            snake_oil_storage.get_unique_experiment_name("experiment") == "experiment_9"
+        )
+        assert (
+            snake_oil_storage.get_unique_experiment_name("___name__0___")
+            == "___name__0____0"
+        )
+        assert snake_oil_storage.get_unique_experiment_name("name") == "name"
+        assert snake_oil_storage.get_unique_experiment_name("__name__") == "__name__"
+        assert snake_oil_storage.get_unique_experiment_name("") == "default_0"
 
 
 parameter_configs = st.lists(

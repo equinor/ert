@@ -48,7 +48,7 @@ class RangeStringArgument(ArgumentDefinition):
         return validation_status
 
 
-class NotInStorage:
+class NotInStorage(ArgumentDefinition):
     def __init__(self, storage: Storage, prop: str) -> None:
         self.storage = storage
         self.prop = prop

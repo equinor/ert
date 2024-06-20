@@ -112,7 +112,7 @@ class StorageWidget(QWidget):
             self.onSelectRealization.emit(ensemble, cls.realization)
 
     def _addItem(self) -> None:
-        create_experiment_dialog = CreateExperimentDialog(parent=self)
+        create_experiment_dialog = CreateExperimentDialog(self._notifier, parent=self)
         create_experiment_dialog.show()
         if create_experiment_dialog.exec_():
             ensemble = self._notifier.storage.create_experiment(

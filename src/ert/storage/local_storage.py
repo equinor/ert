@@ -491,6 +491,37 @@ class LocalStorage(BaseMode):
             )
             raise e
 
+    def get_unique_experiment_name(self, experiment_name: str) -> str:
+        """
+        Get a unique experiment name
+
+        If an experiment with the given name exists an _0 is appended
+        or _n+1 where n is the the largest postfix found for the given experiment name
+        """
+        if not experiment_name:
+            return self.get_unique_experiment_name("default")
+
+        if experiment_name not in [e.name for e in self.experiments]:
+            return experiment_name
+
+        if (
+            len(
+                same_prefix := [
+                    e.name
+                    for e in self.experiments
+                    if e.name.startswith(experiment_name + "_")
+                ]
+            )
+            > 0
+        ):
+            return (
+                experiment_name
+                + "_"
+                + str(max(int(e[e.rfind("_") + 1 :]) for e in same_prefix) + 1)
+            )
+        else:
+            return experiment_name + "_0"
+
 
 def _storage_version(path: Path) -> Optional[int]:
     if not path.exists():
