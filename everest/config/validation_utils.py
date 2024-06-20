@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from everest.config.install_data_config import InstallDataConfig
 from everest.util.forward_models import (
     collect_forward_model_schemas,
+    lint_forward_model_job,
     parse_forward_model_file,
 )
 
@@ -180,24 +181,36 @@ def validate_forward_model_configs(
     install_jobs = install_jobs or []
     user_defined_jobs = [job.name for job in install_jobs]
 
-    def _job_config_path():
-        for i, arg in enumerate(args):
-            if arg in ["-c", "--config"]:
-                if i + 1 >= len(args):
-                    return None
-                return args[i + 1]
+    def _job_config_index(*args):
+        return next(
+            (
+                i
+                for i, arg in enumerate(args)
+                if arg in ["-c", "--config"] and i + 1 < len(args)
+            ),
+            None,
+        )
 
     job_schemas = collect_forward_model_schemas()
 
     for command in forward_model:
         job, *args = command.split()
-        if job in user_defined_jobs:
+        if (
+            job in user_defined_jobs
+            or not args
+            or args[0] == "schema"
+            or (schema := job_schemas.get(job)) is None
+        ):
             continue
-        path = _job_config_path()
-        schema = job_schemas.get(job)
-        if schema is None:
-            continue
-        if path is None:
+
+        if (index := _job_config_index(*args)) is None:
             raise ValueError(f"No config file specified for job {job}")
+
+        if args[0] in ("run", "lint") and (
+            errors := lint_forward_model_job(job, args[index : index + 2])
+        ):
+            raise ValueError("\n\t".join(errors))
+
+        path = args[index + 1]
         message = f"{job = }\t-c/--config = {path}\n\t\t{{error}}"
         parse_forward_model_file(path, schema, message)

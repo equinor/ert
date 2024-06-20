@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Type, TypeVar
+from typing import List, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -15,6 +15,10 @@ def collect_forward_models():
 
 def collect_forward_model_schemas():
     return pm.hook.get_forward_models_schemas().pop()
+
+
+def lint_forward_model_job(job: str, args) -> List[str]:
+    return pm.hook.lint_forward_model(job=job, args=args).pop()
 
 
 def parse_forward_model_file(path: str, schema: Type[T], message: str) -> T:
