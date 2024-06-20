@@ -55,7 +55,6 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
         target_ensemble="smooth_%d",
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
     )
     test_class = EnsembleSmoother(
@@ -92,7 +91,6 @@ def test_hook_call_order_es_mda(monkeypatch):
         prior_ensemble_id="",
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=False,
         experiment_name="no-name",
         starting_iteration=0,
     )
@@ -143,7 +141,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         num_retries_per_iter=1,
         minimum_required_realizations=0,
         ensemble_size=1,
-        stop_long_running=True,
         experiment_name="no-name",
     )
     test_class = IteratedEnsembleSmoother(

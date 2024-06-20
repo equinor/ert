@@ -11,6 +11,7 @@ from ert.config import (
     QueueConfig,
     QueueSystem,
 )
+from ert.config.parsing import ConfigKeys
 from ert.job_queue import Driver
 
 
@@ -18,6 +19,15 @@ def test_create_local_copy_is_a_copy_with_local_queue_system():
     queue_config = QueueConfig(queue_system=QueueSystem.LSF)
     assert queue_config.queue_system == QueueSystem.LSF
     assert queue_config.create_local_copy().queue_system == QueueSystem.LOCAL
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_stop_long_running_is_set_from_corresponding_keyword(value):
+    assert (
+        QueueConfig.from_dict({ConfigKeys.STOP_LONG_RUNNING: value}).stop_long_running
+        == value
+    )
+    assert QueueConfig(stop_long_running=value).stop_long_running == value
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

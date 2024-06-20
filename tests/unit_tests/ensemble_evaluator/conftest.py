@@ -146,7 +146,7 @@ def make_ensemble_builder(queue_config):
         ecl_config = Mock()
         ecl_config.assert_restart = Mock()
 
-        builder.set_legacy_dependencies(queue_config, False, 0)
+        builder.set_legacy_dependencies(queue_config, 0)
         builder.set_id("0")
         return builder
 

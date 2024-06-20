@@ -561,7 +561,6 @@ class BaseRunModel:
     ) -> EEEnsemble:
         builder = EnsembleBuilder().set_legacy_dependencies(
             self._queue_config,
-            self._simulation_arguments.stop_long_running,
             self.minimum_required_realizations,
         )
 

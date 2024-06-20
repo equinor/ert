@@ -38,7 +38,6 @@ class AnalysisConfig:
         self,
         alpha: float = 3.0,
         std_cutoff: float = 1e-6,
-        stop_long_running: bool = False,
         max_runtime: int = 0,
         min_realization: int = 0,
         update_log_path: Union[str, Path] = "update_log",
@@ -47,7 +46,6 @@ class AnalysisConfig:
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
-        self._stop_long_running = stop_long_running
         self._alpha = alpha
         self._std_cutoff = std_cutoff
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
@@ -200,7 +198,6 @@ class AnalysisConfig:
         config = cls(
             alpha=config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
-            stop_long_running=config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
@@ -228,10 +225,6 @@ class AnalysisConfig:
     @property
     def std_cutoff(self) -> float:
         return self._std_cutoff
-
-    @property
-    def stop_long_running(self) -> bool:
-        return self._stop_long_running
 
     @property
     def max_runtime(self) -> Optional[int]:
@@ -265,7 +258,6 @@ class AnalysisConfig:
         return (
             "AnalysisConfig("
             f"alpha={self._alpha}, "
-            f"stop_long_running={self._stop_long_running}, "
             f"max_runtime={self._max_runtime}, "
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
@@ -280,9 +272,6 @@ class AnalysisConfig:
             return False
 
         if self.max_runtime != other.max_runtime:
-            return False
-
-        if self.stop_long_running != other.stop_long_running:
             return False
 
         if self.observation_settings != other.observation_settings:

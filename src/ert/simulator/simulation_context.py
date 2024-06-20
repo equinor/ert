@@ -74,7 +74,7 @@ async def _submit_and_run_jobqueue(
             job_queue.set_realization(realization)
 
     required_realizations = 0
-    if ert_config.analysis_config.stop_long_running:
+    if ert_config.queue_config.stop_long_running:
         required_realizations = ert_config.analysis_config.minimum_required_realizations
     with contextlib.suppress(asyncio.CancelledError):
         await job_queue.execute(required_realizations)
