@@ -17,96 +17,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  build-test-cmake:
-    name: Run C++ tests and coverage
-    timeout-minutes: 10
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['ubuntu-latest']
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y clang-tidy
-
-    - uses: actions/setup-python@v5
-      id: setup_python
-      with:
-        python-version: '3.12'
-
-    - uses: actions/cache@v4
-      with:
-        path: ~/.conan/
-        key: ${{ matrix.os }}-conan-${{ hashFiles('**/CMakeLists.txt') }}
-
-    - name: Install dependencies from PyPI
-      run: |
-        python3 -m pip install "conan<2" pybind11 resdata
-        echo "PIP_PKGS_PATH=$(python3 -m pip show conan | grep Location | cut -d ' ' -f 2 | sed -e 's@/lib/.*site-packages$@/bin@')" >> "$GITHUB_ENV"
-
-    - name: Build ert clib
-      run: |
-        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
-        mkdir cmake-build
-        cmake -S src/clib -B cmake-build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        cmake --build cmake-build "-j$(nproc)"
-
-    - name: find changed cpp files
-      id: find_changed_files
-      run: echo "changed_files=$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' | xargs ls -d 2>/dev/null | grep -E '\.(hpp|cpp)$' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
-
-    - run: echo ::add-matcher::.github/clang-tidy-matcher.json
-
-    - name: run clang-tidy
-      run: clang-tidy -p cmake-build/ ${{steps.find_changed_files.outputs.changed_files}}
-      if: steps.find_changed_files.outputs.changed_files != ''
-
-    - name: Run tests
-      run: |
-        cd cmake-build
-        export PATH=$PWD/bin:$PATH
-        ctest --output-on-failure
-
-    - name: Install gcovr
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        python3 -m pip install gcovr
-
-    - name: generate coverage report
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        export PATH=$PATH:${{ env.PIP_PKGS_PATH }}
-        gcovr -r src/clib/ --gcov-ignore-parse-errors=negative_hits.warn --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
-
-    - name: Upload c coverage to Codecov
-      uses: codecov/codecov-action@v4
-      id: codecov1
-      if: matrix.os == 'ubuntu-latest'
-      continue-on-error: true
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
-        files: cov.xml
-    - name: codecov retry sleep
-      if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
-      run: |
-        sleep 30
-    - name: Codecov retry
-      uses: codecov/codecov-action@v4
-      if: matrix.os == 'ubuntu-latest' && steps.codecov1.outcome == 'failure'
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: cov.xml
-        fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
-
   build-linux:
     strategy:
       fail-fast: false
@@ -277,7 +187,7 @@ jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-test-cmake, test-linux, test-mac-for-tags, docs-ert]
+    needs: [test-linux, test-mac-for-tags, docs-ert]
     permissions:
       id-token: write
 

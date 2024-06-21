@@ -29,7 +29,7 @@ def run_cli_ES_with_case(poly_config):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     set_adaptive_localization_1 = dedent(
         """
@@ -59,7 +59,7 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     """
     Note that "RANDOM_SEED" in both ert configs needs to be the same to obtain
@@ -97,7 +97,7 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_generalized_variance_increases_in_cutoff():
     rng = np.random.default_rng(42)
     cutoff1 = rng.uniform(0, 1)

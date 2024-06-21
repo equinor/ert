@@ -6,7 +6,6 @@ from websockets.server import serve
 
 from _ert.async_utils import get_running_loop
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
-from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
 
 
@@ -38,7 +37,6 @@ async def test_happy_path(
     make_ensemble,
     queue_config,
     monkeypatch,
-    using_scheduler,
 ):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
@@ -49,12 +47,9 @@ async def test_happy_path(
 
     ensemble = make_ensemble(monkeypatch, tmpdir, 1, 1)
 
-    if using_scheduler:
-        queue = Scheduler(
-            create_driver(queue_config), ensemble.reals, ee_uri=url, ens_id="ee_0"
-        )
-    else:
-        queue = JobQueue(queue_config, ensemble.reals, ee_uri=url, ens_id="ee_0")
+    queue = Scheduler(
+        create_driver(queue_config), ensemble.reals, ee_uri=url, ens_id="ee_0"
+    )
 
     await queue.execute()
 

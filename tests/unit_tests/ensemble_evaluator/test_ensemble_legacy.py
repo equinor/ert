@@ -1,6 +1,6 @@
 import contextlib
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from websockets.exceptions import ConnectionClosed
@@ -9,13 +9,10 @@ from ert.config import QueueConfig
 from ert.ensemble_evaluator import Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert.job_queue.queue import JobQueue
 from ert.scheduler import Scheduler
-from ert.shared.feature_toggling import FeatureScheduler
 
 
 @pytest.mark.timeout(60)
-@pytest.mark.usefixtures("using_scheduler")
 def test_run_legacy_ensemble(tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop):
     num_reals = 2
     custom_port_range = range(1024, 65535)
@@ -53,7 +50,6 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble, monkeypatch, run_monitor_in_
 
 
 @pytest.mark.timeout(60)
-@pytest.mark.usefixtures("using_scheduler")
 def test_run_and_cancel_legacy_ensemble(
     tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop
 ):
@@ -104,52 +100,10 @@ def test_run_and_cancel_legacy_ensemble(
             assert not os.path.isfile(f"real_{i}/status.txt")
 
 
-@pytest.mark.timeout(10)
-def test_run_legacy_ensemble_with_bare_exception(
-    tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop
-):
-    """This test function is not ported to Scheduler, as it will not
-    catch general exceptions."""
-    monkeypatch.setattr(FeatureScheduler, "_value", False)
-    num_reals = 2
-    custom_port_range = range(1024, 65535)
-    with tmpdir.as_cwd():
-        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
-        config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range,
-            custom_host="127.0.0.1",
-            use_token=False,
-            generate_cert=False,
-        )
-        evaluator = EnsembleEvaluator(ensemble, config, 0)
-
-        with patch.object(JobQueue, "add_realization") as faulty_queue:
-            faulty_queue.side_effect = RuntimeError()
-            evaluator.start_running()
-
-            async def _run_monitor():
-                async with Monitor(config) as monitor:
-                    async for e in monitor.track():
-                        if e.data is not None and e.data.get(identifiers.STATUS) in [
-                            state.ENSEMBLE_STATE_FAILED,
-                            state.ENSEMBLE_STATE_STOPPED,
-                        ]:
-                            await monitor.signal_done()
-                return True
-
-            run_monitor_in_loop(_run_monitor)
-            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
-
-        # realisations should not finish, thus not creating a status-file
-        for i in range(num_reals):
-            assert not os.path.isfile(f"real_{i}/status.txt")
-
-
 async def test_queue_config_properties_propagated_to_scheduler(
     tmpdir, make_ensemble, monkeypatch
 ):
     num_reals = 1
-    monkeypatch.setattr(FeatureScheduler, "_value", True)
     mocked_scheduler = MagicMock()
     mocked_scheduler.__class__ = Scheduler
     monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)

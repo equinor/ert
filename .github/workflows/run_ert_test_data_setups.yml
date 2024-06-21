@@ -49,7 +49,6 @@ jobs:
       run: |
         pushd test-data/poly_example
         ert test_run poly.ert
-        ert test_run --enable-scheduler poly.ert
         popd
 
     - name: Test snake_oil
