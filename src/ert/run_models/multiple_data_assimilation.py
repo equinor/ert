@@ -33,7 +33,6 @@ class MultipleDataAssimilation(BaseRunModel):
     """
 
     default_weights = "4, 2, 1"
-    simulation_arguments: ESMDARunArguments
 
     def __init__(
         self,

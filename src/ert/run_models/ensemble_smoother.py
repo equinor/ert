@@ -28,8 +28,6 @@ logger = logging.getLogger(__file__)
 
 
 class EnsembleSmoother(BaseRunModel):
-    simulation_arguments: ESRunArguments
-
     def __init__(
         self,
         simulation_arguments: ESRunArguments,

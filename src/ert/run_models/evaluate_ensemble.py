@@ -31,8 +31,6 @@ class EvaluateEnsemble(BaseRunModel):
     reflect any changes to the user configuration on disk.
     """
 
-    simulation_arguments: EvaluateEnsembleRunArguments
-
     def __init__(
         self,
         simulation_arguments: EvaluateEnsembleRunArguments,
