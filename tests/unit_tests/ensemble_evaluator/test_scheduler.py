@@ -12,7 +12,7 @@ from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 @pytest.mark.timeout(60)
 def test_scheduler_receives_checksum_and_waits_for_disk_sync(
-    tmpdir, make_ensemble_builder, monkeypatch, caplog, run_monitor_in_loop
+    tmpdir, make_ensemble, monkeypatch, caplog, run_monitor_in_loop
 ):
     num_reals = 1
     custom_port_range = range(1024, 65535)
@@ -44,7 +44,7 @@ def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         return True
 
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(monkeypatch, tmpdir, num_reals, 2).build()
+        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
 
         # Creating testing manifest file
         with open("real_0/manifest.json", mode="w", encoding="utf-8") as f:

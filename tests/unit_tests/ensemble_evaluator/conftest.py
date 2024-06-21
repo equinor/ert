@@ -12,6 +12,7 @@ import ert.ensemble_evaluator
 from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_file
+from ert.ensemble_evaluator._builder._legacy import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
@@ -65,7 +66,7 @@ def queue_config_fixture():
 
 
 @pytest.fixture
-def make_ensemble_builder(queue_config):
+def make_ensemble(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
         monkeypatch.setattr(
             ert.job_queue.job_queue_node,
@@ -77,7 +78,6 @@ def make_ensemble_builder(queue_config):
             "forward_model_ok",
             lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
         )
-        builder = ert.ensemble_evaluator.EnsembleBuilder(queue_config, 0, "0")
         with tmpdir.as_cwd():
             forward_model_list = []
             for job_index in range(0, num_jobs):
@@ -105,7 +105,7 @@ def make_ensemble_builder(queue_config):
                         str(forward_model_config), name=f"forward_model_{job_index}"
                     )
                 )
-
+            realizations = []
             for iens in range(0, num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")
                 os.mkdir(run_path)
@@ -123,7 +123,7 @@ def make_ensemble_builder(queue_config):
                         f,
                     )
 
-                builder.add_realization(
+                realizations.append(
                     ert.ensemble_evaluator.Realization(
                         active=True,
                         iens=iens,
@@ -145,7 +145,13 @@ def make_ensemble_builder(queue_config):
         ecl_config = Mock()
         ecl_config.assert_restart = Mock()
 
-        return builder
+        return LegacyEnsemble(
+            realizations,
+            {},
+            queue_config,
+            0,
+            "0",
+        )
 
     return _make_ensemble_builder
 

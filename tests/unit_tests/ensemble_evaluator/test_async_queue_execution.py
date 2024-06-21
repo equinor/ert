@@ -35,7 +35,7 @@ async def mock_ws(host, port, done):
 async def test_happy_path(
     tmpdir,
     unused_tcp_port,
-    make_ensemble_builder,
+    make_ensemble,
     queue_config,
     monkeypatch,
     using_scheduler,
@@ -47,7 +47,7 @@ async def test_happy_path(
     mock_ws_task = get_running_loop().create_task(mock_ws(host, unused_tcp_port, done))
     await wait_for_evaluator(base_url=url, timeout=5)
 
-    ensemble = make_ensemble_builder(monkeypatch, tmpdir, 1, 1).build()
+    ensemble = make_ensemble(monkeypatch, tmpdir, 1, 1)
 
     if using_scheduler:
         queue = Scheduler(

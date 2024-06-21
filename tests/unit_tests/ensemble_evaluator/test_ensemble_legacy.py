@@ -16,13 +16,11 @@ from ert.shared.feature_toggling import FeatureScheduler
 
 @pytest.mark.timeout(60)
 @pytest.mark.usefixtures("using_scheduler")
-def test_run_legacy_ensemble(
-    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
-):
+def test_run_legacy_ensemble(tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(monkeypatch, tmpdir, num_reals, 2).build()
+        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
         config = EvaluatorServerConfig(
             custom_port_range=custom_port_range,
             custom_host="127.0.0.1",
@@ -57,14 +55,12 @@ def test_run_legacy_ensemble(
 @pytest.mark.timeout(60)
 @pytest.mark.usefixtures("using_scheduler")
 def test_run_and_cancel_legacy_ensemble(
-    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
+    tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop
 ):
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(
-            monkeypatch, tmpdir, num_reals, 2, job_sleep=40
-        ).build()
+        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2, job_sleep=40)
         config = EvaluatorServerConfig(
             custom_port_range=custom_port_range,
             custom_host="127.0.0.1",
@@ -110,7 +106,7 @@ def test_run_and_cancel_legacy_ensemble(
 
 @pytest.mark.timeout(10)
 def test_run_legacy_ensemble_with_bare_exception(
-    tmpdir, make_ensemble_builder, monkeypatch, run_monitor_in_loop
+    tmpdir, make_ensemble, monkeypatch, run_monitor_in_loop
 ):
     """This test function is not ported to Scheduler, as it will not
     catch general exceptions."""
@@ -118,7 +114,7 @@ def test_run_legacy_ensemble_with_bare_exception(
     num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(monkeypatch, tmpdir, num_reals, 2).build()
+        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
         config = EvaluatorServerConfig(
             custom_port_range=custom_port_range,
             custom_host="127.0.0.1",
@@ -150,14 +146,14 @@ def test_run_legacy_ensemble_with_bare_exception(
 
 
 async def test_queue_config_properties_propagated_to_scheduler(
-    tmpdir, make_ensemble_builder, monkeypatch
+    tmpdir, make_ensemble, monkeypatch
 ):
     num_reals = 1
     monkeypatch.setattr(FeatureScheduler, "_value", True)
     mocked_scheduler = MagicMock()
     mocked_scheduler.__class__ = Scheduler
     monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)
-    ensemble = make_ensemble_builder(monkeypatch, tmpdir, num_reals, 2).build()
+    ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
     ensemble._config = MagicMock()
     ensemble._job_queue = mocked_scheduler
 
