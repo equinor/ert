@@ -4,13 +4,11 @@ import sys
 from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
-from ert.config import ErtConfig
 from ert.storage import open_storage
 from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig
-from everest.simulator.everest2res import everest2res
 from everest.strings import STORAGE_DIR
 
 if sys.version_info < (3, 11):
@@ -157,15 +155,11 @@ def _metadata(config: EverestConfig):
 
 
 def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] = None):
-    ert_config = ErtConfig.from_dict(
-        everest2res(config, site_config=ErtConfig.read_site_config())
-    )
     if batch_ids is None:
         metadata = _metadata(config)
         batch_ids = {data[MetaDataColumnNames.BATCH] for data in metadata}
-
     internal_keys: Set = set()
-    with open_storage(ert_config.ens_path, "r") as storage:
+    with open_storage(config.storage_dir, "r") as storage:
         for batch_id in batch_ids:
             ensemble = storage.get_ensemble_by_name("batch_{}".format(batch_id))
             if not internal_keys:
