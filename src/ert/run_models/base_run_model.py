@@ -34,7 +34,6 @@ from ert.analysis.event import (
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import (
-    EnsembleBuilder,
     EnsembleEvaluator,
     EvaluatorServerConfig,
     Monitor,
@@ -65,6 +64,7 @@ from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 
+from ..ensemble_evaluator._builder._legacy import LegacyEnsemble
 from ..job_queue import WorkflowRunner
 from .event import (
     RunModelDataEvent,
@@ -545,14 +545,9 @@ class BaseRunModel:
         self,
         run_context: RunContext,
     ) -> EEEnsemble:
-        builder = EnsembleBuilder(
-            self._queue_config,
-            self.minimum_required_realizations,
-            str(uuid.uuid1()).split("-", maxsplit=1)[0],
-        )
-
+        realizations = []
         for iens, run_arg in enumerate(run_context):
-            builder.add_realization(
+            realizations.append(
                 Realization(
                     active=run_context.is_active(iens),
                     iens=iens,
@@ -563,7 +558,13 @@ class BaseRunModel:
                     job_script=self.ert_config.queue_config.job_script,
                 )
             )
-        return builder.build()
+        return LegacyEnsemble(
+            realizations,
+            {},
+            self._queue_config,
+            self.minimum_required_realizations,
+            str(run_context.ensemble.experiment.id),
+        )
 
     @property
     def paths(self) -> List[str]:

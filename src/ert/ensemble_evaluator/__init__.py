@@ -1,6 +1,5 @@
 from ._builder import (
     Ensemble,
-    EnsembleBuilder,
     ForwardModelStep,
     Realization,
 )
@@ -13,7 +12,6 @@ from .snapshot import PartialSnapshot, Snapshot
 __all__ = (
     "EndEvent",
     "Ensemble",
-    "EnsembleBuilder",
     "EnsembleEvaluator",
     "EvaluatorServerConfig",
     "ForwardModelStep",
