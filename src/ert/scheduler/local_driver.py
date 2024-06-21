@@ -55,7 +55,11 @@ class LocalDriver(Driver):
             raise err
 
     async def finish(self) -> None:
-        await asyncio.gather(*self._tasks.values())
+        results = await asyncio.gather(*self._tasks.values(), return_exceptions=True)
+        for result in results:
+            if isinstance(result, Exception):
+                logger.error(f"Exception in LocalDriver: {result}")
+                raise result
         logger.info("All realization tasks finished")
 
     async def _run(self, iens: int, executable: str, /, *args: str) -> None:
@@ -79,7 +83,7 @@ class LocalDriver(Driver):
 
         await self.event_queue.put(StartedEvent(iens=iens))
 
-        returncode = 0
+        returncode = 1
         try:
             returncode = await self._wait(proc)
             logger.info(f"Realization {iens} finished with {returncode=}")

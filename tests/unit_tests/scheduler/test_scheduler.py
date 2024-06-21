@@ -17,6 +17,7 @@ from ert.ensemble_evaluator import Realization
 from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
+from ert.scheduler.job import State
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -387,6 +388,27 @@ async def test_is_active(mock_driver, realization):
     assert sch.is_active()
     await execute_task
     assert not sch.is_active()
+
+
+@pytest.mark.timeout(6)
+async def test_job_exception_correctly_propagates(mock_driver, realization, caplog):
+    pre = asyncio.Event()
+
+    async def wait(iens):
+        nonlocal pre
+        pre.set()
+        raise RuntimeError("Job submission failed!")
+
+    driver = mock_driver(wait=wait)
+    sch = scheduler.Scheduler(driver, [realization])
+
+    execute_task = asyncio.create_task(sch.execute())
+    await asyncio.wait_for(pre.wait(), timeout=1)
+    with pytest.raises(RuntimeError, match="Job submission failed!"):
+        await execute_task
+
+    assert sch._jobs[0].state == State.FAILED
+    assert "Exception in LocalDriver: Job submission failed!" in caplog.text
 
 
 @pytest.mark.timeout(6)
