@@ -88,9 +88,10 @@ def _setup_single_test_run(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> SingleTestRun:
-    experiment_name = args.experiment_name
-    if experiment_name is None:
-        experiment_name = "single-test-run"
+    experiment_name = (
+        "single-test-run" if args.experiment_name is None else args.experiment_name
+    )
+
     return SingleTestRun(
         SingleTestRunArguments(
             random_seed=config.random_seed,
@@ -165,7 +166,6 @@ def _setup_evaluate_ensemble(
             ensemble_id=args.ensemble_id,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
-            experiment_name=None,
         ),
         config,
         storage,
@@ -262,6 +262,7 @@ def _setup_iterative_ensemble_smoother(
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> IteratedEnsembleSmoother:
+    experiment_name = "ies" if args.experiment_name is None else args.experiment_name
     return IteratedEnsembleSmoother(
         SIESRunArguments(
             random_seed=config.random_seed,
@@ -273,7 +274,7 @@ def _setup_iterative_ensemble_smoother(
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             num_retries_per_iter=config.analysis_config.num_retries_per_iter,
-            experiment_name=args.experiment_name,
+            experiment_name=experiment_name,
         ),
         config,
         storage,
