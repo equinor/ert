@@ -548,6 +548,7 @@ class BaseRunModel:
         builder = EnsembleBuilder(
             self._queue_config,
             self.minimum_required_realizations,
+            str(uuid.uuid1()).split("-", maxsplit=1)[0],
         )
 
         for iens, run_arg in enumerate(run_context):
@@ -562,7 +563,7 @@ class BaseRunModel:
                     job_script=self.ert_config.queue_config.job_script,
                 )
             )
-        return builder.set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0]).build()
+        return builder.build()
 
     @property
     def paths(self) -> List[str]:

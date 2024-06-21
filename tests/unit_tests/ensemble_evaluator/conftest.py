@@ -77,7 +77,7 @@ def make_ensemble_builder(queue_config):
             "forward_model_ok",
             lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
         )
-        builder = ert.ensemble_evaluator.EnsembleBuilder(queue_config, 0)
+        builder = ert.ensemble_evaluator.EnsembleBuilder(queue_config, 0, "0")
         with tmpdir.as_cwd():
             forward_model_list = []
             for job_index in range(0, num_jobs):
@@ -145,7 +145,6 @@ def make_ensemble_builder(queue_config):
         ecl_config = Mock()
         ecl_config.assert_restart = Mock()
 
-        builder.set_id("0")
         return builder
 
     return _make_ensemble_builder
