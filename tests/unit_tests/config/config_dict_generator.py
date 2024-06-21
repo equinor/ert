@@ -13,7 +13,6 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
-from ert import _clib
 from ert.config import (
     QueueSystem,
     queue_bool_options,
@@ -25,7 +24,11 @@ from ert.config import (
 from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
-from ert.config.queue_config import OPENPBS_DRIVER_OPTIONS
+from ert.config.queue_config import (
+    LSF_DRIVER_OPTIONS,
+    OPENPBS_DRIVER_OPTIONS,
+    SLURM_DRIVER_OPTIONS,
+)
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
@@ -121,9 +124,9 @@ memory_with_unit = {
 def valid_queue_options(queue_system: str):
     valids = ["MAX_RUNNING"]
     if queue_system == QueueSystem.LSF.name:
-        valids += _clib.lsf_driver.LSF_DRIVER_OPTIONS
+        valids += LSF_DRIVER_OPTIONS
     elif queue_system == QueueSystem.SLURM.name:
-        valids += _clib.slurm_driver.SLURM_DRIVER_OPTIONS
+        valids += SLURM_DRIVER_OPTIONS
     elif queue_system == QueueSystem.TORQUE.name:
         valids += OPENPBS_DRIVER_OPTIONS
     return valids
