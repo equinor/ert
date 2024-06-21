@@ -137,7 +137,7 @@ class EnsembleEvaluator:
             with self._snapshot_mutex:
                 max_memory_usage = -1
                 for job in self.ensemble.snapshot.get_all_forward_models().values():
-                    memory_usage = job[ids.MAX_MEMORY_USAGE] or "-1"
+                    memory_usage = job.get(ids.MAX_MEMORY_USAGE) or "-1"
                     max_memory_usage = max(int(memory_usage), max_memory_usage)
                 logger.info(
                     f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"

@@ -469,7 +469,7 @@ class SnapshotModel(QAbstractItemModel):
             data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: Optional[str] = data[data_name]
+                _bytes: Optional[str] = data.get(data_name)
                 if _bytes:
                     return byte_with_unit(float(_bytes))
 
@@ -477,10 +477,12 @@ class SnapshotModel(QAbstractItemModel):
                 return "OPEN" if data_name in node.data else QVariant()
 
             if data_name in [DURATION]:
-                start_time = node.data[ids.START_TIME]
+                start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
                     return QVariant()
-                delta = _estimate_duration(start_time, end_time=node.data[ids.END_TIME])
+                delta = _estimate_duration(
+                    start_time, end_time=node.data.get(ids.END_TIME)
+                )
                 # There is no method for truncating microseconds, so we remove them
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
@@ -490,7 +492,7 @@ class SnapshotModel(QAbstractItemModel):
                 COLOR_RUNNING
                 in real.data.forward_model_step_status_color_by_id.values()
             ):
-                return node.data[data_name]
+                return node.data.get(data_name)
 
             # if queue system status is WAIT, jobs should indicate WAIT
             if (
@@ -500,7 +502,7 @@ class SnapshotModel(QAbstractItemModel):
                 == COLOR_PENDING
             ):
                 return str("Waiting")
-            return node.data[data_name]
+            return node.data.get(data_name)
 
         if role == FileRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
@@ -517,12 +519,12 @@ class SnapshotModel(QAbstractItemModel):
             data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None
             if data_name == ids.ERROR:
-                data = node.data[ids.ERROR]
+                data = node.data.get(ids.ERROR)
             elif data_name == DURATION:
-                start_time = node.data[ids.START_TIME]
+                start_time = node.data.get(ids.START_TIME)
                 if start_time is not None:
                     delta = _estimate_duration(
-                        start_time, end_time=node.data[ids.END_TIME]
+                        start_time, end_time=node.data.get(ids.END_TIME)
                     )
                     data = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
             if data is not None:
