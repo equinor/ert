@@ -92,6 +92,8 @@ class RealizationDelegate(QStyledItemDelegate):
             index.data(RealJobColorHint)
         )
 
+        progress_color = QColor(50, 173, 230)
+
         painter.save()
         painter.setRenderHint(QPainter.TextAntialiasing, True)
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -110,9 +112,11 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawEllipse(adjusted_rect)
 
         if 0 < percentage_done < 100:
-            painter.setBrush(QColor(5, 183, 250))
+            painter.setBrush(progress_color)
             painter.drawPie(adjusted_rect, 1440, progressed_step)
         else:
+            if percentage_done == 100:
+                painter.setBrush(progress_color)
             painter.drawEllipse(adjusted_rect)
 
         painter.setBrush(selected_color)
