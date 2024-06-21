@@ -1294,7 +1294,8 @@ class LocalEnsemble(BaseMode):
         if key is None:
             for response_key in self.experiment.response_configuration:
                 self.unify_responses(response_key)
-                key = response_key
+
+            return None
 
         gen_data_keys = {
             k
