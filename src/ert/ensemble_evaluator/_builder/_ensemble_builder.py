@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
 
 from typing_extensions import Self
@@ -16,15 +17,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class EnsembleBuilder:
-    def __init__(self) -> None:
-        self._reals: List[Realization] = []
-        self._size: int = 0
-        self.queue_config: Optional["QueueConfig"] = None
-        self.num_required_realizations = 0
-        self._custom_port_range: Optional[range] = None
-        self._max_running = 10000
-        self._id: Optional[str] = None
+    queue_config: QueueConfig
+    num_required_realizations: int
+    _reals: List[Realization] = field(default_factory=list)
+    _size: int = 0
+    _custom_port_range: Optional[range] = None
+    _max_running = 10000
+    _id: Optional[str] = None
 
     def add_realization(self, real: Realization) -> Self:
         self._reals.append(real)
@@ -34,15 +35,6 @@ class EnsembleBuilder:
         """Duplicate the ensemble members that existed at build time so as to
         get the desired state."""
         self._size = size
-        return self
-
-    def set_legacy_dependencies(
-        self,
-        queue_config: QueueConfig,
-        num_required_realizations: int,
-    ) -> Self:
-        self.queue_config = queue_config
-        self.num_required_realizations = num_required_realizations
         return self
 
     def set_custom_port_range(self, custom_port_range: range) -> Self:

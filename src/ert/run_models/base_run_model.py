@@ -545,7 +545,7 @@ class BaseRunModel:
         self,
         run_context: RunContext,
     ) -> EEEnsemble:
-        builder = EnsembleBuilder().set_legacy_dependencies(
+        builder = EnsembleBuilder(
             self._queue_config,
             self.minimum_required_realizations,
         )
