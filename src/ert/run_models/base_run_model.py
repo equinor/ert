@@ -147,15 +147,9 @@ class BaseRunModel:
         minimum_required_realizations: int = 0,
     ):
         """
-
-        Parameters
-        ----------
-        simulation_arguments : Parameters for running the experiment,
-            eg. activate realizations, analysis module
-        queue_config : QueueConfig
-        phase_count : Optional[int], optional
-            Number of data assimilation cycles / iterations an experiment will have,
-            by default 1
+        BaseRunModel serves as the base class for the various experiment modes,
+        and contains logic for interacting with the Ensemble Evaluator by running
+        the forward model and passing events back through the supplied queue.
         """
         self._phase: int = 0
         self._phase_count = phase_count
