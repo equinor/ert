@@ -41,14 +41,20 @@ class EnsembleSmoother(BaseRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
-            simulation_arguments,
             config,
             storage,
             queue_config,
             status_queue,
+            active_realizations=simulation_arguments.active_realizations,
             phase_count=2,
             number_of_iterations=2,
+            random_seed=simulation_arguments.random_seed,
+            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
+        self.target_ensemble_format = simulation_arguments.target_ensemble
+        self.experiment_name = simulation_arguments.experiment_name
+        self.ensemble_size = simulation_arguments.ensemble_size
+
         self.es_settings = es_settings
         self.update_settings = update_settings
         self.support_restart = False
@@ -59,19 +65,18 @@ class EnsembleSmoother(BaseRunModel):
         log_msg = "Running ES"
         logger.info(log_msg)
         self.setPhaseName(log_msg)
-        ensemble_format = self.simulation_arguments.target_ensemble
+        ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
-            simulation_arguments=self.simulation_arguments,
-            name=self.simulation_arguments.experiment_name,
+            name=self.experiment_name,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         prior = self._storage.create_ensemble(
             experiment,
-            ensemble_size=self.simulation_arguments.ensemble_size,
+            ensemble_size=self.ensemble_size,
             name=ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))

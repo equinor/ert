@@ -547,6 +547,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "using the prior parameters will be stored. Iteration number is read "
         "from this ensemble. If provided this will be a restart a run",
     )
+    es_mda_parser.add_argument(
+        "--experiment-name",
+        type=valid_name,
+        default="es-mda",
+        dest="experiment_name",
+        help="Name of the experiment",
+    )
 
     workflow_description = "Executes the workflow given"
     workflow_parser = subparsers.add_parser(

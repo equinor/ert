@@ -42,12 +42,14 @@ class EvaluateEnsemble(BaseRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
-            simulation_arguments,
             config,
             storage,
             queue_config,
             status_queue,
+            active_realizations=simulation_arguments.active_realizations,
+            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
+        self.ensemble_id = simulation_arguments.ensemble_id
 
     def run_experiment(
         self,
@@ -55,7 +57,7 @@ class EvaluateEnsemble(BaseRunModel):
     ) -> RunContext:
         self.setPhaseName("Running evaluate experiment...")
 
-        ensemble_id = self.simulation_arguments.ensemble_id
+        ensemble_id = self.ensemble_id
         ensemble_uuid = UUID(ensemble_id)
         ensemble = self._storage.get_ensemble(ensemble_uuid)
         assert isinstance(ensemble, Ensemble)

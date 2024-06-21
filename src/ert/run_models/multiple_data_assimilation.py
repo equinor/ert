@@ -56,15 +56,27 @@ class MultipleDataAssimilation(BaseRunModel):
                 self.weights[simulation_arguments.starting_iteration - 1 :]
             )
 
+        self.target_ensemble_format = simulation_arguments.target_ensemble
+        self.experiment_name = simulation_arguments.experiment_name
+        self.ensemble_size = simulation_arguments.ensemble_size
+        self.restart_run = simulation_arguments.restart_run
+        self.prior_ensemble_id = simulation_arguments.prior_ensemble_id
+        if self.restart_run:
+            if not self.prior_ensemble_id:
+                raise ValueError("For restart run, prior ensemble must be set")
+        elif not self.experiment_name:
+            raise ValueError("For non-restart run, experiment name must be set")
         super().__init__(
-            simulation_arguments,
             config,
             storage,
             queue_config,
             status_queue,
+            active_realizations=simulation_arguments.active_realizations,
             phase_count=2,
             number_of_iterations=number_of_iterations,
             start_iteration=simulation_arguments.starting_iteration,
+            random_seed=simulation_arguments.random_seed,
+            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
 
     def run_experiment(
@@ -76,11 +88,8 @@ class MultipleDataAssimilation(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg)
 
-        restart_run = self.simulation_arguments.restart_run
-        target_ensemble_format = self.simulation_arguments.target_ensemble
-
-        if restart_run:
-            id = self.simulation_arguments.prior_ensemble_id
+        if self.restart_run:
+            id = self.prior_ensemble_id
             try:
                 ensemble_id = UUID(id)
                 prior = self._storage.get_ensemble(ensemble_id)
@@ -108,15 +117,14 @@ class MultipleDataAssimilation(BaseRunModel):
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 observations=self.ert_config.observations.datasets,
                 responses=self.ert_config.ensemble_config.response_configuration,
-                simulation_arguments=self.simulation_arguments,
-                name=self.simulation_arguments.experiment_name,
+                name=self.experiment_name,
             )
 
             prior = self._storage.create_ensemble(
                 experiment,
-                ensemble_size=self.simulation_arguments.ensemble_size,
+                ensemble_size=self.ensemble_size,
                 iteration=0,
-                name=target_ensemble_format % 0,
+                name=self.target_ensemble_format % 0,
             )
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -157,7 +165,7 @@ class MultipleDataAssimilation(BaseRunModel):
             posterior_context = RunContext(
                 ensemble=self._storage.create_ensemble(
                     experiment,
-                    name=target_ensemble_format % (iteration + 1),  # noqa
+                    name=self.target_ensemble_format % (iteration + 1),  # noqa
                     ensemble_size=prior_context.ensemble.ensemble_size,
                     iteration=iteration + 1,
                     prior_ensemble=prior_context.ensemble,
