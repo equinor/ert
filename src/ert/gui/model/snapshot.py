@@ -56,7 +56,6 @@ COLUMNS: Dict[NodeType, Sequence[str]] = {
         ids.CURRENT_MEMORY_USAGE,
         ids.MAX_MEMORY_USAGE,
     ],
-    NodeType.JOB: [],
 }
 
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
@@ -307,6 +306,7 @@ class SnapshotModel(QAbstractItemModel):
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
+        count = 0
         parent_node = parent.internalPointer()
         if parent_node is None:
             count = len(COLUMNS[NodeType.ROOT])
@@ -317,8 +317,6 @@ class SnapshotModel(QAbstractItemModel):
                 count = len(COLUMNS[NodeType.ITER])
             elif isinstance(parent_node, RealNode):
                 count = len(COLUMNS[NodeType.REAL])
-            else:
-                count = len(COLUMNS[NodeType.JOB])
         return count
 
     def rowCount(self, parent: Optional[QModelIndex] = None):

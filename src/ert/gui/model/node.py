@@ -14,7 +14,6 @@ class NodeType(Enum):
     ROOT = auto()
     ITER = auto()
     REAL = auto()
-    JOB = auto()
 
 
 @dataclass
