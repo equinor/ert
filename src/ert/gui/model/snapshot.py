@@ -257,10 +257,9 @@ class SnapshotModel(QAbstractItemModel):
             iter_,
             data=IterNodeData(
                 status=snapshot.status,
-                sorted_realization_ids=metadata["sorted_real_ids"],
             ),
         )
-        for real_id in snapshot_tree.data.sorted_realization_ids:
+        for real_id in metadata["sorted_real_ids"]:
             real = snapshot.get_real(real_id)
             real_node = RealNode(
                 real_id,

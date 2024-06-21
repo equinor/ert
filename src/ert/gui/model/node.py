@@ -61,7 +61,6 @@ class RootNode(_Node):
 class IterNodeData:
     index: Optional[str] = None
     status: Optional[str] = None
-    sorted_realization_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
