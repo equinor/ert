@@ -292,8 +292,8 @@ class Scheduler:
 
         try:
             await self._monitor_and_handle_tasks(scheduling_tasks)
-        finally:
             await self.driver.finish()
+        finally:
             for scheduling_task in scheduling_tasks:
                 scheduling_task.cancel()
             # We discard exceptions when cancelling the scheduling tasks
