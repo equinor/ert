@@ -34,7 +34,7 @@ class RealizationWidget(QWidget):
         super().__init__(parent)
 
         self._iter = _it
-        self._delegate_size = QSize(100, 100)
+        self._delegate_size = QSize(90, 90)
 
         self._real_view = QListView(self)
         self._real_view.setViewMode(QListView.IconMode)
@@ -88,7 +88,7 @@ class RealizationDelegate(QStyledItemDelegate):
         if painter is None:
             return
         text = index.data(RealLabelHint)
-        selected_color, finished_count, total_count = tuple(
+        selected_color, finished_count, total_count, current_job = tuple(
             index.data(RealJobColorHint)
         )
 
@@ -99,45 +99,36 @@ class RealizationDelegate(QStyledItemDelegate):
         if option.state & QStyle.State_Selected:
             selected_color = selected_color.lighter(125)
 
-        painter.setBrush(selected_color)
         percentage_done = int(
             (finished_count * 100.0) / (total_count if total_count > 0 else 1)
         )
 
         adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
-
-        first_step = -int(percentage_done * 57.6)
+        progressed_step = -int(percentage_done * 57.6)
 
         painter.setBrush(QColor(QColorConstants.LightGray).lighter(120))
         painter.drawEllipse(adjusted_rect)
 
-        # progress_color = QColorConstants.Blue
-        # progress_color = progress_color.lighter(150)
-
-        pcolor = QColor(5, 183, 250)
-
-        painter.setBrush(pcolor)
-        # painter.setBrush(selected_color)
-
-        if percentage_done != 0:
-            if percentage_done != 100:
-                painter.drawPie(adjusted_rect, int(5760 / 4), first_step)
-            else:
-                painter.drawEllipse(adjusted_rect)
+        if 0 < percentage_done < 100:
+            painter.setBrush(QColor(5, 183, 250))
+            painter.drawPie(adjusted_rect, 1440, progressed_step)
+        else:
+            painter.drawEllipse(adjusted_rect)
 
         painter.setBrush(selected_color)
-        # painter.setBrush(QColorConstants.White)
 
-        adjusted_rect = option.rect.adjusted(10, 10, -10, -10)
+        adjusted_rect = option.rect.adjusted(7, 7, -7, -7)
         painter.drawEllipse(adjusted_rect)
+        pen = QPen(QColorConstants.Black)
+        painter.setPen(pen)
 
-        painter.setBrush(selected_color)
+        if 0 < percentage_done < 100 and current_job:
+            painter.drawText(option.rect, Qt.AlignCenter, current_job[0:6])
+            adj_rect = option.rect.adjusted(0, 20, 0, 0)
+            painter.drawText(adj_rect, Qt.AlignHCenter, text)
+        else:
+            painter.drawText(adjusted_rect, Qt.AlignCenter, text)
 
-        painter.setPen(QPen(QColorConstants.Black))
-
-        painter.drawText(option.rect, Qt.AlignCenter, f"{percentage_done} %")
-        adj_rect = option.rect.adjusted(0, 20, 0, 0)
-        painter.drawText(adj_rect, Qt.AlignHCenter, text)
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:

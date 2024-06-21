@@ -404,25 +404,20 @@ class SnapshotModel(QAbstractItemModel):
     @staticmethod
     def _real_data(_index: QModelIndex, node: RealNode, role: int):
         if role == RealJobColorHint:
-            selected_color = COLOR_UNKNOWN
-            color_index = finished_count = 0
+            finished_count = 0
             total_count = len(node.data.forward_model_step_status_color_by_id.values())
+            current_job = ""
 
             for color in node.data.forward_model_step_status_color_by_id.values():
-                current_index = COLOR_IMPORTANCE_LIST.index(color)
-
-                if current_index == 1:
+                if color == COLOR_FINISHED:
                     finished_count += 1
+                elif color == COLOR_RUNNING:
+                    for fm in node.children.values():
+                        if fm.data.status == state.FORWARD_MODEL_STATE_RUNNING:
+                            current_job = fm.data.name
 
-                if current_index > color_index:
-                    selected_color = color
-                    color_index = current_index
-
-            # if queue is failed or finished, we have a finalized state
-            if node.data.real_status_color in [COLOR_FINISHED, COLOR_FAILED]:
-                selected_color = node.data.real_status_color
-
-            return selected_color, finished_count, total_count
+            queue_color = node.data.real_status_color
+            return queue_color, finished_count, total_count, current_job
         if role == RealLabelHint:
             return node.id_
         if role == RealIens:
