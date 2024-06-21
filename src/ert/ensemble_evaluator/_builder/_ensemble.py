@@ -1,34 +1,11 @@
 import logging
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
 )
 
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent
-
-from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import state
-from ert.ensemble_evaluator.snapshot import (
-    ForwardModel,
-    PartialSnapshot,
-    RealizationSnapshot,
-    Snapshot,
-    SnapshotDict,
-)
-from ert.serialization import evaluator_marshaller
-
-from ._realization import Realization
-
-if TYPE_CHECKING:
-    from ..config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -89,87 +66,3 @@ class _EnsembleStateTracker:
         self._handles[state_]()
 
         return self._state
-
-
-class Ensemble:
-    def __init__(
-        self, reals: Sequence[Realization], metadata: Mapping[str, Any], id_: str
-    ) -> None:
-        self.reals = reals
-        self.metadata = metadata
-        self._snapshot = self._create_snapshot()
-        self.status = self._snapshot.status
-        if self._snapshot.status:
-            self._status_tracker = _EnsembleStateTracker(self._snapshot.status)
-        else:
-            self._status_tracker = _EnsembleStateTracker()
-        self._id: str = id_
-
-    def __repr__(self) -> str:
-        return f"Ensemble with {len(self.reals)} members"
-
-    def evaluate(self, config: "EvaluatorServerConfig") -> None:
-        pass
-
-    def cancel(self) -> None:
-        pass
-
-    @property
-    def id_(self) -> str:
-        return self._id
-
-    @property
-    def cancellable(self) -> bool:
-        return False
-
-    @property
-    def active_reals(self) -> Sequence[Realization]:
-        return list(filter(lambda real: real.active, self.reals))
-
-    @property
-    def snapshot(self) -> Snapshot:
-        return self._snapshot
-
-    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
-        snapshot_mutate_event = PartialSnapshot(self._snapshot)
-        for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
-        self._snapshot.merge_event(snapshot_mutate_event)
-        if self._snapshot.status is not None and self.status != self._snapshot.status:
-            self.status = self._status_tracker.update_state(self._snapshot.status)
-        return snapshot_mutate_event
-
-    async def send_cloudevent(  # noqa: PLR6301
-        self,
-        url: str,
-        event: CloudEvent,
-        token: Optional[str] = None,
-        cert: Optional[Union[str, bytes]] = None,
-        retries: int = 10,
-    ) -> None:
-        async with Client(url, token, cert, max_retries=retries) as client:
-            await client._send(to_json(event, data_marshaller=evaluator_marshaller))
-
-    def get_successful_realizations(self) -> List[int]:
-        return self._snapshot.get_successful_realizations()
-
-    def _create_snapshot(self) -> Snapshot:
-        reals: Dict[str, RealizationSnapshot] = {}
-        for real in self.active_reals:
-            reals[str(real.iens)] = RealizationSnapshot(
-                active=True,
-                status=state.REALIZATION_STATE_WAITING,
-            )
-            for index, forward_model in enumerate(real.forward_models):
-                reals[str(real.iens)].forward_models[str(index)] = ForwardModel(
-                    status=state.FORWARD_MODEL_STATE_START,
-                    index=str(index),
-                    name=forward_model.name,
-                )
-        top = SnapshotDict(
-            reals=reals,
-            status=state.ENSEMBLE_STATE_UNKNOWN,
-            metadata=self.metadata,
-        )
-
-        return Snapshot(top.model_dump())
