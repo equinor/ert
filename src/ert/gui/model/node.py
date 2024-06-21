@@ -2,18 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Any, Optional
 
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import ForwardModel
-
-
-class NodeType(Enum):
-    ROOT = auto()
-    ITER = auto()
-    REAL = auto()
 
 
 @dataclass

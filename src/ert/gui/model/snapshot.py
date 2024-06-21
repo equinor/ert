@@ -16,7 +16,6 @@ from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
     IterNodeData,
-    NodeType,
     RealNode,
     RealNodeData,
     RootNode,
@@ -43,20 +42,17 @@ StatusRole = Qt.UserRole + 11
 
 DURATION = "Duration"
 
-COLUMNS: Dict[NodeType, Sequence[str]] = {
-    NodeType.ROOT: ["Name", "Status"],
-    NodeType.ITER: ["Name", "Status", "Active"],
-    NodeType.REAL: [
-        ids.NAME,
-        ids.ERROR,
-        ids.STATUS,
-        DURATION,  # Duration is based on two data fields, not coming directly from ert
-        ids.STDOUT,
-        ids.STDERR,
-        ids.CURRENT_MEMORY_USAGE,
-        ids.MAX_MEMORY_USAGE,
-    ],
-}
+JOB_COLUMNS: Sequence[str] = [
+    ids.NAME,
+    ids.ERROR,
+    ids.STATUS,
+    DURATION,  # Duration is based on two data fields, not coming directly from ert
+    ids.STDOUT,
+    ids.STDERR,
+    ids.CURRENT_MEMORY_USAGE,
+    ids.MAX_MEMORY_USAGE,
+]
+JOB_COLUMN_SIZE: Final[int] = len(JOB_COLUMNS)
 
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
@@ -304,19 +300,11 @@ class SnapshotModel(QAbstractItemModel):
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+        count = 1
         if parent is None:
             parent = QModelIndex()
-        count = 0
-        parent_node = parent.internalPointer()
-        if parent_node is None:
-            count = len(COLUMNS[NodeType.ROOT])
-        else:
-            if isinstance(parent_node, RootNode):
-                count = len(COLUMNS[NodeType.ROOT])
-            elif isinstance(parent_node, IterNode):
-                count = len(COLUMNS[NodeType.ITER])
-            elif isinstance(parent_node, RealNode):
-                count = len(COLUMNS[NodeType.REAL])
+        if isinstance(parent.internalPointer(), RealNode):
+            return JOB_COLUMN_SIZE
         return count
 
     def rowCount(self, parent: Optional[QModelIndex] = None):
@@ -436,14 +424,14 @@ class SnapshotModel(QAbstractItemModel):
         node_id = str(node.id_)
 
         if role == Qt.ItemDataRole.FontRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 font = QFont()
                 font.setUnderline(True)
                 return font
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return QColor(Qt.GlobalColor.blue)
 
@@ -451,7 +439,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.parent.data.forward_model_step_status_color_by_id[node_id]
 
         if role == Qt.ItemDataRole.DisplayRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
                 _bytes: Optional[str] = data.get(data_name)
@@ -475,7 +463,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.data.get(data_name)
 
         if role == FileRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return node.data.get(data_name, QVariant())
 
@@ -486,7 +474,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.parent.parent.id_
 
         if role == Qt.ItemDataRole.ToolTipRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             data = None
             if data_name == ids.ERROR:
                 data = node.data.get(ids.ERROR)
