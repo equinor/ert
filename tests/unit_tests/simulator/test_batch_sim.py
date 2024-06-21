@@ -5,7 +5,7 @@ import time
 import pytest
 
 from ert.config import ErtConfig
-from ert.job_queue import JobStatus
+from ert.scheduler import JobStatus
 from ert.simulator import BatchSimulator
 
 
@@ -146,7 +146,6 @@ def test_that_starting_with_invalid_key_raises_key_error(
         batch_simulator.start("case", _input, storage)
 
 
-@pytest.mark.usefixtures("using_scheduler")
 def test_batch_simulation(batch_simulator, storage):
     # Starting a simulation which should actually run through.
     case_data = [
@@ -284,7 +283,7 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         rsim.start("case", inp, storage)
 
 
-@pytest.mark.usefixtures("use_tmpdir", "using_scheduler")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_batch_simulation_suffixes(batch_sim_example, storage):
     ert_config = batch_sim_example
     monitor = MockMonitor()
@@ -352,7 +351,6 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
 
 @pytest.mark.flaky(reruns=3)  # https://github.com/equinor/ert/issues/7309
 @pytest.mark.timeout(10)
-@pytest.mark.usefixtures("using_scheduler")
 def test_stop_sim(copy_case, storage):
     copy_case("batch_sim")
     with open("sleepy_time.ert", "a", encoding="utf-8") as f:
@@ -432,7 +430,6 @@ def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
             assert status == JobStatus.FAILED
 
 
-@pytest.mark.usefixtures("using_scheduler")
 def test_batch_ctx_status_failing_jobs(setup_case, storage):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 

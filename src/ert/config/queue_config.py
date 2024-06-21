@@ -62,6 +62,7 @@ SLURM_DRIVER_OPTIONS: List[str] = [
     "SQUEUE",
     "SQUEUE_TIMEOUT",
 ]
+
 VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
     QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
     QueueSystem.LSF: LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,

@@ -32,7 +32,6 @@ from ert.namespace import Namespace
 from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
-from ert.shared.feature_toggling import FeatureScheduler
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.validation import (
     IntegerArgument,
@@ -265,7 +264,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
-    FeatureScheduler.add_to_argparse(gui_parser)
 
     # lint_parser
     lint_parser = subparsers.add_parser(
@@ -600,8 +598,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
 
-        FeatureScheduler.add_to_argparse(cli_parser)
-
     return parser
 
 
@@ -676,7 +672,6 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
 
-    FeatureScheduler.set_value(args)
     try:
         with ErtPluginContext(logger=logging.getLogger()) as context:
             logger.info(f"Running ert with {args}")

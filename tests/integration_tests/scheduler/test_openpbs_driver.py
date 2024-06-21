@@ -45,7 +45,6 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
     with pytest.raises(ErtCliError):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,
-            "--enable-scheduler",
             "poly.ert",
         )
     assert "RuntimeError: Submit job failed" in caplog.text
@@ -65,7 +64,6 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
     with pytest.raises(ErtCliError):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,
-            "--enable-scheduler",
             "poly.ert",
         )
     assert "RuntimeError: Status polling failed" in caplog.text

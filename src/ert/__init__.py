@@ -13,11 +13,11 @@ from .config import (
     ForwardModelStepDocumentation,
 )
 from .data import MeasuredData
-from .job_queue import JobStatus
 from .libres_facade import LibresFacade
 from .simulator import BatchSimulator, BatchContext
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
+from .scheduler import JobStatus
 
 __all__ = [
     "MeasuredData",

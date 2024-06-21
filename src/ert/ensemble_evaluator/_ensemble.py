@@ -15,7 +15,6 @@ from typing import (
     Optional,
     Protocol,
     Sequence,
-    Tuple,
     Union,
 )
 
@@ -26,18 +25,15 @@ from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
-from ert.job_queue import JobQueue
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
 from ert.serialization import evaluator_marshaller
-from ert.shared.feature_toggling import FeatureScheduler
 
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
 from .identifiers import (
     EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
-    EVTYPE_REALIZATION_TIMEOUT,
 )
 from .snapshot import (
     ForwardModel,
@@ -201,30 +197,6 @@ class LegacyEnsemble:
 
         return event_builder
 
-    def setup_timeout_callback(
-        self,
-        timeout_queue: asyncio.Queue[CloudEvent],
-        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
-        event_generator: Callable[[str, Optional[int]], CloudEvent],
-    ) -> Tuple[Callable[[int], None], asyncio.Task[None]]:
-        """This function is reimplemented inside the Scheduler and should
-        be removed when Scheduler is the only queue code."""
-
-        def on_timeout(iens: int) -> None:
-            timeout_queue.put_nowait(event_generator(EVTYPE_REALIZATION_TIMEOUT, iens))
-
-        async def send_timeout_message() -> None:
-            while True:
-                timeout_cloudevent = await timeout_queue.get()
-                if timeout_cloudevent is None:
-                    break
-                assert self._config  # mypy
-                await cloudevent_unary_send(timeout_cloudevent)
-
-        send_timeout_future = get_running_loop().create_task(send_timeout_message())
-
-        return on_timeout, send_timeout_future
-
     def evaluate(self, config: EvaluatorServerConfig) -> None:
         if not config:
             raise ValueError("no config for evaluator")
@@ -293,16 +265,6 @@ class LegacyEnsemble:
         """
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
         timeout_queue: Optional[asyncio.Queue[Any]] = None
-        using_scheduler = FeatureScheduler.is_enabled(self._queue_config.queue_system)
-
-        if not using_scheduler:
-            # Set up the timeout-mechanism
-            timeout_queue = asyncio.Queue()
-            # Based on the experiment id the generator will
-            # give a function returning cloud event
-            on_timeout, send_timeout_future = self.setup_timeout_callback(
-                timeout_queue, cloudevent_unary_send, event_creator
-            )
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
@@ -310,35 +272,21 @@ class LegacyEnsemble:
             raise ValueError("no config")  # mypy
 
         try:
-            if using_scheduler:
-                driver = create_driver(self._queue_config)
-                queue = Scheduler(
-                    driver,
-                    self.active_reals,
-                    max_submit=self._queue_config.max_submit,
-                    max_running=self._queue_config.max_running,
-                    submit_sleep=self._queue_config.submit_sleep,
-                    ens_id=self.id_,
-                    ee_uri=self._config.dispatch_uri,
-                    ee_cert=self._config.cert,
-                    ee_token=self._config.token,
-                )
-                scheduler_logger.info(
-                    f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
-                )
-            else:
-                queue = JobQueue(
-                    self._queue_config,
-                    self.active_reals,
-                    ens_id=self.id_,
-                    ee_uri=self._config.dispatch_uri,
-                    ee_cert=self._config.cert,
-                    ee_token=self._config.token,
-                    on_timeout=on_timeout,
-                )
-                scheduler_logger.info(
-                    f"Experiment ran on ORCHESTRATOR: job_queue on {self._queue_config.queue_system}"
-                )
+            driver = create_driver(self._queue_config)
+            queue = Scheduler(
+                driver,
+                self.active_reals,
+                max_submit=self._queue_config.max_submit,
+                max_running=self._queue_config.max_running,
+                submit_sleep=self._queue_config.submit_sleep,
+                ens_id=self.id_,
+                ee_uri=self._config.dispatch_uri,
+                ee_cert=self._config.cert,
+                ee_token=self._config.token,
+            )
+            scheduler_logger.info(
+                f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
+            )
             self._job_queue = queue
 
             await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_STARTED, None))
@@ -363,11 +311,6 @@ class LegacyEnsemble:
             )
             await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_FAILED, None))
             return
-
-        if not isinstance(self._job_queue, Scheduler):
-            assert timeout_queue is not None
-            await timeout_queue.put(None)  # signal to exit timer
-            await send_timeout_future
 
         scheduler_logger.info(
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"

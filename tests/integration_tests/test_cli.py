@@ -142,7 +142,7 @@ def test_field_init_file_not_readable(monkeypatch):
         run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
+@pytest.mark.usefixtures("copy_snake_oil_field")
 def test_surface_init_fails_during_forward_model_callback():
     rng = np.random.default_rng()
 
@@ -206,7 +206,7 @@ def test_unopenable_observation_config_fails_gracefully():
         pytest.param(ES_MDA_MODE),
     ],
 )
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_model_raises_exception_if_active_less_than_minimum_realizations(mode):
     """
     Verify that the run model checks that active realizations 20 is less than 100
@@ -236,7 +236,7 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
         )
 
 
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     """
     Verify that the run model checks that active realizations is equal or higher than
@@ -313,14 +313,14 @@ expected_vars = {
 }
 
 
-@pytest.mark.usefixtures("set_site_config", "using_scheduler")
+@pytest.mark.usefixtures("set_site_config")
 def test_that_setenv_config_is_parsed_correctly(setenv_config):
     config = ErtConfig.from_file(str(setenv_config))
     # then res config should read the SETENV as is
     assert config.env_vars == expected_vars
 
 
-@pytest.mark.usefixtures("set_site_config", "using_scheduler")
+@pytest.mark.usefixtures("set_site_config")
 def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     # When running the jobs
     run_cli(
@@ -353,7 +353,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     (
         "workflow_job_config_content",
@@ -576,7 +576,7 @@ def fixture_mock_cli_run(monkeypatch):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_evaluator():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
@@ -589,7 +589,7 @@ def test_ensemble_evaluator():
     )
 
 
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.integration_test
 def test_es_mda(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
@@ -653,7 +653,7 @@ def test_cli_does_not_run_without_observations(mode, target):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_evaluator_disable_monitoring():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
@@ -665,7 +665,7 @@ def test_ensemble_evaluator_disable_monitoring():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_cli_test_run(mock_cli_run):
     run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
 
@@ -676,7 +676,7 @@ def test_cli_test_run(mock_cli_run):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_ies():
     run_cli(
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
@@ -690,7 +690,7 @@ def test_ies():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_running_ies_with_different_steplength_produces_different_result():
     """This is a regression test to make sure that different step-lengths
     give different results when running SIES.
@@ -758,7 +758,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     "prior_mask,reals_rerun_option",
     [
@@ -807,7 +807,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_failing_job_cli_error_message():
     # modify poly_eval.py
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
@@ -831,7 +831,7 @@ def test_failing_job_cli_error_message():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_exclude_parameter_from_update():
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line in fin:
