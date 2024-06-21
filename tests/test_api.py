@@ -433,9 +433,7 @@ def test_ropt_integration(mock_get_optimization_output_dir):
 
 
 @patch("everest.api.everest_data_api.open_storage", return_value=mock_storage((0, 2)))
-@patch("everest.api.everest_data_api.ErtConfig", return_value=None)
-@patch("everest.api.everest_data_api.everest2res", return_value=None)
-def test_get_summary_keys(_, _1, _2, api_no_gradient):
+def test_get_summary_keys(_, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values()
     # Check some data frame properties.
@@ -460,9 +458,7 @@ def test_get_summary_keys(_, _1, _2, api_no_gradient):
 
 
 @patch("everest.api.everest_data_api.open_storage", return_value=mock_storage((0, 2)))
-@patch("everest.api.everest_data_api.ErtConfig", return_value=None)
-@patch("everest.api.everest_data_api.everest2res", return_value=None)
-def test_get_summary_keys_gradient(_, _1, _2, api):
+def test_get_summary_keys_gradient(_, api):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api.summary_values()
     # Check some data frame properties.
@@ -486,9 +482,7 @@ def test_get_summary_keys_gradient(_, _1, _2, api):
 
 
 @patch("everest.api.everest_data_api.open_storage", return_value=mock_storage([2]))
-@patch("everest.api.everest_data_api.ErtConfig", return_value=None)
-@patch("everest.api.everest_data_api.everest2res", return_value=None)
-def test_get_summary_keys_single_batch(_, _1, _2, api_no_gradient):
+def test_get_summary_keys_single_batch(_, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values(batches=[2])
     # Check some data frame properties.
@@ -514,9 +508,7 @@ def test_get_summary_keys_single_batch(_, _1, _2, api_no_gradient):
 
 
 @patch("everest.api.everest_data_api.open_storage", return_value=mock_storage((0, 2)))
-@patch("everest.api.everest_data_api.ErtConfig", return_value=None)
-@patch("everest.api.everest_data_api.everest2res", return_value=None)
-def test_get_summary_keys_single_key(_, _1, _2, api_no_gradient):
+def test_get_summary_keys_single_key(_, api_no_gradient):
     # Retrieve the pandas data frame with mocked values.
     summary_values = api_no_gradient.summary_values(keys=["key2"])
     # Check some data frame properties.

@@ -1,13 +1,11 @@
 from collections import OrderedDict
 
 import pandas as pd
-from ert.config import ErtConfig
 from ert.storage import open_storage
 from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status
-from everest.simulator.everest2res import everest2res
 
 
 class EverestDataAPI:
@@ -157,13 +155,8 @@ class EverestDataAPI:
         if batches is None:
             batches = self.batches
         simulations = self.simulations
-        ert_config = ErtConfig.from_dict(
-            config_dict=everest2res(
-                self._config, site_config=ErtConfig.read_site_config()
-            )
-        )
         data_frames = []
-        storage = open_storage(ert_config.ens_path, "r")
+        storage = open_storage(self._config.storage_dir, "r")
         for batch_id in batches:
             summary = storage.get_ensemble_by_name(
                 f"batch_{batch_id}"

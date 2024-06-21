@@ -153,9 +153,8 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     ever_config.install_templates = None
 
     # prepare the ErtConfig object
-    ert_config = everest2res(ever_config, site_config=ErtConfig.read_site_config())
-    orig_path = ert_config["ENSPATH"]
-    ert_config = ErtConfig.from_dict(config_dict=ert_config)
+    ert_config_dict = everest2res(ever_config, site_config=ErtConfig.read_site_config())
+    ert_config = ErtConfig.from_dict(config_dict=ert_config_dict)
 
     # load information about batches from previous run
     df = export(ever_config, export_ecl=False)
@@ -163,9 +162,9 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
 
     # backup or delete the previous internal storage
     if backup_path:
-        shutil.move(orig_path, backup_path)
+        shutil.move(ever_config.storage_dir, backup_path)
     else:
-        shutil.rmtree(orig_path)
+        shutil.rmtree(ever_config.storage_dir)
 
     # internalize one batch at a time
     for batch_id, group in groups:
