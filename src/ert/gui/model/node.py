@@ -62,9 +62,6 @@ class IterNodeData:
     index: Optional[str] = None
     status: Optional[str] = None
     sorted_realization_ids: list[str] = field(default_factory=list)
-    sorted_forward_model_step_ids_by_realization_id: dict[str, list[str]] = field(
-        default_factory=dict
-    )
 
 
 @dataclass
