@@ -5,6 +5,7 @@ import glob
 import json
 import logging
 import os
+import traceback
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -44,6 +45,33 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
+
+import time
+from functools import wraps
+
+
+def timing_decorator(trace=False):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print(f"START function '{func.__name__}({', '.join(map(str,args))})'")
+            if trace:
+                print(f"Traceback for '{func.__name__}':")
+                print("".join(traceback.format_stack(limit=3)))
+            start_time = time.time()
+
+            result = func(*args, **kwargs)
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Finished function '{func.__name__}'")
+            print(f"Time taken by '{func.__name__}': {elapsed_time:.4f} seconds")
+
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 class _Index(BaseModel):
@@ -290,6 +318,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @timing_decorator()
     def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations with associated parameters.
@@ -307,6 +336,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @timing_decorator()
     def get_realization_mask_with_responses(
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.bool_]:
@@ -475,6 +505,7 @@ class LocalEnsemble(BaseMode):
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
+    @timing_decorator()
     def get_realization_with_responses(
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.int_]:
@@ -1389,10 +1420,12 @@ class LocalEnsemble(BaseMode):
             for response_key in self.experiment.response_configuration
         }
 
+    @timing_decorator(True)
     def _refresh_realization_states_for_parameters(self) -> None:
         old_states = self._realization_states
         states = _MultiRealizationStateDict()
 
+        @timing_decorator()
         def _refresh_grouped_combined():
             birth_time = os.path.getctime(self._path / f"{parameter_group_key}.nc")
 
@@ -1456,6 +1489,7 @@ class LocalEnsemble(BaseMode):
                             source=self._path / f"{parameter_group_key}.nc",
                         )
 
+        @timing_decorator()
         def _refresh_grouped_not_combined():
             for realization_index in range(self.ensemble_size):
                 real_state = states.get_single_realization_state(realization_index)
@@ -1506,15 +1540,12 @@ class LocalEnsemble(BaseMode):
             old_states.copy().assign_states(states).make_keys_consistent()
         )
 
+    @timing_decorator(True)
     def _refresh_realization_states_for_responses(
         self, response_key: Optional[str] = None
     ) -> None:
         old_states = self._realization_states
         states = _MultiRealizationStateDict()
-
-        # If it has gen data, check all names w/ non nan values
-        has_combined_summary = self.has_combined_response_dataset("summary")
-        has_combined_gendata = self.has_combined_response_dataset("gen_data")
 
         response_configs = [
             c
@@ -1522,6 +1553,7 @@ class LocalEnsemble(BaseMode):
             if response_key is None or c.name == response_key
         ]
 
+        @timing_decorator()
         def _refresh_for_gendata_not_combined(key: str):
             for realization_index in range(self.ensemble_size):
                 ds_path = self._realization_dir(realization_index) / f"{key}.nc"
@@ -1540,6 +1572,7 @@ class LocalEnsemble(BaseMode):
         # once per combined dataset, per call to this
         _cached_open_combined_datasets: Dict[str, xr.Dataset] = {}
 
+        @timing_decorator()
         def _refresh_for_responses_combined(response_type, response_keys: Set[str]):
             _cached_open_combined_datasets[response_type] = combined_ds = (
                 _cached_open_combined_datasets[response_type]
@@ -1603,6 +1636,7 @@ class LocalEnsemble(BaseMode):
                         source=(self._path / f"{response_type}.nc"),
                     )
 
+        @timing_decorator()
         def _refresh_for_summary_not_combined(expected_keys: Set[str]):
             for realization_index in range(self.ensemble_size):
                 ds_path = self._realization_dir(realization_index) / "summary.nc"
@@ -1664,6 +1698,7 @@ class LocalEnsemble(BaseMode):
 
         self._realization_states = old_states.copy().assign_states(states)
 
+    @timing_decorator()
     def _refresh_realization_states(self, response_key: Optional[str] = None) -> None:
         self._refresh_realization_states_for_responses(response_key)
         self._refresh_realization_states_for_parameters()
