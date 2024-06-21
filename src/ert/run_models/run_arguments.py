@@ -7,7 +7,6 @@ class SimulationArguments:
     random_seed: Optional[int]
     minimum_required_realizations: int
     ensemble_size: int
-    experiment_name: Optional[str]
     active_realizations: List[bool]
 
 
@@ -20,6 +19,7 @@ class EnsembleExperimentRunArguments(SimulationArguments):
 
 @dataclass
 class SingleTestRunArguments(EnsembleExperimentRunArguments):
+    experiment_name: str
     ensemble_name: str = "prior"
     ensemble_type: str = "Single test"
 
@@ -33,6 +33,7 @@ class EvaluateEnsembleRunArguments(SimulationArguments):
 @dataclass
 class ESRunArguments(SimulationArguments):
     target_ensemble: str
+    experiment_name: str
     ensemble_type: str = "ES"
 
 
@@ -44,13 +45,14 @@ class ESMDARunArguments(SimulationArguments):
     restart_run: bool
     prior_ensemble_id: str
     starting_iteration: int
+    experiment_name: Optional[str]
     ensemble_type: str = "ES_MDA"
-    current_ensemble = None
 
 
 @dataclass
 class SIESRunArguments(SimulationArguments):
     target_ensemble: str
     num_retries_per_iter: int
+    experiment_name: str
     number_of_iterations: int = 3
     ensemble_type: str = "IES"
