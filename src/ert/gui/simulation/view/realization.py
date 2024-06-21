@@ -88,7 +88,7 @@ class RealizationDelegate(QStyledItemDelegate):
         if painter is None:
             return
         text = index.data(RealLabelHint)
-        selected_color, finished_count, total_count, current_job = tuple(
+        selected_color, finished_count, total_count = tuple(
             index.data(RealJobColorHint)
         )
 
@@ -125,13 +125,7 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.drawEllipse(adjusted_rect)
         pen = QPen(QColorConstants.Black)
         painter.setPen(pen)
-
-        if 0 < percentage_done < 100 and current_job:
-            painter.drawText(option.rect, Qt.AlignCenter, current_job[0:6])
-            adj_rect = option.rect.adjusted(0, 20, 0, 0)
-            painter.drawText(adj_rect, Qt.AlignHCenter, text)
-        else:
-            painter.drawText(adjusted_rect, Qt.AlignCenter, text)
+        painter.drawText(adjusted_rect, Qt.AlignCenter, text)
 
         painter.restore()
 

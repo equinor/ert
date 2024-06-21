@@ -63,7 +63,7 @@ def test_realization_state_is_overridden_by_queue_finalized_state(fail_snapshot)
 
     queue_color = model.data(first_real, RealStatusColorHint)
     assert queue_color == QColor(*COLOR_FAILED)
-    color, done_count, full_count, _ = model.data(first_real, RealJobColorHint)
+    color, done_count, full_count = model.data(first_real, RealJobColorHint)
     assert color == QColor(*COLOR_FAILED)
     assert done_count == 1
     assert full_count == 1
@@ -111,5 +111,5 @@ def test_display_color_changes_to_more_important_state(
     model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
     first_real = model.index(0, 0, model.index(0, 0))
 
-    color, _, _, _ = model.data(first_real, RealJobColorHint)
+    color, _, _ = model.data(first_real, RealJobColorHint)
     assert color == expected_color
