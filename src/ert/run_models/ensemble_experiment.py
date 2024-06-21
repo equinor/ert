@@ -27,8 +27,6 @@ class EnsembleExperiment(BaseRunModel):
     will always sample parameters.
     """
 
-    simulation_arguments: EnsembleExperimentRunArguments
-
     def __init__(
         self,
         simulation_arguments: EnsembleExperimentRunArguments,

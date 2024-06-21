@@ -31,8 +31,6 @@ logger = logging.getLogger(__file__)
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
-    simulation_arguments: SIESRunArguments
-
     def __init__(
         self,
         simulation_arguments: SIESRunArguments,
