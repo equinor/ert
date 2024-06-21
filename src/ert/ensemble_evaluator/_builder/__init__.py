@@ -1,4 +1,4 @@
-from ._ensemble import Ensemble
+from ._legacy import LegacyEnsemble as Ensemble
 from ._realization import ForwardModelStep, Realization
 
 __all__ = (

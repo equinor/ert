@@ -7,6 +7,7 @@ from cloudevents.http import CloudEvent
 from _ert.async_utils import new_event_loop
 from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
+from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble, identifiers
 from ert.ensemble_evaluator._builder._realization import ForwardModelStep, Realization
 
@@ -73,7 +74,7 @@ class TestEnsemble(Ensemble):
             )
             for real_no in range(0, reals)
         ]
-        super().__init__(the_reals, {}, id_)
+        super().__init__(the_reals, {}, QueueConfig(), 0, id_)
 
     def _evaluate(self, url):
         event_id = 0
@@ -156,6 +157,10 @@ class TestEnsemble(Ensemble):
 
     def start(self):
         self._eval_thread.start()
+
+    @property
+    def cancellable(self) -> bool:
+        return False
 
 
 class AutorunTestEnsemble(TestEnsemble):

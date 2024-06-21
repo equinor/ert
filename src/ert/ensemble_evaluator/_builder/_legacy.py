@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from dataclasses import dataclass
 from functools import partialmethod
 from typing import (
     TYPE_CHECKING,
@@ -13,20 +14,33 @@ from typing import (
     List,
     Optional,
     Protocol,
+    Sequence,
     Tuple,
+    Union,
 )
 
+from cloudevents.conversion import to_json
 from cloudevents.http.event import CloudEvent
 
 from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
-from ert.ensemble_evaluator import identifiers
+from _ert_forward_model_runner.client import Client
 from ert.job_queue import JobQueue
 from ert.scheduler import Scheduler, create_driver
 from ert.shared.feature_toggling import FeatureScheduler
 
+from ...serialization import evaluator_marshaller
+from .. import identifiers
 from .._wait_for_evaluator import wait_for_evaluator
-from ._ensemble import Ensemble
+from ..snapshot import (
+    ForwardModel,
+    PartialSnapshot,
+    RealizationSnapshot,
+    Snapshot,
+    SnapshotDict,
+    state,
+)
+from ._ensemble import _EnsembleStateTracker
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -45,21 +59,71 @@ class _KillAllJobs(Protocol):
     def kill_all_jobs(self) -> None: ...
 
 
-class LegacyEnsemble(Ensemble):
-    def __init__(
-        self,
-        reals: List[Realization],
-        metadata: Dict[str, Any],
-        queue_config: QueueConfig,
-        min_required_realizations: int,
-        id_: str,
-    ) -> None:
-        super().__init__(reals, metadata, id_)
+@dataclass
+class LegacyEnsemble:
+    reals: List[Realization]
+    metadata: Dict[str, Any]
+    _queue_config: QueueConfig
+    min_required_realizations: int
+    id_: str
 
-        self._queue_config = queue_config
+    def __post_init__(self) -> None:
         self._job_queue: Optional[_KillAllJobs] = None
-        self.min_required_realizations = min_required_realizations
         self._config: Optional[EvaluatorServerConfig] = None
+        self.snapshot: Snapshot = self._create_snapshot()
+        self.status = self.snapshot.status
+        if self.snapshot.status:
+            self._status_tracker = _EnsembleStateTracker(self.snapshot.status)
+        else:
+            self._status_tracker = _EnsembleStateTracker()
+
+    @property
+    def active_reals(self) -> Sequence[Realization]:
+        return list(filter(lambda real: real.active, self.reals))
+
+    def _create_snapshot(self) -> Snapshot:
+        reals: Dict[str, RealizationSnapshot] = {}
+        for real in self.active_reals:
+            reals[str(real.iens)] = RealizationSnapshot(
+                active=True,
+                status=state.REALIZATION_STATE_WAITING,
+            )
+            for index, forward_model in enumerate(real.forward_models):
+                reals[str(real.iens)].forward_models[str(index)] = ForwardModel(
+                    status=state.FORWARD_MODEL_STATE_START,
+                    index=str(index),
+                    name=forward_model.name,
+                )
+        top = SnapshotDict(
+            reals=reals,
+            status=state.ENSEMBLE_STATE_UNKNOWN,
+            metadata=self.metadata,
+        )
+
+        return Snapshot(top.model_dump())
+
+    def get_successful_realizations(self) -> List[int]:
+        return self.snapshot.get_successful_realizations()
+
+    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
+        snapshot_mutate_event = PartialSnapshot(self.snapshot)
+        for event in events:
+            snapshot_mutate_event.from_cloudevent(event)
+        self.snapshot.merge_event(snapshot_mutate_event)
+        if self.snapshot.status is not None and self.status != self.snapshot.status:
+            self.status = self._status_tracker.update_state(self.snapshot.status)
+        return snapshot_mutate_event
+
+    async def send_cloudevent(  # noqa: PLR6301
+        self,
+        url: str,
+        event: CloudEvent,
+        token: Optional[str] = None,
+        cert: Optional[Union[str, bytes]] = None,
+        retries: int = 10,
+    ) -> None:
+        async with Client(url, token, cert, max_retries=retries) as client:
+            await client._send(to_json(event, data_marshaller=evaluator_marshaller))
 
     def generate_event_creator(
         self, experiment_id: Optional[str] = None
