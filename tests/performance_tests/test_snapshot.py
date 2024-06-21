@@ -8,7 +8,6 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
-    PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
@@ -84,12 +83,9 @@ def simulate_forward_model_event_handling(
         reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
     )
 
-    snapshot = Snapshot(top.model_dump())
-
-    partial = PartialSnapshot(snapshot)
-
+    snapshot = Snapshot.from_nested_dict(top.model_dump())
     ens_id = "A"
-    partial.from_cloudevent(
+    snapshot.update_from_cloudevent_and_generate_update_snapshot(
         CloudEvent(
             {
                 "source": f"/ert/ensemble/{ens_id}",
@@ -100,7 +96,7 @@ def simulate_forward_model_event_handling(
     )
 
     for real in range(ensemble_size):
-        partial.from_cloudevent(
+        snapshot.update_from_cloudevent_and_generate_update_snapshot(
             CloudEvent(
                 {
                     "source": f"/ert/ensemble/{ens_id}/real/{real}",
@@ -112,7 +108,7 @@ def simulate_forward_model_event_handling(
 
     for fm_idx in range(forward_models):
         for real in range(ensemble_size):
-            partial.from_cloudevent(
+            snapshot.update_from_cloudevent_and_generate_update_snapshot(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
@@ -125,7 +121,7 @@ def simulate_forward_model_event_handling(
             )
         for current_memory_usage in range(memory_reports):
             for real in range(ensemble_size):
-                partial.from_cloudevent(
+                snapshot.update_from_cloudevent_and_generate_update_snapshot(
                     CloudEvent(
                         attributes={
                             "source": f"/ert/ensemble/{ens_id}/"
@@ -140,7 +136,7 @@ def simulate_forward_model_event_handling(
                     )
                 )
         for real in range(ensemble_size):
-            partial.from_cloudevent(
+            snapshot.update_from_cloudevent_and_generate_update_snapshot(
                 CloudEvent(
                     attributes={
                         "source": f"/ert/ensemble/{ens_id}/"
@@ -152,7 +148,7 @@ def simulate_forward_model_event_handling(
             )
 
     for real in range(ensemble_size):
-        partial.from_cloudevent(
+        snapshot.update_from_cloudevent_and_generate_update_snapshot(
             CloudEvent(
                 {
                     "source": f"/ert/ensemble/{ens_id}/real/{real}",

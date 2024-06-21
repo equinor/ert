@@ -9,7 +9,7 @@ from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
-from .snapshot import PartialSnapshot, Snapshot
+from .snapshot import Snapshot
 
 __all__ = (
     "EndEvent",
@@ -20,7 +20,6 @@ __all__ = (
     "ForwardModelStep",
     "FullSnapshotEvent",
     "Monitor",
-    "PartialSnapshot",
     "Realization",
     "RealizationBuilder",
     "Snapshot",

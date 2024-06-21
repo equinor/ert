@@ -3,7 +3,7 @@ from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex, Qt
 from qtpy.QtGui import QColor
 
-from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
+from ert.ensemble_evaluator.snapshot import ForwardModel
 from ert.ensemble_evaluator.state import (
     COLOR_FAILED,
     COLOR_FINISHED,
@@ -18,7 +18,7 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.gui.model.snapshot import RealJobColorHint, RealStatusColorHint, SnapshotModel
 
-from .gui_models_utils import partial_snapshot
+from .gui_models_utils import finish_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
@@ -29,12 +29,12 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
         model, reporting_mode
     )
 
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
+    model._process_full_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(full_snapshot), 1)
 
-    partial = partial_snapshot(SnapshotModel.prerender(full_snapshot))
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
+    modified_snapshot = finish_snapshot(SnapshotModel.prerender(full_snapshot))
+    model._process_full_snapshot(SnapshotModel.prerender(modified_snapshot), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(modified_snapshot), 1)
 
     qtmodeltester.check(model, force_py=True)
 
@@ -42,7 +42,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
 def test_realization_sort_order(full_snapshot):
     model = SnapshotModel()
 
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(full_snapshot), 0)
 
     for i in range(0, 100):
         iter_index = model.index(i, 0, model.index(0, 0, QModelIndex()))
@@ -54,19 +54,18 @@ def test_realization_sort_order(full_snapshot):
 
 def test_realization_state_matches_display_color(full_snapshot):
     model = SnapshotModel()
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(full_snapshot), 0)
 
-    partial = PartialSnapshot(full_snapshot)
-    partial.update_forward_model(
+    full_snapshot.update_forward_model(
         "0", "0", ForwardModel(status=FORWARD_MODEL_STATE_FINISHED)
     )
-    partial.update_forward_model(
+    full_snapshot.update_forward_model(
         "0", "1", ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
     )
-    partial.update_forward_model(
+    full_snapshot.update_forward_model(
         "0", "2", ForwardModel(status=FORWARD_MODEL_STATE_RUNNING)
     )
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     first_real = model.index(0, 0, model.index(0, 0))
 
     queue_color = model.data(first_real, RealStatusColorHint)
@@ -115,11 +114,11 @@ def test_display_color_changes_when_realization_state_is_not_running(
     forward_model_state, expected_states, expected_colors, waiting_snapshot
 ):
     model = SnapshotModel()
-    model._add_snapshot(SnapshotModel.prerender(waiting_snapshot), 0)
+    model._process_full_snapshot(SnapshotModel.prerender(waiting_snapshot), 0)
 
-    partial = PartialSnapshot(waiting_snapshot)
-    partial.update_forward_model("0", "0", ForwardModel(status=forward_model_state))
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    snapshot = waiting_snapshot
+    snapshot.update_forward_model("0", "0", ForwardModel(status=forward_model_state))
+    model._process_full_snapshot(SnapshotModel.prerender(snapshot), 0)
     first_real = model.index(0, 0, model.index(0, 0))
 
     queue_color = model.data(first_real, RealStatusColorHint)

@@ -9,8 +9,9 @@ from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVa
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
 
-from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
+from ert.ensemble_evaluator import Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import RealizationSnapshot, SnapshotMetadata
 from ert.gui.model.node import (
     ForwardModelStepNode,
@@ -93,8 +94,8 @@ class SnapshotModel(QAbstractItemModel):
 
     @staticmethod
     def prerender(
-        snapshot: Union[Snapshot, PartialSnapshot],
-    ) -> Optional[Union[Snapshot, PartialSnapshot]]:
+        snapshot: Snapshot,
+    ) -> Optional[Snapshot]:
         """Pre-render some data that is required by this model. Ideally, this
         is called outside the GUI thread. This is a requirement of the model,
         so it has to be called."""
@@ -118,11 +119,8 @@ class SnapshotModel(QAbstractItemModel):
                     state.REAL_STATE_TO_COLOR[real.status]
                 ]
 
-        isSnapshot = False
-        if isinstance(snapshot, Snapshot):
-            isSnapshot = True
-            metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
-            metadata["sorted_forward_model_ids"] = defaultdict(list)
+        metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
+        metadata["sorted_forward_model_ids"] = defaultdict(list)
 
         running_forward_model_id: Dict[str, int] = {}
         for (
@@ -136,8 +134,7 @@ class SnapshotModel(QAbstractItemModel):
             real_id,
             forward_model_id,
         ), forward_model_status in forward_model_states.items():
-            if isSnapshot:
-                metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
+            metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
             if (
                 real_id in running_forward_model_id
                 and int(forward_model_id) > running_forward_model_id[real_id]
@@ -152,14 +149,29 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata["aggr_job_status_colors"][real_id][forward_model_id] = color
 
-        if isSnapshot:
-            snapshot.merge_metadata(metadata)
-        elif isinstance(snapshot, PartialSnapshot):
-            snapshot.update_metadata(metadata)
+        snapshot.merge_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int) -> None:
-        metadata = partial.metadata
+    def process_snapshot_event(
+        self, snapshot_event: Union[FullSnapshotEvent, SnapshotUpdateEvent]
+    ) -> None:
+        if isinstance(snapshot_event, FullSnapshotEvent):
+            self._process_full_snapshot(
+                snapshot_event.snapshot, snapshot_event.iteration
+            )
+        else:
+            self._process_snapshot_update(
+                snapshot_event.snapshot, snapshot_event.iteration
+            )
+
+    def _process_snapshot_update(self, snapshot: Snapshot, iter_: int) -> None:
+        """Update the data for an already existing iteration
+
+        Args:
+            partial (Snapshot): An incomplete snapshot containing only the data to be updated.
+            iter_ (int): The iteration that should be updated with the snapshot data.
+        """
+        metadata = snapshot.metadata
         if not metadata:
             logger.debug("no metadata in partial, ignoring partial")
             return
@@ -168,8 +180,8 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot yet, ignoring partial")
             return
 
-        job_infos = partial.get_all_forward_models()
-        reals = partial.reals
+        job_infos = snapshot.get_all_forward_models()
+        reals = snapshot.reals
         if not reals and not job_infos:
             logger.debug(f"no realizations in partial for iter {iter_}")
             return
@@ -273,7 +285,13 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
+    def _process_full_snapshot(self, snapshot: Snapshot, iter_: int):
+        """Add a new snapshot for an iteration, or completely overwrite the current one.
+
+        Args:
+            snapshot (Snapshot): A full snapshot to be added directly.
+            iter_ (int): The iteration to which the snapshot data should be added.
+        """
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             iter_,

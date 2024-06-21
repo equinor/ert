@@ -18,7 +18,6 @@ from _ert_forward_model_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
-    PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
@@ -130,11 +129,14 @@ class Ensemble:
     def snapshot(self) -> Snapshot:
         return self._snapshot
 
-    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
-        snapshot_mutate_event = PartialSnapshot(self._snapshot)
+    def update_snapshot(self, events: List[CloudEvent]) -> Snapshot:
+        snapshot_mutate_event = Snapshot()
         for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
-        self._snapshot.merge_event(snapshot_mutate_event)
+            snapshot_mutate_event = (
+                self._snapshot.update_from_cloudevent_and_generate_update_snapshot(
+                    event, update_event_snapshot=snapshot_mutate_event
+                )
+            )
         if self._snapshot.status is not None and self.status != self._snapshot.status:
             self.status = self._status_tracker.update_state(self._snapshot.status)
         return snapshot_mutate_event
@@ -172,4 +174,4 @@ class Ensemble:
             metadata=self.metadata,
         )
 
-        return Snapshot(top.model_dump())
+        return Snapshot.from_nested_dict(top.model_dump())
