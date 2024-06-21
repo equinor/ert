@@ -37,12 +37,18 @@ class EnsembleExperiment(BaseRunModel):
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        self.ensemble_name = simulation_arguments.ensemble_name
+        self.experiment_name = simulation_arguments.experiment_name
+        self.ensemble_size = simulation_arguments.ensemble_size
+
         super().__init__(
-            simulation_arguments,
             config,
             storage,
             queue_config,
             status_queue,
+            active_realizations=simulation_arguments.active_realizations,
+            random_seed=simulation_arguments.random_seed,
+            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
 
     def run_experiment(
@@ -51,16 +57,15 @@ class EnsembleExperiment(BaseRunModel):
     ) -> RunContext:
         self.setPhaseName(self.run_message())
         experiment = self._storage.create_experiment(
-            name=self.simulation_arguments.experiment_name,
+            name=self.experiment_name,
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
-            simulation_arguments=self.simulation_arguments,
             responses=self.ert_config.ensemble_config.response_configuration,
         )
         ensemble = self._storage.create_ensemble(
             experiment,
-            name=self.simulation_arguments.ensemble_name,
-            ensemble_size=self.simulation_arguments.ensemble_size,
+            name=self.ensemble_name,
+            ensemble_size=self.ensemble_size,
         )
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))

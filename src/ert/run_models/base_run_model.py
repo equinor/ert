@@ -80,7 +80,6 @@ event_logger = logging.getLogger("ert.event_log")
 if TYPE_CHECKING:
     from ert.config import QueueConfig
     from ert.ensemble_evaluator import Ensemble as EEEnsemble
-    from ert.run_models.run_arguments import SimulationArguments
 
 StatusEvents = Union[
     FullSnapshotEvent,
@@ -136,14 +135,16 @@ def captured_logs(
 class BaseRunModel:
     def __init__(
         self,
-        simulation_arguments: SimulationArguments,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
+        active_realizations: List[bool],
         phase_count: int = 1,
         number_of_iterations: int = 1,
         start_iteration: int = 0,
+        random_seed: Optional[int] = None,
+        minimum_required_realizations: int = 0,
     ):
         """
 
@@ -166,17 +167,14 @@ class BaseRunModel:
         self._exception: Optional[Exception] = None
         self._error_messages: MutableSequence[str] = []
         self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: List[bool] = copy.copy(
-            simulation_arguments.active_realizations
-        )
+        self._initial_realizations_mask: List[bool] = copy.copy(active_realizations)
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
         self.facade = LibresFacade(self.ert_config)
         self._storage = storage
-        self.simulation_arguments = simulation_arguments
         self._context_env_keys: List[str] = []
-        self.random_seed: int = _seed_sequence(simulation_arguments.random_seed)
+        self.random_seed: int = _seed_sequence(random_seed)
         self.rng = np.random.default_rng(self.random_seed)
         self.substitution_list = config.substitution_list
 
@@ -190,10 +188,8 @@ class BaseRunModel:
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
         # This holds state about the run model
-        self.minimum_required_realizations = (
-            simulation_arguments.minimum_required_realizations
-        )
-        self.active_realizations = copy.copy(simulation_arguments.active_realizations)
+        self.minimum_required_realizations = minimum_required_realizations
+        self.active_realizations = copy.copy(active_realizations)
         self.number_of_iterations = number_of_iterations
         self.start_iteration = start_iteration
         self.validate()

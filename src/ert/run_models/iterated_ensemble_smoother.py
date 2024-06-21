@@ -53,20 +53,26 @@ class IteratedEnsembleSmoother(BaseRunModel):
             max_steplength=analysis_config.ies_max_steplength,
             halflife=analysis_config.ies_dec_steplength,
         )
+        self.target_ensemble_format = simulation_arguments.target_ensemble
+        self.experiment_name = simulation_arguments.experiment_name
+        self.ensemble_size = simulation_arguments.ensemble_size
 
         super().__init__(
-            simulation_arguments,
             config,
             storage,
             queue_config,
             status_queue,
+            active_realizations=simulation_arguments.active_realizations,
             phase_count=2,
             number_of_iterations=simulation_arguments.number_of_iterations,
+            random_seed=simulation_arguments.random_seed,
+            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
 
         # Initialize sies_smoother to None
         # It is initialized later, but kept track of here
         self.sies_smoother = None
+        self.num_retries_per_iter = simulation_arguments.num_retries_per_iter
 
     @property
     def iteration(self) -> int:
@@ -124,17 +130,16 @@ class IteratedEnsembleSmoother(BaseRunModel):
         logger.info(log_msg)
         self.setPhaseName(log_msg)
 
-        target_ensemble_format = self.simulation_arguments.target_ensemble
+        target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             observations=self.ert_config.observations.datasets,
             responses=self.ert_config.ensemble_config.response_configuration,
-            simulation_arguments=self.simulation_arguments,
-            name=self.simulation_arguments.experiment_name,
+            name=self.experiment_name,
         )
         prior = self._storage.create_ensemble(
             experiment=experiment,
-            ensemble_size=self.simulation_arguments.ensemble_size,
+            ensemble_size=self.ensemble_size,
             name=target_ensemble_format % 0,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -190,7 +195,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 iteration=current_iter,
             )
             update_success = False
-            for _iteration in range(self.simulation_arguments.num_retries_per_iter):
+            for _iteration in range(self.num_retries_per_iter):
                 self.analyzeStep(
                     prior_storage=prior_context.ensemble,
                     posterior_storage=posterior_context.ensemble,
@@ -214,7 +219,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     (
                         "Iterated ensemble smoother stopped: "
                         "maximum number of iteration retries "
-                        f"({self.simulation_arguments.num_retries_per_iter} retries) reached "
+                        f"({self.num_retries_per_iter} retries) reached "
                         f"for iteration {current_iter}"
                     )
                 )

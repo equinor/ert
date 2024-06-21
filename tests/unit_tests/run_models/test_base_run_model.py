@@ -7,29 +7,13 @@ import pytest
 from ert.config import ErtConfig, ModelConfig
 from ert.run_context import RunContext
 from ert.run_models import BaseRunModel
-from ert.run_models.run_arguments import (
-    SimulationArguments,
-)
 from ert.runpaths import Runpaths
 from ert.substitution_list import SubstitutionList
 
 
-@pytest.fixture
-def base_arguments():
-    return SimulationArguments(
-        random_seed=1234,
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-        active_realizations=[True],
-    )
-
-
-def test_base_run_model_supports_restart(minimum_case, base_arguments):
+def test_base_run_model_supports_restart(minimum_case):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(
-        base_arguments, minimum_case, None, None, minimum_case.queue_config
-    )
+    brm = BaseRunModel(minimum_case, None, None, minimum_case.queue_config, [True])
     assert brm.support_restart
 
 
@@ -49,9 +33,9 @@ class MockJob:
         ([False, True]),
     ],
 )
-def test_active_realizations(initials, base_arguments):
+def test_active_realizations(initials):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None)
+    brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     assert brm._ensemble_size == len(initials)
 
@@ -69,9 +53,9 @@ def test_active_realizations(initials, base_arguments):
         ([False, False], [], True, [True, True]),
     ],
 )
-def test_failed_realizations(initials, completed, any_failed, failures, base_arguments):
+def test_failed_realizations(initials, completed, any_failed, failures):
     BaseRunModel.validate = MagicMock()
-    brm = BaseRunModel(base_arguments, MagicMock(), None, None, None)
+    brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -99,13 +83,6 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    simulation_arguments = SimulationArguments(
-        random_seed=None,
-        active_realizations=active_mask,
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-    )
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = SubstitutionList()
     config = MagicMock()
@@ -113,11 +90,11 @@ def test_check_if_runpath_exists(
     config.substitution_list = subs_list
 
     brm = BaseRunModel(
-        simulation_arguments,
         config,
         None,
         None,
         None,
+        active_realizations=active_mask,
         start_iteration=start_iteration,
         number_of_iterations=number_of_iterations,
     )
@@ -136,13 +113,6 @@ def test_check_if_runpath_exists(
     "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
 )
 def test_delete_run_path(run_path_format, active_realizations):
-    simulation_arguments = SimulationArguments(
-        random_seed=None,
-        active_realizations=active_realizations,
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-    )
     expected_remaining = []
     expected_removed = []
     for iens, mask in enumerate(active_realizations):
@@ -166,7 +136,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     config.substitution_list = subs_list
 
     brm = BaseRunModel(
-        simulation_arguments, config, MagicMock(), MagicMock(), MagicMock()
+        config, MagicMock(), MagicMock(), MagicMock(), active_realizations
     )
     brm.rm_run_path()
     assert not any(path.exists() for path in expected_removed)
@@ -176,7 +146,7 @@ def test_delete_run_path(run_path_format, active_realizations):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_is_propagated_from_config_to_ensemble(base_arguments, storage):
+def test_num_cpu_is_propagated_from_config_to_ensemble(storage):
     # Given NUM_CPU in the config file has a special value
     Path("num_cpu_config.ert").write_text(
         "NUM_REALIZATIONS 2\nNUM_CPU 42", encoding="utf-8"
@@ -186,11 +156,11 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(base_arguments, storage):
     config = ErtConfig.from_file("num_cpu_config.ert")
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(
-        simulation_arguments=base_arguments,
         config=config,
         storage=storage,
         queue_config=config.queue_config,
         status_queue=None,
+        active_realizations=[True],
     )
     run_context = RunContext(
         storage.create_experiment().create_ensemble(name="test", ensemble_size=2),
