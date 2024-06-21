@@ -223,8 +223,8 @@ class SnapshotModel(QAbstractItemModel):
                     real_node.data.max_memory_usage = max(
                         real_node.data.max_memory_usage or 0, max_mem_usage
                     )
-                    self.root.data.max_memory_usage = max(
-                        self.root.data.max_memory_usage or 0, max_mem_usage
+                    self.root.max_memory_usage = max(
+                        self.root.max_memory_usage or 0, max_mem_usage
                     )
 
                 # Errors may be unset as the queue restarts the job

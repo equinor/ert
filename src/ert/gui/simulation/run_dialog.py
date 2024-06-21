@@ -393,7 +393,7 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
-        maximum_memory_usage = self._snapshot_model.root.data.max_memory_usage
+        maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
         if maximum_memory_usage:
             self.memory_usage.setText(

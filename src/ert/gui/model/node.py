@@ -40,15 +40,10 @@ class _Node(ABC):
 
 
 @dataclass
-class RootNodeData:
-    max_memory_usage: Optional[int] = None
-
-
-@dataclass
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
     children: dict[int, IterNode] = field(default_factory=dict)
-    data: RootNodeData = field(default_factory=RootNodeData)
+    max_memory_usage: Optional[int] = None
 
     def add_child(self, node: IterNode, node_id: Optional[int] = None) -> None:
         node.parent = self
