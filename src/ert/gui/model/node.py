@@ -49,7 +49,6 @@ class _Node(ABC):
 
 @dataclass
 class RootNodeData:
-    current_memory_usage: Optional[int] = None
     max_memory_usage: Optional[int] = None
 
 
@@ -74,8 +73,6 @@ class IterNodeData:
     sorted_forward_model_step_ids_by_realization_id: dict[str, list[str]] = field(
         default_factory=dict
     )
-    current_memory_usage: Optional[int] = None
-    max_memory_usage: Optional[int] = None
 
 
 @dataclass
