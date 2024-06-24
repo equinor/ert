@@ -28,9 +28,9 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
-from ert.config.observations import EnkfObs
+from ert.config.responses.general_observation import GenObservation
+from ert.config.responses.observation_vector import ObsVector
+from ert.config.responses.observations import EnkfObs
 from ert.storage import open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError

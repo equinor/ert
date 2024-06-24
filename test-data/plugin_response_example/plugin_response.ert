@@ -1,0 +1,46 @@
+NUM_REALIZATIONS 1
+
+-- mock the csv response into runpath
+FORWARD_MODEL COPY_FILE(<FROM>=dummy_csv_response.csv,<TO>=<RUNPATH>/dummy_csv_response.csv)
+
+-- (not implemented)
+-- (probably most complicated to implement)
+-- these keywords are added to the ert config before parsing by the "plugin" response
+-- implicit primary key by header, it is set at runtime after reading a response,
+-- and must thus also defer the observation parsing/validation (if using only <ON_RESPONSE_NAME>)
+-- CSV_RESPONSE(<NAME>=RESP_NAME,<SRC>=dummy_csv_response.csv)
+
+-- (planned to be implemented)
+-- (easy to implement)
+-- explicitly state primary key (will assert that specified primary key matches header)
+CSV_RESPONSE(<NAME>=RESP_NAME,<SRC>=dummy_csv_response.csv,<PRIMARY_KEY>=["x","y","z","w","t"])
+
+-- (planned to be implemented)
+-- (difficult if response name isn't known until post running forward model)
+-- (would not let us do observation validation before
+-- explicitly give response name
+CSV_OBSERVATION(<OBSERVATIONS_CSV>=dummy_csv_obs.csv,<ON_RESPONSE_NAME>=RESP_NAME)
+
+-- (not implemented)
+-- (difficult if response name isn't known until post running forward model)
+-- implicitly match response & primary key by header
+-- all responses must be of same type, which sort of makes sense as they have the same primary key in csv
+-- lookup response type for response name, and expect the columns to match the primary key of that type
+-- CSV_OBSERVATION(<OBSERVATIONS_CSV>=dummy_csv_obs.csv,<RESPONSE_NAME_COLUMN>=response_name_col)
+
+-- (not implemented)
+-- (difficult if response name isn't known until post running forward model)
+-- Will expect header to match that of response type of "FOPR" which is summary
+-- sets response_type to summary after reading and parsing line in csv config
+-- CSV_OBSERVATION(<OBSERVATIONS_CSV>=summary_csv_obs.csv,<ON_RESPONSE_NAME>=FOPR)
+
+
+-- (not implemented)
+-- expect header to contain column "response_name"
+-- expect response names in column to all be of type summary
+-- sets response_type to summary on runtime after reading and parsing the line in the csv config
+-- CSV_OBSERVATION(<OBSERVATIONS_CSV>=summary_csv_obs.csv,<ON_RESPONSE_TYPE>=summary)
+
+-- (not implemented)
+-- Will assert that "FOPR" is of the response type "summary"
+-- CSV_OBSERVATION(<OBSERVATIONS_CSV>=summary_csv_obs.csv,<ON_RESPONSE_TYPE>=summary,<ON_RESPONSE_NAME>=FOPR)

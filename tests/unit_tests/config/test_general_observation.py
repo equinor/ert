@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from ert.config import GenDataConfig
-from ert.config.general_observation import GenObservation
+from ert.config.responses.general_observation import GenObservation
 
 
 def test_create(tmp_path):

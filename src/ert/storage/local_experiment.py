@@ -22,7 +22,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.response_config import ResponseConfig
+from ert.config.responses.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order

@@ -22,10 +22,10 @@ from ert.config import (
     queue_positive_number_options,
     queue_string_options,
 )
-from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
 from ert.config.queue_config import OPENPBS_DRIVER_OPTIONS
+from ert.config.responses._read_summary import make_summary_key
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
