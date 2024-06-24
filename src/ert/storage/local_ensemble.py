@@ -1379,31 +1379,23 @@ class LocalEnsemble(BaseMode):
     def get_parameter_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
-        path = self._realization_dir(realization)
-        return dict(
-            (
-                e,
-                (
-                    RealizationStorageState.INITIALIZED
-                    if (path / f"{e}.nc").exists()
-                    else RealizationStorageState.UNDEFINED
-                ),
+        return {
+            parameter: (
+                RealizationStorageState.INITIALIZED
+                if self._parameters_exist_for_realization(realization)
+                else RealizationStorageState.UNDEFINED
             )
-            for e in self.experiment.parameter_configuration
-        )
+            for parameter in self.experiment.parameter_configuration
+        }
 
     def get_response_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
-        path = self._realization_dir(realization)
-        return dict(
-            (
-                e,
-                (
-                    RealizationStorageState.HAS_DATA
-                    if (path / f"{e}.nc").exists()
-                    else RealizationStorageState.UNDEFINED
-                ),
+        return {
+            response_key: (
+                RealizationStorageState.HAS_DATA
+                if self._responses_exist_for_realization(realization)
+                else RealizationStorageState.UNDEFINED
             )
-            for e in self.experiment.response_configuration
-        )
+            for response_key in self.experiment.response_configuration
+        }

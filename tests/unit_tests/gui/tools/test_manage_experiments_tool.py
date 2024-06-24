@@ -242,9 +242,9 @@ def test_realization_view(
     # Fix these. They should not be UNDEFINED
     assert (
         realization_widget._response_text_edit.toPlainText()
-        == "\nSNAKE_OIL_OPR_DIFF - UNDEFINED\nSNAKE_OIL_WPR_DIFF - UNDEFINED\nSNAKE_OIL_GPR_DIFF - UNDEFINED\nsummary - UNDEFINED\n"
+        == "\nSNAKE_OIL_OPR_DIFF - HAS_DATA\nSNAKE_OIL_WPR_DIFF - HAS_DATA\nSNAKE_OIL_GPR_DIFF - HAS_DATA\nsummary - HAS_DATA\n"
     )
     assert (
         realization_widget._parameter_text_edit.toPlainText()
-        == "\nSNAKE_OIL_PARAM - UNDEFINED\n"
+        == "\nSNAKE_OIL_PARAM - INITIALIZED\n"
     )
