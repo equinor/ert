@@ -161,36 +161,3 @@ class TestEnsemble(Ensemble):
     @property
     def cancellable(self) -> bool:
         return False
-
-
-class AutorunTestEnsemble(TestEnsemble):
-    def _evaluate(self, client_url, dispatch_url):
-        super()._evaluate(dispatch_url)
-        with Client(client_url) as client:
-            client.send(
-                to_json(
-                    CloudEvent(
-                        {
-                            "type": identifiers.EVTYPE_EE_USER_DONE,
-                            "source": f"/ert/ensemble/{self.id_}",
-                            "id": "event-user-done",
-                        }
-                    )
-                )
-            )
-
-    def evaluate(self, config):
-        self._eval_thread = ErtThread(
-            target=self._evaluate,
-            args=(config.client_uri, config.dispatch_uri),
-            name="AutorunTestEnsemble",
-        )
-
-        self._eval_thread.start()
-
-    def cancel(self):
-        pass
-
-    @property
-    def cancellable(self) -> bool:
-        return True
