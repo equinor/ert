@@ -29,11 +29,11 @@ from pandas import DataFrame
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
+from ert.config import GenDataConfig, ResponseTypes, SummaryConfig
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
-from ..config import GenDataConfig, ResponseTypes, SummaryConfig
 from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order
 from .realization_state import _MultiRealizationStateDict
 from .realization_storage_state import RealizationStorageState
@@ -177,6 +177,7 @@ class LocalEnsemble(BaseMode):
 
         self._realization_dir = create_realization_dir
         self._realization_states = _MultiRealizationStateDict()
+        self.__realization_states_need_refresh = True
 
     def on_experiment_initialized(self) -> None:
         """
@@ -184,7 +185,8 @@ class LocalEnsemble(BaseMode):
         For example, if some logic needs to traverse response/parameter configs,
         the experiment of this ensemble must be initialized before running that logic.
         """
-        self._refresh_realization_states()
+
+        self.__realization_states_need_refresh = True
 
     @classmethod
     def create(
@@ -279,6 +281,12 @@ class LocalEnsemble(BaseMode):
     @property
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
+
+    def _refresh_realization_state_if_needed(self):
+        if self.__realization_states_need_refresh:
+            self._refresh_realization_states()
+
+        self.__realization_states_need_refresh = False
 
     def get_realization_mask_without_parent_failure(self) -> npt.NDArray[np.bool_]:
         """
@@ -385,6 +393,7 @@ class LocalEnsemble(BaseMode):
         if not self.experiment.parameter_configuration:
             return True
 
+        self._refresh_realization_state_if_needed()
         return all(
             self._realization_states.has_parameter_group(realization, parameter)
             for parameter in self.experiment.parameter_configuration
@@ -434,6 +443,7 @@ class LocalEnsemble(BaseMode):
             otherwise, `False`.
         """
 
+        self._refresh_realization_state_if_needed()
         if not key:
             return all(
                 self._realization_states.has_response(realization, response)
@@ -453,6 +463,8 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with parameters
         """
+
+        self._refresh_realization_state_if_needed()
 
         return list(
             i
@@ -1061,6 +1073,7 @@ class LocalEnsemble(BaseMode):
             dataset = dataset.expand_dims(realizations=[realization])
 
         dataset.to_netcdf(path, engine="scipy")
+        self.__realization_states_need_refresh = True
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
@@ -1095,6 +1108,7 @@ class LocalEnsemble(BaseMode):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+        self.__realization_states_need_refresh = True
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if not parameter_group in self.experiment.parameter_configuration:
