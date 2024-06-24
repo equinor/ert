@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Mocks the Slurm command line utility squeue
+exec "${PYTHON:-$(which python3)}" "$(dirname $0)/squeue.py" "$@"

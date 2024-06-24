@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Mocks the Slurm provided sbatch utility
+exec "${PYTHON:-$(which python3)}" "$(dirname $0)/sbatch.py" "$@"
