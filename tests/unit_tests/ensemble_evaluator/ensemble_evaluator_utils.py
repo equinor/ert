@@ -9,7 +9,7 @@ from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble, identifiers
-from ert.ensemble_evaluator._builder._realization import ForwardModelStep, Realization
+from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization
 
 
 def _mock_ws(host, port, messages, delay_startup=0):

@@ -3,7 +3,7 @@ import logging
 import pytest
 
 from ert.ensemble_evaluator import state
-from ert.ensemble_evaluator._builder._ensemble import _EnsembleStateTracker
+from ert.ensemble_evaluator._ensemble import _EnsembleStateTracker
 
 
 @pytest.mark.parametrize(

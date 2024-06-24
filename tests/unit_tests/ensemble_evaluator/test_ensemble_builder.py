@@ -3,8 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
-from ert.ensemble_evaluator._builder import Realization
-from ert.ensemble_evaluator._builder._legacy import LegacyEnsemble
+from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
 
 
 @pytest.mark.parametrize("active_real", [True, False])

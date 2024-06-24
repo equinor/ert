@@ -22,7 +22,7 @@ from ert.scheduler.driver import Driver
 from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator._builder._realization import Realization
+    from ert.ensemble_evaluator._ensemble import Realization
     from ert.scheduler.scheduler import Scheduler
 
 logger = logging.getLogger(__name__)

@@ -64,7 +64,7 @@ from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 
-from ..ensemble_evaluator._builder._legacy import LegacyEnsemble
+from ..ensemble_evaluator._ensemble import LegacyEnsemble
 from ..job_queue import WorkflowRunner
 from .event import (
     RunModelDataEvent,
