@@ -347,12 +347,14 @@ class SnapshotModel(QAbstractItemModel):
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     @override
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         if not index.isValid():
             return QVariant()
 
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignCenter
 
         node: Union[RootNode, IterNode, RealNode, ForwardModelStepNode] = (
             index.internalPointer()
@@ -372,22 +374,30 @@ class SnapshotModel(QAbstractItemModel):
         if isinstance(node, RealNode):
             return self._real_data(index, node, role)
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
                 return f"{type(node).__name__}:{node.id_}"
             if index.column() == 1:
                 return f"{node.data.status}"
 
-        if role in (Qt.StatusTipRole, Qt.WhatsThisRole, Qt.ToolTipRole):
+        if role in (
+            Qt.ItemDataRole.StatusTipRole,
+            Qt.ItemDataRole.WhatsThisRole,
+            Qt.ItemDataRole.ToolTipRole,
+        ):
             return ""
 
-        if role == Qt.SizeHintRole:
+        if role == Qt.ItemDataRole.SizeHintRole:
             return QSize()
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             return QFont()
 
-        if role in (Qt.BackgroundRole, Qt.ForegroundRole, Qt.DecorationRole):
+        if role in (
+            Qt.ItemDataRole.BackgroundRole,
+            Qt.ItemDataRole.ForegroundRole,
+            Qt.ItemDataRole.DecorationRole,
+        ):
             return QColor()
 
         return QVariant()
@@ -422,13 +432,27 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     @staticmethod
-    def _job_data(index: QModelIndex, node: ForwardModelStepNode, role: int):
+    def _job_data(
+        index: QModelIndex, node: ForwardModelStepNode, role: Qt.ItemDataRole
+    ):
         node_id = str(node.id_)
 
-        if role == Qt.BackgroundRole:
+        if role == Qt.ItemDataRole.FontRole:
+            data_name = COLUMNS[NodeType.REAL][index.column()]
+            if data_name in [ids.STDOUT, ids.STDERR]:
+                font = QFont()
+                font.setUnderline(True)
+                return font
+
+        if role == Qt.ItemDataRole.ForegroundRole:
+            data_name = COLUMNS[NodeType.REAL][index.column()]
+            if data_name in [ids.STDOUT, ids.STDERR]:
+                return QColor(Qt.GlobalColor.blue)
+
+        if role == Qt.ItemDataRole.BackgroundRole:
             return node.parent.data.forward_model_step_status_color_by_id[node_id]
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
@@ -463,7 +487,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == IterNum:
             return node.parent.parent.id_
 
-        if role == Qt.ToolTipRole:
+        if role == Qt.ItemDataRole.ToolTipRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
             data = None
             if data_name == ids.ERROR:
