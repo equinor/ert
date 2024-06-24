@@ -10,12 +10,13 @@ from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.local_driver import LocalDriver
 from ert.scheduler.lsf_driver import LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
+from ert.scheduler.slurm_driver import SlurmDriver
 from tests.utils import poll
 
 from .conftest import mock_bin
 
 
-@pytest.fixture(params=[LocalDriver, LsfDriver, OpenPBSDriver])
+@pytest.fixture(params=[LocalDriver, LsfDriver, OpenPBSDriver, SlurmDriver])
 def driver(request, pytestconfig, monkeypatch, tmp_path):
     class_ = request.param
     queue_name = None
@@ -86,12 +87,19 @@ async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
 async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     os.chdir(tmp_path)
     aborted_called = False
-    expected_returncodes = [
-        SIGNAL_OFFSET + signal.SIGTERM,
-        SIGNAL_OFFSET + signal.SIGINT,
-        256 + signal.SIGKILL,
-        256 + signal.SIGTERM,
-    ]
+
+    if isinstance(driver, SlurmDriver):
+        expected_returncodes = [
+            0,  # real Slurm
+            271,  # mocked Slurm
+        ]
+    else:
+        expected_returncodes = [
+            SIGNAL_OFFSET + signal.SIGTERM,
+            SIGNAL_OFFSET + signal.SIGINT,
+            256 + signal.SIGKILL,
+            256 + signal.SIGTERM,
+        ]
 
     async def started(iens):
         nonlocal driver
