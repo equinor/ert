@@ -3,10 +3,7 @@ from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
-from ert.ensemble_evaluator.state import (
-    COLOR_FAILED,
-    FORWARD_MODEL_STATE_FINISHED,
-)
+from ert.ensemble_evaluator.state import COLOR_FAILED, FORWARD_MODEL_STATE_FINISHED
 from ert.gui.model.snapshot import RealJobColorHint, RealStatusColorHint, SnapshotModel
 
 from .gui_models_utils import partial_snapshot

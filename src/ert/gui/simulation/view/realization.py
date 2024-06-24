@@ -1,5 +1,4 @@
-import math
-from typing import Any, Final, Optional, Tuple
+from typing import Any, Optional
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -7,12 +6,11 @@ from qtpy.QtCore import (
     QModelIndex,
     QObject,
     QPoint,
-    QRect,
     QSize,
     Qt,
     Signal,
 )
-from qtpy.QtGui import QColor, QColorConstants, QImage, QPainter, QPen
+from qtpy.QtGui import QColor, QColorConstants, QPainter
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QListView,
@@ -73,10 +71,10 @@ class RealizationWidget(QWidget):
 
 
 class RealizationDelegate(QStyledItemDelegate):
-    def __init__(self, width: int, height: int, parent: QObject) -> None:
+    def __init__(self, size: QSize, parent: QObject) -> None:
         super().__init__(parent)
         self._size = size
-        self.parent().installEventFilter(self)
+        parent.installEventFilter(self)
         self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
 
     def paint(
@@ -135,8 +133,8 @@ class RealizationDelegate(QStyledItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, object: Optional[QObject], event: Optional[QEvent]) -> bool:
-        if event.type() == QEvent.Type.ToolTip:  # type: ignore
+    def eventFilter(self, object: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.ToolTip:
             mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
             parent: RealizationWidget = self.parent()  # type: ignore
             view = parent._real_view
