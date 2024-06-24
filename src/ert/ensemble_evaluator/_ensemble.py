@@ -20,43 +20,94 @@ from typing import (
 )
 
 from cloudevents.conversion import to_json
-from cloudevents.http.event import CloudEvent
+from cloudevents.http import CloudEvent
 
 from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
+from ert.config import ForwardModelStep, QueueConfig
+
+from . import identifiers
+from ._wait_for_evaluator import wait_for_evaluator
+
+if TYPE_CHECKING:
+    from ..ensemble_evaluator import EvaluatorServerConfig, SnapshotDict
+
 from ert.job_queue import JobQueue
+from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
+from ert.serialization import evaluator_marshaller
 from ert.shared.feature_toggling import FeatureScheduler
 
-from ...serialization import evaluator_marshaller
-from .. import identifiers
-from .._wait_for_evaluator import wait_for_evaluator
-from ..snapshot import (
+from ..ensemble_evaluator import state
+from .snapshot import (
     ForwardModel,
     PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
-    state,
 )
-from ._ensemble import _EnsembleStateTracker
-
-if TYPE_CHECKING:
-    from ert.config import QueueConfig
-
-    from ..config import EvaluatorServerConfig
-    from ._realization import Realization
-
-CONCURRENT_INTERNALIZATION = 10
 
 logger = logging.getLogger(__name__)
-event_logger = logging.getLogger("ert.event_log")
 scheduler_logger = logging.getLogger("ert.scheduler")
 
+_handle = Callable[..., Any]
 
-class _KillAllJobs(Protocol):
-    def kill_all_jobs(self) -> None: ...
+
+class _EnsembleStateTracker:
+    def __init__(self, state_: str = state.ENSEMBLE_STATE_UNKNOWN) -> None:
+        self._state = state_
+        self._handles: Dict[str, _handle] = {}
+        self._msg = "Illegal state transition from %s to %s"
+
+        self.set_default_handles()
+
+    def add_handle(self, state_: str, handle: _handle) -> None:
+        self._handles[state_] = handle
+
+    def _handle_unknown(self) -> None:
+        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_UNKNOWN)
+        self._state = state.ENSEMBLE_STATE_UNKNOWN
+
+    def _handle_started(self) -> None:
+        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_STARTED)
+        self._state = state.ENSEMBLE_STATE_STARTED
+
+    def _handle_failed(self) -> None:
+        if self._state not in [
+            state.ENSEMBLE_STATE_UNKNOWN,
+            state.ENSEMBLE_STATE_STARTED,
+        ]:
+            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_FAILED)
+        self._state = state.ENSEMBLE_STATE_FAILED
+
+    def _handle_stopped(self) -> None:
+        if self._state != state.ENSEMBLE_STATE_STARTED:
+            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_STOPPED)
+        self._state = state.ENSEMBLE_STATE_STOPPED
+
+    def _handle_canceled(self) -> None:
+        if self._state != state.ENSEMBLE_STATE_STARTED:
+            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_CANCELLED)
+        self._state = state.ENSEMBLE_STATE_CANCELLED
+
+    def set_default_handles(self) -> None:
+        self.add_handle(state.ENSEMBLE_STATE_UNKNOWN, self._handle_unknown)
+        self.add_handle(state.ENSEMBLE_STATE_STARTED, self._handle_started)
+        self.add_handle(state.ENSEMBLE_STATE_FAILED, self._handle_failed)
+        self.add_handle(state.ENSEMBLE_STATE_STOPPED, self._handle_stopped)
+        self.add_handle(state.ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
+
+    def update_state(self, state_: str) -> str:
+        if state_ not in self._handles:
+            raise KeyError(f"Handle not defined for state {state_}")
+
+        # Call the state handle mapped to the new state
+        self._handles[state_]()
+
+        return self._state
 
 
 @dataclass
@@ -324,3 +375,18 @@ class LegacyEnsemble:
         if self._job_queue is not None:
             self._job_queue.kill_all_jobs()
         logger.debug("evaluator cancelled")
+
+
+class _KillAllJobs(Protocol):
+    def kill_all_jobs(self) -> None: ...
+
+
+@dataclass
+class Realization:
+    iens: int
+    forward_models: Sequence[ForwardModelStep]
+    active: bool
+    max_runtime: Optional[int]
+    run_arg: "RunArg"
+    num_cpu: int
+    job_script: str

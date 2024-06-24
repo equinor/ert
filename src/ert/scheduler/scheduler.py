@@ -43,8 +43,7 @@ from ert.scheduler.job import State as JobState
 from ert.serialization import evaluator_unmarshaller
 
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator._builder._realization import Realization
-
+    from ert.ensemble_evaluator._ensemble import Realization
 
 logger = logging.getLogger(__name__)
 

@@ -30,7 +30,7 @@ from _ert.threading import ErtThread
 from ert.ensemble_evaluator import identifiers as ids
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
-from ._builder import Ensemble
+from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
 from .dispatch import BatchingDispatcher
 from .identifiers import (

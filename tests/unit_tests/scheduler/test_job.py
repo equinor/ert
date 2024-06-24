@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 import ert
-from ert.ensemble_evaluator._builder._realization import Realization
+from ert.ensemble_evaluator import Realization
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs

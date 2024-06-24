@@ -12,7 +12,7 @@ import ert.ensemble_evaluator
 from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_file
-from ert.ensemble_evaluator._builder._legacy import LegacyEnsemble
+from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
