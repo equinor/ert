@@ -396,8 +396,8 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
         qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        job_view = run_dialog._job_view
-        qtbot.waitUntil(job_view.isVisible, timeout=20000)
+        job_overview = run_dialog._job_overview
+        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
@@ -412,8 +412,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, sto
                 Qt.LeftButton,
                 pos=click_pos,
             )
-        click_pos = job_view.visualRect(run_dialog._job_model.index(0, 4)).center()
-        qtbot.mouseClick(job_view.viewport(), Qt.LeftButton, pos=click_pos)
+
+        click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
+        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
 
         qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=3000)
 
@@ -516,7 +517,7 @@ def test_run_dialog_memory_usage_showing(
     assert type(realization_box) == RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.LeftButton)
-    job_model = run_dialog._job_view.model()
+    job_model = run_dialog._job_overview.model()
     assert job_model._real == 0
 
     job_number = 0

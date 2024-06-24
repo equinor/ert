@@ -5,6 +5,7 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
+from PyQt5.QtGui import QMouseEvent
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
@@ -59,6 +60,83 @@ from .view import ProgressWidget, RealizationWidget, UpdateWidget
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 
+class JobOverview(QTableView):
+    def __init__(self, snapshot_model: SnapshotModel, parent: QWidget | None) -> None:
+        super().__init__(parent)
+
+        self._job_model = JobListProxyModel(self, 0, 0)
+        self._job_model.setSourceModel(snapshot_model)
+
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        self.clicked.connect(self._job_clicked)
+        self.setModel(self._job_model)
+
+        horizontal_header = self.horizontalHeader()
+        assert horizontal_header is not None
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        vertical_header = self.verticalHeader()
+        assert vertical_header is not None
+        vertical_header.setMinimumWidth(20)
+
+        self.setMouseTracking(True)
+
+    @Slot(int, int)
+    def set_realization(self, iter_: int, real: int) -> None:
+        self._job_model.set_real(iter_, real)
+
+    @Slot(QModelIndex)
+    def _job_clicked(self, index: QModelIndex) -> None:
+        if not index.isValid():
+            return
+        selected_file = index.data(FileRole)
+        file_dialog = self.findChild(QDialog, name=selected_file)
+        if file_dialog and file_dialog.isVisible():
+            file_dialog.raise_()
+        elif selected_file:
+            job_name = index.siblingAtColumn(0).data()
+            FileDialog(
+                selected_file,
+                job_name,
+                index.row(),
+                index.data(RealIens),
+                index.data(IterNum),
+                self,
+            )
+        else:
+            if COLUMNS[NodeType.REAL][index.column()] == ids.ERROR and index.data():
+                error_dialog = QDialog(self)
+                error_dialog.setWindowTitle("Error information")
+                layout = QVBoxLayout(error_dialog)
+
+                error_textedit = QPlainTextEdit()
+                error_textedit.setReadOnly(True)
+                error_textedit.setWordWrapMode(QTextOption.NoWrap)
+                error_textedit.appendPlainText(index.data())
+                layout.addWidget(error_textedit)
+
+                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+                dialog_button.accepted.connect(error_dialog.accept)
+                layout.addWidget(dialog_button)
+                error_dialog.resize(700, 300)
+                error_textedit.moveCursor(QTextCursor.Start)
+                error_dialog.exec_()
+
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+        if event:
+            index = self.indexAt(event.pos())
+            if index.isValid():
+                data_name = COLUMNS[NodeType.REAL][index.column()]
+                if data_name in [ids.STDOUT, ids.STDERR]:
+                    self.setCursor(Qt.CursorShape.PointingHandCursor)
+                else:
+                    self.setCursor(Qt.CursorShape.ArrowCursor)
+
+        return super().mouseMoveEvent(event)
+
+
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
     on_run_model_event = Signal(object)
@@ -111,21 +189,7 @@ class RunDialog(QDialog):
 
         self._job_label = QLabel(self)
 
-        self._job_model = JobListProxyModel(self, 0, 0)
-        self._job_model.setSourceModel(self._snapshot_model)
-
-        self._job_view = QTableView(self)
-        self._job_view.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
-        self._job_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self._job_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        self._job_view.clicked.connect(self._job_clicked)
-        self._job_view.setModel(self._job_model)
-        horizontal_header = self._job_view.horizontalHeader()
-        assert horizontal_header is not None
-        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        vertical_header = self._job_view.horizontalHeader()
-        assert vertical_header is not None
-        vertical_header.setMinimumWidth(20)
+        self._job_overview = JobOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
@@ -176,7 +240,7 @@ class RunDialog(QDialog):
         layout.addWidget(self._progress_widget)
         layout.addWidget(self._tab_widget)
         layout.addWidget(self._job_label)
-        layout.addWidget(self._job_view)
+        layout.addWidget(self._job_overview)
         layout.addWidget(button_widget_container)
 
         self.setLayout(layout)
@@ -205,14 +269,14 @@ class RunDialog(QDialog):
         self._isDetailedDialog = False
         self._tab_widget.setVisible(False)
         self._job_label.setVisible(False)
-        self._job_view.setVisible(False)
+        self._job_overview.setVisible(False)
         self.show_details_button.setText("Show details")
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
         self._tab_widget.setVisible(True)
         self._job_label.setVisible(True)
-        self._job_view.setVisible(True)
+        self._job_overview.setVisible(True)
         self.show_details_button.setText("Hide details")
 
     @Slot(QModelIndex, int, int)
@@ -235,47 +299,10 @@ class RunDialog(QDialog):
             )
 
     @Slot(QModelIndex)
-    def _job_clicked(self, index: QModelIndex) -> None:
-        if not index.isValid():
-            return
-        selected_file = index.data(FileRole)
-        file_dialog = self.findChild(QDialog, name=selected_file)
-        if file_dialog and file_dialog.isVisible():
-            file_dialog.raise_()
-        elif selected_file:
-            job_name = index.siblingAtColumn(0).data()
-            FileDialog(
-                selected_file,
-                job_name,
-                index.row(),
-                index.data(RealIens),
-                index.data(IterNum),
-                self,
-            )
-        else:
-            if COLUMNS[NodeType.REAL][index.column()] == ids.ERROR and index.data():
-                error_dialog = QDialog(self)
-                error_dialog.setWindowTitle("Error information")
-                layout = QVBoxLayout(error_dialog)
-
-                error_textedit = QPlainTextEdit()
-                error_textedit.setReadOnly(True)
-                error_textedit.setWordWrapMode(QTextOption.NoWrap)
-                error_textedit.appendPlainText(index.data())
-                layout.addWidget(error_textedit)
-
-                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
-                dialog_button.accepted.connect(error_dialog.accept)
-                layout.addWidget(dialog_button)
-                error_dialog.resize(700, 300)
-                error_textedit.moveCursor(QTextCursor.Start)
-                error_dialog.exec_()
-
-    @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
         real = index.row()
         iter_ = index.model().get_iter()  # type: ignore
-        self._job_model.set_real(iter_, real)
+        self._job_overview.set_realization(iter_, real)
         self._job_label.setText(
             f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
