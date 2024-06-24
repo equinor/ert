@@ -29,7 +29,7 @@ class JobStatus(Enum):
     COMPLETED = auto()
     RUNNING = auto()
     FAILED = auto()
-    CANCELED = auto()
+    CANCELLED = auto()
     COMPLETING = auto()
     CONFIGURING = auto()
 
@@ -41,7 +41,7 @@ class JobData:
     status: Optional[JobStatus] = None
 
 
-END_STATES = {JobStatus.FAILED, JobStatus.COMPLETED, JobStatus.CANCELED}
+END_STATES = {JobStatus.FAILED, JobStatus.COMPLETED, JobStatus.CANCELLED}
 
 
 @dataclass
