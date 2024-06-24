@@ -92,22 +92,17 @@ class RealizationDelegate(QStyledItemDelegate):
             index.data(RealJobColorHint)
         )
 
-        progress_color = QColor(50, 173, 230)
-
         painter.save()
         painter.setRenderHint(QPainter.TextAntialiasing, True)
         painter.setRenderHint(QPainter.Antialiasing, True)
+        progress_color = QColor(50, 173, 230)
 
-        if option.state & QStyle.State_Selected:
-            selected_color = selected_color.lighter(125)
-
-        percentage_done = int(
-            (finished_count * 100.0) / (total_count if total_count > 0 else 1)
+        percentage_done = (
+            100 if total_count < 1 else int((finished_count * 100.0) / total_count)
         )
-
-        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
         progressed_step = -int(percentage_done * 57.6)
 
+        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
         painter.setBrush(QColor(QColorConstants.LightGray).lighter(120))
         painter.drawEllipse(adjusted_rect)
 
@@ -119,13 +114,21 @@ class RealizationDelegate(QStyledItemDelegate):
                 painter.setBrush(progress_color)
             painter.drawEllipse(adjusted_rect)
 
-        painter.setBrush(selected_color)
+        if option.state & QStyle.State_Selected:
+            selected_color = selected_color.lighter(125)
 
+        painter.setBrush(selected_color)
         adjusted_rect = option.rect.adjusted(7, 7, -7, -7)
         painter.drawEllipse(adjusted_rect)
-        pen = QPen(QColorConstants.Black)
-        painter.setPen(pen)
-        painter.drawText(adjusted_rect, Qt.AlignCenter, text)
+
+        font = painter.font()
+        font.setBold(True)
+        painter.setFont(font)
+
+        adj_rect = option.rect.adjusted(0, 20, 0, 0)
+        painter.drawText(adj_rect, Qt.AlignHCenter, text)
+        adj_rect = option.rect.adjusted(0, 45, 0, 0)
+        painter.drawText(adj_rect, Qt.AlignHCenter, f"{finished_count} / {total_count}")
 
         painter.restore()
 
