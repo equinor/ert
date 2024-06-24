@@ -166,7 +166,7 @@ def _load_observations_and_responses(
     try:
         observations_and_responses = ensemble.get_observations_and_responses(
             [*selected_observations], iens_active_index
-        )
+        ).sort_values()
     except KeyError as e:
         # Exit early if some observations are pointing to non-existing responses
         raise ErtAnalysisError("No active observations for update step") from e

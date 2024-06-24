@@ -39,7 +39,10 @@ class MeasuredData:
             raise ValueError("index list must be same length as observations keys")
 
         self._set_data(
-            ensemble.get_observations_and_responses(keys).to_long_dataframe().T
+            ensemble.get_observations_and_responses(keys)
+            .sort_values()
+            .to_long_dataframe()
+            .T
         )
         self._set_data(self.filter_on_column_index(keys, index_lists))
 

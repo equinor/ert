@@ -61,7 +61,7 @@ def test_memory_smoothing(poly_template):
 
 
 @pytest.mark.limit_memory("1 GB")
-def test_that_observations_and_responses_is_always_ordered(poly_template):
+def test_that_observations_and_responses_are_ordered_correctly(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
     with open_storage(poly_template / "ensembles", mode="w") as storage:
@@ -69,7 +69,7 @@ def test_that_observations_and_responses_is_always_ordered(poly_template):
         ds = prior_ens.get_observations_and_responses(
             prior_ens.experiment.observation_keys
         )
-        df = ds._observations_and_responses
+        df = ds.sort_values()._observations_and_responses
         np.all(df.sort_values(["name", "key_index"]) == df)
 
 

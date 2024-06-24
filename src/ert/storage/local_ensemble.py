@@ -25,7 +25,7 @@ import pandas as pd
 import xarray as xr
 from pandas import DataFrame
 from pydantic import BaseModel
-from typing_extensions import deprecated
+from typing_extensions import Self, deprecated
 
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.observations import ObservationsIndices
@@ -68,6 +68,12 @@ class ObservationsAndResponsesData:
         return self._observations_and_responses.set_index(
             ["name", "key_index"], verify_integrity=True
         )
+
+    def sort_values(self) -> Self:
+        self._observations_and_responses.sort_values(
+            by=["name", "key_index"], inplace=True
+        )
+        return self
 
     def index(self) -> npt.NDArray[np.str_]:
         """
@@ -1240,7 +1246,6 @@ class LocalEnsemble(BaseMode):
             columns=["OBS", "STD"] + list(range(response_vals_per_real.shape[1])),
         )
         result_df = pd.concat([index_df, numerical_df], axis=1)
-        result_df.sort_values(by=["name", "key_index"], inplace=True)
         return ObservationsAndResponsesData(result_df)
 
     def _unify_datasets(
