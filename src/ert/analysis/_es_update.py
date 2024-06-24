@@ -140,10 +140,23 @@ def _load_param_ensemble_array(
 def _expand_wildcards(
     input_list: npt.NDArray[np.str_], patterns: List[str]
 ) -> List[str]:
+    """
+    Returns a sorted list of unique strings from `input_list` that match any of the specified wildcard patterns.
+
+    Examples:
+        >>> _expand_wildcards(np.array(["apple", "apricot", "banana"]), ["apricot", "apricot"])
+        ['apricot']
+        >>> _expand_wildcards(np.array(["apple", "banana", "apricot"]), [])
+        []
+        >>> _expand_wildcards(np.array(["dog", "deer", "frog"]), ["d*"])
+        ['deer', 'dog']
+        >>> _expand_wildcards(np.array(["apple", "APPLE", "Apple"]), ["apple"])
+        ['apple']
+    """
     matches = []
     for pattern in patterns:
         matches.extend([val for val in input_list if fnmatch(val, pattern)])
-    return list(set(matches))
+    return sorted(list(set(matches)))
 
 
 def _load_observations_and_responses(
