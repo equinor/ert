@@ -213,9 +213,7 @@ class CustomizePlotDialog(QDialog):
 
         self._tabs = QTabWidget()
         layout.addWidget(self._tabs)
-        layout.setSizeConstraint(
-            QLayout.SizeConstraint.SetFixedSize
-        )  # not resizable!!!
+        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         self._button_layout = QHBoxLayout()
 

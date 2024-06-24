@@ -27,5 +27,5 @@ class ExperimentConfigPanel(QWidget):
         return {}
 
     @Slot(QWidget)
-    def experimentTypeChanged(self, w: QWidget):
+    def experimentTypeChanged(self, w: QWidget) -> Any:
         pass

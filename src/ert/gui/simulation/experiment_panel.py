@@ -152,7 +152,6 @@ class ExperimentPanel(QWidget):
 
         if not mode_enabled:
             item_count = self._experiment_type_combo.count() - 1
-            combo_model = self._experiment_type_combo.model()
             sim_item = self._experiment_type_combo.model().item(item_count)  # type: ignore
             sim_item.setEnabled(False)
             sim_item.setToolTip("Both observations and parameters must be defined")

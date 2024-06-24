@@ -146,20 +146,18 @@ class FileDialog(QDialog):
     def _enable_follow_mode(self, enable: bool) -> None:
         vertical_scroll_bar = self._view.verticalScrollBar()
         assert vertical_scroll_bar is not None
+        vertical_scroll_bar.setDisabled(enable)
+        self._follow_mode = enable
         if enable:
             self._view.moveCursor(QTextCursor.End)
             self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-            vertical_scroll_bar.setDisabled(True)
             self._view.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-            self._follow_mode = True
         else:
-            vertical_scroll_bar.setDisabled(False)
             self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             self._view.setTextInteractionFlags(
                 Qt.TextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
                 | Qt.TextInteractionFlag.TextSelectableByKeyboard
             )
-            self._follow_mode = False
 
     def _append_text(self, text: str) -> None:
         # Remove trailing newline as appendPlainText adds this

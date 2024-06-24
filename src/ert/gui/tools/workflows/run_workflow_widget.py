@@ -184,7 +184,7 @@ class RunWorkflowWidget(QWidget):
 
         QMessageBox.critical(self, title_text, content_text)
         if self._running_workflow_dialog is not None:
-            self._running_workflow_dialog.accept()
+            self._running_workflow_dialog.reject()
             self._running_workflow_dialog = None
 
     def workflowStoppedByUser(self) -> None:
@@ -195,5 +195,5 @@ class RunWorkflowWidget(QWidget):
             f"The workflow '{workflow_name}' was killed successfully!",
         )
         if self._running_workflow_dialog is not None:
-            self._running_workflow_dialog.accept()
+            self._running_workflow_dialog.reject()
             self._running_workflow_dialog = None
