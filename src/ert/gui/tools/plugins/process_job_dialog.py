@@ -1,7 +1,7 @@
 from typing import Optional, cast
 
 from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QMovie
+from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie
 from qtpy.QtWidgets import (
     QDialog,
     QGridLayout,
@@ -31,11 +31,16 @@ class ProcessJobDialog(QDialog):
         self.__parent = parent
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags()
+            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
+        )
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
+        )
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
         widget = QWidget()
         widget_layout = QHBoxLayout()
@@ -83,12 +88,15 @@ class ProcessJobDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, q_key_event):
-        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
-            QDialog.keyPressEvent(self, q_key_event)
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if self.close_button.isEnabled() or (
+            a0 is not None and a0.key() != Qt.Key.Key_Escape
+        ):
+            QDialog.keyPressEvent(self, a0)
 
-    def closeEvent(self, close_event):
-        close_event.ignore()
+    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
+        if a0 is not None:
+            a0.ignore()
         self.closeButtonPressed.emit()
 
     def __createMsgBox(

@@ -63,8 +63,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(
-            self._ensemble_format_model,
-            self._ensemble_format_model.getDefaultValue(),
+            self._ensemble_format_model,  # type: ignore
+            self._ensemble_format_model.getDefaultValue(),  # type: ignore
             True,
         )
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
@@ -78,7 +78,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            active_realizations_model, "config/simulation/active_realizations"
+            active_realizations_model,  # type: ignore
+            "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
@@ -113,7 +114,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     def get_experiment_arguments(self) -> Arguments:
         arguments = Arguments(
             mode=ENSEMBLE_SMOOTHER_MODE,
-            target_ensemble=self._ensemble_format_model.getValue(),
+            target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,
         )

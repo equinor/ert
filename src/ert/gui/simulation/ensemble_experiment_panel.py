@@ -31,9 +31,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))
+        lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
-        lab.setAlignment(QtCore.Qt.AlignLeft)
+        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
         self._experiment_name_field = StringBox(
@@ -65,7 +65,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),
+            ActiveRealizationsModel(ensemble_size),  # type: ignore
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
@@ -75,13 +75,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._experiment_name_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._ensemble_name_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._ensemble_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
 

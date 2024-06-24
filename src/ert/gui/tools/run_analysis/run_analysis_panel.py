@@ -1,12 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from qtpy.QtWidgets import QFormLayout, QLineEdit, QWidget
 
 from ert.config import AnalysisModule
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 
+if TYPE_CHECKING:
+    from ert.gui.ertnotifier import ErtNotifier
+
 
 class RunAnalysisPanel(QWidget):
-    def __init__(self, analysis_module: AnalysisModule, ensemble_size: int, notifier):
+    def __init__(
+        self, analysis_module: AnalysisModule, ensemble_size: int, notifier: ErtNotifier
+    ) -> None:
         QWidget.__init__(self)
 
         self.setWindowTitle("Run analysis")
@@ -26,5 +35,5 @@ class RunAnalysisPanel(QWidget):
     def target_ensemble(self) -> str:
         return str(self.target_ensemble_text.text())
 
-    def source_ensemble(self):
+    def source_ensemble(self) -> Any:
         return self.source_ensemble_selector.currentData()

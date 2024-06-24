@@ -29,9 +29,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         self.setObjectName("Evaluate_parameters_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(EvaluateEnsemble.__doc__.split()))
+        lab = QLabel(" ".join(EvaluateEnsemble.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
-        lab.setAlignment(QtCore.Qt.AlignLeft)
+        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
         self._ensemble_selector = EnsembleSelector(notifier, show_only_no_children=True)
         layout.addRow("Ensemble:", self._ensemble_selector)
@@ -42,7 +42,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size, show_default=False),
+            ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
@@ -53,7 +53,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
@@ -85,4 +85,4 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             mask = np.logical_and(
                 parameters, np.logical_or(missing_responses, failures)
             )
-            self._active_realizations_field.model.setValueFromMask(mask)
+            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore

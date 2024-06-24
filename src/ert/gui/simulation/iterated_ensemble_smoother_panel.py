@@ -76,7 +76,7 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
             analysis_config, notifier
         )
         self._iterated_target_ensemble_format_field = StringBox(
-            self._iterated_target_ensemble_format_model,
+            self._iterated_target_ensemble_format_model,  # type: ignore
             "config/simulation/iterated_target_ensemble_format",
         )
         self._iterated_target_ensemble_format_field.setValidator(
@@ -93,7 +93,8 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
 
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            self._active_realizations_model, "config/simulation/active_realizations"
+            self._active_realizations_model,  # type: ignore
+            "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
@@ -120,7 +121,7 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
             )
         )
 
-    def setNumberIterations(self, iteration_count):
+    def setNumberIterations(self, iteration_count: int) -> None:
         if iteration_count != self.analysis_config.num_iterations:
             self.analysis_config.set_num_iterations(iteration_count)
             self.notifier.emitErtChange()
@@ -134,7 +135,7 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            target_ensemble=self._iterated_target_ensemble_format_model.getValue(),
+            target_ensemble=self._iterated_target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             num_iterations=self._num_iterations_spinner.value(),
             experiment_name=self._experiment_name_field.get_text,

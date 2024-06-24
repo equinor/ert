@@ -1,7 +1,7 @@
-from typing import List
+from typing import Iterable, List, Optional
 
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QKeyEvent
 from qtpy.QtWidgets import (
     QCompleter,
     QHBoxLayout,
@@ -17,7 +17,9 @@ from ert.gui.ertwidgets.validationsupport import ValidationSupport
 
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
-    def __init__(self, items, parent=None):
+    def __init__(
+        self, items: Iterable[Optional[str]], parent: Optional[QWidget] = None
+    ):
         super().__init__(parent)
 
         self._separators = [",", " "]
@@ -25,11 +27,16 @@ class AutoCompleteLineEdit(QLineEdit):
         self._completer = QCompleter(items, self)
         self._completer.setWidget(self)
         self._completer.activated[str].connect(self.__insertCompletion)
-        self._completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self._completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
 
-        self.__keysToIgnore = [Qt.Key_Enter, Qt.Key_Return, Qt.Key_Escape, Qt.Key_Tab]
+        self.__keysToIgnore = [
+            Qt.Key.Key_Enter,
+            Qt.Key.Key_Return,
+            Qt.Key.Key_Escape,
+            Qt.Key.Key_Tab,
+        ]
 
-    def __insertCompletion(self, completion):
+    def __insertCompletion(self, completion: str) -> None:
         extra = len(completion) - len(self._completer.completionPrefix())
         extra_text = completion[-extra:]
         extra_text += ", "
@@ -44,26 +51,34 @@ class AutoCompleteLineEdit(QLineEdit):
             i -= 1
         return text_under_cursor
 
-    def keyPressEvent(self, event):
-        if self._completer.popup().isVisible() and event.key() in self.__keysToIgnore:
-            event.ignore()
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        popup = self._completer.popup()
+        if (
+            popup is not None
+            and popup.isVisible()
+            and a0 is not None
+            and a0.key() in self.__keysToIgnore
+        ):
+            a0.ignore()
             return
 
-        super().keyPressEvent(event)
+        super().keyPressEvent(a0)
 
         completion_prefix = self.textUnderCursor()
         if completion_prefix != self._completer.completionPrefix():
             self.__updateCompleterPopupItems(completion_prefix)
-        if len(event.text()) > 0 and len(completion_prefix) > 0:
+        if a0 is not None and len(a0.text()) > 0 and len(completion_prefix) > 0:
             self._completer.complete()
-        if len(completion_prefix) == 0:
-            self._completer.popup().hide()
+        if popup is not None and len(completion_prefix) == 0:
+            popup.hide()
 
-    def __updateCompleterPopupItems(self, completionPrefix):
+    def __updateCompleterPopupItems(self, completionPrefix: Optional[str]) -> None:
         self._completer.setCompletionPrefix(completionPrefix)
-        self._completer.popup().setCurrentIndex(
-            self._completer.completionModel().index(0, 0)
-        )
+        popup = self._completer.popup()
+        assert popup is not None
+        model = self._completer.completionModel()
+        assert model is not None
+        popup.setCurrentIndex(model.index(0, 0))
 
 
 class ListEditBox(QWidget):

@@ -1,6 +1,7 @@
 from typing import Optional
 
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -21,11 +22,18 @@ class WorkflowDialog(QDialog):
 
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(
+            self.windowFlags()
+            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
+        )
+        self.setWindowFlags(
+            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
+        )
 
         layout = QVBoxLayout()
-        layout.setSizeConstraint(QLayout.SetFixedSize)  # not resizable!!!
+        layout.setSizeConstraint(
+            QLayout.SizeConstraint.SetFixedSize
+        )  # not resizable!!!
         layout.addWidget(widget)
 
         button_layout = QHBoxLayout()
@@ -45,6 +53,8 @@ class WorkflowDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, q_key_event):
-        if self.close_button.isEnabled() or q_key_event.key() != Qt.Key_Escape:
-            QDialog.keyPressEvent(self, q_key_event)
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if self.close_button.isEnabled() or (
+            a0 is not None and a0.key() != Qt.Key.Key_Escape
+        ):
+            QDialog.keyPressEvent(self, a0)

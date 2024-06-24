@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Iterable, List, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QMovie
@@ -39,7 +39,7 @@ class RunWorkflowWidget(QWidget):
         layout = QFormLayout()
 
         self._workflow_combo = QComboBox()
-        self._workflow_combo.addItems(sorted(config.workflows.keys(), key=str.lower))
+        self._workflow_combo.addItems(sorted(config.workflows.keys(), key=str.lower))  # type: ignore
 
         layout.addRow("Workflow", self._workflow_combo)
 
@@ -51,13 +51,13 @@ class RunWorkflowWidget(QWidget):
         self.run_button.setText("Start workflow")
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
         self.run_button.clicked.connect(self.startWorkflow)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         layout.addRow(self.run_button)
 
         self.setLayout(layout)
 
-        self._running_workflow_dialog = None
+        self._running_workflow_dialog: Optional[WorkflowDialog] = None
 
         self.workflowSucceeded.connect(self.workflowFinished)
         self.workflowFailed.connect(self.workflowFinishedWithFail)
@@ -101,17 +101,17 @@ class RunWorkflowWidget(QWidget):
 
             if cancel == QMessageBox.Yes:
                 self._workflow_runner.cancel()
-                self._running_workflow_dialog.disableCloseButton()
+                if self._running_workflow_dialog is not None:
+                    self._running_workflow_dialog.disableCloseButton()
 
-    def getCurrentWorkflowName(self) -> List[str]:
+    def getCurrentWorkflowName(self) -> str:
         index = self._workflow_combo.currentIndex()
         return (sorted(self.config.workflows.keys(), key=str.lower))[index]
 
     def startWorkflow(self) -> None:
-        self._running_workflow_dialog = WorkflowDialog(
-            "Running workflow", self.createSpinWidget(), self
-        )
-        self._running_workflow_dialog.closeButtonPressed.connect(self.cancelWorkflow)
+        dialog = WorkflowDialog("Running workflow", self.createSpinWidget(), self)
+        dialog.closeButtonPressed.connect(self.cancelWorkflow)
+        self._running_workflow_dialog = dialog
 
         workflow_thread = ErtThread(
             name="ert_gui_workflow_thread",
@@ -131,9 +131,10 @@ class RunWorkflowWidget(QWidget):
 
         workflow_thread.start()
 
-        self._running_workflow_dialog.show()
+        dialog.show()
 
     def runWorkflow(self) -> None:
+        assert self._workflow_runner is not None
         while self._workflow_runner.isRunning():
             time.sleep(2)
 
@@ -162,10 +163,12 @@ class RunWorkflowWidget(QWidget):
             "Workflow completed!",
             f"The workflow '{workflow_name}' completed {jobs_msg}",
         )
-        self._running_workflow_dialog.accept()
-        self._running_workflow_dialog = None
+        if self._running_workflow_dialog is not None:
+            self._running_workflow_dialog.accept()
+            self._running_workflow_dialog = None
 
-    def workflowFinishedWithFail(self):
+    def workflowFinishedWithFail(self) -> None:
+        assert self._workflow_runner is not None
         report = self._workflow_runner.workflowReport()
         failing_workflows = [
             (wfname, info) for wfname, info in report.items() if not info["completed"]
@@ -180,15 +183,17 @@ class RunWorkflowWidget(QWidget):
         )
 
         QMessageBox.critical(self, title_text, content_text)
-        self._running_workflow_dialog.reject()
-        self._running_workflow_dialog = None
+        if self._running_workflow_dialog is not None:
+            self._running_workflow_dialog.reject()
+            self._running_workflow_dialog = None
 
-    def workflowStoppedByUser(self):
+    def workflowStoppedByUser(self) -> None:
         workflow_name = self.getCurrentWorkflowName()
         QMessageBox.information(
             self,
             "Workflow killed!",
             f"The workflow '{workflow_name}' was killed successfully!",
         )
-        self._running_workflow_dialog.reject()
-        self._running_workflow_dialog = None
+        if self._running_workflow_dialog is not None:
+            self._running_workflow_dialog.reject()
+            self._running_workflow_dialog = None

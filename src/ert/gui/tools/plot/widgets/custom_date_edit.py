@@ -46,7 +46,7 @@ class CustomDateEdit(QWidget):
 
     def setDate(self, date: Union[datetime.date, QDate]) -> None:
         if isinstance(date, datetime.date):
-            date = QDate(date.year, date.month, date.day)
+            date = QDate(date.year, date.month, date.day)  # type: ignore
 
         if date is not None and date.isValid():
             self._line_edit.setText(str(date.toString("yyyy-MM-dd")))

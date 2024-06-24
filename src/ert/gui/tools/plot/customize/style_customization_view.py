@@ -24,7 +24,7 @@ class StyleCustomizationView(CustomizationView):
 
         layout = QHBoxLayout()
 
-        self.addRow("", layout)
+        self.addRow("", layout)  # type: ignore
         self.addStyleChooser(
             "default_style", "Default", "Line and marker style for default lines."
         )
@@ -50,7 +50,7 @@ class StyleCustomizationView(CustomizationView):
             self._color_boxes.append(color_box)
             color_layout.addWidget(color_box)
 
-        self.addRow("Color cycle", color_layout)
+        self.addRow("Color cycle", color_layout)  # type: ignore
         self.updateProperty(
             "color_cycle",
             StyleCustomizationView.getColorCycle,
@@ -68,11 +68,11 @@ class StyleCustomizationView(CustomizationView):
     def getObservationsColor(self) -> str:
         return str(self._observs_color_box.color.name())
 
-    def setObservationsColor(self, name: str) -> None:
+    def setObservationsColor(self, name: QColor) -> None:
         self._observs_color_box.color = name
 
     @staticmethod
-    def createColorBox(name):
+    def createColorBox(name: str) -> ColorBox:
         color_box = ColorBox(QColor(255, 255, 255), 20)
         color_box.setToolTip(name)
         return color_box
@@ -84,7 +84,7 @@ class StyleCustomizationView(CustomizationView):
 
         return colors
 
-    def setColorCycle(self, color_cycle: Iterable[str]) -> None:
+    def setColorCycle(self, color_cycle: Iterable[QColor]) -> None:
         for index, color in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]

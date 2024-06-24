@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import httpx
 import pandas as pd
@@ -30,14 +30,14 @@ PlotApiKeyDefinition = NamedTuple(
         ("index_type", Optional[str]),
         ("observations", bool),
         ("dimensionality", int),
-        ("metadata", dict),
+        ("metadata", Dict[Any, Any]),
         ("log_scale", bool),
     ],
 )
 
 
 class PlotApi:
-    def __init__(self):
+    def __init__(self) -> None:
         self._all_ensembles: Optional[List[EnsembleObject]] = None
         self._timeout = 120
 

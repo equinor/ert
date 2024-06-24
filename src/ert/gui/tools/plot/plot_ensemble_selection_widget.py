@@ -1,12 +1,22 @@
-from typing import List
+from typing import Any, Iterator, List, Optional
 
-from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QBrush, QColor, QCursor, QIcon, QPainter, QPen
+from qtpy.QtCore import QModelIndex, QSize, Qt, Signal
+from qtpy.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QDropEvent,
+    QIcon,
+    QMouseEvent,
+    QPainter,
+    QPen,
+)
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QListWidget,
     QListWidgetItem,
     QStyledItemDelegate,
+    QStyleOptionViewItem,
     QVBoxLayout,
     QWidget,
 )
@@ -51,7 +61,8 @@ class EnsembleSelectListWidget(QListWidget):
             self.addItem(it)
             self._ensemble_count += 1
 
-        self.viewport().setMouseTracking(True)
+        if (viewport := self.viewport()) is not None:
+            viewport.setMouseTracking(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
@@ -60,24 +71,27 @@ class EnsembleSelectListWidget(QListWidget):
         )
 
     def get_checked_ensembles(self) -> List[EnsembleObject]:
-        return [
-            self.item(index).data(Qt.ItemDataRole.UserRole)
-            for index in range(self._ensemble_count)
-            if self.item(index).data(Qt.ItemDataRole.CheckStateRole)
-        ]
+        def _iter() -> Iterator[EnsembleObject]:
+            for index in range(self._ensemble_count):
+                item = self.item(index)
+                assert item is not None
+                if item.data(Qt.ItemDataRole.CheckStateRole):
+                    yield item.data(Qt.ItemDataRole.UserRole)
 
-    def mouseMoveEvent(self, event):
-        super().mouseMoveEvent(event)
-        if self.itemAt(event.pos()):
-            self.setCursor(QCursor(Qt.PointingHandCursor))
+        return list(_iter())
+
+    def mouseMoveEvent(self, e: Optional[QMouseEvent]) -> None:
+        super().mouseMoveEvent(e)
+        if e is not None and self.itemAt(e.pos()):
+            self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         else:
-            self.setCursor(QCursor(Qt.ArrowCursor))
+            self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
 
-    def dropEvent(self, e):
-        super().dropEvent(e)
+    def dropEvent(self, event: Optional[QDropEvent]) -> None:
+        super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
 
-    def slot_toggle_plot(self, item: QListWidgetItem):
+    def slot_toggle_plot(self, item: QListWidgetItem) -> None:
         count = len(self.get_checked_ensembles())
         selected = item.data(Qt.ItemDataRole.CheckStateRole)
 
@@ -90,14 +104,21 @@ class EnsembleSelectListWidget(QListWidget):
 
 
 class CustomItemDelegate(QStyledItemDelegate):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.swap_pixmap = QIcon("img:reorder.svg").pixmap(QSize(20, 20))
 
-    def sizeHint(self, option, index):
+    def sizeHint(self, option: Any, index: Any) -> QSize:
         return QSize(-1, 30)
 
-    def paint(self, painter, option, index):
+    def paint(
+        self,
+        painter: Optional[QPainter],
+        option: QStyleOptionViewItem,
+        index: QModelIndex,
+    ) -> None:
+        if painter is None:
+            return
         painter.setRenderHint(QPainter.Antialiasing)
 
         pen_color = QColor("black")
@@ -115,7 +136,7 @@ class CustomItemDelegate(QStyledItemDelegate):
         painter.drawRect(rect)
 
         text_rect = rect.adjusted(4, 4, -4, -4)
-        painter.drawText(text_rect, Qt.AlignHCenter, index.data())
+        painter.drawText(text_rect, Qt.AlignmentFlag.AlignHCenter, index.data())
 
         cursor_x = option.rect.left() + self.swap_pixmap.width() - 14
         cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
@@ -21,9 +21,11 @@ class ManageExperimentsTool(Tool):
         self.notifier = notifier
         self.ert_config = config
         self.ensemble_size = ensemble_size
-        self._ensemble_management_widget = None
+        self._ensemble_management_widget: Optional[
+            EnsembleInitializationConfigurationPanel
+        ] = None
 
-    def trigger(self):
+    def trigger(self) -> None:
         if not self._ensemble_management_widget:
             self._ensemble_management_widget = EnsembleInitializationConfigurationPanel(
                 self.ert_config, self.notifier, self.ensemble_size

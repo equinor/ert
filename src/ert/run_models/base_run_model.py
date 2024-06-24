@@ -188,6 +188,10 @@ class BaseRunModel:
         self.start_iteration = start_iteration
         self.validate()
 
+    @classmethod
+    def name(cls) -> str:
+        return "Base run model"
+
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
 
@@ -378,11 +382,11 @@ class BaseRunModel:
 
         self._phase = phase
 
-    def get_runtime(self) -> Union[int, float]:
+    def get_runtime(self) -> int:
         if self.start_time is None:
             return 0
         elif self.stop_time is None:
-            return time.time() - self.start_time
+            return round(time.time() - self.start_time)
         return self.stop_time - self.start_time
 
     def _current_status(self) -> tuple[dict[str, int], float, int]:

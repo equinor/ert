@@ -73,9 +73,11 @@ class FileDialog(QDialog):
         self._view.setReadOnly(True)
         self._view.setWordWrapMode(QTextOption.NoWrap)
         # for moving the actual slider
-        self._view.verticalScrollBar().sliderMoved.connect(self._update_cursor)
+        scroll_bar = self._view.verticalScrollBar()
+        assert scroll_bar is not None
+        scroll_bar.sliderMoved.connect(self._update_cursor)
         # for mouse wheel and keyboard arrows
-        self._view.verticalScrollBar().valueChanged.connect(self._update_cursor)
+        scroll_bar.valueChanged.connect(self._update_cursor)
 
         self._view.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
 
@@ -97,14 +99,16 @@ class FileDialog(QDialog):
 
         self._copy_all_button = dialog_buttons.addButton(
             "Copy all",
-            QDialogButtonBox.ActionRole,  # type: ignore
+            QDialogButtonBox.ActionRole,
         )
+        assert self._copy_all_button is not None
         self._copy_all_button.clicked.connect(self._copy_all)
 
         self._follow_button = dialog_buttons.addButton(
             "Follow",
-            QDialogButtonBox.ActionRole,  # type: ignore
+            QDialogButtonBox.ActionRole,
         )
+        assert self._follow_button is not None
         self._follow_button.setCheckable(True)
         self._follow_button.toggled.connect(self._enable_follow_mode)
         self._enable_follow_mode(self._follow_mode)
@@ -133,31 +137,34 @@ class FileDialog(QDialog):
 
     def _update_cursor(self, value: int) -> None:
         if not self._view.textCursor().hasSelection():
-            block = self._view.document().findBlockByLineNumber(value)
+            document = self._view.document()
+            assert document is not None
+            block = document.findBlockByLineNumber(value)
             cursor = QTextCursor(block)
             self._view.setTextCursor(cursor)
 
     def _enable_follow_mode(self, enable: bool) -> None:
+        vertical_scroll_bar = self._view.verticalScrollBar()
+        assert vertical_scroll_bar is not None
+        vertical_scroll_bar.setDisabled(enable)
+        self._follow_mode = enable
         if enable:
-            self._view.moveCursor(QTextCursor.End)  # type: ignore
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # type: ignore
-            self._view.verticalScrollBar().setDisabled(True)
-            self._view.setTextInteractionFlags(Qt.NoTextInteraction)  # type: ignore
-            self._follow_mode = True
+            self._view.moveCursor(QTextCursor.End)
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self._view.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         else:
-            self._view.verticalScrollBar().setDisabled(False)
-            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # type: ignore
+            self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             self._view.setTextInteractionFlags(
-                Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard  # type: ignore
+                Qt.TextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                | Qt.TextInteractionFlag.TextSelectableByKeyboard
             )
-            self._follow_mode = False
 
     def _append_text(self, text: str) -> None:
         # Remove trailing newline as appendPlainText adds this
         if text[-1:] == "\n":
             text = text[:-1]
         if self._follow_mode:
-            self._view.moveCursor(QTextCursor.End)  # type: ignore
+            self._view.moveCursor(QTextCursor.End)
         self._view.appendPlainText(text)
         self.adjustSize()
 

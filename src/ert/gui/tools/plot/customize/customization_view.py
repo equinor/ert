@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -25,25 +25,31 @@ class CustomizationView(QWidget):
 
         self._layout = QFormLayout()
         self.setLayout(self._layout)
-        self._widgets = {}
+        self._widgets: dict[str, QWidget] = {}
 
     def addRow(self, title: Optional[str], widget: Optional[QWidget]) -> None:
         self._layout.addRow(title, widget)
 
-    def addLineEdit(self, attribute_name, title, tool_tip=None, placeholder=""):
+    def addLineEdit(
+        self,
+        attribute_name: str,
+        title: str,
+        tool_tip: Optional[str] = None,
+        placeholder: str = "",
+    ) -> None:
         self[attribute_name] = ClearableLineEdit(placeholder=placeholder)
         self.addRow(title, self[attribute_name])
 
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self) -> Optional[str]:
-            value = str(self[attribute_name].text())
+        def getter(self: Any) -> Optional[str]:
+            value: Optional[str] = str(self[attribute_name].text())
             if not value:
                 value = None
             return value
 
-        def setter(self, value: Optional[str]) -> None:
+        def setter(self: Any, value: Optional[str]) -> None:
             if value is None:
                 value = ""
             self[attribute_name].setText(str(value))
@@ -59,10 +65,10 @@ class CustomizationView(QWidget):
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self) -> bool:
+        def getter(self: Any) -> bool:
             return self[attribute_name].isChecked()
 
-        def setter(self, value: bool) -> None:
+        def setter(self: Any, value: bool) -> None:
             self[attribute_name].setChecked(value)
 
         self.updateProperty(attribute_name, getter, setter)
@@ -82,7 +88,7 @@ class CustomizationView(QWidget):
         sb_layout = QHBoxLayout()
         sb_layout.addWidget(sb)
         sb_layout.addStretch()
-        self.addRow(title, sb_layout)
+        self.addRow(title, sb_layout)  # type: ignore
 
         if tool_tip is not None:
             sb.setToolTip(tool_tip)
@@ -91,10 +97,10 @@ class CustomizationView(QWidget):
         sb.setMaximum(max_value)
         sb.setSingleStep(single_step)
 
-        def getter(self) -> QWidget:
+        def getter(self: Any) -> QWidget:
             return self[attribute_name].value()
 
-        def setter(self, value: QWidget) -> None:
+        def setter(self: Any, value: QWidget) -> None:
             self[attribute_name].setValue(value)
 
         self.updateProperty(attribute_name, getter, setter)
@@ -114,21 +120,26 @@ class CustomizationView(QWidget):
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self) -> QWidget:
+        def getter(self: Any) -> QWidget:
             return self[attribute_name].getStyle()
 
-        def setter(self, style: QWidget) -> None:
+        def setter(self: Any, style: QWidget) -> None:
             self[attribute_name].setStyle(style)
 
         self.updateProperty(attribute_name, getter, setter)
 
-    def updateProperty(self, attribute_name, getter, setter):
+    def updateProperty(
+        self,
+        attribute_name: str,
+        getter: Callable[[Any], Any],
+        setter: Callable[[Any, Any], None],
+    ) -> None:
         setattr(self.__class__, attribute_name, property(getter, setter))
 
-    def addSpacing(self, pixels=10):
+    def addSpacing(self, pixels: int = 10) -> None:
         self._layout.addItem(QSpacerItem(1, pixels))
 
-    def addHeading(self, title):
+    def addHeading(self, title: str) -> None:
         self.addSpacing(10)
         self._layout.addRow(title, None)
         self.addSpacing(1)
@@ -145,7 +156,7 @@ class CustomizationView(QWidget):
             "the applyCustomization() function!"
         )
 
-    def revertCustomization(self, plot_config: "PlotConfig") -> None:
+    def revertCustomization(self, plot_config: PlotConfig) -> None:
         raise NotImplementedError(
             f"Class '{self.__class__.__name__}' has not implemented "
             "the revertCustomization() function!"

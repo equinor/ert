@@ -24,7 +24,7 @@ class Exporter:
         export_job: Optional[WorkflowJob],
         runpath_job: Optional[WorkflowJob],
         notifier: ErtNotifier,
-        runpath_file: str,
+        runpath_file: Path,
     ):
         self.runpath_file = runpath_file
         self.export_job = export_job

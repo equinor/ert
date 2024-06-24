@@ -1,7 +1,7 @@
 from typing import Optional
 
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QColor, QIcon
+from qtpy.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
 from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
 
 
@@ -18,9 +18,9 @@ class ClearableLineEdit(QLineEdit):
         self._clear_button = QPushButton(self)
         self._clear_button.setIcon(QIcon("img:remove_outlined.svg"))
         self._clear_button.setFlat(True)
-        self._clear_button.setFocusPolicy(Qt.NoFocus)
+        self._clear_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._clear_button.setFixedSize(17, 17)
-        self._clear_button.setCursor(Qt.ArrowCursor)
+        self._clear_button.setCursor(Qt.CursorShape.ArrowCursor)
 
         self._clear_button.clicked.connect(self.clearButtonClicked)
         self._clear_button.setVisible(False)
@@ -42,14 +42,16 @@ class ClearableLineEdit(QLineEdit):
         size = QLineEdit.minimumSizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, a0: Optional[QResizeEvent]) -> None:
         right = self.rect().right()
-        frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
+        style = self.style()
+        assert style is not None
+        frame_width = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
         self._clear_button.move(
             right - frame_width - self._clear_button.width(),
             int((self.height() - self._clear_button.height()) / 2),
         )
-        QLineEdit.resizeEvent(self, event)
+        QLineEdit.resizeEvent(self, a0)
 
     def clearButtonClicked(self) -> None:
         self.setText("")
@@ -70,29 +72,29 @@ class ClearableLineEdit(QLineEdit):
             palette.setColor(self.foregroundRole(), self._active_color)
             self.setPalette(palette)
 
-    def focusInEvent(self, focus_event):
-        QLineEdit.focusInEvent(self, focus_event)
+    def focusInEvent(self, a0: Optional[QFocusEvent]) -> None:
+        QLineEdit.focusInEvent(self, a0)
         self.hidePlaceHolder()
 
-    def focusOutEvent(self, focus_event):
-        QLineEdit.focusOutEvent(self, focus_event)
+    def focusOutEvent(self, a0: Optional[QFocusEvent]) -> None:
+        QLineEdit.focusOutEvent(self, a0)
         if not QLineEdit.text(self):
             self.showPlaceholder()
 
-    def keyPressEvent(self, key_event):
-        if key_event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        if a0 is not None and a0.key() != Qt.Key.Key_Escape:
             self.clear()
             self.clearFocus()
-            key_event.accept()
+            a0.accept()
 
-        QLineEdit.keyPressEvent(self, key_event)
+        QLineEdit.keyPressEvent(self, a0)
 
-    def setText(self, string: Optional[str]) -> None:
+    def setText(self, a0: Optional[str]) -> None:
         self.hidePlaceHolder()
 
-        QLineEdit.setText(self, string)
+        QLineEdit.setText(self, a0)
 
-        if len(str(string)) == 0 and not self.hasFocus():
+        if len(str(a0)) == 0 and not self.hasFocus():
             self.showPlaceholder()
 
     def text(self) -> str:
