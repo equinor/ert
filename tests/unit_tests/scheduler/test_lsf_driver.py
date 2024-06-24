@@ -288,10 +288,10 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
     driver = LsfDriver()
     with pytest.raises(RuntimeError):
         await driver.submit(0, "sleep")
-        assert (
-            "failed with exit code 1, output: {_out}, and error: {_err}"
-            in driver._job_error_message_by_iens[0]
-        )
+    assert (
+        f'failed with exit code 1, output: "{_out}", and error: "{_err}"'
+        in driver._job_error_message_by_iens[0]
+    )
 
 
 @pytest.mark.timeout(10)
