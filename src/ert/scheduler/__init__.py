@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from os import getuid
+from pwd import getpwuid
 from typing import TYPE_CHECKING, Optional
 
 from ert.config.parsing.queue_system import QueueSystem
@@ -8,6 +10,7 @@ from ert.scheduler.local_driver import LocalDriver
 from ert.scheduler.lsf_driver import LsfDriver
 from ert.scheduler.openpbs_driver import OpenPBSDriver
 from ert.scheduler.scheduler import Scheduler
+from ert.scheduler.slurm_driver import SlurmDriver
 
 if TYPE_CHECKING:
     from ert.config.queue_config import QueueConfig
@@ -48,8 +51,28 @@ def create_driver(config: QueueConfig) -> Driver:
             queue_name=queue_config.get("LSF_QUEUE"),
             resource_requirement=queue_config.get("LSF_RESOURCE"),
         )
+    elif config.queue_system == QueueSystem.SLURM:
+        queue_config = {
+            key: value for key, value in config.queue_options.get(QueueSystem.SLURM, [])
+        }
+        return SlurmDriver(
+            sbatch_cmd=queue_config.get("SBATCH", "sbatch"),
+            scancel_cmd=queue_config.get("SCANCEL", "scancel"),
+            scontrol_cmd=queue_config.get("SCONTROL", "scontrol"),
+            squeue_cmd=queue_config.get("SQUEUE", "squeue"),
+            exclude_hosts=queue_config.get("EXCLUDE_HOST", ""),
+            include_hosts=queue_config.get("INCLUDE_HOST", ""),
+            memory_per_cpu=queue_config.get("MEMORY_PER_CPU"),
+            memory=queue_config.get("MEMORY", ""),
+            max_runtime=queue_config.get("MAX_RUNTIME"),
+            queue_name=queue_config.get("PARTITION"),
+            squeue_timeout=queue_config.get("SQUEUE_TIMEOUT"),
+            user=getpwuid(getuid()).pw_name,
+        )
     else:
-        raise NotImplementedError("Only LOCAL, TORQUE and LSF drivers are implemented")
+        raise NotImplementedError(
+            "Only LOCAL, SLURM, TORQUE and LSF drivers are implemented"
+        )
 
 
 __all__ = [

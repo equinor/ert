@@ -81,3 +81,4 @@ jobs:
         EOF
 
         time ert ensemble_experiment poly.ert
+        time ert ensemble_experiment --enable-scheduler poly.ert
