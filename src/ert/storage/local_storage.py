@@ -206,6 +206,7 @@ class LocalStorage(BaseMode):
         ensembles: List[LocalEnsemble] = []
         for ensemble_path in (self.path / "ensembles").iterdir():
             try:
+                print("Creating local ensenmble")
                 ensemble = LocalEnsemble(self, ensemble_path, self.mode)
                 ensembles.append(ensemble)
             except FileNotFoundError:

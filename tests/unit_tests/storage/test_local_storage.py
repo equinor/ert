@@ -12,7 +12,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import xarray as xr
-from hypothesis import assume
+from hypothesis import Verbosity, assume, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from xarray.testing import assert_allclose
@@ -32,6 +32,7 @@ from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.config.observations import EnkfObs
 from ert.storage import open_storage
+from ert.storage.local_ensemble import RealizationState
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -316,6 +317,83 @@ def test_ensemble_no_parameters(storage):
     assert ensemble.get_ensemble_state() == [RealizationStorageState.HAS_DATA] * 2
 
 
+def test_realization_state_nonexisting_to_existing_response():
+    state0 = RealizationState()
+    state0.add(0, {("gen_data", "gen_data", False)})
+
+    assert state0.has_entry(0, "gen_data")
+    assert not state0.has(0, "gen_data")
+
+    state0.add(0, {("gen_data", "gen_data", True)})
+
+    assert state0.has_entry(0, "gen_data")
+    assert state0.has(0, "gen_data")
+
+
+def test_realization_state_main_and_subkeys():
+    state0 = RealizationState()
+    state0.add(0, {("gen_data", "FOPR", True)})
+    state0.add(1, {("gen_data", "FOPT", True)})
+
+    state0.add(0, {("summary", "summary", True)})
+    state0.add(1, {("summary", "WOPR", True)})
+
+    assert state0.has(0, "gen_data")
+    assert state0.has(0, "FOPR")
+    assert not state0.has(0, "FOPT")
+
+    assert state0.has(1, "gen_data")
+    assert state0.has(1, "FOPT")
+    assert state0.has(1, "WOPR")
+    assert not state0.has(1, "FOPR")
+
+
+def test_realization_state_to_and_from_json(tmp_path):
+    state0 = RealizationState()
+    state0.add(0, {("gen_data", "FOPR", True)})
+    state0.add(1, {("gen_data", "FOPT", True)})
+
+    state0.add(0, {("summary", "summary", True)})
+    state0.add(1, {("summary", "WOPR", True)})
+
+    state0.to_file(tmp_path / "state_map.json")
+
+    state_loaded = RealizationState.from_file(tmp_path / "state_map.json")
+    assert state_loaded == state0
+
+
+def test_realization_state_updates_on_re_save_response(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="test-experiment",
+            responses=[
+                GenDataConfig(name="FOPTZ", input_file="", report_steps=[199]),
+                GenDataConfig(name="FOPTZZ", input_file="", report_steps=[199]),
+            ],
+        )
+
+        ens = experiment.create_ensemble(ensemble_size=200, name="default_0")
+        ds = xr.Dataset({"values": (["report_step", "index"], [[2, 3, 4, 5, 6]])})
+
+        ens.save_response("FOPTZ", ds, 1)
+        response_mask = ens.get_realization_mask_with_responses()
+        assert all(response_mask == [False] * 200)
+
+        rstate = RealizationState.from_file(ens._path / "state_map.json")
+        assert rstate.has(1, "FOPTZ")
+        assert not rstate.has(1, "FOPTZZ")
+        assert rstate.has(1, "gen_data")
+
+        ens.save_response("FOPTZZ", ds, 1)
+        response_mask2 = ens.get_realization_mask_with_responses()
+        assert all(response_mask2 == [False] + [True] + [False] * 198)
+        rstate2 = RealizationState.from_file(ens._path / "state_map.json")
+        assert rstate2 != rstate
+        assert rstate2.has(1, "FOPTZ")
+        assert rstate2.has(1, "FOPTZZ")
+        assert rstate2.has(1, "gen_data")
+
+
 def test_remove_and_add_response_from_storage(
     snake_oil_case_storage,
     snake_oil_storage,
@@ -521,6 +599,7 @@ class Experiment:
     observations: Dict[str, xr.Dataset] = field(default_factory=dict)
 
 
+@settings(verbosity=Verbosity.verbose)
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and

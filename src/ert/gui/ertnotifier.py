@@ -55,6 +55,7 @@ class ErtNotifier(QObject):
     @Slot(object)
     def set_storage(self, storage: Storage) -> None:
         self._storage = storage
+        print("Set the storage to GUI!")
         self.storage_changed.emit(storage)
 
     @Slot(object)
