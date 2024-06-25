@@ -18,3 +18,7 @@ bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr" &
 child_pid=$!
 wait $child_pid
 echo $? > "${job}.returncode"
+
+cat ${job}.stdout
+
+cat ${job}.stderr >&2
