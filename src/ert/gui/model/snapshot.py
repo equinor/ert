@@ -59,12 +59,7 @@ COLUMNS: Dict[NodeType, Sequence[str]] = {
     NodeType.JOB: [],
 }
 
-COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
-COLOR_PENDING: Final[QColor] = QColor(*state.COLOR_PENDING)
-COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
-COLOR_UNKNOWN: Final[QColor] = QColor(*state.COLOR_UNKNOWN)
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
-COLOR_FAILED: Final[QColor] = QColor(*state.COLOR_FAILED)
 
 _QCOLORS = {
     state.COLOR_WAITING: QColor(*state.COLOR_WAITING),
@@ -75,14 +70,6 @@ _QCOLORS = {
     state.COLOR_FINISHED: QColor(*state.COLOR_FINISHED),
     state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
 }
-
-COLOR_IMPORTANCE_LIST = [
-    QColor(*state.COLOR_UNKNOWN),
-    QColor(*state.COLOR_FINISHED),
-    QColor(*state.COLOR_PENDING),
-    QColor(*state.COLOR_RUNNING),
-    QColor(*state.COLOR_FAILED),
-]
 
 
 def _estimate_duration(
