@@ -112,7 +112,7 @@ class RealizationDelegate(QStyledItemDelegate):
                 painter.setBrush(progress_color)
             painter.drawEllipse(adjusted_rect)
 
-        if option.state & QStyle.State_Selected:
+        if option.state & QStyle.StateFlag.State_Selected:
             selected_color = selected_color.lighter(125)
 
         painter.setBrush(selected_color)
@@ -124,17 +124,19 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.setFont(font)
 
         adj_rect = option.rect.adjusted(0, 20, 0, 0)
-        painter.drawText(adj_rect, Qt.AlignHCenter, text)
+        painter.drawText(adj_rect, Qt.AlignmentFlag.AlignHCenter, text)
         adj_rect = option.rect.adjusted(0, 45, 0, 0)
-        painter.drawText(adj_rect, Qt.AlignHCenter, f"{finished_count} / {total_count}")
+        painter.drawText(
+            adj_rect, Qt.AlignmentFlag.AlignHCenter, f"{finished_count} / {total_count}"
+        )
 
         painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, object: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.ToolTip:
+    def eventFilter(self, object: Optional[QObject], event: Optional[QEvent]) -> bool:
+        if event.type() == QEvent.Type.ToolTip:  # type: ignore
             mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
             parent: RealizationWidget = self.parent()  # type: ignore
             view = parent._real_view
