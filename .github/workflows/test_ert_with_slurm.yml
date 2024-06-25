@@ -46,6 +46,7 @@ jobs:
         SelectTypeParameters=CR_Core  # Cores are the consumable resource
         ProctrackType=proctrack/linuxproc  # Use /proc to track processes
         PartitionName=LocalQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+        PartitionName=AlternativeQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
         EOF
 
         # Self-configure the node:
@@ -70,6 +71,7 @@ jobs:
     - name: Run integration tests towards Slurm
       run: |
         set -e
+        export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
         pytest tests/integration_tests/scheduler --slurm
 
     - name: Test poly-example on slurm
