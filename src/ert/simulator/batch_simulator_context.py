@@ -92,7 +92,7 @@ async def _submit_and_run_jobqueue(
 class BatchContext:
     result_keys: "Iterable[str]"
     ert_config: "ErtConfig"
-    fs: Ensemble
+    ensemble: Ensemble
     mask: npt.NDArray[np.bool_]
     itr: int
     case_data: List[Tuple[Any, Any]]
@@ -111,12 +111,12 @@ class BatchContext:
             self._job_queue = JobQueue(ert_config.queue_config)
         # fill in the missing geo_id data
         global_substitutions = self.ert_config.substitution_list
-        global_substitutions["<CASE_NAME>"] = _slug(self.fs.name)
+        global_substitutions["<CASE_NAME>"] = _slug(self.ensemble.name)
         for sim_id, (geo_id, _) in enumerate(self.case_data):
             if self.mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{self.itr}>"] = str(geo_id)
         self._run_context = RunContext(
-            ensemble=self.fs,
+            ensemble=self.ensemble,
             runpaths=Runpaths(
                 jobname_format=ert_config.model_config.jobname_format_string,
                 runpath_format=ert_config.model_config.runpath_format_string,
@@ -141,7 +141,7 @@ class BatchContext:
         return len(self.mask)
 
     def get_ensemble(self) -> Ensemble:
-        return self.fs
+        return self.ensemble
 
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = ErtThread(
@@ -230,7 +230,7 @@ class BatchContext:
                 "Simulations are still running - need to wait before getting results"
             )
 
-        self.fs.unify_responses()
+        self.ensemble.unify_responses()
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
             if not self.didRealizationSucceed(sim_id):
@@ -239,7 +239,7 @@ class BatchContext:
                 continue
             d = {}
             for key in self.result_keys:
-                data = self.fs.load_responses(key, (sim_id,))
+                data = self.ensemble.load_responses(key, (sim_id,))
                 d[key] = data["values"].dropna("index").values.flatten()
             res.append(d)
 
