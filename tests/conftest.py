@@ -278,6 +278,12 @@ def pytest_addoption(parser):
         default=False,
         help="Run LSF tests against the real cluster.",
     )
+    parser.addoption(
+        "--slurm",
+        action="store_true",
+        default=False,
+        help="Run Slurm tests against a real cluster.",
+    )
     parser.addoption("--show-gui", action="store_true", default=False)
 
 
