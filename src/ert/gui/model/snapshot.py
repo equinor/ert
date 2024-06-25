@@ -25,7 +25,6 @@ from ert.shared.status.utils import byte_with_unit
 
 logger = logging.getLogger(__name__)
 
-
 NodeRole = Qt.UserRole + 1
 RealJobColorHint = Qt.UserRole + 2
 RealStatusColorHint = Qt.UserRole + 3
@@ -60,9 +59,7 @@ COLUMNS: Dict[NodeType, Sequence[str]] = {
     NodeType.JOB: [],
 }
 
-COLOR_WAITING: Final[QColor] = QColor(*state.COLOR_WAITING)
-COLOR_PENDING: Final[QColor] = QColor(*state.COLOR_PENDING)
-COLOR_RUNNING: Final[QColor] = QColor(*state.COLOR_RUNNING)
+COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
 _QCOLORS = {
     state.COLOR_WAITING: QColor(*state.COLOR_WAITING),
@@ -394,37 +391,15 @@ class SnapshotModel(QAbstractItemModel):
     @staticmethod
     def _real_data(_index: QModelIndex, node: RealNode, role: int):
         if role == RealJobColorHint:
-            colors: List[QColor] = []
+            total_count = len(node.data.forward_model_step_status_color_by_id)
+            finished_count = sum(
+                1
+                for color in node.data.forward_model_step_status_color_by_id.values()
+                if color == COLOR_FINISHED
+            )
 
-            is_running = False
-
-            if (
-                COLOR_RUNNING
-                in node.data.forward_model_step_status_color_by_id.values()
-            ):
-                is_running = True
-
-            for (
-                forward_model_id
-            ) in node.parent.data.sorted_forward_model_step_ids_by_realization_id[
-                str(node.id_)
-            ]:
-                # if queue system status is WAIT, jobs should indicate WAIT
-                if (
-                    node.data.forward_model_step_status_color_by_id[forward_model_id]
-                    == COLOR_PENDING
-                    and node.data.real_status_color == COLOR_WAITING
-                    and not is_running
-                ):
-                    colors.append(COLOR_WAITING)
-                else:
-                    colors.append(
-                        node.data.forward_model_step_status_color_by_id[
-                            forward_model_id
-                        ]
-                    )
-
-            return colors
+            queue_color = node.data.real_status_color
+            return queue_color, finished_count, total_count
         if role == RealLabelHint:
             return node.id_
         if role == RealIens:
@@ -447,23 +422,7 @@ class SnapshotModel(QAbstractItemModel):
         node_id = str(node.id_)
 
         if role == Qt.BackgroundRole:
-            real = node.parent
-
-            if (
-                COLOR_RUNNING
-                in real.data.forward_model_step_status_color_by_id.values()
-            ):
-                return real.data.forward_model_step_status_color_by_id[node_id]
-
-            # if queue system status is WAIT, jobs should indicate WAIT
-            if (
-                real.data.forward_model_step_status_color_by_id[node_id]
-                == COLOR_PENDING
-                and real.data.real_status_color == COLOR_WAITING
-            ):
-                return COLOR_WAITING
-
-            return real.data.forward_model_step_status_color_by_id[node_id]
+            return node.parent.data.forward_model_step_status_color_by_id[node_id]
 
         if role == Qt.DisplayRole:
             data_name = COLUMNS[NodeType.REAL][index.column()]
@@ -487,21 +446,6 @@ class SnapshotModel(QAbstractItemModel):
                 delta -= datetime.timedelta(microseconds=delta.microseconds)
                 return str(delta)
 
-            real = node.parent
-            if (
-                COLOR_RUNNING
-                in real.data.forward_model_step_status_color_by_id.values()
-            ):
-                return node.data.get(data_name)
-
-            # if queue system status is WAIT, jobs should indicate WAIT
-            if (
-                data_name in [ids.STATUS]
-                and real.data.real_status_color == COLOR_WAITING
-                and real.data.forward_model_step_status_color_by_id[node_id]
-                == COLOR_PENDING
-            ):
-                return str("Waiting")
             return node.data.get(data_name)
 
         if role == FileRole:
