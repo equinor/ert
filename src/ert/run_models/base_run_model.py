@@ -249,10 +249,6 @@ class BaseRunModel:
         self._exception = None
         self._phase = 0
 
-    def restart(self) -> None:
-        active_realizations = self._create_mask_from_failed_realizations()
-        self.active_realizations = active_realizations
-
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
 
@@ -297,7 +293,9 @@ class BaseRunModel:
         self._context_env_keys = []
 
     def start_simulations_thread(
-        self, evaluator_server_config: EvaluatorServerConfig
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        restart: bool = False,
     ) -> None:
         try:
             self.start_time = int(time.time())
@@ -306,8 +304,16 @@ class BaseRunModel:
                 self._set_default_env_context()
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
+                    restart=restart,
                 )
-                self._completed_realizations_mask = run_context.mask
+                if self._completed_realizations_mask:
+                    combined = np.logical_or(
+                        np.array(self._completed_realizations_mask),
+                        np.array(run_context.mask),
+                    )
+                    self._completed_realizations_mask = list(combined)
+                else:
+                    self._completed_realizations_mask = run_context.mask
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -322,7 +328,9 @@ class BaseRunModel:
             self._simulationEnded()
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        restart: bool = False,
     ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 

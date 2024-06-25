@@ -16,7 +16,7 @@ from .conftest import wait_for_child
 @pytest.mark.usefixtures("using_scheduler")
 def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     """This runs an ensemble experiment with some failing realizations, and then
-    does a restart, checking that only the failed realizations are started.
+    restarts two times, checking that only the failed realizations are started.
     """
     gui = opened_main_window_clean
 
@@ -59,14 +59,14 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
 
     # Click start simulation and agree to the message
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     # The Run dialog opens, click show details and wait until done appears
     # then click it
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
     run_dialog = gui.findChild(RunDialog)
 
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=200000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
@@ -76,6 +76,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     realization_widget = run_dialog._tab_widget.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
+    assert list_model
     assert (
         list_model.rowCount() == experiment_panel.config.model_config.num_realizations
     )
@@ -92,10 +93,34 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
 
     def handle_dialog():
         message_box = wait_for_child(gui, qtbot, QMessageBox, name="restart_prompt")
-        qtbot.mouseClick(message_box.buttons()[0], Qt.LeftButton)
+        qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(500, handle_dialog)
-    qtbot.mouseClick(run_dialog.restart_button, Qt.LeftButton)
+    qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
+
+    qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=200000)
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+
+    # Assert that the number of boxes in the detailed view is
+    # equal to the number of previously failed realizations
+    realization_widget = run_dialog._tab_widget.currentWidget()
+    assert isinstance(realization_widget, RealizationWidget)
+    list_model = realization_widget._real_view.model()
+    assert list_model
+    assert list_model.rowCount() == len(failed_realizations)
+
+    # Second restart
+    assert any(run_dialog._run_model._create_mask_from_failed_realizations())
+    failed_realizations = [
+        i
+        for i, mask in enumerate(
+            run_dialog._run_model._create_mask_from_failed_realizations()
+        )
+        if mask
+    ]
+
+    QTimer.singleShot(500, handle_dialog)
+    qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
@@ -105,6 +130,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     realization_widget = run_dialog._tab_widget.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
+    assert list_model
     assert list_model.rowCount() == len(failed_realizations)
 
-    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+    qtbot.mouseClick(run_dialog.done_button, Qt.MouseButton.LeftButton)

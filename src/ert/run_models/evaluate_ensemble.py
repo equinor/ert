@@ -50,8 +50,7 @@ class EvaluateEnsemble(BaseRunModel):
         self.ensemble_id = simulation_arguments.ensemble_id
 
     def run_experiment(
-        self,
-        evaluator_server_config: EvaluatorServerConfig,
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> RunContext:
         self.setPhaseName("Running evaluate experiment...")
 

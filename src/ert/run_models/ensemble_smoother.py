@@ -58,7 +58,7 @@ class EnsembleSmoother(BaseRunModel):
         self.support_restart = False
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> RunContext:
         log_msg = "Running ES"
         logger.info(log_msg)
