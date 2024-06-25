@@ -227,7 +227,7 @@ class BatchContext:
         """
         if self.running():
             raise RuntimeError(
-                "Simulations are still running - need to wait before gettting results"
+                "Simulations are still running - need to wait before getting results"
             )
 
         self.fs.unify_responses()
