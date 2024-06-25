@@ -372,7 +372,7 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
 
 
 async def test_is_active(mock_driver, realization):
-    """The is_active() function is only used by simulation_context.py"""
+    """The is_active() function is only used by batch_simulation_context.py"""
     realization_started = asyncio.Event()
 
     async def init(iens, *args, **kwargs):
