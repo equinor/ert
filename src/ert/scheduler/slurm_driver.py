@@ -103,7 +103,7 @@ class SlurmDriver(Driver):
 
         self._sleep_time_between_cmd_retries = 3
         self._sleep_time_between_kills = 30
-        self._poll_period = 10 if squeue_timeout is None else int(squeue_timeout)
+        self._poll_period = 2 if squeue_timeout is None else int(squeue_timeout)
 
     def _submit_cmd(
         self,
