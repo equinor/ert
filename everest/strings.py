@@ -17,7 +17,7 @@ OPTIMIZATION_LOG_DIR = "logs"
 OPT_PROGRESS_ENDPOINT = "opt_progress"
 OPT_PROGRESS_ID = "optimization_progress"
 OPT_FAILURE_REALIZATIONS = (
-    "Optimization failed: not enough succesful realizations to proceed."
+    "Optimization failed: not enough successful realizations to proceed."
 )
 
 SESSION_DIR = ".session"
