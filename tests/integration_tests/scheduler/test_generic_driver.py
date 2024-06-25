@@ -41,6 +41,8 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
                 "the real LSF cluster needs a shared disk"
             )
             sys.exit(1)
+    elif class_ is SlurmDriver and pytestconfig.getoption("slurm"):
+        pass
     else:
         mock_bin(monkeypatch, tmp_path)
 
@@ -149,8 +151,10 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     os.chdir(tmp_path)
 
-    if (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf")) or (
-        isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs")
+    if (
+        (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf"))  # noqa: PLR0916
+        or (isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs"))
+        or (isinstance(driver, SlurmDriver) and pytestconfig.getoption("slurm"))
     ):
         # Allow more time when tested on a real compute cluster to avoid false positives.
         job_kill_window = 60

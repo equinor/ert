@@ -7,7 +7,7 @@ on:
         type: string
 
 jobs:
-  test-poly-on-slurm:
+  test-ert-on-slurm:
     name: Run ert tests
     timeout-minutes: 20
     runs-on: ubuntu-latest
@@ -67,6 +67,10 @@ jobs:
         srun env | grep SLURM
         # Several SLURM_* env variables are defined only when run through slurm
 
+    - name: Run integration tests towards Slurm
+      run: |
+        set -e
+        pytest tests/integration_tests/scheduler --slurm
 
     - name: Test poly-example on slurm
       run: |
