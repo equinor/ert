@@ -15,10 +15,6 @@ class Job(BaseModel):
     job_state: JobState
 
 
-class SQueueOutput(BaseModel):
-    jobs: List[Job]
-
-
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Mocked LSF bjobs command reading state from filesystem"
