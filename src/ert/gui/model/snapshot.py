@@ -222,11 +222,15 @@ class SnapshotModel(QAbstractItemModel):
                 ):
                     cur_mem_usage = int(float(job["current_memory_usage"]))
                     real_node.data.current_memory_usage = cur_mem_usage
-                    self.root.data.current_memory_usage = cur_mem_usage
                 if "max_memory_usage" in job and job["max_memory_usage"] is not None:
                     max_mem_usage = int(float(job["max_memory_usage"]))
-                    real_node.data.max_memory_usage = max_mem_usage
-                    self.root.data.max_memory_usage = max_mem_usage
+
+                    real_node.data.max_memory_usage = max(
+                        real_node.data.max_memory_usage or 0, max_mem_usage
+                    )
+                    self.root.data.max_memory_usage = max(
+                        self.root.data.max_memory_usage or 0, max_mem_usage
+                    )
 
                 # Errors may be unset as the queue restarts the job
                 job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
