@@ -3,6 +3,7 @@ import argparse
 import logging
 import sys
 
+from ert.shared.feature_toggling import FeatureScheduler
 from ieverest.bin.ieverest_script import ieverest_entry
 
 from everest import __version__ as everest_version
@@ -81,6 +82,10 @@ class EverestMain(object):
             action="version",
             version="%(prog)s {version}".format(version=everest_version),
         )
+
+        # Obtain the feature toggle from env variable: ERT_FEATURE_SCHEDULER
+        # Supported values are 0, 1, False, True (case insensitive)
+        FeatureScheduler.set_value(None)
 
         # Parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
