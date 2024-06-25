@@ -289,7 +289,7 @@ class RunDialog(QDialog):
         elif self.killJobs() != QMessageBox.Yes:
             QCloseEvent.ignore()  # type: ignore
 
-    def run_experiment(self) -> None:
+    def run_experiment(self, restart: bool = False) -> None:
         self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
@@ -302,6 +302,7 @@ class RunDialog(QDialog):
         def run() -> None:
             self._run_model.start_simulations_thread(
                 evaluator_server_config=evaluator_server_config,
+                restart=restart,
             )
 
         simulation_thread = ErtThread(
@@ -461,8 +462,7 @@ class RunDialog(QDialog):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
-            self._run_model.restart()
-            self.run_experiment()
+            self.run_experiment(restart=True)
 
     @Slot()
     def toggle_detailed_progress(self) -> None:
