@@ -53,7 +53,7 @@ def get_machine_name():
         ]
         resolved_hosts.sort()
         return resolved_hosts[0]
-    except resolver.NXDOMAIN:
+    except (resolver.NXDOMAIN, resolver.NoResolverConfiguration):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
