@@ -6,7 +6,7 @@ def async_run(function, on_finished=None, on_error=None):
 
     If the function raise an exception, on_error is called, with the
     exception as first argument.
-    When the excecution is finished (either succesfully or with an
+    When the excecution is finished (either successfully or with an
     exception), on_finished is called with:
     - first argument is the value returned by the function
     - second argument is None if the function completed correctly, or
