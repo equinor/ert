@@ -21,10 +21,6 @@ class Job(BaseModel):
     total: int = 0
 
 
-class SQueueOutput(BaseModel):
-    jobs: List[Job]
-
-
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Mocked LSF bhist command reading state from filesystem"
