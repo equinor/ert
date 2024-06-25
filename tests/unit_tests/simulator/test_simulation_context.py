@@ -1,6 +1,7 @@
 import pytest
 
-from ert.simulator import SimulationContext
+from ert import JobStatus
+from ert.simulator import BatchContext
 from tests.utils import wait_until
 
 
@@ -25,41 +26,41 @@ def test_simulation_context(setup_case, storage):
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]
-    even_ctx = SimulationContext(ert_config, even_half, even_mask, 0, case_data)
-    odd_ctx = SimulationContext(ert_config, odd_half, odd_mask, 0, case_data)
+    even_ctx = BatchContext([], ert_config, even_half, even_mask, 0, case_data)
+    odd_ctx = BatchContext([], ert_config, odd_half, odd_mask, 0, case_data)
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert not even_ctx.isRealizationFinished(iens)
+            assert even_ctx.job_status(iens) != JobStatus.SUCCESS
         else:
-            assert not odd_ctx.isRealizationFinished(iens)
+            assert odd_ctx.job_status(iens) != JobStatus.SUCCESS
 
     wait_until(lambda: not even_ctx.isRunning() and not odd_ctx.isRunning(), timeout=90)
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert even_ctx.get_run_args(iens).runpath.endswith(
+            assert even_ctx._run_context[iens].runpath.endswith(
                 f"runpath/realization-{iens}-{iens}/iter-0"
             )
         else:
-            assert odd_ctx.get_run_args(iens).runpath.endswith(
+            assert odd_ctx._run_context[iens].runpath.endswith(
                 f"runpath/realization-{iens}-{iens}/iter-0"
             )
 
-    assert even_ctx.getNumFailed() == 0
-    assert even_ctx.getNumRunning() == 0
-    assert even_ctx.getNumSuccess() == size / 2
+    assert even_ctx.status.failed == 0
+    assert even_ctx.status.running == 0
+    assert even_ctx.status.complete == size / 2
 
-    assert odd_ctx.getNumFailed() == 0
-    assert odd_ctx.getNumRunning() == 0
-    assert odd_ctx.getNumSuccess() == size / 2
+    assert odd_ctx.status.failed == 0
+    assert odd_ctx.status.running == 0
+    assert odd_ctx.status.complete == size / 2
 
     for iens in range(size):
         if iens % 2 == 0:
             assert even_ctx.didRealizationSucceed(iens)
-            assert not even_ctx.didRealizationFail(iens)
-            assert even_ctx.isRealizationFinished(iens)
+            assert even_ctx.job_status(iens) != JobStatus.FAILED
+            assert even_ctx.job_status(iens) == JobStatus.SUCCESS
         else:
             assert odd_ctx.didRealizationSucceed(iens)
-            assert not odd_ctx.didRealizationFail(iens)
-            assert odd_ctx.isRealizationFinished(iens)
+            assert odd_ctx.job_status(iens) != JobStatus.FAILED
+            assert odd_ctx.job_status(iens) == JobStatus.SUCCESS

@@ -167,7 +167,7 @@ def test_batch_simulation(batch_simulator, storage):
     ]
 
     ctx = batch_simulator.start("case", case_data, storage=storage)
-    assert len(case_data) == len(ctx)
+    assert len(case_data) == len(ctx.mask)
 
     # Asking for results before it is complete.
     with pytest.raises(RuntimeError):
