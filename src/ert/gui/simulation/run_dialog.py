@@ -286,8 +286,8 @@ class RunDialog(QDialog):
                 self._run_model.hasRunFailed(), self._run_model.getFailMessage()
             )
             self.accept()
-        elif self.killJobs() != QMessageBox.Yes:
-            QCloseEvent.ignore()  # type: ignore
+        elif self.killJobs() != QMessageBox.Yes and a0 is not None:
+            a0.ignore()
 
     def run_experiment(self) -> None:
         self._run_model.reset()
@@ -478,7 +478,9 @@ class RunDialog(QDialog):
             file_dialog.close()
 
     def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
-        if a0 is not None and a0.key() != Qt.Key.Key_Escape:
+        # QDialog on escape will close without prompting
+        # so call self.close() instead
+        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.close()
         else:
             QDialog.keyPressEvent(self, a0)
