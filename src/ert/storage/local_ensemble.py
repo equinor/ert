@@ -319,12 +319,27 @@ class LocalEnsemble(BaseMode):
             and `False` otherwise.
         """
 
-        return np.array(
-            [
-                self._responses_exist_for_realization(i, key)
-                for i in range(self.ensemble_size)
+        realization_sets = None
+        if key is None:
+            realization_sets = [
+                set(self._load_combined_response_dataset(response)["realization"])
+                for response in self.experiment.response_configuration
             ]
-        )
+        elif self.has_combined_response_dataset(key):
+            realization_sets = [
+                set(self._load_combined_response_dataset(key)["realization"])
+            ]
+
+        def _realization_mask(realization: int) -> bool:
+            real_dir = self._realization_dir(realization)
+            if not self.experiment.response_configuration:
+                return True
+            if realization_sets is not None:
+                return all(realization in rs for rs in realization_sets)
+            else:
+                return (real_dir / f"{key}.nc").exists()
+
+        return np.array([_realization_mask(i) for i in range(self.ensemble_size)])
 
     def _parameters_exist_for_realization(self, realization: int) -> bool:
         """
@@ -728,13 +743,9 @@ class LocalEnsemble(BaseMode):
                 ) from e
 
     def _find_unified_dataset_for_response(self, key: str) -> str:
-        all_gen_data_keys = {
-            k
-            for k, c in self.experiment.response_configuration.items()
-            if isinstance(c, GenDataConfig)
-        }
-
-        if key == ResponseTypes.gen_data or key in all_gen_data_keys:
+        if key == ResponseTypes.gen_data or isinstance(
+            self.experiment.response_configuration.get(key), GenDataConfig
+        ):
             return "gen_data"
 
         if key == ResponseTypes.summary or key in self.get_summary_keyset():
