@@ -294,6 +294,8 @@ class CustomizePlotDialog(QDialog):
         self.current_key = new_key
 
     def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+        # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
+        # which closes the dialog
         if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.hide()
         else:

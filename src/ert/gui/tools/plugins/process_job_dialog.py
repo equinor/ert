@@ -89,8 +89,12 @@ class ProcessJobDialog(QDialog):
         self.close_button.setEnabled(True)
 
     def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
-        if self.close_button.isEnabled() or (
-            a0 is not None and a0.key() != Qt.Key.Key_Escape
+        # disallow pressing escape to close
+        # when close button is not enabled
+        if (
+            self._close_button.isEnabled()
+            or a0 is None
+            or a0.key() != Qt.Key.Key_Escape
         ):
             QDialog.keyPressEvent(self, a0)
 
