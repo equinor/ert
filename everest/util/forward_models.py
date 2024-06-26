@@ -18,7 +18,7 @@ def collect_forward_model_schemas():
 
 
 def lint_forward_model_job(job: str, args) -> List[str]:
-    return pm.hook.lint_forward_model(job=job, args=args).pop()
+    return pm.hook.lint_forward_model(job=job, args=args)
 
 
 def parse_forward_model_file(path: str, schema: Type[T], message: str) -> T:

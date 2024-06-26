@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable, Optional
 
 import pytest
 from everest.config import EverestConfig
@@ -24,3 +25,16 @@ def test_workflow_run():
         with path.open("r", encoding="utf-8") as file_obj:
             runpath = file_obj.readline()
         assert Path(runpath.strip()).exists()
+
+
+@pytest.mark.integration_test
+def test_state_modifier_workflow_run(
+    copy_testdata_tmpdir: Callable[[Optional[str]], Path],
+) -> None:
+    cwd = copy_testdata_tmpdir("open_shut_state_modifier")
+    _EverestWorkflow(
+        config=EverestConfig.load_file("everest/model/index.yml")
+    ).start_optimization()
+
+    for path in Path.cwd().glob("**/simulation_0/RESULT.SCH"):
+        assert path.read_bytes() == (cwd / "eclipse/model/EXPECTED.SCH").read_bytes()
