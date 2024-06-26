@@ -58,7 +58,7 @@ dependencies=[
     "lark",
     "lxml",
     "matplotlib",
-    "netCDF4!=1.7.1",
+    "netCDF4",
     "numpy<2",
     "packaging",
     "pandas",
@@ -208,3 +208,4 @@ ignore = ["PLW2901", # redefined-loop-name
 
 [tool.ruff.lint.pylint]
 max-args = 20
+#test
