@@ -3,8 +3,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional, cast
 
+from ert import WorkflowRunner
 from ert.config import ErtConfig
-from ert.job_queue import WorkflowRunner
 from ert.storage import open_storage
 from pydantic import BaseModel, ConfigDict
 from ropt.config.plan import EvaluatorStepConfig

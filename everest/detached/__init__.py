@@ -10,9 +10,8 @@ from typing import List, Literal, Mapping, Optional, Tuple
 
 import pkg_resources
 import requests
+from ert import BatchContext, BatchSimulator, JobStatus
 from ert.config import ErtConfig, QueueSystem
-from ert.job_queue import JobStatus
-from ert.simulator import BatchContext, BatchSimulator
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 
