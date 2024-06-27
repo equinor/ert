@@ -210,3 +210,13 @@ def test_invalid_argument_gives_a_user_error_message(
         _ = parse_field_line(
             f"FIELD f parameter out.roff INIT_FILES:file.init {invalid_argument}"
         )
+
+
+def test_field_parameter_name_max_length(parse_field_line):
+    with pytest.raises(
+        ConfigValidationError,
+        match="FIELD parameter_name 'very_long_parameter_name' is too long. Eclipse keywords are limited to max 8 characters",
+    ):
+        _ = parse_field_line(
+            "FIELD very_long_parameter_name PARAMETER permx.grdecl INIT_FILES:fields/perms%d.grdecl"
+        )
