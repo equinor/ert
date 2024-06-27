@@ -382,7 +382,7 @@ class EnsembleEvaluatorAsync:
     def stop(self) -> None:
         assert self._loop
         if self._loop.is_running():
-            asyncio.run_coroutine_threadsafe(self._stop(), self._loop)
+            asyncio.run_coroutine_threadsafe(self._stop(), self._loop).result()
 
     async def _signal_cancel(self) -> None:
         """

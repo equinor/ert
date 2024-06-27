@@ -230,7 +230,7 @@ class LegacyEnsemble:
                 cert=self._config.cert,
             ),
             get_running_loop(),
-        )
+        ).result()
 
         ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
 
