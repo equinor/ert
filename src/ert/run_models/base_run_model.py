@@ -65,7 +65,7 @@ from ert.mode_definitions import MODULE_MODE
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.shared.feature_toggling import FeatureScheduler
-from ert.storage import Storage
+from ert.storage import Ensemble, Storage
 
 from ..ensemble_evaluator._ensemble import LegacyEnsemble
 from ..job_queue import WorkflowRunner
