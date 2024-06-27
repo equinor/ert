@@ -546,10 +546,6 @@ class BaseRunModel:
             event_logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
             return []
-
-        run_context.ensemble.unify_parameters()
-        run_context.ensemble.unify_responses()
-
         return evaluator.get_successful_realizations()
 
     def _build_ensemble(

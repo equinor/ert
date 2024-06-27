@@ -9,9 +9,10 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert import LibresFacade, MeasuredData
+from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig
+from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
 
 
@@ -20,7 +21,7 @@ def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
-        observations=ert_config.observations.datasets,
+        observations=ert_config.observations,
     ).create_ensemble(ensemble_size=3, name="prior")
 
 
@@ -78,7 +79,6 @@ def create_responses(config_file, prior_ensemble, response_times):
     facade.load_from_forward_model(
         prior_ensemble, [True] * facade.get_ensemble_size(), 0
     )
-    prior_ensemble.unify_responses()
 
 
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
@@ -101,7 +101,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        target_ensemble.experiment.observation_keys,
+        list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
     )
 
@@ -128,7 +128,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
         smoother_update(
             prior_ensemble,
             target_ensemble,
-            target_ensemble.experiment.observation_keys,
+            list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
         )
 
@@ -159,7 +159,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        target_ensemble.experiment.observation_keys,
+        list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
     )
 
@@ -205,7 +205,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        target_ensemble.experiment.observation_keys,
+        list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
     )
 
@@ -235,4 +235,4 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert fopr_2.loc["STD"].iloc[0] == 0.05
     assert pd.isna(fopr_2.loc[0].iloc[0])
     assert pd.isna(fopr_2.loc[1].iloc[0])
-    assert pd.isna(fopr_2.loc[2].iloc[0])
+    assert pd.isna(fopr_1.loc[2].iloc[0])

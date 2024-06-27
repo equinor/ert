@@ -21,7 +21,6 @@ def get_observations(
     *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
 ) -> List[js.ObservationOut]:
     experiment = storage.get_experiment(experiment_id)
-    all_obs = get_all_observations(experiment)
     return [
         js.ObservationOut(
             id=UUID(int=0),
@@ -31,5 +30,5 @@ def get_observations(
             x_axis=observation["x_axis"],
             name=observation["name"],
         )
-        for observation in all_obs
+        for observation in get_all_observations(experiment)
     ]

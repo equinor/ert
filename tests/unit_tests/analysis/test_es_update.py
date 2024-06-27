@@ -47,26 +47,13 @@ def uniform_parameter():
 
 @pytest.fixture
 def obs():
-    observations = np.array([1.0, 1.0, 1.0])
-    errors = np.array([0.1, 1.0, 10.0])
     return xr.Dataset(
         {
-            "observations": (
-                ["name", "obs_name", "index", "report_step"],
-                np.reshape(observations, (1, 1, 3, 1)),
-            ),
-            "std": (
-                ["name", "obs_name", "index", "report_step"],
-                np.reshape(errors, (1, 1, 3, 1)),
-            ),
+            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
+            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
         },
-        coords={
-            "name": ["RESPONSE"],
-            "obs_name": ["OBSERVATION"],
-            "index": [0, 1, 2],
-            "report_step": [0],
-        },
-        attrs={"response": "gen_data"},
+        coords={"index": [0, 1, 2], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
     )
 
 
@@ -108,7 +95,7 @@ def test_update_report(
     smoother_update(
         prior_ens,
         posterior_ens,
-        posterior_ens.experiment.observation_keys,
+        list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
         UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
@@ -143,7 +130,7 @@ def test_update_report_with_exception_in_analysis_ES(
         smoother_update(
             prior_ens,
             posterior_ens,
-            posterior_ens.experiment.observation_keys,
+            list(ert_config.observations.keys()),
             ert_config.ensemble_config.parameters,
             UpdateSettings(alpha=0.0000000001),
             ESSettings(inversion="subspace"),
@@ -185,7 +172,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     ss = smoother_update(
         prior_ens,
         posterior_ens,
-        posterior_ens.experiment.observation_keys,
+        list(ert_config.observations.keys()),
         ert_config.ensemble_config.parameters,
         update_settings,
         ESSettings(inversion="subspace"),
@@ -229,31 +216,31 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         (
             "IES_ENKF",
             [
-                0.6037999677949758,
-                -0.8995579907754752,
-                -0.6504407295556552,
-                -0.1166452141673402,
-                0.14636995541134484,
-                0.06369103179639837,
-                -1.5673341202722992,
-                0.20453207322555156,
-                -0.8182935319800029,
-                0.7551500416016633,
+                0.5167529669896218,
+                -0.9178847938402281,
+                -0.6299046429604261,
+                -0.1632005925319205,
+                0.0216488942750398,
+                0.07464619425897459,
+                -1.5587692532545538,
+                0.22910522740018124,
+                -0.7171489000139469,
+                0.7287252249699406,
             ],
         ),
         (
             "STD_ENKF",
             [
-                1.736559294191663,
-                -0.819068399753349,
-                -1.662845371931207,
-                -1.269802978525508,
-                -0.06688653025763673,
-                0.5544020846860213,
-                -2.9042930481733293,
-                1.6866437009109858,
-                -1.6783511626158152,
-                1.3081206280331028,
+                1.3040645145742686,
+                -0.8162878122658299,
+                -1.5484856041224397,
+                -1.379896334985399,
+                -0.510970027650022,
+                0.5638868158813687,
+                -2.7669280724377487,
+                1.7160680670028017,
+                -1.2603717378211836,
+                1.2014197463741136,
             ],
         ),
     ],
@@ -300,7 +287,7 @@ def test_update_snapshot(
             prior_storage=prior_ens,
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
-            observations=posterior_ens.experiment.observation_keys,
+            observations=list(ert_config.observations.keys()),
             parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
             analysis_config=IESSettings(inversion="subspace_exact"),
@@ -312,7 +299,7 @@ def test_update_snapshot(
         smoother_update(
             prior_ens,
             posterior_ens,
-            posterior_ens.experiment.observation_keys,
+            list(ert_config.observations.keys()),
             list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
             ESSettings(inversion="subspace"),
@@ -418,7 +405,6 @@ def test_smoother_snapshot_alpha(
             ),
             iens,
         )
-
     posterior_storage = storage.create_ensemble(
         prior_storage.experiment_id,
         ensemble_size=prior_storage.ensemble_size,
@@ -519,19 +505,17 @@ def test_and_benchmark_adaptive_localization_with_fields(
     obs = xr.Dataset(
         {
             "observations": (
-                ["index", "report_step"],
-                observations.reshape((num_observations, 1)),
+                ["report_step", "index"],
+                observations.reshape((1, num_observations)),
             ),
             "std": (
-                ["index", "report_step"],
-                observation_noise.reshape(num_observations, 1),
+                ["report_step", "index"],
+                observation_noise.reshape(1, num_observations),
             ),
         },
         coords={"report_step": [0], "index": np.arange(len(observations))},
-        attrs={"response": "gen_data"},
+        attrs={"response": "RESPONSE"},
     )
-    obs = obs.expand_dims({"obs_name": ["OBSERVATION"]})
-    obs = obs.expand_dims({"name": ["RESPONSE"]})
 
     param_group = "PARAM_FIELD"
 
@@ -583,9 +567,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
         )
 
-    prior_ensemble.unify_parameters()
-    prior_ensemble.unify_responses()
-
     posterior_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
         ensemble_size=prior_ensemble.ensemble_size,
@@ -605,12 +586,12 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
     benchmark(smoother_update_run)
 
-    prior_da = prior_ensemble.load_parameters(param_group, list(range(num_ensemble)))[
+    prior_da = prior_ensemble.load_parameters(param_group, range(num_ensemble))[
         "values"
     ]
-    posterior_da = posterior_ensemble.load_parameters(
-        param_group, list(range(num_ensemble))
-    )["values"]
+    posterior_da = posterior_ensemble.load_parameters(param_group, range(num_ensemble))[
+        "values"
+    ]
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
     # All parameters would be updated with a global update so this would fail.
@@ -726,8 +707,6 @@ def test_temporary_parameter_storage_with_inactive_fields(
     for iens in range(ensemble_size):
         prior_ensemble.save_parameters(param_group, iens, fields[iens])
 
-    prior_ensemble.unify_parameters()
-
     realization_list = list(range(ensemble_size))
     param_ensemble_array = _load_param_ensemble_array(
         prior_ensemble, param_group, realization_list
@@ -750,7 +729,19 @@ def test_temporary_parameter_storage_with_inactive_fields(
         ensemble, param_ensemble_array, param_group, realization_list
     )
     for iens in range(prior_ensemble.ensemble_size):
-        ds = ensemble.load_parameters(param_group, iens)
-        np.testing.assert_array_equal(
-            ds["values"].values[0], fields[iens]["values"].values[0]
+        ds = xr.open_dataset(
+            ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
         )
+        np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
+
+
+def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
+    """
+    The order of the observations influence the update as it affects the
+    perturbations, so we make sure we maintain the order throughout.
+    """
+    ert_config = snake_oil_case_storage
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    assert list(ert_config.observations.keys()) == list(
+        prior_ens.experiment.observations.keys()
+    )
