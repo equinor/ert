@@ -4,10 +4,6 @@ WORKFLOW_JOB_DIRECTORY workflows/jobs/shell
 WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 
 JOB_SCRIPT job_dispatch.py
-INSTALL_JOB_DIRECTORY forward-models/res
-INSTALL_JOB_DIRECTORY forward-models/shell
-INSTALL_JOB_DIRECTORY forward-models/templating
-INSTALL_JOB_DIRECTORY forward-models/old_style
 
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 1
