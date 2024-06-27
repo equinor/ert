@@ -134,7 +134,7 @@ class BatchContext:
 
         # Wait until the queue is active before we finish the creation
         # to ensure sane job status while running
-        while self.isRunning() and not self._job_queue.is_active():
+        while self.running() and not self._job_queue.is_active():
             time.sleep(0.1)
 
     def __len__(self) -> int:
@@ -256,9 +256,6 @@ class BatchContext:
         if iens in self._job_queue._jobs:
             return self._job_queue._jobs[iens].state == JobState.COMPLETED
         return False
-
-    def isRunning(self) -> bool:
-        return self._sim_thread.is_alive() or self._job_queue.is_active()
 
     def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""
