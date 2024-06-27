@@ -26,6 +26,7 @@ from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.server import WebSocketServerProtocol
 
+from ert.ensemble_evaluator import identifiers as ids
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 from ._ensemble import LegacyEnsemble as Ensemble
@@ -159,10 +160,10 @@ class EnsembleEvaluatorAsync:
             self._result = events[0].data  # normal termination
             max_memory_usage = -1
             for job in self.ensemble.snapshot.get_all_forward_models().values():
-                memory_usage = job.max_memory_usage or "-1"
+                memory_usage = job.get(ids.MAX_MEMORY_USAGE) or "-1"
                 max_memory_usage = max(int(memory_usage), max_memory_usage)
             logger.info(
-                f"Ensemble ran with maximum memory usage for a forward model step: {max_memory_usage}"
+                f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
             )
             await self._append_message(self.ensemble.update_snapshot(events))
 
