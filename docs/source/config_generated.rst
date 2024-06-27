@@ -63,7 +63,7 @@ a group of control variables
 
 
 **variables (required)**
-    Type: *Union[List[ControlVariableGuessListConfig]]*
+    Type: *Union[List[ControlVariableConfig], List[ControlVariableGuessListConfig]]*
 
     List of control variables
 
@@ -144,7 +144,7 @@ a group of control variables
         The backend used by Everest for sampling points
 
         **backend (optional)**
-            Type: *Optional[str]*
+            Type: *str*
 
             The backend used by Everest for sampling points.
 
@@ -153,7 +153,7 @@ a group of control variables
 
 
 
-        **backend_options (optional)**
+        **options (optional)**
             Type: *Optional[Mapping[str, Any]]*
 
 
@@ -164,7 +164,7 @@ a group of control variables
 
 
         **method (optional)**
-            Type: *Optional[str]*
+            Type: *str*
 
             The sampling method or distribution used by the sampler backend.
 
@@ -177,17 +177,9 @@ a group of control variables
 
 
     **initial_guess (optional)**
-        Type: *Optional[float]*
+        Type: *List[float]*
 
-
-        Starting value for the control variable, if given needs to be in the interval [min, max]
-
-
-    **index (optional)**
-        Type: *Optional[NonNegativeInt]*
-
-
-        Index should be given either for all of the variables or for none of them
+        List of Starting values for the control variable
 
 
 
@@ -201,7 +193,7 @@ a group of control variables
 
 
 **control_type (optional)**
-    Type: *Optional[Literal['real', 'integer']]*
+    Type: *Literal['real', 'integer']*
 
 
     The type of the controls for the control group. Individual control types in the
@@ -219,7 +211,7 @@ a group of control variables
 
 
 **auto_scale (optional)**
-    Type: *Optional[bool]*
+    Type: *bool*
 
 
     Can be set to true to re-scale controls from the range
@@ -251,7 +243,7 @@ a group of control variables
 
 
 **perturbation_type (optional)**
-    Type: *Optional[Literal['absolute', 'relative']]*
+    Type: *Literal['absolute', 'relative']*
 
 
     Example: absolute or relative
@@ -316,7 +308,7 @@ a group of control variables
 
 
     **backend (optional)**
-        Type: *Optional[str]*
+        Type: *str*
 
         The backend used by Everest for sampling points.
 
@@ -325,7 +317,7 @@ a group of control variables
 
 
 
-    **backend_options (optional)**
+    **options (optional)**
         Type: *Optional[Mapping[str, Any]]*
 
 
@@ -336,7 +328,7 @@ a group of control variables
 
 
     **method (optional)**
-        Type: *Optional[str]*
+        Type: *str*
 
         The sampling method or distribution used by the sampler backend.
 
@@ -1342,6 +1334,3 @@ and environment variables are exposed in the form 'os.NAME', for example:
 | os.USER: $USER
 | os.HOSTNAME: $HOSTNAME
 | ...
-
-
-
