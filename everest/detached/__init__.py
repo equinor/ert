@@ -80,7 +80,7 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
 
     global _server
     global _context
-    if _context and _context.isRunning():
+    if _context and _context.running():
         raise RuntimeError(
             "Starting two instances of everest server "
             "in the same process is not allowed!"
@@ -110,14 +110,14 @@ def context_stop_and_wait():
     global _context  # pylint: disable=global-variable-not-assigned
     if _context:
         _context.stop()
-        while _context.isRunning():
+        while _context.running():
             time.sleep(1)
 
 
 def wait_for_context():
     global _context  # pylint: disable=global-variable-not-assigned
-    if _context and _context.isRunning():
-        while _context.isRunning():
+    if _context and _context.running():
+        while _context.running():
             time.sleep(1)
 
 
