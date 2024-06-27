@@ -125,8 +125,6 @@ def _save_param_ensemble_array_to_disk(
             ensemble, param_group, realization, param_ensemble_array[:, i]
         )
 
-    ensemble.unify_parameters()
-
 
 def _load_param_ensemble_array(
     ensemble: Ensemble,
@@ -573,6 +571,8 @@ def analysis_ES(
             target_ensemble,
         )
 
+    target_ensemble.unify_parameters()
+
 
 def analysis_IES(
     parameters: Iterable[str],
@@ -677,6 +677,7 @@ def analysis_IES(
             target_ensemble, param_ensemble_array, param_group, iens_active_index
         )
 
+    target_ensemble.unify_parameters()
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
         parameters,

@@ -78,7 +78,7 @@ def create_responses(config_file, prior_ensemble, response_times):
     facade.load_from_forward_model(
         prior_ensemble, [True] * facade.get_ensemble_size(), 0
     )
-    prior_ensemble.unify_responses()
+    prior_ensemble._refresh_realization_states()
 
 
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):

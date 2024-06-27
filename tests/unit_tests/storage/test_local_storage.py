@@ -512,6 +512,7 @@ class Experiment:
     observations: Dict[str, xr.Dataset] = field(default_factory=dict)
 
 
+# @reproduce_failure('6.103.2', b'AXicY2BgZCARMOJgg7mMYDFuRgiNz2xGDB5EhBGhj5EBAAeeAB0=')
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and

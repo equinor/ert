@@ -5,6 +5,7 @@ import glob
 import json
 import logging
 import os
+import traceback
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -15,6 +16,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Set,
     Tuple,
     Union,
 )
@@ -27,12 +29,13 @@ from pandas import DataFrame
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
+from ert.config import GenDataConfig, ResponseTypes, SummaryConfig
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
-from ..config import GenDataConfig, ResponseTypes
 from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order
+from .realization_state import _MultiRealizationStateDict
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -42,6 +45,33 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
+
+import time
+from functools import wraps
+
+
+def timing_decorator(trace=False):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print(f"START function '{func.__name__}({', '.join(map(str,args))})'")
+            if trace:
+                print(f"Traceback for '{func.__name__}':")
+                print("".join(traceback.format_stack(limit=3)))
+            start_time = time.time()
+
+            result = func(*args, **kwargs)
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Finished function '{func.__name__}'")
+            print(f"Time taken by '{func.__name__}': {elapsed_time:.4f} seconds")
+
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 class _Index(BaseModel):
@@ -146,6 +176,17 @@ class LocalEnsemble(BaseMode):
             return self._path / f"realization-{realization}"
 
         self._realization_dir = create_realization_dir
+        self._realization_states = _MultiRealizationStateDict()
+        self.__realization_states_need_refresh = True
+
+    def on_experiment_initialized(self) -> None:
+        """
+        Executes logic that depends on the experiment of the ensemble to exist.
+        For example, if some logic needs to traverse response/parameter configs,
+        the experiment of this ensemble must be initialized before running that logic.
+        """
+
+        self.__realization_states_need_refresh = True
 
     @classmethod
     def create(
@@ -241,6 +282,12 @@ class LocalEnsemble(BaseMode):
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
+    def _refresh_realization_state_if_needed(self):
+        if self.__realization_states_need_refresh:
+            self._refresh_realization_states()
+
+        self.__realization_states_need_refresh = False
+
     def get_realization_mask_without_parent_failure(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations without a parent failure.
@@ -279,6 +326,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @timing_decorator()
     def get_realization_mask_with_parameters(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations with associated parameters.
@@ -296,6 +344,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @timing_decorator()
     def get_realization_mask_with_responses(
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.bool_]:
@@ -343,14 +392,10 @@ class LocalEnsemble(BaseMode):
         """
         if not self.experiment.parameter_configuration:
             return True
-        path = self._realization_dir(realization)
+
+        self._refresh_realization_state_if_needed()
         return all(
-            (
-                self.has_combined_parameter_dataset(parameter)
-                and realization
-                in self._load_combined_parameter_dataset(parameter)["realizations"]
-            )
-            or (path / f"{parameter}.nc").exists()
+            self._realization_states.has_parameter_group(realization, parameter)
             for parameter in self.experiment.parameter_configuration
         )
 
@@ -398,28 +443,14 @@ class LocalEnsemble(BaseMode):
             otherwise, `False`.
         """
 
-        if not self.experiment.response_configuration:
-            return True
-
-        real_dir = self._realization_dir(realization)
-        if key:
-            if self.has_combined_response_dataset(key):
-                return (
-                    realization
-                    in self._load_combined_response_dataset(key)["realization"]
-                )
-            else:
-                return (real_dir / f"{key}.nc").exists()
-
-        return all(
-            (real_dir / f"{response}.nc").exists()
-            or (
-                self.has_combined_response_dataset(response)
-                and realization
-                in self._load_combined_response_dataset(response)["realization"].values
+        self._refresh_realization_state_if_needed()
+        if not key:
+            return all(
+                self._realization_states.has_response(realization, response)
+                for response in self.experiment.response_configuration
             )
-            for response in self.experiment.response_configuration
-        )
+
+        return self._realization_states.has_response(realization, key)
 
     def is_initalized(self) -> List[int]:
         """
@@ -433,16 +464,13 @@ class LocalEnsemble(BaseMode):
             Returns the realization numbers with parameters
         """
 
+        self._refresh_realization_state_if_needed()
+
         return list(
             i
             for i in range(self.ensemble_size)
             if all(
-                (self._realization_dir(i) / f"{parameter.name}.nc").exists()
-                for parameter in self.experiment.parameter_configuration.values()
-                if not parameter.forward_init
-            )
-            or all(
-                (self._path / f"{parameter.name}.nc").exists()
+                self._realization_states.has_parameter_group(i, parameter.name)
                 for parameter in self.experiment.parameter_configuration.values()
                 if not parameter.forward_init
             )
@@ -489,6 +517,7 @@ class LocalEnsemble(BaseMode):
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
+    @timing_decorator()
     def get_realization_with_responses(
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.int_]:
@@ -1044,6 +1073,7 @@ class LocalEnsemble(BaseMode):
             dataset = dataset.expand_dims(realizations=[realization])
 
         dataset.to_netcdf(path, engine="scipy")
+        self.__realization_states_need_refresh = True
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
@@ -1078,6 +1108,7 @@ class LocalEnsemble(BaseMode):
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+        self.__realization_states_need_refresh = True
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if not parameter_group in self.experiment.parameter_configuration:
@@ -1294,7 +1325,7 @@ class LocalEnsemble(BaseMode):
         if key is None:
             for response_key in self.experiment.response_configuration:
                 self.unify_responses(response_key)
-                key = response_key
+            return None
 
         gen_data_keys = {
             k
@@ -1366,6 +1397,8 @@ class LocalEnsemble(BaseMode):
                 "realization",
             )
 
+        self._refresh_realization_states_for_responses(response_key=key)
+
     def unify_parameters(self, key: Optional[str] = None) -> None:
         self._unify_datasets(
             (
@@ -1375,6 +1408,7 @@ class LocalEnsemble(BaseMode):
             ),
             "realizations",
         )
+        self._refresh_realization_states_for_parameters()
 
     def get_parameter_state(
         self, realization: int
@@ -1399,3 +1433,286 @@ class LocalEnsemble(BaseMode):
             )
             for response_key in self.experiment.response_configuration
         }
+
+    @timing_decorator(True)
+    def _refresh_realization_states_for_parameters(self) -> None:
+        old_states = self._realization_states
+        states = _MultiRealizationStateDict()
+
+        @timing_decorator()
+        def _refresh_grouped_combined():
+            birth_time = os.path.getctime(self._path / f"{parameter_group_key}.nc")
+
+            combined_param_ds = self._load_combined_parameter_dataset(
+                parameter_group_key
+            )
+            for realization_index in range(self.ensemble_size):
+                old_state = old_states.get_single_realization_state(realization_index)
+
+                if (
+                    old_state.has_parameter_key_or_group(parameter_group_key)
+                    and old_state.get_parameter(parameter_group_key).timestamp
+                    == birth_time
+                ):
+                    continue
+
+                real_state = states.get_single_realization_state(realization_index)
+
+                if realization_index not in combined_param_ds["realizations"]:
+                    if "names" in combined_param_ds:
+                        for param_key in combined_param_ds["names"].values:
+                            real_state.set_parameter_group(
+                                key=param_key,
+                                value=False,
+                                parameter_group=parameter_group_key,
+                                source=self._path / f"{parameter_group_key}.nc",
+                            )
+                        real_state.set_parameter_group(
+                            key=parameter_group_key,
+                            value=False,
+                            parameter_group=parameter_group_key,
+                            source=self._path / f"{parameter_group_key}.nc",
+                        )
+                else:
+                    params_for_realization = combined_param_ds.sel(
+                        realizations=realization_index, drop=True
+                    )
+
+                    if "names" in params_for_realization:
+                        df = (
+                            params_for_realization[["names", "values"]]
+                            .to_dataframe()
+                            .reset_index()
+                        )
+                        for _, row in df.iterrows():
+                            real_state.set_parameter_group(
+                                key=row["names"],
+                                value=not pd.isna(row["values"]),
+                                parameter_group=parameter_group_key,
+                                source=self._path / f"{parameter_group_key}.nc",
+                            )
+                    else:
+                        # Surfaces and fields don't have a "name",
+                        # not the concept of a parameter group as opposed
+                        # to GEN_KW
+                        real_state.set_parameter_group(
+                            key=parameter_group_key,
+                            value=realization_index
+                            in combined_param_ds["realizations"],
+                            parameter_group=parameter_group_key,
+                            source=self._path / f"{parameter_group_key}.nc",
+                        )
+
+        @timing_decorator()
+        def _refresh_grouped_not_combined():
+            for realization_index in range(self.ensemble_size):
+                real_state = states.get_single_realization_state(realization_index)
+
+                ds_path = (
+                    self._realization_dir(realization_index)
+                    / f"{parameter_group_key}.nc"
+                )
+
+                if not os.path.exists(ds_path):
+                    # Here we can't really know what the specific keys of
+                    # the parameter is (if any), so we need to just set that
+                    # the entire group was not found
+                    real_state.set_parameter_group(
+                        parameter_group_key,
+                        False,
+                        parameter_group_key,
+                    )
+                    continue
+
+                old_state = old_states.get_single_realization_state(realization_index)
+
+                if old_state.has_parameter_key_or_group(
+                    parameter_group_key
+                ) and old_state.get_parameter(
+                    parameter_group_key
+                ).timestamp == os.path.getctime(ds_path):
+                    continue
+
+                ds = xr.open_dataset(ds_path)
+                for _, row in (
+                    ds[["names", "values"]].to_dataframe().reset_index().iterrows()
+                ):
+                    real_state.set_parameter_group(
+                        key=row["names"],
+                        value=not pd.isna(row["values"]),
+                        parameter_group=parameter_group_key,
+                        source=ds_path,
+                    )
+
+        for parameter_group_key in self.experiment.parameter_configuration:
+            if self.has_combined_parameter_dataset(parameter_group_key):
+                _refresh_grouped_combined()
+            else:
+                _refresh_grouped_not_combined()
+
+        self._realization_states = (
+            old_states.copy().assign_states(states).make_keys_consistent()
+        )
+
+    @timing_decorator(True)
+    def _refresh_realization_states_for_responses(
+        self, response_key: Optional[str] = None
+    ) -> None:
+        old_states = self._realization_states
+        states = _MultiRealizationStateDict()
+
+        response_configs = [
+            c
+            for c in self.experiment.response_configuration.values()
+            if response_key is None or c.name == response_key
+        ]
+
+        @timing_decorator()
+        def _refresh_for_gendata_not_combined(key: str):
+            for realization_index in range(self.ensemble_size):
+                ds_path = self._realization_dir(realization_index) / f"{key}.nc"
+                realization_state = states.get_single_realization_state(
+                    realization_index
+                )
+
+                realization_state.set_response(
+                    key=key,
+                    value=ds_path.exists(),
+                    response_type="gen_data",
+                    source=ds_path,
+                )
+
+        # ._load_combined_response_dataset(key) takes pretty long and needs to be done only
+        # once per combined dataset, per call to this
+        _cached_open_combined_datasets: Dict[str, xr.Dataset] = {}
+
+        @timing_decorator()
+        def _refresh_for_responses_combined(response_type, response_keys: Set[str]):
+            _cached_open_combined_datasets[response_type] = combined_ds = (
+                _cached_open_combined_datasets[response_type]
+                if response_type in _cached_open_combined_datasets
+                else self._load_combined_response_dataset(response_type)
+            )
+
+            ds_time_of_birth = os.path.getctime(self._path / f"{response_type}.nc")
+
+            # We know all keys that need to be checked, and all reals
+            # first filter out all key, real that doesn't need update,
+            # then select and update on the remaining (without the for loop ideally)
+            response_keys_already_up_to_date = set()
+
+            def _is_response_up_to_date(realization_index):
+                _real_state = states.get_single_realization_state(realization_index)
+
+                return (
+                    _real_state.has_response_key_or_group(response_type)
+                    and _real_state.get_response(response_type).timestamp
+                    == ds_time_of_birth
+                )
+
+            for _response_key in response_keys:
+                if all(
+                    _is_response_up_to_date(realization_index)
+                    for realization_index in range(self.ensemble_size)
+                ):
+                    response_keys_already_up_to_date.add(_response_key)
+
+            response_keys_that_need_update = (
+                response_keys - response_keys_already_up_to_date
+            )
+            response_keys_in_data = set(combined_ds["name"].data)
+            response_keys_not_in_data = (
+                response_keys_that_need_update - response_keys_in_data
+            )
+
+            for _response_key, ds in combined_ds.sel(
+                name=list(response_keys_in_data)
+            ).groupby("name", squeeze=True):
+                realizations_with_response = set(
+                    ds.dropna("realization", how="all")["realization"].data
+                )
+
+                for i in range(self.ensemble_size):
+                    states.get_single_realization_state(i).set_response(
+                        key=_response_key,
+                        value=i in realizations_with_response,
+                        response_type=response_type,
+                        source=(self._path / f"{response_type}.nc"),
+                    )
+
+            for i in range(self.ensemble_size):
+                _state = states.get_single_realization_state(i)
+                for _response_key in response_keys_not_in_data:
+                    _state.set_response(
+                        key=_response_key,
+                        value=False,
+                        response_type=response_type,
+                        source=(self._path / f"{response_type}.nc"),
+                    )
+
+        @timing_decorator()
+        def _refresh_for_summary_not_combined(expected_keys: Set[str]):
+            for realization_index in range(self.ensemble_size):
+                ds_path = self._realization_dir(realization_index) / "summary.nc"
+                realization_state = states.get_single_realization_state(
+                    realization_index
+                )
+
+                if ds_path.exists():
+                    if realization_state.has_response_key_or_group(
+                        "summary"
+                    ) and realization_state.get_response(
+                        "summary"
+                    ).timestamp == os.path.getctime(ds_path):
+                        continue
+
+                    ds = xr.open_dataset(ds_path)
+                    for smry_key in expected_keys:
+                        realization_state.set_response(
+                            key=smry_key,
+                            value=smry_key in ds["name"],
+                            response_type="summary",
+                            source=ds_path,
+                        )
+                else:
+                    for smry_key in expected_keys:
+                        realization_state.set_response(
+                            key=smry_key,
+                            value=False,
+                            response_type="summary",
+                            source=ds_path,
+                        )
+
+        keys_per_response_type: Dict[str, Set[str]] = {}
+
+        for response_config in response_configs:
+            if isinstance(response_config, GenDataConfig):
+                if "gen_data" not in keys_per_response_type:
+                    keys_per_response_type["gen_data"] = set()
+
+                keys_per_response_type["gen_data"].add(response_config.name)
+
+            elif isinstance(response_config, SummaryConfig):
+                assert isinstance(response_config, SummaryConfig)
+                if "summary" not in keys_per_response_type:
+                    keys_per_response_type["summary"] = set()
+
+                keys_per_response_type["summary"].update(response_config.keys)
+
+        for response_type, expected_keys in keys_per_response_type.items():
+            if self.has_combined_response_dataset(response_type):
+                _refresh_for_responses_combined(response_type, expected_keys)
+            elif response_type == "gen_data":
+                # Not combined and one file per response key
+                for k in expected_keys:
+                    _refresh_for_gendata_not_combined(k)
+            else:
+                # Not combined and one file with multiple response keys
+                _refresh_for_summary_not_combined(expected_keys)
+
+        self._realization_states = old_states.copy().assign_states(states)
+
+    @timing_decorator()
+    def _refresh_realization_states(self, response_key: Optional[str] = None) -> None:
+        self._refresh_realization_states_for_responses(response_key)
+        self._refresh_realization_states_for_parameters()

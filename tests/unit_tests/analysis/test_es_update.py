@@ -434,6 +434,7 @@ def test_smoother_snapshot_alpha(
     sies_smoother = None
 
     # The initial_mask equals ens_mask on first iteration
+    prior_storage._refresh_realization_states()
     initial_mask = prior_storage.get_realization_mask_with_responses()
 
     with expectation:
