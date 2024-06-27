@@ -59,7 +59,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
         responses=config.ensemble_config.response_configuration,
-        observations=config.observations.datasets,
+        observations=config.observations,
         name="my-experiment",
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations, name="default"
@@ -239,7 +239,6 @@ def test_realization_view(
     realization_widget = tool._storage_info_widget._content_layout.currentWidget()
 
     assert realization_widget._state_label.text() == "Realization state: HAS_DATA"
-    # Fix these. They should not be UNDEFINED
     assert (
         realization_widget._response_text_edit.toPlainText()
         == "\nSNAKE_OIL_OPR_DIFF - HAS_DATA\nSNAKE_OIL_WPR_DIFF - HAS_DATA\nSNAKE_OIL_GPR_DIFF - HAS_DATA\nsummary - HAS_DATA\n"
