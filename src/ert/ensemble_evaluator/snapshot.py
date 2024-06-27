@@ -303,11 +303,15 @@ class PartialSnapshot:
                     error = event.data.get(ids.ERROR_MSG)
 
             fm = ForwardModel(
-                status=status,
-                start_time=start_time,
-                end_time=end_time,
-                index=_get_forward_model_index(e_source),
-                error=error,
+                **_filter_nones(  # type: ignore
+                    {
+                        ids.STATUS: status,
+                        ids.INDEX: _get_forward_model_index(e_source),
+                        ids.START_TIME: start_time,
+                        ids.END_TIME: end_time,
+                        ids.ERROR: error,
+                    }
+                )
             )
 
             if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
@@ -316,6 +320,7 @@ class PartialSnapshot:
             if e_type == ids.EVTYPE_FORWARD_MODEL_START:
                 fm[ids.STDOUT] = event.data.get(ids.STDOUT)
                 fm[ids.STDERR] = event.data.get(ids.STDERR)
+
             self.update_forward_model(
                 _get_real_id(e_source),
                 _get_forward_model_id(e_source),
