@@ -272,7 +272,7 @@ class _MonitorThread(threading.Thread):
             return
         try:
             status = None
-            while self._context.isRunning() and not self._shutdown_flag:
+            while self._context.running() and not self._shutdown_flag:
                 newstatus = self._simulation_status()
                 if status == newstatus:  # No change in status
                     time.sleep(1)
