@@ -129,9 +129,7 @@ class Simulator(BatchSimulator):
                 case_data.append((real_id, controls))
 
         with open_storage(self._ert_config.ens_path, "w") as storage:
-            sim_context = BatchSimulator.start(
-                self, f"batch_{self._batch}", case_data, storage
-            )
+            sim_context = self.start(f"batch_{self._batch}", case_data, storage)
             while sim_context.running():
                 time.sleep(0.2)
             results = sim_context.results()
