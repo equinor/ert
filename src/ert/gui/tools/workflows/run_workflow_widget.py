@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
 from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
-from ert.job_queue import WorkflowRunner
+from ert.workflow_runner import WorkflowRunner
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig

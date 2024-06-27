@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ert.config import WorkflowJob
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.job_queue import WorkflowJobRunner
+from ert.workflow_runner import WorkflowJobRunner
 
 logger = logging.getLogger(__name__)
 

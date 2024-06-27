@@ -36,14 +36,15 @@ from ert.job_queue.queue import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_STOPPED,
 )
-from ert.scheduler.driver import Driver
-from ert.scheduler.event import FinishedEvent
-from ert.scheduler.job import Job
-from ert.scheduler.job import State as JobState
 from ert.serialization import evaluator_unmarshaller
 
+from .driver import Driver
+from .event import FinishedEvent
+from .job import Job
+from .job import State as JobState
+
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator._ensemble import Realization
+    from ert.ensemble_evaluator import Realization
 
 logger = logging.getLogger(__name__)
 

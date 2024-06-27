@@ -9,6 +9,7 @@ from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
     ForwardModelStep,
+    ForwardModelStepDocumentation,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
@@ -64,6 +65,7 @@ __all__ = [
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
     "ForwardModelStepValidationError",
+    "ForwardModelStepDocumentation",
     "GenDataConfig",
     "GenKwConfig",
     "TransformFunction",

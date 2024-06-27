@@ -10,8 +10,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import MutableMapping, Optional, Set
 
-from ert.scheduler.driver import SIGNAL_OFFSET, Driver
-from ert.scheduler.event import FinishedEvent, StartedEvent
+from .driver import SIGNAL_OFFSET, Driver
+from .event import FinishedEvent, StartedEvent
 
 _TERMINATE_TIMEOUT = 10.0
 

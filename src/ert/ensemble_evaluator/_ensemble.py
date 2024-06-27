@@ -6,7 +6,6 @@ import uuid
 from dataclasses import dataclass
 from functools import partialmethod
 from typing import (
-    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -26,26 +25,34 @@ from _ert.async_utils import get_running_loop, new_event_loop
 from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
-
-from . import identifiers
-from ._wait_for_evaluator import wait_for_evaluator
-
-if TYPE_CHECKING:
-    from ..ensemble_evaluator import EvaluatorServerConfig, SnapshotDict
-
 from ert.job_queue import JobQueue
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
 from ert.serialization import evaluator_marshaller
 from ert.shared.feature_toggling import FeatureScheduler
 
-from ..ensemble_evaluator import state
+from ._wait_for_evaluator import wait_for_evaluator
+from .config import EvaluatorServerConfig
+from .identifiers import (
+    EVTYPE_ENSEMBLE_FAILED,
+    EVTYPE_ENSEMBLE_STARTED,
+    EVTYPE_REALIZATION_TIMEOUT,
+)
 from .snapshot import (
     ForwardModel,
     PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
+)
+from .state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_UNKNOWN,
+    FORWARD_MODEL_STATE_START,
+    REALIZATION_STATE_WAITING,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,7 +62,7 @@ _handle = Callable[..., Any]
 
 
 class _EnsembleStateTracker:
-    def __init__(self, state_: str = state.ENSEMBLE_STATE_UNKNOWN) -> None:
+    def __init__(self, state_: str = ENSEMBLE_STATE_UNKNOWN) -> None:
         self._state = state_
         self._handles: Dict[str, _handle] = {}
         self._msg = "Illegal state transition from %s to %s"
@@ -66,39 +73,39 @@ class _EnsembleStateTracker:
         self._handles[state_] = handle
 
     def _handle_unknown(self) -> None:
-        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
-            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_UNKNOWN)
-        self._state = state.ENSEMBLE_STATE_UNKNOWN
+        if self._state != ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_UNKNOWN)
+        self._state = ENSEMBLE_STATE_UNKNOWN
 
     def _handle_started(self) -> None:
-        if self._state != state.ENSEMBLE_STATE_UNKNOWN:
-            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_STARTED)
-        self._state = state.ENSEMBLE_STATE_STARTED
+        if self._state != ENSEMBLE_STATE_UNKNOWN:
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_STARTED)
+        self._state = ENSEMBLE_STATE_STARTED
 
     def _handle_failed(self) -> None:
         if self._state not in [
-            state.ENSEMBLE_STATE_UNKNOWN,
-            state.ENSEMBLE_STATE_STARTED,
+            ENSEMBLE_STATE_UNKNOWN,
+            ENSEMBLE_STATE_STARTED,
         ]:
-            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_FAILED)
-        self._state = state.ENSEMBLE_STATE_FAILED
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_FAILED)
+        self._state = ENSEMBLE_STATE_FAILED
 
     def _handle_stopped(self) -> None:
-        if self._state != state.ENSEMBLE_STATE_STARTED:
-            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_STOPPED)
-        self._state = state.ENSEMBLE_STATE_STOPPED
+        if self._state != ENSEMBLE_STATE_STARTED:
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_STOPPED)
+        self._state = ENSEMBLE_STATE_STOPPED
 
     def _handle_canceled(self) -> None:
-        if self._state != state.ENSEMBLE_STATE_STARTED:
-            logger.warning(self._msg, self._state, state.ENSEMBLE_STATE_CANCELLED)
-        self._state = state.ENSEMBLE_STATE_CANCELLED
+        if self._state != ENSEMBLE_STATE_STARTED:
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_CANCELLED)
+        self._state = ENSEMBLE_STATE_CANCELLED
 
     def set_default_handles(self) -> None:
-        self.add_handle(state.ENSEMBLE_STATE_UNKNOWN, self._handle_unknown)
-        self.add_handle(state.ENSEMBLE_STATE_STARTED, self._handle_started)
-        self.add_handle(state.ENSEMBLE_STATE_FAILED, self._handle_failed)
-        self.add_handle(state.ENSEMBLE_STATE_STOPPED, self._handle_stopped)
-        self.add_handle(state.ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
+        self.add_handle(ENSEMBLE_STATE_UNKNOWN, self._handle_unknown)
+        self.add_handle(ENSEMBLE_STATE_STARTED, self._handle_started)
+        self.add_handle(ENSEMBLE_STATE_FAILED, self._handle_failed)
+        self.add_handle(ENSEMBLE_STATE_STOPPED, self._handle_stopped)
+        self.add_handle(ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
 
     def update_state(self, state_: str) -> str:
         if state_ not in self._handles:
@@ -137,17 +144,17 @@ class LegacyEnsemble:
         for real in self.active_reals:
             reals[str(real.iens)] = RealizationSnapshot(
                 active=True,
-                status=state.REALIZATION_STATE_WAITING,
+                status=REALIZATION_STATE_WAITING,
             )
             for index, forward_model in enumerate(real.forward_models):
                 reals[str(real.iens)].forward_models[str(index)] = ForwardModel(
-                    status=state.FORWARD_MODEL_STATE_START,
+                    status=FORWARD_MODEL_STATE_START,
                     index=str(index),
                     name=forward_model.name,
                 )
         top = SnapshotDict(
             reals=reals,
-            status=state.ENSEMBLE_STATE_UNKNOWN,
+            status=ENSEMBLE_STATE_UNKNOWN,
             metadata=self.metadata,
         )
 
@@ -203,9 +210,7 @@ class LegacyEnsemble:
         be removed when Scheduler is the only queue code."""
 
         def on_timeout(iens: int) -> None:
-            timeout_queue.put_nowait(
-                event_generator(identifiers.EVTYPE_REALIZATION_TIMEOUT, iens)
-            )
+            timeout_queue.put_nowait(event_generator(EVTYPE_REALIZATION_TIMEOUT, iens))
 
         async def send_timeout_message() -> None:
             while True:
@@ -335,9 +340,7 @@ class LegacyEnsemble:
                 )
             self._job_queue = queue
 
-            await cloudevent_unary_send(
-                event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
-            )
+            await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_STARTED, None))
 
             min_required_realizations = (
                 self.min_required_realizations
@@ -353,7 +356,7 @@ class LegacyEnsemble:
                 "unexpected exception in ensemble",
                 exc_info=True,
             )
-            result = identifiers.EVTYPE_ENSEMBLE_FAILED
+            result = EVTYPE_ENSEMBLE_FAILED
 
         if not isinstance(self._job_queue, Scheduler):
             assert timeout_queue is not None

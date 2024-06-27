@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from _ert.threading import ErtThread
 from ert.config import CancelPluginException
-from ert.job_queue import WorkflowJobRunner
+from ert.workflow_runner import WorkflowJobRunner
 
 from .process_job_dialog import ProcessJobDialog
 
