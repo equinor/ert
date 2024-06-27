@@ -77,7 +77,7 @@ def simulate_forward_model_event_handling(
         for fm_idx in range(forward_models):
             reals[f"{real}"].forward_models[str(fm_idx)] = ForwardModel(
                 status=state.FORWARD_MODEL_STATE_START,
-                index=fm_idx,
+                index=str(fm_idx),
                 name=f"FM_{fm_idx}",
             )
     top = SnapshotDict(
