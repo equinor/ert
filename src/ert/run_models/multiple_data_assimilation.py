@@ -81,7 +81,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        self.setPhaseCount(self.number_of_iterations + 1)
+        self.setPhaseCount(self.number_of_iterations)
 
         log_msg = f"Running ES-MDA with normalized weights {self.weights}"
         logger.info(log_msg)
@@ -191,7 +191,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...")
 
-        self.setPhase(self.number_of_iterations + 1, "Experiment completed.")
+        self.setPhase(self.number_of_iterations, "Experiment completed.")
 
         return prior_context
 
