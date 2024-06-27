@@ -28,7 +28,7 @@ from websockets.legacy.server import WebSocketServerProtocol
 
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
-from ._builder import Ensemble
+from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
 from .identifiers import (
     EVGROUP_FM_ALL,
