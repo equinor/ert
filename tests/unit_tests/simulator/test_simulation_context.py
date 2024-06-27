@@ -35,7 +35,7 @@ def test_simulation_context(setup_case, storage):
         else:
             assert odd_ctx.job_status(iens) != JobStatus.SUCCESS
 
-    wait_until(lambda: not even_ctx.isRunning() and not odd_ctx.isRunning(), timeout=90)
+    wait_until(lambda: not even_ctx.running() and not odd_ctx.running(), timeout=90)
 
     for iens in range(size):
         if iens % 2 == 0:
