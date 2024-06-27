@@ -126,7 +126,7 @@ def run_everest(options):
     elif server_state["status"] == ServerStatus.never_run or options.new_run:
         config_dict = options.config.to_dict()
         logger.info("Running everest with config info\n {}".format(config_dict))
-        for fm_job in options.config.forward_model:
+        for fm_job in options.config.forward_model or []:
             job_name = fm_job.split()[0]
             logger.info("Everest forward model contains job {}".format(job_name))
 

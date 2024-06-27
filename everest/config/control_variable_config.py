@@ -8,6 +8,7 @@ from pydantic import (
     NonNegativeInt,
     PositiveFloat,
 )
+from ropt.enums import VariableType
 from typing_extensions import Annotated
 
 from everest.config.validation_utils import no_dots_in_string, valid_range
@@ -84,6 +85,10 @@ NOTE: In most cases this should not be configured, and the default value should 
         default=None, description="The backend used by Everest for sampling points"
     )
 
+    @property
+    def ropt_control_type(self) -> Optional[VariableType]:
+        return VariableType[self.control_type.upper()] if self.control_type else None
+
 
 class ControlVariableConfig(_ControlVariable):
     model_config = ConfigDict(title="variable control")
@@ -116,10 +121,13 @@ Index should be given either for all of the variables or for none of them
 
 
 class ControlVariableGuessListConfig(_ControlVariable):
-    initial_guess: List[float] = Field(
-        default=None,
-        description="List of Starting values for the control variable",
-    )
+    initial_guess: Annotated[
+        List[float],
+        Field(
+            default=None,
+            description="List of Starting values for the control variable",
+        ),
+    ]
 
     def __hash__(self) -> int:
         return hash(self.name)

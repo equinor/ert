@@ -1,157 +1,229 @@
 import os
-from typing import Any, Dict, List, Optional
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from typing import (
+    Any,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from ropt.enums import ConstraintType, PerturbationType, VariableType
+from typing_extensions import Final, TypeAlias
 
-from everest.config import EverestConfig
-from everest.config.sampler_config import SamplerConfig
+from everest.config import (
+    ControlConfig,
+    EverestConfig,
+    SamplerConfig,
+)
+from everest.config.control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
+
+VariableName: TypeAlias = Tuple[str, str, int]
+ControlName: TypeAlias = Union[Tuple[str, str], VariableName, List[VariableName]]
+StrListDict: TypeAlias = DefaultDict[str, list]
+IGNORE_KEYS: Final[Tuple[str, ...]] = (
+    "enabled",
+    "scaled_range",
+    "auto_scale",
+    "index",
+    "name",
+    "perturbation_magnitudes",
+)
 
 
-def _parse_sampler(ever_sampler: SamplerConfig):
-    method = "default" if ever_sampler.method is None else ever_sampler.method
-    backend = "scipy" if ever_sampler.backend is None else ever_sampler.backend
-    sampler_config: Dict[str, Any] = {"method": f"{backend}/{method}"}
-    if ever_sampler.backend_options is not None:
-        sampler_config["options"] = ever_sampler.backend_options
-    if ever_sampler.shared is not None:
-        sampler_config["shared"] = ever_sampler.shared
-    return sampler_config
-
-
-def _parse_controls(ever_config: EverestConfig, ropt_config):
-    """Extract info from ever_config['controls']"""
-    names = []
-    control_types = []
-    initial_values = []
-    enabled = []
-    min_values = []
-    max_values = []
-    scales = []
-    offsets = []
-    magnitudes = []
-    pert_types = []
-    have_auto_scale = False
-
-    for group in ever_config.controls:
-        sampler = group.sampler
-        if sampler is not None:
-            g_sampler = _parse_sampler(sampler)
-            g_sampler["control_names"] = []
-            if "samplers" not in ropt_config:
-                ropt_config["samplers"] = [g_sampler]
-            else:
-                ropt_config["samplers"].append(g_sampler)
-        else:
-            g_sampler = None
-
-        g_magnitudes = []
-        for control in group.variables:
-            # Collect info about the controls
-            cname = control.name
-            c_index = control.index
-            ropt_control_name = (
-                (group.name, cname) if c_index is None else (group.name, cname, c_index)
-            )
-            names.append(ropt_control_name)
-            initial_values.append(
-                control.initial_guess
-                if control.initial_guess is not None
-                else group.initial_guess
-            )
-            enabled.append(
-                control.enabled if control.enabled is not None else group.enabled
-            )
-            control_type = (
-                control.control_type
-                if control.control_type is not None
-                else group.control_type
-            )
-            control_types.append(
-                VariableType.REAL
-                if control_type is None
-                else VariableType[control_type.upper()]
-            )
-
-            auto_scale = control.auto_scale or group.auto_scale
-            scaled_range = control.scaled_range or group.scaled_range or [0, 1.0]
-            cmin = control.min if control.min is not None else group.min
-            cmax = control.max if control.max is not None else group.max
-
-            # Naked asserts to pacify mypy
-            assert cmin is not None
-            assert cmax is not None
-
-            min_values.append(cmin)
-            max_values.append(cmax)
-            if auto_scale:
-                have_auto_scale = True
-                scale = (cmax - cmin) / (scaled_range[1] - scaled_range[0])
-                offset = cmin - scaled_range[0] * scale
-                scales.append(scale)
-                offsets.append(offset)
-            else:
-                scales.append(1.0)
-                offsets.append(0.0)
-
-            pert_mag = control.perturbation_magnitude
-            g_magnitudes.append(pert_mag)
-            pert_types.append(
-                PerturbationType.SCALED
-                if auto_scale
-                else PerturbationType[(group.perturbation_type or "absolute").upper()]
-            )
-
-            sampler = control.sampler
-            if sampler is not None:
-                c_sampler = _parse_sampler(sampler)
-                c_sampler["control_names"] = [ropt_control_name]
-                if "samplers" not in ropt_config:
-                    ropt_config["samplers"] = [c_sampler]
-                else:
-                    ropt_config["samplers"].append(c_sampler)
-            elif g_sampler is not None:
-                g_sampler["control_names"].append(ropt_control_name)
-
-        default_pert_mag = (max(max_values) - min(min_values)) / 10.0
-        g_pert_mag = (
-            group.perturbation_magnitude
-            if group.perturbation_magnitude is not None
-            else default_pert_mag
+def _collect_sampler(
+    sampler: Optional[SamplerConfig],
+    storage: Dict[str, Any],
+    control_name: Union[List[ControlName], ControlName, None] = None,
+) -> Optional[Dict[str, Any]]:
+    if sampler is None:
+        return None
+    map = sampler.model_dump(exclude_none=True, exclude={"backend", "method"})
+    map["method"] = sampler.ropt_method
+    control_names = map.setdefault("control_names", [])
+    if control_name:
+        control_names.extend(
+            control_name if isinstance(control_name, list) else [control_name]
         )
-        magnitudes += [g_pert_mag if mag is None else mag for mag in g_magnitudes]
+    storage.setdefault("samplers", []).append(map)
+    return map
 
-    ropt_config["variables"] = {
-        "names": names,
-        "types": (
-            None
-            if all(item == VariableType.REAL for item in control_types)
-            else control_types
-        ),
-        "initial_values": initial_values,
-        "indices": (
-            None if all(enabled) else [idx for idx, item in enumerate(enabled) if item]
-        ),
-        "lower_bounds": min_values,
-        "upper_bounds": max_values,
-        "scales": scales if have_auto_scale else None,
-        "offsets": offsets if have_auto_scale else None,
-        "delimiters": ".-",
-    }
-    ropt_config["gradient"] = {
-        "perturbation_magnitudes": magnitudes,
-        "perturbation_types": pert_types,
-    }
+
+def _scale_translations(
+    is_scale: bool,
+    _min: float,
+    _max: float,
+    scale_upper_range: float,
+    scale_lower_range: float,
+    perturbation_type: PerturbationType,
+) -> Tuple[float, float, int]:
+    if not is_scale:
+        return 1.0, 0.0, perturbation_type.value
+    scale = (_max - _min) / (scale_lower_range - scale_upper_range)
+    return scale, _min - scale_upper_range * scale, PerturbationType.SCALED.value
+
+
+@dataclass
+class Control:
+    name: Tuple[str, str]
+    enabled: bool
+    lower_bounds: float
+    upper_bounds: float
+    perturbation_magnitudes: Optional[float]
+    initial_values: List[float]
+    types: VariableType
+    scaled_range: Tuple[float, float]
+    auto_scale: bool
+    index: Optional[int]
+    scales: float
+    offsets: float
+    perturbation_types: int
+
+
+def _resolve_everest_control(
+    variable: Union[ControlVariableConfig, ControlVariableGuessListConfig],
+    group: ControlConfig,
+) -> Control:
+    scaled_range = variable.scaled_range or group.scaled_range or (0, 1.0)
+    auto_scale = variable.auto_scale or group.auto_scale
+    lower_bounds = group.min if variable.min is None else variable.min
+    upper_bounds = group.max if variable.max is None else variable.max
+
+    scale, offset, perturbation_type = _scale_translations(
+        auto_scale,
+        lower_bounds,  # type: ignore
+        upper_bounds,  # type: ignore
+        *scaled_range,
+        group.ropt_perturbation_type,
+    )
+    return Control(
+        name=(group.name, variable.name),
+        enabled=group.enabled if variable.enabled is None else variable.enabled,  # type: ignore
+        lower_bounds=lower_bounds,  # type: ignore
+        upper_bounds=upper_bounds,  # type: ignore
+        perturbation_magnitudes=group.perturbation_magnitude
+        if variable.perturbation_magnitude is None
+        else variable.perturbation_magnitude,
+        initial_values=group.initial_guess
+        if variable.initial_guess is None
+        else variable.initial_guess,  # type: ignore
+        types=group.ropt_control_type
+        if variable.ropt_control_type is None
+        else variable.ropt_control_type,
+        scaled_range=scaled_range,
+        auto_scale=auto_scale,
+        index=getattr(variable, "index", None),
+        scales=scale,
+        offsets=offset,
+        perturbation_types=perturbation_type,
+    )
+
+
+def _variable_initial_guess_list_injection(
+    control: Control,
+    *,
+    variables: StrListDict,
+    gradients: StrListDict,
+) -> List[VariableName]:
+    guesses = len(control.initial_values)
+    ropt_names = [(*control.name, index + 1) for index in range(guesses)]
+    variables["names"].extend(ropt_names)
+    variables["initial_values"].extend(control.initial_values)
+    for key, value in asdict(control).items():
+        if key not in (*IGNORE_KEYS, "initial_values"):
+            (gradients if "perturbation" in key else variables)[key].extend(
+                [value] * guesses
+            )
+    gradients["perturbation_magnitudes"].extend(
+        [
+            (
+                (max(variables["upper_bounds"]) - min(variables["lower_bounds"])) / 10.0
+                if control.perturbation_magnitudes is None
+                else control.perturbation_magnitudes
+            )
+        ]
+        * guesses
+    )
+    return ropt_names
+
+
+def _variable_initial_guess_injection(
+    control: Control,
+    *,
+    variables: StrListDict,
+    gradients: StrListDict,
+) -> ControlName:
+    ropt_names: ControlName = (
+        control.name if control.index is None else (*control.name, control.index)
+    )
+    variables["names"].append(ropt_names)
+    for key, value in asdict(control).items():
+        if key not in IGNORE_KEYS:
+            (gradients if "perturbation" in key else variables)[key].append(value)
+    gradients["perturbation_magnitudes"].append(
+        (max(variables["upper_bounds"]) - min(variables["lower_bounds"])) / 10.0
+        if control.perturbation_magnitudes is None
+        else control.perturbation_magnitudes
+    )
+    return ropt_names
+
+
+def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
+    """Extract info from ever_config['controls']"""
+    enabled = []
+    variables: StrListDict = defaultdict(list)
+    gradients: StrListDict = defaultdict(list)
+
+    for group in controls:
+        sampler = _collect_sampler(group.sampler, ropt_config)
+
+        for variable in group.variables:
+            control = _resolve_everest_control(variable, group)
+            enabled.append(control.enabled)
+            control_injector = (
+                _variable_initial_guess_list_injection
+                if isinstance(variable.initial_guess, list)
+                else _variable_initial_guess_injection
+            )
+            ropt_names = control_injector(
+                control,
+                variables=variables,
+                gradients=gradients,
+            )
+
+            if (
+                _collect_sampler(variable.sampler, ropt_config, ropt_names) is None
+                and sampler
+            ):
+                control_names = sampler["control_names"]
+                (
+                    control_names.extend
+                    if isinstance(ropt_names, list)
+                    else control_names.append
+                )(ropt_names)
+
+    ropt_config["variables"] = dict(variables)
+    ropt_config["variables"]["indices"] = (
+        None if all(enabled) else [idx for idx, item in enumerate(enabled) if item]
+    )
+    ropt_config["variables"]["delimiters"] = ".-"
+    ropt_config["gradient"] = dict(gradients)
 
     # The samplers in the list constructed above contain the names of the
     # variables they should apply to, but ropt expects a array of indices that
     # map variables to the samplers that should apply to them:
-    if ropt_config.get("samplers", []):
-        sampler_indices = [0] * len(names)
-        for idx, sampler in enumerate(ropt_config.get("samplers", [])):
-            assert isinstance(sampler, dict)
-            for name in sampler["control_names"]:
-                sampler_indices[names.index(name)] = idx
-            del sampler["control_names"]
+    if samplers := ropt_config.get("samplers"):
+        sampler_indices = [0] * len(variables["names"])
+        for idx, sampler in enumerate(samplers):
+            for name in sampler.pop("control_names"):  # type: ignore
+                sampler_indices[variables["names"].index(name)] = idx
         ropt_config["gradient"]["samplers"] = sampler_indices
 
 
@@ -431,7 +503,7 @@ def everest2ropt(ever_config: EverestConfig):
     """
     ropt_config: Dict[str, Any] = {}
 
-    _parse_controls(ever_config, ropt_config)
+    _parse_controls(ever_config.controls, ropt_config)
 
     control_names = [
         (

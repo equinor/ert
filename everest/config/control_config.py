@@ -1,14 +1,8 @@
 from itertools import chain
 from typing import Any, List, Literal, Optional, Tuple, Union
 
-from pydantic import (
-    AfterValidator,
-    BaseModel,
-    ConfigDict,
-    Field,
-    ValidationInfo,
-    model_validator,
-)
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from ropt.enums import PerturbationType, VariableType
 from typing_extensions import Annotated, Self, TypeAlias
 
 from .control_variable_config import (
@@ -16,76 +10,23 @@ from .control_variable_config import (
     ControlVariableGuessListConfig,
 )
 from .sampler_config import SamplerConfig
-from .validation_utils import no_dots_in_string, unique_items, valid_range
-
-VARIABLE_ERROR_MESSAGE = (
-    "Variable {name} must define {variable_type} value either"
-    " at control level or variable level"
+from .validation_utils import (
+    control_variables_validation,
+    no_dots_in_string,
+    unique_items,
+    valid_range,
 )
+
 ControlVariable: TypeAlias = Union[
     List[ControlVariableConfig], List[ControlVariableGuessListConfig]
 ]
-
-
-# TODO: Seperate validation from Model
-def _firgure_a_better_name(  # TODO: Help needed
-    name: str,
-    _min: Optional[float],
-    _max: Optional[float],
-    initial_guess: Union[float, List[float], None],
-) -> List[str]:
-    error = []
-    if _min is None:
-        error.append(VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="min"))
-    if _max is None:
-        error.append(VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="max"))
-    if initial_guess is None:
-        error.append(
-            VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
-        )
-    if isinstance(initial_guess, float):
-        initial_guess = [initial_guess]
-    if (
-        _min is not None
-        and _max is not None
-        and (
-            msg := ", ".join(
-                str(guess) for guess in initial_guess or [] if not _min <= guess <= _max
-            )
-        )
-    ):
-        error.append(
-            f"Variable {name} must respect {_min} <= initial_guess <= {_max}: {msg}"
-        )
-    return error
-
-
-# this is to be used as an AfterValidator
-def _valid_varibales(
-    variables: ControlVariable, info: ValidationInfo
-) -> ControlVariable:
-    if error := list(
-        chain.from_iterable(
-            _firgure_a_better_name(
-                variable.name,
-                info.data.get("min") if variable.min is None else variable.min,
-                info.data.get("max") if variable.max is None else variable.max,
-                info.data.get("initial_guess")
-                if variable.initial_guess is None
-                else variable.initial_guess,
-            )
-            for variable in variables
-        )
-    ):
-        raise ValueError(error)
-    return variables
 
 
 def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
     if isinstance(variables[-1], ControlVariableGuessListConfig):
         return variables
 
-    if len(set(variable.index is None for variable in variables)) != 1:
+    if len({getattr(variable, "index", None) is None for variable in variables}) != 1:
         raise ValueError(
             "Index should be given either for all of the variables or for none"
             " of them"
@@ -112,7 +53,6 @@ Only two allowed control types are accepted
         ControlVariable,
         AfterValidator(_all_or_no_index),
         AfterValidator(unique_items),
-        # AfterValidator(_valid_varibales),
     ] = Field(description="List of control variables", min_length=1)
     initial_guess: Optional[float] = Field(
         default=None,
@@ -122,8 +62,8 @@ defined will be assigned this value. Individual initial_guess values in the cont
 variables will overwrite this value.
 """,
     )
-    control_type: Optional[Literal["real", "integer"]] = Field(
-        default=None,
+    control_type: Literal["real", "integer"] = Field(
+        default="real",
         description="""
 The type of the controls for the control group. Individual control types in the
 control variables will override this value. Set to "integer" for discrete
@@ -138,8 +78,8 @@ If `True`, all variables in this control group will be optimized. If set to `Fal
 the value of the variables will remain fixed.
 """,
     )
-    auto_scale: Optional[bool] = Field(
-        default=None,
+    auto_scale: bool = Field(
+        default=False,
         description="""
 Can be set to true to re-scale controls from the range
 defined by [min, max] to the range defined by
@@ -166,8 +106,8 @@ The initial guess for both the group and the individual variables needs to be co
 in the resulting [min, max] range
 """,
     )
-    perturbation_type: Optional[Literal["absolute", "relative"]] = Field(
-        default=None,
+    perturbation_type: Literal["absolute", "relative"] = Field(
+        default="absolute",
         description="""
 Example: absolute or relative
 Specifies the perturbation type for a set of controls of a certain type.  The
@@ -227,6 +167,20 @@ sampler to use the same perturbations for each realization.
         """,
     )
 
+    @property
+    def ropt_perturbation_type(self) -> PerturbationType:
+        return PerturbationType[self.perturbation_type.upper()]
+
+    @property
+    def ropt_control_type(self) -> VariableType:
+        return VariableType[self.control_type.upper()]
+
+    @property
+    def has_auto_scale(self) -> bool:
+        return self.auto_scale or any(
+            variable.auto_scale for variable in self.variables
+        )
+
     @model_validator(mode="after")
     def validate_variables(self) -> Self:
         if self.variables is None:
@@ -234,13 +188,15 @@ sampler to use the same perturbations for each realization.
 
         if error := list(
             chain.from_iterable(
-                _firgure_a_better_name(
+                control_variables_validation(
                     variable.name,
                     self.min if variable.min is None else variable.min,
                     self.max if variable.max is None else variable.max,
-                    self.initial_guess
-                    if variable.initial_guess is None
-                    else variable.initial_guess,
+                    (
+                        self.initial_guess
+                        if variable.initial_guess is None
+                        else variable.initial_guess
+                    ),
                 )
                 for variable in self.variables
             )
@@ -258,6 +214,6 @@ sampler to use the same perturbations for each realization.
     def uniqueness(self) -> str:
         return "name"
 
-    model_config = ConfigDict(
+    model_config = ConfigDict(  # type: ignore
         extra="forbid",
     )
