@@ -247,6 +247,11 @@ class LegacyEnsemble:
                 cert=self._config.cert,
             ),
         )
+        await wait_for_evaluator(
+            base_url=self._config.url,
+            token=self._config.token,
+            cert=self._config.cert,
+        )
         await self._evaluate_inner(
             cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
         )

@@ -42,6 +42,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from .snapshot import PartialSnapshot
 from .state import (
@@ -280,7 +281,10 @@ class EnsembleEvaluatorAsync:
                         )
                         continue
                     try:
-                        await self._events.put(event)
+                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                            await self.forward_checksum(event)
+                        else:
+                            await self._events.put(event)
                     except BaseException as ex:
                         # Exceptions include asyncio.InvalidStateError, and
                         # anything that self._*_handler() can raise (updates
@@ -307,6 +311,18 @@ class EnsembleEvaluatorAsync:
                 logger.error(
                     f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
                 )
+
+    async def forward_checksum(self, event: CloudEvent) -> None:
+        forward_event = CloudEvent(
+            {
+                "type": EVTYPE_FORWARD_MODEL_CHECKSUM,
+                "source": f"/ert/ensemble/{self.ensemble.id_}",
+            },
+            {event["run_path"]: event.data},
+        )
+        await self._messages_to_send.put(
+            to_json(forward_event, data_marshaller=evaluator_marshaller).decode()
+        )
 
     async def connection_handler(
         self, websocket: WebSocketServerProtocol, path: str
