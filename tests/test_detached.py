@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 import requests
+from ert import JobStatus
 from ert.config import ErtConfig, QueueSystem
-from ert.job_queue import JobStatus
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig

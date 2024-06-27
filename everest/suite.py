@@ -14,7 +14,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypedDict
 
-from ert.job_queue import JobStatus
+from ert import JobStatus
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.optimization import EnsembleOptimizer
 from ropt.report import ResultsTable

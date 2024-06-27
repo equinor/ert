@@ -7,8 +7,8 @@ import os
 import shutil
 from functools import partial
 
+from ert import LibresFacade
 from ert.config import ErtConfig
-from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
 from everest import MetaDataColumnNames as MDCN
