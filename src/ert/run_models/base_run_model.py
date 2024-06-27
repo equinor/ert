@@ -543,6 +543,8 @@ class BaseRunModel:
             self._end_queue.get()
             return []
         await evaluator_task
+        run_context.ensemble.unify_parameters()
+        run_context.ensemble.unify_responses()
         return evaluator_task.result()
 
     def run_ensemble_evaluator(

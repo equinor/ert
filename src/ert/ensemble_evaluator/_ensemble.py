@@ -223,14 +223,14 @@ class LegacyEnsemble:
         if not config:
             raise ValueError("no config for evaluator")
         self._config = config
-        asyncio.run_coroutine_threadsafe(
+
+        get_running_loop().run_until_complete(
             wait_for_evaluator(
                 base_url=self._config.url,
                 token=self._config.token,
                 cert=self._config.cert,
-            ),
-            get_running_loop(),
-        ).result()
+            )
+        )
 
         ErtThread(target=self._evaluate, name="LegacyEnsemble").start()
 
