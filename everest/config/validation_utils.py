@@ -4,7 +4,7 @@ import tempfile
 from collections import Counter
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, TypeVar
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from pydantic import BaseModel, ValidationError
 
@@ -19,6 +19,10 @@ from .install_job_config import InstallJobConfig
 
 if TYPE_CHECKING:
     from pydantic_core import ErrorDetails
+_VARIABLE_ERROR_MESSAGE = (
+    "Variable {name} must define {variable_type} value either"
+    " at control level or variable level"
+)
 
 
 class InstallDataContext:
@@ -56,6 +60,38 @@ class InstallDataContext:
         if self._temp_dir:
             self._temp_dir.cleanup()
         os.chdir(self._cwd)
+
+
+def control_variables_validation(
+    name: str,
+    _min: Optional[float],
+    _max: Optional[float],
+    initial_guess: Union[float, List[float], None],
+) -> List[str]:
+    error = []
+    if _min is None:
+        error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="min"))
+    if _max is None:
+        error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="max"))
+    if initial_guess is None:
+        error.append(
+            _VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
+        )
+    if isinstance(initial_guess, float):
+        initial_guess = [initial_guess]
+    if (
+        _min is not None
+        and _max is not None
+        and (
+            msg := ", ".join(
+                str(guess) for guess in initial_guess or [] if not _min <= guess <= _max
+            )
+        )
+    ):
+        error.append(
+            f"Variable {name} must respect {_min} <= initial_guess <= {_max}: {msg}"
+        )
+    return error
 
 
 def no_dots_in_string(value: str) -> str:

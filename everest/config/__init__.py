@@ -1,5 +1,8 @@
 from .control_config import ControlConfig
-from .control_variable_config import ControlVariableConfig
+from .control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from .cvar_config import CVaRConfig
 from .environment_config import EnvironmentConfig
 from .everest_config import EverestConfig
@@ -23,6 +26,7 @@ __all__ = [
     "EverestConfig",
     "ControlConfig",
     "ControlVariableConfig",
+    "ControlVariableGuessListConfig",
     "CVaRConfig",
     "EnvironmentConfig",
     "ExportConfig",

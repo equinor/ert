@@ -27,26 +27,11 @@ controls:
     max: 1.0
     perturbation_magnitude: 0.05
     variables:
-      - { name: WELL-1, index: 1, initial_guess: 0.58 }
-      - { name: WELL-2, index: 1, initial_guess: 0.50 }
-      - { name: WELL-3, index: 1, initial_guess: 0.56 }
-      - { name: WELL-4, index: 1, initial_guess: 0.54 }
-      - { name: WELL-5, index: 1, initial_guess: 0.52 }
-      - { name: WELL-1, index: 2, initial_guess: 0.54 }
-      - { name: WELL-2, index: 2, initial_guess: 0.58 }
-      - { name: WELL-3, index: 2, initial_guess: 0.52 }
-      - { name: WELL-4, index: 2, initial_guess: 0.56 }
-      - { name: WELL-5, index: 2, initial_guess: 0.50 }
-      - { name: WELL-1, index: 3, initial_guess: 0.50 }
-      - { name: WELL-2, index: 3, initial_guess: 0.56 }
-      - { name: WELL-3, index: 3, initial_guess: 0.58 }
-      - { name: WELL-4, index: 3, initial_guess: 0.54 }
-      - { name: WELL-5, index: 3, initial_guess: 0.52 }
-      - { name: WELL-1, index: 4, initial_guess: 0.52 }
-      - { name: WELL-2, index: 4, initial_guess: 0.54 }
-      - { name: WELL-3, index: 4, initial_guess: 0.50 }
-      - { name: WELL-4, index: 4, initial_guess: 0.58 }
-      - { name: WELL-5, index: 4, initial_guess: 0.56 }
+      - { name: WELL-1, initial_guess: [0.58, 0.54, 0.50, 0.52] }
+      - { name: WELL-2, initial_guess: [0.50, 0.58, 0.56, 0.54] }
+      - { name: WELL-3, initial_guess: [0.56, 0.52, 0.58, 0.50] }
+      - { name: WELL-4, initial_guess: [0.54, 0.56, 0.54, 0.58] }
+      - { name: WELL-5, initial_guess: [0.52, 0.50, 0.52, 0.56] }
 
   - name: swapping_constraints
     type: generic_control
@@ -54,10 +39,7 @@ controls:
     max: 1.0
     perturbation_magnitude: 0.05
     variables:
-      - { name: state_duration, index: 1, initial_guess: 0.5 }
-      - { name: state_duration, index: 2, initial_guess: 0.5 }
-      - { name: state_duration, index: 3, initial_guess: 0.5 }
-      - { name: state_duration, index: 4, initial_guess: 0.5 }
+      - { name: state_duration, initial_guess: [0.5, 0.5, 0.5, 0.5] }
 
 objective_functions:
   - name: npv

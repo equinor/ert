@@ -20,6 +20,7 @@ from pydantic import (
 from ruamel.yaml import YAML, YAMLError
 from typing_extensions import Annotated
 
+from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
@@ -327,9 +328,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @field_validator("install_templates")
     @classmethod
-    def validate_install_templates_unique_output_files(
-        cls, install_templates
-    ):  # pylint: disable=E0213 # noqa: E501
+    def validate_install_templates_unique_output_files(cls, install_templates):  # pylint: disable=E0213 # noqa: E501
         check_for_duplicate_names(
             [t.output_file for t in install_templates],
             "install_templates",
@@ -448,7 +447,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
         errors = []
         for c in controls:
             for v in c.variables:
-                if v.index is not None:
+                if isinstance(v, ControlVariableGuessListConfig):
+                    control_full_name.extend(
+                        f"{c.name}.{v.name}-{index}"
+                        for index, _ in enumerate(v.initial_guess)
+                    )
+                elif v.index is not None:
                     control_full_name.append(f"{c.name}.{v.name}-{v.index}")
                 else:
                     control_full_name.append(f"{c.name}.{v.name}")

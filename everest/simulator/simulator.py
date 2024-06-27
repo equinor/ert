@@ -13,7 +13,10 @@ from numpy._typing import NDArray
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from everest.config import EverestConfig
-from everest.config.control_variable_config import ControlVariableConfig
+from everest.config.control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from everest.simulator.everest2res import everest2res
 
 
@@ -46,17 +49,24 @@ class Simulator(BatchSimulator):
 
     @staticmethod
     def _get_variables(
-        variables: List[ControlVariableConfig],
+        variables: Union[
+            List[ControlVariableConfig], List[ControlVariableGuessListConfig]
+        ],
     ) -> Union[List[str], Dict[str, List[str]]]:
-        if variables[0].index is not None:
-            result: Dict[str, List[str]] = {}
-            for variable in variables:
-                if variable.name not in result and variable.index is not None:
-                    result[variable.name] = []
-                result[variable.name].append(str(variable.index))
-            return result  # { name : [ index ]
-        else:
+        if (
+            isinstance(variables[0], ControlVariableConfig)
+            and getattr(variables[0], "index", None) is None
+        ):
             return [var.name for var in variables]
+        result: DefaultDict[str, list] = defaultdict(list)
+        for variable in variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                result[variable.name].extend(
+                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                )
+            else:
+                result[variable.name].append(str(variable.index))  # type: ignore
+        return dict(result)  # { name : [ index ]
 
     def _get_controls_def(
         self, ever_config: EverestConfig
@@ -107,7 +117,7 @@ class Simulator(BatchSimulator):
         cached = {}
         assert metadata.config.realizations.names is not None
         realization_ids = [
-            metadata.config.realizations.names[realization]
+            metadata.config.realizations.names[realization]  # type: ignore
             for realization in metadata.realizations
         ]
 
@@ -122,7 +132,8 @@ class Simulator(BatchSimulator):
                 controls: DefaultDict[str, Any] = defaultdict(dict)
                 assert metadata.config.variables.names is not None
                 for control_name, control_value in zip(
-                    metadata.config.variables.names, control_values[sim_idx, :]
+                    metadata.config.variables.names,  # type: ignore
+                    control_values[sim_idx, :],
                 ):
                     self._add_control(controls, control_name, control_value)
                 case_data.append((real_id, controls))
@@ -148,15 +159,22 @@ class Simulator(BatchSimulator):
                 result[fnc_name] = result[alias]
 
         names = metadata.config.objective_functions.names
-        assert names is not None
-        objectives = self._get_active_results(results, names, control_values, active)
+        objectives = self._get_active_results(
+            results,
+            names,  # type: ignore
+            control_values,
+            active,
+        )
 
         constraints = None
         if metadata.config.nonlinear_constraints is not None:
             names = metadata.config.nonlinear_constraints.names
             assert names is not None
             constraints = self._get_active_results(
-                results, names, control_values, active
+                results,  # type: ignore
+                names,  # type: ignore
+                control_values,
+                active,
             )
 
         if self._cache is not None:

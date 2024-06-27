@@ -28,12 +28,13 @@ def test_workflow_run():
 
 
 @pytest.mark.integration_test
+@pytest.mark.parametrize("config", ("array", "index"))
 def test_state_modifier_workflow_run(
-    copy_testdata_tmpdir: Callable[[Optional[str]], Path],
+    config: str, copy_testdata_tmpdir: Callable[[Optional[str]], Path]
 ) -> None:
     cwd = copy_testdata_tmpdir("open_shut_state_modifier")
     _EverestWorkflow(
-        config=EverestConfig.load_file("everest/model/index.yml")
+        config=EverestConfig.load_file(f"everest/model/{config}.yml")
     ).start_optimization()
 
     for path in Path.cwd().glob("**/simulation_0/RESULT.SCH"):
