@@ -288,7 +288,14 @@ class Job:
 def log_info_from_exit_file(exit_file_path: Path) -> None:
     if not exit_file_path.exists():
         return
-    exit_file = etree.parse(exit_file_path)
+    try:
+        exit_file = etree.parse(exit_file_path)
+    except etree.XMLSyntaxError:
+        raw_xml_contents = exit_file_path.read_text(encoding="utf-8", errors="ignore")
+        logger.error(
+            f"job failed with invalid XML ERROR file, contents '{raw_xml_contents}'"
+        )
+        return
     filecontents: List[str] = []
     for element in ["job", "reason", "stderr_file", "stderr"]:
         filecontents.append(str(exit_file.findtext(element)))

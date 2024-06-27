@@ -8,6 +8,7 @@ from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from lxml import etree
 
 import ert
 from ert.ensemble_evaluator import Realization
@@ -15,7 +16,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
-from ert.scheduler.job import STATE_TO_LEGACY, Job, State
+from ert.scheduler.job import STATE_TO_LEGACY, Job, State, log_info_from_exit_file
 
 
 def create_scheduler():
@@ -299,3 +300,37 @@ async def test_when_no_checksum_info_is_received_a_warning_is_logged(
         f"Checksum information not received for {realization.run_arg.runpath}"
         in log_msgs
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_log_info_from_exit_file(caplog):
+    exit_contents = {
+        "job": "foojob",
+        "reason": "Divizion-by-sero",
+        "stderr_file": "somefilename",
+        "stderr": "some_error",
+    }
+
+    root = etree.Element("root")
+    for key, value in exit_contents.items():
+        node = etree.Element(key)
+        node.text = value
+        root.append(node)
+
+    Path("ERROR").write_text(
+        str(etree.tostring(root), encoding="utf-8", errors="ignore"), encoding="utf-8"
+    )
+
+    log_info_from_exit_file(Path("ERROR"))
+    logs = caplog.text
+    for magic_string in exit_contents.values():
+        assert magic_string in logs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_log_info_from_garbled_exit_file(caplog):
+    Path("ERROR").write_text("this is not XML", encoding="utf-8")
+    log_info_from_exit_file(Path("ERROR"))
+    logs = caplog.text
+    assert "job failed with invalid XML" in logs
+    assert "'this is not XML'" in logs
