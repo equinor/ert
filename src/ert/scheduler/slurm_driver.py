@@ -16,8 +16,8 @@ from typing import (
     Tuple,
 )
 
-from ert.scheduler.driver import SIGNAL_OFFSET, Driver
-from ert.scheduler.event import Event, FinishedEvent, StartedEvent
+from .driver import SIGNAL_OFFSET, Driver
+from .event import Event, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
 

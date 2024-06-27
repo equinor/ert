@@ -5,8 +5,8 @@ import pytest
 from hypothesis import given, strategies
 
 from ert.config import ConfigValidationError, Workflow, WorkflowJob
-from ert.job_queue import WorkflowRunner
 from ert.substitution_list import SubstitutionList
+from ert.workflow_runner import WorkflowRunner
 
 from .workflow_common import WorkflowCommon
 

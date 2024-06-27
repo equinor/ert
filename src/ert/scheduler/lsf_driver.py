@@ -28,8 +28,8 @@ from typing import (
     get_args,
 )
 
-from ert.scheduler.driver import SIGNAL_OFFSET, Driver
-from ert.scheduler.event import Event, FinishedEvent, StartedEvent
+from .driver import SIGNAL_OFFSET, Driver
+from .event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
 LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode

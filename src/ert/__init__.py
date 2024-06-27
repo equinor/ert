@@ -10,19 +10,28 @@ from .config import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepDocumentation,
 )
 from .data import MeasuredData
 from .job_queue import JobStatus
 from .libres_facade import LibresFacade
-from .simulator import BatchSimulator
+from .simulator import BatchSimulator, BatchContext
+from .workflow_runner import WorkflowRunner
+from .shared.plugins.plugin_manager import hook_implementation
+from .shared.plugins.plugin_response import plugin_response
 
 __all__ = [
     "MeasuredData",
     "LibresFacade",
     "BatchSimulator",
+    "BatchContext",
     "ErtScript",
     "JobStatus",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
     "ForwardModelStepValidationError",
+    "ForwardModelStepDocumentation",
+    "WorkflowRunner",
+    "hook_implementation",
+    "plugin_response",
 ]

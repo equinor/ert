@@ -33,6 +33,7 @@ from ert.analysis.event import (
 )
 from ert.config import ErtConfig, HookRuntime, QueueSystem
 from ert.enkf_main import _seed_sequence, create_run_path
+from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
@@ -63,9 +64,8 @@ from ert.mode_definitions import MODULE_MODE
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
+from ert.workflow_runner import WorkflowRunner
 
-from ..ensemble_evaluator._ensemble import LegacyEnsemble
-from ..job_queue import WorkflowRunner
 from .event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -79,7 +79,6 @@ event_logger = logging.getLogger("ert.event_log")
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-    from ert.ensemble_evaluator import Ensemble as EEEnsemble
 
 StatusEvents = Union[
     FullSnapshotEvent,
@@ -562,7 +561,7 @@ class BaseRunModel:
                     job_script=self.ert_config.queue_config.job_script,
                 )
             )
-        return LegacyEnsemble(
+        return EEEnsemble(
             realizations,
             {},
             self._queue_config,

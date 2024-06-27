@@ -18,12 +18,14 @@ from ert.callbacks import forward_model_ok
 from ert.constant_filenames import ERROR_file
 from ert.job_queue.queue import _queue_state_event_type
 from ert.load_status import LoadStatus
-from ert.scheduler.driver import Driver
 from ert.storage.realization_storage_state import RealizationStorageState
 
+from .driver import Driver
+
 if TYPE_CHECKING:
-    from ert.ensemble_evaluator._ensemble import Realization
-    from ert.scheduler.scheduler import Scheduler
+    from ert.ensemble_evaluator import Realization
+
+    from .scheduler import Scheduler
 
 logger = logging.getLogger(__name__)
 

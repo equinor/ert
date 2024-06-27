@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from ert.scheduler.event import Event
+from .event import Event
 
 SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal value when a process exited due to a signal"""

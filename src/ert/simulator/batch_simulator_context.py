@@ -13,16 +13,15 @@ import numpy as np
 
 from _ert.threading import ErtThread
 from ert.config import HookRuntime
+from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
+from ert.run_context import RunContext
+from ert.runpaths import Runpaths
+from ert.scheduler import Scheduler, create_driver
 from ert.scheduler.job import State as JobState
-from ert.scheduler.scheduler import Scheduler
+from ert.workflow_runner import WorkflowRunner
 
-from .. import JobStatus
-from ..enkf_main import create_run_path
-from ..job_queue import JobQueue, WorkflowRunner
-from ..run_context import RunContext
-from ..runpaths import Runpaths
-from ..scheduler import create_driver
+from ..job_queue import JobQueue, JobStatus
 from ..shared.feature_toggling import FeatureScheduler
 from .forward_model_status import ForwardModelStatus
 

@@ -24,8 +24,8 @@ from typing import (
     get_type_hints,
 )
 
-from ert.scheduler.driver import Driver
-from ert.scheduler.event import Event, FinishedEvent, StartedEvent
+from .driver import Driver
+from .event import Event, FinishedEvent, StartedEvent
 
 logger = logging.getLogger(__name__)
 

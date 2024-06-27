@@ -5,12 +5,13 @@ from pwd import getpwuid
 from typing import TYPE_CHECKING, Optional
 
 from ert.config.parsing.queue_system import QueueSystem
-from ert.scheduler.driver import Driver
-from ert.scheduler.local_driver import LocalDriver
-from ert.scheduler.lsf_driver import LsfDriver
-from ert.scheduler.openpbs_driver import OpenPBSDriver
-from ert.scheduler.scheduler import Scheduler
-from ert.scheduler.slurm_driver import SlurmDriver
+
+from .driver import Driver
+from .local_driver import LocalDriver
+from .lsf_driver import LsfDriver
+from .openpbs_driver import OpenPBSDriver
+from .scheduler import Scheduler
+from .slurm_driver import SlurmDriver
 
 if TYPE_CHECKING:
     from ert.config.queue_config import QueueConfig
