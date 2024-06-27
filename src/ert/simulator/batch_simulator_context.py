@@ -233,7 +233,7 @@ class BatchContext:
         self.ensemble.unify_responses()
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
-            if not self.didRealizationSucceed(sim_id):
+            if self.job_status(sim_id) != JobStatus.SUCCESS:
                 logging.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
@@ -244,18 +244,6 @@ class BatchContext:
             res.append(d)
 
         return res
-
-    def didRealizationSucceed(self, iens: int) -> bool:
-        if isinstance(self._job_queue, JobQueue):
-            queue_index = self._run_context[iens].queue_index
-            if queue_index is None:
-                raise ValueError("Queue index not set")
-            return (
-                self._job_queue.job_list[queue_index].queue_status == JobStatus.SUCCESS
-            )
-        if iens in self._job_queue._jobs:
-            return self._job_queue._jobs[iens].state == JobState.COMPLETED
-        return False
 
     def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""

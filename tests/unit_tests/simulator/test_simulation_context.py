@@ -57,10 +57,8 @@ def test_simulation_context(setup_case, storage):
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert even_ctx.didRealizationSucceed(iens)
             assert even_ctx.job_status(iens) != JobStatus.FAILED
             assert even_ctx.job_status(iens) == JobStatus.SUCCESS
         else:
-            assert odd_ctx.didRealizationSucceed(iens)
             assert odd_ctx.job_status(iens) != JobStatus.FAILED
             assert odd_ctx.job_status(iens) == JobStatus.SUCCESS
