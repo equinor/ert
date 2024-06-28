@@ -130,33 +130,28 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
 def build_resource_requirement_string(
     exclude_hosts: Sequence[str], resource_requirement: Optional[str]
 ) -> str:
-    exclude_hosts_string = ""
-    if exclude_hosts:
-        # Create a string representing the exclusion of hosts if any are provided.
-        select_list = [
-            f"hname!='{host_name}'" for host_name in exclude_hosts if host_name
-        ]
-        exclude_hosts_string = " && ".join(select_list)
+    exclude_clauses = (
+        [f"hname!='{host_name}'" for host_name in exclude_hosts if host_name]
+        if exclude_hosts
+        else []
+    )
 
-    # If no resource requirements are provided, simply return the exclusion string.
     if not resource_requirement:
-        return f"select[{exclude_hosts_string}]" if exclude_hosts_string else ""
+        return f"select[{' && '.join(exclude_clauses)}]" if exclude_clauses else ""
 
-    # If 'select[' is in the resource requirement string, insert the exclusion string.
-    if "select[" in resource_requirement and exclude_hosts_string:
-        # We split string into (before) "bla[..] bla[..] select[xxx_"
-        # and (after) "... bla[..] bla[..]". (we replaced one ']' with ' ')
-        # Then we make final string:  before + &&excludes] + after
-        end_index = resource_requirement.rindex("]")
-        first_part = resource_requirement[:end_index]
-        second_part = resource_requirement[end_index:]
-        return f"{first_part} && {exclude_hosts_string}{second_part}"
+    selects = re.match(r".*select\[(.*?)\].*", resource_requirement)
+    if selects and exclude_clauses:
+        select_clauses = selects[1].split("&&")
+        select_clauses = [string.strip() for string in select_clauses]
+        select_clauses.extend(exclude_clauses)
+        select_string = " && ".join(select_clauses)
+        return resource_requirement.replace(selects[1], select_string)
 
     # If 'select[' is not in the resource requirement, append the exclusion string.
-    if exclude_hosts_string:
-        return f"{resource_requirement} select[{exclude_hosts_string}]"
+    if exclude_clauses:
+        return f"{resource_requirement} select[{' && '.join(exclude_clauses)}]"
 
-    # Return the original resource requirement if no exclusions are needed.
+    # Return the original resource uequirement if no exclusions are needed.
     return resource_requirement
 
 
