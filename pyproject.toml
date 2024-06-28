@@ -169,35 +169,37 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
-  "W",   # pycodestyle
-  "I",   # isort
-  "B",   # flake-8-bugbear
-  "SIM", # flake-8-simplify
-  "F",   # pyflakes
+  "W",  # pycodestyle
+  "I",  # isort
+  "B",  # flake-8-bugbear
+  "SIM",  # flake-8-simplify
+  "F",  # pyflakes
   "PL",  # pylint
-  "NPY", # numpy specific rules
+  "NPY",  # numpy specific rules
+  "C4",  # flake8-comprehensions
+  "ASYNC",  # flake8-async
 ]
 preview = true
-ignore = ["PLW2901", # redefined-loop-name
-          "PLR2004", # magic-value-comparison
-          "PLR0915", # too-many-statements
-          "PLR0912", # too-many-branches
-          "PLR5501", # collapsible-else-if
-          "PLR0911", # too-many-return-statements
-          "PLC2701", # import-private-name
-          "PLR6201", # literal-membership
-          "PLR0914", # too-many-locals
-          "F841", # unused-variable
-          "PLW1514", # unspecified-encoding
-          "PLR6104", # non-augmented-assignment
-          "PLR6301", # no-self-use
-          "PLW1641", # eq-without-hash
-          "PLC0415", # import-outside-toplevel
-          "PLR0904", # too-many-public-methods
-          "PLR1702", # too-many-nested-blocks
-          "PLW3201", # bad-dunder-method-name
-          "PLW0108", # unnecessary-lambda
-          "PLC2801", # unnecessary-dunder-call
+ignore = ["PLW2901",  # redefined-loop-name
+          "PLR2004",  # magic-value-comparison
+          "PLR0915",  # too-many-statements
+          "PLR0912",  # too-many-branches
+          "PLR5501",  # collapsible-else-if
+          "PLR0911",  # too-many-return-statements
+          "PLC2701",  # import-private-name
+          "PLR6201",  # literal-membership
+          "PLR0914",  # too-many-locals
+          "F841",  # unused-variable
+          "PLW1514",  # unspecified-encoding
+          "PLR6104",  # non-augmented-assignment
+          "PLR6301",  # no-self-use
+          "PLW1641",  # eq-without-hash
+          "PLC0415",  # import-outside-toplevel
+          "PLR0904",  # too-many-public-methods
+          "PLR1702",  # too-many-nested-blocks
+          "PLW3201",  # bad-dunder-method-name
+          "PLW0108",  # unnecessary-lambda
+          "PLC2801",  # unnecessary-dunder-call
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]

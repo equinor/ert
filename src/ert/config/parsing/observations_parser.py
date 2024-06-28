@@ -214,7 +214,7 @@ class TreeToObservations(
     @staticmethod
     @no_type_check
     def observation(tree):
-        return tuple([ObservationType.from_rule(tree[0].data), *tree[1:]])
+        return (ObservationType.from_rule(tree[0].data), *tree[1:])
 
     @staticmethod
     @no_type_check

@@ -824,7 +824,7 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
     [
         pytest.param(
             -1.0,
-            set(["1"]),
+            {"1"},
             id="job_submitted_before_deadline",
         ),
         pytest.param(0, set(), id="job_submitted_on_deadline"),

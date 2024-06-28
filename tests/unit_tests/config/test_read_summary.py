@@ -258,22 +258,19 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
     ljs = smspec.numly if smspec.numly else []
     lks = smspec.numlz if smspec.numlz else []
     keys_in_smspec = [
-        key
-        for key in map(
-            lambda x: make_summary_key(*x[:3], smspec.nx, smspec.ny, *x[3:]),
-            zip_longest(
-                [k.rstrip() for k in smspec.keywords],
-                smspec.region_numbers,
-                smspec.well_names,
-                local_name,
-                lis,
-                ljs,
-                lks,
-                fillvalue=None,
-            ),
+        make_summary_key(*x[:3], smspec.nx, smspec.ny, *x[3:])
+        for x in zip_longest(
+            [k.rstrip() for k in smspec.keywords],
+            smspec.region_numbers,
+            smspec.well_names,
+            local_name,
+            lis,
+            ljs,
+            lks,
+            fillvalue=None,
         )
     ]
-    assert set(keys) == set((k for k in keys_in_smspec if k))
+    assert set(keys) == {k for k in keys_in_smspec if k}
 
     def to_date(start_date: datetime, offset: float, unit: str) -> datetime:
         if unit == "DAYS":

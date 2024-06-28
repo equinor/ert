@@ -115,8 +115,8 @@ class PartialSnapshot:
         # well
         self._metadata = SnapshotMetadata(
             aggr_job_status_colors=defaultdict(dict),
-            real_status_colors=dict(),
-            sorted_real_ids=list(),
+            real_status_colors={},
+            sorted_real_ids=[],
             sorted_forward_model_ids=defaultdict(list),
         )
         self._snapshot = snapshot

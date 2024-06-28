@@ -118,7 +118,7 @@ def _create_summary_config_ds_and_obs(
                 f"sum_key_{i%num_summary_names}"
                 for i in range(num_summary_names * num_summary_timesteps)
             ],
-            "values": [i for i in range(num_summary_names * num_summary_timesteps)],
+            "values": list(range(num_summary_names * num_summary_timesteps)),
         }
     )
 

@@ -433,7 +433,7 @@ class LocalEnsemble(BaseMode):
             Returns the realization numbers with parameters
         """
 
-        return list(
+        return [
             i
             for i in range(self.ensemble_size)
             if all(
@@ -446,7 +446,7 @@ class LocalEnsemble(BaseMode):
                 for parameter in self.experiment.parameter_configuration.values()
                 if not parameter.forward_init
             )
-        )
+        ]
 
     def has_data(self) -> List[int]:
         """
@@ -457,14 +457,14 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with responses
         """
-        return list(
+        return [
             i
             for i in range(self.ensemble_size)
             if all(
                 self._responses_exist_for_realization(i, response_key)
                 for response_key in self.experiment.response_configuration
             )
-        )
+        ]
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         """

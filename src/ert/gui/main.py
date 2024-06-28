@@ -92,7 +92,6 @@ def _start_initial_gui_window(
     # the root-logger.
     logger = logging.getLogger(__name__)
     error_messages = []
-    all_warnings = []
     config_warnings = []
     ert_config = None
 

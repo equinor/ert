@@ -15,7 +15,7 @@ class StorageService(BaseService):
 
     def __init__(
         self,
-        exec_args: Sequence[str] = tuple(),
+        exec_args: Sequence[str] = (),
         timeout: int = 120,
         conn_info: Union[Mapping[str, Any], Exception, None] = None,
         project: Optional[str] = None,

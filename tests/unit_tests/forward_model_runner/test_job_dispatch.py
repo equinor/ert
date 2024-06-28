@@ -348,7 +348,7 @@ def test_killed_by_oom(tmp_path, monkeypatch):
     dmesg_path.chmod(dmesg_path.stat().st_mode | stat.S_IEXEC)
     monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
 
-    assert killed_by_oom(set([parent_pid, child_pid]))
-    assert killed_by_oom(set([child_pid]))
-    assert not killed_by_oom(set([parent_pid]))
-    assert not killed_by_oom(set([child_pid + 1]))
+    assert killed_by_oom({parent_pid, child_pid})
+    assert killed_by_oom({child_pid})
+    assert not killed_by_oom({parent_pid})
+    assert not killed_by_oom({child_pid + 1})

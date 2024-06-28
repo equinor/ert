@@ -51,11 +51,11 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
 
     # Find all the ensemble_context calls and fetch the ensemble name and
     # iteration number
-    calls = set(
+    calls = {
         (x.kwargs["ensemble"].name, x.kwargs["iteration"])
         for x in context_mock.mock_calls
         if "ensemble" in x.kwargs and isinstance(x.kwargs["ensemble"], Ensemble)
-    )
+    }
     assert ("target_0", 0) in calls
     assert ("target_1", 1) in calls
     assert ("target_2", 2) in calls

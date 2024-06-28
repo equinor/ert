@@ -178,7 +178,7 @@ class SlurmDriver(Driver):
             process_success, process_message = await self._execute_with_retry(
                 sbatch_with_args,
                 retry_on_empty_stdout=True,
-                retry_codes=tuple(),
+                retry_codes=(),
                 retries=self._sbatch_retries,
                 retry_interval=self._sleep_time_between_cmd_retries,
             )

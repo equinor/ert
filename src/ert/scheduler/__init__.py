@@ -21,10 +21,7 @@ def create_driver(config: QueueConfig) -> Driver:
     if config.queue_system == QueueSystem.LOCAL:
         return LocalDriver()
     elif config.queue_system == QueueSystem.TORQUE:
-        queue_config = {
-            key: value
-            for key, value in config.queue_options.get(QueueSystem.TORQUE, [])
-        }
+        queue_config = dict(config.queue_options.get(QueueSystem.TORQUE, []))
         num_nodes: Optional[str] = queue_config.get("NUM_NODES")
         num_cpus_per_node: Optional[str] = queue_config.get("NUM_CPUS_PER_NODE")
         return OpenPBSDriver(
@@ -40,9 +37,7 @@ def create_driver(config: QueueConfig) -> Driver:
             job_prefix=queue_config.get("JOB_PREFIX"),
         )
     elif config.queue_system == QueueSystem.LSF:
-        queue_config = {
-            key: value for key, value in config.queue_options.get(QueueSystem.LSF, [])
-        }
+        queue_config = dict(config.queue_options.get(QueueSystem.LSF, []))
         return LsfDriver(
             bsub_cmd=queue_config.get("BSUB_CMD"),
             bkill_cmd=queue_config.get("BKILL_CMD"),
@@ -53,9 +48,7 @@ def create_driver(config: QueueConfig) -> Driver:
             resource_requirement=queue_config.get("LSF_RESOURCE"),
         )
     elif config.queue_system == QueueSystem.SLURM:
-        queue_config = {
-            key: value for key, value in config.queue_options.get(QueueSystem.SLURM, [])
-        }
+        queue_config = dict(config.queue_options.get(QueueSystem.SLURM, []))
         return SlurmDriver(
             sbatch_cmd=queue_config.get("SBATCH", "sbatch"),
             scancel_cmd=queue_config.get("SCANCEL", "scancel"),

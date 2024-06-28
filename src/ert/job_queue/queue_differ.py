@@ -47,7 +47,7 @@ class QueueDiffer:
         """Return the diff between old_state and new_state."""
         changes = {}
 
-        diff = list(map(lambda s: s[0] == s[1], zip(old_state, new_state)))
+        diff = [s[0] == s[1] for s in zip(old_state, new_state)]
         if len(diff) > 0:
             for q_index, equal in enumerate(diff):
                 if not equal:

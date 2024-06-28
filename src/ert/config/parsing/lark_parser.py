@@ -249,7 +249,7 @@ def _substitute_args(
         key, value = tup
         substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
 
-        return tuple([key, substituted_value])
+        return (key, substituted_value)
 
     def substitute_arg(
         arg: Union[FileContextToken, List[Tuple[FileContextToken]]],

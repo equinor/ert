@@ -292,7 +292,7 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def observations(self) -> Dict[str, xr.Dataset]:
-        observations = sorted(list(self.mount_point.glob("observations/*")))
+        observations = sorted(self.mount_point.glob("observations/*"))
         obs_by_response_type = {}
 
         for obs_file in observations:

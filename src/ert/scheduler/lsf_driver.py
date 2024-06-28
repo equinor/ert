@@ -8,7 +8,6 @@ import re
 import shlex
 import shutil
 import stat
-import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
@@ -342,12 +341,11 @@ class LsfDriver(Driver):
                 retry_interval=self._sleep_time_between_cmd_retries,
                 exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
             )
-            subprocess.Popen(
+            await asyncio.create_subprocess_shell(
                 f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
-                shell=True,
                 start_new_session=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
 
             if not re.search(
