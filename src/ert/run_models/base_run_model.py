@@ -590,13 +590,19 @@ class BaseRunModel:
         """
         return any(Path(run_path).exists() for run_path in self.paths)
 
+    def get_number_of_existing_runpaths(self) -> int:
+        return [Path(run_path).exists() for run_path in self.paths].count(True)
+
+    def get_number_of_active_realizations(self) -> int:
+        return self.active_realizations.count(True)
+
     def rm_run_path(self) -> None:
         for run_path in self.paths:
             if Path(run_path).exists():
                 shutil.rmtree(run_path)
 
     def validate(self) -> None:
-        active_realizations_count = self.active_realizations.count(True)
+        active_realizations_count = self.get_number_of_active_realizations()
         min_realization_count = self.minimum_required_realizations
 
         if active_realizations_count < min_realization_count:

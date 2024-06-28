@@ -104,6 +104,43 @@ def test_check_if_runpath_exists(
     assert brm.check_if_runpath_exists() == expected
 
 
+@pytest.mark.parametrize(
+    "run_path, number_of_iterations, start_iteration, active_mask, expected_number",
+    [
+        ("out/realization-%d/iter-%d", 2, 0, [True, True, True, True], 3),
+        ("out/realization-%d/iter-%d", 2, 1, [True, True], 1),
+        ("out/realization-%d/iter-%d", 4, 3, [True, True, False, True], 0),
+    ],
+)
+def test_get_number_of_existing_runpaths(
+    create_dummy_run_path,
+    run_path: str,
+    number_of_iterations: int,
+    start_iteration: int,
+    active_mask: list,
+    expected_number: int,
+):
+    model_config = ModelConfig(runpath_format_string=run_path)
+    subs_list = SubstitutionList()
+    config = MagicMock()
+    config.model_config = model_config
+    config.substitution_list = subs_list
+
+    brm = BaseRunModel(
+        config,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        active_realizations=active_mask,
+        start_iteration=start_iteration,
+        number_of_iterations=number_of_iterations,
+    )
+    brm.facade = MagicMock(
+        run_path=run_path,
+    )
+    assert brm.get_number_of_existing_runpaths() == expected_number
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "run_path_format",

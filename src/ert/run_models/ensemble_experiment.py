@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
@@ -95,9 +94,3 @@ class EnsembleExperiment(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Ensemble experiment"
-
-    def check_if_runpath_exists(self) -> bool:
-        active_mask = self.active_realizations
-        active_realizations = [i for i in range(len(active_mask)) if active_mask[i]]
-        run_paths = self.run_paths.get_paths(active_realizations, 0)
-        return any(Path(run_path).exists() for run_path in run_paths)
