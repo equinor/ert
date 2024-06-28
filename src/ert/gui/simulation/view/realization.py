@@ -10,7 +10,7 @@ from qtpy.QtCore import (
     Qt,
     Signal,
 )
-from qtpy.QtGui import QColor, QColorConstants, QPainter
+from qtpy.QtGui import QColor, QColorConstants, QPainter, QPalette, QPen
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QListView,
@@ -45,6 +45,9 @@ class RealizationWidget(QWidget):
         self._real_view.setWrapping(True)
         self._real_view.setResizeMode(QListView.Adjust)
         self._real_view.setUniformItemSizes(True)
+        self._real_view.setStyleSheet(
+            f"QListView {{ background-color: {self.palette().color(QPalette.Window).name()}; }}"
+        )
 
         def _emit_change(current: QModelIndex, previous: Any) -> None:
             self.currentChanged.emit(current)
@@ -76,6 +79,10 @@ class RealizationDelegate(QStyledItemDelegate):
         self._size = size
         parent.installEventFilter(self)
         self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
+        self._color_black = QColor(0, 0, 0, 180)
+        self._color_progress = QColor(50, 173, 230, 200)
+        self._color_lightgray = QColor(QColorConstants.LightGray).lighter(120)
+        self._pen_black = QPen(self._color_black, 2, Qt.PenStyle.SolidLine)
 
     def paint(
         self,
@@ -93,24 +100,22 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.TextAntialiasing, True)
         painter.setRenderHint(QPainter.Antialiasing, True)
-        progress_color = QColor(50, 173, 230)
 
         percentage_done = (
             100 if total_count < 1 else int((finished_count * 100.0) / total_count)
         )
-        progressed_step = -int(percentage_done * 57.6)
 
+        painter.setPen(self._pen_black)
         adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
-        painter.setBrush(QColor(QColorConstants.LightGray).lighter(120))
+
+        painter.setBrush(
+            self._color_progress if percentage_done == 100 else self._color_lightgray
+        )
         painter.drawEllipse(adjusted_rect)
 
         if 0 < percentage_done < 100:
-            painter.setBrush(progress_color)
-            painter.drawPie(adjusted_rect, 1440, progressed_step)
-        else:
-            if percentage_done == 100:
-                painter.setBrush(progress_color)
-            painter.drawEllipse(adjusted_rect)
+            painter.setBrush(self._color_progress)
+            painter.drawPie(adjusted_rect, 1440, -int(percentage_done * 57.6))
 
         if option.state & QStyle.StateFlag.State_Selected:
             selected_color = selected_color.lighter(125)
