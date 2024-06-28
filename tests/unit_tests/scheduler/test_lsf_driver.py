@@ -610,7 +610,7 @@ async def test_that_bsub_will_retry_and_succeed(
             "select[location=='cloud']",
             ["linrgs12-foo", "linrgs13-bar"],
             "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar']",
-            id="multiple_selects",
+            id="existing_select",
         ),
         pytest.param(
             None,
@@ -629,6 +629,24 @@ async def test_that_bsub_will_retry_and_succeed(
             [""],
             "select[location=='cloud']",
             id="select_in_resource_requirement_and_empty_string_in_excluded_hosts",
+        ),
+        pytest.param(
+            "select[location=='cloud'] rusage[mem=7000]",
+            [""],
+            "select[location=='cloud'] rusage[mem=7000]",
+            id="select_and_rusage_in_resource_requirement_empty_excluded_hosts",
+        ),
+        pytest.param(
+            "select[location=='cloud'] rusage[mem=7000]",
+            ["rogue_host"],
+            "select[location=='cloud' && hname!='rogue_host'] rusage[mem=7000]",
+            id="select_and_rusage_in_resource_requirement_one_excluded_hosts",
+        ),
+        pytest.param(
+            "rusage[mem=7000] select[location=='cloud']",
+            ["rogue_host"],
+            "rusage[mem=7000] select[location=='cloud' && hname!='rogue_host']",
+            id="rusage_and_select_resource_requirement_one_excluded_hosts",
         ),
     ],
 )
