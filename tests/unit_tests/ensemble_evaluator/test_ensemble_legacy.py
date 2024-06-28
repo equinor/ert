@@ -9,6 +9,7 @@ import pytest
 from websockets.exceptions import ConnectionClosed
 
 from _ert.async_utils import new_event_loop
+from _ert.threading import ErtThread
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -38,11 +39,16 @@ def evaluator_to_use(using_scheduler):
     async def run_evaluator(ensemble, ee_config):
         if not using_scheduler:
             evaluator = EnsembleEvaluator(ensemble, ee_config, 0)
-            evaluator.start_running()
+            eval_thread = ErtThread(
+                target=evaluator.start_running,
+                name="eval_thread",
+            )
+            eval_thread.start()
             try:
                 yield evaluator
             finally:
                 evaluator.stop()
+                eval_thread.join()
 
         else:
             ee_async = EnsembleEvaluatorAsync(ensemble, ee_config, 0)
