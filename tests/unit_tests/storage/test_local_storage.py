@@ -370,6 +370,15 @@ def test_get_unique_experiment_name(snake_oil_storage):
         assert snake_oil_storage.get_unique_experiment_name("") == "default_0"
 
 
+def add_to_name(prefix: str):
+    def _inner(params):
+        for param in params:
+            param.name = prefix + param.name
+        return params
+
+    return _inner
+
+
 parameter_configs = st.lists(
     st.one_of(
         st.builds(
@@ -394,7 +403,7 @@ parameter_configs = st.lists(
     ),
     unique_by=lambda x: x.name,
     min_size=1,
-)
+).map(add_to_name("parameter_"))
 
 response_configs = st.lists(
     st.one_of(
@@ -414,7 +423,7 @@ response_configs = st.lists(
     ),
     unique_by=lambda x: x.name,
     min_size=1,
-)
+).map(add_to_name("response_"))
 
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
 coordinates = st.integers(min_value=1, max_value=100)
