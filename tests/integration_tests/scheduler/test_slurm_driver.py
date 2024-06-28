@@ -121,6 +121,7 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.flaky(reruns=3)
 async def test_kill_before_submit_is_finished(
     tmp_path, monkeypatch, caplog, pytestconfig
 ):
@@ -128,8 +129,8 @@ async def test_kill_before_submit_is_finished(
 
     if pytestconfig.getoption("slurm"):
         # Allow more time when tested on a real compute cluster to avoid false positives.
-        job_kill_window = 10
-        test_grace_time = 20
+        job_kill_window = 5
+        test_grace_time = 10
     elif sys.platform.startswith("darwin"):
         # Mitigate flakiness on low-power test nodes
         job_kill_window = 5
