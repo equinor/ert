@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import RealizationSnapshot, SnapshotMetadata
+from ert.ensemble_evaluator.snapshot import SnapshotMetadata
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -174,10 +174,6 @@ class SnapshotModel(QAbstractItemModel):
             iter_index = self.index(iter_node.row(), 0, QModelIndex())
             reals_changed: List[int] = []
 
-            for idx in job_infos:
-                real_id = idx[0]
-                if real_id not in reals:
-                    reals[real_id] = RealizationSnapshot()
             for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
                 if real and real.status:
