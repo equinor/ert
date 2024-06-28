@@ -124,13 +124,7 @@ def test_that_storage_matches(
                 str(tmp_path), "/home/eivind/Projects/ert/test-data"
             )
         snapshot.assert_match(
-            str(
-                {
-                    key: value
-                    for key, value in sorted(experiment.parameter_configuration.items())
-                }
-            )
-            + "\n",
+            str(dict(sorted(experiment.parameter_configuration.items()))) + "\n",
             "parameters",
         )
         snapshot.assert_match(

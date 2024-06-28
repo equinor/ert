@@ -175,7 +175,7 @@ class Job:
 
         # All child pids for the forward model step. Need to track these in order to be able
         # to detect OOM kills in case of failure.
-        fm_step_pids = set([process.pid])
+        fm_step_pids = {process.pid}
 
         max_memory_usage = 0
         while exit_code is None:
@@ -195,9 +195,9 @@ class Job:
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
             except TimeoutExpired:
-                fm_step_pids |= set(
-                    [int(child.pid) for child in process.children(recursive=True)]
-                )
+                fm_step_pids |= {
+                    int(child.pid) for child in process.children(recursive=True)
+                }
                 run_time = dt.now() - run_start_time
                 if (
                     max_running_minutes is not None

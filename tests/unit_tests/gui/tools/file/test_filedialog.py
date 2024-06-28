@@ -16,7 +16,7 @@ testCaseTextFiles = [
 
 @pytest.mark.parametrize(
     "textFile",
-    map(lambda textFile: pytest.param(textFile, id=textFile), testCaseTextFiles),
+    (pytest.param(textFile, id=textFile) for textFile in testCaseTextFiles),
 )
 def test_filedialog_size(textFile, qtbot):
     filepath = path.join(

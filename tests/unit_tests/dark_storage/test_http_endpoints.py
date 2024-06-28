@@ -216,4 +216,4 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
 
     assert all(dataframe.index.values == [1, 2, 4])
     assert dataframe.index.name == "Realization"
-    assert dataframe.shape == tuple([3, 1])
+    assert dataframe.shape == (3, 1)
