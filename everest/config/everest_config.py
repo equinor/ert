@@ -450,7 +450,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
                 if isinstance(v, ControlVariableGuessListConfig):
                     control_full_name.extend(
                         f"{c.name}.{v.name}-{index}"
-                        for index, _ in enumerate(v.initial_guess)
+                        for index, _ in enumerate(v.initial_guess, start=1)
                     )
                 elif v.index is not None:
                     control_full_name.append(f"{c.name}.{v.name}-{v.index}")
