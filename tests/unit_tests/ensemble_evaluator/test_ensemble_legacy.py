@@ -38,13 +38,13 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble, monkeypatch, run_monitor_in_
                         identifiers.EVTYPE_EE_SNAPSHOT,
                     ) and e.data.get(identifiers.STATUS) in [
                         state.ENSEMBLE_STATE_FAILED,
-                        state.ENSEMBLE_STATE_STOPPED,
+                        state.ENSEMBLE_STATE_SUCCEEDED,
                     ]:
                         await monitor.signal_done()
             return True
 
         run_monitor_in_loop(_run_monitor)
-        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
+        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_SUCCEEDED
         assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
         # realisations should finish, each creating a status-file
@@ -76,7 +76,7 @@ def test_run_and_cancel_legacy_ensemble(
             terminated_event = False
             async with Monitor(config) as mon:
                 # on lesser hardware the realizations might be killed by max_runtime
-                # and the ensemble is set to STOPPED
+                # and the ensemble is set to SUCCEEDED
                 mon._receiver_timeout = 10.0
                 cancel = True
                 with contextlib.suppress(
@@ -97,7 +97,7 @@ def test_run_and_cancel_legacy_ensemble(
         if run_monitor_in_loop(_run_monitor):
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
         else:
-            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
+            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_SUCCEEDED
 
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
@@ -132,7 +132,7 @@ def test_run_legacy_ensemble_with_bare_exception(
                     async for e in monitor.track():
                         if e.data is not None and e.data.get(identifiers.STATUS) in [
                             state.ENSEMBLE_STATE_FAILED,
-                            state.ENSEMBLE_STATE_STOPPED,
+                            state.ENSEMBLE_STATE_SUCCEEDED,
                         ]:
                             await monitor.signal_done()
                 return True
