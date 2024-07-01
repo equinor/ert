@@ -150,7 +150,6 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
 @pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     os.chdir(tmp_path)
-
     if (
         (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf"))  # noqa: PLR0916
         or (isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs"))
@@ -183,3 +182,34 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     # Give the script a chance to finish if it is running
     await asyncio.sleep(test_grace_time)
     assert not Path("survived").exists(), "Job should have been killed"
+
+
+@pytest.mark.integration_test
+async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
+    """The intention of this check is to verify that the driver sets up
+    the num_cpu requirement correctly for the relevant queue system.
+
+    How this can be verified depends on the queue system, there is no single
+    environment variable that they all set."""
+    if isinstance(driver, LocalDriver):
+        pytest.skip("LocalDriver has no NUM_CPU concept")
+    os.chdir(tmp_path)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        f"env | grep -e PROCESS -e CPU -e THREAD > {tmp_path}/env",
+        name=job_name,
+        num_cpu=2,
+    )
+    await poll(driver, {0})
+
+    env_lines = Path(f"{tmp_path}/env").read_text(encoding="utf-8").splitlines()
+    if isinstance(driver, SlurmDriver):
+        assert "SLURM_JOB_CPUS_PER_NODE=2" in env_lines
+        assert "SLURM_CPUS_ON_NODE=2" in env_lines
+    elif isinstance(driver, LsfDriver):
+        assert "LSB_MAX_NUM_PROCESSORS=2" in env_lines
+    elif isinstance(driver, OpenPBSDriver):
+        assert "OMP_NUM_THREADS=2" in env_lines
+        assert "NCPUS=2" in env_lines
