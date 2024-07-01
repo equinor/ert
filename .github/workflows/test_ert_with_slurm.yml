@@ -19,10 +19,9 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
-        cache: "pip"
-        cache-dependency-path: |
-          setup.py
-          pyproject.toml
+
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Get wheels
       uses: actions/download-artifact@v4
@@ -31,7 +30,7 @@ jobs:
 
     - name: Install wheel
       run: |
-        find . -name "*.whl" -exec pip install "{}[dev]" \;
+        find . -name "*.whl" -exec uv pip install --system "{}[dev]" \;
 
     - name: Install and setup slurm
       run: |
