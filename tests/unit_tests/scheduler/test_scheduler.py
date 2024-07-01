@@ -14,7 +14,7 @@ from cloudevents.http import from_json
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator import Realization
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
+from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_SUCCEEDED
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
 from ert.scheduler.job import State
@@ -73,7 +73,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
 
 async def test_empty(mock_driver):
     sch = scheduler.Scheduler(mock_driver())
-    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
 
 
 async def test_single_job(realization, mock_driver):
@@ -86,7 +86,7 @@ async def test_single_job(realization, mock_driver):
 
     sch = scheduler.Scheduler(driver, [realization])
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
     assert await future == realization.iens
 
 
@@ -182,7 +182,7 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
 
     sch._max_submit = max_submit
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
     assert retries == max_submit
 
 
@@ -196,7 +196,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
     driver = mock_driver(init=init)
     sch = scheduler.Scheduler(driver, [realization], max_submit=5)
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
     assert retries == 1
 
 
@@ -214,7 +214,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
 
     result = await asyncio.create_task(sch.execute())
     assert wait_started.is_set()
-    assert result == EVTYPE_ENSEMBLE_STOPPED
+    assert result == EVTYPE_ENSEMBLE_SUCCEEDED
 
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
@@ -242,7 +242,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
         mock_driver(init=init, wait=wait), [realization], max_submit=2
     )
     result = await sch.execute()
-    assert result == EVTYPE_ENSEMBLE_STOPPED
+    assert result == EVTYPE_ENSEMBLE_SUCCEEDED
 
     assert retries == 1
 
@@ -273,7 +273,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         mock_driver(wait=wait), realizations, max_running=max_running
     )
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
 
     currently_running = 0
     max_running_observed = 0
@@ -473,7 +473,7 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
         mock_driver(wait=wait, kill=kill), realizations, max_running=ensemble_size
     )
 
-    assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_STOPPED
+    assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_SUCCEEDED
     assert killed_iens == [6, 7, 8, 9]
 
 

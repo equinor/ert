@@ -369,7 +369,7 @@ async def test_ensure_multi_level_events_in_order(evaluator):
             )
             await send_dispatch_event_async(
                 dispatch1,
-                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                identifiers.EVTYPE_ENSEMBLE_SUCCEEDED,
                 f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event3",
                 {},

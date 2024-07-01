@@ -49,7 +49,7 @@ from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
-    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_SUCCEEDED,
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_WAITING,
@@ -90,10 +90,10 @@ class _EnsembleStateTracker:
             logger.warning(self._msg, self._state, ENSEMBLE_STATE_FAILED)
         self._state = ENSEMBLE_STATE_FAILED
 
-    def _handle_stopped(self) -> None:
+    def _handle_succeeded(self) -> None:
         if self._state != ENSEMBLE_STATE_STARTED:
-            logger.warning(self._msg, self._state, ENSEMBLE_STATE_STOPPED)
-        self._state = ENSEMBLE_STATE_STOPPED
+            logger.warning(self._msg, self._state, ENSEMBLE_STATE_SUCCEEDED)
+        self._state = ENSEMBLE_STATE_SUCCEEDED
 
     def _handle_canceled(self) -> None:
         if self._state != ENSEMBLE_STATE_STARTED:
@@ -104,7 +104,7 @@ class _EnsembleStateTracker:
         self.add_handle(ENSEMBLE_STATE_UNKNOWN, self._handle_unknown)
         self.add_handle(ENSEMBLE_STATE_STARTED, self._handle_started)
         self.add_handle(ENSEMBLE_STATE_FAILED, self._handle_failed)
-        self.add_handle(ENSEMBLE_STATE_STOPPED, self._handle_stopped)
+        self.add_handle(ENSEMBLE_STATE_SUCCEEDED, self._handle_succeeded)
         self.add_handle(ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
 
     def update_state(self, state_: str) -> str:
@@ -367,7 +367,7 @@ class LegacyEnsemble:
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
         )
 
-        # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
+        # Dispatch final result from evaluator - FAILED, CANCEL or SUCCEEDED
         await cloudevent_unary_send(event_creator(result, None))
 
     @property

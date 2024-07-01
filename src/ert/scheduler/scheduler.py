@@ -32,7 +32,7 @@ from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
 from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_CANCELLED,
-    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from ert.serialization import evaluator_unmarshaller
@@ -372,7 +372,7 @@ class Scheduler:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return EVTYPE_ENSEMBLE_CANCELLED
 
-        return EVTYPE_ENSEMBLE_STOPPED
+        return EVTYPE_ENSEMBLE_SUCCEEDED
 
     async def _process_event_queue(self) -> None:
         while True:

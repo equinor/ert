@@ -7,7 +7,7 @@ EVTYPE_REALIZATION_WAITING = "com.equinor.ert.realization.waiting"
 EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 EVTYPE_ENSEMBLE_STARTED = "com.equinor.ert.ensemble.started"
-EVTYPE_ENSEMBLE_STOPPED = "com.equinor.ert.ensemble.stopped"
+EVTYPE_ENSEMBLE_SUCCEEDED = "com.equinor.ert.ensemble.succeeded"
 EVTYPE_ENSEMBLE_CANCELLED = "com.equinor.ert.ensemble.cancelled"
 EVTYPE_ENSEMBLE_FAILED = "com.equinor.ert.ensemble.failed"
 

@@ -43,14 +43,14 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
-    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from .snapshot import PartialSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_SUCCEEDED,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class EnsembleEvaluator:
         for e_type, f in (
             (EVGROUP_FM_ALL, self._fm_handler),
             ({EVTYPE_ENSEMBLE_STARTED}, self._started_handler),
-            ({EVTYPE_ENSEMBLE_STOPPED}, self._stopped_handler),
+            ({EVTYPE_ENSEMBLE_SUCCEEDED}, self._succeeded_handler),
             ({EVTYPE_ENSEMBLE_CANCELLED}, self._cancelled_handler),
             ({EVTYPE_ENSEMBLE_FAILED}, self._failed_handler),
         ):
@@ -129,7 +129,7 @@ class EnsembleEvaluator:
             )
             send_future.result()
 
-    def _stopped_handler(self, events: List[CloudEvent]) -> None:
+    def _succeeded_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status == ENSEMBLE_STATE_FAILED:
             return
 
@@ -161,7 +161,7 @@ class EnsembleEvaluator:
 
     def _failed_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status in (
-            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_SUCCEEDED,
             ENSEMBLE_STATE_CANCELLED,
         ):
             return
@@ -304,7 +304,7 @@ class EnsembleEvaluator:
                         return
 
                     if event["type"] in [
-                        EVTYPE_ENSEMBLE_STOPPED,
+                        EVTYPE_ENSEMBLE_SUCCEEDED,
                         EVTYPE_ENSEMBLE_FAILED,
                     ]:
                         return

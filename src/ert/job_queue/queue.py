@@ -25,7 +25,7 @@ from ert.constant_filenames import CERT_FILE, JOBS_FILE
 from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_FAILED,
-    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_REALIZATION_FAILURE,
     EVTYPE_REALIZATION_PENDING,
     EVTYPE_REALIZATION_RUNNING,
@@ -333,7 +333,7 @@ class JobQueue(BaseCClass):  # type: ignore
             await self._changes_to_publish.put(self._differ.snapshot())
             await self._changes_to_publish.put(CLOSE_PUBLISHER_SENTINEL)
 
-        return EVTYPE_ENSEMBLE_STOPPED
+        return EVTYPE_ENSEMBLE_SUCCEEDED
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(

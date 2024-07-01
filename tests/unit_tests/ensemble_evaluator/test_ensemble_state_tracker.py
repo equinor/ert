@@ -9,17 +9,17 @@ from ert.ensemble_evaluator._ensemble import _EnsembleStateTracker
 @pytest.mark.parametrize(
     "transition, allowed",
     [
-        ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_STOPPED], True),
+        ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_SUCCEEDED], True),
         ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_FAILED], True),
         ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_CANCELLED], True),
         ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_STARTED], False),
-        ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_STOPPED], False),
+        ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_SUCCEEDED], False),
         ([state.ENSEMBLE_STATE_CANCELLED, state.ENSEMBLE_STATE_FAILED], False),
-        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_FAILED], False),
-        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_CANCELLED], False),
-        ([state.ENSEMBLE_STATE_STOPPED, state.ENSEMBLE_STATE_STARTED], False),
+        ([state.ENSEMBLE_STATE_SUCCEEDED, state.ENSEMBLE_STATE_FAILED], False),
+        ([state.ENSEMBLE_STATE_SUCCEEDED, state.ENSEMBLE_STATE_CANCELLED], False),
+        ([state.ENSEMBLE_STATE_SUCCEEDED, state.ENSEMBLE_STATE_STARTED], False),
         ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STARTED], False),
-        ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STOPPED], False),
+        ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_SUCCEEDED], False),
         ([state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_CANCELLED], False),
         ([state.ENSEMBLE_STATE_UNKNOWN, state.ENSEMBLE_STATE_STARTED], True),
     ],
@@ -44,7 +44,7 @@ def test_ensemble_state_tracker_handles():
         state.ENSEMBLE_STATE_UNKNOWN,
         state.ENSEMBLE_STATE_STARTED,
         state.ENSEMBLE_STATE_FAILED,
-        state.ENSEMBLE_STATE_STOPPED,
+        state.ENSEMBLE_STATE_SUCCEEDED,
         state.ENSEMBLE_STATE_CANCELLED,
     ]
     handled_states = list(state_machine._handles.keys())

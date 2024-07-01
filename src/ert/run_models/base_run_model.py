@@ -55,7 +55,7 @@ from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_SUCCEEDED,
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
@@ -484,7 +484,7 @@ class BaseRunModel:
                     ):
                         self.send_snapshot_event(event)
                         if event.data.get(STATUS) in [
-                            ENSEMBLE_STATE_STOPPED,
+                            ENSEMBLE_STATE_SUCCEEDED,
                             ENSEMBLE_STATE_FAILED,
                         ]:
                             event_logger.debug(

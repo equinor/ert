@@ -38,7 +38,7 @@ def test_scheduler_receives_checksum_and_waits_for_disk_sync(
                     identifiers.EVTYPE_EE_SNAPSHOT,
                 ) and e.data.get(identifiers.STATUS) in [
                     state.ENSEMBLE_STATE_FAILED,
-                    state.ENSEMBLE_STATE_STOPPED,
+                    state.ENSEMBLE_STATE_SUCCEEDED,
                 ]:
                     await monitor.signal_done()
         return True
@@ -64,4 +64,4 @@ def test_scheduler_receives_checksum_and_waits_for_disk_sync(
             run_monitor_in_loop(_run_monitor)
         assert "Waiting for disk synchronization" in caplog.messages
         assert f"File {file_path.absolute()} checksum successful." in caplog.messages
-        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
+        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_SUCCEEDED

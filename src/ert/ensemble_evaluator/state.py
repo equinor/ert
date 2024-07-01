@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 ENSEMBLE_STATE_STARTED = "Starting"
-ENSEMBLE_STATE_STOPPED = "Stopped"
+ENSEMBLE_STATE_SUCCEEDED = "Succeeded"
 ENSEMBLE_STATE_CANCELLED = "Cancelled"
 ENSEMBLE_STATE_FAILED = "Failed"
 ENSEMBLE_STATE_UNKNOWN = "Unknown"
