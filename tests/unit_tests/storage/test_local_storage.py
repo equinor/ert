@@ -12,7 +12,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import xarray as xr
-from hypothesis import Verbosity, assume, settings
+from hypothesis import assume
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from xarray.testing import assert_allclose
@@ -599,7 +599,6 @@ class Experiment:
     observations: Dict[str, xr.Dataset] = field(default_factory=dict)
 
 
-@settings(verbosity=Verbosity.verbose)
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and

@@ -104,11 +104,9 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
 
-            print("Creating ert config")
             ert_config = ErtConfig.with_plugins(
                 plugin_manager.forward_model_steps if plugin_manager else []
             ).from_file(args.config)
-            print("local storage set ert config")
 
             local_storage_set_ert_config(ert_config)
         except ConfigValidationError as error:
@@ -164,9 +162,7 @@ def _start_initial_gui_window(
         logger.info("Suggestion shown in gui '%s'", msg)
     for msg in config_warnings:
         logger.info("Warning shown in gui '%s'", msg)
-    print("opening storage")
     storage = open_storage(ert_config.ens_path, mode="w")
-    print("set up main window")
     _main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
     )
@@ -241,50 +237,37 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(config)
     config_file = args.config
-    print("create ert main window")
     window = ErtMainWindow(config_file, plugin_manager)
-    print("notifier set storage")
     window.notifier.set_storage(storage)
-    print("set window widget")
     window.setWidget(
         ExperimentPanel(
             config, window.notifier, config_file, facade.get_ensemble_size()
         )
     )
 
-    print("add plugin handler")
     plugin_handler = PluginHandler(
         window.notifier,
         [wfj for wfj in config.workflow_jobs.values() if wfj.is_plugin()],
         window,
     )
 
-    print("add summary panel")
     window.addDock(
         "Configuration summary",
         SummaryPanel(config),
         area=Qt.DockWidgetArea.BottomDockWidgetArea,
     )
-    print("window.addTool(PlotTool(config_file, window))")
     window.addTool(PlotTool(config_file, window))
-    print("window.addTool(ExportTool(config, window.notifier))")
     window.addTool(ExportTool(config, window.notifier))
-    print("window.addTool(WorkflowsTool(config, window.notifier))")
     window.addTool(WorkflowsTool(config, window.notifier))
-    print("window.addTool(")
     window.addTool(
         ManageExperimentsTool(
             config, window.notifier, config.model_config.num_realizations
         )
     )
-    print("window.addTool(PluginsTool(plugin_handler, window.notifier, config))")
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
-    print("window.addTool(RunAnalysisTool(config, window.notifier))")
     window.addTool(RunAnalysisTool(config, window.notifier))
-    print("window.addTool(LoadResultsTool(facade, window.notifier))")
     window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler)
-    print("window.addTool(event_viewer)")
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()

@@ -5,6 +5,8 @@ from typing import List, Optional
 
 import xarray as xr
 
+from ert.storage.local_ensemble import RealizationState
+
 info = (
     "Combining datasets for responses and parameters."
     "Rename and change transfer_function_definitions"
@@ -129,11 +131,44 @@ def migrate(path: Path) -> None:
 
                 param_datasets.append((param_group, datasets_for_group))
 
+            state_maps = RealizationState()
+
+            for i in range(ens_file["ensemble_size"]):
+                real_dir = ens / f"realization-{i}"
+                for _param_group, _datasets in param_datasets:
+                    state_maps.add(
+                        i,
+                        {
+                            (
+                                _param_group,
+                                _param_group,
+                                os.path.exists(real_dir / f"{_param_group}.nc"),
+                            )
+                        },
+                    )
+
+                for _key in gen_data_keys:
+                    state_maps.add(
+                        i, {("gen_data", _key, os.path.exists(real_dir / f"{_key}.nc"))}
+                    )
+                state_maps.add(
+                    i,
+                    {
+                        (
+                            "summary",
+                            "summary",
+                            os.path.exists(os.path.exists(real_dir / "summary.nc")),
+                        )
+                    },
+                )
+
+            state_maps.to_file(ens / "state_map.json")
+
             if gen_data_datasets:
                 gen_data_combined = _ensure_coord_order(
                     xr.concat([ds for _, ds in gen_data_datasets], dim="realization")
                 )
-                gen_data_combined.to_netcdf(ens / "gen_data.nc")
+                gen_data_combined.to_netcdf(ens / "gen_data.nc", engine="scipy")
 
                 for p in [ds_path for ds_path, _ in gen_data_datasets]:
                     os.remove(p)
@@ -142,7 +177,7 @@ def migrate(path: Path) -> None:
                 summary_combined = _ensure_coord_order(
                     xr.concat([ds for _, ds in summary_datasets], dim="realization")
                 )
-                summary_combined.to_netcdf(ens / "summary.nc")
+                summary_combined.to_netcdf(ens / "summary.nc", engine="scipy")
                 for p in [ds_path for ds_path, _ in summary_datasets]:
                     os.remove(p)
 
@@ -152,7 +187,9 @@ def migrate(path: Path) -> None:
                         params_combined = _ensure_coord_order(
                             xr.concat([ds for _, ds in datasets], dim="realizations")
                         )
-                        params_combined.to_netcdf(ens / f"{param_group}.nc")
+                        params_combined.to_netcdf(
+                            ens / f"{param_group}.nc", engine="scipy"
+                        )
                         for p in [ds_path for ds_path, _ in datasets]:
                             os.remove(p)
 

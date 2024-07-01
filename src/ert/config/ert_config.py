@@ -3,7 +3,6 @@ import copy
 import importlib
 import logging
 import os
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -123,10 +122,8 @@ class ErtConfig:
             else os.getcwd()
         )
 
-        t0 = time.time()
-        print("Parsing observations")
         self.observations = self._create_observations_and_find_summary_keys()
-        print(f"Parsed observations, it took {time.time() - t0}s")
+
         if ResponseTypes.summary in self.observations:
             summary_ds = self.observations[ResponseTypes.summary]
             names_in_ds = summary_ds["name"].data.tolist()
