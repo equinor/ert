@@ -16,6 +16,7 @@ do
         e)
             ;;
         l)
+            resource=$OPTARG
             ;;
         *)
             echo "Unprocessed option ${opt}"
@@ -26,11 +27,18 @@ shift $((OPTIND-1))
 
 jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
 jobid="test${RANDOM}.localhost"
+job_env_file="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.env"
 
 mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
 cat <&0 > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
+touch $job_env_file
 
+echo $resource >> $job_env_file
+num_cpu=$(echo $resource | sed 's/.*ncpus=\([[:digit:]]*\).*/\1/')
+
+[ -n $num_cpu ] && echo "export OMP_NUM_THREADS=$num_cpu" >> $job_env_file
+[ -n $num_cpu ] && echo "export NCPUS=$num_cpu" >> $job_env_file
 
 bash "$(dirname $0)/runner" "${jobdir}/${jobid}" >/dev/null 2>/dev/null &
 disown
