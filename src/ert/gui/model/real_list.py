@@ -149,11 +149,8 @@ class RealListModel(QAbstractProxyModel):
     def _source_rows_about_to_be_inserted(
         self, parent: QModelIndex, start: int, end: int
     ) -> None:
-        if not parent.isValid():
-            return
-        if not self._accept_index(parent):
-            return
-        self.beginInsertRows(self.mapFromSource(parent), start, end)
+        if parent.isValid() and self._accept_index(parent):
+            self.beginInsertRows(self.mapFromSource(parent), start, end)
 
     def _source_rows_inserted(
         self, parent: QModelIndex, _start: int, _end: int
