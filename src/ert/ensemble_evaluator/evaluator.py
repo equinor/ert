@@ -41,7 +41,7 @@ from .identifiers import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
-    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from .snapshot import PartialSnapshot
@@ -122,7 +122,7 @@ class EnsembleEvaluator:
 
         set_event_handler(EVGROUP_FM_ALL, self._fm_handler)
         set_event_handler({EVTYPE_ENSEMBLE_STARTED}, self._started_handler)
-        set_event_handler({EVTYPE_ENSEMBLE_STOPPED}, self._stopped_handler)
+        set_event_handler({EVTYPE_ENSEMBLE_SUCCEEDED}, self._stopped_handler)
         set_event_handler({EVTYPE_ENSEMBLE_CANCELLED}, self._cancelled_handler)
         set_event_handler({EVTYPE_ENSEMBLE_FAILED}, self._failed_handler)
 
@@ -290,7 +290,7 @@ class EnsembleEvaluator:
                         return
 
                     if event["type"] in [
-                        EVTYPE_ENSEMBLE_STOPPED,
+                        EVTYPE_ENSEMBLE_SUCCEEDED,
                         EVTYPE_ENSEMBLE_FAILED,
                     ]:
                         return
