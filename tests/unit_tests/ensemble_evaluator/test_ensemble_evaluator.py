@@ -1,7 +1,16 @@
+import asyncio
+from functools import partial
+
 import pytest
 
 from _ert_forward_model_runner.client import Client
-from ert.ensemble_evaluator import Monitor, Snapshot, identifiers
+from ert.ensemble_evaluator import (
+    EnsembleEvaluator,
+    EnsembleEvaluatorAsync,
+    Monitor,
+    Snapshot,
+    identifiers,
+)
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
@@ -11,12 +20,87 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_RUNNING,
 )
 
-from .ensemble_evaluator_utils import send_dispatch_event_async
+from .ensemble_evaluator_utils import TestEnsemble, send_dispatch_event_async
+
+
+@pytest.mark.parametrize(
+    ("task, error_msg"),
+    [
+        ("_batch_events_into_buffer", "Batcher failed!"),
+        ("_process_event_buffer", "Batch processing failed!"),
+        ("_publisher", "Publisher failed!"),
+    ],
+)
+async def test_when_task_fails_evaluator_raises_exception(
+    task, error_msg, make_ee_config, monkeypatch
+):
+    async def mock_failure(message, *args, **kwargs):
+        raise RuntimeError(message)
+
+    evaluator = EnsembleEvaluatorAsync(
+        TestEnsemble(0, 2, 2, id_="0"), make_ee_config(), 0
+    )
+    monkeypatch.setattr(
+        EnsembleEvaluatorAsync,
+        task,
+        partial(mock_failure, error_msg),
+    )
+    with pytest.raises(RuntimeError, match=error_msg):
+        await evaluator.run_and_get_successful_realizations()
+
+
+@pytest.mark.parametrize(
+    ("task, task_name"),
+    [
+        ("_batch_events_into_buffer", "dispatcher_task"),
+        ("_process_event_buffer", "processing_task"),
+        ("_publisher", "publisher_task"),
+    ],
+)
+async def test_when_task_prematurely_ends_raises_exception(
+    task, task_name, make_ee_config, monkeypatch
+):
+    async def mock_done_prematurely(message, *args, **kwargs):
+        await asyncio.sleep(0.5)
+
+    evaluator = EnsembleEvaluatorAsync(
+        TestEnsemble(0, 2, 2, id_="0"), make_ee_config(), 0
+    )
+    monkeypatch.setattr(
+        EnsembleEvaluatorAsync,
+        task,
+        mock_done_prematurely,
+    )
+    error_msg = f"Something went wrong, {task_name} is done prematurely!"
+    with pytest.raises(RuntimeError, match=error_msg):
+        await evaluator.run_and_get_successful_realizations()
+
+
+@pytest.fixture(params=["EnsembleEvaluatorAsync", "EnsembleEvaluator"])
+async def evaluator_to_use(request, make_ee_config):
+    ee_class = request.param
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
+    if ee_class == "EnsembleEvaluator":
+        ee = EnsembleEvaluator(
+            ensemble,
+            make_ee_config(),
+            0,
+        )
+        ee.start_running()
+        yield ee
+        ee.stop()
+    elif ee_class == "EnsembleEvaluatorAsync":
+        ee_async = EnsembleEvaluatorAsync(ensemble, make_ee_config(), 0)
+        run_task = asyncio.create_task(ee_async.run_and_get_successful_realizations())
+        await ee_async._server_started.wait()
+        yield ee_async
+        await ee_async._stop()
+        await run_task
 
 
 @pytest.mark.timeout(20)
-async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
-    evaluator.start_running()
+async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
+    evaluator = evaluator_to_use
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
@@ -24,7 +108,8 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
         # first snapshot before any event occurs
-        snapshot_event = await monitor._event_queue.get()
+        events = monitor.track()
+        snapshot_event = await events.__anext__()
         snapshot = Snapshot(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
@@ -106,8 +191,9 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator):
 
 
 @pytest.mark.timeout(20)
-async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
-    evaluator.start_running()
+async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
+    evaluator = evaluator_to_use
+
     token = evaluator._config.token
     cert = evaluator._config.cert
     url = evaluator._config.url
@@ -235,9 +321,10 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator):
 
 
 async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
-    evaluator,
+    evaluator_to_use,
 ):
-    evaluator.start_running()
+    evaluator = evaluator_to_use
+
     conn_info = evaluator._config.get_connection_info()
     async with Monitor(conn_info) as monitor:
         events = monitor.track()
@@ -333,8 +420,9 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 raise AssertionError(f"got unexpected event {event} from monitor2")
 
 
-async def test_ensure_multi_level_events_in_order(evaluator):
-    evaluator.start_running()
+async def test_ensure_multi_level_events_in_order(evaluator_to_use):
+    evaluator = evaluator_to_use
+
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
         events = monitor.track()

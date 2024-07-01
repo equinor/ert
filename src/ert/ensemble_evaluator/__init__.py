@@ -8,6 +8,7 @@ from ._ensemble import (
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
+from .evaluator_async import EnsembleEvaluatorAsync
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
 from .snapshot import (
@@ -22,6 +23,7 @@ __all__ = (
     "EndEvent",
     "Ensemble",
     "EnsembleEvaluator",
+    "EnsembleEvaluatorAsync",
     "EvaluatorServerConfig",
     "ForwardModelStep",
     "FullSnapshotEvent",

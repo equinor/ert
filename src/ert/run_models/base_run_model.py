@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import os
@@ -36,6 +37,7 @@ from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
+    EnsembleEvaluatorAsync,
     EvaluatorServerConfig,
     Monitor,
     Realization,
@@ -63,6 +65,7 @@ from ert.libres_facade import LibresFacade
 from ert.mode_definitions import MODULE_MODE
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
+from ert.shared.feature_toggling import FeatureScheduler
 from ert.storage import Ensemble, Storage
 from ert.workflow_runner import WorkflowRunner
 
@@ -509,7 +512,54 @@ class BaseRunModel:
 
         return True
 
+    async def run_ensemble_evaluator_async(
+        self, run_context: RunContext, ee_config: EvaluatorServerConfig
+    ) -> List[int]:
+        if not self._end_queue.empty():
+            event_logger.debug("Run model canceled - pre evaluation")
+            self._end_queue.get()
+            return []
+        ensemble = self._build_ensemble(run_context)
+        evaluator = EnsembleEvaluatorAsync(
+            ensemble,
+            ee_config,
+            run_context.iteration,
+        )
+        evaluator_task = asyncio.create_task(
+            evaluator.run_and_get_successful_realizations()
+        )
+        if not (await self.run_monitor(ee_config)):
+            return []
+
+        event_logger.debug(
+            "observed that model was finished, waiting tasks completion..."
+        )
+        # The model has finished, we indicate this by sending a DONE
+        event_logger.debug("tasks complete")
+
+        if not self._end_queue.empty():
+            event_logger.debug("Run model canceled - post evaluation")
+            self._end_queue.get()
+            return []
+        await evaluator_task
+        run_context.ensemble.unify_parameters()
+        run_context.ensemble.unify_responses()
+        return evaluator_task.result()
+
     def run_ensemble_evaluator(
+        self, run_context: RunContext, ee_config: EvaluatorServerConfig
+    ) -> List[int]:
+        if FeatureScheduler.is_enabled(self.queue_system):
+            successful_realizations = asyncio.run(
+                self.run_ensemble_evaluator_async(run_context, ee_config)
+            )
+        else:
+            successful_realizations = self.run_ensemble_evaluator_sync(
+                run_context, ee_config
+            )
+        return successful_realizations
+
+    def run_ensemble_evaluator_sync(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> List[int]:
         if not self._end_queue.empty():
