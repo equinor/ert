@@ -58,6 +58,42 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     assert np.allclose(posterior_sample, prior_sample)
 
 
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+def test_that_adaptive_localization_works_with_a_single_observation():
+    """This is a regression test as ert would crash if adaptive localization
+    was run with a single observation.
+    """
+    set_adaptive_localization_0 = dedent(
+        """
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
+        """
+    )
+
+    with open("poly.ert", "r+", encoding="utf-8") as f:
+        lines = f.readlines()
+        lines.insert(9, set_adaptive_localization_0)
+
+    content = """GENERAL_OBSERVATION POLY_OBS {
+        DATA       = POLY_RES;
+        INDEX_LIST = 0;
+        OBS_FILE   = poly_obs_data.txt;
+    };"""
+
+    with open("observations", "w") as file:
+        file.write(content)
+
+    content = "2.1457049781272213 0.6"
+
+    with open("poly_obs_data.txt", "w") as file:
+        file.write(content)
+
+    with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+
+
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
