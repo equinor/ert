@@ -204,8 +204,7 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_realization_memory(pytestconfig, job_name):
     if not pytestconfig.getoption("lsf"):
-        # Mocked LSF driver does not provide bhist.
-        return
+        pytest.skip("Mocked LSF driver does not provide bhist")
 
     realization_memory_bytes = 1024 * 1024
     driver = LsfDriver()

@@ -47,7 +47,8 @@ class Driver(ABC):
           cwd: Working directory.
           name: Name of job as submitted to compute cluster
           num_cpu: Number of CPU-cores to allocate
-          realization_memory: Memory to reserve, in bytes. 0 means no allocation.
+          realization_memory: Memory to book, in bytes. 0 means no booking. This should
+            be regareded as a hint to the queue system, not absolute limits.
         """
 
     @abstractmethod
