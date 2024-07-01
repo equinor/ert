@@ -38,27 +38,25 @@ class RealListModel(QAbstractProxyModel):
 
     def _disconnect(self) -> None:
         source_model = self.sourceModel()
-        if source_model is None:
-            return
-        source_model.dataChanged.disconnect(self._source_data_changed)
-        source_model.rowsAboutToBeInserted.disconnect(
-            self._source_rows_about_to_be_inserted
-        )
-        source_model.rowsInserted.disconnect(self._source_rows_inserted)
-        source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
-        source_model.modelReset.disconnect(self.modelReset)
+        if source_model:
+            source_model.dataChanged.disconnect(self._source_data_changed)
+            source_model.rowsAboutToBeInserted.disconnect(
+                self._source_rows_about_to_be_inserted
+            )
+            source_model.rowsInserted.disconnect(self._source_rows_inserted)
+            source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
+            source_model.modelReset.disconnect(self.modelReset)
 
     def _connect(self) -> None:
         source_model = self.sourceModel()
-        if source_model is None:
-            return
-        source_model.dataChanged.connect(self._source_data_changed)
-        source_model.rowsAboutToBeInserted.connect(
-            self._source_rows_about_to_be_inserted
-        )
-        source_model.rowsInserted.connect(self._source_rows_inserted)
-        source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
-        source_model.modelReset.connect(self.modelReset)
+        if source_model:
+            source_model.dataChanged.connect(self._source_data_changed)
+            source_model.rowsAboutToBeInserted.connect(
+                self._source_rows_about_to_be_inserted
+            )
+            source_model.rowsInserted.connect(self._source_rows_inserted)
+            source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
+            source_model.modelReset.connect(self.modelReset)
 
     @override
     def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
