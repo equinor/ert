@@ -6,6 +6,9 @@ on:
       python-version:
         type: string
 
+env:
+  UV_SYSTEM_PYTHON: 1
+
 jobs:
   test-ert-on-slurm:
     name: Run ert tests
@@ -19,14 +22,13 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
-        cache: "pip"
-        cache-dependency-path: |
-          setup.py
-          pyproject.toml
+
+    - name: Install uv
+      run: pip install uv
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        uv pip install ".[dev]"
 
     - name: Install and setup slurm
       run: |
