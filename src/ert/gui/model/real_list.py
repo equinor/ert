@@ -126,15 +126,12 @@ class RealListModel(QAbstractProxyModel):
                 return sm.index(proxyIndex.row(), proxyIndex.column(), iter_index)
         return QModelIndex()
 
-    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
-        if not sourceIndex.isValid():
-            return QModelIndex()
-        source_node = sourceIndex.internalPointer()
-        if source_node is None:
-            return QModelIndex()
-        if not self._accept_index(sourceIndex):
-            return QModelIndex()
-        return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+        return (
+            self.index(src_index.row(), src_index.column(), QModelIndex())
+            if src_index.isValid() and self._accept_index(src_index)
+            else QModelIndex()
+        )
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
