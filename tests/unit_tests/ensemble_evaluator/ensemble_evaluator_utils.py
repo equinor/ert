@@ -138,7 +138,7 @@ class TestEnsemble(Ensemble):
                 extra_attrs["datacontenttype"] = self.result_datacontenttype
             await send_dispatch_event(
                 dispatch,
-                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+                identifiers.EVTYPE_ENSEMBLE_SUCCEEDED,
                 f"/ert/ensemble/{self.id_}",
                 f"event-{event_id}",
                 data,
