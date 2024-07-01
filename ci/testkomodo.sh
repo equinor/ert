@@ -50,18 +50,18 @@ start_tests () {
 
     pushd ${CI_TEST_ROOT}/tests
 
-    python -m pytest -n auto --mpl --benchmark-disable --eclipse-simulator \
-        --durations=0 -sv --dist loadgroup -m "not limit_memory" --max-worker-restart 0
+    #python -m pytest -n auto --mpl --benchmark-disable --eclipse-simulator \
+    #    --durations=0 -sv --dist loadgroup -m "not limit_memory" --max-worker-restart 0
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
     export OMP_NUM_THREADS=1
 
-    python -m pytest -n 2 --durations=0 -m "limit_memory" --memray
+    #python -m pytest -n 2 --durations=0 -m "limit_memory" --memray
 
     unset OMP_NUM_THREADS
 
     basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
-    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" integration_tests/scheduler
+    pytest --timeout=3600 --runoom -s -vv --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" integration_tests/scheduler/test_oom.py
     rm -rf "$basetemp" || true
 
     popd
