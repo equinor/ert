@@ -139,15 +139,12 @@ class RealListModel(QAbstractProxyModel):
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
     ) -> None:
-        if top_left.internalPointer() is None:
-            return
-        if not top_left.data(IsRealizationRole):
-            return
-        proxy_top_left = self.mapFromSource(top_left)
-        proxy_bottom_right = self.mapFromSource(bottom_right)
-        if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
-            return
-        self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
+        if top_left.internalPointer() and top_left.data(IsRealizationRole):
+            proxy_top_left = self.mapFromSource(top_left)
+            proxy_bottom_right = self.mapFromSource(bottom_right)
+
+            if all([proxy_top_left.isValid(), proxy_bottom_right.isValid()]):
+                self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _source_rows_about_to_be_inserted(
         self, parent: QModelIndex, start: int, end: int
