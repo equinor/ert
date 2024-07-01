@@ -174,16 +174,13 @@ class RealListModel(QAbstractProxyModel):
         self.endInsertRows()
 
     def _accept_index(self, index: QModelIndex) -> bool:
-        if index.internalPointer() is None:
-            return False
         # If the index under test isn't a realization, it is of no interest as
         # this model should only consist of realization indices.
-        if not index.data(IsRealizationRole):
+        if not index.internalPointer() or not index.data(IsRealizationRole):
             return False
 
-        # traverse upwards the tree, checking whether this index is accepted or
-        # not.
-        while index.isValid() and index.internalPointer() is not None:
+        # traverse upwards the tree, checking whether this index is accepted or not
+        while index.isValid() and index.internalPointer():
             if index.data(IsEnsembleRole) and index.row() != self._iter:
                 return False
             index = index.parent()
