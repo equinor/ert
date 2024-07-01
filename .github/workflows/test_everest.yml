@@ -7,6 +7,9 @@ name: Test everest
 
 on: [pull_request]
 
+env:
+  UV_SYSTEM_PYTHON: 1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -17,7 +20,9 @@ jobs:
     timeout-minutes: 40
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
+      matrix:
+        python-version: ['3.12']
     steps:
     - uses: actions/checkout@v4
       with:
@@ -26,16 +31,19 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      run: pip install uv
 
     - name: Install ert
       run: |
-        pip install .
+        uv pip install .
 
     - name: Install everest and dependencies
       run: |
         git clone https://github.com/equinor/everest.git
-        pip install git+https://github.com/equinor/everest-models.git
+        uv pip install git+https://github.com/equinor/everest-models.git
 
     - name: Test everest
       env:
@@ -43,6 +51,7 @@ jobs:
         NO_PROJECT_RES: 1
       run: |
         pushd everest
-        pip install ".[test]"
+        uv pip install ".[test]"
+
         pytest tests -n 4 --dist loadgroup -m "not ui_test"
         pytest tests -m "ui_test"

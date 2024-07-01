@@ -11,6 +11,7 @@ on:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
+  UV_SYSTEM_PYTHON: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -114,13 +115,13 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ matrix.python-version }}
-        cache: "pip"
-        cache-dependency-path: |
-          pyproject.toml
+
+    - name: Install uv
+      run: pip install uv
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        uv pip install ".[dev]"
 
     - name: Make test directory
       run: |
