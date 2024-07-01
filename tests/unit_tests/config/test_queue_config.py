@@ -147,7 +147,9 @@ def test_conflicting_realization_slurm_memory():
         f.write("QUEUE_SYSTEM SLURM\n")
         f.write("QUEUE_OPTION SLURM MEMORY 20m\n")
 
-    with pytest.raises(ConfigValidationError):
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
         ErtConfig.from_file(filename)
 
 
@@ -171,7 +173,9 @@ def test_conflicting_realization_openpbs_memory_per_job():
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20m\n")
 
-    with pytest.raises(ConfigValidationError):
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
         ErtConfig.from_file(filename)
 
 
@@ -197,7 +201,9 @@ def test_that_invalid_memory_pr_job_raises_validation_error(
         f.write("NUM_REALIZATIONS 1\n")
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {torque_memory_with_unit_str}")
-    with pytest.raises(ConfigValidationError):
+    with pytest.raises(ConfigValidationError), pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
         ErtConfig.from_file(filename)
 
 
@@ -274,7 +280,11 @@ def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_
         f.write(f"QUEUE_OPTION {queue_system} {queue_option} {queue_value}\n")
 
     with pytest.raises(ConfigValidationError, match=err_msg):
-        ErtConfig.from_file(filename)
+        if queue_system == "TORQUE":
+            with pytest.warns(ConfigWarning, match="deprecated"):
+                ErtConfig.from_file(filename)
+        else:
+            ErtConfig.from_file(filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -322,7 +332,8 @@ def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
         f.write("QUEUE_SYSTEM SLURM\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
 
-    ErtConfig.from_file(filename)
+    with pytest.warns(ConfigWarning, match="deprecated"):
+        ErtConfig.from_file(filename)
 
 
 @pytest.mark.parametrize(
@@ -338,7 +349,8 @@ def test_that_torque_queue_mem_options_are_corrected(mem_per_job):
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
 
     with pytest.raises(ConfigValidationError) as e:
-        ert_config = ErtConfig.from_file(filename)
+        with pytest.warns(ConfigWarning, match="deprecated"):
+            ert_config = ErtConfig.from_file(filename)
         torque_opts = ert_config.queue_config.queue_options[QueueSystem.TORQUE]
         assert torque_opts[0][1] == mem_per_job
 
