@@ -9,7 +9,8 @@ from typing import Callable, Collection, Dict, List, Tuple
 from cloudevents.http import CloudEvent
 
 from _ert.threading import ErtThread
-from ert.ensemble_evaluator import identifiers
+
+from .identifiers import EVTYPE_ENSEMBLE_FAILED
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ class BatchingDispatcher:
 
         # call any registered handlers for FAILED. since we don't have
         # an event, pass empty list and let handler decide how to proceed
-        failure_func = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
+        failure_func = self._LOOKUP_MAP[EVTYPE_ENSEMBLE_FAILED]
         failure_func([])
 
         logger.debug("Dispatcher thread exiting.")

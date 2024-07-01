@@ -6,7 +6,6 @@ import pytest
 from tests.integration_tests.run_cli import run_cli
 
 
-@pytest.mark.usefixtures("using_scheduler")
 @pytest.mark.integration_test
 def test_shell_scripts_integration(tmpdir):
     """

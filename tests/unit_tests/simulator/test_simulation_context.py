@@ -1,11 +1,8 @@
-import pytest
-
 from ert import JobStatus
 from ert.simulator import BatchContext
 from tests.utils import wait_until
 
 
-@pytest.mark.usefixtures("using_scheduler")
 def test_simulation_context(setup_case, storage):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
 

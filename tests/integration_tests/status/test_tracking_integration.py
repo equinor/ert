@@ -32,7 +32,6 @@ from ert.mode_definitions import (
     TEST_RUN_MODE,
 )
 from ert.run_models.model_factory import create_model
-from ert.shared.feature_toggling import FeatureScheduler
 
 
 class Events:
@@ -62,7 +61,7 @@ def check_expression(original, path_expression, expected, msg_start):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
@@ -247,7 +246,7 @@ def test_tracking(
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     ("mode, cmd_line_arguments"),
     [
@@ -333,7 +332,6 @@ def run_sim(start_date):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("using_scheduler")
 def test_tracking_missing_ecl(tmpdir, caplog, storage):
     with tmpdir.as_cwd():
         config = dedent(
@@ -409,13 +407,12 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE"
         ) in failures[0].failed_msg
-        if FeatureScheduler._value:
-            case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
-            assert (
-                f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
-                f"file {case}.SMSPEC not created by forward model!"
-            ) in caplog.messages
-            assert (
-                f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
-                f"file {case}.SMSPEC not created by forward model!"
-            ) in failures[0].failed_msg
+        case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
+        assert (
+            f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
+            f"file {case}.SMSPEC not created by forward model!"
+        ) in caplog.messages
+        assert (
+            f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
+            f"file {case}.SMSPEC not created by forward model!"
+        ) in failures[0].failed_msg

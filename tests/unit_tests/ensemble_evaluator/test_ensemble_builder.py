@@ -7,7 +7,6 @@ from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
 
 
 @pytest.mark.parametrize("active_real", [True, False])
-@pytest.mark.usefixtures("using_scheduler")
 def test_build_ensemble(active_real):
     ensemble = LegacyEnsemble(
         [

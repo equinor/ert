@@ -16,7 +16,14 @@ from lxml import etree
 
 from ert.callbacks import forward_model_ok
 from ert.constant_filenames import ERROR_file
-from ert.job_queue.queue import _queue_state_event_type
+from ert.event_type_constants import (
+    EVTYPE_REALIZATION_FAILURE,
+    EVTYPE_REALIZATION_PENDING,
+    EVTYPE_REALIZATION_RUNNING,
+    EVTYPE_REALIZATION_SUCCESS,
+    EVTYPE_REALIZATION_UNKNOWN,
+    EVTYPE_REALIZATION_WAITING,
+)
 from ert.load_status import LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -53,6 +60,23 @@ STATE_TO_LEGACY = {
     State.COMPLETED: "SUCCESS",
     State.FAILED: "FAILED",
     State.ABORTED: "IS_KILLED",
+}
+
+_queue_state_event_type = {
+    "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
+    "WAITING": EVTYPE_REALIZATION_WAITING,
+    "SUBMITTED": EVTYPE_REALIZATION_WAITING,
+    "PENDING": EVTYPE_REALIZATION_PENDING,
+    "RUNNING": EVTYPE_REALIZATION_RUNNING,
+    "DONE": EVTYPE_REALIZATION_RUNNING,
+    "EXIT": EVTYPE_REALIZATION_RUNNING,
+    "IS_KILLED": EVTYPE_REALIZATION_FAILURE,
+    "DO_KILL": EVTYPE_REALIZATION_FAILURE,
+    "SUCCESS": EVTYPE_REALIZATION_SUCCESS,
+    "STATUS_FAILURE": EVTYPE_REALIZATION_UNKNOWN,
+    "FAILED": EVTYPE_REALIZATION_FAILURE,
+    "DO_KILL_NODE_FAILURE": EVTYPE_REALIZATION_FAILURE,
+    "UNKNOWN": EVTYPE_REALIZATION_UNKNOWN,
 }
 
 
@@ -274,7 +298,7 @@ class Job:
         status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {
-                "type": _queue_state_event_type(status),
+                "type": _queue_state_event_type[status],
                 "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
                 "datacontenttype": "application/json",
             },

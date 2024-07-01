@@ -372,7 +372,7 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
 
 
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, storage):
     """
     This is a regression test for a crash happening when
@@ -537,7 +537,7 @@ def test_run_dialog_memory_usage_showing(
     assert max_memory_value == "60.00 kB"
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config", "using_scheduler")
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
     """
     This is a regression test for a crash happening when clicking show details

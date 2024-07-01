@@ -13,12 +13,12 @@ from .config import (
     ForwardModelStepDocumentation,
 )
 from .data import MeasuredData
-from .job_queue import JobStatus
 from .libres_facade import LibresFacade
 from .simulator import BatchSimulator, BatchContext
 from .workflow_runner import WorkflowRunner
 from .shared.plugins.plugin_manager import hook_implementation
 from .shared.plugins.plugin_response import plugin_response
+from .scheduler import JobStatus
 
 __all__ = [
     "MeasuredData",
@@ -34,4 +34,5 @@ __all__ = [
     "WorkflowRunner",
     "hook_implementation",
     "plugin_response",
+    "WorkflowRunner",
 ]
