@@ -155,11 +155,8 @@ class RealListModel(QAbstractProxyModel):
     def _source_rows_inserted(
         self, parent: QModelIndex, _start: int, _end: int
     ) -> None:
-        if not parent.isValid():
-            return
-        if not self._accept_index(parent):
-            return
-        self.endInsertRows()
+        if parent.isValid() and self._accept_index(parent):
+            self.endInsertRows()
 
     def _accept_index(self, index: QModelIndex) -> bool:
         # If the index under test isn't a realization, it is of no interest as
