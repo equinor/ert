@@ -423,7 +423,7 @@ class RunDialog(QDialog):
             self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
+                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
             self.update_total_progress(event.progress, event.phase_name)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
@@ -431,7 +431,7 @@ class RunDialog(QDialog):
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
-                    event.partial_snapshot, event.iteration
+                    event.partial_snapshot, str(event.iteration)
                 )
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count

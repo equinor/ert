@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
+from typing import Any, Dict, Final, List, Optional, Sequence, Union, cast, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -23,21 +23,22 @@ from ert.shared.status.utils import byte_with_unit
 
 logger = logging.getLogger(__name__)
 
-NodeRole = Qt.UserRole + 1
-RealJobColorHint = Qt.UserRole + 2
-RealStatusColorHint = Qt.UserRole + 3
-RealLabelHint = Qt.UserRole + 4
-ProgressRole = Qt.UserRole + 5
-FileRole = Qt.UserRole + 6
-RealIens = Qt.UserRole + 7
-IterNum = Qt.UserRole + 12
-MemoryUsageRole = Qt.UserRole + 13
+UserRole = Qt.ItemDataRole.UserRole
+NodeRole = UserRole + 1
+RealJobColorHint = UserRole + 2
+RealStatusColorHint = UserRole + 3
+RealLabelHint = UserRole + 4
+ProgressRole = UserRole + 5
+FileRole = UserRole + 6
+RealIens = UserRole + 7
+IterNum = UserRole + 12
+MemoryUsageRole = UserRole + 13
 
 # Indicates what type the underlying data is
-IsEnsembleRole = Qt.UserRole + 8
-IsRealizationRole = Qt.UserRole + 9
-IsJobRole = Qt.UserRole + 10
-StatusRole = Qt.UserRole + 11
+IsEnsembleRole = UserRole + 8
+IsRealizationRole = UserRole + 9
+IsJobRole = UserRole + 10
+StatusRole = UserRole + 11
 
 DURATION = "Duration"
 
@@ -77,7 +78,7 @@ def _estimate_duration(
 class SnapshotModel(QAbstractItemModel):
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
-        self.root: RootNode = RootNode(0)
+        self.root: RootNode = RootNode("0")
 
     @staticmethod
     def prerender(
@@ -97,7 +98,7 @@ class SnapshotModel(QAbstractItemModel):
             # A mapping from real to job to that job's QColor status representation
             aggr_job_status_colors=defaultdict(dict),
             # A mapping from real to that real's QColor status representation
-            real_status_colors=defaultdict(dict),
+            real_status_colors={},
         )
 
         for real_id, real in reals.items():
@@ -141,12 +142,13 @@ class SnapshotModel(QAbstractItemModel):
             metadata["aggr_job_status_colors"][real_id][forward_model_id] = color
 
         if isSnapshot:
+            snapshot = cast(Snapshot, snapshot)
             snapshot.merge_metadata(metadata)
         elif isinstance(snapshot, PartialSnapshot):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int) -> None:
+    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: str) -> None:
         metadata = partial.metadata
         if not metadata:
             logger.debug("no metadata in partial, ignoring partial")
@@ -238,7 +240,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
+    def _add_snapshot(self, snapshot: Snapshot, iter_: str) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             id_=iter_,
@@ -246,22 +248,26 @@ class SnapshotModel(QAbstractItemModel):
                 status=snapshot.status,
             ),
         )
-        for real_id in metadata["sorted_real_ids"]:
+        for real_id in metadata.get("sorted_real_ids", {}):
             real = snapshot.get_real(real_id)
             real_node = RealNode(
-                real_id,
+                id_=real_id,
                 data=RealNodeData(
                     status=real.status,
                     active=real.active,
-                    forward_model_step_status_color_by_id=metadata[
-                        "aggr_job_status_colors"
-                    ][real_id],
-                    real_status_color=metadata["real_status_colors"][real_id],
+                    forward_model_step_status_color_by_id=metadata.get(
+                        "aggr_job_status_colors", defaultdict(None)
+                    )[real_id],
+                    real_status_color=metadata.get(
+                        "real_status_colors", defaultdict(None)
+                    )[real_id],
                 ),
             )
             snapshot_tree.add_child(real_node)
 
-            for forward_model_id in metadata["sorted_forward_model_ids"][real_id]:
+            for forward_model_id in metadata.get(
+                "sorted_forward_model_ids", defaultdict(None)
+            )[real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
@@ -287,7 +293,7 @@ class SnapshotModel(QAbstractItemModel):
             return JOB_COLUMN_SIZE
         return 1
 
-    def rowCount(self, parent: Optional[QModelIndex] = None):
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -313,18 +319,14 @@ class SnapshotModel(QAbstractItemModel):
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     @override
-    def data(
-        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return QVariant()
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
 
-        node: Union[RootNode, IterNode, RealNode, ForwardModelStepNode] = (
-            index.internalPointer()
-        )
+        node: Union[IterNode, RealNode, ForwardModelStepNode] = index.internalPointer()
         if role == NodeRole:
             return node
 
@@ -369,7 +371,7 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     @staticmethod
-    def _real_data(_index: QModelIndex, node: RealNode, role: int):
+    def _real_data(_: QModelIndex, node: RealNode, role: int) -> Any:
         if role == RealJobColorHint:
             total_count = len(node.data.forward_model_step_status_color_by_id)
             finished_count = sum(
@@ -385,7 +387,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealIens:
             return node.id_
         if role == IterNum:
-            return node.parent.id_
+            return node.parent.id_ if node.parent else None
         if role == RealStatusColorHint:
             return node.data.real_status_color
         if role == StatusRole:
@@ -399,8 +401,10 @@ class SnapshotModel(QAbstractItemModel):
 
     @staticmethod
     def _job_data(
-        index: QModelIndex, node: ForwardModelStepNode, role: Qt.ItemDataRole
-    ):
+        index: QModelIndex,
+        node: ForwardModelStepNode,
+        role: int,  # Qt.ItemDataRole
+    ) -> Any:
         node_id = str(node.id_)
 
         if role == Qt.ItemDataRole.FontRole:
@@ -416,13 +420,17 @@ class SnapshotModel(QAbstractItemModel):
                 return QColor(Qt.GlobalColor.blue)
 
         if role == Qt.ItemDataRole.BackgroundRole:
-            return node.parent.data.forward_model_step_status_color_by_id[node_id]
+            return (
+                node.parent.data.forward_model_step_status_color_by_id[node_id]
+                if node.parent
+                else None
+            )
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: Optional[str] = data.get(data_name)
+                _bytes: Optional[str] = data.get(data_name)  # type: ignore
                 if _bytes:
                     return byte_with_unit(float(_bytes))
 
@@ -448,25 +456,27 @@ class SnapshotModel(QAbstractItemModel):
                 return node.data.get(data_name, QVariant())
 
         if role == RealIens:
-            return node.parent.id_
+            return node.parent.id_ if node.parent else None
 
         if role == IterNum:
-            return node.parent.parent.id_
+            return (
+                node.parent.parent.id_ if node.parent and node.parent.parent else None
+            )
 
         if role == Qt.ItemDataRole.ToolTipRole:
             data_name = JOB_COLUMNS[index.column()]
-            data = None
+            tt_text = None
             if data_name == ids.ERROR:
-                data = node.data.get(ids.ERROR)
+                tt_text = node.data.get(ids.ERROR)
             elif data_name == DURATION:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is not None:
                     delta = _estimate_duration(
                         start_time, end_time=node.data.get(ids.END_TIME)
                     )
-                    data = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
-            if data is not None:
-                return str(data)
+                    tt_text = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
+            if tt_text is not None:
+                return str(tt_text)
 
         return QVariant()
 
@@ -489,5 +499,5 @@ class SnapshotModel(QAbstractItemModel):
 
     def reset(self) -> None:
         self.modelAboutToBeReset.emit()
-        self.root = RootNode(0)
+        self.root = RootNode("0")
         self.modelReset.emit()
