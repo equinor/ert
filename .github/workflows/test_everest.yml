@@ -28,14 +28,17 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
     - name: Install ert
       run: |
-        pip install .
+        uv pip install --system .
 
     - name: Install everest and dependencies
       run: |
         git clone https://github.com/equinor/everest.git
-        pip install git+https://github.com/equinor/everest-models.git
+        uv pip install --system git+https://github.com/equinor/everest-models.git
 
     - name: Test everest
       env:
@@ -43,6 +46,6 @@ jobs:
         NO_PROJECT_RES: 1
       run: |
         pushd everest
-        pip install ".[test]"
+        uv pip install --system ".[test]"
         pytest tests -n 4 --dist loadgroup -m "not ui_test"
         pytest tests -m "ui_test"

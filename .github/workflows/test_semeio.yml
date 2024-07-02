@@ -28,9 +28,12 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
     - name: Install ert
       run: |
-        pip install .
+        uv pip install --system .
 
     - name: Get semeio
       run: |
@@ -39,5 +42,5 @@ jobs:
     - name: Test semeio
       run: |
         pushd semeio
-        pip install ".[test]"
+        uv pip install --system ".[test]"
         pytest
