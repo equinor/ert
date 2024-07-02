@@ -26,7 +26,6 @@ class _Node(ABC):
     def add_child(
         self,
         node: IterNode | RealNode | ForwardModelStepNode,
-        node_id: Optional[int] = None,
     ) -> None:
         pass
 
@@ -42,11 +41,9 @@ class RootNode(_Node):
     children: dict[int, IterNode] = field(default_factory=dict)
     max_memory_usage: Optional[int] = None
 
-    def add_child(self, node: IterNode, node_id: Optional[int] = None) -> None:
+    def add_child(self, node: IterNode) -> None:
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[node_id] = node
+        self.children[node.id_] = node
 
 
 @dataclass
@@ -61,16 +58,13 @@ class IterNode(_Node):
     data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
-    def add_child(self, node: RealNode, node_id: Optional[int] = None) -> None:
+    def add_child(self, node: RealNode) -> None:
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[str(node_id)] = node
+        self.children[str(node.id_)] = node
 
 
 @dataclass
 class RealNodeData:
-    index: Optional[str] = None
     status: Optional[str] = None
     active: Optional[bool] = False
     forward_model_step_status_color_by_id: dict[str, QColor] = field(
@@ -87,13 +81,9 @@ class RealNode(_Node):
     data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
-    def add_child(
-        self, node: ForwardModelStepNode, node_id: Optional[int] = None
-    ) -> None:
+    def add_child(self, node: ForwardModelStepNode) -> None:
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[str(node_id)] = node
+        self.children[str(node.id_)] = node
 
 
 @dataclass
@@ -101,5 +91,5 @@ class ForwardModelStepNode(_Node):
     parent: RealNode
     data: ForwardModel = field(default_factory=ForwardModel)
 
-    def add_child(self, *args, **kwargs):
+    def add_child(self, _):
         pass

@@ -245,7 +245,7 @@ class SnapshotModel(QAbstractItemModel):
     def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
-            iter_,
+            id_=iter_,
             data=IterNodeData(
                 status=snapshot.status,
             ),
@@ -282,7 +282,7 @@ class SnapshotModel(QAbstractItemModel):
         parent = QModelIndex()
         next_iter = len(self.root.children)
         self.beginInsertRows(parent, next_iter, next_iter)
-        self.root.add_child(snapshot_tree, node_id=iter_)
+        self.root.add_child(snapshot_tree)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     @override
