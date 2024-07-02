@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 import seaborn as sns
-import xarray as xr
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
@@ -106,9 +105,8 @@ class _ExperimentWidget(QWidget):
             json.dumps(experiment.parameter_info, indent=4)
         )
         html = "<table>"
-        for obs_name in experiment.observation_keys:
-            response, response_type = experiment.response_info_for_obs(obs_name)
-            html += f"<tr><td>{obs_name} on response key {response} (type: {response_type})</td></tr>"
+        for obs_name in experiment.observations:
+            html += f"<tr><td>{obs_name}</td></tr>"
         html += "</table>"
         self._observations_text_edit.setHtml(html)
 
@@ -182,24 +180,21 @@ class _EnsembleWidget(QWidget):
             return
 
         observation_label = selected.data(0, Qt.ItemDataRole.DisplayRole)
+        assert self._ensemble is not None
+        observations_dict = self._ensemble.experiment.observations
 
         self._figure.clear()
         ax = self._figure.add_subplot(111)
         ax.set_title(observation_name)
         ax.grid(True)
 
-        ensemble = self._ensemble
-        assert ensemble is not None
-        response_name, response_type = ensemble.experiment.response_info_for_obs(
-            observation_name
+        observation_ds = observations_dict[observation_name]
+
+        response_name = observation_ds.attrs["response"]
+        response_ds = self._ensemble.load_responses(
+            response_name,
+            tuple(self._ensemble.get_realization_list_with_responses()),
         )
-        observation_ds = ensemble.experiment.get_single_obs_ds(observation_name)
-        try:
-            response_ds = ensemble.load_responses(
-                response_name,
-            )
-        except KeyError:
-            response_ds = xr.Dataset()
 
         # check if the response is empty
         if bool(response_ds.dims):
@@ -251,9 +246,8 @@ class _EnsembleWidget(QWidget):
         if index == _EnsembleWidgetTabs.STATE_TAB:
             self._state_text_edit.clear()
             html = "<table>"
-            ensemble = self._ensemble
-            assert ensemble is not None
-            for state_index, value in enumerate(ensemble.get_ensemble_state()):
+            assert self._ensemble is not None
+            for state_index, value in enumerate(self._ensemble.get_ensemble_state()):
                 html += (
                     f"<tr><td width=30>{state_index:d}.</td><td>{value.name}</td></tr>"
                 )
@@ -265,34 +259,31 @@ class _EnsembleWidget(QWidget):
             self._figure.clear()
             self._canvas.draw()
 
-            ensemble = self._ensemble
-            assert ensemble is not None
-            exp = ensemble.experiment
-            for obs_name in exp.observation_keys:
-                response_name, response_type = exp.response_info_for_obs(obs_name)
-                obs_ds = exp.get_single_obs_ds(obs_name)
+            assert self._ensemble is not None
+            exp = self._ensemble.experiment
+            for obs_name, obs_ds in exp.observations.items():
+                response_name = obs_ds.attrs["response"]
+                if response_name == "summary":
+                    name = obs_ds.name.data[0]
+                else:
+                    name = response_name
 
                 match_list = self._observations_tree_widget.findItems(
-                    response_name, Qt.MatchFlag.MatchExactly
+                    name, Qt.MatchFlag.MatchExactly
                 )
                 if len(match_list) == 0:
-                    root = QTreeWidgetItem(
-                        self._observations_tree_widget, [response_name]
-                    )
+                    root = QTreeWidgetItem(self._observations_tree_widget, [name])
                 else:
                     root = match_list[0]
 
                 if "time" in obs_ds.coords:
-                    for t in obs_ds.dropna("time").time:
+                    for t in obs_ds.time:
                         QTreeWidgetItem(
                             root,
-                            [
-                                str(np.datetime_as_string(t.values, unit="D")),
-                                obs_name,
-                            ],
+                            [str(np.datetime_as_string(t.values, unit="D")), obs_name],
                         )
                 elif "index" in obs_ds.coords:
-                    for t in obs_ds.dropna("index").index:
+                    for t in obs_ds.index:
                         QTreeWidgetItem(root, [str(t.data), obs_name])
 
                 self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)

@@ -313,7 +313,7 @@ def migrate_case(storage: Storage, path: Path, stack: ExitStack) -> None:
     experiment = storage.create_experiment(
         parameters=parameter_configs,
         responses=response_configs,
-        observations=ert_config.observations.datasets,
+        observations=ert_config.observations,
     )
     ensemble = experiment.create_ensemble(
         name=path.name,
@@ -327,14 +327,10 @@ def migrate_case(storage: Storage, path: Path, stack: ExitStack) -> None:
         _migrate_gen_kw(ensemble, data_file, ens_config)
         _migrate_surface(ensemble, data_file, ens_config)
 
-    ensemble.unify_parameters()
-
     # Copy response data
     for data_file in response_files:
         _migrate_summary(ensemble, data_file, time_map)
         _migrate_gen_data(ensemble, data_file)
-
-    ensemble.unify_responses()
 
 
 def _backup(path: Path) -> Path:
@@ -410,8 +406,6 @@ def _migrate_surface(
             xr.DataArray(array, name="values").to_dataset(),
         )
 
-    ensemble.unify_parameters()
-
 
 def _migrate_field_info(
     data_file: DataFile,
@@ -450,8 +444,6 @@ def _migrate_field(
         )  # type: ignore
         ds = xr.Dataset({"values": (["x", "y", "z"], m_data)})
         ensemble.save_parameters(block.name, block.realization_index, ds)
-
-    ensemble.unify_parameters()
 
 
 def _migrate_summary_info(
@@ -500,8 +492,6 @@ def _migrate_summary(
             coords={"time": time_map[time_mask], "name": keys},
         )
         ensemble.save_response("summary", ds, realization_index)
-
-    ensemble.unify_responses("summary")
 
 
 def _migrate_gen_data_info(

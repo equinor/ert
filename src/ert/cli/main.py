@@ -56,7 +56,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     for fm_step in ert_config.forward_model_steps:
         logger.info("Config contains forward model step %s", fm_step.name)
 
-    if not ert_config.observation_keys and args.mode not in [
+    if not ert_config.observations and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,
