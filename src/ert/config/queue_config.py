@@ -67,6 +67,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
     QueueSystem.LSF: LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.SLURM: SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.TORQUE: OPENPBS_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.GENERAL: GENERIC_QUEUE_OPTIONS,
 }
 
 
@@ -90,12 +91,13 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
-        job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         submit_sleep: float = config_dict.get(ConfigKeys.SUBMIT_SLEEP, 0.0)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
+            if queue_system == "*":
+                queue_system = selected_queue_system
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
@@ -133,6 +135,9 @@ class QueueConfig:
                 config_dict.get("NUM_CPU", 1),
                 queue_options[selected_queue_system],
             )
+        queue_options[selected_queue_system] = _add_generic_queue_options(
+            config_dict, queue_options[selected_queue_system]
+        )
         return QueueConfig(
             job_script,
             max_submit,
@@ -206,6 +211,7 @@ queue_memory_options: Mapping[str, List[str]] = {
     "SLURM": ["MEMORY_PER_CPU", "MEMORY"],
     "TORQUE": ["MEMORY_PER_JOB"],
     "LOCAL": [],
+    "GENERAL": [],
 }
 
 
@@ -262,6 +268,7 @@ queue_string_options: Mapping[str, List[str]] = {
         "DEBUG_OUTPUT",
     ],
     "LOCAL": [],
+    "GENERAL": [],
 }
 
 queue_positive_int_options: Mapping[str, List[str]] = {
@@ -278,6 +285,7 @@ queue_positive_int_options: Mapping[str, List[str]] = {
         "MAX_RUNNING",
     ],
     "LOCAL": ["MAX_RUNNING"],
+    "GENERAL": ["MAX_RUNNING"],
 }
 
 queue_positive_number_options: Mapping[str, List[str]] = {
@@ -290,6 +298,7 @@ queue_positive_number_options: Mapping[str, List[str]] = {
     ],
     "TORQUE": ["SUBMIT_SLEEP", "QUEUE_QUERY_TIMEOUT"],
     "LOCAL": [],
+    "GENERAL": [],
 }
 
 queue_bool_options: Mapping[str, List[str]] = {
@@ -297,6 +306,7 @@ queue_bool_options: Mapping[str, List[str]] = {
     "SLURM": [],
     "TORQUE": ["KEEP_QSUB_OUTPUT"],
     "LOCAL": [],
+    "GENERAL": [],
 }
 
 
@@ -377,3 +387,12 @@ def _validate_queue_driver_settings(
                 option_value,
                 throw_error,
             )
+
+
+def _add_generic_queue_options(config_dict, queue_options):
+    options_dict = _option_list_to_dict(queue_options)
+    for generic_option in GENERIC_QUEUE_OPTIONS:
+        value = config_dict.get(generic_option)
+        if generic_option not in options_dict and value is not None:
+            queue_options.append((generic_option, value))
+    return queue_options

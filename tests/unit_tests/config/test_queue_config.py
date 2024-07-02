@@ -299,3 +299,18 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
         f.write(f"MAX_SUBMIT {max_submit_value}\n")
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file("file.ert")
+
+
+def test_global_queue_options(tmpdir):
+    with tmpdir.as_cwd():
+        config = """
+        QUEUE_SYSTEM LSF
+        QUEUE_OPTION * MAX_RUNNING 50
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        """
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+
+        ert_config = ErtConfig.from_file("config.ert")
+        assert ert_config.queue_config.max_running == 50
