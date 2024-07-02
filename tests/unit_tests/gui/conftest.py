@@ -28,6 +28,7 @@ from ert.ensemble_evaluator.snapshot import (
 )
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
+    FORWARD_MODEL_STATE_FINISHED,
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_RUNNING,
@@ -390,7 +391,7 @@ def fail_snapshot() -> Snapshot:
                 end_time=dt.now(),
                 name="poly_eval",
                 index="0",
-                status=FORWARD_MODEL_STATE_START,
+                status=FORWARD_MODEL_STATE_FINISHED,
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",

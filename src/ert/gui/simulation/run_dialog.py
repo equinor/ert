@@ -37,7 +37,13 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.snapshot import COLUMNS, FileRole, IterNum, RealIens, SnapshotModel
+from ert.gui.model.snapshot import (
+    JOB_COLUMNS,
+    FileRole,
+    IterNum,
+    RealIens,
+    SnapshotModel,
+)
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
@@ -53,7 +59,6 @@ from ert.shared.status.utils import byte_with_unit, format_running_time
 
 from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
-from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
 from .view import ProgressWidget, RealizationWidget, UpdateWidget
 
@@ -106,7 +111,7 @@ class JobOverview(QTableView):
                 self,
             )
         else:
-            if COLUMNS[NodeType.REAL][index.column()] == ids.ERROR and index.data():
+            if JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
                 error_dialog = QDialog(self)
                 error_dialog.setWindowTitle("Error information")
                 layout = QVBoxLayout(error_dialog)
@@ -128,7 +133,7 @@ class JobOverview(QTableView):
         if event:
             index = self.indexAt(event.pos())
             if index.isValid():
-                data_name = COLUMNS[NodeType.REAL][index.column()]
+                data_name = JOB_COLUMNS[index.column()]
                 if data_name in [ids.STDOUT, ids.STDERR]:
                     self.setCursor(Qt.CursorShape.PointingHandCursor)
                 else:
@@ -389,7 +394,7 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
-        maximum_memory_usage = self._snapshot_model.root.data.max_memory_usage
+        maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
         if maximum_memory_usage:
             self.memory_usage.setText(
@@ -404,7 +409,7 @@ class RunDialog(QDialog):
             self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
+                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
             self.update_total_progress(event.progress, event.phase_name)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
@@ -412,7 +417,7 @@ class RunDialog(QDialog):
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
-                    event.partial_snapshot, event.iteration
+                    event.partial_snapshot, str(event.iteration)
                 )
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
