@@ -11,10 +11,10 @@ from ert.ensemble_evaluator.snapshot import ForwardModel
 
 @dataclass
 class _Node(ABC):
-    id_: int
+    id_: str
     parent: Optional[RootNode | IterNode | RealNode] = None
     children: (
-        dict[int, IterNode] | dict[int, RealNode] | dict[int, ForwardModelStepNode]
+        dict[str, IterNode] | dict[str, RealNode] | dict[str, ForwardModelStepNode]
     ) = field(default_factory=dict)
 
     def __repr__(self) -> str:
@@ -35,7 +35,7 @@ class _Node(ABC):
 @dataclass
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
-    children: dict[int, IterNode] = field(default_factory=dict)
+    children: dict[str, IterNode] = field(default_factory=dict)
     max_memory_usage: Optional[int] = None
 
     def add_child(self, node: _Node) -> None:
@@ -52,9 +52,9 @@ class IterNodeData:
 
 @dataclass
 class IterNode(_Node):
-    parent: RootNode
+    parent: Optional[RootNode] = None
     data: IterNodeData = field(default_factory=IterNodeData)
-    children: dict[int, RealNode] = field(default_factory=dict)
+    children: dict[str, RealNode] = field(default_factory=dict)
 
     def add_child(self, node: _Node) -> None:
         node = cast(RealNode, node)
@@ -76,9 +76,9 @@ class RealNodeData:
 
 @dataclass
 class RealNode(_Node):
-    parent: IterNode
+    parent: Optional[IterNode] = None
     data: RealNodeData = field(default_factory=RealNodeData)
-    children: dict[int, ForwardModelStepNode] = field(default_factory=dict)
+    children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
     def add_child(self, node: _Node) -> None:
         node = cast(ForwardModelStepNode, node)
@@ -88,7 +88,7 @@ class RealNode(_Node):
 
 @dataclass
 class ForwardModelStepNode(_Node):
-    parent: RealNode
+    parent: Optional[RealNode]
     data: ForwardModel = field(default_factory=lambda: ForwardModel())
 
     def add_child(self, _: _Node) -> None:

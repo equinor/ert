@@ -81,7 +81,7 @@ def _estimate_duration(
 class SnapshotModel(QAbstractItemModel):
     def __init__(self, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
-        self.root: RootNode = RootNode(0)
+        self.root: RootNode = RootNode("0")
 
     @staticmethod
     def prerender(
@@ -150,7 +150,7 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int) -> None:
+    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: str) -> None:
         metadata = partial.metadata
         if not metadata:
             logger.debug("no metadata in partial, ignoring partial")
@@ -242,7 +242,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
+    def _add_snapshot(self, snapshot: Snapshot, iter_: str) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             id_=iter_,
@@ -493,5 +493,5 @@ class SnapshotModel(QAbstractItemModel):
 
     def reset(self) -> None:
         self.modelAboutToBeReset.emit()
-        self.root = RootNode(0)
+        self.root = RootNode("0")
         self.modelReset.emit()
