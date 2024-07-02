@@ -102,6 +102,7 @@ def test_supported_memory_units_to_realization_memory(
     assert ErtConfig.from_file(filename).queue_config.realization_memory > 0
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "memory_spec, expected_bytes",
     [
@@ -212,7 +213,7 @@ def test_that_invalid_memory_pr_job_raises_validation_error(
     "queue_system, queue_system_option",
     [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
 )
-def test_that_overwriting_QUEUE_OPTIONS_warns(
+def test_that_overwriting_queue_options_warns(
     tmp_path, monkeypatch, queue_system, queue_system_option, caplog
 ):
     filename = "config.ert"

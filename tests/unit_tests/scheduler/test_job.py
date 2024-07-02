@@ -189,7 +189,8 @@ async def test_num_cpu_is_propagated_to_driver(realization: Realization):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.asyncio
 async def test_realization_memory_is_propagated_to_driver(realization: Realization):
-    realization.realization_memory = 8 * 1024**2
+    eight_megabytes: int = 8 * 1024**2
+    realization.realization_memory = eight_megabytes
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
     job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
@@ -201,7 +202,7 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
         realization.job_script,
         realization.run_arg.runpath,
         num_cpu=1,
-        realization_memory=8 * 1024**2,
+        realization_memory=eight_megabytes,
         name=realization.run_arg.job_name,
         runpath=Path(realization.run_arg.runpath),
     )
