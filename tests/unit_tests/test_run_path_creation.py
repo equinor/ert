@@ -498,7 +498,6 @@ def _create_runpath(ert_config: ErtConfig, storage: Storage) -> None:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
-    iteration = 0
     ensemble = storage.create_ensemble(
         storage.create_experiment(),
         name="prior",
