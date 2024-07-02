@@ -13,6 +13,7 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.snapshot import (
+    JOB_COLUMN_SIZE,
     JOB_COLUMNS,
     IsEnsembleRole,
     IsJobRole,
@@ -102,7 +103,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
-        return len(JOB_COLUMNS)
+        return JOB_COLUMN_SIZE
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:

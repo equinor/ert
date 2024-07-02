@@ -287,12 +287,9 @@ class SnapshotModel(QAbstractItemModel):
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
-        count = 1
-        if parent is None:
-            parent = QModelIndex()
-        if isinstance(parent.internalPointer(), RealNode):
+        if parent and isinstance(parent.internalPointer(), RealNode):
             return JOB_COLUMN_SIZE
-        return count
+        return 1
 
     def rowCount(self, parent: Optional[QModelIndex] = None):
         if parent is None:
