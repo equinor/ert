@@ -8,17 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 
-import numpy as np
 from numpy.random import SeedSequence
 
 from .config import ParameterConfig
-from .run_context import RunContext
+from .run_arg import RunArg
 from .runpaths import Runpaths
-from .substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from .config import ErtConfig
     from .storage import Ensemble
 
@@ -157,21 +153,21 @@ def sample_prior(
 
 
 def create_run_path(
-    run_context: RunContext,
+    run_args: List[RunArg],
+    ensemble: Ensemble,
     ert_config: ErtConfig,
+    runpaths: Runpaths,
 ) -> None:
     t = time.perf_counter()
     substitution_list = ert_config.substitution_list
-    substitution_list["<ERT-CASE>"] = run_context.ensemble.name
-    substitution_list["<ERTCASE>"] = run_context.ensemble.name
-    for iens, run_arg in enumerate(run_context):
+    runpaths.set_ert_ensemble(ensemble.name)
+    for run_arg in run_args:
         run_path = Path(run_arg.runpath)
-        if run_context.is_active(iens):
+        if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
-
             for source_file, target_file in ert_config.ert_templates:
                 target_file = substitution_list.substitute_real_iter(
-                    target_file, run_arg.iens, run_context.iteration
+                    target_file, run_arg.iens, ensemble.iteration
                 )
                 try:
                     file_content = Path(source_file).read_text("utf-8")
@@ -183,7 +179,7 @@ def create_run_path(
                 result = substitution_list.substitute_real_iter(
                     file_content,
                     run_arg.iens,
-                    run_context.iteration,
+                    ensemble.iteration,
                 )
                 target = run_path / target_file
                 if not target.parent.exists():
@@ -195,12 +191,12 @@ def create_run_path(
 
             model_config = ert_config.model_config
             _generate_parameter_files(
-                run_context.ensemble.experiment.parameter_configuration.values(),
+                ensemble.experiment.parameter_configuration.values(),
                 model_config.gen_kw_export_name,
                 run_path,
                 run_arg.iens,
-                run_context.ensemble,
-                run_context.iteration,
+                ensemble,
+                ensemble.iteration,
             )
 
             path = run_path / "jobs.json"
@@ -209,7 +205,7 @@ def create_run_path(
                 forward_model_output = ert_config.forward_model_data_to_json(
                     run_arg.run_id,
                     run_arg.iens,
-                    run_context.iteration,
+                    ensemble.iteration,
                 )
 
                 json.dump(forward_model_output, fptr)
@@ -218,36 +214,8 @@ def create_run_path(
                 data = ert_config.manifest_to_json(run_arg.iens, run_arg.itr)
                 json.dump(data, fptr)
 
-    run_context.runpaths.write_runpath_list(
-        [run_context.iteration], run_context.active_realizations
+    runpaths.write_runpath_list(
+        [ensemble.iteration], [real.iens for real in run_args if real.active]
     )
 
     logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")
-
-
-def ensemble_context(
-    ensemble: Ensemble,
-    active_realizations: npt.NDArray[np.bool_],
-    iteration: int,
-    substitution_list: Optional[SubstitutionList],
-    jobname_format: str,
-    runpath_format: str,
-    runpath_file: Union[str, Path],
-) -> RunContext:
-    """This loads an existing ensemble from storage
-    and creates run information for that ensemble"""
-    substitution_list = (
-        SubstitutionList() if substitution_list is None else substitution_list
-    )
-    run_paths = Runpaths(
-        jobname_format=jobname_format,
-        runpath_format=runpath_format,
-        filename=runpath_file,
-        substitution_list=substitution_list,
-    )
-    return RunContext(
-        ensemble=ensemble,
-        runpaths=run_paths,
-        initial_mask=active_realizations,
-        iteration=iteration,
-    )

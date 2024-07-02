@@ -16,7 +16,7 @@ from ert.config import (
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parsing import ConfigKeys, ContextString
 from ert.config.parsing.file_context_token import FileContextToken
-from ert.enkf_main import create_run_path, ensemble_context, sample_prior
+from ert.enkf_main import create_run_path, sample_prior
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -198,7 +198,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
     ],
 )
 def test_gen_kw_is_log_or_not(
-    tmpdir, storage, distribution, expect_log, parameters_regex
+    tmpdir, storage, distribution, expect_log, parameters_regex, run_args, run_paths
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -227,17 +227,13 @@ def test_gen_kw_is_log_or_not(
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        prior = ensemble_context(
-            prior_ensemble,
-            [True],
-            0,
-            None,
-            "",
-            ert_config.model_config.runpath_format_string,
-            "name",
-        )
         sample_prior(prior_ensemble, [0])
-        create_run_path(prior, ert_config)
+        create_run_path(
+            run_args(ert_config, prior_ensemble),
+            prior_ensemble,
+            ert_config,
+            run_paths(ert_config),
+        )
         assert re.match(
             parameters_regex,
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(

@@ -106,7 +106,8 @@ def test_surface_param(
 
                 # Once data has been internalised, ERT will generate the
                 # parameter files
-                create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
+                fs._index.iteration = 1
+                create_runpath(storage, "config.ert", ensemble=fs)
             expected_iter = 1 if expect_forward_init else 0
             actual_surface = Surface(
                 f"simulations/realization-0/iter-{expected_iter}/surf.irap"
