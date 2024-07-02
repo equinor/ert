@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Optional
 
 from qtpy.QtGui import QColor
 
@@ -12,7 +12,6 @@ from ert.ensemble_evaluator.snapshot import ForwardModel
 @dataclass
 class _Node(ABC):
     id_: int
-    data: dict[Any, Any] = field(default_factory=dict)
     parent: Optional[RootNode | IterNode | RealNode] = None
     children: dict[int, IterNode | RealNode | ForwardModelStepNode] = field(
         default_factory=dict
@@ -32,8 +31,6 @@ class _Node(ABC):
         pass
 
     def row(self) -> int:
-        if "index" in self.data:
-            return int(self.data["index"])
         if self.parent:
             return list(self.parent.children.keys()).index(self.id_)
         raise ValueError(f"{self} had no parent")
@@ -61,7 +58,7 @@ class IterNodeData:
 @dataclass
 class IterNode(_Node):
     parent: RootNode
-    data: IterNodeData
+    data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
     def add_child(self, node: RealNode, node_id: Optional[int] = None) -> None:
@@ -69,13 +66,6 @@ class IterNode(_Node):
         if node_id is None:
             node_id = node.id_
         self.children[str(node_id)] = node
-
-    def row(self) -> int:
-        if self.data.index is not None:
-            return int(self.data.index)
-        if self.parent:
-            return list(self.parent.children.keys()).index(self.id_)
-        raise ValueError(f"{self} had no parent")
 
 
 @dataclass
@@ -94,7 +84,7 @@ class RealNodeData:
 @dataclass
 class RealNode(_Node):
     parent: IterNode
-    data: RealNodeData
+    data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
     def add_child(
@@ -105,18 +95,11 @@ class RealNode(_Node):
             node_id = node.id_
         self.children[str(node_id)] = node
 
-    def row(self) -> int:
-        if self.data.index is not None:
-            return int(self.data.index)
-        if self.parent:
-            return list(self.parent.children.keys()).index(str(self.id_))
-        raise ValueError(f"{self} had no parent")
-
 
 @dataclass
 class ForwardModelStepNode(_Node):
     parent: RealNode
-    data: ForwardModel
+    data: ForwardModel = field(default_factory=ForwardModel)
 
     def add_child(self, *args, **kwargs):
         pass
