@@ -31,6 +31,7 @@ def test_init_prior(qtbot, storage):
         ensemble_size=config.model_config.num_realizations,
         name="prior",
     )
+    ensemble.refresh_statemap()
     notifier.set_current_ensemble(ensemble)
     assert (
         ensemble.get_ensemble_state()

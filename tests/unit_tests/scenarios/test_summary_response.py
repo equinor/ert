@@ -17,11 +17,13 @@ from ert.enkf_main import sample_prior
 
 @pytest.fixture
 def prior_ensemble(storage, ert_config):
-    return storage.create_experiment(
+    prior = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
         observations=ert_config.observations.datasets,
     ).create_ensemble(ensemble_size=3, name="prior")
+
+    return prior
 
 
 @pytest.fixture
@@ -78,6 +80,7 @@ def create_responses(config_file, prior_ensemble, response_times):
     facade.load_from_forward_model(
         prior_ensemble, [True] * facade.get_ensemble_size(), 0
     )
+    prior_ensemble.refresh_statemap()
     prior_ensemble.unify_responses()
 
 

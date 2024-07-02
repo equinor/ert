@@ -376,6 +376,7 @@ def test_realization_state_updates_on_re_save_response(tmp_path):
         ds = xr.Dataset({"values": (["report_step", "index"], [[2, 3, 4, 5, 6]])})
 
         ens.save_response("FOPTZ", ds, 1)
+        ens.refresh_statemap()
         response_mask = ens.get_realization_mask_with_responses()
         assert all(response_mask == [False] * 200)
 
@@ -385,6 +386,7 @@ def test_realization_state_updates_on_re_save_response(tmp_path):
         assert rstate.has(1, "gen_data")
 
         ens.save_response("FOPTZZ", ds, 1)
+        ens.refresh_statemap()
         response_mask2 = ens.get_realization_mask_with_responses()
         assert all(response_mask2 == [False] + [True] + [False] * 198)
         rstate2 = RealizationState.from_file(ens._path / "state_map.json")

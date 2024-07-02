@@ -237,18 +237,41 @@ class LocalEnsemble(BaseMode):
 
         self._realization_dir = create_realization_dir
 
-        self._realization_states: Optional[RealizationState] = None
-        self.try_read_state_map_from_file()
-        self._response_states_need_update = False
-        self._parameter_states_need_update = False
+        self._realization_states = (
+            RealizationState.from_file(self._path / "state_map.json")
+            if os.path.exists(self._path / "state_map.json")
+            else RealizationState()
+        )
 
-    def try_read_state_map_from_file(self):
-        if self._realization_states is None:
-            self._realization_states = (
-                RealizationState.from_file(self._path / "state_map.json")
-                if os.path.exists(self._path / "state_map.json")
-                else None
-            )
+        self.__response_states_need_update = False  # Tmp
+        self.__parameter_states_need_update = False  # Tmp
+        self._has_invoked_refresh_statemap = False
+
+    @property
+    def _response_states_need_update(self) -> bool:
+        return self.__response_states_need_update
+
+    @_response_states_need_update.setter
+    def _response_states_need_update(self, val: bool):
+        if val and self._has_invoked_refresh_statemap:
+            # Temp, all tests should pass without
+            # hitting this line
+            pass  # raise AssertionError("Expected this line to never be hit")
+
+        self.__response_states_need_update = val
+
+    @property
+    def _parameter_states_need_update(self) -> bool:
+        return self.__parameter_states_need_update
+
+    @_parameter_states_need_update.setter
+    def _parameter_states_need_update(self, val: bool):
+        if val and self._has_invoked_refresh_statemap:
+            # Temp, all tests should pass without
+            # hitting this line
+            pass
+
+        self.__parameter_states_need_update = val
 
     @classmethod
     def create(
@@ -449,7 +472,6 @@ class LocalEnsemble(BaseMode):
 
         self.refresh_parameters_state_if_needed()
 
-        assert self._realization_states is not None
         return all(
             self._realization_states.has(realization, parameter)
             for parameter in self.experiment.parameter_configuration
@@ -477,33 +499,29 @@ class LocalEnsemble(BaseMode):
 
         return unified_ds
 
-    def _ensure_realization_state_initialized(self) -> None:
-        if self._realization_states is None:
-            if os.path.exists(self._path / "state_map.json"):
-                self._realization_states = RealizationState.from_file(
-                    self._path / "state_map.json"
-                )
-            else:
-                self._response_states_need_update = True
-                self._parameter_states_need_update = True
-                self._realization_states = RealizationState()
-
     def refresh_responses_state_if_needed(self) -> None:
-        self._ensure_realization_state_initialized()
         if self._response_states_need_update:
+            raise AssertionError("Expected this line to never be hit")
             self._response_states_need_update = False
             self._refresh_all_responses_state_for_all_realizations()
-            assert self._realization_states is not None
+
             self._realization_states.to_file(self._path / "state_map.json")
 
     def refresh_parameters_state_if_needed(self) -> None:
-        self._ensure_realization_state_initialized()
-
         if self._parameter_states_need_update:
+            raise AssertionError("Expected this line to never be hit")
             self._parameter_states_need_update = False
             self._refresh_all_parameters_state_for_all_realizations()
             assert self._realization_states is not None
             self._realization_states.to_file(self._path / "state_map.json")
+
+    def refresh_statemap(self):
+        self._refresh_all_responses_state_for_all_realizations()
+        self._refresh_all_parameters_state_for_all_realizations()
+        self._parameter_states_need_update = False
+        self._response_states_need_update = False
+        self._has_invoked_refresh_statemap = True
+        self._realization_states.to_file(self._path / "state_map.json")
 
     def _responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
@@ -664,13 +682,11 @@ class LocalEnsemble(BaseMode):
         if filename.exists():
             filename.unlink()
 
-        if self._realization_states is not None:
-            for response_key in self.experiment.response_configuration:
-                self._realization_states.clear_entry(realization, response_key)
+        for response_key in self.experiment.response_configuration:
+            self._realization_states.clear_entry(realization, response_key)
 
-        if self._realization_states is not None:
-            for parameter_group_key in self.experiment.parameter_configuration:
-                self._realization_states.clear_entry(realization, parameter_group_key)
+        for parameter_group_key in self.experiment.parameter_configuration:
+            self._realization_states.clear_entry(realization, parameter_group_key)
 
         self._refresh_all_responses_state_for_realization(realization)
         self._refresh_all_parameters_state_for_realization(realization)
@@ -1176,12 +1192,8 @@ class LocalEnsemble(BaseMode):
 
         dataset.to_netcdf(path, engine="scipy")
 
-        if self._realization_states is not None:
-            self._realization_states.clear_entry(realization, group)
-
+        self._realization_states.clear_entry(realization, group)
         self._parameter_states_need_update = True
-        if self._realization_states is not None:
-            self._realization_states.clear_entry(realization, group)
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
@@ -1217,9 +1229,7 @@ class LocalEnsemble(BaseMode):
 
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
         self._response_states_need_update = True
-
-        if self._realization_states is not None:
-            self._realization_states.clear_entry(realization, group)
+        self._realization_states.clear_entry(realization, group)
 
     def _refresh_all_parameters_state_for_all_realizations(self) -> None:
         for real in range(self.ensemble_size):
@@ -1232,7 +1242,6 @@ class LocalEnsemble(BaseMode):
         for real in range(self.ensemble_size):
             self._refresh_all_responses_state_for_realization(realization=real)
 
-        assert self._realization_states is not None
         self._realization_states.to_file(self._path / "state_map.json")
 
     def _refresh_all_responses_state_for_realization(self, realization: int) -> None:
@@ -1243,38 +1252,8 @@ class LocalEnsemble(BaseMode):
         for parameter_key in self.experiment.parameter_configuration:
             self._refresh_parameter_state(parameter_key, realization)
 
-    def _refresh_parameter_state(
-        self, parameter_key: str, realization: int, skip_others: bool = False
-    ) -> None:
-        if self._realization_states is None:
-            if os.path.exists(self._path / "state_map.json"):
-                with open(self._path / "state_map.json", "r") as f:
-                    self._realization_states = RealizationState.from_json(json.load(f))
-            else:
-                self._realization_states = RealizationState()
-
+    def _refresh_parameter_state(self, parameter_key: str, realization: int) -> None:
         if self._realization_states.has_entry(realization, parameter_key):
-            return
-
-        realizations_to_refresh = (
-            range(self.ensemble_size) if not skip_others else [realization]
-        )
-
-        if self.has_combined_parameter_dataset(parameter_key):
-            ds = xr.open_dataset(self._path / f"{parameter_key}.nc")
-
-            for _real in realizations_to_refresh:
-                _reals_with_parameter = set(ds["realizations"].values)
-                self._realization_states.add(
-                    _real,
-                    {
-                        (
-                            parameter_key,
-                            parameter_key,
-                            _real in _reals_with_parameter,
-                        )
-                    },
-                )
             return
 
         self._realization_states.add(
@@ -1290,66 +1269,19 @@ class LocalEnsemble(BaseMode):
             },
         )
 
-    def _refresh_response_state(
-        self, response_key: str, realization: int, skip_others: bool = False
-    ) -> None:
-        if self._realization_states is None:
-            if os.path.exists(self._path / "state_map.json"):
-                with open(self._path / "state_map.json", "r") as f:
-                    self._realization_states = RealizationState.from_json(json.load(f))
-            else:
-                self._realization_states = RealizationState()
-
+    def _refresh_response_state(self, response_key: str, realization: int) -> None:
         if self._realization_states.has_entry(realization, response_key):
             return
 
         combined_ds_key = self._find_unified_dataset_for_response(response_key)
 
-        # ex: combined_ds_key == gen_data, response_key = WOPR_OP1
-        # ex2: response_key = summary, combined_ds_key = summary
-        is_grouped_ds = combined_ds_key == response_key
-
-        realizations_to_refresh = (
-            range(self.ensemble_size) if not skip_others else [realization]
-        )
-
-        if self.has_combined_response_dataset(response_key):
-            ds = xr.open_dataset(self._path / f"{combined_ds_key}.nc")
-
-            if is_grouped_ds:
-                for _real in realizations_to_refresh:
-                    _reals_with_response = set(ds["realization"].values)
-                    self._realization_states.add(
-                        _real,
-                        {
-                            (
-                                combined_ds_key,
-                                combined_ds_key,
-                                _real in _reals_with_response,
-                            )
-                        },
-                    )
-
-                return
-
-            all_names = set(ds["name"].values)
-            for _key in all_names:
-                _ds = ds.sel(name=_key, drop=True)
-                reals_with_response = set(
-                    _ds.dropna("realization", how="all")["realization"].values
-                )
-
-                for _real in realizations_to_refresh:
-                    self._realization_states.add(
-                        _real, {(combined_ds_key, _key, _real in reals_with_response)}
-                    )
-
-            return
-
         # We assume we will never receive "sub-keys" for grouped datasets
         if combined_ds_key == "summary" and response_key != combined_ds_key:
             raise KeyError("Did not expect sub-key for grouped dataset")
 
+        # ex: combined_ds_key == gen_data, response_key = WOPR_OP1
+        # ex2: response_key = summary, combined_ds_key = summary
+        is_grouped_ds = combined_ds_key == response_key
         has_realization_dir = os.path.exists(self._realization_dir(realization))
 
         if not has_realization_dir:

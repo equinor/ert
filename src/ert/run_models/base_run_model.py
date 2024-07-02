@@ -539,6 +539,7 @@ class BaseRunModel:
             self._end_queue.get()
             return []
 
+        run_context.ensemble.refresh_statemap()
         run_context.ensemble.unify_parameters()
         run_context.ensemble.unify_responses()
 

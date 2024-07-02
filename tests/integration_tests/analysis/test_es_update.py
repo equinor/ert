@@ -253,6 +253,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             iens,
         )
 
+    prior.refresh_statemap()
     prior.unify_responses()
     prior.unify_parameters()
 
@@ -317,6 +318,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             iens,
         )
 
+    prior.refresh_statemap()
     prior.unify_responses()
     prior.unify_parameters()
 
@@ -411,6 +413,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             iens,
         )
 
+    prior.refresh_statemap()
     prior.unify_responses()
     prior.unify_parameters()
 

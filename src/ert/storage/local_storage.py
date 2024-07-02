@@ -134,8 +134,8 @@ class LocalStorage(BaseMode):
         # into statemap
         # Can be removed if we know 100% that
         # no storages will ever have datasets in storage, but have no state map file
-        for ens in self._ensembles.values():
-            ens.try_read_state_map_from_file()
+        # for ens in self._ensembles.values():
+        #    ens.try_read_state_map_from_file()
 
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """
@@ -282,8 +282,6 @@ class LocalStorage(BaseMode):
 
         if self.can_write:
             for ens in self._ensembles.values():
-                ens.refresh_responses_state_if_needed()
-                ens.refresh_parameters_state_if_needed()
                 ens.unify_responses()
                 ens.unify_parameters()
 

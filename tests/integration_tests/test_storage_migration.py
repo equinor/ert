@@ -391,6 +391,7 @@ def test_that_storage_always_has_state_map_after_migrations(
             _ds_bpr1.coords["realizations"] = [i]
             ensemble.save_parameters("BPR", i, _ds_bpr1)
 
+        ensemble.refresh_statemap()
         ensemble.unify_parameters()
         ensemble.unify_responses()
 

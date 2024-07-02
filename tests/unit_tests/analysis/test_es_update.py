@@ -418,6 +418,7 @@ def test_smoother_snapshot_alpha(
             ),
             iens,
         )
+    prior_storage.refresh_statemap()
 
     posterior_storage = storage.create_ensemble(
         prior_storage.experiment_id,
@@ -583,6 +584,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
         )
 
+    prior_ensemble.refresh_statemap()
     prior_ensemble.unify_parameters()
     prior_ensemble.unify_responses()
 
@@ -726,6 +728,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     for iens in range(ensemble_size):
         prior_ensemble.save_parameters(param_group, iens, fields[iens])
 
+    prior_ensemble.refresh_statemap()
     prior_ensemble.unify_parameters()
 
     realization_list = list(range(ensemble_size))
