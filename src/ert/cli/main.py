@@ -43,6 +43,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     # Changing current working directory means we need to update
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
+    forward_models = []
 
     ert_config = ErtConfig.with_plugins(
         plugin_manager.forward_model_steps if plugin_manager else []
@@ -54,7 +55,9 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     # the root-logger.
     logger = logging.getLogger(__name__)
     for fm_step in ert_config.forward_model_steps:
-        logger.info("Config contains forward model step %s", fm_step.name)
+        if fm_step.name not in forward_models:
+            logger.info("Config contains forward model step %s", fm_step.name)
+            forward_models.append(fm_step.name)
 
     if not ert_config.observation_keys and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
