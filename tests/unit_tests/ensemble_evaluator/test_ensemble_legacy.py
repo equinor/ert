@@ -158,7 +158,7 @@ async def test_queue_config_properties_propagated_to_scheduler(
     ensemble._job_queue = mocked_scheduler
 
     # The properties we want to propagate from QueueConfig to the Scheduler object:
-    ensemble._queue_config.submit_sleep = 33
+    monkeypatch.setattr(QueueConfig, "submit_sleep", 33)
     monkeypatch.setattr(QueueConfig, "max_running", 44)
     ensemble._queue_config.max_submit = 55
 
