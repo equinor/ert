@@ -166,7 +166,7 @@ class PartialSnapshot:
 
     def get_forward_model_status_for_all_reals(
         self,
-    ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
+    ) -> Mapping[Tuple[str, str], str]:
         if self._snapshot:
             return self._snapshot.get_forward_model_status_for_all_reals()
         return {}
@@ -215,7 +215,7 @@ class PartialSnapshot:
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
             if "forward_models" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["forward_models"] = ForwardModel()
+                _dict["reals"][real_id]["forward_models"] = {}
 
             _dict["reals"][real_id]["forward_models"][fm_id] = fm_values_dict
 
