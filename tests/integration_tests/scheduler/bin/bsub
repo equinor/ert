@@ -19,6 +19,7 @@ do
             queue=$OPTARG
             ;;
         n)
+            num_cpu=$OPTARG
             ;;
         R)
             resource_requirement=$OPTARG
@@ -32,11 +33,15 @@ shift $((OPTIND-1))
 
 jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
 jobid="${RANDOM}"
+job_env_file="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.env"
 
 mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
 echo $@ > "${jobdir}/${jobid}.script"
 echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
 echo "$resource_requirement" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.resource_requirement"
+touch $job_env_file
+
+[ -n $num_cpu ] && echo "export LSB_MAX_NUM_PROCESSORS=$num_cpu" >> $job_env_file
 
 [ -z $stdout ] && stdout="/dev/null"
 [ -z $stderr ] && stderr="/dev/null"

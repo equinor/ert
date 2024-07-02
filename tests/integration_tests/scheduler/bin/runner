@@ -14,6 +14,7 @@ function handle_sigterm {
 trap handle_sigterm SIGTERM
 
 echo "$$" > "${job}.pid"
+source "${job}.env"
 bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr" &
 child_pid=$!
 wait $child_pid
