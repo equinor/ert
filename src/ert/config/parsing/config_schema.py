@@ -345,6 +345,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         path_keyword(ConfigKeys.RUNPATH_FILE),
         positive_int_keyword(ConfigKeys.MAX_SUBMIT),
         positive_int_keyword(ConfigKeys.NUM_CPU),
+        positive_int_keyword(ConfigKeys.MAX_RUNNING),
         queue_system_keyword(False),
         queue_option_keyword(),
         job_script_keyword(),
