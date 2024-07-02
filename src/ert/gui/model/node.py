@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, cast
 
 from qtpy.QtGui import QColor
 
@@ -13,9 +13,9 @@ from ert.ensemble_evaluator.snapshot import ForwardModel
 class _Node(ABC):
     id_: int
     parent: Optional[RootNode | IterNode | RealNode] = None
-    children: dict[int, IterNode | RealNode | ForwardModelStepNode] = field(
-        default_factory=dict
-    )
+    children: (
+        dict[int, IterNode] | dict[int, RealNode] | dict[int, ForwardModelStepNode]
+    ) = field(default_factory=dict)
 
     def __repr__(self) -> str:
         parent = "no " if self.parent is None else ""
@@ -23,10 +23,7 @@ class _Node(ABC):
         return f"Node<{type(self).__name__}>@{self.id_} with {parent}parent and {children}children"
 
     @abstractmethod
-    def add_child(
-        self,
-        node: IterNode | RealNode | ForwardModelStepNode,
-    ) -> None:
+    def add_child(self, node: _Node) -> None:
         pass
 
     def row(self) -> int:
@@ -41,7 +38,8 @@ class RootNode(_Node):
     children: dict[int, IterNode] = field(default_factory=dict)
     max_memory_usage: Optional[int] = None
 
-    def add_child(self, node: IterNode) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(IterNode, node)
         node.parent = self
         self.children[node.id_] = node
 
@@ -56,11 +54,12 @@ class IterNodeData:
 class IterNode(_Node):
     parent: RootNode
     data: IterNodeData = field(default_factory=IterNodeData)
-    children: dict[str, RealNode] = field(default_factory=dict)
+    children: dict[int, RealNode] = field(default_factory=dict)
 
-    def add_child(self, node: RealNode) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(RealNode, node)
         node.parent = self
-        self.children[str(node.id_)] = node
+        self.children[node.id_] = node
 
 
 @dataclass
@@ -79,17 +78,18 @@ class RealNodeData:
 class RealNode(_Node):
     parent: IterNode
     data: RealNodeData = field(default_factory=RealNodeData)
-    children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
+    children: dict[int, ForwardModelStepNode] = field(default_factory=dict)
 
-    def add_child(self, node: ForwardModelStepNode) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(ForwardModelStepNode, node)
         node.parent = self
-        self.children[str(node.id_)] = node
+        self.children[node.id_] = node
 
 
 @dataclass
 class ForwardModelStepNode(_Node):
     parent: RealNode
-    data: ForwardModel = field(default_factory=ForwardModel)
+    data: ForwardModel = field(default_factory=lambda: ForwardModel())
 
-    def add_child(self, _):
+    def add_child(self, _: _Node) -> None:
         pass
