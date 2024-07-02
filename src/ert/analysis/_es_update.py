@@ -461,7 +461,7 @@ def analysis_ES(
         )
 
         # Pre-calculate cov_YY
-        cov_YY = np.cov(S)
+        cov_YY = np.atleast_2d(np.cov(S))
 
         D = smoother_adaptive_es.perturb_observations(
             ensemble_size=ensemble_size, alpha=1.0
