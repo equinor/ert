@@ -52,7 +52,7 @@ class Runpaths:
             for realization in realizations
         ]
 
-    def get_jobnames(self, realizations: List[int], iteration: int) -> List[str]:
+    def get_jobnames(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [
             self._substitution_list.substitute_real_iter(
                 self._jobname_format, realization, iteration

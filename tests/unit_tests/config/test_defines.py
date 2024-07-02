@@ -1,27 +1,6 @@
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path, ensemble_context
-from ert.storage import open_storage
-
-
-def read_jobname(config_file):
-    ert_config = ErtConfig.from_file(config_file)
-    with open_storage(ert_config.ens_path, mode="w") as storage:
-        prior = storage.create_experiment().create_ensemble(
-            name="prior", ensemble_size=ert_config.model_config.num_realizations
-        )
-        run_context = ensemble_context(
-            prior,
-            [True] * ert_config.model_config.num_realizations,
-            0,
-            substitution_list=ert_config.substitution_list,
-            jobname_format=ert_config.model_config.jobname_format_string,
-            runpath_format=ert_config.model_config.runpath_format_string,
-            runpath_file="name",
-        )
-        create_run_path(run_context, ert_config)
-    return run_context[0].job_name
 
 
 @pytest.mark.parametrize(
@@ -70,10 +49,12 @@ JOBNAME <A>%d""",
     ],
 )
 def test_that_user_defined_substitution_works_as_expected(
-    defines, expected, tmp_path, monkeypatch
+    defines, expected, tmp_path, monkeypatch, run_args, prior_ensemble
 ):
     monkeypatch.chdir(tmp_path)
     config_file = tmp_path / "config_file.ert"
     config_file.write_text(defines)
-
-    assert read_jobname(str(config_file)) == expected
+    assert (
+        run_args(ErtConfig.from_file(config_file), prior_ensemble)[0].job_name
+        == expected
+    )

@@ -8,7 +8,6 @@ from ert.run_models import (
     multiple_data_assimilation,
 )
 from ert.run_models.run_arguments import ESMDARunArguments
-from ert.storage import Ensemble
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -29,8 +28,10 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     )
     ens_mock = MagicMock()
     ens_mock.iteration = 0
-    context_mock = MagicMock()
-    monkeypatch.setattr(multiple_data_assimilation, "RunContext", context_mock)
+    evaluate_mock = MagicMock()
+    monkeypatch.setattr(
+        MultipleDataAssimilation, "_evaluate_and_postprocess", evaluate_mock
+    )
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "validate", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "setPhase", MagicMock())
@@ -51,11 +52,11 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
 
     # Find all the ensemble_context calls and fetch the ensemble name and
     # iteration number
-    calls = {
-        (x.kwargs["ensemble"].name, x.kwargs["iteration"])
-        for x in context_mock.mock_calls
-        if "ensemble" in x.kwargs and isinstance(x.kwargs["ensemble"], Ensemble)
-    }
+    calls = (
+        (x[1][1].name, x[1][1].iteration)
+        for x in evaluate_mock.mock_calls
+        if len(x) == 3
+    )
     assert ("target_0", 0) in calls
     assert ("target_1", 1) in calls
     assert ("target_2", 2) in calls

@@ -30,8 +30,9 @@ from ert.config.observations import EnkfObs
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
+from ert.run_arg import create_run_arguments
 
-from .enkf_main import ensemble_context
+from .runpaths import Runpaths
 from .shared.plugins import ErtPluginContext
 
 _logger = logging.getLogger(__name__)
@@ -126,23 +127,29 @@ class LibresFacade:
         self,
         ensemble: Ensemble,
         realisations: npt.NDArray[np.bool_],
-        iteration: int,
+        iteration: Optional[int] = None,
     ) -> int:
+        if iteration is not None:
+            warnings.warn(
+                "The iteration argument has no effect, iteration is read from ensemble",
+                DeprecationWarning,
+                stacklevel=1,
+            )
         t = time.perf_counter()
-        run_context = ensemble_context(
-            ensemble,
+        run_args = create_run_arguments(
+            Runpaths(
+                jobname_format=self.config.model_config.jobname_format_string,
+                runpath_format=self.config.model_config.runpath_format_string,
+                filename=str(self.config.runpath_file),
+                substitution_list=self.config.substitution_list,
+            ),
             realisations,
-            iteration,
-            self.config.substitution_list,
-            jobname_format=self.config.model_config.jobname_format_string,
-            runpath_format=self.config.model_config.runpath_format_string,
-            runpath_file=self.config.runpath_file,
+            ensemble=ensemble,
         )
-
         nr_loaded = self._load_from_run_path(
             self.config.model_config.num_realizations,
-            run_context.run_args,
-            run_context.mask,
+            run_args,
+            realisations,
         )
         _logger.debug(
             f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
@@ -153,7 +160,7 @@ class LibresFacade:
     def _load_from_run_path(
         ensemble_size: int,
         run_args: List[RunArg],
-        active_realizations: List[bool],
+        active_realizations: npt.NDArray[np.bool_],
     ) -> int:
         """Returns the number of loaded realizations"""
         pool = ThreadPool(processes=8)
