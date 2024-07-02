@@ -882,3 +882,29 @@ def test_exclude_parameter_from_update():
     assert log_paths
     assert (log_paths[0] / "Report.report").exists()
     assert (log_paths[0] / "Report.csv").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+def test_that_log_is_cleaned_up_from_repeated_forward_models(caplog):
+    """Verify that the run model now gereneates a cleanup log when
+    there are repeated forward models
+    """
+    with open("poly.ert", "r", encoding="utf-8") as fin, open(
+        "poly_repeated_forward_models.ert", "w", encoding="utf-8"
+    ) as fout:
+        forward_models = ["FORWARD_MODEL poly_eval\n"] * 5
+        lines = fin.readlines() + forward_models
+        fout.writelines(lines)
+
+    expected_msg = "Config contains forward model step poly_eval"
+
+    with caplog.at_level(logging.INFO):
+        run_cli(
+            "ensemble_experiment",
+            "--disable-monitor",
+            "poly_repeated_forward_models.ert",
+            "--realizations",
+            "0-4",
+        )
+    assert len([msg for msg in caplog.messages if expected_msg in msg]) == 1
