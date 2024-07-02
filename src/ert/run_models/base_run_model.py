@@ -61,11 +61,11 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.libres_facade import LibresFacade
 from ert.mode_definitions import MODULE_MODE
-from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.workflow_runner import WorkflowRunner
 
+from ..run_arg import RunArg
 from .event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -302,18 +302,20 @@ class BaseRunModel:
             self.stop_time = None
             with captured_logs(self._error_messages):
                 self._set_default_env_context()
-                run_context = self.run_experiment(
+                self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                     restart=restart,
                 )
                 if self._completed_realizations_mask:
                     combined = np.logical_or(
                         np.array(self._completed_realizations_mask),
-                        np.array(run_context.mask),
+                        np.array(self.active_realizations),
                     )
                     self._completed_realizations_mask = list(combined)
                 else:
-                    self._completed_realizations_mask = run_context.mask
+                    self._completed_realizations_mask = copy.copy(
+                        self.active_realizations
+                    )
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -331,7 +333,7 @@ class BaseRunModel:
         self,
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
-    ) -> RunContext:
+    ) -> None:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def phaseCount(self) -> int:
@@ -518,17 +520,20 @@ class BaseRunModel:
         return True
 
     async def run_ensemble_evaluator_async(
-        self, run_context: RunContext, ee_config: EvaluatorServerConfig
+        self,
+        run_args: List[RunArg],
+        ensemble: Ensemble,
+        ee_config: EvaluatorServerConfig,
     ) -> List[int]:
         if not self._end_queue.empty():
             event_logger.debug("Run model canceled - pre evaluation")
             self._end_queue.get()
             return []
-        ensemble = self._build_ensemble(run_context)
+        ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
         evaluator = EnsembleEvaluator(
-            ensemble,
+            ee_ensemble,
             ee_config,
-            run_context.iteration,
+            ensemble.iteration,
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
@@ -551,23 +556,27 @@ class BaseRunModel:
 
     # This function needs to be there for the sake of testing that expects sync ee run
     def run_ensemble_evaluator(
-        self, run_context: RunContext, ee_config: EvaluatorServerConfig
+        self,
+        run_args: List[RunArg],
+        ensemble: Ensemble,
+        ee_config: EvaluatorServerConfig,
     ) -> List[int]:
         successful_realizations = asyncio.run(
-            self.run_ensemble_evaluator_async(run_context, ee_config)
+            self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
         )
         return successful_realizations
 
     def _build_ensemble(
         self,
-        run_context: RunContext,
+        run_args: List[RunArg],
+        experiment_id: uuid.UUID,
     ) -> EEEnsemble:
         realizations = []
-        for iens, run_arg in enumerate(run_context):
+        for run_arg in run_args:
             realizations.append(
                 Realization(
-                    active=run_context.is_active(iens),
-                    iens=iens,
+                    active=run_arg.active,
+                    iens=run_arg.iens,
                     forward_models=self.ert_config.forward_model_steps,
                     max_runtime=self.ert_config.analysis_config.max_runtime,
                     run_arg=run_arg,
@@ -580,7 +589,7 @@ class BaseRunModel:
             {},
             self._queue_config,
             self.minimum_required_realizations,
-            str(run_context.ensemble.experiment.id),
+            str(experiment_id),
         )
 
     @property
@@ -636,34 +645,37 @@ class BaseRunModel:
 
     def _evaluate_and_postprocess(
         self,
-        run_context: RunContext,
+        run_args: List[RunArg],
+        ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
-        iteration = run_context.iteration
-
+        iteration = ensemble.iteration
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhase(iteration, phase_string)
-        create_run_path(run_context, self.ert_config)
+        create_run_path(
+            run_args,
+            ensemble,
+            self.ert_config,
+            self.run_paths,
+        )
 
         phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.run_workflows(
-            HookRuntime.PRE_SIMULATION, self._storage, run_context.ensemble
-        )
+        self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
 
         phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string)
 
         successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_server_config
+            run_args,
+            ensemble,
+            evaluator_server_config,
         )
-
-        starting_realizations = run_context.active_realizations
+        starting_realizations = [real.iens for real in run_args if real.active]
         failed_realizations = list(
             set(starting_realizations) - set(successful_realizations)
         )
         for iens in failed_realizations:
-            run_context.deactivate_realization(iens)
             self.active_realizations[iens] = False
 
         num_successful_realizations = len(successful_realizations)
@@ -684,8 +696,6 @@ class BaseRunModel:
 
         phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
-        self.run_workflows(
-            HookRuntime.POST_SIMULATION, self._storage, run_context.ensemble
-        )
+        self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
 
         return num_successful_realizations

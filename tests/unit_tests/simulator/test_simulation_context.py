@@ -36,11 +36,11 @@ def test_simulation_context(setup_case, storage):
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert even_ctx._run_context[iens].runpath.endswith(
+            assert even_ctx.run_args[iens].runpath.endswith(
                 f"runpath/realization-{iens}-{iens}/iter-0"
             )
         else:
-            assert odd_ctx._run_context[iens].runpath.endswith(
+            assert odd_ctx.run_args[iens].runpath.endswith(
                 f"runpath/realization-{iens}-{iens}/iter-0"
             )
 

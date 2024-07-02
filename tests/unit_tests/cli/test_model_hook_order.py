@@ -48,6 +48,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
+    monkeypatch.setattr(base_run_model.BaseRunModel, "setPhase", MagicMock())
 
     minimum_args = ESRunArguments(
         random_seed=None,
@@ -132,6 +133,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
+    monkeypatch.setattr(base_run_model.BaseRunModel, "setPhase", MagicMock())
 
     minimum_args = SIESRunArguments(
         random_seed=None,

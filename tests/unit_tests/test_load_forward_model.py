@@ -8,13 +8,13 @@ import pytest
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path, ensemble_context
+from ert.enkf_main import create_run_path
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
 
 @pytest.fixture()
-def setup_case(storage, use_tmpdir):
+def setup_case(storage, use_tmpdir, run_args, run_paths):
     def func(config_text):
         Path("config.ert").write_text(config_text, encoding="utf-8")
 
@@ -26,16 +26,12 @@ def setup_case(storage, use_tmpdir):
             name="prior",
             ensemble_size=ert_config.model_config.num_realizations,
         )
-        run_context = ensemble_context(
+        create_run_path(
+            run_args(ert_config, prior_ensemble),
             prior_ensemble,
-            [True],
-            0,
-            None,
-            "",
-            ert_config.model_config.runpath_format_string,
-            "name",
+            ert_config,
+            run_paths(ert_config),
         )
-        create_run_path(run_context, ert_config)
         return ert_config, prior_ensemble
 
     yield func
@@ -110,7 +106,9 @@ def test_load_forward_model(snake_oil_default_storage):
         ),
     ],
 )
-def test_load_forward_model_summary(summary_configuration, storage, expected, caplog):
+def test_load_forward_model_summary(
+    summary_configuration, storage, expected, caplog, run_paths, run_args
+):
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
@@ -133,16 +131,12 @@ def test_load_forward_model_summary(summary_configuration, storage, expected, ca
         experiment_id, name="prior", ensemble_size=100
     )
 
-    run_context = ensemble_context(
+    create_run_path(
+        run_args(ert_config, prior_ensemble),
         prior_ensemble,
-        [True],
-        0,
-        None,
-        "",
-        ert_config.model_config.runpath_format_string,
-        "name",
+        ert_config,
+        run_paths(ert_config),
     )
-    create_run_path(run_context, ert_config)
     facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
@@ -227,7 +221,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_gen_data_without_restart(storage):
+def test_loading_gen_data_without_restart(storage, run_paths, run_args):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
@@ -245,16 +239,12 @@ def test_loading_gen_data_without_restart(storage):
         ensemble_size=ert_config.model_config.num_realizations,
     )
 
-    run_context = ensemble_context(
+    create_run_path(
+        run_args(ert_config, prior_ensemble),
         prior_ensemble,
-        [True],
-        0,
-        None,
-        "",
-        ert_config.model_config.runpath_format_string,
-        "name",
+        ert_config,
+        run_paths(ert_config),
     )
-    create_run_path(run_context, ert_config)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))

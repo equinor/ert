@@ -15,12 +15,12 @@ from _ert.threading import ErtThread
 from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
-from ert.run_context import RunContext
 from ert.runpaths import Runpaths
 from ert.scheduler import JobStatus, Scheduler, create_driver
 from ert.scheduler import State as JobState
 from ert.workflow_runner import WorkflowRunner
 
+from ..run_arg import RunArg, create_run_arguments
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
@@ -42,22 +42,22 @@ def _slug(entity: str) -> str:
 def _run_forward_model(
     ert_config: "ErtConfig",
     job_queue: Scheduler,
-    run_context: "RunContext",
+    run_args: List[RunArg],
 ) -> None:
     # run simplestep
-    asyncio.run(_submit_and_run_jobqueue(ert_config, job_queue, run_context))
+    asyncio.run(_submit_and_run_jobqueue(ert_config, job_queue, run_args))
 
 
 async def _submit_and_run_jobqueue(
     ert_config: "ErtConfig",
     job_queue: Scheduler,
-    run_context: "RunContext",
+    run_args: List[RunArg],
 ) -> None:
     max_runtime: Optional[int] = ert_config.analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
-    for index, run_arg in enumerate(run_context):
-        if not run_context.is_active(index):
+    for run_arg in run_args:
+        if not run_arg.active:
             continue
         realization = Realization(
             iens=run_arg.iens,
@@ -101,21 +101,26 @@ class BatchContext:
         for sim_id, (geo_id, _) in enumerate(self.case_data):
             if self.mask[sim_id]:
                 global_substitutions[f"<GEO_ID_{sim_id}_{self.itr}>"] = str(geo_id)
-        self._run_context = RunContext(
-            ensemble=self.ensemble,
-            runpaths=Runpaths(
-                jobname_format=ert_config.model_config.jobname_format_string,
-                runpath_format=ert_config.model_config.runpath_format_string,
-                filename=str(ert_config.runpath_file),
-                substitution_list=global_substitutions,
-            ),
-            initial_mask=self.mask,
-            iteration=self.itr,
-        )
 
-        create_run_path(self._run_context, ert_config)
+        run_paths = Runpaths(
+            jobname_format=ert_config.model_config.jobname_format_string,
+            runpath_format=ert_config.model_config.runpath_format_string,
+            filename=str(ert_config.runpath_file),
+            substitution_list=global_substitutions,
+        )
+        self.run_args = create_run_arguments(
+            run_paths,
+            self.mask,
+            ensemble=self.ensemble,
+        )
+        create_run_path(
+            self.run_args,
+            self.ensemble,
+            ert_config,
+            run_paths,
+        )
         for workflow in ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]:
-            WorkflowRunner(workflow, None, self._run_context.ensemble).run_blocking()
+            WorkflowRunner(workflow, None, self.ensemble).run_blocking()
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation
@@ -132,7 +137,7 @@ class BatchContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = ErtThread(
             target=lambda: _run_forward_model(
-                self.ert_config, self._job_queue, self._run_context
+                self.ert_config, self._job_queue, self.run_args
             )
         )
         sim_thread.start()
@@ -246,7 +251,7 @@ class BatchContext:
             ]
         """  # noqa
         try:
-            run_arg = self._run_context[iens]
+            run_arg = self.run_args[iens]
         except IndexError as e:
             raise KeyError(e) from e
 
@@ -262,4 +267,4 @@ class BatchContext:
         self._sim_thread.join()
 
     def run_path(self, iens: int) -> str:
-        return self._run_context[iens].runpath
+        return self.run_args[iens].runpath
