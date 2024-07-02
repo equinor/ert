@@ -660,6 +660,7 @@ def test_scheduler_create_lsf_driver():
     exclude_host = "host1,host2"
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
+        "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
             ("LSF", "BSUB_CMD", bsub_cmd),
             ("LSF", "BKILL_CMD", bkill_cmd),
@@ -671,6 +672,7 @@ def test_scheduler_create_lsf_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
+    queue_options = queue_config.queue_options_as_dict
     driver: LsfDriver = create_driver(queue_config)
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
@@ -679,6 +681,7 @@ def test_scheduler_create_lsf_driver():
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource
     assert driver._exclude_hosts == ["host1", "host2"]
+    assert driver._project_code == queue_options["PROJECT_CODE"]
 
 
 def test_scheduler_create_openpbs_driver():
@@ -694,6 +697,7 @@ def test_scheduler_create_openpbs_driver():
     qstat_cmd = "bar_qstat_cmd"
     queue_config_dict = {
         "QUEUE_SYSTEM": "TORQUE",
+        "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
             ("TORQUE", "QUEUE", queue_name),
             ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
@@ -708,6 +712,7 @@ def test_scheduler_create_openpbs_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
+    queue_option_dict = queue_config.queue_options_as_dict
     driver: OpenPBSDriver = create_driver(queue_config)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
@@ -719,3 +724,4 @@ def test_scheduler_create_openpbs_driver():
     assert str(driver._qsub_cmd) == qsub_cmd
     assert str(driver._qstat_cmd) == qstat_cmd
     assert str(driver._qdel_cmd) == qdel_cmd
+    assert driver._project_code == queue_option_dict["PROJECT_CODE"]
