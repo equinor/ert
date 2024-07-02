@@ -5,7 +5,6 @@ from qtpy.QtCore import (
     QAbstractProxyModel,
     QModelIndex,
     QObject,
-    Signal,
     Slot,
 )
 from typing_extensions import override
@@ -25,8 +24,6 @@ class RealListModel(QAbstractProxyModel):
     def get_iter(self) -> int:
         return self._iter
 
-    iter_changed = Signal(int)
-
     @Slot(int)
     def setIter(self, iter_: int) -> None:
         self._disconnect()
@@ -34,7 +31,6 @@ class RealListModel(QAbstractProxyModel):
         self._iter = iter_
         self.modelReset.emit()
         self._connect()
-        self.iter_changed.emit(iter_)
 
     def _disconnect(self) -> None:
         source_model = self.sourceModel()
