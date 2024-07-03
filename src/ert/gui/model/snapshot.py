@@ -11,12 +11,11 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import RealizationSnapshot, SnapshotMetadata
+from ert.ensemble_evaluator.snapshot import SnapshotMetadata
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
     IterNodeData,
-    NodeType,
     RealNode,
     RealNodeData,
     RootNode,
@@ -43,21 +42,17 @@ StatusRole = Qt.UserRole + 11
 
 DURATION = "Duration"
 
-COLUMNS: Dict[NodeType, Sequence[str]] = {
-    NodeType.ROOT: ["Name", "Status"],
-    NodeType.ITER: ["Name", "Status", "Active"],
-    NodeType.REAL: [
-        ids.NAME,
-        ids.ERROR,
-        ids.STATUS,
-        DURATION,  # Duration is based on two data fields, not coming directly from ert
-        ids.STDOUT,
-        ids.STDERR,
-        ids.CURRENT_MEMORY_USAGE,
-        ids.MAX_MEMORY_USAGE,
-    ],
-    NodeType.JOB: [],
-}
+JOB_COLUMNS: Sequence[str] = [
+    ids.NAME,
+    ids.ERROR,
+    ids.STATUS,
+    DURATION,  # Duration is based on two data fields, not coming directly from ert
+    ids.STDOUT,
+    ids.STDERR,
+    ids.CURRENT_MEMORY_USAGE,
+    ids.MAX_MEMORY_USAGE,
+]
+JOB_COLUMN_SIZE: Final[int] = len(JOB_COLUMNS)
 
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
@@ -177,17 +172,8 @@ class SnapshotModel(QAbstractItemModel):
         with ExitStack() as stack:
             iter_node = self.root.children[iter_]
             iter_index = self.index(iter_node.row(), 0, QModelIndex())
-            iter_index_bottom_right = self.index(
-                iter_node.row(), iter_index.column(), QModelIndex()
-            )
-            stack.callback(self.dataChanged.emit, iter_index, iter_index_bottom_right)
-
             reals_changed: List[int] = []
 
-            for idx in job_infos:
-                real_id = idx[0]
-                if real_id not in reals:
-                    reals[real_id] = RealizationSnapshot()
             for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
                 if real and real.status:
@@ -228,8 +214,8 @@ class SnapshotModel(QAbstractItemModel):
                     real_node.data.max_memory_usage = max(
                         real_node.data.max_memory_usage or 0, max_mem_usage
                     )
-                    self.root.data.max_memory_usage = max(
-                        self.root.data.max_memory_usage or 0, max_mem_usage
+                    self.root.max_memory_usage = max(
+                        self.root.max_memory_usage or 0, max_mem_usage
                     )
 
                 # Errors may be unset as the queue restarts the job
@@ -259,16 +245,12 @@ class SnapshotModel(QAbstractItemModel):
     def _add_snapshot(self, snapshot: Snapshot, iter_: int) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
-            iter_,
+            id_=iter_,
             data=IterNodeData(
                 status=snapshot.status,
-                sorted_realization_ids=metadata["sorted_real_ids"],
-                sorted_forward_model_step_ids_by_realization_id=metadata[
-                    "sorted_forward_model_ids"
-                ],
             ),
         )
-        for real_id in snapshot_tree.data.sorted_realization_ids:
+        for real_id in metadata["sorted_real_ids"]:
             real = snapshot.get_real(real_id)
             real_node = RealNode(
                 real_id,
@@ -300,26 +282,14 @@ class SnapshotModel(QAbstractItemModel):
         parent = QModelIndex()
         next_iter = len(self.root.children)
         self.beginInsertRows(parent, next_iter, next_iter)
-        self.root.add_child(snapshot_tree, node_id=iter_)
+        self.root.add_child(snapshot_tree)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        parent_node = parent.internalPointer()
-        if parent_node is None:
-            count = len(COLUMNS[NodeType.ROOT])
-        else:
-            if isinstance(parent_node, RootNode):
-                count = len(COLUMNS[NodeType.ROOT])
-            elif isinstance(parent_node, IterNode):
-                count = len(COLUMNS[NodeType.ITER])
-            elif isinstance(parent_node, RealNode):
-                count = len(COLUMNS[NodeType.REAL])
-            else:
-                count = len(COLUMNS[NodeType.JOB])
-        return count
+        if parent and isinstance(parent.internalPointer(), RealNode):
+            return JOB_COLUMN_SIZE
+        return 1
 
     def rowCount(self, parent: Optional[QModelIndex] = None):
         if parent is None:
@@ -438,14 +408,14 @@ class SnapshotModel(QAbstractItemModel):
         node_id = str(node.id_)
 
         if role == Qt.ItemDataRole.FontRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 font = QFont()
                 font.setUnderline(True)
                 return font
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return QColor(Qt.GlobalColor.blue)
 
@@ -453,7 +423,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.parent.data.forward_model_step_status_color_by_id[node_id]
 
         if role == Qt.ItemDataRole.DisplayRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data
                 _bytes: Optional[str] = data.get(data_name)
@@ -477,7 +447,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.data.get(data_name)
 
         if role == FileRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return node.data.get(data_name, QVariant())
 
@@ -488,7 +458,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.parent.parent.id_
 
         if role == Qt.ItemDataRole.ToolTipRole:
-            data_name = COLUMNS[NodeType.REAL][index.column()]
+            data_name = JOB_COLUMNS[index.column()]
             data = None
             if data_name == ids.ERROR:
                 data = node.data.get(ids.ERROR)
