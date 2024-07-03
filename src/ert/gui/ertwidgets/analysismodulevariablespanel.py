@@ -180,4 +180,4 @@ class AnalysisModuleVariablesPanel(QWidget):
             value = variable_control.value()
 
         if value is not None:
-            self.analysis_module.__setattr__(variable_name, value)
+            self.analysis_module.__setattr__(variable_name, value)  # noqa: PLC2801
