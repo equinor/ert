@@ -150,12 +150,12 @@ class JobListProxyModel(QAbstractProxyModel):
         )
         return job_index
 
-    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
-        if not sourceIndex.isValid():
-            return QModelIndex()
-        if not self._accept_index(sourceIndex):
-            return QModelIndex()
-        return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+        return (
+            self.index(src_index.row(), src_index.column(), QModelIndex())
+            if src_index.isValid() and self._accept_index(src_index)
+            else QModelIndex()
+        )
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
