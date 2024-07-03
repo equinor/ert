@@ -217,11 +217,10 @@ class EclRun:
         (_, ext) = os.path.splitext(input_arg)
         if ext and ext in [".data", ".DATA"]:
             data_file = input_arg
+        elif input_arg.islower():
+            data_file = input_arg + ".data"
         else:
-            if input_arg.islower():
-                data_file = input_arg + ".data"
-            else:
-                data_file = input_arg + ".DATA"
+            data_file = input_arg + ".DATA"
 
         if not os.path.isfile(data_file):
             raise IOError(f"No such file: {data_file}")

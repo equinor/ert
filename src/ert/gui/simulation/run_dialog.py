@@ -110,24 +110,23 @@ class JobOverview(QTableView):
                 index.data(IterNum),
                 self,
             )
-        else:
-            if JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
-                error_dialog = QDialog(self)
-                error_dialog.setWindowTitle("Error information")
-                layout = QVBoxLayout(error_dialog)
+        elif JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
+            error_dialog = QDialog(self)
+            error_dialog.setWindowTitle("Error information")
+            layout = QVBoxLayout(error_dialog)
 
-                error_textedit = QPlainTextEdit()
-                error_textedit.setReadOnly(True)
-                error_textedit.setWordWrapMode(QTextOption.NoWrap)
-                error_textedit.appendPlainText(index.data())
-                layout.addWidget(error_textedit)
+            error_textedit = QPlainTextEdit()
+            error_textedit.setReadOnly(True)
+            error_textedit.setWordWrapMode(QTextOption.NoWrap)
+            error_textedit.appendPlainText(index.data())
+            layout.addWidget(error_textedit)
 
-                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
-                dialog_button.accepted.connect(error_dialog.accept)
-                layout.addWidget(dialog_button)
-                error_dialog.resize(700, 300)
-                error_textedit.moveCursor(QTextCursor.Start)
-                error_dialog.exec_()
+            dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+            dialog_button.accepted.connect(error_dialog.accept)
+            layout.addWidget(dialog_button)
+            error_dialog.resize(700, 300)
+            error_textedit.moveCursor(QTextCursor.Start)
+            error_dialog.exec_()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if event:

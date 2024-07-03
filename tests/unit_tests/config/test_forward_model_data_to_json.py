@@ -177,11 +177,10 @@ def create_std_file(config, std="stdout", step_index=None):
             return f"{config[std]}"
         else:
             return f'{config["name"]}.{std}'
+    elif config[std]:
+        return f"{config[std]}.{step_index}"
     else:
-        if config[std]:
-            return f"{config[std]}.{step_index}"
-        else:
-            return f'{config["name"]}.{std}.{step_index}'
+        return f'{config["name"]}.{std}.{step_index}'
 
 
 def validate_forward_model(forward_model, forward_model_config):
