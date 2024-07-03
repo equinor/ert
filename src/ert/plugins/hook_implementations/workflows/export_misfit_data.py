@@ -30,7 +30,7 @@ class ExportMisfitDataJob(ErtScript):
 
         realizations = ensemble.get_realization_list_with_responses()
 
-        from ert import LibresFacade
+        from ert import LibresFacade  # noqa: PLC0415 (circular import)
 
         facade = LibresFacade(ert_config)
         misfit = facade.load_all_misfit_data(ensemble)

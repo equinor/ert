@@ -161,7 +161,12 @@ class CSVExportJob(ErtPlugin):
         return export_info
 
     def getArguments(self, parent, ert_config, storage):
-        from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser, PathModel
+        from ert.gui.ertwidgets import (  # noqa: PLC0415
+            CustomDialog,
+            ListEditBox,
+            PathChooser,
+            PathModel,
+        )
 
         description = "The CSV export requires some information before it starts:"
         dialog = CustomDialog("CSV Export", description, parent)

@@ -231,8 +231,13 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         return export_info
 
     def getArguments(self, parent, storage):
-        from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
-        from ert.gui.ertwidgets.models.path_model import PathModel
+        # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
+        from ert.gui.ertwidgets import (  # noqa: PLC0415
+            CustomDialog,
+            ListEditBox,
+            PathChooser,
+        )
+        from ert.gui.ertwidgets.models.path_model import PathModel  # noqa: PLC0415
 
         description = (
             "The GEN_DATA RFT CSV export requires some information before it starts:"
