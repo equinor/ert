@@ -20,10 +20,7 @@ from .gui_models_utils import partial_snapshot
 
 
 def _id_to_col(identifier):
-    for col, field in enumerate(JOB_COLUMNS):
-        if field == identifier:
-            return col
-    raise ValueError(f"{identifier} not a column in {JOB_COLUMNS}")
+    return JOB_COLUMNS.index(identifier)
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
