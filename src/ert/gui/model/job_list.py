@@ -30,11 +30,11 @@ class JobListProxyModel(QAbstractProxyModel):
         self,
         parent: Optional[QObject],
         iter_: int,
-        real: int,
+        real_: int,
     ) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
-        self._real = real
+        self._real = real_
 
     @Slot(int, int)
     def set_real(self, iter_: int, real: int) -> None:
