@@ -151,7 +151,7 @@ def _substitute_token(
     prev = None
     n = 0
     while prev != current and n < 100:
-        n = n + 1
+        n += 1
         for key, val in defines:
             prev = current
             current = current.replace_value(key, str(val))

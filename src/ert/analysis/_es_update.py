@@ -616,7 +616,8 @@ def analysis_ES(
             )
 
         else:
-            param_ensemble_array = param_ensemble_array @ T.astype(
+            # In-place multiplication is not yet supported, therefore avoiding @=
+            param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
                 param_ensemble_array.dtype
             )
 
@@ -732,11 +733,8 @@ def analysis_IES(
         param_ensemble_array = _load_param_ensemble_array(
             source_ensemble, param_group, iens_active_index
         )
-        param_ensemble_array = (
-            param_ensemble_array
-            + param_ensemble_array
-            @ sies_smoother.W
-            / np.sqrt(len(iens_active_index) - 1)
+        param_ensemble_array += (
+            param_ensemble_array @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
         )
 
         progress_callback(AnalysisStatusEvent(msg=f"Storing data for {param_group}.."))

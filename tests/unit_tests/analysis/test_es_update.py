@@ -464,7 +464,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     # We add some noise that is insignificant compared to the
     # actual local structure in the forward model step
-    A = A + rng.standard_normal(size=A.shape) * 0.01
+    A += rng.standard_normal(size=A.shape) * 0.01
 
     def g(X):
         """Apply the forward model."""

@@ -8,7 +8,7 @@ def byte_with_unit(byte_count: float) -> str:
 
     i = 0
     while byte_count >= power and i < len(suffixes) - 1:
-        byte_count = byte_count / power
+        byte_count /= power
         i += 1
 
     return f"{byte_count:.2f} {suffixes[i]}"
