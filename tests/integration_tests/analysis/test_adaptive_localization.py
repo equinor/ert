@@ -80,12 +80,12 @@ def test_that_adaptive_localization_works_with_a_single_observation():
         OBS_FILE   = poly_obs_data.txt;
     };"""
 
-    with open("observations", "w") as file:
+    with open("observations", "w", encoding="utf-8") as file:
         file.write(content)
 
     content = "2.1457049781272213 0.6"
 
-    with open("poly_obs_data.txt", "w") as file:
+    with open("poly_obs_data.txt", "w", encoding="utf-8") as file:
         file.write(content)
 
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:

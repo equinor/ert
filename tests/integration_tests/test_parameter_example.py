@@ -363,7 +363,7 @@ def test_parameter_example(
             num_realizations=num_realizations,
         ) + "\n".join(p.declaration() for p in parameters)
         note(f"config file: {contents}")
-        Path("config.ert").write_text(contents)
+        Path("config.ert").write_text(contents, encoding="utf-8")
         io_source.create_grid(GRID_NAME, grid_format)
 
         for p in parameters:

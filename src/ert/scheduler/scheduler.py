@@ -402,8 +402,8 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "r") as fp:
+        with open(jobs_path, "r", encoding="utf-8") as fp:
             data = json.load(fp)
-        with open(jobs_path, "w") as fp:
+        with open(jobs_path, "w", encoding="utf-8") as fp:
             data.update(asdict(jobs))
             json.dump(data, fp, indent=4)
