@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
@@ -12,9 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
@@ -23,38 +21,8 @@ from ert.gui.ertwidgets.storage_info_widget import StorageInfoWidget
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 
 if TYPE_CHECKING:
+    from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
-
-
-def createCheckLists(
-    ensemble_size: int, parameters: List[str]
-) -> Tuple[QHBoxLayout, SelectableListModel, SelectableListModel]:
-    parameter_model = SelectableListModel(parameters)
-
-    parameter_check_list = CheckList(parameter_model, "Parameters")
-    parameter_check_list.setMaximumWidth(300)
-
-    members_model = SelectableListModel(
-        [str(member) for member in range(ensemble_size)]
-    )
-
-    member_check_list = CheckList(members_model, "Members")
-    member_check_list.setMaximumWidth(150)
-    return (
-        createRow(parameter_check_list, member_check_list),
-        parameter_model,
-        members_model,
-    )
-
-
-def createRow(*widgets: CheckList) -> QHBoxLayout:
-    row = QHBoxLayout()
-
-    for widget in widgets:
-        row.addWidget(widget)
-
-    row.addStretch()
-    return row
 
 
 class EnsembleInitializationConfigurationPanel(QTabWidget):
@@ -63,15 +31,17 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         self.ert_config = config
         self.ensemble_size = ensemble_size
         self.notifier = notifier
-        self._addCreateNewEnsembleTab()
-        self._addInitializeFromScratchTab()
+
+        self._add_create_new_ensemble_tab()
+        self._add_initialize_from_scratch_tab()
+
         self.installEventFilter(self)
 
         self.setWindowTitle("Manage experiments")
         self.setMinimumWidth(850)
         self.setMinimumHeight(250)
 
-    def _addCreateNewEnsembleTab(self) -> None:
+    def _add_create_new_ensemble_tab(self) -> None:
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
 
@@ -95,22 +65,41 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
 
         self.addTab(panel, "Create new experiment")
 
-    def _addInitializeFromScratchTab(self) -> None:
+    def _add_initialize_from_scratch_tab(self) -> None:
         panel = QWidget()
         panel.setObjectName("initialize_from_scratch_panel")
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
 
-        target_ensemble = EnsembleSelector(self.notifier, show_only_undefined=True)
-        row = createRow(QLabel("Target ensemble:"), target_ensemble)
-        layout.addLayout(row)
+        ensemble_layout = QHBoxLayout()
+        ensemble_label = QLabel("Target ensemble:")
+        ensemble_selector = EnsembleSelector(self.notifier, show_only_undefined=True)
+        ensemble_selector.setMinimumWidth(300)
+        ensemble_layout.addWidget(ensemble_label)
+        ensemble_layout.addWidget(ensemble_selector)
+        ensemble_layout.addStretch(1)
 
-        check_list_layout, parameter_model, members_model = createCheckLists(
-            self.ert_config.model_config.num_realizations,
-            self.ert_config.ensemble_config.parameters,
+        main_layout.addLayout(ensemble_layout)
+
+        center_layout = QHBoxLayout()
+
+        parameter_model = SelectableListModel(
+            self.ert_config.ensemble_config.parameters
         )
-        layout.addLayout(check_list_layout)
+        parameter_check_list = CheckList(parameter_model, "Parameters")
+        parameter_check_list.setMinimumWidth(500)
+        center_layout.addWidget(parameter_check_list)
 
-        layout.addSpacing(10)
+        members_model = SelectableListModel(
+            [
+                str(member)
+                for member in range(self.ert_config.model_config.num_realizations)
+            ]
+        )
+        member_check_list = CheckList(members_model, "Members")
+        center_layout.addWidget(member_check_list, stretch=1)
+
+        main_layout.addLayout(center_layout)
+        main_layout.addSpacing(10)
 
         initialize_button = QPushButton("Initialize")
         initialize_button.setObjectName("initialize_from_scratch_button")
@@ -118,28 +107,30 @@ class EnsembleInitializationConfigurationPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initializeFromScratch(_: Any) -> None:
+        def initialize_from_scratch(_: Any) -> None:
             parameters = parameter_model.getSelectedItems()
             sample_prior(
-                ensemble=target_ensemble.currentData(),
+                ensemble=ensemble_selector.currentData(),
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,
             )
 
         def update_button_state() -> None:
-            initialize_button.setEnabled(target_ensemble.count() > 0)
+            initialize_button.setEnabled(ensemble_selector.count() > 0)
 
         update_button_state()
-        target_ensemble.ensemble_populated.connect(update_button_state)
-        initialize_button.clicked.connect(initializeFromScratch)
+        ensemble_selector.ensemble_populated.connect(update_button_state)
+        initialize_button.clicked.connect(initialize_from_scratch)
         initialize_button.clicked.connect(
-            lambda: self._storage_info_widget.setEnsemble(target_ensemble.currentData())
+            lambda: self._storage_info_widget.setEnsemble(
+                ensemble_selector.currentData()
+            )
         )
-        initialize_button.clicked.connect(target_ensemble.populate)
+        initialize_button.clicked.connect(ensemble_selector.populate)
 
-        layout.addWidget(initialize_button, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addSpacing(10)
-        panel.setLayout(layout)
+        main_layout.addWidget(initialize_button, 1, Qt.AlignmentFlag.AlignRight)
+        main_layout.addSpacing(10)
+        panel.setLayout(main_layout)
 
         self.addTab(panel, "Initialize from scratch")
 
