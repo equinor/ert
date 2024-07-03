@@ -160,13 +160,11 @@ class JobListProxyModel(QAbstractProxyModel):
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
     ) -> None:
-        if not self._accept_index(top_left):
-            return
-        proxy_top_left = self.mapFromSource(top_left)
-        proxy_bottom_right = self.mapFromSource(bottom_right)
-        if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
-            return
-        self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
+        if self._accept_index(top_left):
+            proxy_top_left = self.mapFromSource(top_left)
+            proxy_bottom_right = self.mapFromSource(bottom_right)
+            if all([proxy_top_left.isValid(), proxy_bottom_right.isValid()]):
+                self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _accept_index(self, index: QModelIndex) -> bool:
         if not index.internalPointer() or not index.data(IsJobRole):
