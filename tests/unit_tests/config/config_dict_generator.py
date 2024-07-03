@@ -452,8 +452,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             gen_kw_export_name=st.just("gen-kw-export-name-" + draw(file_names)),
             field=small_list(
                 st.tuples(
-                    ##
-                    st.just(draw(words)),
+                    st.builds(lambda w: "FIELD-" + w, words),
                     st.just("PARAMETER"),
                     field_output_names(),
                     st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
