@@ -688,7 +688,7 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
         FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/%d  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y
 
 - **ID**
-  String identifier with maximum 8 characters that must match the name of the parameter specified in ``INIT_FILES``. The 8 characters limitation is due to Eclipse where keywords are limited to max 8 characters.
+  String identifier with maximum 8 characters that must match the name of the parameter specified in ``INIT_FILES``.
 
 - **PARAMETER**
   Legacy from when ERT supported EnKF and needed to handle dynamic fields like pressure and saturations.
