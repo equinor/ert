@@ -85,7 +85,7 @@ class TestEnsemble(Ensemble):
                 None,
             )
 
-            event_id = event_id + 1
+            event_id += 1
             for real in range(0, self.test_reals):
                 job_failed = False
                 await send_dispatch_event(
@@ -95,7 +95,7 @@ class TestEnsemble(Ensemble):
                     f"event-{event_id}",
                     None,
                 )
-                event_id = event_id + 1
+                event_id += 1
                 for job in range(0, self.jobs):
                     await send_dispatch_event(
                         dispatch,
@@ -104,7 +104,7 @@ class TestEnsemble(Ensemble):
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
-                    event_id = event_id + 1
+                    event_id += 1
                     await send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
@@ -112,7 +112,7 @@ class TestEnsemble(Ensemble):
                         f"event-{event_id}",
                         {"current_memory_usage": 1000},
                     )
-                    event_id = event_id + 1
+                    event_id += 1
                 if job_failed:
                     await send_dispatch_event(
                         dispatch,
@@ -121,7 +121,7 @@ class TestEnsemble(Ensemble):
                         f"event-{event_id}",
                         {},
                     )
-                    event_id = event_id + 1
+                    event_id += 1
                 else:
                     await send_dispatch_event(
                         dispatch,
@@ -130,7 +130,7 @@ class TestEnsemble(Ensemble):
                         f"event-{event_id}",
                         {},
                     )
-                    event_id = event_id + 1
+                    event_id += 1
 
             data = self.result if self.result else None
             extra_attrs = {}

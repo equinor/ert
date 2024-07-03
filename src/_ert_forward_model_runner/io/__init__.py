@@ -22,7 +22,7 @@ def assert_file_executable(fname):
 
     potential_executables = [os.path.abspath(fname)]
     if not os.path.isabs(fname):
-        potential_executables = potential_executables + [
+        potential_executables += [
             os.path.join(location, fname)
             for location in os.environ["PATH"].split(os.pathsep)
         ]

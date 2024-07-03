@@ -54,7 +54,7 @@ def render_template(folder, template, target, **kwargs):
 
 
 def make_poly_example(folder, source, **kwargs):
-    folder = folder / "poly"
+    folder /= "poly"
     summary_count = kwargs["summary_data_count"]
     gen_obs_count = kwargs["gen_obs_count"]
     summary_data_entries = kwargs["summary_data_entries"]
