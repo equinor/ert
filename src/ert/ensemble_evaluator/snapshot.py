@@ -104,8 +104,8 @@ class PartialSnapshot:
         realization number, pointing to a dict with keys active (bool),
         start_time (datetime), end_time (datetime) and status (str)."""
 
-        self._forward_model_states: Dict[Tuple[str, str], "ForwardModel"] = defaultdict(
-            lambda: ForwardModel()
+        self._forward_model_states: DefaultDict[Tuple[str, str], ForwardModel] = (
+            defaultdict(ForwardModel)  # type: ignore
         )
         """A shallow dictionary of forward_model states. The key is a tuple of two
         strings with realization id and forward_model id, pointing to a ForwardModel."""
