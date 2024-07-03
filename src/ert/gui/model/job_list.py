@@ -135,20 +135,15 @@ class JobListProxyModel(QAbstractProxyModel):
         return self.createIndex(row, column, job_index.data(NodeRole))
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
-        if not proxyIndex.isValid():
-            return QModelIndex()
-        source_model = self.sourceModel()
-        assert source_model is not None
-        iter_index = source_model.index(self._iter, 0, QModelIndex())
-        if not iter_index.isValid() or not source_model.hasChildren(iter_index):
-            return QModelIndex()
-        real_index = source_model.index(self._real, 0, iter_index)
-        if not real_index.isValid() or not source_model.hasChildren(real_index):
-            return QModelIndex()
-        job_index = source_model.index(
-            proxyIndex.row(), proxyIndex.column(), real_index
-        )
-        return job_index
+        if proxyIndex.isValid():
+            sm = self.sourceModel()
+            assert sm is not None
+            iter_index = sm.index(self._iter, 0, QModelIndex())
+            if iter_index.isValid() and sm.hasChildren(iter_index):
+                real_index = sm.index(self._real, 0, iter_index)
+                if real_index.isValid() and sm.hasChildren(real_index):
+                    return sm.index(proxyIndex.row(), proxyIndex.column(), real_index)
+        return QModelIndex()
 
     def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
         return (
