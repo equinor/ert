@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import traceback
 import uuid
 from dataclasses import dataclass
 from functools import partialmethod
@@ -351,12 +352,17 @@ class LegacyEnsemble:
             queue.add_dispatch_information_to_jobs_file()
             result = await queue.execute(min_required_realizations)
 
-        except Exception:
+        except Exception as exc:
             logger.exception(
-                "unexpected exception in ensemble",
+                (
+                    "Unexpected exception in ensemble: \n" "".join(
+                        traceback.format_exception(None, exc, exc.__traceback__)
+                    )
+                ),
                 exc_info=True,
             )
-            result = EVTYPE_ENSEMBLE_FAILED
+            await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_FAILED, None))
+            return
 
         if not isinstance(self._job_queue, Scheduler):
             assert timeout_queue is not None

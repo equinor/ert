@@ -861,3 +861,23 @@ def test_exclude_parameter_from_update():
     assert log_paths
     assert (log_paths[0] / "Report.report").exists()
     assert (log_paths[0] / "Report.csv").exists()
+
+
+from ert.scheduler.driver import Driver
+
+
+@pytest.mark.timeout(15)
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_driver__init__exceptions_are_propagated(monkeypatch):
+    def mocked__init__(*args, **kwargs) -> None:
+        raise ValueError("Foobar error")
+
+    monkeypatch.setattr(Driver, "__init__", mocked__init__)
+    with pytest.raises(
+        ErtCliError,
+        match="Foobar error",
+    ):
+        run_cli(
+            TEST_RUN_MODE,
+            "poly.ert",
+        )
