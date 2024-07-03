@@ -108,10 +108,10 @@ class ForwardModelStatus:
         status_file = os.path.join(path, STATUS_json)
         fm_steps_file = os.path.join(path, JOBS_FILE)
 
-        with open(status_file) as status_fp:
+        with open(status_file, encoding="utf-8") as status_fp:
             status_data = json.load(status_fp)
 
-        with open(fm_steps_file) as fm_steps_fp:
+        with open(fm_steps_file, encoding="utf-8") as fm_steps_fp:
             fm_steps_data = json.load(fm_steps_fp)
 
         start_time = _deserialize_date(status_data["start_time"])

@@ -36,8 +36,8 @@ def main() -> None:
     subprocess.Popen(
         [str(Path(__file__).parent / "runner"), f"{jobdir}/mock_jobs/{jobid}"],
         start_new_session=True,
-        stdout=open(args.output, "w"),  # noqa: SIM115
-        stderr=open(args.error, "w"),  # noqa: SIM115
+        stdout=open(args.output, "w", encoding="utf-8"),  # noqa: SIM115
+        stderr=open(args.error, "w", encoding="utf-8"),  # noqa: SIM115
     )
 
     if args.parsable:

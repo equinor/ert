@@ -182,7 +182,7 @@ def test_failed_run(source_root):
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run_nonzero_returncode(monkeypatch):
-    Path("FOO.DATA").write_text("")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
     econfig = ecl_config.Ecl100Config()
     eclrun_config = ecl_config.EclrunConfig(econfig, "2021.3")
     erun = ecl_run.EclRun("FOO.DATA", None)

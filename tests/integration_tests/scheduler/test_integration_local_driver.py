@@ -8,7 +8,7 @@ import pytest
 
 def create_ert_config(path: Path):
     ert_config_path = Path(path / "ert_config.ert")
-    Path(path / "TEST_JOB").write_text("EXECUTABLE test_script.sh")
+    Path(path / "TEST_JOB").write_text("EXECUTABLE test_script.sh", encoding="utf-8")
     Path(path / "test_script.sh").write_text(
         dedent(
             """\
@@ -16,7 +16,8 @@ def create_ert_config(path: Path):
             echo $$ > forward_model_pid
             sleep 20
             """
-        )
+        ),
+        encoding="utf-8",
     )
     os.chmod(path / "test_script.sh", 0o755)
     ert_config_path.write_text(
