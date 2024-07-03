@@ -17,11 +17,10 @@ def delete_file(filename):
                 )
         else:
             raise IOError(f"Entry:'{filename}' is not a regular file")
+    elif os.path.islink(filename):
+        os.remove(filename)
     else:
-        if os.path.islink(filename):
-            os.remove(filename)
-        else:
-            sys.stderr.write(f"File: '{filename}' does not exist - delete ignored\n")
+        sys.stderr.write(f"File: '{filename}' does not exist - delete ignored\n")
 
 
 if __name__ == "__main__":

@@ -299,12 +299,11 @@ class BatchContext:
                 return None
             if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
                 return None
-        else:
-            if (
-                iens not in self._job_queue._jobs
-                or self._job_queue._jobs[iens].state == JobState.WAITING
-            ):
-                return None
+        elif (
+            iens not in self._job_queue._jobs
+            or self._job_queue._jobs[iens].state == JobState.WAITING
+        ):
+            return None
         return ForwardModelStatus.load(run_arg.runpath)
 
     def stop(self) -> None:
