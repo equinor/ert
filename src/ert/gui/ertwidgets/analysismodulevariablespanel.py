@@ -138,11 +138,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             lf_layout.addWidget(self.local_spinner)
             layout.addRow(localization_frame)
 
-            local_checkbox.stateChanged.connect(
-                lambda localization_is_on: self.local_spinner.setEnabled(
-                    localization_is_on
-                )
-            )
+            local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
             local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
