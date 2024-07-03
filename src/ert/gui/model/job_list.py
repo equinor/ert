@@ -169,17 +169,11 @@ class JobListProxyModel(QAbstractProxyModel):
         self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _accept_index(self, index: QModelIndex) -> bool:
-        if index.internalPointer() is None:
+        if not index.internalPointer() or not index.data(IsJobRole):
             return False
 
-        # This model should only consist of job indices, so anything else mean
-        # the index is not on "our branch" of the state graph.
-        if not index.data(IsJobRole):
-            return False
-
-        # traverse upwards and check real and iter against parents of
-        # this index.
-        while index.isValid() and index.internalPointer() is not None:
+        # traverse upwards and check real and iter against parents of this index
+        while index.isValid() and index.internalPointer():
             if (index.data(IsRealizationRole) and (index.row() != self._real)) or (
                 index.data(IsEnsembleRole) and (index.row() != self._iter)
             ):
