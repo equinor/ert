@@ -116,13 +116,12 @@ class RealListModel(QAbstractProxyModel):
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return False
-        source_model = self.sourceModel()
-        assert source_model is not None
-        return source_model.hasChildren(self.mapToSource(parent))
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            source_model = self.sourceModel()
+            assert source_model is not None
+            return source_model.hasChildren(self.mapToSource(parent))
+        return False
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
