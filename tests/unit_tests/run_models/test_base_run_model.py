@@ -62,7 +62,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
 
 
 @pytest.mark.parametrize(
-    "run_path, number_of_iterations, start_iteration, active_mask, expected",
+    "run_path, number_of_iterations, start_iteration, active_realizations_mask, expected",
     [
         ("out/realization-%d/iter-%d", 4, 2, [True, True, True, True], False),
         ("out/realization-%d/iter-%d", 4, 1, [True, True, True, True], True),
@@ -78,7 +78,7 @@ def test_check_if_runpath_exists(
     run_path: str,
     number_of_iterations: int,
     start_iteration: int,
-    active_mask: list,
+    active_realizations_mask: list,
     expected: bool,
 ):
     model_config = ModelConfig(runpath_format_string=run_path)
@@ -92,7 +92,7 @@ def test_check_if_runpath_exists(
         None,
         None,
         None,
-        active_realizations=active_mask,
+        active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
         total_iterations=number_of_iterations,
     )
@@ -103,21 +103,19 @@ def test_check_if_runpath_exists(
 
 
 @pytest.mark.parametrize(
-    "run_path, number_of_iterations, start_iteration, active_mask, expected_number",
+    "active_realizations_mask, expected_number",
     [
-        ("out/realization-%d/iter-%d", 2, 0, [True, True, True, True], 3),
-        ("out/realization-%d/iter-%d", 2, 1, [True, True], 1),
-        ("out/realization-%d/iter-%d", 4, 3, [True, True, False, True], 0),
+        ([True, True, True, True], 2),
+        ([False, False, True, True], 0),
+        ([True, False, False, True], 1),
     ],
 )
 def test_get_number_of_existing_runpaths(
     create_dummy_run_path,
-    run_path: str,
-    number_of_iterations: int,
-    start_iteration: int,
-    active_mask: list,
-    expected_number: int,
+    active_realizations_mask,
+    expected_number,
 ):
+    run_path = "out/realization-%d/iter-%d"
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = SubstitutionList()
     config = MagicMock()
@@ -125,13 +123,11 @@ def test_get_number_of_existing_runpaths(
     config.substitution_list = subs_list
 
     brm = BaseRunModel(
-        config,
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        active_realizations=active_mask,
-        start_iteration=start_iteration,
-        total_iterations=number_of_iterations,
+        config=config,
+        storage=MagicMock(),
+        queue_config=MagicMock(),
+        status_queue=MagicMock(),
+        active_realizations=active_realizations_mask,
     )
     brm.facade = MagicMock(
         run_path=run_path,
