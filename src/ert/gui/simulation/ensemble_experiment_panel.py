@@ -52,6 +52,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             TextModel(""), placeholder_text="ensemble"
         )
         self._ensemble_name_field.setMinimumWidth(250)
+        self._ensemble_name_field.setValidator(
+            NotInStorage(self.notifier.storage, "ensembles")
+        )
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)
 
