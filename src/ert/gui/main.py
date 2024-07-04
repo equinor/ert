@@ -267,7 +267,7 @@ def _setup_main_window(
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
     window.addTool(RunAnalysisTool(config, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
-    event_viewer = EventViewerTool(log_handler, config_file)
+    event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()
