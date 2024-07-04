@@ -14,13 +14,17 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
 )
 from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.snapshot import DURATION, JOB_COLUMNS, SnapshotModel
+from ert.gui.model.node import NodeType
+from ert.gui.model.snapshot import COLUMNS, DURATION, SnapshotModel
 
 from .gui_models_utils import partial_snapshot
 
 
 def _id_to_col(identifier):
-    return JOB_COLUMNS.index(identifier)
+    for col, field in enumerate(COLUMNS[NodeType.REAL]):
+        if field == identifier:
+            return col
+    raise ValueError(f"{identifier} not a column in {COLUMNS}")
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
