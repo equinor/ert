@@ -105,13 +105,11 @@ class RealListModel(QAbstractProxyModel):
     def index(
         self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return QModelIndex()
-        real_index = self.mapToSource(self.createIndex(row, 0, parent))
-        ret_index = self.createIndex(row, column, real_index.data(NodeRole))
-        return ret_index
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            real_index = self.mapToSource(self.createIndex(row, 0, parent))
+            return self.createIndex(row, column, real_index.data(NodeRole))
+        return QModelIndex()
 
     @override
     def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
