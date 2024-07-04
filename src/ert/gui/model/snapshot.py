@@ -5,7 +5,6 @@ from contextlib import ExitStack
 from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
 from dateutil import tz
-from dateutil.parser import isoparse
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
@@ -29,7 +28,7 @@ def convert_iso8601_to_datetime(
 ) -> datetime.datetime:
     if isinstance(timestamp, datetime.datetime):
         return timestamp
-    return isoparse(timestamp)
+    return datetime.datetime.fromisoformat(timestamp)
 
 
 logger = logging.getLogger(__name__)
