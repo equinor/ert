@@ -84,16 +84,14 @@ class RealListModel(QAbstractProxyModel):
         return source_model.columnCount(iter_index)
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return 0
-        source_model = self.sourceModel()
-        assert source_model is not None
-        iter_index = source_model.index(self._iter, 0, QModelIndex())
-        if not iter_index.isValid():
-            return 0
-        return source_model.rowCount(iter_index)
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            source_model = self.sourceModel()
+            assert source_model is not None
+            iter_index = source_model.index(self._iter, 0, QModelIndex())
+            if iter_index.isValid():
+                return source_model.rowCount(iter_index)
+        return 0
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
