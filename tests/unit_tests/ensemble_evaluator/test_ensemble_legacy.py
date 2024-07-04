@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from websockets.exceptions import ConnectionClosed
 
+from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -47,16 +48,15 @@ async def test_run_legacy_ensemble(
         async with evaluator_to_use(ensemble, config) as evaluator, Monitor(
             config
         ) as monitor:
-            async for e in monitor.track():
-                if e["type"] in (
-                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    identifiers.EVTYPE_EE_SNAPSHOT,
-                ) and e.data.get(identifiers.STATUS) in [
+            async for event in monitor.track():
+                if type(event) in (
+                    EESnapshotUpdate,
+                    EESnapshot,
+                ) and event.snapshot.get(identifiers.STATUS) in [
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
                 ]:
                     await monitor.signal_done()
-
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
             assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
@@ -97,7 +97,7 @@ async def test_run_and_cancel_legacy_ensemble(
                     if cancel:
                         await monitor.signal_cancel()
                         cancel = False
-                    if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
+                    if type(event) is EETerminated:
                         terminated_event = True
 
         if terminated_event:

@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
-import uuid
 from dataclasses import dataclass
 from functools import partialmethod
 from typing import (
@@ -18,18 +17,14 @@ from typing import (
     Union,
 )
 
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent
-
+from _ert.events import Event, Id, event_from_dict, event_to_json
 from _ert_forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
-from ert.serialization import evaluator_marshaller
 
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
-from .identifiers import EVTYPE_ENSEMBLE_FAILED, EVTYPE_ENSEMBLE_STARTED
 from .snapshot import ForwardModel, RealizationSnapshot, Snapshot, SnapshotDict
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -148,10 +143,10 @@ class LegacyEnsemble:
     def get_successful_realizations(self) -> List[int]:
         return self.snapshot.get_successful_realizations()
 
-    def update_snapshot(self, events: List[CloudEvent]) -> Snapshot:
+    def update_snapshot(self, events: Sequence[Event]) -> Snapshot:
         snapshot_mutate_event = Snapshot()
         for event in events:
-            snapshot_mutate_event = snapshot_mutate_event.update_from_cloudevent(
+            snapshot_mutate_event = snapshot_mutate_event.update_from_event(
                 event, source_snapshot=self.snapshot
             )
         self.snapshot.merge_snapshot(snapshot_mutate_event)
@@ -159,37 +154,32 @@ class LegacyEnsemble:
             self.status = self._status_tracker.update_state(self.snapshot.status)
         return snapshot_mutate_event
 
-    async def send_cloudevent(  # noqa: PLR6301
+    async def send_event(  # noqa: PLR6301
         self,
         url: str,
-        event: CloudEvent,
+        event: Event,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
         retries: int = 10,
     ) -> None:
         async with Client(url, token, cert, max_retries=retries) as client:
-            await client._send(to_json(event, data_marshaller=evaluator_marshaller))
+            await client._send(event_to_json(event))
 
-    def generate_event_creator(self) -> Callable[[str, Optional[int]], CloudEvent]:
-        def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
-            source = f"/ert/ensemble/{self.id_}"
-            if real_id is not None:
-                source += f"/real/{real_id}"
-            return CloudEvent(
-                {
-                    "type": status,
-                    "source": source,
-                    "id": str(uuid.uuid1()),
-                }
-            )
+    def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
+        def event_builder(status: str) -> Event:
+            event = {
+                "event_type": status,
+                "ensemble": self.id_,
+            }
+            return event_from_dict(event)
 
         return event_builder
 
     async def evaluate(
         self,
         config: EvaluatorServerConfig,
-        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
-        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        scheduler_queue: Optional[asyncio.Queue[Event]] = None,
+        manifest_queue: Optional[asyncio.Queue[Event]] = None,
     ) -> None:
         self._config = config
         ce_unary_send_method_name = "_ce_unary_send"
@@ -197,7 +187,7 @@ class LegacyEnsemble:
             self.__class__,
             ce_unary_send_method_name,
             partialmethod(
-                self.__class__.send_cloudevent,
+                self.__class__.send_event,
                 self._config.dispatch_uri,
                 token=self._config.token,
                 cert=self._config.cert,
@@ -209,27 +199,27 @@ class LegacyEnsemble:
             cert=self._config.cert,
         )
         await self._evaluate_inner(
-            cloudevent_unary_send=getattr(self, ce_unary_send_method_name),
+            event_unary_send=getattr(self, ce_unary_send_method_name),
             scheduler_queue=scheduler_queue,
             manifest_queue=manifest_queue,
         )
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
-        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
-        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
-        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        event_unary_send: Callable[[Event], Awaitable[None]],
+        scheduler_queue: Optional[asyncio.Queue[Event]] = None,
+        manifest_queue: Optional[asyncio.Queue[Event]] = None,
     ) -> None:
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
         prepares and executes the necessary bookkeeping, prepares and executes
         the JobQueue, and dispatches pertinent events.
 
-        Before returning, it always dispatches a CloudEvent describing
+        Before returning, it always dispatches an Event describing
         the final result of executing all its jobs through a JobQueue.
 
-        cloudevent_unary_send determines how CloudEvents are dispatched. This
-        is a function (or bound method) that only takes a CloudEvent as a positional
+        event_unary_send determines how Events are dispatched. This
+        is a function (or bound method) that only takes an Event as a positional
         argument.
         """
         event_creator = self.generate_event_creator()
@@ -258,7 +248,7 @@ class LegacyEnsemble:
                 f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
             )
 
-            await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_STARTED, None))
+            await event_unary_send(event_creator(Id.ENSEMBLE_STARTED))
 
             min_required_realizations = (
                 self.min_required_realizations
@@ -278,13 +268,13 @@ class LegacyEnsemble:
                 ),
                 exc_info=True,
             )
-            await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_FAILED, None))
+            await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
             return
 
         logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
-        await cloudevent_unary_send(event_creator(result, None))
+        await event_unary_send(event_creator(result))
 
     @property
     def cancellable(self) -> bool:

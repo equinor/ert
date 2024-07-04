@@ -18,13 +18,13 @@ from ert.scheduler import Scheduler
 from ert.scheduler.job import (
     Job,
     JobState,
-    _queue_jobstate_event_type,
     log_info_from_exit_file,
 )
 
 
 def create_scheduler():
     sch = AsyncMock()
+    sch._ens_id = "0"
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch._manifest_queue = None
@@ -62,8 +62,8 @@ async def assert_scheduler_events(
         assert (
             scheduler._events.qsize()
         ), f"Expected to find {expected_job_event=} in the event queue"
-        queue_event = scheduler._events.get_nowait()
-        assert queue_event["type"] == _queue_jobstate_event_type[expected_job_event]
+        event = scheduler._events.get_nowait()
+        assert event.queue_event_type == expected_job_event
 
     # should be no more events
     assert scheduler._events.empty()

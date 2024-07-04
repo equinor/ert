@@ -17,26 +17,21 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
+    Union,
 )
 
 import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.async_utils import get_running_loop
+from _ert.events import Event, ForwardModelStepChecksum, Id
 from ert.constant_filenames import CERT_FILE
-from ert.event_type_constants import (
-    EVTYPE_ENSEMBLE_CANCELLED,
-    EVTYPE_ENSEMBLE_SUCCEEDED,
-    EVTYPE_FORWARD_MODEL_CHECKSUM,
-)
 
 from .driver import Driver
 from .event import FinishedEvent
 from .job import Job, JobState
 
 if TYPE_CHECKING:
-    from cloudevents.http import CloudEvent
-
     from ert.ensemble_evaluator import Realization
 
 logger = logging.getLogger(__name__)
@@ -74,8 +69,8 @@ class Scheduler:
         self,
         driver: Driver,
         realizations: Optional[Sequence[Realization]] = None,
-        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
-        ensemble_evaluator_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        manifest_queue: Optional[asyncio.Queue[Event]] = None,
+        ensemble_evaluator_queue: Optional[asyncio.Queue[Event]] = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,
@@ -101,6 +96,7 @@ class Scheduler:
 
         self._loop = get_running_loop()
         self._events: asyncio.Queue[Any] = asyncio.Queue()
+        self._running: asyncio.Event = asyncio.Event()
 
         self._average_job_runtime: float = 0
         self._completed_jobs_num: int = 0
@@ -128,6 +124,7 @@ class Scheduler:
             asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
 
     async def cancel_all_jobs(self) -> None:
+        await self._running.wait()
         self._cancelled = True
         logger.info("Cancelling all jobs")
         await self._cancel_job_tasks()
@@ -192,8 +189,8 @@ class Scheduler:
             return
         while True:
             event = await self._manifest_queue.get()
-            if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                self.checksum.update(event.data)
+            if type(event) is ForwardModelStepChecksum:
+                self.checksum.update(event.checksums)
             self._manifest_queue.task_done()
 
     async def _publisher(self) -> None:
@@ -254,7 +251,7 @@ class Scheduler:
     async def execute(
         self,
         min_required_realizations: int = 0,
-    ) -> str:
+    ) -> Union[Id.ENSEMBLE_SUCCEEDED_TYPE, Id.ENSEMBLE_CANCELLED_TYPE]:
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(
@@ -283,7 +280,8 @@ class Scheduler:
                 job.run(sem, forward_model_ok_lock, self._max_submit),
                 name=f"job-{iens}_task",
             )
-
+        logger.info("All tasks started")
+        self._running.set()
         try:
             await self._monitor_and_handle_tasks(scheduling_tasks)
             await self.driver.finish()
@@ -298,9 +296,9 @@ class Scheduler:
 
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
-            return EVTYPE_ENSEMBLE_CANCELLED
+            return Id.ENSEMBLE_CANCELLED
 
-        return EVTYPE_ENSEMBLE_SUCCEEDED
+        return Id.ENSEMBLE_SUCCEEDED
 
     async def _process_event_queue(self) -> None:
         while True:

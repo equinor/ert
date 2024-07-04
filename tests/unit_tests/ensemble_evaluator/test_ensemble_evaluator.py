@@ -1,10 +1,23 @@
 import asyncio
 from functools import partial
+from typing import cast
 
 import pytest
 
+from _ert.events import (
+    EESnapshot,
+    EESnapshotUpdate,
+    EETerminated,
+    EnsembleStarted,
+    EnsembleSucceeded,
+    ForwardModelStepFailure,
+    ForwardModelStepRunning,
+    ForwardModelStepSuccess,
+    RealizationSuccess,
+    event_to_json,
+)
 from _ert_forward_model_runner.client import Client
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, Snapshot, identifiers
+from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -13,11 +26,11 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_RUNNING,
 )
 
-from .ensemble_evaluator_utils import TestEnsemble, send_dispatch_event
+from .ensemble_evaluator_utils import TestEnsemble
 
 
 @pytest.mark.parametrize(
-    ("task, error_msg"),
+    "task, error_msg",
     [
         ("_batch_events_into_buffer", "Batcher failed!"),
         ("_process_event_buffer", "Batch processing failed!"),
@@ -94,7 +107,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         # first snapshot before any event occurs
         events = monitor.track()
         snapshot_event = await events.__anext__()
-        snapshot = Snapshot.from_nested_dict(snapshot_event.data)
+        snapshot = Snapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -104,21 +117,21 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch:
-            await send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
             )
+            await dispatch._send(event_to_json(event))
 
-            await send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
-                "event_job_0_fail",
-                {identifiers.ERROR_MSG: "error"},
+            event = ForwardModelStepFailure(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                error_msg="error",
             )
+            await dispatch._send(event_to_json(event))
 
         def is_completed_snapshot(snapshot: Snapshot) -> bool:
             try:
@@ -132,7 +145,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
 
         final_snapshot = Snapshot()
         async for event in monitor.track():
-            final_snapshot.update_from_cloudevent(event)
+            final_snapshot.update_from_event(event)
             if is_completed_snapshot(final_snapshot):
                 break
 
@@ -143,13 +156,13 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         max_retries=1,
         timeout_multiplier=1,
     ) as dispatch:
-        await send_dispatch_event(
-            dispatch,
-            identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
-            "event_job_0_rerun_success",
-            None,
+        event = ForwardModelStepSuccess(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
         )
+        await dispatch._send(event_to_json(event))
 
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
@@ -167,7 +180,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
 
         final_snapshot = Snapshot()
         async for event in new_monitor.track():
-            final_snapshot = final_snapshot.update_from_cloudevent(event)
+            final_snapshot = final_snapshot.update_from_event(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
 
@@ -196,30 +209,29 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
             timeout_multiplier=1,
         ) as dispatch2:
             # first dispatch endpoint client informs that forward model 0 is running
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
             )
-
+            await dispatch1._send(event_to_json(event))
             # second dispatch endpoint client informs that forward model 0 is running
-            await send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="1",
+                fm_step="0",
+                current_memory_usage=1000,
             )
+            await dispatch2._send(event_to_json(event))
             # second dispatch endpoint client informs that forward model 1 is running
-            await send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="1",
+                fm_step="1",
+                current_memory_usage=1000,
             )
+            await dispatch2._send(event_to_json(event))
 
         final_snapshot = Snapshot()
 
@@ -239,7 +251,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 return False
 
         async for event in monitor.track():
-            final_snapshot = final_snapshot.update_from_cloudevent(event)
+            final_snapshot = final_snapshot.update_from_event(event)
             if check_if_all_fm_running(final_snapshot):
                 break
         assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
@@ -254,22 +266,18 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
         timeout_multiplier=1,
     ) as dispatch2:
         # second dispatch endpoint client informs that job 0 is done
-        await send_dispatch_event(
-            dispatch2,
-            identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
-            "event1",
-            {"current_memory_usage": 1000},
+        event = ForwardModelStepSuccess(
+            ensemble=evaluator.ensemble.id_,
+            real="1",
+            fm_step="0",
+            current_memory_usage=1000,
         )
-
+        await dispatch2._send(event_to_json(event))
         # second dispatch endpoint client informs that job 1 is failed
-        await send_dispatch_event(
-            dispatch2,
-            identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
-            f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
-            "event_job_1_fail",
-            {identifiers.ERROR_MSG: "error"},
+        event = ForwardModelStepFailure(
+            ensemble=evaluator.ensemble.id_, real="1", fm_step="1", error_msg="error"
         )
+        await dispatch2._send(event_to_json(event))
 
     def check_if_final_snapshot_is_complete(final_snapshot: Snapshot) -> bool:
         try:
@@ -294,7 +302,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     async with Monitor(config_info) as new_monitor:
         final_snapshot = Snapshot()
         async for event in new_monitor.track():
-            final_snapshot = final_snapshot.update_from_cloudevent(event)
+            final_snapshot = final_snapshot.update_from_event(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
 
@@ -313,7 +321,8 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         url = evaluator._config.url
         # first snapshot before any event occurs
         snapshot_event = await events.__anext__()
-        snapshot = Snapshot.from_nested_dict(snapshot_event.data)
+        assert type(snapshot_event) is EESnapshot
+        snapshot = Snapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -330,42 +339,40 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             timeout_multiplier=1,
         ) as dispatch2:
             # first dispatch endpoint client informs that job 0 is running
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
             )
-
+            await dispatch1._send(event_to_json(event))
             # second dispatch endpoint client informs that job 0 is running
-            await send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="1",
+                fm_step="0",
+                current_memory_usage=1000,
             )
-
+            await dispatch2._send(event_to_json(event))
             # second dispatch endpoint client informs that job 0 is done
-            await send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/0",
-                "event1",
-                {"current_memory_usage": 1000},
+            event = ForwardModelStepSuccess(
+                ensemble=evaluator.ensemble.id_,
+                real="1",
+                fm_step="0",
+                current_memory_usage=1000,
             )
-
+            await dispatch2._send(event_to_json(event))
             # second dispatch endpoint client informs that job 1 is failed
-            await send_dispatch_event(
-                dispatch2,
-                identifiers.EVTYPE_FORWARD_MODEL_FAILURE,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/forward_model/1",
-                "event_job_1_fail",
-                {identifiers.ERROR_MSG: "error"},
+            event = ForwardModelStepFailure(
+                ensemble=evaluator.ensemble.id_,
+                real="1",
+                fm_step="1",
+                error_msg="error",
             )
-            evt = await events.__anext__()
-            snapshot = Snapshot.from_nested_dict(evt.data)
+            await dispatch2._send(event_to_json(event))
+
+            event = await events.__anext__()
+            snapshot = Snapshot.from_nested_dict(event.snapshot)
             assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
             assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
@@ -374,8 +381,8 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
             full_snapshot_event = await events2.__anext__()
-            assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-            snapshot = Snapshot.from_nested_dict(full_snapshot_event.data)
+            event = cast(EESnapshot, full_snapshot_event)
+            snapshot = Snapshot.from_nested_dict(event.snapshot)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
             assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
@@ -387,8 +394,8 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             # both monitors should get a terminated event
             terminated = await events.__anext__()
             terminated2 = await events2.__anext__()
-            assert terminated["type"] == identifiers.EVTYPE_EE_TERMINATED
-            assert terminated2["type"] == identifiers.EVTYPE_EE_TERMINATED
+            assert type(terminated) is EETerminated
+            assert type(terminated2) is EETerminated
 
             if not monitor._event_queue.empty():
                 event = await monitor._event_queue.get()
@@ -411,45 +418,30 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         url = evaluator._config.url
 
         snapshot_event = await events.__anext__()
-        assert snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch1:
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ensemble/{evaluator.ensemble.id_}",
-                "event0",
-                {},
+        assert type(snapshot_event) is EESnapshot
+        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
+            event = EnsembleStarted(ensemble=evaluator.ensemble.id_)
+            await dispatch._send(event_to_json(event))
+            event = RealizationSuccess(
+                ensemble=evaluator.ensemble.id_, real="0", queue_event_type=""
             )
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_REALIZATION_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0",
-                "event1",
-                {},
+            await dispatch._send(event_to_json(event))
+            event = RealizationSuccess(
+                ensemble=evaluator.ensemble.id_, real="1", queue_event_type=""
             )
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_REALIZATION_SUCCESS,
-                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1",
-                "event2",
-                {},
-            )
-            await send_dispatch_event(
-                dispatch1,
-                identifiers.EVTYPE_ENSEMBLE_SUCCEEDED,
-                f"/ert/ensemble/{evaluator.ensemble.id_}",
-                "event3",
-                {},
-            )
+            await dispatch._send(event_to_json(event))
+            event = EnsembleSucceeded(ensemble=evaluator.ensemble.id_)
+            await dispatch._send(event_to_json(event))
+
         await monitor.signal_done()
 
         # Without making too many assumptions about what events to expect, it
         # should be reasonable to expect that if an event contains information
         # about realizations, the state of the ensemble up until that point
         # should be not final (i.e. not cancelled, stopped, failed).
-        ensemble_state = snapshot_event.data.get("status")
+        ensemble_state = snapshot_event.snapshot.get("status")
         async for event in monitor.track():
-            if event.data:
-                if "reals" in event.data:
+            if type(event) in [EESnapshot, EESnapshotUpdate]:
+                if "reals" in event.snapshot:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
-                ensemble_state = event.data.get("status", ensemble_state)
+                ensemble_state = event.snapshot.get("status", ensemble_state)
