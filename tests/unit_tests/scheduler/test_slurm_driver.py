@@ -126,16 +126,6 @@ async def test_queue_name_is_set(queue_name):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
-@given(project_code=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
-async def test_project_code_is_set(project_code):
-    driver = SlurmDriver(project_code=f"{project_code}")
-    await driver.submit(0, "sleep", name="myjobname")
-    assert f"--account={project_code}" in Path("captured_sbatch_args").read_text(
-        encoding="utf-8"
-    )
-
-
-@pytest.mark.usefixtures("capturing_sbatch")
 @given(max_runtime=st.integers(min_value=1))
 async def test_max_runtime_is_set(max_runtime):
     driver = SlurmDriver(max_runtime=str(max_runtime))

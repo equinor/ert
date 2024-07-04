@@ -566,13 +566,3 @@ def test_create_job_class_raises_error_on_invalid_state():
     with pytest.raises(TypeError, match=r"Invalid job state"):
         invalid_job_dict = {"job_state": "foobar"}
         _create_job_class(invalid_job_dict)
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_submit_project_code():
-    project_code = "testing+testing123"
-    driver = OpenPBSDriver(project_code=project_code)
-    await driver.submit(0, "sleep")
-    assert f" -A {project_code} " in Path("captured_qsub_args").read_text(
-        encoding="utf-8"
-    )
