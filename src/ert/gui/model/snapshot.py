@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
@@ -23,6 +24,20 @@ from ert.gui.model.node import (
     RootNode,
 )
 from ert.shared.status.utils import byte_with_unit, file_has_content
+
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
+
+
+def convert_iso8601_to_datetime(
+    timestamp: Union[datetime, str],
+) -> datetime:
+    if isinstance(timestamp, datetime):
+        return timestamp
+    return datetime.fromisoformat(timestamp)
+
 
 logger = logging.getLogger(__name__)
 
