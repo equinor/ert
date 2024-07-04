@@ -106,16 +106,14 @@ class JobListProxyModel(QAbstractProxyModel):
         return JOB_COLUMN_SIZE
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return 0
-        source_index = self._get_source_parent_index()
-        if not source_index.isValid():
-            return 0
-        source_model = self.sourceModel()
-        assert source_model is not None
-        return source_model.rowCount(source_index)
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            source_model = self.sourceModel()
+            assert source_model is not None
+            source_index = self._get_source_parent_index()
+            if source_index.isValid():
+                return source_model.rowCount(source_index)
+        return 0
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
