@@ -15,7 +15,7 @@ from typing import (
 )
 
 from cloudevents.http import CloudEvent
-from dateutil.parser import parse
+from dateutil.parser import isoparse
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
@@ -75,8 +75,7 @@ def convert_iso8601_to_datetime(
 ) -> datetime.datetime:
     if isinstance(timestamp, datetime.datetime):
         return timestamp
-
-    return parse(timestamp)
+    return isoparse(timestamp)
 
 
 RealId = str

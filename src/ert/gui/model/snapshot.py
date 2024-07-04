@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
 from dateutil import tz
+from dateutil.parser import isoparse
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
@@ -21,6 +22,15 @@ from ert.gui.model.node import (
     RootNode,
 )
 from ert.shared.status.utils import byte_with_unit
+
+
+def convert_iso8601_to_datetime(
+    timestamp: Union[datetime.datetime, str],
+) -> datetime.datetime:
+    if isinstance(timestamp, datetime.datetime):
+        return timestamp
+    return isoparse(timestamp)
+
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +210,10 @@ class SnapshotModel(QAbstractItemModel):
                 job_node = real_node.children[forward_model_id]
 
                 jobs_changed_by_real[real_id].append(job_node.row())
-
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
                 job_node.data.update(job)
                 if (
                     "current_memory_usage" in job
@@ -267,6 +280,10 @@ class SnapshotModel(QAbstractItemModel):
 
             for forward_model_id in metadata["sorted_forward_model_ids"][real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
                 )
