@@ -21,11 +21,17 @@ from typing import (
     MutableSequence,
     Optional,
     Union,
+    cast,
 )
 
 import numpy as np
-from cloudevents.http import CloudEvent
 
+from _ert.events import (
+    EESnapshot,
+    EESnapshotUpdate,
+    EETerminated,
+    Event,
+)
 from ert.analysis import (
     AnalysisEvent,
     AnalysisStatusEvent,
@@ -52,12 +58,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.identifiers import (
-    EVTYPE_EE_SNAPSHOT,
-    EVTYPE_EE_SNAPSHOT_UPDATE,
-    EVTYPE_EE_TERMINATED,
-    STATUS,
-)
+from ert.ensemble_evaluator.identifiers import STATUS
 from ert.ensemble_evaluator.snapshot import Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -391,9 +392,9 @@ class BaseRunModel(ABC):
 
         return status, current_progress, realization_count
 
-    def send_snapshot_event(self, event: CloudEvent, iteration: int) -> None:
-        if event["type"] == EVTYPE_EE_SNAPSHOT:
-            snapshot = Snapshot.from_nested_dict(event.data)
+    def send_snapshot_event(self, event: Event, iteration: int) -> None:
+        if type(event) is EESnapshot:
+            snapshot = Snapshot.from_nested_dict(event.snapshot)
             self._iter_snapshot[iteration] = snapshot
             status, current_progress, realization_count = self._current_status()
             self.send_event(
@@ -408,14 +409,14 @@ class BaseRunModel(ABC):
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
-        elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
+        elif type(event) is EESnapshotUpdate:
             if iteration not in self._iter_snapshot:
                 raise OutOfOrderSnapshotUpdateException(
-                    f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
+                    f"got snapshot update message without having stored "
                     f"snapshot for iter {iteration}"
                 )
             snapshot = Snapshot()
-            snapshot.update_from_cloudevent(
+            snapshot.update_from_event(
                 event, source_snapshot=self._iter_snapshot[iteration]
             )
             self._iter_snapshot[iteration].merge_snapshot(snapshot)
@@ -441,12 +442,13 @@ class BaseRunModel(ABC):
             async with Monitor(ee_config.get_connection_info()) as monitor:
                 logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
-                    if event is not None and event["type"] in (
-                        EVTYPE_EE_SNAPSHOT,
-                        EVTYPE_EE_SNAPSHOT_UPDATE,
+                    if type(event) in (
+                        EESnapshot,
+                        EESnapshotUpdate,
                     ):
+                        event = cast(Union[EESnapshot, EESnapshotUpdate], event)
                         self.send_snapshot_event(event, iteration)
-                        if event.data.get(STATUS) in [
+                        if event.snapshot.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
                         ]:
@@ -455,13 +457,13 @@ class BaseRunModel(ABC):
                             )
                             await monitor.signal_done()
 
-                        if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
+                        if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                             logger.debug(
                                 "observed evaluation cancelled event, exit drainer"
                             )
                             # Allow track() to emit an EndEvent.
                             return False
-                    elif event is not None and event["type"] == EVTYPE_EE_TERMINATED:
+                    elif type(event) is EETerminated:
                         logger.debug("got terminator event")
 
                     if not self._end_queue.empty():
@@ -471,8 +473,8 @@ class BaseRunModel(ABC):
                         logger.debug(
                             "Run model canceled - during evaluation - cancel sent"
                         )
-        except BaseException:
-            logger.exception("unexpected error: ")
+        except BaseException as e:
+            logger.exception(f"unexpected error: {e}")
             # We really don't know what happened...  shut down
             # the thread and get out of here. The monitor has
             # been stopped by the ctx-mgr

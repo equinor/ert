@@ -1,4 +1,3 @@
-import re
 import sys
 import typing
 from collections import defaultdict
@@ -13,13 +12,37 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    cast,
+    get_args,
 )
 
-from cloudevents.http import CloudEvent
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
 
+from _ert.events import (
+    EESnapshot,
+    EESnapshotUpdate,
+    EnsembleCancelled,
+    EnsembleEvent,
+    EnsembleFailed,
+    EnsembleStarted,
+    EnsembleSucceeded,
+    Event,
+    FMEvent,
+    ForwardModelStepFailure,
+    ForwardModelStepRunning,
+    ForwardModelStepStart,
+    ForwardModelStepSuccess,
+    RealizationEvent,
+    RealizationFailed,
+    RealizationPending,
+    RealizationRunning,
+    RealizationSuccess,
+    RealizationTimeout,
+    RealizationUnknown,
+    RealizationWaiting,
+)
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
@@ -28,50 +51,30 @@ if sys.version_info < (3, 11):
 
     MonkeyPatch.patch_fromisoformat()
 
-_regexp_pattern = r"(?<=/{token}/)[^/]+"
-
-
-def _match_token(token: str, source: str) -> str:
-    f_pattern = _regexp_pattern.format(token=token)
-    match = re.search(f_pattern, source)
-    return match if match is None else match.group()  # type: ignore
-
-
-def _get_real_id(source: str) -> str:
-    return _match_token("real", source)
-
-
-def _get_forward_model_id(source: str) -> str:
-    return _match_token("forward_model", source)
-
-
-def _get_forward_model_index(source: str) -> str:
-    return _match_token("index", source)
-
 
 class UnsupportedOperationException(ValueError):
     pass
 
 
 _FM_TYPE_EVENT_TO_STATUS = {
-    ids.EVTYPE_REALIZATION_WAITING: state.REALIZATION_STATE_WAITING,
-    ids.EVTYPE_REALIZATION_PENDING: state.REALIZATION_STATE_PENDING,
-    ids.EVTYPE_REALIZATION_RUNNING: state.REALIZATION_STATE_RUNNING,
-    ids.EVTYPE_REALIZATION_FAILURE: state.REALIZATION_STATE_FAILED,
-    ids.EVTYPE_REALIZATION_SUCCESS: state.REALIZATION_STATE_FINISHED,
-    ids.EVTYPE_REALIZATION_UNKNOWN: state.REALIZATION_STATE_UNKNOWN,
-    ids.EVTYPE_REALIZATION_TIMEOUT: state.REALIZATION_STATE_FAILED,
-    ids.EVTYPE_FORWARD_MODEL_START: state.FORWARD_MODEL_STATE_START,
-    ids.EVTYPE_FORWARD_MODEL_RUNNING: state.FORWARD_MODEL_STATE_RUNNING,
-    ids.EVTYPE_FORWARD_MODEL_SUCCESS: state.FORWARD_MODEL_STATE_FINISHED,
-    ids.EVTYPE_FORWARD_MODEL_FAILURE: state.FORWARD_MODEL_STATE_FAILURE,
+    RealizationWaiting: state.REALIZATION_STATE_WAITING,
+    RealizationPending: state.REALIZATION_STATE_PENDING,
+    RealizationRunning: state.REALIZATION_STATE_RUNNING,
+    RealizationFailed: state.REALIZATION_STATE_FAILED,
+    RealizationSuccess: state.REALIZATION_STATE_FINISHED,
+    RealizationUnknown: state.REALIZATION_STATE_UNKNOWN,
+    RealizationTimeout: state.REALIZATION_STATE_FAILED,
+    ForwardModelStepStart: state.FORWARD_MODEL_STATE_START,
+    ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
+    ForwardModelStepSuccess: state.FORWARD_MODEL_STATE_FINISHED,
+    ForwardModelStepFailure: state.FORWARD_MODEL_STATE_FAILURE,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
-    ids.EVTYPE_ENSEMBLE_STARTED: state.ENSEMBLE_STATE_STARTED,
-    ids.EVTYPE_ENSEMBLE_SUCCEEDED: state.ENSEMBLE_STATE_STOPPED,
-    ids.EVTYPE_ENSEMBLE_CANCELLED: state.ENSEMBLE_STATE_CANCELLED,
-    ids.EVTYPE_ENSEMBLE_FAILED: state.ENSEMBLE_STATE_FAILED,
+    EnsembleStarted: state.ENSEMBLE_STATE_STARTED,
+    EnsembleSucceeded: state.ENSEMBLE_STATE_STOPPED,
+    EnsembleCancelled: state.ENSEMBLE_STATE_CANCELLED,
+    EnsembleFailed: state.ENSEMBLE_STATE_FAILED,
 }
 
 
@@ -136,6 +139,8 @@ class Snapshot:
     @classmethod
     def from_nested_dict(cls, data: Mapping[Any, Any]) -> "Snapshot":
         snapshot = Snapshot()
+        if data is None:
+            return snapshot
         if "metadata" in data:
             snapshot._metadata = data["metadata"]
         if "status" in data:
@@ -281,87 +286,81 @@ class Snapshot:
         )
         return self
 
-    def update_from_cloudevent(
-        self, event: CloudEvent, source_snapshot: Optional["Snapshot"] = None
+    def update_from_event(
+        self, event: Event, source_snapshot: Optional["Snapshot"] = None
     ) -> "Snapshot":
-        e_type = event["type"]
-        e_source = event["source"]
-        timestamp = event["time"]
+        e_type = type(event)
+        timestamp = event.time
+
         if source_snapshot is None:
             source_snapshot = Snapshot()
-        if e_type in ids.EVGROUP_REALIZATION:
-            status = _FM_TYPE_EVENT_TO_STATUS[e_type]
+        if e_type in get_args(RealizationEvent):
+            event = cast(RealizationEvent, event)
+            status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
             start_time = None
             end_time = None
             callback_status_message = None
 
-            if e_type == ids.EVTYPE_REALIZATION_RUNNING:
+            if e_type is RealizationRunning:
                 start_time = convert_iso8601_to_datetime(timestamp)
             elif e_type in {
-                ids.EVTYPE_REALIZATION_SUCCESS,
-                ids.EVTYPE_REALIZATION_FAILURE,
-                ids.EVTYPE_REALIZATION_TIMEOUT,
+                RealizationSuccess,
+                RealizationFailed,
+                RealizationTimeout,
             }:
-                if event.data and event.data.get("callback_status_message"):
-                    callback_status_message = event.data["callback_status_message"]
                 end_time = convert_iso8601_to_datetime(timestamp)
+            if type(event) is RealizationFailed:
+                callback_status_message = event.callback_status_message
             self.update_realization(
-                _get_real_id(e_source),
+                event.real,
                 status,
                 start_time,
                 end_time,
                 callback_status_message,
             )
 
-            if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
+            if e_type is RealizationTimeout:
                 for (
                     forward_model_id,
                     forward_model,
-                ) in source_snapshot.get_forward_models_for_real(
-                    _get_real_id(e_source)
-                ).items():
+                ) in source_snapshot.get_forward_models_for_real(event.real).items():
                     if (
                         forward_model.get(ids.STATUS)
                         != state.FORWARD_MODEL_STATE_FINISHED
                     ):
-                        real_id = _get_real_id(e_source)
-                        forward_model_idx = (real_id, forward_model_id)
-                        if (
-                            forward_model_idx
-                            not in source_snapshot._forward_model_states
-                        ):
-                            self._forward_model_states[forward_model_idx] = {}
-                        self._forward_model_states[forward_model_idx].update(
-                            {
-                                "status": state.FORWARD_MODEL_STATE_FAILURE,
-                                "end_time": end_time,
-                                "error": "The run is cancelled due to "
+                        fm_idx = (event.real, forward_model_id)
+                        if fm_idx not in source_snapshot._forward_model_states:
+                            self._forward_model_states[fm_idx] = ForwardModel()
+                        self._forward_model_states[fm_idx].update(
+                            ForwardModel(
+                                status=state.FORWARD_MODEL_STATE_FAILURE,
+                                end_time=end_time,
+                                error="The run is cancelled due to "
                                 "reaching MAX_RUNTIME",
-                            }
+                            )
                         )
 
-        elif e_type in ids.EVGROUP_FORWARD_MODEL:
-            status = _FM_TYPE_EVENT_TO_STATUS[e_type]
+        elif e_type in get_args(FMEvent):
+            event = cast(FMEvent, event)
+            status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
             start_time = None
             end_time = None
             error = None
-            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
+            if e_type is ForwardModelStepStart:
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
-                ids.EVTYPE_FORWARD_MODEL_SUCCESS,
-                ids.EVTYPE_FORWARD_MODEL_FAILURE,
-            }:
+            elif e_type in {ForwardModelStepSuccess, ForwardModelStepFailure}:
                 end_time = convert_iso8601_to_datetime(timestamp)
-                # Make sure error msg from previous failed run is replaced
-                error = ""
-                if event.data is not None:
-                    error = event.data.get(ids.ERROR_MSG)
+                if type(event) is ForwardModelStepFailure:
+                    error = event.error_msg if event.error_msg else ""
+                else:
+                    # Make sure error msg from previous failed run is replaced
+                    error = ""
 
             fm = ForwardModel(
                 **_filter_nones(  # type: ignore
                     {
                         ids.STATUS: status,
-                        ids.INDEX: _get_forward_model_index(e_source),
+                        ids.INDEX: event.fm_step,
                         ids.START_TIME: start_time,
                         ids.END_TIME: end_time,
                         ids.ERROR: error,
@@ -369,25 +368,26 @@ class Snapshot:
                 )
             )
 
-            if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
-                fm[ids.CURRENT_MEMORY_USAGE] = event.data.get(ids.CURRENT_MEMORY_USAGE)
-                fm[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
-            if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                fm[ids.STDOUT] = event.data.get(ids.STDOUT)
-                fm[ids.STDERR] = event.data.get(ids.STDERR)
+            if type(event) is ForwardModelStepRunning:
+                fm[ids.CURRENT_MEMORY_USAGE] = event.current_memory_usage
+                fm[ids.MAX_MEMORY_USAGE] = event.max_memory_usage
+            if type(event) is ForwardModelStepStart:
+                fm[ids.STDOUT] = event.std_out
+                fm[ids.STDERR] = event.std_err
 
             self.update_forward_model(
-                _get_real_id(e_source),
-                _get_forward_model_id(e_source),
+                event.real,
+                event.fm_step,
                 fm,
             )
 
-        elif e_type in ids.EVGROUP_ENSEMBLE:
-            self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type]
-        elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-            self.merge_snapshot(Snapshot.from_nested_dict(event.data))
-        elif e_type == ids.EVTYPE_EE_SNAPSHOT:
-            return Snapshot.from_nested_dict(event.data)
+        elif e_type in get_args(EnsembleEvent):
+            event = cast(EnsembleEvent, event)
+            self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
+        elif type(event) is EESnapshotUpdate:
+            self.merge_snapshot(Snapshot.from_nested_dict(event.snapshot))
+        elif type(event) is EESnapshot:
+            return Snapshot.from_nested_dict(event.snapshot)
         else:
             raise ValueError(f"Unknown type: {e_type}")
         return self

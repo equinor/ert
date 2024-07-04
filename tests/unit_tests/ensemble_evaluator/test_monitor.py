@@ -4,9 +4,9 @@ from http import HTTPStatus
 
 import pytest
 import websockets
-from cloudevents.http import from_json
 from websockets.exceptions import ConnectionClosedOK
 
+from _ert.events import EEUserCancel, EEUserDone, event_from_json
 from ert.ensemble_evaluator import Monitor
 from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
 
@@ -43,9 +43,9 @@ async def test_immediate_stop(unused_tcp_port):
     set_when_done = asyncio.Event()
 
     async def mock_ws_event_handler(websocket):
-        async for event in websocket:
-            cloud_event = from_json(event)
-            assert cloud_event["type"] == "com.equinor.ert.ee.user_done"
+        async for raw_msg in websocket:
+            event = event_from_json(raw_msg)
+            assert type(event) is EEUserDone
             break
         await websocket.close()
 
@@ -74,7 +74,7 @@ async def test_unexpected_close(unused_tcp_port):
         _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
     )
     async with Monitor(ee_con_info) as monitor:
-        # this expects cloud_event send to fail
+        # this expects Event send to fail
         # but no attempt on resubmitting
         # since connection closed via websocket.close
         with pytest.raises(ConnectionClosedOK):
@@ -96,9 +96,9 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
     set_when_done = asyncio.Event()
 
     async def mock_ws_event_handler(websocket):
-        async for event in websocket:
-            cloud_event = from_json(event)
-            assert cloud_event["type"] == "com.equinor.ert.ee.user_cancel"
+        async for raw_msg in websocket:
+            event = event_from_json(raw_msg)
+            assert type(event) is EEUserCancel
             break
         await websocket.close()
 

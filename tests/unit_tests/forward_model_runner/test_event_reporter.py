@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 import time
@@ -6,18 +5,19 @@ from unittest.mock import patch
 
 import pytest
 
+from _ert.events import (
+    ForwardModelStepFailure,
+    ForwardModelStepRunning,
+    ForwardModelStepStart,
+    ForwardModelStepSuccess,
+    event_from_json,
+)
 from _ert_forward_model_runner.client import (
     ClientConnectionClosedOK,
     ClientConnectionError,
 )
 from _ert_forward_model_runner.job import Job
 from _ert_forward_model_runner.reporting import Event
-from _ert_forward_model_runner.reporting.event import (
-    _FORWARD_MODEL_FAILURE,
-    _FORWARD_MODEL_RUNNING,
-    _FORWARD_MODEL_START,
-    _FORWARD_MODEL_SUCCESS,
-)
 from _ert_forward_model_runner.reporting.message import (
     Exited,
     Finish,
@@ -49,11 +49,13 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(lines) == 1
-    event = json.loads(lines[0])
-    assert event["type"] == _FORWARD_MODEL_START
-    assert event["source"] == "/ert/ensemble/ens_id/real/0/forward_model/0/index/0"
-    assert os.path.basename(event["data"]["stdout"]) == "stdout"
-    assert os.path.basename(event["data"]["stderr"]) == "stderr"
+    event = event_from_json(lines[0])
+    assert type(event) is ForwardModelStepStart
+    assert event.ensemble == "ens_id"
+    assert event.real == "0"
+    assert event.fm_step == "0"
+    assert os.path.basename(event.std_out) == "stdout"
+    assert os.path.basename(event.std_err) == "stderr"
 
 
 def test_report_with_failed_start_message_argument(unused_tcp_port):
@@ -73,9 +75,9 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(lines) == 2
-    event = json.loads(lines[1])
-    assert event["type"] == _FORWARD_MODEL_FAILURE
-    assert event["data"]["error_msg"] == "massive_failure"
+    event = event_from_json(lines[1])
+    assert type(event) is ForwardModelStepFailure
+    assert event.error_msg == "massive_failure"
 
 
 def test_report_with_successful_exit_message_argument(unused_tcp_port):
@@ -91,8 +93,8 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
         reporter.report(Finish().with_error("failed"))
 
     assert len(lines) == 1
-    event = json.loads(lines[0])
-    assert event["type"] == _FORWARD_MODEL_SUCCESS
+    event = event_from_json(lines[0])
+    assert type(event) is ForwardModelStepSuccess
 
 
 def test_report_with_failed_exit_message_argument(unused_tcp_port):
@@ -108,9 +110,9 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(lines) == 1
-    event = json.loads(lines[0])
-    assert event["type"] == _FORWARD_MODEL_FAILURE
-    assert event["data"]["error_msg"] == "massive_failure"
+    event = event_from_json(lines[0])
+    assert type(event) is ForwardModelStepFailure
+    assert event.error_msg == "massive_failure"
 
 
 def test_report_with_running_message_argument(unused_tcp_port):
@@ -126,10 +128,10 @@ def test_report_with_running_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(lines) == 1
-    event = json.loads(lines[0])
-    assert event["type"] == _FORWARD_MODEL_RUNNING
-    assert event["data"]["max_memory_usage"] == 100
-    assert event["data"]["current_memory_usage"] == 10
+    event = event_from_json(lines[0])
+    assert type(event) is ForwardModelStepRunning
+    assert event.max_memory_usage == 100
+    assert event.current_memory_usage == 10
 
 
 def test_report_only_job_running_for_successful_run(unused_tcp_port):

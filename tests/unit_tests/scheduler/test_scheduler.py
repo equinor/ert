@@ -9,17 +9,14 @@ from typing import List
 
 import pytest
 
+from _ert.events import Id, RealizationFailed, RealizationTimeout
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator import Realization
-from ert.event_type_constants import (
-    EVTYPE_ENSEMBLE_CANCELLED,
-    EVTYPE_ENSEMBLE_SUCCEEDED,
-)
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
-from ert.scheduler.job import EVTYPE_REALIZATION_TIMEOUT, JobState
+from ert.scheduler.job import JobState
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -76,7 +73,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
 
 async def test_empty(mock_driver):
     sch = scheduler.Scheduler(mock_driver())
-    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
 
 
 async def test_single_job(realization, mock_driver):
@@ -89,7 +86,7 @@ async def test_single_job(realization, mock_driver):
 
     sch = scheduler.Scheduler(driver, [realization])
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
     assert await future == realization.iens
 
 
@@ -185,7 +182,7 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
 
     sch._max_submit = max_submit
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
     assert retries == max_submit
 
 
@@ -199,7 +196,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
     driver = mock_driver(init=init)
     sch = scheduler.Scheduler(driver, [realization], max_submit=5)
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
     assert retries == 1
 
 
@@ -217,12 +214,12 @@ async def test_max_runtime(realization, mock_driver, caplog):
 
     result = await asyncio.create_task(sch.execute())
     assert wait_started.is_set()
-    assert result == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert result == Id.ENSEMBLE_SUCCEEDED
 
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
         event = await sch._events.get()
-        if event["type"] == EVTYPE_REALIZATION_TIMEOUT:
+        if type(event) is RealizationTimeout:
             timeouteventfound = True
     assert timeouteventfound
 
@@ -245,7 +242,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
         mock_driver(init=init, wait=wait), [realization], max_submit=2
     )
     result = await sch.execute()
-    assert result == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert result == Id.ENSEMBLE_SUCCEEDED
 
     assert retries == 1
 
@@ -276,7 +273,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         mock_driver(wait=wait), realizations, max_running=max_running
     )
 
-    assert await sch.execute() == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
 
     currently_running = 0
     max_running_observed = 0
@@ -322,7 +319,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
         event = await sch._events.get()
-        if event["type"] == EVTYPE_REALIZATION_TIMEOUT:
+        if type(event) is RealizationTimeout:
             timeouteventfound = True
 
     # Assert that a timeout_event is actually emitted, because killing took a
@@ -334,7 +331,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
 
     # The result from execute is that we were cancelled, not stopped
     # as if the timeout happened before kill_all_jobs()
-    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
 
 
 @pytest.mark.timeout(6)
@@ -366,13 +363,13 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
     await sch.cancel_all_jobs()
 
     await scheduler_task
-    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
     assert retries == 1, "Job was resubmitted after killing"
     event = None
     while not sch._events.empty():
         event = await sch._events.get()
     assert event is not None
-    assert event["type"] == "com.equinor.ert.realization.failure"
+    assert type(event) is RealizationFailed
 
 
 async def test_is_active(mock_driver, realization):
@@ -443,7 +440,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
     await sch.cancel_all_jobs()
 
     await scheduler_task
-    assert scheduler_task.result() == EVTYPE_ENSEMBLE_CANCELLED
+    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
 
     assert kill_called == (not should_fail)
 
@@ -478,7 +475,7 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
         max_running=ensemble_size,
     )
 
-    assert await sch.execute(min_required_realizations=5) == EVTYPE_ENSEMBLE_SUCCEEDED
+    assert await sch.execute(min_required_realizations=5) == Id.ENSEMBLE_SUCCEEDED
     assert killed_iens == [6, 7, 8, 9]
 
 
@@ -717,4 +714,4 @@ async def test_callback_status_message_present_in_event_on_load_failure(
     while not sch._events.empty():
         event = await sch._events.get()
 
-    assert expected_error in event.data["callback_status_message"]
+    assert expected_error in event.callback_status_message
