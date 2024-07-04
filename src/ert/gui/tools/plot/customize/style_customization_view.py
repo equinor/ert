@@ -65,8 +65,8 @@ class StyleCustomizationView(CustomizationView):
             StyleCustomizationView.setObservationsColor,
         )
 
-    def getObservationsColor(self) -> str:
-        return str(self._observs_color_box.color.name())
+    def getObservationsColor(self) -> QColor:
+        return self._observs_color_box.color
 
     def setObservationsColor(self, name: QColor) -> None:
         self._observs_color_box.color = name
@@ -94,12 +94,17 @@ class StyleCustomizationView(CustomizationView):
         plot_config.setDefaultStyle(self.default_style)
         plot_config.setHistoryStyle(self.history_style)
         plot_config.setObservationsStyle(self.observs_style)
-        plot_config.setObservationsColor(self.observs_color)
+        plot_config.setObservationsColor(self.observs_color.name())
+        plot_config.setObservationsAlpha(self.observs_color.alphaF())
         plot_config.setLineColorCycle(self.color_cycle)
 
     def revertCustomization(self, plot_config: "PlotConfig") -> None:
         self.default_style = plot_config.defaultStyle()
         self.history_style = plot_config.historyStyle()
         self.observs_style = plot_config.observationsStyle()
-        self.observs_color = plot_config.observationsColor()
+
+        obs_color = QColor(plot_config.observationsColor())
+        obs_color.setAlphaF(plot_config.observationsAlpha())
+        self.observs_color = obs_color
+
         self.color_cycle = plot_config.lineColorCycle()

@@ -124,6 +124,9 @@ class PlotConfig:
     def observationsColor(self) -> Optional[str]:
         return self._observs_style.color
 
+    def observationsAlpha(self) -> float:
+        return self._observs_style.alpha
+
     def observationsStyle(self) -> PlotStyle:
         style = PlotStyle("Observations style")
         style.copyStyleFrom(self._observs_style)
@@ -227,6 +230,9 @@ class PlotConfig:
 
     def setObservationsColor(self, color: str) -> None:
         self._observs_style.color = color
+
+    def setObservationsAlpha(self, alpha: float) -> None:
+        self._observs_style.alpha = alpha
 
     def setObservationsStyle(self, style: PlotStyle) -> None:
         self._observs_style.line_style = style.line_style

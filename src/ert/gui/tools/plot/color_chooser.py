@@ -54,6 +54,9 @@ class ColorBox(QFrame):
         return self._color
 
     @color.setter
-    def color(self, color: str) -> None:
-        self._color = QColor(color)
+    def color(self, color: str | QColor) -> None:
+        if isinstance(color, str):
+            self._color = QColor(color)
+        else:
+            self._color = color
         self.update()
