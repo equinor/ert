@@ -20,7 +20,12 @@ def test_that_attempting_to_export_infty_fails(infty_val):
         ValueError,
         match=r"export of field 'param' to .* contained infinity or nan values",
     ):
-        export_roff(np.ma.MaskedArray([infty_val]), BytesIO(), "param", True)
+        export_roff(
+            np.ma.MaskedArray(np.array(infty_val).reshape((1, 1, 1))),
+            BytesIO(),
+            "param",
+            True,
+        )
 
 
 @pytest.mark.parametrize(

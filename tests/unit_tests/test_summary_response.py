@@ -52,6 +52,7 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
 
         facade = LibresFacade.from_config_file("config.ert")
         facade.load_from_forward_model(ensemble, [True], 0)
+        ensemble.unify_responses()
 
         df = ensemble.load_responses("summary", (0,)).to_dataframe()
         df = df.unstack(level="name")

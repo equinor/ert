@@ -1,6 +1,5 @@
 from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
-from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .ert_plugin import CancelPluginException, ErtPlugin
@@ -19,7 +18,6 @@ from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
-from .observations import EnkfObs
 from .parameter_config import ParameterConfig
 from .parsing import (
     AnalysisMode,
@@ -39,6 +37,7 @@ from .queue_config import (
     queue_string_options,
 )
 from .response_config import ResponseConfig
+from .response_properties import ResponseTypes
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -55,8 +54,6 @@ __all__ = [
     "ConfigWarning",
     "ErrorInfo",
     "WarningInfo",
-    "EnkfObs",
-    "EnkfObservationImplementationType",
     "EnsembleConfig",
     "ErtConfig",
     "ErtPlugin",
@@ -80,6 +77,7 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ResponseTypes",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

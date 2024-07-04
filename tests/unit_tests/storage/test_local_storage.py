@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import tempfile
 from dataclasses import dataclass, field
@@ -17,21 +18,19 @@ from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from xarray.testing import assert_allclose
 
 from ert.config import (
-    EnkfObs,
     Field,
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
     ResponseConfig,
+    ResponseTypes,
     SummaryConfig,
     SurfaceConfig,
-)
-from ert.config.enkf_observation_implementation_type import (
-    EnkfObservationImplementationType,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
+from ert.config.observations import EnkfObs
 from ert.storage import open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
@@ -175,6 +174,26 @@ def test_that_load_responses_throws_exception(tmp_path):
             ensemble.load_responses("I_DONT_EXIST", (1,))
 
 
+def test_that_load_unified_responses_errors_for_missing_type_and_key(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[GenDataConfig(name="FOPR", input_file="", report_steps=[199])]
+        )
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+
+        with pytest.raises(
+            expected_exception=FileNotFoundError,
+            match=".*for response type gen_data not found",
+        ):
+            ensemble.open_unified_response_dataset("gen_data")
+
+        with pytest.raises(
+            expected_exception=FileNotFoundError,
+            match=".*for response FOPR not found",
+        ):
+            ensemble.open_unified_response_dataset("FOPR")
+
+
 def test_that_load_parameters_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -297,6 +316,28 @@ def test_ensemble_no_parameters(storage):
     assert ensemble.get_ensemble_state() == [RealizationStorageState.HAS_DATA] * 2
 
 
+def test_remove_and_add_response_from_storage(
+    snake_oil_case_storage,
+    snake_oil_storage,
+):
+    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+
+    gen_data_ds = prior_ens.load_responses("gen_data")
+    gpr_diff_ds = gen_data_ds.sel(name="SNAKE_OIL_GPR_DIFF", drop=True).load()
+
+    gen_data_ds_path = prior_ens._path / "gen_data.nc"
+    os.remove(gen_data_ds_path)
+    gen_data_ds.copy().drop_sel(name="SNAKE_OIL_GPR_DIFF").to_netcdf(gen_data_ds_path)
+
+    with pytest.raises(KeyError):
+        prior_ens.load_responses("SNAKE_OIL_GPR_DIFF")
+
+    os.remove(gen_data_ds_path)
+    gen_data_ds.to_netcdf(prior_ens._path / "gen_data.nc")
+    resp = prior_ens.load_responses("SNAKE_OIL_GPR_DIFF")
+    assert resp.equals(gpr_diff_ds)
+
+
 def test_get_unique_experiment_name(snake_oil_storage):
     with patch(
         "ert.storage.local_storage.LocalStorage.experiments", new_callable=PropertyMock
@@ -349,7 +390,16 @@ parameter_configs = st.lists(
             forward_init=st.booleans(),
             transform_function_definitions=st.just([]),
         ),
-        st.builds(SurfaceConfig),
+        st.builds(
+            SurfaceConfig,
+            ncol=st.integers(min_value=0, max_value=100),
+            nrow=st.integers(min_value=0, max_value=100),
+            xori=st.floats(min_value=-1000, max_value=1000),
+            yori=st.floats(min_value=-1000, max_value=1000),
+            yinc=st.floats(min_value=0, max_value=10),
+            xinc=st.floats(min_value=0, max_value=10),
+            rotation=st.floats(min_value=-10, max_value=10),
+        ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
@@ -359,6 +409,7 @@ response_configs = st.lists(
     st.one_of(
         st.builds(
             GenDataConfig,
+            name=st.text(min_size=1, max_size=40),
         ),
         st.builds(
             SummaryConfig,
@@ -386,7 +437,9 @@ words = st.text(
 gen_observations = st.integers(min_value=1, max_value=10).flatmap(
     lambda size: st.builds(
         GenObservation,
-        values=arrays(np.double, shape=size),
+        values=arrays(
+            np.double, shape=size, elements=st.floats(min_value=-10e5, max_value=10e5)
+        ),
         stds=arrays(
             np.double,
             elements=st.floats(min_value=0.1, max_value=1.0),
@@ -396,10 +449,17 @@ gen_observations = st.integers(min_value=1, max_value=10).flatmap(
             np.int64,
             elements=st.integers(min_value=0, max_value=100),
             shape=size,
+        ).filter(lambda l: len(set(l)) == len(l)),
+        std_scaling=arrays(
+            np.double, shape=size, elements=st.floats(min_value=1e-5, max_value=1e5)
         ),
-        std_scaling=arrays(np.double, shape=size),
     )
 )
+
+
+def _ensure_unique_obs_names(l):
+    all_obs_names = [ll.observation_name for ll in l.values()]
+    return len(all_obs_names) == len(set(all_obs_names))
 
 
 observations = st.builds(
@@ -408,9 +468,9 @@ observations = st.builds(
         words,
         st.builds(
             ObsVector,
-            observation_type=st.just(EnkfObservationImplementationType.GEN_OBS),
-            observation_key=words,
-            data_key=words,
+            observation_type=st.just(ResponseTypes.gen_data),
+            observation_name=words,
+            response_name=words,
             observations=st.dictionaries(
                 st.integers(min_value=0, max_value=200),
                 gen_observations,
@@ -418,7 +478,7 @@ observations = st.builds(
                 min_size=1,
             ),
         ),
-    ),
+    ).filter(_ensure_unique_obs_names),
 )
 
 small_ints = st.integers(min_value=1, max_value=10)

@@ -16,7 +16,7 @@ from ert.shared.plugins import ErtPluginManager
 )
 def test_export_misfit(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     ExportMisfitDataJob().run(snake_oil_case_storage, snake_oil_default_storage, [])
-    result = pd.read_hdf("misfit.hdf")
+    result = pd.read_hdf("misfit.hdf").round(10)
     snapshot.assert_match(
         result.to_csv(),
         "csv_data.csv",

@@ -56,11 +56,12 @@ class EnsembleExperiment(BaseRunModel):
         restart: bool = False,
     ) -> RunContext:
         self.setPhaseName(self.run_message())
+
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations,
+                observations=self.ert_config.observations.datasets,
                 responses=self.ert_config.ensemble_config.response_configuration,
             )
             self.ensemble = self._storage.create_ensemble(

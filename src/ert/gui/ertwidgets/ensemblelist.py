@@ -90,7 +90,7 @@ class EnsembleList(QWidget):
             ensemble = self.storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 responses=self.ert_config.ensemble_config.response_configuration,
-                observations=self.ert_config.observations,
+                observations=self.ert_config.observations.datasets,
             ).create_ensemble(
                 name=new_ensemble_name,
                 ensemble_size=self.ensemble_size,
