@@ -56,7 +56,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     for fm_step in ert_config.forward_model_steps:
         logger.info("Config contains forward model step %s", fm_step.name)
 
-    if not ert_config.observations and args.mode not in [
+    if not ert_config.observation_keys and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,
@@ -107,8 +107,6 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
             "might be overwritten.\n"
             "- Previously generated files might "
             "be used if not configured correctly.\n"
-            f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
-            "are running in existing runpaths.\n"
         )
         logger.warning("ERT is running in an existing runpath")
 

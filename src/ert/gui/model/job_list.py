@@ -12,9 +12,9 @@ from qtpy.QtCore import (
 from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
+from ert.gui.model.node import NodeType
 from ert.gui.model.snapshot import (
-    JOB_COLUMN_SIZE,
-    JOB_COLUMNS,
+    COLUMNS,
     IsEnsembleRole,
     IsJobRole,
     IsRealizationRole,
@@ -91,7 +91,7 @@ class JobListProxyModel(QAbstractProxyModel):
         if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
         if orientation == Qt.Orientation.Horizontal:
-            header = JOB_COLUMNS[section]
+            header = COLUMNS[NodeType.REAL][section]
             if header in [ids.STDOUT, ids.STDERR]:
                 return header.upper()
             if header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
@@ -103,7 +103,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
-        return JOB_COLUMN_SIZE
+        return len(COLUMNS[NodeType.REAL])
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent is None:

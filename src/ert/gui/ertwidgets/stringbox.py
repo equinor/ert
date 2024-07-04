@@ -23,7 +23,6 @@ class StringBox(QLineEdit):
         default_string: str = "",
         continuous_update: bool = False,
         placeholder_text: str = "",
-        minimum_width: int = 250,
     ):
         """
         :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
@@ -32,7 +31,7 @@ class StringBox(QLineEdit):
         :type continuous_update: bool
         """
         QLineEdit.__init__(self)
-        self.setMinimumWidth(minimum_width)
+        self.setMinimumWidth(250)
         self._validation = ValidationSupport(self)
         self._validator: Optional[ArgumentDefinition] = None
         self._model = model

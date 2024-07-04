@@ -131,23 +131,29 @@ def test_that_storage_matches(
             str(experiment.response_configuration) + "\n", "responses"
         )
 
+        assert ensemble.has_combined_response_dataset("gen_data")
+        assert ensemble.has_combined_response_dataset("summary")
+
         summary_data = ensemble.load_responses(
             "summary",
-            tuple(ensemble.get_realization_list_with_responses("summary")),
+            tuple(ensemble.get_realization_with_responses("summary")),
         )
         snapshot.assert_match(
-            summary_data.to_dataframe(dim_order=["time", "name", "realization"])
+            summary_data.to_dataframe(dim_order=["realization", "name", "time"])
             .transform(np.sort)
             .to_csv(),
             "summary_data",
         )
-        snapshot.assert_match_dir(
-            {
-                key: value.to_dataframe().to_csv()
-                for key, value in experiment.observations.items()
-            },
-            "observations",
-        )
+
+        expect_dir = {}
+        for group, ds in experiment.observations["gen_data"].groupby(
+            "obs_name", squeeze=True
+        ):
+            expect_dir[group] = (
+                ds.drop("obs_name").squeeze("name", drop=True).to_dataframe().to_csv()
+            )
+
+        snapshot.assert_match_dir(expect_dir, "observations")
 
 
 @pytest.mark.usefixtures("copy_shared")
@@ -250,10 +256,13 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
         ens_dir_contents = set(os.listdir(ensemble_path))
         assert {
+            "BPR.nc",
+            "PORO.nc",
             "index.json",
+            "summary.nc",
         }.issubset(ens_dir_contents)
 
         assert "TOP.nc" not in ens_dir_contents
 
         with pytest.raises(KeyError):
-            ensembles[0].load_responses("GEN", (0,))
+            ensembles[0].load_responses("GEN")

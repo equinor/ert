@@ -14,8 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from tests.utils import poll
 
-from ert.config import QueueConfig
-from ert.scheduler import LsfDriver, create_driver
+from ert.scheduler import LsfDriver
 from ert.scheduler.lsf_driver import (
     FLAKY_SSH_RETURNCODE,
     LSF_FAILED_JOB,
@@ -177,22 +176,6 @@ async def test_submit_with_default_queue():
     driver = LsfDriver()
     await driver.submit(0, "sleep")
     assert "-q" not in Path("captured_bsub_args").read_text(encoding="utf-8")
-
-
-@pytest.mark.usefixtures("capturing_bsub")
-async def test_submit_with_project_code():
-    queue_config_dict = {
-        "QUEUE_SYSTEM": "LSF",
-        "FORWARD_MODEL": [("FLOW",), ("ECLIPSE",), ("RMS",)],
-    }
-    queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver: LsfDriver = create_driver(queue_config)
-    await driver.submit(0, "sleep")
-    queue_option_dict = queue_config.queue_options_as_dict
-    project_code = queue_option_dict["PROJECT_CODE"]
-    assert f"-P {project_code}" in Path("captured_bsub_args").read_text(
-        encoding="utf-8"
-    )
 
 
 @pytest.mark.usefixtures("capturing_bsub")

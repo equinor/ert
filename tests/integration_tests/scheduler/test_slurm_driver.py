@@ -50,7 +50,7 @@ async def test_slurm_dumps_stderr_to_file(tmp_path, job_name):
 
 def generate_random_text(size):
     letters = string.ascii_letters
-    return "".join(random.choice(letters) for _ in range(size))
+    return "".join(random.choice(letters) for i in range(size))
 
 
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
@@ -78,7 +78,7 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
 
 
 @pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, job_name):
+async def test_submit_to_named_queue(tmp_path, caplog, job_name):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
 

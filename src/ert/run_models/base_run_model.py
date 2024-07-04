@@ -249,6 +249,10 @@ class BaseRunModel:
         self._exception = None
         self._phase = 0
 
+    def restart(self) -> None:
+        active_realizations = self._create_mask_from_failed_realizations()
+        self.active_realizations = active_realizations
+
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
 
@@ -293,9 +297,7 @@ class BaseRunModel:
         self._context_env_keys = []
 
     def start_simulations_thread(
-        self,
-        evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
         try:
             self.start_time = int(time.time())
@@ -304,16 +306,8 @@ class BaseRunModel:
                 self._set_default_env_context()
                 run_context = self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
-                    restart=restart,
                 )
-                if self._completed_realizations_mask:
-                    combined = np.logical_or(
-                        np.array(self._completed_realizations_mask),
-                        np.array(run_context.mask),
-                    )
-                    self._completed_realizations_mask = list(combined)
-                else:
-                    self._completed_realizations_mask = run_context.mask
+                self._completed_realizations_mask = run_context.mask
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -328,9 +322,7 @@ class BaseRunModel:
             self._simulationEnded()
 
     def run_experiment(
-        self,
-        evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
@@ -546,6 +538,10 @@ class BaseRunModel:
             event_logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
             return []
+
+        run_context.ensemble.unify_parameters()
+        run_context.ensemble.unify_responses()
+
         return evaluator.get_successful_realizations()
 
     def _build_ensemble(
@@ -594,19 +590,13 @@ class BaseRunModel:
         """
         return any(Path(run_path).exists() for run_path in self.paths)
 
-    def get_number_of_existing_runpaths(self) -> int:
-        return [Path(run_path).exists() for run_path in self.paths].count(True)
-
-    def get_number_of_active_realizations(self) -> int:
-        return self.active_realizations.count(True)
-
     def rm_run_path(self) -> None:
         for run_path in self.paths:
             if Path(run_path).exists():
                 shutil.rmtree(run_path)
 
     def validate(self) -> None:
-        active_realizations_count = self.get_number_of_active_realizations()
+        active_realizations_count = self.active_realizations.count(True)
         min_realization_count = self.minimum_required_realizations
 
         if active_realizations_count < min_realization_count:

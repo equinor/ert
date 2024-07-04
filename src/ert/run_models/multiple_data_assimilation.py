@@ -79,7 +79,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.setPhaseCount(self.number_of_iterations)
 
@@ -114,7 +114,7 @@ class MultipleDataAssimilation(BaseRunModel):
         else:
             experiment = self._storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations,
+                observations=self.ert_config.observations.datasets,
                 responses=self.ert_config.ensemble_config.response_configuration,
                 name=self.experiment_name,
             )
@@ -212,7 +212,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior_context.ensemble.experiment.update_parameters,
-                observations=prior_context.ensemble.experiment.observations.keys(),
+                observations=prior_context.ensemble.experiment.observation_keys,
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(

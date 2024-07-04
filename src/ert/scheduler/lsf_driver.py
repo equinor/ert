@@ -198,7 +198,6 @@ class LsfDriver(Driver):
     def __init__(
         self,
         queue_name: Optional[str] = None,
-        project_code: Optional[str] = None,
         resource_requirement: Optional[str] = None,
         exclude_hosts: Optional[str] = None,
         bsub_cmd: Optional[str] = None,
@@ -208,7 +207,6 @@ class LsfDriver(Driver):
     ) -> None:
         super().__init__()
         self._queue_name = queue_name
-        self._project_code = project_code
         self._resource_requirement = resource_requirement
         self._exclude_hosts = [
             host.strip() for host in (exclude_hosts.split(",") if exclude_hosts else [])
@@ -248,7 +246,6 @@ class LsfDriver(Driver):
             runpath = Path.cwd()
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
-        arg_project_code = ["-P", self._project_code] if self._project_code else []
 
         script = (
             "#!/usr/bin/env bash\n"
@@ -272,7 +269,6 @@ class LsfDriver(Driver):
         bsub_with_args: list[str] = (
             [str(self._bsub_cmd)]
             + arg_queue_name
-            + arg_project_code
             + ["-o", str(runpath / (name + ".LSF-stdout"))]
             + ["-e", str(runpath / (name + ".LSF-stderr"))]
             + ["-n", str(num_cpu)]

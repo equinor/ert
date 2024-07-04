@@ -55,6 +55,8 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
+_MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
+
 
 class EnsembleEvaluator:
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
@@ -130,54 +132,50 @@ class EnsembleEvaluator:
             send_future.result()
 
     def _stopped_handler(self, events: List[CloudEvent]) -> None:
-        if self.ensemble.status == ENSEMBLE_STATE_FAILED:
-            return
-
-        self._result = events[0].data  # normal termination
-        with self._snapshot_mutex:
-            max_memory_usage = -1
-            for job in self.ensemble.snapshot.get_all_forward_models().values():
-                memory_usage = job.get(ids.MAX_MEMORY_USAGE) or "-1"
-                max_memory_usage = max(int(memory_usage), max_memory_usage)
-            logger.info(
-                f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            self._result = events[0].data  # normal termination
+            with self._snapshot_mutex:
+                max_memory_usage = -1
+                for job in self.ensemble.snapshot.get_all_forward_models().values():
+                    memory_usage = job.get(ids.MAX_MEMORY_USAGE) or "-1"
+                    max_memory_usage = max(int(memory_usage), max_memory_usage)
+                logger.info(
+                    f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
+                )
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
             )
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-        send_future = asyncio.run_coroutine_threadsafe(
-            self._send_snapshot_update(snapshot_update_event), self._loop
-        )
-        send_future.result()
+            send_future.result()
 
     def _cancelled_handler(self, events: List[CloudEvent]) -> None:
-        if self.ensemble.status == ENSEMBLE_STATE_FAILED:
-            return
-        with self._snapshot_mutex:
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-        send_future = asyncio.run_coroutine_threadsafe(
-            self._send_snapshot_update(snapshot_update_event), self._loop
-        )
-        send_future.result()
-        self._loop.call_soon_threadsafe(self._stop)
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
+            self._loop.call_soon_threadsafe(self._stop)
 
     def _failed_handler(self, events: List[CloudEvent]) -> None:
-        if self.ensemble.status in (
+        if self.ensemble.status not in (
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
         ):
-            return
-        # if list is empty this call is not triggered by an
-        # event, but as a consequence of some bad state
-        # create a fake event because that's currently the only
-        # api for setting state in the ensemble
-        if len(events) == 0:
-            events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
-        with self._snapshot_mutex:
-            snapshot_update_event = self.ensemble.update_snapshot(events)
-        send_future = asyncio.run_coroutine_threadsafe(
-            self._send_snapshot_update(snapshot_update_event), self._loop
-        )
-        send_future.result()
-        self._signal_cancel()  # let ensemble know it should stop
+            # if list is empty this call is not triggered by an
+            # event, but as a consequence of some bad state
+            # create a fake event because that's currently the only
+            # api for setting state in the ensemble
+            if len(events) == 0:
+                events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
+            with self._snapshot_mutex:
+                snapshot_update_event = self.ensemble.update_snapshot(events)
+            send_future = asyncio.run_coroutine_threadsafe(
+                self._send_snapshot_update(snapshot_update_event), self._loop
+            )
+            send_future.result()
+            self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(
         self, snapshot_update_event: PartialSnapshot

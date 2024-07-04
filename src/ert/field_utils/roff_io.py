@@ -23,6 +23,9 @@ def export_roff(
     binary: bool,
 ) -> None:
     dimensions = data.shape
+    if len(dimensions) != 3:
+        raise ValueError("Unexpected size of dimensions in field.")
+
     data = np.flip(data, -1).ravel()  # type: ignore
     data = data.astype(np.float32).filled(RMS_UNDEFINED_FLOAT)  # type: ignore
     if not np.isfinite(data).all():

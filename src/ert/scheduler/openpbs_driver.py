@@ -136,7 +136,6 @@ class OpenPBSDriver(Driver):
         self,
         *,
         queue_name: Optional[str] = None,
-        project_code: Optional[str] = None,
         keep_qsub_output: Optional[str] = None,
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
@@ -150,7 +149,6 @@ class OpenPBSDriver(Driver):
         super().__init__()
 
         self._queue_name = queue_name
-        self._project_code = project_code
         self._keep_qsub_output = keep_qsub_output in ["1", "True", "TRUE", "T"]
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
@@ -227,7 +225,6 @@ class OpenPBSDriver(Driver):
             runpath = Path.cwd()
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
-        arg_project_code = ["-A", self._project_code] if self._project_code else []
         arg_keep_qsub_output = (
             [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
         )
@@ -243,7 +240,6 @@ class OpenPBSDriver(Driver):
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
-            *arg_project_code,
             *arg_keep_qsub_output,
             *self._build_resource_string(num_cpu=num_cpu or 1),
         ]

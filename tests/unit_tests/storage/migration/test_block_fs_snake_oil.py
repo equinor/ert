@@ -82,6 +82,7 @@ def test_migrate_gen_kw(data, parameter, ens_config, tmp_path):
         )
         ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
         bf._migrate_gen_kw(ensemble, parameter, ens_config)
+        ensemble.unify_parameters()
 
         for param in ens_config.parameters:
             expect_names = list(data[f"{group_root}/{param}"]["name"])
@@ -103,6 +104,7 @@ def test_migrate_summary(data, forecast, time_map, tmp_path):
         ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
 
         bf._migrate_summary(ensemble, forecast, time_map)
+        ensemble.unify_responses()
 
         expected_keys = set(data[group].variables) - set(data[group].dimensions)
         assert set(ensemble.get_summary_keyset()) == expected_keys
@@ -132,6 +134,7 @@ def test_migrate_gen_data(data, forecast, tmp_path):
         )
         ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
         bf._migrate_gen_data(ensemble, forecast)
+        ensemble.unify_responses()
 
         for key in set(data[group].variables) - set(data[group].dimensions):
             expect = np.array(data[group][key]).flatten()
@@ -148,6 +151,8 @@ def test_migrate_case(data, storage, tmp_path, enspath, ens_config, name, iter):
 
     ensemble = storage.get_ensemble_by_name(name)
     assert ensemble.iteration == iter
+    ensemble.unify_parameters()
+    ensemble.unify_responses()
     for real_key, var in data.groups.items():
         index = int(re.match(r"REAL_(\d+)", real_key)[1])
 

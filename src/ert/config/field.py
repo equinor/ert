@@ -110,6 +110,14 @@ class Field(ParameterConfig):
                 )
             )
 
+        if len(name) > 8:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"FIELD parameter_name '{name}' is too long. Eclipse keywords are limited to max 8 characters",
+                    config_list,
+                )
+            )
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
         assert file_format is not None

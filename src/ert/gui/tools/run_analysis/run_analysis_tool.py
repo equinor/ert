@@ -59,7 +59,7 @@ class Analyse(QObject):
             smoother_update(
                 self._source_ensemble,
                 self._target_ensemble,
-                self._source_ensemble.experiment.observations.keys(),
+                self._source_ensemble.experiment.observation_keys,
                 self._source_ensemble.experiment.update_parameters,
                 update_settings,
                 config.analysis_config.es_module,

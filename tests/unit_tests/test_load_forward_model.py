@@ -171,6 +171,7 @@ def test_load_forward_model_gen_data(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.unify_responses()
     assert list(
         prior_ensemble.load_responses("RESPONSE", (0,))
         .sel(report_step=0, drop=True)
@@ -197,6 +198,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.unify_responses()
     assert list(
         prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
     ) == [1.0]
@@ -219,6 +221,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.unify_responses()
     response = (
         prior_ensemble.load_responses("RESPONSE", (0,)).to_dataframe().values.flatten()
     )
@@ -263,6 +266,7 @@ def test_loading_gen_data_without_restart(storage):
 
     facade = LibresFacade.from_config_file("config.ert")
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.unify_responses()
     assert list(
         prior_ensemble.load_responses("RESPONSE", (0,))
         .to_dataframe()
