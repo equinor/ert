@@ -533,7 +533,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
     obs = obs.expand_dims({"obs_name": ["OBSERVATION"]})
     obs = obs.expand_dims({"name": ["RESPONSE"]})
 
-    param_group = "PARAM_FIELD"
+    param_group = "PARA_FLD"
 
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
@@ -673,7 +673,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     num_grid_cells = 40
     layers = 5
     ensemble_size = 5
-    param_group = "PARAM_FIELD"
+    param_group = "PARA_FLD"
     shape = Shape(num_grid_cells, num_grid_cells, layers)
 
     grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
