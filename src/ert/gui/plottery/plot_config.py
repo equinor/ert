@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from copy import copy
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from ert.gui.plottery import PlotLimits, PlotStyle
 
@@ -23,13 +23,16 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        self._line_color_cycle_colors = ["#000000"]
-        self._line_color_cycle = itertools.cycle(self._line_color_cycle_colors)  # Black
-        # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown
-        self.setLineColorCycle(["#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"])
-        # alternative color cycle:
-        # ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33",
-        #  "#a65628", "#f781bf" ,"#386CB0", "#7FC97F", "#FDC086", "#F0027F", "#BF5B17"]
+        # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown with alpha=1.0
+        self.setLineColorCycle(
+            [
+                ("#386CB0", 1.0),
+                ("#7FC97F", 1.0),
+                ("#FDC086", 1.0),
+                ("#F0027F", 1.0),
+                ("#BF5B17", 1.0),
+            ]
+        )
 
         self._legend_items: list[Any] = []
         self._legend_labels: list[str] = []
@@ -68,7 +71,7 @@ class PlotConfig:
             name="Distribution lines", line_style="-", alpha=0.25, width=1.0
         )
         self._distribution_line_style.setEnabled(False)
-        self._current_color: Optional[str] = None
+        self._current_color: Optional[Tuple[str, float]] = None
 
         self._legend_enabled = True
         self._grid_enabled = True
@@ -84,23 +87,23 @@ class PlotConfig:
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
-    def currentColor(self) -> str:
+    def currentColor(self) -> Tuple[str, float]:
         if self._current_color is None:
             return self.nextColor()
 
         return self._current_color
 
-    def nextColor(self) -> str:
+    def nextColor(self) -> Tuple[str, float]:
         color = next(self._line_color_cycle)
         self._current_color = color
         return self._current_color
 
-    def setLineColorCycle(self, color_list: List[str]) -> None:
+    def setLineColorCycle(self, color_list: List[Tuple[str, float]]) -> None:
         self._line_color_cycle_colors = color_list
         self._line_color_cycle = itertools.cycle(color_list)
 
-    def lineColorCycle(self) -> List[str]:
-        return list(self._line_color_cycle_colors)
+    def lineColorCycle(self) -> List[Tuple[str, float]]:
+        return self._line_color_cycle_colors
 
     def addLegendItem(self, label: str, item: Any) -> None:
         self._legend_items.append(item)
@@ -118,14 +121,12 @@ class PlotConfig:
     def defaultStyle(self) -> PlotStyle:
         style = PlotStyle("Default style")
         style.copyStyleFrom(self._default_style)
-        style.color = self.currentColor()
+        style.color, style.alpha = self.currentColor()
         return style
 
-    def observationsColor(self) -> Optional[str]:
-        return self._observs_style.color
-
-    def observationsAlpha(self) -> float:
-        return self._observs_style.alpha
+    def observationsColor(self) -> Tuple[str, float]:
+        assert self._observs_style.color
+        return (self._observs_style.color, self._observs_style.alpha)
 
     def observationsStyle(self) -> PlotStyle:
         style = PlotStyle("Observations style")
@@ -140,13 +141,13 @@ class PlotConfig:
     def histogramStyle(self) -> PlotStyle:
         style = PlotStyle("Histogram style")
         style.copyStyleFrom(self._histogram_style)
-        style.color = self.currentColor()
+        style.color, style.alpha = self.currentColor()
         return style
 
     def distributionStyle(self) -> PlotStyle:
         style = PlotStyle("Distribution style")
         style.copyStyleFrom(self._distribution_style)
-        style.color = self.currentColor()
+        style.color, style.alpha = self.currentColor()
         return style
 
     def distributionLineStyle(self) -> PlotStyle:
@@ -219,7 +220,7 @@ class PlotConfig:
         style = self._statistics_style[statistic]
         copy_style = PlotStyle(style.name)
         copy_style.copyStyleFrom(style)
-        copy_style.color = self.currentColor()
+        copy_style.color, copy_style.alpha = self.currentColor()
         return copy_style
 
     def setHistoryStyle(self, style: PlotStyle) -> None:
@@ -228,11 +229,8 @@ class PlotConfig:
         self._history_style.width = style.width
         self._history_style.size = style.size
 
-    def setObservationsColor(self, color: str) -> None:
-        self._observs_style.color = color
-
-    def setObservationsAlpha(self, alpha: float) -> None:
-        self._observs_style.alpha = alpha
+    def setObservationsColor(self, color_tuple: Tuple[str, float]) -> None:
+        self._observs_style.color, self._observs_style.alpha = color_tuple
 
     def setObservationsStyle(self, style: PlotStyle) -> None:
         self._observs_style.line_style = style.line_style
