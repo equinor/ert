@@ -127,12 +127,11 @@ class JobListProxyModel(QAbstractProxyModel):
     def index(
         self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return QModelIndex()
-        job_index = self.mapToSource(self.createIndex(row, column, parent))
-        return self.createIndex(row, column, job_index.data(NodeRole))
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            job_index = self.mapToSource(self.createIndex(row, column, parent))
+            return self.createIndex(row, column, job_index.data(NodeRole))
+        return QModelIndex()
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if proxyIndex.isValid():
