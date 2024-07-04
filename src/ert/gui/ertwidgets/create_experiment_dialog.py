@@ -30,14 +30,13 @@ class CreateExperimentDialog(QDialog):
         QDialog.__init__(self, parent=parent)
         self.setModal(True)
         self.setWindowTitle(title)
-        self.setFixedSize(400, 100)
+        self.setFixedSize(450, 120)
 
         layout = QGridLayout()
 
         experiment_label = QLabel("Experiment name:")
         self._experiment_edit = StringBox(
-            TextModel(""),
-            placeholder_text="My experiment",
+            TextModel(""), placeholder_text="My experiment", minimum_width=200
         )
         self._experiment_edit.setValidator(
             NotInStorage(notifier.storage, "experiments")
@@ -45,6 +44,7 @@ class CreateExperimentDialog(QDialog):
 
         ensemble_label = QLabel("Ensemble name:")
         self._ensemble_edit = QLineEdit()
+        self._ensemble_edit.setMinimumWidth(200)
         self._ensemble_edit.setPlaceholderText("My ensemble")
 
         buttons = QDialogButtonBox(
