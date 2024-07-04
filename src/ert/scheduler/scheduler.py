@@ -30,10 +30,11 @@ from websockets.client import connect
 
 from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
-from ert.event_type_constants import (
+from ert.event_type_constants import EVTYPE_FORWARD_MODEL_CHECKSUM
+from ert.job_queue.queue import (
+    CLOSE_PUBLISHER_SENTINEL,
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_STOPPED,
-    EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
 from ert.serialization import evaluator_unmarshaller
 
@@ -46,8 +47,6 @@ if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
 
 logger = logging.getLogger(__name__)
-
-CLOSE_PUBLISHER_SENTINEL = object()
 
 
 @dataclass
