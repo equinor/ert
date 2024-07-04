@@ -5,15 +5,9 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
+from PyQt5.QtGui import QMouseEvent
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import (
-    QCloseEvent,
-    QKeyEvent,
-    QMouseEvent,
-    QMovie,
-    QTextCursor,
-    QTextOption,
-)
+from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie, QTextCursor, QTextOption
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -87,17 +81,7 @@ class JobOverview(QTableView):
 
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
-
-        for section in range(horizontal_header.count()):
-            horizontal_header.resizeSection(section, 140)
-            # Only last section should be stretch
-            horizontal_header.setSectionResizeMode(
-                section,
-                QHeaderView.Stretch
-                if section == horizontal_header.count() - 1
-                else QHeaderView.Interactive,
-            )
-
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setMinimumWidth(20)
@@ -209,6 +193,7 @@ class RunDialog(QDialog):
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
         self._job_label = QLabel(self)
+
         self._job_overview = JobOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
