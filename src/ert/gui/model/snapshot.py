@@ -10,7 +10,10 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import SnapshotMetadata
+from ert.ensemble_evaluator.snapshot import (
+    SnapshotMetadata,
+    convert_iso8601_to_datetime,
+)
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -198,7 +201,10 @@ class SnapshotModel(QAbstractItemModel):
                 job_node = real_node.children[forward_model_id]
 
                 jobs_changed_by_real[real_id].append(job_node.row())
-
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
                 job_node.data.update(job)
                 if (
                     "current_memory_usage" in job
@@ -269,6 +275,10 @@ class SnapshotModel(QAbstractItemModel):
                 "sorted_forward_model_ids", defaultdict(None)
             )[real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
                 )
