@@ -562,7 +562,8 @@ class BaseRunModel:
         return any(Path(run_path).exists() for run_path in self.paths)
 
     def get_number_of_existing_runpaths(self) -> int:
-        return [Path(run_path).exists() for run_path in self.paths].count(True)
+        realization_set = {Path(run_path).parent for run_path in self.paths}
+        return [real_path.exists() for real_path in realization_set].count(True)
 
     def get_number_of_active_realizations(self) -> int:
         return self.active_realizations.count(True)
