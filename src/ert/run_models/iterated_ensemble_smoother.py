@@ -115,7 +115,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         iteration_count = self.number_of_iterations
         phase_count = iteration_count + 1

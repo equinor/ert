@@ -8,7 +8,7 @@ import numpy as np
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_context import RunContext
-from ert.storage import Ensemble, Experiment, Storage
+from ert.storage import Storage
 
 from .base_run_model import BaseRunModel, StatusEvents
 
@@ -37,8 +37,6 @@ class EnsembleExperiment(BaseRunModel):
         self.ensemble_name = simulation_arguments.ensemble_name
         self.experiment_name = simulation_arguments.experiment_name
         self.ensemble_size = simulation_arguments.ensemble_size
-        self.experiment: Experiment | None = None
-        self.ensemble: Ensemble | None = None
 
         super().__init__(
             config,
@@ -53,50 +51,41 @@ class EnsembleExperiment(BaseRunModel):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
     ) -> RunContext:
         self.setPhaseName(self.run_message())
+        experiment = self._storage.create_experiment(
+            name=self.experiment_name,
+            parameters=self.ert_config.ensemble_config.parameter_configuration,
+            observations=self.ert_config.observations.datasets,
+            responses=self.ert_config.ensemble_config.response_configuration,
+        )
+        ensemble = self._storage.create_ensemble(
+            experiment,
+            name=self.ensemble_name,
+            ensemble_size=self.ensemble_size,
+        )
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
-        if not restart:
-            self.experiment = self._storage.create_experiment(
-                name=self.experiment_name,
-                parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations.datasets,
-                responses=self.ert_config.ensemble_config.response_configuration,
-            )
-            self.ensemble = self._storage.create_ensemble(
-                self.experiment,
-                name=self.ensemble_name,
-                ensemble_size=self.ensemble_size,
-            )
-        else:
-            self.active_realizations = self._create_mask_from_failed_realizations()
-
-        assert self.experiment
-        assert self.ensemble
-
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(self.experiment.id))
-        self.set_env_key("_ERT_ENSEMBLE_ID", str(self.ensemble.id))
-
-        run_context = RunContext(
-            ensemble=self.ensemble,
+        prior_context = RunContext(
+            ensemble=ensemble,
             runpaths=self.run_paths,
             initial_mask=np.array(self.active_realizations, dtype=bool),
         )
         sample_prior(
-            run_context.ensemble,
-            run_context.active_realizations,
+            prior_context.ensemble,
+            prior_context.active_realizations,
             random_seed=self.random_seed,
         )
 
-        phase_count = run_context.iteration + 1
+        iteration = prior_context.iteration
+        phase_count = iteration + 1
         self.setPhaseCount(phase_count)
-
-        self._evaluate_and_postprocess(run_context, evaluator_server_config)
+        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
         self.setPhase(phase_count, "Simulations completed.")
 
-        return run_context
+        return prior_context
 
     @classmethod
     def run_message(cls) -> str:

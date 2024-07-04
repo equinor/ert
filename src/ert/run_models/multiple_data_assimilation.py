@@ -79,7 +79,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
         self.setPhaseCount(self.number_of_iterations)
 
