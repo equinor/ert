@@ -24,23 +24,23 @@ def package_files(directory):
     return paths
 
 
-args = {
-    "packages": find_packages(where="src"),
-    "package_dir": {"": "src"},
-    "package_data": {
+args = dict(
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    package_data={
         "ert": package_files("src/ert/gui/resources/")
         + package_files("src/ert/shared/share/")
         + ["logging/logger.conf", "logging/storage_log.conf"]
     },
-    "cmake_args": [
+    cmake_args=[
         "-DBUILD_TESTS=OFF",
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
         # everything not OS X. We depend on C++17, which makes our minimum
         # supported OS X release 10.15
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
     ],
-    "cmake_source_dir": "src/clib/",
-}
+    cmake_source_dir="src/clib/",
+)
 
 setup(**args)
 

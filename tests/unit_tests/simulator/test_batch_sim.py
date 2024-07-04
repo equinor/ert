@@ -411,16 +411,18 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
 
 
 def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
-    running_status = {
-        JobStatus.WAITING,
-        JobStatus.SUBMITTED,
-        JobStatus.PENDING,
-        JobStatus.RUNNING,
-        JobStatus.UNKNOWN,
-        JobStatus.EXIT,
-        JobStatus.DONE,
-        None,  # job is not submitted yet but ok for this test
-    }
+    running_status = set(
+        (
+            JobStatus.WAITING,
+            JobStatus.SUBMITTED,
+            JobStatus.PENDING,
+            JobStatus.RUNNING,
+            JobStatus.UNKNOWN,
+            JobStatus.EXIT,
+            JobStatus.DONE,
+            None,  # job is not submitted yet but ok for this test
+        )
+    )
 
     for idx in range(len(batch_ctx)):
         status = batch_ctx.job_status(idx)

@@ -37,7 +37,7 @@ class GenDataConfig(ResponseConfig):
         report_steps: Optional[List[int]] = rangestring_to_list(
             options.get("REPORT_STEPS", "")
         )
-        report_steps = sorted(report_steps) if report_steps else None
+        report_steps = sorted(list(report_steps)) if report_steps else None
         if os.path.isabs(res_file):
             result_file_context = next(
                 x for x in gen_data if x.startswith("RESULT_FILE:")

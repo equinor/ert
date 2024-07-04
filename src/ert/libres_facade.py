@@ -103,11 +103,11 @@ class LibresFacade:
         return self.config.user_config_file
 
     def get_field_parameters(self) -> List[str]:
-        return [
+        return list(
             val.name
             for val in self.config.ensemble_config.parameter_configuration
             if isinstance(val, Field)
-        ]
+        )
 
     def get_gen_kw(self) -> List[str]:
         return self.config.ensemble_config.get_keylist_gen_kw()

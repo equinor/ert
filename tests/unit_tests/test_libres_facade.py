@@ -228,7 +228,7 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
-    with pytest.raises((IndexError, KeyError)):
+    with pytest.raises(tuple([IndexError, KeyError])):
         _ = snake_oil_default_storage.load_all_gen_kw_data(
             "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,

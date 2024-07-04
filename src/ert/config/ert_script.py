@@ -129,7 +129,7 @@ class ErtScript:
             func_args = inspect.signature(self.run).parameters
             # If the user has specified *args, we skip injecting fixtures, and just
             # pass the user configured arguments
-            if not any(p.kind == p.VAR_POSITIONAL for p in func_args.values()):
+            if not any([p.kind == p.VAR_POSITIONAL for p in func_args.values()]):
                 try:
                     arguments = self.insert_fixtures(func_args, fixtures)
                 except ValueError as e:

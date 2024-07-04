@@ -189,7 +189,7 @@ class _ErtDocumentation(SphinxDirective):
                 )
             )
 
-        return {k: dict(v) for k, v in categories.items()}
+        return dict({k: dict(v) for k, v in categories.items()})
 
     def _create_forward_model_section_node(
         self, section_id: str, title: str
