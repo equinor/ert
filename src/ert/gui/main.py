@@ -92,10 +92,11 @@ def _start_initial_gui_window(
     # the root-logger.
     logger = logging.getLogger(__name__)
     error_messages = []
+    all_warnings = []
     config_warnings = []
     ert_config = None
 
-    with warnings.catch_warnings(record=True) as all_warnings:
+    with warnings.catch_warnings(record=True) as all_warnings:  # noqa : F811
         try:
             _check_locale()
             ert_dir = os.path.abspath(os.path.dirname(args.config))
