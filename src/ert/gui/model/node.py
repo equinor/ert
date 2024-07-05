@@ -73,6 +73,7 @@ class RealNodeData:
     forward_model_step_status_color_by_id: dict[str, QColor] = field(
         default_factory=dict
     )
+    finished_forward_model_steps: int = 0
     real_status_color: Optional[QColor] = None
     current_memory_usage: Optional[int] = None
     max_memory_usage: Optional[int] = None
