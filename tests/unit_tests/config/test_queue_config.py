@@ -296,7 +296,7 @@ def test_max_running_property(tmp_path):
     assert config.queue_config.max_running == 19
 
 
-@pytest.mark.parametrize("queue_system", ["LSF", "*"])
+@pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
 def test_multiple_submit_sleep_keywords(tmp_path, queue_system):
     config_path = tmp_path / "config.ert"
     config_path.write_text(
@@ -405,3 +405,41 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
         f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
         f.write(f"{key} {value + 42}\n")
     _check_results()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, key, value",
+    [
+        ("LSF", "MAX_RUNNING", -50),
+        ("SLURM", "MAX_RUNNING", -50),
+        ("TORQUE", "MAX_RUNNING", -50),
+        ("LSF", "SUBMIT_SLEEP", -4.2),
+        ("SLURM", "SUBMIT_SLEEP", -4.2),
+        ("TORQUE", "SUBMIT_SLEEP", -4.2),
+    ],
+)
+def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
+    error_msg = (
+        "is not a valid positive integer."
+        if key == "MAX_RUNNING"
+        else "is not a valid integer or float."
+    )
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        ErtConfig.from_file("config.ert")
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"{key} {value}\n")
+    error_msg = (
+        "must have a positive integer value as argument 1"
+        if key == "MAX_RUNNING"
+        else "is not a valid integer or float."
+    )
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        ErtConfig.from_file("config.ert")
