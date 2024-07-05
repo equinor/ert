@@ -17,7 +17,7 @@ from .parsing import (
     QueueSystem,
 )
 
-GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING"]
+GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING", "SUBMIT_SLEEP"]
 LSF_DRIVER_OPTIONS = [
     "BHIST_CMD",
     "BJOBS_CMD",
@@ -32,7 +32,6 @@ LSF_DRIVER_OPTIONS = [
     "LSF_RSH_CMD",
     "LSF_SERVER",
     "PROJECT_CODE",
-    "SUBMIT_SLEEP",
 ]
 OPENPBS_DRIVER_OPTIONS: List[str] = [
     "CLUSTER_LABEL",
@@ -49,7 +48,6 @@ OPENPBS_DRIVER_OPTIONS: List[str] = [
     "QSUB_CMD",
     "QUEUE",
     "QUEUE_QUERY_TIMEOUT",
-    "SUBMIT_SLEEP",
 ]
 SLURM_DRIVER_OPTIONS: List[str] = [
     "EXCLUDE_HOST",
@@ -69,6 +67,82 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
     QueueSystem.LSF: LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.SLURM: SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
     QueueSystem.TORQUE: OPENPBS_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
+    QueueSystem.GENERIC: GENERIC_QUEUE_OPTIONS,
+}
+queue_string_options: Mapping[str, List[str]] = {
+    "LSF": [
+        "LSF_RESOURCE",
+        "LSF_SERVER",
+        "LSF_QUEUE",
+        "LSF_LOGIN_SHELL",
+        "LSF_RSH_CMD",
+        "BSUB_CMD",
+        "BJOBS_CMD",
+        "BKILL_CMD",
+        "BHIST_CMD",
+        "EXCLUDE_HOST",
+        "PROJECT_CODE",
+    ],
+    "SLURM": [
+        "SBATCH",
+        "SCANCEL",
+        "SCONTROL",
+        "SQUEUE",
+        "PARTITION",
+        "INCLUDE_HOST",
+        "EXCLUDE_HOST",
+        "PROJECT_CODE",
+    ],
+    "TORQUE": [
+        "QSUB_CMD",
+        "QSTAT_CMD",
+        "QDEL_CMD",
+        "QSTAT_OPTIONS",
+        "QUEUE",
+        "CLUSTER_LABEL",
+        "JOB_PREFIX",
+        "DEBUG_OUTPUT",
+        "PROJECT_CODE",
+    ],
+    "LOCAL": ["PROJECT_CODE"],
+    "GENERIC": [],
+}
+queue_positive_int_options: Mapping[str, List[str]] = {
+    "LSF": [
+        "BJOBS_TIMEOUT",
+        "MAX_RUNNING",
+    ],
+    "SLURM": [
+        "MAX_RUNNING",
+    ],
+    "TORQUE": [
+        "NUM_NODES",
+        "NUM_CPUS_PER_NODE",
+        "MAX_RUNNING",
+    ],
+    "LOCAL": ["MAX_RUNNING"],
+    "GENERIC": ["MAX_RUNNING"],
+}
+queue_positive_number_options: Mapping[str, List[str]] = {
+    "LSF": ["SUBMIT_SLEEP"],
+    "SLURM": ["SUBMIT_SLEEP", "SQUEUE_TIMEOUT", "MAX_RUNTIME"],
+    "TORQUE": ["SUBMIT_SLEEP", "QUEUE_QUERY_TIMEOUT"],
+    "LOCAL": ["SUBMIT_SLEEP"],
+    "GENERIC": ["SUBMIT_SLEEP"],
+}
+queue_bool_options: Mapping[str, List[str]] = {
+    "LSF": ["DEBUG_OUTPUT"],
+    "SLURM": [],
+    "TORQUE": ["KEEP_QSUB_OUTPUT"],
+    "LOCAL": [],
+    "GENERIC": [],
+}
+queue_memory_options: Mapping[str, List[str]] = {
+    "LSF": [],
+    "SLURM": ["MEMORY_PER_CPU", "MEMORY"],
+    "TORQUE": ["MEMORY_PER_JOB"],
+    "LOCAL": [],
+    "GENERIC": [],
 }
 
 
@@ -76,7 +150,6 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 class QueueConfig:
     job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
     max_submit: int = 1
-    submit_sleep: float = 0.0
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
         default_factory=dict
@@ -92,12 +165,12 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
         )
-        job_script = job_script or "job_dispatch.py"
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
-        submit_sleep: float = config_dict.get(ConfigKeys.SUBMIT_SLEEP, 0.0)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
         queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
+            if queue_system == QueueSystem.GENERIC:
+                queue_system = selected_queue_system
             if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
                 raise ConfigValidationError(
                     f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
@@ -107,57 +180,26 @@ class QueueConfig:
             queue_options[queue_system].append(
                 (option_name, values[0] if values else "")
             )
-            if (
-                values
-                and option_name == "SUBMIT_SLEEP"
-                and selected_queue_system == queue_system
-            ):
-                submit_sleep = float(values[0])
-
-        project_code_is_set = next(
-            (
-                True
-                for key, _ in queue_options[selected_queue_system]
-                if key == "PROJECT_CODE"
-            ),
-            False,
+        queue_options[selected_queue_system] = _add_generic_queue_options(
+            config_dict, queue_options[selected_queue_system]
         )
-        if selected_queue_system != QueueSystem.LOCAL and not project_code_is_set:
+
+        if "PROJECT_CODE" not in _option_list_to_dict(
+            queue_options[selected_queue_system]
+        ):
             tags = {
-                fm[0].lower()
-                for fm in config_dict.get("FORWARD_MODEL", [])
-                if fm[0] in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
+                fm_name.lower()
+                for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
+                if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
             }
             if tags:
                 queue_options[selected_queue_system].append(
                     ("PROJECT_CODE", "+".join(tags))
                 )
-
-        for queue_system, queue_system_settings in queue_options.items():
-            if queue_system_settings:
-                _validate_queue_driver_settings(
-                    queue_system_settings,
-                    QueueSystem(queue_system).name,
-                    throw_error=(queue_system == selected_queue_system),
-                )
-
-        if (
-            selected_queue_system != QueueSystem.LOCAL
-            and queue_options[selected_queue_system]
-        ):
-            _check_for_overwritten_queue_system_options(
-                selected_queue_system,
-                queue_options[selected_queue_system],
-            )
-        if selected_queue_system == QueueSystem.TORQUE:
-            _check_num_cpu_requirement(
-                config_dict.get("NUM_CPU", 1),
-                queue_options[selected_queue_system],
-            )
+        _check_queue_option_settings(selected_queue_system, queue_options, config_dict)
         return QueueConfig(
             job_script,
             max_submit,
-            submit_sleep,
             selected_queue_system,
             queue_options,
             stop_long_running=stop_long_running,
@@ -167,7 +209,6 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.max_submit,
-            self.submit_sleep,
             QueueSystem.LOCAL,
             self.queue_options,
             stop_long_running=self.stop_long_running,
@@ -182,8 +223,63 @@ class QueueConfig:
         return max_running
 
     @property
+    def submit_sleep(self) -> float:
+        return float(
+            dict(self.queue_options.get(self.queue_system, [])).get("SUBMIT_SLEEP", 0.0)
+        )
+
+    @property
     def queue_options_as_dict(self) -> Dict[str, str]:
         return dict(self.queue_options.get(self.queue_system, []))
+
+
+@dataclass
+class QueueMemoryStringFormat:
+    suffixes: List[str]
+
+    def validate(self, mem_str_format: str) -> bool:
+        return (
+            re.match(
+                r"\d+(" + "|".join(self.suffixes) + ")$",
+                mem_str_format,
+            )
+            is not None
+        )
+
+
+queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
+    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
+    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
+}
+
+
+@no_type_check
+def _check_queue_option_settings(
+    selected_queue_system: QueueSystem,
+    queue_options: List[Tuple[str, str]],
+    config_dict: ConfigDict,
+) -> None:
+    for queue_system, queue_system_settings in queue_options.items():
+        if queue_system_settings:
+            _validate_queue_driver_settings(
+                queue_system_settings,
+                QueueSystem(queue_system).name,
+                throw_error=(queue_system == selected_queue_system),
+            )
+
+    if (
+        selected_queue_system != QueueSystem.LOCAL
+        and queue_options[selected_queue_system]
+    ):
+        _check_for_overwritten_queue_system_options(
+            selected_queue_system,
+            queue_options[selected_queue_system],
+        )
+    if selected_queue_system == QueueSystem.TORQUE:
+        _check_num_cpu_requirement(
+            config_dict.get("NUM_CPU", 1),
+            queue_options[selected_queue_system],
+        )
 
 
 def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
@@ -224,107 +320,6 @@ def _check_num_cpu_requirement(
             f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({num_nodes}) "
             f"and NUM_CPUS_PER_NODE ({num_cpus_per_node}) must be equal."
         )
-
-
-queue_memory_options: Mapping[str, List[str]] = {
-    "LSF": [],
-    "SLURM": ["MEMORY_PER_CPU", "MEMORY"],
-    "TORQUE": ["MEMORY_PER_JOB"],
-    "LOCAL": [],
-}
-
-
-@dataclass
-class QueueMemoryStringFormat:
-    suffixes: List[str]
-
-    def validate(self, mem_str_format: str) -> bool:
-        return (
-            re.match(
-                r"\d+(" + "|".join(self.suffixes) + ")$",
-                mem_str_format,
-            )
-            is not None
-        )
-
-
-queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
-    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
-    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
-}
-
-queue_string_options: Mapping[str, List[str]] = {
-    "LSF": [
-        "LSF_RESOURCE",
-        "LSF_SERVER",
-        "LSF_QUEUE",
-        "LSF_LOGIN_SHELL",
-        "LSF_RSH_CMD",
-        "BSUB_CMD",
-        "BJOBS_CMD",
-        "BKILL_CMD",
-        "BHIST_CMD",
-        "EXCLUDE_HOST",
-        "PROJECT_CODE",
-    ],
-    "SLURM": [
-        "SBATCH",
-        "SCANCEL",
-        "SCONTROL",
-        "SQUEUE",
-        "PARTITION",
-        "INCLUDE_HOST",
-        "EXCLUDE_HOST",
-        "PROJECT_CODE",
-    ],
-    "TORQUE": [
-        "QSUB_CMD",
-        "QSTAT_CMD",
-        "QDEL_CMD",
-        "QSTAT_OPTIONS",
-        "QUEUE",
-        "CLUSTER_LABEL",
-        "JOB_PREFIX",
-        "DEBUG_OUTPUT",
-        "PROJECT_CODE",
-    ],
-    "LOCAL": [],
-}
-
-queue_positive_int_options: Mapping[str, List[str]] = {
-    "LSF": [
-        "BJOBS_TIMEOUT",
-        "MAX_RUNNING",
-    ],
-    "SLURM": [
-        "MAX_RUNNING",
-    ],
-    "TORQUE": [
-        "NUM_NODES",
-        "NUM_CPUS_PER_NODE",
-        "MAX_RUNNING",
-    ],
-    "LOCAL": ["MAX_RUNNING"],
-}
-
-queue_positive_number_options: Mapping[str, List[str]] = {
-    "LSF": [
-        "SUBMIT_SLEEP",
-    ],
-    "SLURM": [
-        "SQUEUE_TIMEOUT",
-        "MAX_RUNTIME",
-    ],
-    "TORQUE": ["SUBMIT_SLEEP", "QUEUE_QUERY_TIMEOUT"],
-    "LOCAL": [],
-}
-
-queue_bool_options: Mapping[str, List[str]] = {
-    "LSF": ["DEBUG_OUTPUT"],
-    "SLURM": [],
-    "TORQUE": ["KEEP_QSUB_OUTPUT"],
-    "LOCAL": [],
-}
 
 
 def throw_error_or_warning(
@@ -404,3 +399,15 @@ def _validate_queue_driver_settings(
                 option_value,
                 throw_error,
             )
+
+
+@no_type_check
+def _add_generic_queue_options(
+    config_dict: ConfigDict, queue_options: List[Tuple[str, str]]
+) -> List[Tuple[str, str]]:
+    options_dict = _option_list_to_dict(queue_options)
+    for generic_option in GENERIC_QUEUE_OPTIONS:
+        value = config_dict.get(generic_option, None)
+        if generic_option not in options_dict and value is not None:
+            queue_options.append((generic_option, value))
+    return queue_options

@@ -296,13 +296,14 @@ def test_max_running_property(tmp_path):
     assert config.queue_config.max_running == 19
 
 
-def test_multiple_submit_sleep_keywords(tmp_path):
+@pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
+def test_multiple_submit_sleep_keywords(tmp_path, queue_system):
     config_path = tmp_path / "config.ert"
     config_path.write_text(
         "NUM_REALIZATIONS 1\n"
         "QUEUE_SYSTEM LSF\n"
         "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
-        "QUEUE_OPTION LSF SUBMIT_SLEEP 42\n"
+        f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
         "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
     )
     config = ErtConfig.from_file(config_path)
@@ -331,3 +332,114 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
         f.write(f"MAX_SUBMIT {max_submit_value}\n")
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file("file.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, key, value",
+    [
+        ("LSF", "MAX_RUNNING", 50),
+        ("SLURM", "MAX_RUNNING", 50),
+        ("TORQUE", "MAX_RUNNING", 50),
+        ("LSF", "SUBMIT_SLEEP", 4.2),
+        ("SLURM", "SUBMIT_SLEEP", 4.2),
+        ("TORQUE", "SUBMIT_SLEEP", 4.2),
+    ],
+)
+def test_global_queue_options(queue_system, key, value):
+    def _check_results():
+        ert_config = ErtConfig.from_file("config.ert")
+        if key == "MAX_RUNNING":
+            assert ert_config.queue_config.max_running == value
+        elif key == "SUBMIT_SLEEP":
+            assert ert_config.queue_config.submit_sleep == value
+        else:
+            raise KeyError("Unexpected key")
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {key} 10\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
+    _check_results()
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"{key} {value}\n")
+    _check_results()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, key, value",
+    [
+        ("LSF", "MAX_RUNNING", 50),
+        ("SLURM", "MAX_RUNNING", 50),
+        ("TORQUE", "MAX_RUNNING", 50),
+        ("LSF", "SUBMIT_SLEEP", 4.2),
+        ("SLURM", "SUBMIT_SLEEP", 4.2),
+        ("TORQUE", "SUBMIT_SLEEP", 4.2),
+    ],
+)
+def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, value):
+    def _check_results():
+        ert_config = ErtConfig.from_file("config.ert")
+        if key == "MAX_RUNNING":
+            assert ert_config.queue_config.max_running == value
+        elif key == "SUBMIT_SLEEP":
+            assert ert_config.queue_config.submit_sleep == value
+        else:
+            raise KeyError("Unexpected key")
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION {queue_system} {key} {value}\n")
+        f.write(f"{key} {value + 42}\n")
+    _check_results()
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
+        f.write(f"{key} {value + 42}\n")
+    _check_results()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "queue_system, key, value",
+    [
+        ("LSF", "MAX_RUNNING", -50),
+        ("SLURM", "MAX_RUNNING", -50),
+        ("TORQUE", "MAX_RUNNING", -50),
+        ("LSF", "SUBMIT_SLEEP", -4.2),
+        ("SLURM", "SUBMIT_SLEEP", -4.2),
+        ("TORQUE", "SUBMIT_SLEEP", -4.2),
+    ],
+)
+def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
+    error_msg = (
+        "is not a valid positive integer."
+        if key == "MAX_RUNNING"
+        else "is not a valid integer or float."
+    )
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        ErtConfig.from_file("config.ert")
+
+    with open("config.ert", mode="w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write(f"QUEUE_SYSTEM {queue_system}\n")
+        f.write(f"{key} {value}\n")
+    error_msg = (
+        "must have a positive integer value as argument 1"
+        if key == "MAX_RUNNING"
+        else "is not a valid integer or float."
+    )
+    with pytest.raises(ConfigValidationError, match=error_msg):
+        ErtConfig.from_file("config.ert")

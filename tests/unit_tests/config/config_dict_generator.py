@@ -24,11 +24,7 @@ from ert.config import (
 from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
-from ert.config.queue_config import (
-    LSF_DRIVER_OPTIONS,
-    OPENPBS_DRIVER_OPTIONS,
-    SLURM_DRIVER_OPTIONS,
-)
+from ert.config.queue_config import VALID_QUEUE_OPTIONS
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
@@ -118,18 +114,12 @@ memory_with_unit = {
     QueueSystem.TORQUE: memory_with_unit_torque,
     QueueSystem.LSF: memory_with_unit_lsf,
     QueueSystem.LOCAL: memory_with_unit_lsf,  # Just a dummy value
+    QueueSystem.GENERIC: memory_with_unit_lsf,  # Just a dummy value
 }
 
 
 def valid_queue_options(queue_system: str):
-    valids = ["MAX_RUNNING"]
-    if queue_system == QueueSystem.LSF.name:
-        valids += LSF_DRIVER_OPTIONS
-    elif queue_system == QueueSystem.SLURM.name:
-        valids += SLURM_DRIVER_OPTIONS
-    elif queue_system == QueueSystem.TORQUE.name:
-        valids += OPENPBS_DRIVER_OPTIONS
-    return valids
+    return VALID_QUEUE_OPTIONS[queue_system]
 
 
 def valid_queue_values(option_name, queue_system):
@@ -158,7 +148,7 @@ def queue_options(draw, systems):
     name = draw(st.sampled_from(valid_queue_options(queue_system)))
     do_set = draw(booleans)
     if do_set:
-        return [queue_system, name, draw(valid_queue_values(name, queue_system))]
+        return [queue_system, name, draw(valid_queue_values(name, queue_system.name))]
     else:
         # Missing VALUE means unset
         return [queue_system, name]
