@@ -26,12 +26,7 @@ class JobListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
     forward model data for a specific realization in a specific iteration."""
 
-    def __init__(
-        self,
-        parent: Optional[QObject],
-        iter_: int,
-        real_: int,
-    ) -> None:
+    def __init__(self, parent: Optional[QObject], iter_: int, real_: int) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
         self._real = real_

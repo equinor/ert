@@ -13,11 +13,7 @@ from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
 
 class RealListModel(QAbstractProxyModel):
-    def __init__(
-        self,
-        parent: Optional[QObject],
-        iter_: int,
-    ) -> None:
+    def __init__(self, parent: Optional[QObject], iter_: int) -> None:
         super().__init__(parent=parent)
         self._iter: int = iter_
 
