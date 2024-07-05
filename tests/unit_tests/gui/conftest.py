@@ -534,7 +534,7 @@ def add_experiment_manually(
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # Open the create new experiment tab
     experiments_panel.setCurrentIndex(0)

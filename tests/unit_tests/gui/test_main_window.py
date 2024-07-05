@@ -38,9 +38,7 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
-from ert.gui.tools.manage_experiments.manage_experiments_tool import (
-    ManageExperimentsTool,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,
@@ -425,7 +423,7 @@ def test_that_the_manage_experiments_tool_can_be_used(
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # Open the tab
     experiments_panel.setCurrentIndex(0)
@@ -545,7 +543,7 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # Open the create new ensembles tab
     experiments_panel.setCurrentIndex(0)

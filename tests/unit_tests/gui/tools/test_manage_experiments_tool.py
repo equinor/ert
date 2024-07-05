@@ -11,9 +11,7 @@ from ert.gui.ertwidgets.storage_info_widget import (
     _WidgetType,
 )
 from ert.gui.ertwidgets.storage_widget import StorageWidget
-from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
-    EnsembleInitializationConfigurationPanel,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.storage import Storage
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -37,7 +35,7 @@ def test_init_prior(qtbot, storage):
         == [RealizationStorageState.UNDEFINED] * config.model_config.num_realizations
     )
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
     qtbot.mouseClick(
@@ -66,7 +64,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     )
     notifier.set_current_ensemble(ensemble)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -126,7 +124,7 @@ def test_experiment_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -158,7 +156,7 @@ def test_ensemble_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -216,7 +214,7 @@ def test_realization_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
