@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING, List, Tuple
 
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QHBoxLayout
@@ -65,11 +65,14 @@ class StyleCustomizationView(CustomizationView):
             StyleCustomizationView.setObservationsColor,
         )
 
-    def getObservationsColor(self) -> str:
-        return str(self._observs_color_box.color.name())
+    def getObservationsColor(self) -> Tuple[str, float]:
+        return (
+            self._observs_color_box.color.name(),
+            self._observs_color_box.color.alphaF(),
+        )
 
-    def setObservationsColor(self, name: QColor) -> None:
-        self._observs_color_box.color = name
+    def setObservationsColor(self, color_tuple: Tuple[str, float]) -> None:
+        self._observs_color_box.color = color_tuple  # type: ignore[assignment]
 
     @staticmethod
     def createColorBox(name: str) -> ColorBox:
@@ -77,18 +80,17 @@ class StyleCustomizationView(CustomizationView):
         color_box.setToolTip(name)
         return color_box
 
-    def getColorCycle(self) -> List[str]:
-        colors = []
-        for color_box in self._color_boxes:
-            colors.append(str(color_box.color.name()))
+    def getColorCycle(self) -> List[Tuple[str, float]]:
+        return [
+            (color_box.color.name(), color_box.color.alphaF())
+            for color_box in self._color_boxes
+        ]
 
-        return colors
-
-    def setColorCycle(self, color_cycle: Iterable[QColor]) -> None:
-        for index, color in enumerate(color_cycle):
+    def setColorCycle(self, color_cycle: List[Tuple[str, float]]) -> None:
+        for index, color_tuple in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]
-                color_box.color = color
+                color_box.color = color_tuple  # type: ignore[assignment]
 
     def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setDefaultStyle(self.default_style)
