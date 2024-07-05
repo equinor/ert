@@ -360,7 +360,7 @@ def test_global_queue_options(queue_system, key, value):
         f.write("NUM_REALIZATIONS 1\n")
         f.write(f"QUEUE_SYSTEM {queue_system}\n")
         f.write(f"QUEUE_OPTION {queue_system} {key} 10\n")
-        f.write(f"QUEUE_OPTION * {key} {value}\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
     _check_results()
 
     with open("config.ert", mode="w", encoding="utf-8") as f:
@@ -402,6 +402,6 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
     with open("config.ert", mode="w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
         f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION * {key} {value}\n")
+        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
         f.write(f"{key} {value + 42}\n")
     _check_results()

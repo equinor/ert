@@ -9,7 +9,7 @@ class QueueDriverEnum(BaseCEnum):  # type: ignore
     LOCAL = None
     TORQUE = None
     SLURM = None
-    GENERAL = None
+    GENERIC = None
 
 
 QueueDriverEnum.addEnum("LSF", 1)
@@ -24,7 +24,7 @@ class QueueSystem(StrEnum):
     LOCAL = "LOCAL"
     TORQUE = "TORQUE"
     SLURM = "SLURM"
-    GENERIC = "*"
+    GENERIC = "GENERIC"
 
     def to_c_enum(self) -> QueueDriverEnum:
         return QueueDriverEnum.from_string(self.name)
