@@ -1,6 +1,8 @@
 import os
+import random
 import stat
 from textwrap import dedent
+from typing import Set
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
@@ -20,38 +22,50 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     """
     gui = opened_main_window_clean
 
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
-                #!/usr/bin/env python
-                import numpy as np
-                import sys
-                import json
+    def write_poly_eval(failing_reals: Set[int]):
+        with open("poly_eval.py", "w", encoding="utf-8") as f:
+            f.write(
+                dedent(
+                    f"""\
+                    #!/usr/bin/env python
+                    import numpy as np
+                    import sys
+                    import json
+                    import os
 
-                def _load_coeffs(filename):
-                    with open(filename, encoding="utf-8") as f:
-                        return json.load(f)["COEFFS"]
+                    def _load_coeffs(filename):
+                        with open(filename, encoding="utf-8") as f:
+                            return json.load(f)["COEFFS"]
 
-                def _evaluate(coeffs, x):
-                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                    def _evaluate(coeffs, x):
+                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
-                if __name__ == "__main__":
-                    if np.random.random(1) > 0.5:
-                        sys.exit(1)
-                    coeffs = _load_coeffs("parameters.json")
-                    output = [_evaluate(coeffs, x) for x in range(10)]
-                    with open("poly.out", "w", encoding="utf-8") as f:
-                        f.write("\\n".join(map(str, output)))
-                """
+                    if __name__ == "__main__":
+                        if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {str(failing_reals)}:
+                            sys.exit(1)
+                        coeffs = _load_coeffs("parameters.json")
+                        output = [_evaluate(coeffs, x) for x in range(10)]
+                        with open("poly.out", "w", encoding="utf-8") as f:
+                            f.write("\\n".join(map(str, output)))
+                    """
+                )
             )
+        os.chmod(
+            "poly_eval.py",
+            os.stat("poly_eval.py").st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
         )
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
-    )
-    # Select correct experiment in the simulation panel
+
     experiment_panel = gui.findChild(ExperimentPanel)
+    num_reals = experiment_panel.config.model_config.num_realizations
+
+    successful_reals = set(range(num_reals))
+    failing_reals_first_try = {*random.sample(range(num_reals), 10)}
+    write_poly_eval(failing_reals=failing_reals_first_try)
+
+    # Select correct experiment in the simulation panel
     assert isinstance(experiment_panel, ExperimentPanel)
     simulation_mode_combo = experiment_panel.findChild(QComboBox)
     assert isinstance(simulation_mode_combo, QComboBox)
@@ -91,11 +105,15 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
         if mask
     ]
 
+    assert set(failed_realizations) == failing_reals_first_try
+
     def handle_dialog():
         message_box = wait_for_child(gui, qtbot, QMessageBox, name="restart_prompt")
         qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(500, handle_dialog)
+    failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
+    write_poly_eval(failing_reals=failing_reals_second_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=200000)
@@ -118,8 +136,13 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
         )
         if mask
     ]
+    assert set(failed_realizations) == (
+        failing_reals_second_try.union(failing_reals_second_try)
+    )
 
     QTimer.singleShot(500, handle_dialog)
+    failing_reals_third_try = {*random.sample(list(failing_reals_second_try), 2)}
+    write_poly_eval(failing_reals=failing_reals_third_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
