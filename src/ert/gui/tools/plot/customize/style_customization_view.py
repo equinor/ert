@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, List, Tuple
 
-from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QHBoxLayout
 
 from ert.gui.tools.plot import ColorBox
@@ -76,7 +75,7 @@ class StyleCustomizationView(CustomizationView):
 
     @staticmethod
     def createColorBox(name: str) -> ColorBox:
-        color_box = ColorBox(QColor(255, 255, 255), 20)
+        color_box = ColorBox(size=20)
         color_box.setToolTip(name)
         return color_box
 
