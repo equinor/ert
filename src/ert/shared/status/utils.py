@@ -1,4 +1,5 @@
 import math
+import os
 
 
 def byte_with_unit(byte_count: float) -> str:
@@ -61,3 +62,10 @@ def format_running_time(runtime: int) -> str:
         layout = "Running time: {s} seconds"
 
     return layout.format(d=days, h=hours, m=minutes, s=seconds)
+
+
+def file_has_content(file_path: str) -> bool:
+    file_path_exists = os.path.isfile(str(file_path))
+    if file_path_exists:
+        return os.path.getsize(file_path) > 0
+    return False

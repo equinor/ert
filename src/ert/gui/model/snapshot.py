@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 from collections import defaultdict
 from contextlib import ExitStack
 from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
@@ -20,7 +21,7 @@ from ert.gui.model.node import (
     RealNodeData,
     RootNode,
 )
-from ert.shared.status.utils import byte_with_unit
+from ert.shared.status.utils import byte_with_unit, file_has_content
 
 logger = logging.getLogger(__name__)
 
@@ -409,17 +410,25 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.FontRole:
             data_name = JOB_COLUMNS[index.column()]
-            if data_name in [ids.STDOUT, ids.STDERR]:
+            if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+                index.data(FileRole)
+            ):
                 font = QFont()
                 font.setUnderline(True)
                 return font
 
         if role == Qt.ItemDataRole.ForegroundRole:
             data_name = JOB_COLUMNS[index.column()]
-            if data_name in [ids.STDOUT, ids.STDERR]:
+            if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+                index.data(FileRole)
+            ):
                 return QColor(Qt.GlobalColor.blue)
 
         if role == Qt.ItemDataRole.BackgroundRole:
+            file_path = index.data(FileRole)
+            file_path_exists = os.path.isfile(str(file_path))
+            if file_path_exists and not file_has_content(index.data(FileRole)):
+                return QColor(Qt.GlobalColor.gray)
             return node.parent.data.forward_model_step_status_color_by_id[node_id]
 
         if role == Qt.ItemDataRole.DisplayRole:
@@ -431,7 +440,9 @@ class SnapshotModel(QAbstractItemModel):
                     return byte_with_unit(float(_bytes))
 
             if data_name in [ids.STDOUT, ids.STDERR]:
-                return "OPEN" if data_name in node.data else QVariant()
+                if not file_has_content(index.data(FileRole)):
+                    return "-"
+                return "View" if data_name in node.data else QVariant()
 
             if data_name in [DURATION]:
                 start_time = node.data.get(ids.START_TIME)
