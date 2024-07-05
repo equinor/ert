@@ -55,6 +55,7 @@ Keyword name                                                            Required
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LOCALIZATION <localization>`                                      NO                                      False                           Enable experimental adaptive localization correlation
 :ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`        NO                                      0.30                            Specifying adaptive localization correlation threshold
+:ref:`MAX_RUNNING <max_running>`                                        NO                                      0                               Set the maximum number of simultaneously submitted and running realizations a positive integer (> 0) is required
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
@@ -70,6 +71,7 @@ Keyword name                                                            Required
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`SIMULATION_JOB <simulation_job>`                                  NO                                                                      Lightweight alternative FORWARD_MODEL
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                            NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
+:ref:`SUBMIT_SLEEP  <submit_sleep>`                                     NO                                      0.0                             Determines for how long the system will sleep between submitting jobs.
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
@@ -618,6 +620,17 @@ Please note that MIN_REALIZATIONS = 0 means all simulations must succeed
 e.g. 2% of 20 realizations is rounded to 1.
 
 
+SUBMIT_SLEEP
+-----------------
+.. _submit_sleep:
+
+Determines for how long the system will sleep between submitting jobs.
+Default: ``0.0``. To change it to 1.0 s
+
+::
+
+    SUBMIT_SLEEP 1
+
 STOP_LONG_RUNNING
 -----------------
 .. _stop_long_running:
@@ -639,6 +652,18 @@ successful realizations, and then killed.
 
 The STOP_LONG_RUNNING key is optional. The MIN_REALIZATIONS key must be set
 when STOP_LONG_RUNNING is set to TRUE.
+
+MAX_RUNNING
+-----------
+.. _max_running:
+
+The MAX_RUNNING keyword controls the maximum number of simultaneously
+  submitted and running realizations, where ``n`` is a positive integer::
+
+    MAX_RUNNING n
+
+  If ``n`` is zero (the default), then there is no limit, and all realizations
+  will be started as soon as possible.
 
 
 MAX_RUNTIME
