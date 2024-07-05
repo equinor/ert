@@ -6,9 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 
 from ert.gui.tools import Tool
-from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
-    EnsembleInitializationConfigurationPanel,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -21,17 +19,15 @@ class ManageExperimentsTool(Tool):
         self.notifier = notifier
         self.ert_config = config
         self.ensemble_size = ensemble_size
-        self._ensemble_management_widget: Optional[
-            EnsembleInitializationConfigurationPanel
-        ] = None
+        self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
 
     def trigger(self) -> None:
-        if not self._ensemble_management_widget:
-            self._ensemble_management_widget = EnsembleInitializationConfigurationPanel(
+        if not self._manage_experiments_panel:
+            self._manage_experiments_panel = ManageExperimentsPanel(
                 self.ert_config, self.notifier, self.ensemble_size
             )
-            self._ensemble_management_widget.setWindowModality(
+            self._manage_experiments_panel.setWindowModality(
                 Qt.WindowModality.ApplicationModal
             )
 
-        self._ensemble_management_widget.show()
+        self._manage_experiments_panel.show()

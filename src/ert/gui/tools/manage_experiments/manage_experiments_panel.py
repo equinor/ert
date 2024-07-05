@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from ert.gui.ertnotifier import ErtNotifier
 
 
-class EnsembleInitializationConfigurationPanel(QTabWidget):
+class ManageExperimentsPanel(QTabWidget):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int):
         QTabWidget.__init__(self)
         self.ert_config = config
