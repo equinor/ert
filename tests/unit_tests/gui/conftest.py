@@ -16,7 +16,14 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QMessageBox,
+    QPushButton,
+    QToolButton,
+    QWidget,
+)
 
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.snapshot import (
@@ -36,7 +43,6 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
@@ -549,8 +555,10 @@ def add_experiment_manually(
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
-    add_widget = get_child(storage_widget, AddWidget)
-    qtbot.mouseClick(add_widget.addButton, Qt.MouseButton.LeftButton)
+    add_button = get_child(
+        storage_widget, QToolButton, name="add_experiment_tool_button"
+    )
+    qtbot.mouseClick(add_button, Qt.MouseButton.LeftButton)
 
     experiments_panel.close()
 

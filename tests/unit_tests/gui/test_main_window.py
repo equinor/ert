@@ -27,7 +27,6 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
@@ -447,8 +446,10 @@ def test_that_the_manage_experiments_tool_can_be_used(
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
-    create_widget = get_child(storage_widget, AddWidget)
-    qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+    add_button = get_child(
+        storage_widget, QToolButton, name="add_experiment_tool_button"
+    )
+    qtbot.mouseClick(add_button, Qt.LeftButton)
 
     # Go to the "initialize from scratch" panel
     experiments_panel.setCurrentIndex(1)
@@ -563,8 +564,10 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
-    create_widget = get_child(storage_widget, AddWidget)
-    qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
+    add_button = get_child(
+        storage_widget, QToolButton, name="add_experiment_tool_button"
+    )
+    qtbot.mouseClick(add_button, Qt.MouseButton.LeftButton)
 
     assert tree_view.model().rowCount() == 1
     assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1

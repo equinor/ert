@@ -5,9 +5,13 @@ from qtpy.QtCore import (
     QSortFilterProxyModel,
     Qt,
     Signal,
+    Slot,
 )
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
+    QHBoxLayout,
     QLineEdit,
+    QToolButton,
     QTreeView,
     QVBoxLayout,
     QWidget,
@@ -16,7 +20,6 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.models.storage_model import (
     EnsembleModel,
     ExperimentModel,
@@ -82,22 +85,52 @@ class StorageWidget(QWidget):
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
         selection_model = QItemSelectionModel(proxy_model)
-        selection_model.currentChanged.connect(self._currentChanged)
+        selection_model.currentChanged.connect(self._current_changed)
         self._tree_view.setSelectionModel(selection_model)
         self._tree_view.setColumnWidth(0, 225)
         self._tree_view.setColumnWidth(1, 125)
         self._tree_view.setColumnWidth(2, 100)
 
-        self._create_experiment_button = AddWidget(self._addItem)
+        actions_layout = QHBoxLayout()
+
+        add_button = QToolButton()
+        add_button.setIcon(QIcon("img:add_circle_outlined.svg"))
+        add_button.setText("New")
+        add_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        add_button.clicked.connect(self._add_experiment)
+        # for tests
+        add_button.setObjectName("add_experiment_tool_button")
+
+        delete_button = QToolButton()
+        delete_button.setIcon(QIcon("img:delete_to_trash.svg"))
+        delete_button.setText("Delete")
+        delete_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        delete_button.clicked.connect(self._delete_experiment)
+        # for tests
+        delete_button.setObjectName("delete_experiment_tool_button")
+
+        # Only able delete experiments
+        self.onSelectExperiment.connect(lambda: delete_button.setEnabled(True))
+        self.onSelectEnsemble.connect(lambda: delete_button.setEnabled(False))
+        self.onSelectRealization.connect(lambda: delete_button.setEnabled(False))
+        delete_button.setEnabled(False)
+
+        actions_layout.addWidget(add_button)
+        actions_layout.addWidget(delete_button)
+        actions_layout.addStretch(1)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
         layout.addWidget(self._tree_view)
-        layout.addWidget(self._create_experiment_button)
+        layout.addLayout(actions_layout)
 
         self.setLayout(layout)
 
-    def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
+    @Slot(QModelIndex, QModelIndex)
+    def _current_changed(self, selected: QModelIndex, previous: QModelIndex) -> None:
+        if not previous.isValid() or not selected.isValid():
+            return
+
         idx = self._tree_view.model().mapToSource(selected)  # type: ignore
         cls = idx.internalPointer()
 
@@ -111,7 +144,21 @@ class StorageWidget(QWidget):
             ensemble = self._notifier.storage.get_ensemble(cls.ensemble_id)
             self.onSelectRealization.emit(ensemble, cls.realization)
 
-    def _addItem(self) -> None:
+    @Slot()
+    def _delete_experiment(self) -> None:
+        assert self._tree_view.selectedIndexes()
+        model = (
+            self._tree_view.model()
+            .mapToSource(self._tree_view.selectedIndexes()[0])
+            .internalPointer()
+        )  # type: ignore
+        assert isinstance(model, ExperimentModel)
+        print(model._id)
+
+        # self._notifier.storage.delete_experiment()
+
+    @Slot()
+    def _add_experiment(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(self._notifier, parent=self)
         create_experiment_dialog.show()
         if create_experiment_dialog.exec_():

@@ -27,7 +27,6 @@ from .analysismoduleedit import AnalysisModuleEdit  # noqa
 from .activelabel import ActiveLabel  # noqa
 from .searchbox import SearchBox  # noqa
 from .ensembleselector import EnsembleSelector  # noqa
-from .ensemblelist import EnsembleList  # noqa
 from .checklist import CheckList  # noqa
 from .stringbox import StringBox  # noqa
 from .listeditbox import ListEditBox  # noqa
