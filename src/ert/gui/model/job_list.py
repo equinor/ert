@@ -26,15 +26,10 @@ class JobListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
     forward model data for a specific realization in a specific iteration."""
 
-    def __init__(
-        self,
-        parent: Optional[QObject],
-        iter_: int,
-        real: int,
-    ) -> None:
+    def __init__(self, parent: Optional[QObject], iter_: int, real_: int) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
-        self._real = real
+        self._real = real_
 
     @Slot(int, int)
     def set_real(self, iter_: int, real: int) -> None:
@@ -88,17 +83,16 @@ class JobListProxyModel(QAbstractProxyModel):
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
     ) -> Any:
-        if role != Qt.ItemDataRole.DisplayRole:
-            return QVariant()
-        if orientation == Qt.Orientation.Horizontal:
-            header = JOB_COLUMNS[section]
-            if header in [ids.STDOUT, ids.STDERR]:
-                return header.upper()
-            if header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
-                header = header.replace("_", " ")
-            return header.capitalize()
-        if orientation == Qt.Orientation.Vertical:
-            return section
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                header = JOB_COLUMNS[section]
+                if header in [ids.STDOUT, ids.STDERR]:
+                    return header.upper()
+                elif header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
+                    header = header.replace("_", " ")
+                return header.capitalize()
+            if orientation == Qt.Orientation.Vertical:
+                return section
         return QVariant()
 
     @override
@@ -106,16 +100,14 @@ class JobListProxyModel(QAbstractProxyModel):
         return JOB_COLUMN_SIZE
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return 0
-        source_index = self._get_source_parent_index()
-        if not source_index.isValid():
-            return 0
-        source_model = self.sourceModel()
-        assert source_model is not None
-        return source_model.rowCount(source_index)
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            source_model = self.sourceModel()
+            assert source_model is not None
+            source_index = self._get_source_parent_index()
+            if source_index.isValid():
+                return source_model.rowCount(source_index)
+        return 0
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
@@ -129,59 +121,45 @@ class JobListProxyModel(QAbstractProxyModel):
     def index(
         self, row: int, column: int, parent: Optional[QModelIndex] = None
     ) -> QModelIndex:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            return QModelIndex()
-        job_index = self.mapToSource(self.createIndex(row, column, parent))
-        return self.createIndex(row, column, job_index.data(NodeRole))
+        parent = parent if parent else QModelIndex()
+        if not parent.isValid():
+            job_index = self.mapToSource(self.createIndex(row, column, parent))
+            return self.createIndex(row, column, job_index.data(NodeRole))
+        return QModelIndex()
 
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
-        if not proxyIndex.isValid():
-            return QModelIndex()
-        source_model = self.sourceModel()
-        assert source_model is not None
-        iter_index = source_model.index(self._iter, 0, QModelIndex())
-        if not iter_index.isValid() or not source_model.hasChildren(iter_index):
-            return QModelIndex()
-        real_index = source_model.index(self._real, 0, iter_index)
-        if not real_index.isValid() or not source_model.hasChildren(real_index):
-            return QModelIndex()
-        job_index = source_model.index(
-            proxyIndex.row(), proxyIndex.column(), real_index
-        )
-        return job_index
+        if proxyIndex.isValid():
+            sm = self.sourceModel()
+            assert sm is not None
+            iter_index = sm.index(self._iter, 0, QModelIndex())
+            if iter_index.isValid() and sm.hasChildren(iter_index):
+                real_index = sm.index(self._real, 0, iter_index)
+                if real_index.isValid() and sm.hasChildren(real_index):
+                    return sm.index(proxyIndex.row(), proxyIndex.column(), real_index)
+        return QModelIndex()
 
-    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
-        if not sourceIndex.isValid():
-            return QModelIndex()
-        if not self._accept_index(sourceIndex):
-            return QModelIndex()
-        return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+        return (
+            self.index(src_index.row(), src_index.column(), QModelIndex())
+            if src_index.isValid() and self._accept_index(src_index)
+            else QModelIndex()
+        )
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
     ) -> None:
-        if not self._accept_index(top_left):
-            return
-        proxy_top_left = self.mapFromSource(top_left)
-        proxy_bottom_right = self.mapFromSource(bottom_right)
-        if not proxy_top_left.isValid() or not proxy_bottom_right.isValid():
-            return
-        self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
+        if self._accept_index(top_left):
+            proxy_top_left = self.mapFromSource(top_left)
+            proxy_bottom_right = self.mapFromSource(bottom_right)
+            if all([proxy_top_left.isValid(), proxy_bottom_right.isValid()]):
+                self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _accept_index(self, index: QModelIndex) -> bool:
-        if index.internalPointer() is None:
+        if not index.internalPointer() or not index.data(IsJobRole):
             return False
 
-        # This model should only consist of job indices, so anything else mean
-        # the index is not on "our branch" of the state graph.
-        if not index.data(IsJobRole):
-            return False
-
-        # traverse upwards and check real and iter against parents of
-        # this index.
-        while index.isValid() and index.internalPointer() is not None:
+        # traverse upwards and check real and iter against parents of this index
+        while index.isValid() and index.internalPointer():
             if (index.data(IsRealizationRole) and (index.row() != self._real)) or (
                 index.data(IsEnsembleRole) and (index.row() != self._iter)
             ):
