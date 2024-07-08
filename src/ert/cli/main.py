@@ -44,9 +44,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
 
-    ert_config = ErtConfig.with_plugins(
-        plugin_manager.forward_model_steps if plugin_manager else []
-    ).from_file(args.config)
+    ert_config = ErtConfig.with_plugins().from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
 

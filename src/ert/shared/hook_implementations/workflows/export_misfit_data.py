@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, List
 
 import pandas as pd
 
-from ert import ErtScript
+from ert.config.ert_script import ErtScript
 from ert.exceptions import StorageError
 
 if TYPE_CHECKING:

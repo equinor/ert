@@ -39,7 +39,7 @@ def test_ert_config_throws_on_missing_forward_model_step(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_substitutions_can_be_done_in_job_names(ErtConfigWithPlugins):
+def test_that_substitutions_can_be_done_in_job_names():
     """
     Regression test for a usage case involving setting ECL100 or ECL300
     that was broken by changes to forward_model substitutions.
@@ -55,14 +55,14 @@ def test_that_substitutions_can_be_done_in_job_names(ErtConfigWithPlugins):
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.name == "ECLIPSE100"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_parsing_forward_model_with_double_dash_is_possible(ErtConfigWithPlugins):
+def test_parsing_forward_model_with_double_dash_is_possible():
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
@@ -79,7 +79,7 @@ def test_parsing_forward_model_with_double_dash_is_possible(ErtConfigWithPlugins
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -88,9 +88,7 @@ def test_parsing_forward_model_with_double_dash_is_possible(ErtConfigWithPlugins
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
-    ErtConfigWithPlugins,
-):
+def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     """this is a regression test, making sure that we do not by mistake introduce
     spaces while parsing forward model lines that contain quotation marks
 
@@ -110,7 +108,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert list(ert_config.forward_model_steps[0].private_args.values()) == [
         "foo",
         "smt/<foo>/bar/xx/t--s.s/yy/z/z/oo",
@@ -118,7 +116,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_comments_are_ignored(ErtConfigWithPlugins):
+def test_that_comments_are_ignored():
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
@@ -136,7 +134,7 @@ def test_that_comments_are_ignored(ErtConfigWithPlugins):
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -145,9 +143,7 @@ def test_that_comments_are_ignored(ErtConfigWithPlugins):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_quotations_in_forward_model_arglist_are_handled_correctly(
-    ErtConfigWithPlugins,
-):
+def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     """This is a regression test, making sure that quoted strings behave consistently.
     They should all result in the same.
     See https://github.com/equinor/ert/issues/2766"""
@@ -164,7 +160,7 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly(
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    res_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
 
     assert res_config.forward_model_steps[0].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_steps[0].private_args["<TO>"] == "some stuff"
@@ -215,7 +211,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
-    caplog, ErtConfigWithPlugins
+    caplog,
 ):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -227,7 +223,7 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     with caplog.at_level(logging.WARNING):
         ert_config.forward_model_data_to_json(0, 0, 0)
         assert "Reached max iterations" not in caplog.text
@@ -254,7 +250,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_spaces_in_forward_model_args_are_dropped(ErtConfigWithPlugins):
+def test_that_spaces_in_forward_model_args_are_dropped():
     test_config_file_name = "test.ert"
     # Intentionally inserted several spaces before comma
     test_config_contents = dedent(
@@ -266,7 +262,7 @@ def test_that_spaces_in_forward_model_args_are_dropped(ErtConfigWithPlugins):
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    ert_config = ErtConfigWithPlugins.from_file(test_config_file_name)
+    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.private_args.get("<VERSION>") == "smersion"

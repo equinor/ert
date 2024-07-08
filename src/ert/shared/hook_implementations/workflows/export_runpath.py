@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Tuple
 
-from ert.config import ErtScript
+from ert.config.ert_script import ErtScript
 from ert.runpaths import Runpaths
 from ert.validation import rangestring_to_mask
 

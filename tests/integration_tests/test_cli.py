@@ -29,30 +29,9 @@ from ert.mode_definitions import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert.shared.plugins import ErtPluginManager
 from ert.storage import open_storage
-from tests.unit_tests.all.plugins import dummy_plugins
 
-from .run_cli import run_cli, run_cli_with_pm
-
-
-def test_that_cli_runs_forward_model_from_plugin(tmp_path):
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL DummyForwardModel
-        """
-    )
-    with open(tmp_path / "test.ert", "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    pm = ErtPluginManager(plugins=[dummy_plugins])
-    run_cli_with_pm(
-        [TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert")], pm
-    )
-    assert os.path.exists(
-        tmp_path / "simulations" / "realization-0" / "iter-0" / "dummy.out"
-    )
+from .run_cli import run_cli
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")

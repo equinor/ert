@@ -1,7 +1,7 @@
 from typing import Any, List
 
-from ert import ErtScript
-from ert.config import ConfigValidationError
+from ert.config.ert_script import ErtScript
+from ert.config.parsing.config_errors import ConfigValidationError
 
 
 class MisfitPreprocessor(ErtScript):

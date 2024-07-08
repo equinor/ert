@@ -332,9 +332,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_deprecated_runpath_substitution_remain_valid(
-    prior_ensemble, ErtConfigWithPlugins
-):
+def test_that_deprecated_runpath_substitution_remain_valid(prior_ensemble):
     """
     This checks that deprecated runpath substitution, using %d, remain intact.
     """
@@ -348,7 +346,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfigWithPlugins.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
 
     run_context = ensemble_context(
         prior_ensemble,
