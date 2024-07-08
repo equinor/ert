@@ -1,10 +1,9 @@
-import datetime
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
+from datetime import datetime, timedelta
 from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
-from dateutil import tz
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
@@ -68,13 +67,10 @@ _QCOLORS = {
 
 
 def _estimate_duration(
-    start_time: datetime.datetime, end_time: Optional[datetime.datetime] = None
-) -> datetime.timedelta:
-    timezone = None
-    if start_time.tzname() is not None:
-        timezone = tz.gettz(start_time.tzname())
+    start_time: datetime, end_time: Optional[datetime] = None
+) -> timedelta:
     if not end_time or end_time < start_time:
-        end_time = datetime.datetime.now(timezone)
+        end_time = datetime.now(start_time.tzinfo)
     return end_time - start_time
 
 
@@ -441,7 +437,7 @@ class SnapshotModel(QAbstractItemModel):
                     start_time, end_time=node.data.get(ids.END_TIME)
                 )
                 # There is no method for truncating microseconds, so we remove them
-                delta -= datetime.timedelta(microseconds=delta.microseconds)
+                delta -= timedelta(microseconds=delta.microseconds)
                 return str(delta)
 
             return node.data.get(data_name)
