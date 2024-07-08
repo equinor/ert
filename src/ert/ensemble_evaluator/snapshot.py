@@ -1,7 +1,7 @@
-import datetime
 import re
 import typing
 from collections import defaultdict
+from datetime import datetime
 from typing import (
     Any,
     DefaultDict,
@@ -73,12 +73,12 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 
 
 def convert_iso8601_to_datetime(
-    timestamp: Union[datetime.datetime, str],
-) -> datetime.datetime:
-    if isinstance(timestamp, datetime.datetime):
+    timestamp: Union[datetime, str],
+) -> datetime:
+    if isinstance(timestamp, datetime):
         return timestamp
 
-    return datetime.datetime.fromisoformat(timestamp)
+    return datetime.fromisoformat(timestamp)
 
 
 RealId = str
@@ -100,7 +100,7 @@ class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
         self._realization_states: Dict[
             str,
-            Dict[str, Union[bool, datetime.datetime, str, Dict[str, "ForwardModel"]]],
+            Dict[str, Union[bool, datetime, str, Dict[str, "ForwardModel"]]],
         ] = defaultdict(dict)
         """A shallow dictionary of realization states. The key is a string with
         realization number, pointing to a dict with keys active (bool),
@@ -136,8 +136,8 @@ class PartialSnapshot:
         self,
         real_id: str,
         status: str,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
     ) -> "PartialSnapshot":
         self._realization_states[real_id].update(
             _filter_nones(
@@ -419,8 +419,8 @@ class Snapshot:
 
 class ForwardModel(TypedDict, total=False):
     status: Optional[str]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
     index: Optional[str]
     current_memory_usage: Optional[str]
     max_memory_usage: Optional[str]
@@ -433,8 +433,8 @@ class ForwardModel(TypedDict, total=False):
 class RealizationSnapshot(BaseModel):
     status: Optional[str] = None
     active: Optional[bool] = None
-    start_time: Optional[datetime.datetime] = None
-    end_time: Optional[datetime.datetime] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
     forward_models: Dict[str, ForwardModel] = {}
 
 
@@ -452,8 +452,8 @@ class SnapshotBuilder(BaseModel):
         self,
         real_ids: Sequence[str],
         status: Optional[str],
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
     ) -> Snapshot:
         top = SnapshotDict(status=status, metadata=self.metadata)
         for r_id in real_ids:
@@ -474,8 +474,8 @@ class SnapshotBuilder(BaseModel):
         status: Optional[str],
         current_memory_usage: Optional[str] = None,
         max_memory_usage: Optional[str] = None,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
