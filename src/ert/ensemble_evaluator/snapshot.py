@@ -14,14 +14,16 @@ from typing import (
     Union,
 )
 
+from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
 from cloudevents.http import CloudEvent
-from dateutil.parser import parse
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
+
+MonkeyPatch.patch_fromisoformat()
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
@@ -76,7 +78,7 @@ def convert_iso8601_to_datetime(
     if isinstance(timestamp, datetime.datetime):
         return timestamp
 
-    return parse(timestamp)
+    return datetime.datetime.fromisoformat(timestamp)
 
 
 RealId = str
