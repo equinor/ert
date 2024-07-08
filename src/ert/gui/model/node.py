@@ -16,6 +16,7 @@ class _Node(ABC):
     children: dict[int, IterNode | RealNode | ForwardModelStepNode] = field(
         default_factory=dict
     )
+    _index: Optional[int] = None
 
     def __repr__(self) -> str:
         parent = "no " if self.parent is None else ""
@@ -30,9 +31,12 @@ class _Node(ABC):
         pass
 
     def row(self) -> int:
-        if self.parent:
-            return list(self.parent.children.keys()).index(self.id_)
-        raise ValueError(f"{self} had no parent")
+        if not self._index:
+            if self.parent:
+                self._index = list(self.parent.children.keys()).index(self.id_)
+            else:
+                raise ValueError(f"{self} had no parent")
+        return self._index
 
 
 @dataclass
