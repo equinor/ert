@@ -28,7 +28,7 @@ class Simulator(BatchSimulator):
         pwd = os.getcwd()
         assert ever_config.output_dir is not None
         os.chdir(ever_config.output_dir)
-        self._ert_config = ErtConfig.from_dict(
+        self._ert_config = ErtConfig.with_plugins().from_dict(
             config_dict=everest2res(
                 ever_config, site_config=ErtConfig.read_site_config()
             )

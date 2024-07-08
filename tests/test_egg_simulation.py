@@ -666,7 +666,7 @@ def test_opm_fail_explicit_summary_keys():
 def test_init_egg_model():
     config = EverestConfig.load_file(CONFIG_FILE)
     ert_config = everest2res(config, site_config=ErtConfig.read_site_config())
-    ErtConfig.from_dict(config_dict=ert_config)
+    ErtConfig.with_plugins().from_dict(config_dict=ert_config)
 
 
 @skipif_no_simulator

@@ -52,7 +52,9 @@ def test_everest_output(start_mock):
 
     assert "storage" not in initial_folders
     assert DETACHED_NODE_DIR not in initial_folders
-    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(config))
+    ert_config = ErtConfig.with_plugins().from_dict(
+        generate_everserver_ert_config(config)
+    )
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(config, ert_config, storage)
@@ -87,7 +89,9 @@ def test_everest_output(start_mock):
 def test_save_running_config(start_mock):
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
-    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(config))
+    ert_config = ErtConfig.with_plugins().from_dict(
+        generate_everserver_ert_config(config)
+    )
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(config, ert_config, storage)

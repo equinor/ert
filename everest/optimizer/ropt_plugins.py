@@ -61,7 +61,7 @@ class WorkflowJob(BasicStep):
         try:
             workflows = self._ert_dict.get("LOAD_WORKFLOW", [])
             self._ert_dict["LOAD_WORKFLOW"] = workflows + [(file_name, workflow_name)]
-            ert_config = ErtConfig.from_dict(config_dict=self._ert_dict)
+            ert_config = ErtConfig.with_plugins().from_dict(config_dict=self._ert_dict)
             with open_storage(ert_config.ens_path, "w") as storage:
                 workflow = ert_config.workflows[workflow_name]
                 runner = WorkflowRunner(workflow, storage, None, ert_config)

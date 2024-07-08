@@ -131,7 +131,7 @@ def run_everest(options):
             logger.info("Everest forward model contains job {}".format(job_name))
 
         with PluginSiteConfigEnv():
-            ert_config = ErtConfig.from_dict(
+            ert_config = ErtConfig.with_plugins().from_dict(
                 config_dict=generate_everserver_ert_config(
                     options.config, options.debug
                 )

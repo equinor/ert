@@ -68,7 +68,9 @@ def test_https_requests():
     expected_server_status = ServerStatus.never_run
     assert expected_server_status == everserver_status(everest_config)["status"]
     wait_for_context()
-    ert_config = ErtConfig.from_dict(generate_everserver_ert_config(everest_config))
+    ert_config = ErtConfig.with_plugins().from_dict(
+        generate_everserver_ert_config(everest_config)
+    )
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     with open_storage(ert_config.ens_path, "w") as storage:
         start_server(everest_config, ert_config, storage)
