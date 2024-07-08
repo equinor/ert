@@ -77,10 +77,12 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
 
     assert isinstance(manage_tool, ManageExperimentsTool)
     experiments_panel = manage_tool._manage_experiments_panel
+    assert experiments_panel
 
     # In the "create new case" tab, it should now contain "iter-1"
     experiments_panel.setCurrentIndex(0)
     current_tab = experiments_panel.currentWidget()
+    assert current_tab
     assert current_tab.objectName() == "create_new_ensemble_tab"
     storage_widget = get_child(current_tab, StorageWidget)
     tree_view = get_child(storage_widget, QTreeView)

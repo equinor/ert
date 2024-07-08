@@ -491,7 +491,7 @@ class SnapshotModel(QAbstractItemModel):
 
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
         try:
-            child_item = list(parent_item.children.values())[row]
+            child_item = parent_item.children_list[row]
         except KeyError:
             return QModelIndex()
         else:

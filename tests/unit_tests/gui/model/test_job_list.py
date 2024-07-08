@@ -35,11 +35,11 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
 
     qtmodeltester.check(model, force_py=True)
 
@@ -56,7 +56,7 @@ def test_changes(full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
     partial = PartialSnapshot(full_snapshot)
@@ -71,7 +71,7 @@ def test_changes(full_snapshot):
             end_time=end_time,
         ),
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
     assert (
         model.index(0, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:00:00"
     )
@@ -95,7 +95,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         model, reporting_mode
     )
 
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == FORWARD_MODEL_STATE_START
@@ -122,7 +122,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
             start_time=start_time,
         ),
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
     assert (
         model.index(2, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:12:11"
     )
@@ -139,15 +139,15 @@ def test_no_cross_talk(full_snapshot):
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
     qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)  # noqa: F841
 
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
     # Test that changes to iter=1 does not bleed into iter=0
     partial = PartialSnapshot(full_snapshot)
     partial.update_forward_model(
         "0", "0", forward_model=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == FORWARD_MODEL_STATE_START

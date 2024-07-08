@@ -40,12 +40,14 @@ class _Node(ABC):
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
     children: dict[str, IterNode] = field(default_factory=dict)
+    children_list: list[IterNode] = field(default_factory=list)
     max_memory_usage: Optional[int] = None
 
     def add_child(self, node: _Node) -> None:
         node = cast(IterNode, node)
         node.parent = self
         self.children[node.id_] = node
+        self.children_list.append(node)
 
 
 @dataclass
@@ -59,11 +61,13 @@ class IterNode(_Node):
     parent: Optional[RootNode] = None
     data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
+    children_list: list[RealNode] = field(default_factory=list)
 
     def add_child(self, node: _Node) -> None:
         node = cast(RealNode, node)
         node.parent = self
         self.children[node.id_] = node
+        self.children_list.append(node)
 
 
 @dataclass
@@ -83,11 +87,13 @@ class RealNode(_Node):
     parent: Optional[IterNode] = None
     data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
+    children_list: list[ForwardModelStepNode] = field(default_factory=list)
 
     def add_child(self, node: _Node) -> None:
         node = cast(ForwardModelStepNode, node)
         node.parent = self
         self.children[node.id_] = node
+        self.children_list.append(node)
 
 
 @dataclass
