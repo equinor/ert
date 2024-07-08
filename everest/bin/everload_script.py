@@ -154,7 +154,7 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
 
     # prepare the ErtConfig object
     ert_config_dict = everest2res(ever_config, site_config=ErtConfig.read_site_config())
-    ert_config = ErtConfig.from_dict(config_dict=ert_config_dict)
+    ert_config = ErtConfig.with_plugins().from_dict(config_dict=ert_config_dict)
 
     # load information about batches from previous run
     df = export(ever_config, export_ecl=False)

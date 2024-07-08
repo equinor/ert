@@ -34,7 +34,7 @@ def test_logging_setup():
     everest_config = EverestConfig.load_file(CONFIG_FILE)
 
     wait_for_context()
-    ert_config = ErtConfig.from_dict(
+    ert_config = ErtConfig.with_plugins().from_dict(
         generate_everserver_ert_config(everest_config, True)
     )
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)

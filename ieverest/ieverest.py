@@ -191,7 +191,7 @@ class IEverest(QObject):
             self._gui.monitor_gui.update_status(
                 workflow_is_running=True,
             )
-            ert_config = ErtConfig.from_dict(
+            ert_config = ErtConfig.with_plugins().from_dict(
                 generate_everserver_ert_config(self.config)
             )
             self._storage = open_storage(ert_config.ens_path)
@@ -277,7 +277,7 @@ class IEverest(QObject):
         if not server_is_running(self.config):
             app_output().info("Starting optimization session....")
             with PluginSiteConfigEnv():
-                ert_config = ErtConfig.from_dict(
+                ert_config = ErtConfig.with_plugins().from_dict(
                     generate_everserver_ert_config(self.config)
                 )
 

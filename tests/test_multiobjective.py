@@ -75,7 +75,7 @@ def test_config_multi_objectives():
 def test_multi_objectives2res():
     config = EverestConfig.load_file(CONFIG_FILE)
     res = everest2res(config, site_config=ErtConfig.read_site_config())
-    ErtConfig.from_dict(config_dict=res)
+    ErtConfig.with_plugins().from_dict(config_dict=res)
 
 
 @tmpdir(CONFIG_DIR)

@@ -227,7 +227,7 @@ def test_snake_everest2res():
     assert snake_dict == ert_config_dict
 
     # Instantiate res
-    ErtConfig.from_dict(
+    ErtConfig.with_plugins().from_dict(
         config_dict=everest2res(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
@@ -248,7 +248,7 @@ def test_snake_everest2res_slurm():
     assert snake_dict == ert_config_dict
 
     # Instantiate res
-    ErtConfig.from_dict(
+    ErtConfig.with_plugins().from_dict(
         config_dict=everest2res(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
@@ -272,7 +272,7 @@ def test_tutorial_everest2res():
     assert tutorial_dict == ert_config_dict
 
     # Instantiate res
-    ErtConfig.from_dict(
+    ErtConfig.with_plugins().from_dict(
         config_dict=everest2res(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
@@ -501,7 +501,7 @@ def test_install_data():
             assert tutorial_dict == ert_config_dict
 
             # Instantiate res
-            ErtConfig.from_dict(
+            ErtConfig.with_plugins().from_dict(
                 config_dict=everest2res(
                     ever_config, site_config=ErtConfig.read_site_config()
                 )

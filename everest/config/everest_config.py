@@ -71,7 +71,7 @@ def _dummy_ert_config():
     site_config = ErtConfig.read_site_config()
     dummy_config = {"NUM_REALIZATIONS": 1, "ENSPATH": "."}
     dummy_config.update(site_config)
-    return ErtConfig.from_dict(config_dict=dummy_config)
+    return ErtConfig.with_plugins().from_dict(config_dict=dummy_config)
 
 
 def get_system_installed_jobs():
