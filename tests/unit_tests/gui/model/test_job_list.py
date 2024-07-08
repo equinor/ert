@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -60,8 +60,8 @@ def test_changes(full_snapshot):
     assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
     partial = PartialSnapshot(full_snapshot)
-    start_time = datetime.datetime(year=2020, month=10, day=27, hour=12)
-    end_time = datetime.datetime(year=2020, month=10, day=28, hour=13)
+    start_time = datetime(year=2020, month=10, day=27, hour=12)
+    end_time = datetime(year=2020, month=10, day=28, hour=13)
     partial.update_forward_model(
         "0",
         "0",
@@ -102,11 +102,9 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     )
 
     partial = PartialSnapshot(full_snapshot)
-    start_time = datetime.datetime(
-        year=2020, month=10, day=27, hour=12, tzinfo=timezone
-    )
-    # mock only datetime.datetime.now()
-    mock_datetime.datetime.now.return_value = datetime.datetime(
+    start_time = datetime(year=2020, month=10, day=27, hour=12, tzinfo=timezone)
+    # mock only datetime.now()
+    mock_datetime.now.return_value = datetime(
         year=2020,
         month=10,
         day=28,
@@ -128,7 +126,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     assert (
         model.index(2, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:12:11"
     )
-    mock_datetime.datetime.now.assert_called_once_with(timezone)
+    mock_datetime.now.assert_called_once_with(timezone)
 
 
 @pytest.mark.requires_window_manager
