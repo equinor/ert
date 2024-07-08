@@ -16,12 +16,12 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
         model, reporting_mode
     )
 
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
+    model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
+    model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
     partial = partial_snapshot(SnapshotModel.prerender(full_snapshot))
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), 1)
+    model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
+    model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
 
     qtmodeltester.check(model, force_py=True)
 
@@ -29,7 +29,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
 def test_realization_sort_order(full_snapshot):
     model = SnapshotModel()
 
-    model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
 
     for i in range(0, 100):
         iter_index = model.index(i, 0, model.index(0, 0, QModelIndex()))
@@ -41,7 +41,7 @@ def test_realization_sort_order(full_snapshot):
 
 def test_realization_state_is_queue_finalized_state(fail_snapshot):
     model = SnapshotModel()
-    model._add_snapshot(SnapshotModel.prerender(fail_snapshot), 0)
+    model._add_snapshot(SnapshotModel.prerender(fail_snapshot), "0")
     first_real = model.index(0, 0, model.index(0, 0))
 
     queue_color = model.data(first_real, RealStatusColorHint)
