@@ -2,7 +2,9 @@ import datetime
 import json
 from typing import Any
 
-from dateutil import parser
+from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+MonkeyPatch.patch_fromisoformat()
 
 
 class _EvaluatorEncoder(json.JSONEncoder):
@@ -26,7 +28,7 @@ def _object_hook(obj: Any) -> Any:
         return obj
 
     if obj["__type__"] == "isoformat8601":
-        return parser.parse(obj["value"])
+        return datetime.datetime.fromisoformat(obj["value"])
 
     return obj
 

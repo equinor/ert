@@ -39,6 +39,7 @@ classifiers=[
 dynamic = ["version"]
 dependencies=[
     "aiohttp",
+    "backports-datetime_fromisoformat",
     "cloudevents>=1.6.0",
     "cloudpickle",
     "cryptography",
@@ -51,7 +52,6 @@ dependencies=[
     "humanize",
     "importlib_resources;python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
-    "typing_extensions>=4.5",
     "jinja2",
     "lark",
     "lxml",
@@ -77,6 +77,7 @@ dependencies=[
     "tables<3.9;python_version == '3.8'",
     "tabulate",
     "tqdm>=4.62.0",
+    "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
     "websockets",
     "xarray",
