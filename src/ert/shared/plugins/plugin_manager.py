@@ -29,10 +29,6 @@ logger = logging.getLogger(__name__)
 
 import pluggy
 
-from ert.config.forward_model_step import (
-    ForwardModelStepDocumentation,
-    ForwardModelStepPlugin,
-)
 from ert.shared.plugins.workflow_config import WorkflowConfigs
 
 _PLUGIN_NAMESPACE = "ert"
@@ -46,6 +42,11 @@ import ert.shared.hook_implementations  # noqa
 import ert.shared.plugins.hook_specifications  # noqa
 
 if TYPE_CHECKING:
+    from ert.config.forward_model_step import (
+        ForwardModelStepDocumentation,
+        ForwardModelStepPlugin,
+    )
+
     from .plugin_response import PluginMetadata, PluginResponse
 
 K = TypeVar("K")

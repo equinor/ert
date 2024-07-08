@@ -15,7 +15,6 @@ from unittest.mock import MagicMock
 from qtpy.QtWidgets import QApplication
 
 from _ert.threading import set_signal_handler
-from ert.shared.plugins import ErtPluginManager
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -157,12 +156,6 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 @pytest.fixture()
 def snake_oil_case(setup_case):
     return setup_case("snake_oil", "snake_oil.ert")
-
-
-@pytest.fixture()
-def ErtConfigWithPlugins():
-    pm = ErtPluginManager()
-    return ErtConfig.with_plugins(forward_model_step_classes=pm.forward_model_steps)
 
 
 @pytest.fixture()

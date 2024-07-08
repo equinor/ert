@@ -27,6 +27,7 @@ import xarray as xr
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
+from ert.shared.plugins import ErtPluginManager
 from ert.substitution_list import SubstitutionList
 
 from ._get_num_cpu import get_num_cpu_from_data_file
@@ -126,8 +127,11 @@ class ErtConfig:
 
     @staticmethod
     def with_plugins(
-        forward_model_step_classes: List[Type[ForwardModelStepPlugin]],
+        forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,
     ) -> Type["ErtConfig"]:
+        if forward_model_step_classes is None:
+            forward_model_step_classes = ErtPluginManager().forward_model_steps
+
         preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
