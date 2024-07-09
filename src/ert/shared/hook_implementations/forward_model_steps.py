@@ -532,3 +532,37 @@ _UpperCaseFMSteps: List[Type[ForwardModelStepPlugin]] = [
     Symlink,
     TemplateRender,
 ]
+
+
+# Legacy:
+# Mimicking old style lower case forward models, which pointed only to
+# executables with no validation.
+def _create_lowercase_fm_step_cls_with_only_executable(
+    fm_step_name: str, executable: str
+) -> Type[ForwardModelStepPlugin]:
+    class _LowerCaseFMStep(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(name=fm_step_name, command=[executable])
+
+        @staticmethod
+        def documentation() -> Optional[ForwardModelStepDocumentation]:
+            return None
+
+    return _LowerCaseFMStep
+
+
+_LowerCaseFMSteps: List[Type[ForwardModelStepPlugin]] = []
+for fm_step_subclass in _UpperCaseFMSteps:
+    assert issubclass(fm_step_subclass, ForwardModelStepPlugin)
+    inst = fm_step_subclass()  # type: ignore
+    _LowerCaseFMSteps.append(
+        _create_lowercase_fm_step_cls_with_only_executable(
+            inst.name.lower(), inst.executable
+        )
+    )
+
+
+@hook_implementation
+@plugin_response(plugin_name="ert")
+def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
+    return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
