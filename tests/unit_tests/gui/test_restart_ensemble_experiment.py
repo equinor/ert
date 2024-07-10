@@ -61,7 +61,6 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     experiment_panel = gui.findChild(ExperimentPanel)
     num_reals = experiment_panel.config.model_config.num_realizations
 
-    successful_reals = set(range(num_reals))
     failing_reals_first_try = {*random.sample(range(num_reals), 10)}
     write_poly_eval(failing_reals=failing_reals_first_try)
 
