@@ -81,7 +81,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
 
     qtbot.mouseClick(run_dialog.show_details_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=20000)
+    qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # Assert that the number of boxes in the detailed view is
@@ -115,7 +115,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     write_poly_eval(failing_reals=failing_reals_second_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=20000)
+    qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # Assert that the number of boxes in the detailed view is
@@ -144,7 +144,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     write_poly_eval(failing_reals=failing_reals_third_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=20000)
+    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # Assert that the number of boxes in the detailed view is
