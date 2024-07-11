@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from functools import partial
+from typing import Type, cast
 
 from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
@@ -10,11 +13,17 @@ from qtpy.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QWidget,
 )
 from typing_extensions import get_args
 
-from ert.config.analysis_module import AnalysisModule, IESSettings
+from ert.config.analysis_module import (
+    AnalysisModule,
+    IESSettings,
+    InversionTypeES,
+    InversionTypeIES,
+)
 
 
 class AnalysisModuleVariablesPanel(QWidget):
@@ -24,7 +33,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         layout = QFormLayout()
         layout.setVerticalSpacing(5)
-        layout.setLabelAlignment(Qt.AlignLeft)
+        layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setHorizontalSpacing(150)
 
         self.blockSignals(True)
@@ -48,8 +57,14 @@ class AnalysisModuleVariablesPanel(QWidget):
                     self.createDoubleSpinBox(
                         variable_name,
                         analysis_module.__getattribute__(variable_name),
-                        [val for val in metadata.metadata if isinstance(val, Ge)][0].ge,
-                        [val for val in metadata.metadata if isinstance(val, Le)][0].le,
+                        cast(
+                            float,
+                            [v for v in metadata.metadata if isinstance(v, Ge)][0].ge,
+                        ),
+                        cast(
+                            float,
+                            [v for v in metadata.metadata if isinstance(v, Le)][0].le,
+                        ),
                         0.1,
                     ),
                 )
@@ -77,8 +92,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.truncation_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.enkf_truncation,
-            [val for val in metadata.metadata if isinstance(val, Gt)][0].gt + 0.001,
-            [val for val in metadata.metadata if isinstance(val, Le)][0].le,
+            cast(float, [v for v in metadata.metadata if isinstance(v, Gt)][0].gt)
+            + 0.001,
+            cast(float, [v for v in metadata.metadata if isinstance(v, Le)][0].le),
             0.01,
         )
         self.truncation_spinner.setEnabled(False)
@@ -90,7 +106,8 @@ class AnalysisModuleVariablesPanel(QWidget):
 
             localization_frame = QFrame()
             localization_frame.setLayout(QHBoxLayout())
-            localization_frame.layout().setContentsMargins(0, 0, 0, 0)
+            lf_layout = cast(QLayout, localization_frame.layout())
+            lf_layout.setContentsMargins(0, 0, 0, 0)
 
             metadata = analysis_module.model_fields[
                 "localization_correlation_threshold"
@@ -110,15 +127,15 @@ class AnalysisModuleVariablesPanel(QWidget):
             self.local_spinner = self.createDoubleSpinBox(
                 var_name,
                 analysis_module.correlation_threshold(ensemble_size),
-                [val for val in metadata.metadata if isinstance(val, Ge)][0].ge,
-                [val for val in metadata.metadata if isinstance(val, Le)][0].le,
+                cast(float, [v for v in metadata.metadata if isinstance(v, Ge)][0].ge),
+                cast(float, [v for v in metadata.metadata if isinstance(v, Le)][0].le),
                 0.1,
             )
             self.local_spinner.setObjectName("localization_threshold")
             self.local_spinner.setEnabled(local_checkbox.isChecked())
 
-            localization_frame.layout().addWidget(local_checkbox)
-            localization_frame.layout().addWidget(self.local_spinner)
+            lf_layout.addWidget(local_checkbox)
+            lf_layout.addWidget(self.local_spinner)
             layout.addRow(localization_frame)
 
             local_checkbox.stateChanged.connect(
@@ -131,7 +148,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.setLayout(layout)
         self.blockSignals(False)
 
-    def update_inversion_algorithm(self, text: str) -> None:
+    def update_inversion_algorithm(
+        self, text: InversionTypeES | InversionTypeIES
+    ) -> None:
         self.truncation_spinner.setEnabled(
             not any(val in text.lower() for val in ["direct", "exact"])
         )
@@ -170,8 +189,13 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         return spinner
 
-    def valueChanged(self, variable_name, variable_type, variable_control):
-        value = None
+    def valueChanged(
+        self,
+        variable_name: str,
+        variable_type: Type[bool] | Type[float],
+        variable_control: QWidget,
+    ) -> None:
+        value: bool | float | None = None
         if variable_type == bool:
             assert isinstance(variable_control, QCheckBox)
             value = variable_control.isChecked()
