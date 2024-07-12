@@ -1,7 +1,6 @@
 import os
 
 import pkg_resources
-from ert.shared import ert_share_path
 
 from everest.jobs import io, templating, well_tools
 
@@ -20,35 +19,11 @@ script_names = (
 
 __all__ = [
     "recovery_factor",
-    "get_system_installed_shell_jobs",
     "io",
     "templating",
     "well_tools",
     "script_names",
 ]
-
-
-def get_system_installed_shell_jobs():
-    try:
-        path = os.path.join(ert_share_path(), "forward-models/shell")
-        shell_scripts = [
-            job_name
-            for job_name in os.listdir(path)
-            if os.path.isfile(os.path.join(path, job_name))
-        ]
-        return shell_scripts
-    except OSError:
-        return (
-            "careful_copy_file",
-            "copy_directory",
-            "copy_file",
-            "delete_directory",
-            "delete_file",
-            "make_directory",
-            "make_symlink",
-            "move_file",
-            "symlink",
-        )
 
 
 def _inject_scripts():
@@ -72,4 +47,17 @@ def fetch_script(script_name):
 
 
 _inject_scripts()
-shell_commands = get_system_installed_shell_jobs()
+
+# Note: Must be kept in sync with shell scripts on ERT-side
+# (which is also not expected to change frequently/drastically)
+shell_commands = (
+    "careful_copy_file",
+    "copy_directory",
+    "copy_file",
+    "delete_directory",
+    "delete_file",
+    "make_directory",
+    "make_symlink",
+    "move_file",
+    "symlink",
+)
