@@ -57,7 +57,7 @@ class PluginSiteConfigEnv:
             site_config_lines = self.pm.hook.default_site_config_lines()
             site_config_lines.extend(plugin_content)
             site_config_lines.extend(self._config_env_vars())
-            site_config_lines.extend(self.pm.hook.install_job_directories())
+            site_config_lines.extend(self.pm.hook.install_job_directories() or [])
             site_config_lines.extend(self._install_workflow_job_lines())
 
             return "\n".join(site_config_lines) + "\n"

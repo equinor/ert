@@ -3,7 +3,6 @@ import shutil
 from unittest.mock import patch
 
 import pytest
-from ert.shared import ert_share_path as get_ert_share_path
 from everest.plugins import hook_impl as everest_implementation
 from everest.plugins import hookimpl
 from everest.plugins.hook_manager import EverestPluginManager
@@ -66,15 +65,6 @@ expected_env_lines = [
     "",
 ]
 
-ert_share_path = get_ert_share_path()
-expected_install_job_directories = [
-    "INSTALL_JOB_DIRECTORY      {}/forward-models/shell".format(ert_share_path),
-    "INSTALL_JOB_DIRECTORY      {}/forward-models/res".format(ert_share_path),
-    "INSTALL_JOB_DIRECTORY      {}/forward-models/templating".format(ert_share_path),
-    "INSTALL_JOB_DIRECTORY      {}/forward-models/old_style".format(ert_share_path),
-    "",
-]
-
 expected_site_config_extra = [
     "JOB_SCRIPT job_dispatch.py",
     "QUEUE_OPTION LOCAL MAX_RUNNING 1",
@@ -87,7 +77,6 @@ expected_site_config_content = (
         + ["-- dummy site config", ""]
         + ["-- dummy site config from plugin 2", ""]
         + expected_env_lines
-        + expected_install_job_directories
         + ["LOAD_WORKFLOW_JOB dummy/workflow/job/path", ""]
     )
     + "\n"

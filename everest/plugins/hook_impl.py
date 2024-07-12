@@ -1,24 +1,9 @@
-from ert.shared import ert_share_path
-
 from everest.plugins import hookimpl
 
 
 @hookimpl
 def visualize_data(api):
     print("No visualization plugin installed!")
-
-
-@hookimpl
-def install_job_directories():
-    _ert_share_path = ert_share_path()
-    job_dirs = [
-        "INSTALL_JOB_DIRECTORY      {}/forward-models/shell",
-        "INSTALL_JOB_DIRECTORY      {}/forward-models/res",
-        "INSTALL_JOB_DIRECTORY      {}/forward-models/templating",
-        "INSTALL_JOB_DIRECTORY      {}/forward-models/old_style",
-        "",
-    ]
-    return [line.format(_ert_share_path) for line in job_dirs]
 
 
 @hookimpl
