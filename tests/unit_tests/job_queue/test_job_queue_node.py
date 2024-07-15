@@ -21,17 +21,13 @@ from ert.job_queue.thread_status import ThreadStatus
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
 
-queue_systems = st.sampled_from([QueueSystem.LOCAL, QueueSystem.LSF, QueueSystem.SLURM])
+queue_systems = st.sampled_from([QueueSystem.LSF, QueueSystem.SLURM])
 job_status = st.sampled_from(JobStatus.enums())
 thread_status = st.sampled_from(ThreadStatus)
 
 
 def make_driver(queue_system: QueueSystem):
-    result = Driver(queue_system)
-    if queue_system == QueueSystem.TORQUE:
-        result.set_option("QSTAT_CMD", "qstat")
-        result.set_option("QUEUE_QUERY_TIMEOUT", "0")
-    return result
+    return Driver(queue_system)
 
 
 drivers = st.builds(make_driver, queue_systems)
@@ -120,7 +116,7 @@ def test_submit_attempt_is_initially_zero(job_queue_node):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @settings(max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(job_queue_nodes, drivers.filter(lambda d: d.name != "LOCAL"))
+@given(job_queue_nodes, drivers)
 def test_when_submit_command_returns_invalid_output_then_submit_fails(
     tmp_path, job_queue_node, driver
 ):
@@ -130,8 +126,6 @@ def test_when_submit_command_returns_invalid_output_then_submit_fails(
 
 
 def submit_success_output(driver_name: str, jobid: int) -> str:
-    if driver_name == "TORQUE":
-        return f"{jobid}.hostname"
     if driver_name == "LSF":
         return f"Job <{jobid}> is submitted to default queue <normal>."
     if driver_name == "SLURM":
@@ -153,30 +147,7 @@ def job_status_as_slurm(status: JobStatus) -> Sequence[str]:
     raise ValueError()
 
 
-def job_status_as_torque(status: JobStatus) -> Sequence[str]:
-    if status == JobStatus.PENDING:
-        return ("job_state = H", "job_state = Q")
-    if status == JobStatus.DONE:
-        return ("job_state = E", "job_state = F", "job_state = C")
-    if status == JobStatus.RUNNING:
-        return ("job_state = R",)
-    if status == JobStatus.EXIT:
-        return ("Exit_status = -1",)
-    raise ValueError()
-
-
 def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
-    if driver_name == "TORQUE":
-        job_status = draw(st.sampled_from(job_status_as_torque(status)))
-        return dedent(
-            f"""\
-        Job Id: {jobid}.s034-lcam
-            Job_Name = jobname
-            Job_Owner = owner
-            queue = normal
-            {job_status}
-        """
-        )
     if driver_name == "LSF":
         return (
             f"JOBID USER STAT QUEUE FROM_HOST EXEC_HOST JOB_NAME SUBMIT_TIME\n"
@@ -185,8 +156,6 @@ def status_output(draw, driver_name: str, jobid: int, status: JobStatus) -> str:
     if driver_name == "SLURM":
         job_status = draw(st.sampled_from(job_status_as_slurm(status)))
         return f"{jobid} {job_status}"
-    if driver_name == "LOCAL":
-        return ""
     raise ValueError(f"Unknown driver_name {driver_name}")
 
 
