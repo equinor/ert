@@ -726,7 +726,15 @@ class ErtConfig:
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
                 )
-                workflow_jobs[new_job.name] = new_job
+                name = new_job.name
+                if name in workflow_jobs:
+                    ConfigWarning.ert_context_warn(
+                        f"Duplicate workflow jobs with name {name!r}, choosing "
+                        f"{new_job.executable or new_job.script!r} over "
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                        name,
+                    )
+                workflow_jobs[name] = new_job
             except ErtScriptLoadFailure as err:
                 ConfigWarning.ert_context_warn(
                     f"Loading workflow job {workflow_job[0]!r}"
@@ -740,7 +748,15 @@ class ErtConfig:
             for file_name in _get_files_in_directory(job_path, errors):
                 try:
                     new_job = WorkflowJob.from_file(config_file=file_name)
-                    workflow_jobs[new_job.name] = new_job
+                    name = new_job.name
+                    if name in workflow_jobs:
+                        ConfigWarning.ert_context_warn(
+                            f"Duplicate workflow jobs with name {name!r}, choosing "
+                            f"{new_job.executable or new_job.script!r} over "
+                            f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                            name,
+                        )
+                    workflow_jobs[name] = new_job
                 except ErtScriptLoadFailure as err:
                     ConfigWarning.ert_context_warn(
                         f"Loading workflow job {file_name!r}"
