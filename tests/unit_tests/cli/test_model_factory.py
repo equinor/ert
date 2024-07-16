@@ -1,7 +1,6 @@
 import dataclasses
 from argparse import Namespace
 from unittest.mock import MagicMock
-from uuid import uuid1
 
 import pytest
 
@@ -193,7 +192,7 @@ def test_multiple_data_assimilation_restart_paths(
         weights="6,4,2",
         target_ensemble="restart_case_%d",
         restart_run=True,
-        prior_ensemble=str(uuid1()),
+        prior_ensemble="default_n",
         experiment_name=None,
     )
     monkeypatch.setattr(
@@ -203,7 +202,7 @@ def test_multiple_data_assimilation_restart_paths(
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
     config = ErtConfig()
-    storage_mock.get_ensemble.return_value = ensemble_mock
+    storage_mock.get_ensemble_by_name.return_value = ensemble_mock
     model = model_factory._setup_multiple_data_assimilation(
         config, storage_mock, args, MagicMock(), MagicMock()
     )
