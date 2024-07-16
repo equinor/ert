@@ -162,7 +162,6 @@ class LegacyEnsemble:
                     event, snapshot_mutate_event
                 )
             )
-        # JONAK self.snapshot.merge_event(snapshot_mutate_event)
         if self.snapshot.status is not None and self.status != self.snapshot.status:
             self.status = self._status_tracker.update_state(self.snapshot.status)
         return snapshot_mutate_event

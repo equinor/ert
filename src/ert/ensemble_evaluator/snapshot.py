@@ -235,8 +235,10 @@ class Snapshot:
             ids.EVTYPE_REALIZATION_TIMEOUT,
         }:
             end_time = convert_iso8601_to_datetime(timestamp)
-        self.update_realization(_get_real_id(e_source), status, start_time, end_time)
-
+        update_event_snapshot.update_realization(
+            _get_real_id(e_source), status, start_time, end_time
+        )
+        self._realization_states.update(update_event_snapshot._realization_states)
         if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
             for (
                 forward_model_id,
@@ -246,16 +248,18 @@ class Snapshot:
                     real_id = _get_real_id(e_source)
                     forward_model_idx = (real_id, forward_model_id)
                     if forward_model_idx not in self._forward_model_states:
-                        self._forward_model_states[forward_model_idx] = {}
-                    self._forward_model_states[forward_model_idx].update(
-                        {
-                            "status": state.FORWARD_MODEL_STATE_FAILURE,
-                            "end_time": end_time,
-                            "error": "The run is cancelled due to "
-                            "reaching MAX_RUNTIME",
-                        }
+                        update_event_snapshot._forward_model_states[
+                            forward_model_idx
+                        ] = {}
+                    update_event_snapshot._forward_model_states[forward_model_idx] = {
+                        "status": state.FORWARD_MODEL_STATE_FAILURE,
+                        "end_time": end_time,
+                        "error": "The run is cancelled due to " "reaching MAX_RUNTIME",
+                    }
+                    self._forward_model_states.update(
+                        update_event_snapshot._forward_model_states
                     )
-        return self
+        return update_event_snapshot
 
     def _handle_forward_model_event(
         self, event: CloudEvent, update_event_snapshot: "Snapshot"
