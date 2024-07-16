@@ -71,7 +71,7 @@ class MultipleDataAssimilation(BaseRunModel):
             self._simulation_arguments.minimum_required_realizations,
         )
         iteration_count = self.simulation_arguments.num_iterations
-        self.setPhaseCount(iteration_count)
+        self.setPhaseCount(self._simulation_arguments.start_iteration + iteration_count)
 
         log_msg = f"Running ES-MDA with normalized weights {self.weights}"
         logger.info(log_msg)
@@ -184,7 +184,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
 
-        self.setPhase(iteration_count, "Experiment completed.")
+        self.setPhase(self.phaseCount(), "Experiment completed.")
 
         return prior_context
 
