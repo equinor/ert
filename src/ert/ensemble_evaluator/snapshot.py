@@ -1,4 +1,5 @@
 import re
+import sys
 import typing
 from collections import defaultdict
 from datetime import datetime
@@ -14,7 +15,6 @@ from typing import (
     Union,
 )
 
-from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
 from cloudevents.http import CloudEvent
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
@@ -23,7 +23,10 @@ from typing_extensions import TypedDict
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
-MonkeyPatch.patch_fromisoformat()
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 

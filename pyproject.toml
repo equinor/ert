@@ -39,7 +39,7 @@ classifiers=[
 dynamic = ["version"]
 dependencies=[
     "aiohttp",
-    "backports-datetime_fromisoformat",
+    "backports-datetime_fromisoformat; python_version < '3.11'",
     "cloudevents>=1.6.0",
     "cloudpickle",
     "cryptography",

@@ -1,10 +1,12 @@
 import json
+import sys
 from datetime import date, datetime
 from typing import Any
 
-from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
 
-MonkeyPatch.patch_fromisoformat()
+    MonkeyPatch.patch_fromisoformat()
 
 
 class _EvaluatorEncoder(json.JSONEncoder):
