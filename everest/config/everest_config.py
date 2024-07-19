@@ -50,7 +50,6 @@ from ..strings import (
 )
 from .control_config import ControlConfig
 from .environment_config import EnvironmentConfig
-from .experimental_config import ExperimentalConfig
 from .export_config import ExportConfig
 from .input_constraint_config import InputConstraintConfig
 from .install_data_config import InstallDataConfig
@@ -205,9 +204,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     export: Optional[ExportConfig] = Field(
         default=None,
         description="Settings to control the exports of a optimization run by everest.",
-    )
-    experimental: Optional[ExperimentalConfig] = Field(
-        default=None, description="Configuration of experimental features."
     )
     config_path: Path = Field()
     model_config = ConfigDict(extra="forbid")
