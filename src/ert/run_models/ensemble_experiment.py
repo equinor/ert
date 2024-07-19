@@ -93,7 +93,7 @@ class EnsembleExperiment(BaseRunModel):
 
         self._evaluate_and_postprocess(run_context, evaluator_server_config)
 
-        self.setPhase(phase_count, "Simulations completed.")
+        self.setPhase(phase_count, "Experiment completed.")
 
         return run_context
 
