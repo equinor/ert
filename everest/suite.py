@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypedDict
 
 from ert import JobStatus
-from ropt.enums import EventType, OptimizerExitCode
-from ropt.optimization import EnsembleOptimizer
+from ropt.enums import EventType
+from ropt.plan import OptimizationPlanRunner
 from ropt.report import ResultsTable
 from ropt.results import convert_to_maximize
 from seba_sqlite import SqliteStorage
@@ -24,8 +24,6 @@ from seba_sqlite import SqliteStorage
 import everest
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.ropt_plugins import EverestPlanStepPlugin
-from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator import Simulator
 from everest.strings import EVEREST, SIMULATOR_END, SIMULATOR_START, SIMULATOR_UPDATE
@@ -341,7 +339,6 @@ class _EverestWorkflow(object):
         self._display_all_jobs = display_all_jobs
         self._fm_errors: Dict[str, Dict[str, Any]] = {}
         self._max_batch_num_reached = False
-        self._exit_code = OptimizerExitCode.UNKNOWN
 
     def _handle_errors(self, batch, simulation, realization, fm_name, error_path):
         fm_id = "b_{}_r_{}_s_{}_{}".format(batch, realization, simulation, fm_name)
@@ -415,14 +412,20 @@ class _EverestWorkflow(object):
         # Initialize the Everest simulator:
         simulator = Simulator(self.config, callback=self._simulation_callback)
 
-        plugin_manager = get_ropt_plugin_manager()
-        plugin_manager.add_plugins(
-            "optimization_step",
-            {"everest": EverestPlanStepPlugin(self.config)},
+        # Initialize the ropt optimizer:
+        optimizer = OptimizationPlanRunner(
+            enopt_config=everest2ropt(self.config),
+            evaluator=simulator,
+            seed=self._config.environment.random_seed,
         )
-        optimizer = EnsembleOptimizer(
-            evaluator=simulator, plugin_manager=plugin_manager
-        )
+
+        # Configure restarting:
+        if self.config.optimization.restart is not None:
+            optimizer.repeat(
+                iterations=self.config.optimization.restart.max_restarts + 1,
+                restart_from=self.config.optimization.restart.restart_from,
+                counter_var="restart",
+            ).add_metadata({"restart": "$restart"})
 
         # Before each batch evaluation we check if we should abort:
         optimizer.add_observer(
@@ -436,25 +439,13 @@ class _EverestWorkflow(object):
         # accessed by Everest via separate SebaSnapshot objects.
         # This mechanism is outdated and not supported by the ropt package. It
         # is retained for now via the seba_sqlite package.
-        ropt_output_folder = self.config.optimization_output_dir
-        seba_storage = SqliteStorage(optimizer, ropt_output_folder)
+        seba_storage = SqliteStorage(optimizer, self.config.optimization_output_dir)
 
         # Initialize tabular reporters
-        self._init_reporters(optimizer, ropt_output_folder)
-
-        # Add a handler that extracts an exit code after optimization:
-        optimizer.add_observer(
-            EventType.FINISHED_OPTIMIZER_STEP, self._handle_optimizer_finished
-        )
+        self._init_reporters(optimizer, self.config.optimization_output_dir)
 
         # Run the optimization:
-        if self.config.experimental is not None and self.config.experimental.plan:
-            plan, have_ensemble_evaluation = self._build_experimental_plan()
-            if have_ensemble_evaluation:
-                self._init_evaluation_reporter(optimizer, ropt_output_folder)
-        else:
-            plan = self._build_optimization_plan()
-        optimizer.start_optimization(plan, seed=self._config.environment.random_seed)
+        exit_code = optimizer.run().exit_code
 
         # Extract the best result from the storage.
         self._result = seba_storage.get_optimal_result()
@@ -464,12 +455,7 @@ class _EverestWorkflow(object):
             self._monitor_thread.join()
             self._monitor_thread = None
 
-        return (
-            "max_batch_num_reached" if self._max_batch_num_reached else self._exit_code
-        )
-
-    def _handle_optimizer_finished(self, event):
-        self._exit_code = event.exit_code
+        return "max_batch_num_reached" if self._max_batch_num_reached else exit_code
 
     @property
     def result(self):
@@ -484,67 +470,9 @@ class _EverestWorkflow(object):
             self.config, sort_keys=True, indent=2
         )
 
-    def _build_optimization_plan(self):
-        # Initialize with the optimizer configuration:
-        config_step = {"config": everest2ropt(self.config)}
-
-        # Add the optimizer step later in the appropriate place:
-        optimizer_step = {"optimizer": {"id": "optimizer"}}
-
-        # No restarting:
-        if self.config.optimization.restart is None:
-            return [config_step, optimizer_step]
-
-        # Handle the case with restarting:
-        max_restarts = self.config.optimization.restart.max_restarts
-        if max_restarts is None:
-            max_restarts = 1
-        restart_step = {"restart": {"max_restarts": max_restarts}}
-
-        # Simple restarting from the initial value:
-        if self.config.optimization.restart.restart_from == "initial":
-            return [config_step, optimizer_step, restart_step]
-
-        # When restarting from optimal or last values, we have to track those
-        # values using a tracker step:
-        tracker_type_map = {
-            "last": "last_result",
-            "optimal": "optimal_result",
-            "last_optimal": "optimal_result",
-        }
-        tolerance = self._config.optimization.constraint_tolerance
-        tracker_step = {
-            "tracker": {
-                "id": "restart_tracker",
-                "source": "optimizer",  # The optimizer defined above
-                "type": tracker_type_map[self.config.optimization.restart.restart_from],
-                "constraint_tolerance": tolerance,
-            }
-        }
-
-        # We have to modify the initial values using the results from the tracker:
-        init_step = {"update_config": {"initial_variables": "restart_tracker"}}
-
-        # When we want to restart from the overall optimal result, or from the
-        # last result we are done:
-        if self.config.optimization.restart.restart_from in {"optimal", "last"}:
-            return [config_step, tracker_step, init_step, optimizer_step, restart_step]
-
-        # Otherwise, only the best result of the last run should be tracked.
-        # Therefore insert a step that resets the tracker before restarting:
-        reset_step = {"reset_tracker": "restart_tracker"}
-        return [
-            config_step,
-            tracker_step,
-            init_step,
-            optimizer_step,
-            reset_step,
-            restart_step,
-        ]
-
     def _init_reporters(self, optimizer, ropt_output_folder):
         # Initialize the tabular reporters, which writes the optimization results
-        # in tables formatted for human inspection in the optimization folder:
+        # as a table with fixed-width columns:
         results_report = ResultsTable(
             columns=RESULT_COLUMNS,
             path=Path(ropt_output_folder) / "results.txt",
@@ -568,6 +496,15 @@ class _EverestWorkflow(object):
             min_header_len=MIN_HEADER_LEN,
         )
 
+        # Results passed from ropt are for minimization of the negative of the
+        # objective function. We want results that correspond to the
+        # maximization. This event handler converts the results and forwards
+        # them to the reporter:
+        def _handle_reporter_event(event, reporters):
+            results = tuple(convert_to_maximize(result) for result in event.results)
+            for reporter in reporters:
+                reporter.add_results(event.config, results)
+
         optimizer.add_observer(
             EventType.FINISHED_EVALUATION,
             partial(
@@ -580,31 +517,3 @@ class _EverestWorkflow(object):
                 ],
             ),
         )
-
-    def _build_experimental_plan(self):
-        plan = [{"config": everest2ropt(self.config)}, *self._config.experimental.plan]
-        have_ensemble_evaluation = False
-        for step in plan:
-            if "ensemble_evaluation" in step:
-                have_ensemble_evaluation = True
-        return plan, have_ensemble_evaluation
-
-    def _init_evaluation_reporter(self, optimizer, ropt_output_folder):
-        evaluation_reporter = ResultsTable(
-            columns=RESULT_COLUMNS,
-            path=Path(ropt_output_folder) / "evaluations.txt",
-            min_header_len=MIN_HEADER_LEN,
-        )
-        optimizer.add_observer(
-            EventType.FINISHED_EVALUATOR_STEP,
-            partial(_handle_reporter_event, reporters=[evaluation_reporter]),
-        )
-
-
-# Results passed from ropt are for minimization of the negative of the objective
-# function. We want results that correspond to the maximization. This event
-# handler converts the results and them feeds them to the reporter:
-def _handle_reporter_event(event, reporters):
-    results = tuple(convert_to_maximize(result) for result in event.results)
-    for reporter in reporters:
-        reporter.add_results(event.config, results)

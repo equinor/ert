@@ -588,7 +588,7 @@ Optimizer options
     multiple times.
 
     **max_restarts (optional)**
-        Type: *Optional[int]*
+        Type: *int*
 
         The maximum number of restarts.
 

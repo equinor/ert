@@ -1,11 +1,11 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class RestartConfig(BaseModel):  # type: ignore
-    max_restarts: Optional[int] = Field(
-        default=None,
+    max_restarts: int = Field(
+        default=1,
         gt=0,
         description="""The maximum number of restarts.
 

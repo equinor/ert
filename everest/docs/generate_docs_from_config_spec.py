@@ -203,4 +203,4 @@ def generate_docs_pydantic_to_rst(extended: bool = False):
 
     parsed_field_info = parse_field_info(list_of_fields)
 
-    return _generate_rst(parsed_field_info, extended=extended).doc
+    return _generate_rst(parsed_field_info, extended=extended).doc.strip() + "\n"
