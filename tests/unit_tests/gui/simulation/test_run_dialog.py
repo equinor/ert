@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
 
@@ -372,58 +371,51 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
 
 
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
-def test_that_run_dialog_can_be_closed_while_file_plot_is_open(qtbot: QtBot, storage):
+@pytest.mark.usefixtures("using_scheduler")
+def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
+    opened_main_window_clean, qtbot: QtBot
+):
     """
     This is a regression test for a crash happening when
     closing the RunDialog with a file open.
     """
+    gui = opened_main_window_clean
 
-    config_file = Path("poly.ert")
-    args_mock = Mock()
-    args_mock.config = str(config_file)
+    run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
-    ert_config = ErtConfig.from_file(str(config_file))
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        qtbot.addWidget(gui)
-        run_experiment = gui.findChild(QToolButton, name="run_experiment")
+    qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+    run_dialog = gui.findChild(RunDialog)
+    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+    job_overview = run_dialog._job_overview
+    qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        job_overview = run_dialog._job_overview
-        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+    realization_widget = run_dialog.findChild(RealizationWidget)
 
-        realization_widget = run_dialog.findChild(RealizationWidget)
+    click_pos = realization_widget._real_view.rectForIndex(
+        realization_widget._real_list_model.index(0, 0)
+    ).center()
 
-        click_pos = realization_widget._real_view.rectForIndex(
-            realization_widget._real_list_model.index(0, 0)
-        ).center()
+    with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
+        qtbot.mouseClick(
+            realization_widget._real_view.viewport(),
+            Qt.LeftButton,
+            pos=click_pos,
+        )
 
-        with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
-            qtbot.mouseClick(
-                realization_widget._real_view.viewport(),
-                Qt.LeftButton,
-                pos=click_pos,
-            )
+    click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
+    qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
 
-        click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
-        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+    qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=3000)
 
-        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=3000)
+    with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+        run_dialog.close()  # Close the run dialog by pressing 'x' close button
 
-        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
-            run_dialog.close()  # Close the run dialog by pressing 'x' close button
-
-        # Ensure that once the run dialog is closed
-        # another simulation can be started
-        assert run_experiment.isEnabled()
+    # Ensure that once the run dialog is closed
+    # another simulation can be started
+    assert run_experiment.isEnabled()
 
 
 @pytest.mark.parametrize(
