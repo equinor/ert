@@ -58,10 +58,11 @@ class ErtThread(_Thread):
             err_traceback = str(traceback.format_exc())
             logger.error(err_traceback, exc_info=exc)
             if _can_raise and self._should_raise:
-                _raise_on_main_thread(exc, err_traceback)
+                _raise_on_main_thread(exc)
 
 
-def _raise_on_main_thread(exception: BaseException, err_traceback: str) -> None:
+def _raise_on_main_thread(exception: BaseException) -> None:
+    err_traceback = str(traceback.format_exc())
     global _current_exception  # noqa: PLW0603
     _current_exception = ErtThreadError(
         exception, threading.current_thread(), err_traceback
