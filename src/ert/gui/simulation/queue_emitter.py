@@ -52,6 +52,7 @@ class QueueEmitter(QObject):
             # pre-rendering in this thread to avoid work in main rendering thread
             if (
                 isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent))
+                and event.snapshot is not None
             ):
                 SnapshotModel.prerender(event.snapshot)
 

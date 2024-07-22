@@ -79,10 +79,12 @@ class Monitor:
         while True:
             event = event_queue.get()
             if isinstance(event, FullSnapshotEvent):
-                self._snapshots[event.iteration] = event.snapshot
+                if event.snapshot is not None:
+                    self._snapshots[event.iteration] = event.snapshot
                 self._progress = event.progress
             elif isinstance(event, SnapshotUpdateEvent):
-                self._snapshots[event.iteration].merge_event(event.snapshot)
+                if event.snapshot is not None:
+                    self._snapshots[event.iteration].merge_event(event.snapshot)
                 self._print_progress(event)
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.msg)

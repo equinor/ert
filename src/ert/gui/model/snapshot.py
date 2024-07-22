@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Dict, Final, List, Optional, Sequence, Union, cast, overload
+from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -144,6 +144,8 @@ class SnapshotModel(QAbstractItemModel):
     def process_snapshot_event(
         self, snapshot_event: Union[FullSnapshotEvent, SnapshotUpdateEvent]
     ) -> None:
+        if not snapshot_event.snapshot:
+            return
         if isinstance(snapshot_event, FullSnapshotEvent):
             self._process_full_snapshot(
                 snapshot_event.snapshot, str(snapshot_event.iteration)

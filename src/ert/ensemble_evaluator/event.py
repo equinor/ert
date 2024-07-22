@@ -17,12 +17,12 @@ class _UpdateEvent:
 
 @dataclass
 class FullSnapshotEvent(_UpdateEvent):
-    snapshot: Snapshot
+    snapshot: Optional[Snapshot] = None
 
 
 @dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
-    snapshot: Snapshot
+    snapshot: Optional[Snapshot] = None
 
 
 @dataclass
