@@ -78,6 +78,12 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 def convert_iso8601_to_datetime(
     timestamp: Union[datetime, str],
 ) -> datetime:
+    return _convert_iso8601_to_datetime(timestamp)
+
+
+def _convert_iso8601_to_datetime(
+    timestamp: Union[datetime, str],
+) -> datetime:
     if isinstance(timestamp, datetime):
         return timestamp
 
