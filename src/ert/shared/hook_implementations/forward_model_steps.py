@@ -2,14 +2,13 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List, Optional, Type
 
-from ert.config.forward_model_step import (
+from ert import (
     ForwardModelStepDocumentation,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    plugin,
 )
-from ert.shared.plugins.plugin_manager import hook_implementation
-from ert.shared.plugins.plugin_response import plugin_response
 
 
 class CarefulCopyFile(ForwardModelStepPlugin):
@@ -562,7 +561,6 @@ for fm_step_subclass in _UpperCaseFMSteps:
     )
 
 
-@hook_implementation
-@plugin_response(plugin_name="ert")
+@plugin(name="ert")
 def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]

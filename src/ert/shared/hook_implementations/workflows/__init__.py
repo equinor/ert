@@ -1,5 +1,4 @@
-from ert.shared.plugins.plugin_manager import hook_implementation
-from ert.shared.plugins.plugin_response import plugin_response
+import ert
 
 from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
@@ -7,8 +6,7 @@ from .export_runpath import ExportRunpathJob
 from .misfit_preprocessor import MisfitPreprocessor
 
 
-@hook_implementation
-@plugin_response(plugin_name="ert")  # type: ignore
+@ert.plugin(name="ert")  # type: ignore
 def legacy_ertscript_workflow(config):
     workflow = config.add_workflow(ExportMisfitDataJob, "EXPORT_MISFIT_DATA")
     workflow.description = ExportMisfitDataJob.__doc__
