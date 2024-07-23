@@ -44,9 +44,9 @@ from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,
 )
 from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
+from ert.plugins import ErtPluginManager
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 from .conftest import (
     add_experiment_manually,

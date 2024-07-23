@@ -1,6 +1,6 @@
 from typing import List
 
-from ert.shared.plugins.plugin_manager import hook_specification
+from ert.plugins.plugin_manager import hook_specification
 
 
 @hook_specification

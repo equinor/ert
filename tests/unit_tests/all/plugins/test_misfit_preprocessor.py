@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ConfigValidationError, ErtConfig
-from ert.shared.plugins import ErtPluginContext
+from ert.plugins import ErtPluginContext
 
 
 @pytest.mark.usefixtures("copy_poly_case")

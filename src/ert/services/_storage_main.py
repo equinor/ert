@@ -16,9 +16,9 @@ import yaml
 from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
+from ert.plugins import ErtPluginContext
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import port_handler
-from ert.shared.plugins import ErtPluginContext
 from ert.shared.storage.command import add_parser_options
 
 

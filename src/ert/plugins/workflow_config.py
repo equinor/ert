@@ -25,7 +25,6 @@ class WorkflowConfigs:
         :param ert_script: class which inherits from ErtScript
         :param name: Optional name for workflow (default is name of class)
         :return: Instantiated workflow config.
-        :type: :class:`ert.shared.plugins.workflow_config.WorkflowConfig`
         """
         workflow = WorkflowConfig(ert_script, self._temp_dir, name)
         self._workflows.append(workflow)

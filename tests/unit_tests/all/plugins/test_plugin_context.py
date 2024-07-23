@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert.shared.plugins import ErtPluginContext
+from ert.plugins import ErtPluginContext
 from tests.unit_tests.all.plugins import dummy_plugins
 
 env_vars = [

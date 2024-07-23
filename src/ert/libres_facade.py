@@ -32,7 +32,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.storage import Ensemble
 
 from .enkf_main import ensemble_context
-from .shared.plugins import ErtPluginContext
+from .plugins import ErtPluginContext
 
 _logger = logging.getLogger(__name__)
 

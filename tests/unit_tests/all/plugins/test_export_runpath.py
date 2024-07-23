@@ -3,9 +3,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from ert.plugins import ErtPluginManager
+from ert.plugins.hook_implementations.workflows.export_runpath import ExportRunpathJob
 from ert.runpaths import Runpaths
-from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
-from ert.shared.plugins import ErtPluginManager
 
 
 @pytest.fixture

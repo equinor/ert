@@ -29,7 +29,7 @@ args = {
     "package_dir": {"": "src"},
     "package_data": {
         "ert": package_files("src/ert/gui/resources/")
-        + package_files("src/ert/shared/share/")
+        + package_files("src/ert/resources/")
         + ["logging/logger.conf", "logging/storage_log.conf"]
     },
     "cmake_args": [

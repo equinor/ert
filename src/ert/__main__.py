@@ -29,10 +29,10 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
+from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.feature_toggling import FeatureScheduler
-from ert.shared.plugins.plugin_manager import ErtPluginContext, ErtPluginManager
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.validation import (
     IntegerArgument,

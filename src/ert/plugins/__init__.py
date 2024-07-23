@@ -3,8 +3,13 @@ from typing import Callable
 
 from typing_extensions import Any, ParamSpec
 
-from ert.shared.plugins.plugin_manager import hook_implementation
-from ert.shared.plugins.plugin_response import PluginMetadata, PluginResponse
+from .plugin_manager import (
+    ErtPluginContext,
+    ErtPluginManager,
+    JobDoc,
+    hook_implementation,
+)
+from .plugin_response import PluginMetadata, PluginResponse
 
 P = ParamSpec("P")
 
@@ -41,4 +46,4 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
     return wrapper
 
 
-__all__ = ["plugin"]
+__all__ = ["plugin", "ErtPluginManager", "ErtPluginContext", "JobDoc"]

@@ -19,7 +19,7 @@ class CarefulCopyFile(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/shell_scripts/careful_copy_file.py"
+                        / "../../../resources/shell_scripts/careful_copy_file.py"
                     ).resolve()
                 ),
                 "<FROM>",
@@ -57,7 +57,7 @@ class CopyDirectory(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/shell_scripts/copy_directory.py"
+                        / "../../../resources/shell_scripts/copy_directory.py"
                     ).resolve()
                 ),
                 "<FROM>",
@@ -91,7 +91,7 @@ class CopyFile(ForwardModelStepPlugin):
             command=[
                 str(
                     (
-                        Path(__file__) / "../../share/ert/shell_scripts/copy_file.py"
+                        Path(__file__) / "../../../resources/shell_scripts/copy_file.py"
                     ).resolve()
                 ),
                 "<FROM>",
@@ -125,7 +125,7 @@ class DeleteDirectory(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/shell_scripts/delete_directory.py"
+                        / "../../../resources/shell_scripts/delete_directory.py"
                     ).resolve()
                 ),
                 "<DIRECTORY>",
@@ -166,7 +166,8 @@ class DeleteFile(ForwardModelStepPlugin):
             command=[
                 str(
                     (
-                        Path(__file__) / "../../share/ert/shell_scripts/delete_file.py"
+                        Path(__file__)
+                        / "../../../resources/shell_scripts/delete_file.py"
                     ).resolve()
                 ),
                 "<FILES>",
@@ -200,7 +201,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/forward-models/res/script/ecl100.py"
+                        / "../../../resources/forward-models/res/script/ecl100.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -250,7 +251,7 @@ class Eclipse300(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/forward-models/res/script/ecl300.py"
+                        / "../../../resources/forward-models/res/script/ecl300.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -289,7 +290,7 @@ class Flow(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/forward-models/res/script/flow.py"
+                        / "../../../resources/forward-models/res/script/flow.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -335,7 +336,7 @@ class MakeDirectory(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/shell_scripts/make_directory.py"
+                        / "../../../resources/shell_scripts/make_directory.py"
                     ).resolve()
                 ),
                 "<DIRECTORY>",
@@ -365,7 +366,7 @@ class MakeSymlink(ForwardModelStepPlugin):
             command=[
                 str(
                     (
-                        Path(__file__) / "../../share/ert/shell_scripts/symlink.py"
+                        Path(__file__) / "../../../resources/shell_scripts/symlink.py"
                     ).resolve()
                 ),
                 "<TARGET>",
@@ -396,7 +397,7 @@ class MoveFile(ForwardModelStepPlugin):
             command=[
                 str(
                     (
-                        Path(__file__) / "../../share/ert/shell_scripts/move_file.py"
+                        Path(__file__) / "../../../resources/shell_scripts/move_file.py"
                     ).resolve()
                 ),
                 "<FROM>",
@@ -428,7 +429,7 @@ class Symlink(ForwardModelStepPlugin):
             command=[
                 str(
                     (
-                        Path(__file__) / "../../share/ert/shell_scripts/symlink.py"
+                        Path(__file__) / "../../../resources/shell_scripts/symlink.py"
                     ).resolve()
                 ),
                 "<TARGET>",
@@ -460,7 +461,7 @@ class TemplateRender(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../share/ert/forward-models/templating/script/template_render.py"
+                        / "../../../resources/forward-models/templating/script/template_render.py"
                     ).resolve()
                 ),
                 "-i",

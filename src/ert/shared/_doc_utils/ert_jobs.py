@@ -11,7 +11,7 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import nested_parse_with_titles
 
 from ert.config.forward_model_step import ForwardModelStepDocumentation
-from ert.shared.plugins import ErtPluginManager, JobDoc
+from ert.plugins import ErtPluginManager, JobDoc
 
 
 class _ForwardModelDocumentation:

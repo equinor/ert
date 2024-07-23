@@ -5,8 +5,8 @@ import pytest
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli as cli_runner
+from ert.plugins import ErtPluginManager
 from ert.shared.feature_toggling import FeatureScheduler
-from ert.shared.plugins import ErtPluginManager
 
 
 def run_cli(*args):

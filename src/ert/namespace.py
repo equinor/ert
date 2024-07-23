@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import Callable, Optional
 
-from ert.shared.plugins.plugin_manager import ErtPluginManager
+from ert.plugins.plugin_manager import ErtPluginManager
 
 
 class Namespace(argparse.Namespace):

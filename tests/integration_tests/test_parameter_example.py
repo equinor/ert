@@ -18,7 +18,7 @@ from resdata.resfile import ResdataKW
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
-from ert.shared.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager
 from tests.unit_tests.config.egrid_generator import egrids
 from tests.unit_tests.config.summary_generator import names, summaries
 
