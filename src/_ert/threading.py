@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import threading
+import traceback
 from threading import Thread as _Thread
 from types import FrameType
 from typing import Any, Callable, Iterable, Optional
@@ -16,17 +17,25 @@ _can_raise = False
 
 
 class ErtThreadError(Exception):
-    def __init__(self, exception: BaseException, thread: _Thread) -> None:
+    def __init__(
+        self, exception: BaseException, thread: _Thread, err_traceback: str
+    ) -> None:
         super().__init__(repr(exception))
         self._exception = exception
         self._thread = thread
+        self._err_traceback = err_traceback
 
     @property
     def exception(self) -> BaseException:
         return self._exception
 
     def __str__(self) -> str:
-        return f"{self._exception} in thread '{self._thread.name}'"
+        return (
+            f"{self._exception} in thread '{self._thread.name}'\n {self._err_traceback}"
+        )
+
+    def __repr__(self) -> str:
+        return str(self)
 
 
 class ErtThread(_Thread):
@@ -46,14 +55,18 @@ class ErtThread(_Thread):
         try:
             super().run()
         except BaseException as exc:
-            logger.error(str(exc), exc_info=exc)
+            err_traceback = str(traceback.format_exc())
+            logger.error(err_traceback, exc_info=exc)
             if _can_raise and self._should_raise:
                 _raise_on_main_thread(exc)
 
 
 def _raise_on_main_thread(exception: BaseException) -> None:
+    err_traceback = str(traceback.format_exc())
     global _current_exception  # noqa: PLW0603
-    _current_exception = ErtThreadError(exception, threading.current_thread())
+    _current_exception = ErtThreadError(
+        exception, threading.current_thread(), err_traceback
+    )
 
     # Send a signal to ourselves. On POSIX, the signal is explicitly handled on
     # the main thread, thus this is a way for us to inform the main thread that
