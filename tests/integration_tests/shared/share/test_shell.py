@@ -3,7 +3,7 @@ import os.path
 
 import pytest
 
-from ert.shared.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager
 from tests.integration_tests.run_cli import run_cli_with_pm
 
 
@@ -12,7 +12,7 @@ from tests.integration_tests.run_cli import run_cli_with_pm
 def test_shell_scripts_integration(tmpdir):
     """
     The following test is a regression test that
-    checks that the scripts under src/ert/shared/share/ert/shell_scripts
+    checks that the scripts under src/ert/resources/shell_scripts
     are not broken, and correctly installed through site-config.
     """
     with tmpdir.as_cwd():

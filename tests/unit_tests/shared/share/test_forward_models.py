@@ -18,8 +18,7 @@ def file_exist_and_is_executable(file_path):
 
 def test_validate_scripts():
     fm_path = (
-        Path(importlib.util.find_spec("ert.shared").origin).parent
-        / "share/ert/forward-models"
+        Path(importlib.util.find_spec("ert").origin).parent / "resources/forward-models"
     )
     for fm_dir in os.listdir(fm_path):
         fm_dir = os.path.join(fm_path, fm_dir)

@@ -128,7 +128,7 @@ The configuration file needed to use the ``installable_workflow_jobs`` hook must
 and specify its arguments.
 The built-in internal ``CSV_EXPORT`` workflow job is shown as an example:
 
-.. literalinclude:: ../../../src/ert/shared/share/ert/workflows/jobs/internal-gui/config/CSV_EXPORT
+.. literalinclude:: ../../../src/ert/resources/workflows/jobs/internal-gui/config/CSV_EXPORT
 
 Implement the hook specification as follows to register the workflow job ``CSV_EXPORT``:
 
@@ -149,7 +149,7 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
 The second approach does not require creating a workflow job configuration file up-front,
 and allows adding documentation.
 
-.. literalinclude:: ../../../src/ert/shared/plugins/hook_specifications/jobs.py
+.. literalinclude:: ../../../src/ert/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
 
 Minimal example:
@@ -186,14 +186,14 @@ Full example:
 
 The configuration object and properties are as follows.
 
-.. autofunction:: ert.shared.plugins.hook_specifications.jobs.legacy_ertscript_workflow
+.. autofunction:: ert.plugins.hook_specifications.jobs.legacy_ertscript_workflow
 
-.. autoclass:: ert.shared.plugins.workflow_config.WorkflowConfigs
+.. autoclass:: ert.plugins.workflow_config.WorkflowConfigs
     :members: add_workflow
     :undoc-members:
 
 
-.. autoclass:: ert.shared.plugins.workflow_config.WorkflowConfig
+.. autoclass:: ert.plugins.workflow_config.WorkflowConfig
     :members:
     :undoc-members:
 
@@ -201,7 +201,7 @@ Logging Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 The logging can be configured by plugins to add custom log handlers.
 
-.. autofunction:: ert.shared.plugins.hook_specifications.logging.add_log_handle_to_root
+.. autofunction:: ert.plugins.hook_specifications.logging.add_log_handle_to_root
 
 Minimal example to log to a new file:
 

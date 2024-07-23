@@ -27,7 +27,7 @@ import xarray as xr
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
-from ert.shared.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager
 from ert.substitution_list import SubstitutionList
 
 from ._get_num_cpu import get_num_cpu_from_data_file
@@ -75,8 +75,7 @@ def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     return str(
-        Path(importlib.util.find_spec("ert.shared").origin).parent
-        / "share/ert/site-config"
+        Path(importlib.util.find_spec("ert").origin).parent / "resources/site-config"
     )
 
 

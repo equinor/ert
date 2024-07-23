@@ -31,9 +31,7 @@ class Shell:
             source_root,
             "src",
             "ert",
-            "shared",
-            "share",
-            "ert",
+            "resources",
             "shell_scripts",
         )
 

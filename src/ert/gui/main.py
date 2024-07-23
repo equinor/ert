@@ -35,8 +35,8 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
+from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 

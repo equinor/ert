@@ -4,7 +4,7 @@ from textwrap import dedent
 import pytest
 
 from ert.config import ConfigWarning, ErtConfig
-from ert.shared.plugins import ErtPluginContext
+from ert.plugins import ErtPluginContext
 
 
 def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):

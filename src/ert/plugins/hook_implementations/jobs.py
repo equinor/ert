@@ -1,24 +1,14 @@
-import importlib.util
 import os
-from pathlib import Path
 from typing import Dict, List
 
 from jinja2 import Template
 
 import ert
-
-
-def _resolve_ert_share_path() -> str:
-    spec = importlib.util.find_spec("ert.shared")
-    assert spec, "Could not find ert.shared in import path"
-    assert spec.has_location
-    spec_origin = spec.origin
-    assert spec_origin
-    return str(Path(spec_origin).parent / "share/ert")
+from ert.shared import ert_share_path
 
 
 def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:
-    share_path = _resolve_ert_share_path()
+    share_path = ert_share_path()
     directories = [
         Template(directory).render(ERT_SHARE_PATH=share_path, ERT_UI_MODE="gui")
         for directory in directories

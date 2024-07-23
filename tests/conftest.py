@@ -1,5 +1,4 @@
 import fileinput
-import importlib
 import json
 import logging
 import os
@@ -55,7 +54,7 @@ def log_check():
 
 @pytest.fixture(scope="session", autouse=True)
 def _reraise_thread_exceptions_on_main_thread():
-    """Allow `ert.shared.threading.ErtThread` to re-raise exceptions on main thread"""
+    """Allow `_ert.threading.ErtThread` to re-raise exceptions on main thread"""
     set_signal_handler()
 
 
@@ -92,9 +91,6 @@ def fixture_source_root():
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data"
-    request.cls.SHARE_ROOT = str(
-        Path(importlib.util.find_spec("ert.shared").origin).parent / "share"
-    )
     yield
 
 

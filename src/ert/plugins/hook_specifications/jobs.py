@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Optional, no_type_check
 
-from ert.shared.plugins.plugin_manager import hook_specification
+from ert.plugins.plugin_manager import hook_specification
 
 if TYPE_CHECKING:
-    from ert.shared.plugins.plugin_response import PluginResponse
-    from ert.shared.plugins.workflow_config import WorkflowConfigs
+    from ert.plugins.plugin_response import PluginResponse
+    from ert.plugins.workflow_config import WorkflowConfigs
 
 
 @no_type_check

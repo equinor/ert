@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ert.shared.plugins.plugin_manager import hook_specification
+from ert.plugins.plugin_manager import hook_specification
 
 if TYPE_CHECKING:
-    from ert.shared.plugins.plugin_response import PluginResponse
+    from ert.plugins.plugin_response import PluginResponse
 
 
 @hook_specification(firstresult=True)

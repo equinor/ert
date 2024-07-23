@@ -69,7 +69,7 @@ build_ert_clib () {
 run_ctest () {
 	enable_environment
 	pushd ${ERT_SOURCE_ROOT}/build
-	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
+	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/resources/site-config
 	ctest -j$(nproc) -E Lint --output-on-failure
 	popd
 }
