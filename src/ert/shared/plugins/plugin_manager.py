@@ -36,10 +36,6 @@ _PLUGIN_NAMESPACE = "ert"
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
-import ert.shared.hook_implementations  # noqa
-
-# Imports below hook_implementation and hook_specification to avoid circular imports
-import ert.shared.plugins.hook_specifications  # noqa
 
 if TYPE_CHECKING:
     from ert.config.forward_model_step import (
@@ -65,6 +61,9 @@ class JobDoc(TypedDict):
 class ErtPluginManager(pluggy.PluginManager):
     def __init__(self, plugins: Optional[Sequence[object]] = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
+        import ert.shared.hook_implementations  # noqa
+        import ert.shared.plugins.hook_specifications  # noqa
+
         self.add_hookspecs(ert.shared.plugins.hook_specifications)
         if plugins is None:
             self.register(ert.shared.hook_implementations)

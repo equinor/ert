@@ -5,8 +5,7 @@ from typing import Dict, List
 
 from jinja2 import Template
 
-from ert.shared.plugins.plugin_manager import hook_implementation
-from ert.shared.plugins.plugin_response import plugin_response
+import ert
 
 
 def _resolve_ert_share_path() -> str:
@@ -57,8 +56,7 @@ def _get_job_category(job_name: str) -> str:
     return "other"
 
 
-@hook_implementation
-@plugin_response(plugin_name="ert")
+@ert.plugin(name="ert")
 def installable_workflow_jobs() -> Dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/workflows/jobs/shell",
