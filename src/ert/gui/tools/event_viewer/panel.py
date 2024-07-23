@@ -6,6 +6,8 @@ from qtpy import QtCore
 from qtpy.QtCore import QObject
 from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
 
+from ert.gui.tools.search_bar import SearchBar
+
 # Need to separate GUILogHandler into _Signaler & _GUILogHandler
 # to avoid a object lifetime issue where logging keeps around a reference
 # to the handler until application exit
@@ -52,7 +54,7 @@ class EventViewerPanel(QPlainTextEdit):
         QPlainTextEdit.__init__(self)
 
         self.setMinimumWidth(500)
-        self.setMinimumHeight(200)
+        self.setMinimumHeight(800)
         self._dynamic = False
 
         self.setWindowTitle("Event viewer")
@@ -62,8 +64,9 @@ class EventViewerPanel(QPlainTextEdit):
         self.text_box = QPlainTextEdit()
         self.text_box.setReadOnly(True)
         self.text_box.setMaximumBlockCount(1000)
+        self.search_bar = SearchBar(self.text_box)
+        layout.addLayout(self.search_bar.get_layout())
         layout.addWidget(self.text_box)
-
         self.setLayout(layout)
         log_handler.append_log_statement.connect(self.val_changed)
 
