@@ -1,13 +1,7 @@
 [build-system]
 requires = [
-    "setuptools<64; python_version < '3.12'",
-    "setuptools; python_version >= '3.12'",
-    "setuptools_scm[toml]>=8.1",
-    "wheel",
-    "cmake",
-    "ninja",
-    "conan<2",
-    "pybind11>=2.10.0",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
+    "setuptools",
+    "setuptools_scm>=8.1",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -124,7 +118,6 @@ dev = [
     "testpath",
 ]
 style = [
-    "cmake-format",
     "pre-commit",
 ]
 types = [
