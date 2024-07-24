@@ -60,15 +60,15 @@ class EnsembleSelectListWidget(QListWidget):
             it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
             self.addItem(it)
             self._ensemble_count += 1
+            it.setToolTip(
+                f"{ensemble.experiment_name} : {ensemble.name}\nToggle up to 5 plots or reorder by drag & drop\nOrder determines draw order and color"
+            )
 
         if (viewport := self.viewport()) is not None:
             viewport.setMouseTracking(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
-        self.setToolTip(
-            "Toggle up to 5 plots or reorder by drag & drop\nOrder determines draw order and color"
-        )
 
     def get_checked_ensembles(self) -> List[EnsembleObject]:
         def _iter() -> Iterator[EnsembleObject]:
@@ -135,8 +135,8 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         painter.drawRect(rect)
 
-        text_rect = rect.adjusted(4, 4, -4, -4)
-        painter.drawText(text_rect, Qt.AlignmentFlag.AlignHCenter, index.data())
+        text_rect = rect.adjusted(self.swap_pixmap.width() + 4, 4, -4, -4)
+        painter.drawText(text_rect, Qt.AlignmentFlag.AlignLeft, index.data())
 
         cursor_x = option.rect.left() + self.swap_pixmap.width() - 14
         cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))
