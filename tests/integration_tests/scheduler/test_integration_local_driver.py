@@ -38,7 +38,6 @@ def create_ert_config(path: Path):
     )
 
 
-@pytest.mark.usefixtures("using_scheduler")
 @pytest.mark.integration_test
 async def test_subprocesses_live_on_after_ert_dies(tmp_path):
     # Have ERT run a forward model that writes in PID to a file, then sleeps

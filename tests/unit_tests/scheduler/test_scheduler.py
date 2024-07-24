@@ -14,7 +14,7 @@ from cloudevents.http import from_json
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator import Realization
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
+from ert.event_type_constants import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
 from ert.scheduler.job import State

@@ -1,5 +1,0 @@
-#!/bin/sh
-echo 1612427.greier.og.greier
-echo "#!/bin/sh" > qstat
-echo "echo \"Job Id: 1612427.st-lcmm\"" >> qstat
-echo "echo \"  job_state = R\"" >> qstat

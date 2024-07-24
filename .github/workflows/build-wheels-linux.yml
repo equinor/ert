@@ -17,11 +17,12 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Build Linux Wheel
-      uses: docker://quay.io/pypa/manylinux2014_x86_64
+    - uses: actions/setup-python@v5
       with:
-        entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
-        args: ${{ inputs.python-version }}
+        python-version: ${{ inputs.python-version }}
+
+    - name: Build wheels
+      run: pip wheel -w dist --no-deps .
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v4

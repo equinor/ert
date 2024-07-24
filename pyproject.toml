@@ -4,7 +4,6 @@ requires = [
     "setuptools; python_version >= '3.12'",
     "setuptools_scm[toml]>=8.1",
     "wheel",
-    "scikit-build",
     "cmake",
     "ninja",
     "conan<2",
@@ -43,8 +42,8 @@ dependencies=[
     "cloudevents>=1.6.0",
     "cloudpickle",
     "cryptography",
-    "cwrap",
     "dask",  # extra dependency for xarray/pandas
+    "deprecation",
     "dnspython >= 2",
     "fastapi",
     "filelock",

@@ -34,9 +34,7 @@ For examples and help with configuration, see the [ert Documentation](https://er
 
 ## Developing
 
-ert was originally written in C/C++ but most new code is Python.
-
-### Developing Python
+ert was originally written in C/C++ but is now only Python.
 
 You might first want to make sure that some system level packages are installed
 before attempting setup:
@@ -106,8 +104,6 @@ $ pre-commit install
 
 ### Trouble with setup
 
-If you encounter problems during install, try deleting the `_skbuild` folder before reinstalling.
-
 As a simple test of your `ert` installation, you may try to run one of the
 examples, for instance:
 
@@ -119,81 +115,14 @@ ert test_run poly.ert
 ert gui poly.ert
 ```
 
-Note that in order to parse floating point numbers from text files correctly,
-your locale must be set such that `.` is the decimal separator, e.g. by setting
-
-```
-# export LC_NUMERIC=en_US.UTF-8
-```
-
-in bash (or an equivalent way of setting that environment variable for your
-shell).
-
-### Developing C++
-
-C++ is the backbone of ert as in used extensively in important parts of ert.
-There's a combination of legacy code and newer refactored code. The end goal is
-likely that some core performance-critical functionality will be implemented in
-C++ and the rest of the business logic will be implemented in Python.
-
-While running `--editable` will create the necessary Python extension module
-(`src/ert/_clib.cpython-*.so`), changing C++ code will not take effect even when
-reloading ert. This requires recompilation, which means reinstalling ert from
-scratch.
-
-To avoid recompiling already-compiled source files, we provide the
-`script/build` script. From a fresh virtualenv:
-
-```sh
-git clone https://github.com/equinor/ert
-cd ert
-script/build
-```
-
-This command will update `pip` if necessary, install the build dependencies,
-compile ert and install in editable mode, and finally install the runtime
-requirements. Further invocations will only build the necessary source files. To
-do a full rebuild, delete the `_skbuild` directory.
-
-Note: This will create a debug build, which is faster to compile and comes with
-debugging functionality enabled. The downside is that this makes the code
-unoptimised and slow. Debugging flags are therefore not present in builds of
-ert that we release on Komodo or PyPI. To build a release build for development,
-use `script/build --release`.
-
 ### Notes
 
-1. If pip reinstallation fails during the compilation step, try removing the
-`_skbuild` directory.
-
-2. The default maximum number of open files is normally relatively low on MacOS
+The default maximum number of open files is normally relatively low on MacOS
 and some Linux distributions. This is likely to make tests crash with mysterious
 error-messages. You can inspect the current limits in your shell by issuing the
 command `ulimit -a`. In order to increase maximum number of open files, run
 `ulimit -n 16384` (or some other large number) and put the command in your
 `.profile` to make it persist.
-
-### Running C++ tests
-
-The C++ code and tests require [resdata](https://github.com/Equinor/resdata). As long
-as you have `pip install resdata`'d into your Python virtualenv all should work.
-
-``` sh
-# Create and enable a virtualenv
-python3 -m venv my_virtualenv
-source my_virtualenv/bin/activate
-
-# Install build dependencies
-pip install pybind11 conan cmake resdata
-
-# Build ert and tests
-mkdir build && cd build
-cmake ../src/clib -DCMAKE_BUILD_TYPE=Debug
-make -j$(nproc)
-
-# Run tests
-ctest --output-on-failure
-```
 
 ## Example usage
 

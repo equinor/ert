@@ -69,11 +69,6 @@ def queue_config_fixture():
 def make_ensemble(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
         monkeypatch.setattr(
-            ert.job_queue.job_queue_node,
-            "forward_model_ok",
-            lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
-        )
-        monkeypatch.setattr(
             ert.scheduler.job,
             "forward_model_ok",
             lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),

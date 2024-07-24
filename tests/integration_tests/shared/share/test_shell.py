@@ -7,7 +7,6 @@ from ert.plugins import ErtPluginManager
 from tests.integration_tests.run_cli import run_cli_with_pm
 
 
-@pytest.mark.usefixtures("using_scheduler")
 @pytest.mark.integration_test
 def test_shell_scripts_integration(tmpdir):
     """

@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Optional
 from ert.config.parsing.queue_system import QueueSystem
 
 from .driver import Driver
+from .job import State
+from .job_status import JobStatus
 from .local_driver import LocalDriver
 from .lsf_driver import LsfDriver
 from .openpbs_driver import OpenPBSDriver
@@ -76,4 +78,6 @@ __all__ = [
     "Scheduler",
     "Driver",
     "create_driver",
+    "JobStatus",
+    "State",
 ]
