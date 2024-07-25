@@ -1053,7 +1053,6 @@ def _forward_model_step_from_config_file(
             required_keywords=content_dict.get("REQUIRED", []),
             exec_env=exec_env,
             default_mapping=default_mapping,
-            help_text=content_dict.get("HELP_TEXT", ""),
         )
     except IOError as err:
         raise ConfigValidationError.with_context(str(err), config_file) from err
