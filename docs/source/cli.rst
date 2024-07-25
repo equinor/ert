@@ -1,36 +1,8 @@
-.. _cha_usage:
+.. _cha_cli:
 
-********************
-Everest Installation
-********************
-
-Follow these instructions to install Everest on your system:
-
-Using pip (Recommended for General Users)
------------------------------------------
-**Install via pip** - Open your command line interface (CLI) and enter the following command:
-
-.. code-block:: bash
-
-   $ pip install git+https://github.com/equinor/everest.git
-
-
-Installing the Development Version
----------------------------------------------------
-If you want to build and install the latest development version, follow the instructions on the `Everest Github page <https://github.com/equinor/everest>`_.
-
-
-For Equinor Employees (Using Komodo Release)
---------------------------------------------
-If you work at Equinor, Everest should be available after sourcing a Komodo release. Run the following command:
-
-.. code-block:: bash
-
-   $ source /prog/res/komodo/stable/enable
-
-
-Command line
-============
+**********************
+Command Line Interface
+**********************
 
 After setting up a ``*.yml`` config file describing the optimization case required the reservoir planning optimization tool Everest supports the following commands.
 
@@ -300,6 +272,7 @@ Display the configuration data loaded from a config file after replacing templat
 
  everest render config_file.yml
 
+===================
 Graphical interface
 ===================
 
@@ -321,6 +294,7 @@ Start the Everest graphical user interface
 
 .. _ev_branch:
 
+==============
 Everest branch
 ==============
 
@@ -347,8 +321,10 @@ Removing the optimization output folder before running the *branch* will make th
 The *branch* command does not provide optimization experiment restart functionality. Starting an optimization case based
 on the newly created config file is considered an new optimization experiment.
 
+===============
 Everest results
 ===============
+
 Start the everest visualization plugin. If no visualization plugin is installed the message:
 ``No visualization plugin installed!`` will be displayed in the console.
 
@@ -366,6 +342,7 @@ Positional Arguments
 ``config_file``
 
 The path to the everest configuration file
+
 
 Plugin
 ======
