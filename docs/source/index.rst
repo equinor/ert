@@ -1,6 +1,5 @@
-######################
 Everest™ Documentation
-######################
+======================
 
 This guide serves as documentation for the *Everest* decision-making tool
 
@@ -9,21 +8,54 @@ This guide serves as documentation for the *Everest* decision-making tool
 * Everest could for example be used as decision support tool for well planning (drilling order) and drainage strategy optimization.
 
 
-Table of Contents
-=================
+.. toctree::
+   :hidden:
+
+   self
 
 .. toctree::
-    :maxdepth: 2
+   :hidden:
+   :caption: Getting started
 
-    introduction
-    theory
-    usage
-    config
-    config_reference
-    optimization_backends
-    sampler_backends
-    forward_model_jobs
-    creating_custom_jobs
-    custom_workflow_jobs
-    minimal_example
-    development
+   introduction
+   installation
+   minimal_example
+
+.. toctree::
+   :hidden:
+   :caption: Reference
+
+   cli
+   config
+   config_reference
+   optimization_backends
+   sampler_backends
+   forward_model_jobs
+   creating_custom_jobs
+   custom_workflow_jobs
+
+.. toctree::
+   :hidden:
+   :caption: Theory
+
+   theory
+
+.. toctree::
+   :hidden:
+   :caption: Developer Documentation
+
+   development
+
+.. toctree::
+   :hidden:
+   :caption: About
+
+   Code in GitHub <https://github.com/equinor/everest>
+   Issue tracker <https://github.com/equinor/everest/issues>
+
+.. Indices and tables
+   ==================
+
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`
