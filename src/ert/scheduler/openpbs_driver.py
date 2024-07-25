@@ -20,7 +20,6 @@ from typing import (
     Type,
     Union,
     cast,
-    get_args,
     get_type_hints,
 )
 
@@ -30,7 +29,7 @@ from .event import Event, FinishedEvent, StartedEvent
 logger = logging.getLogger(__name__)
 
 _POLL_PERIOD = 2.0  # seconds
-JobState = Literal[
+JOB_STATES = [
     "B",  # Begun
     "E",  # Exiting with or without errors
     "F",  # Finished (completed, failed or deleted)
@@ -119,7 +118,7 @@ def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, str]]:
             continue
         tokens = line.split(maxsplit=6)
         if len(tokens) >= 5 and tokens[0] and tokens[5]:
-            if tokens[4] not in get_args(JobState):
+            if tokens[4] not in JOB_STATES:
                 logger.error(
                     f"Unknown state {tokens[4]} obtained from "
                     f"PBS for jobid {tokens[0]}, ignored."
