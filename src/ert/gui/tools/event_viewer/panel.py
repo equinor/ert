@@ -6,25 +6,44 @@ from qtpy import QtCore
 from qtpy.QtCore import QObject
 from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
 
+# Need to separate GUILogHandler into _Signaler & _GUILogHandler
+# to avoid a object lifetime issue where logging keeps around a reference
+# to the handler until application exit
 
-class GUILogHandler(logging.Handler, QObject):
+
+class _Signaler(QObject):
+    append_log_statement = QtCore.Signal(str)
+
+
+class _GUILogHandler(logging.Handler):
+    def __init__(self, signaler: _Signaler):
+        super().__init__()
+        self.signaler = signaler
+
+    def emit(self, record: logging.LogRecord) -> None:
+        msg = self.format(record)
+        self.signaler.append_log_statement.emit(msg)
+
+
+class GUILogHandler(_Signaler):
     """
     Log handler which will emit a qt signal every time a
     log is emitted
     """
 
-    append_log_statement = QtCore.Signal(str)
-
     def __init__(self) -> None:
         super().__init__()
-        self.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
-        self.setLevel(logging.INFO)
 
-        QObject.__init__(self)
+        self.handler = _GUILogHandler(self)
+        self.handler.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+        self.handler.setLevel(logging.INFO)
 
-    def emit(self, record: logging.LogRecord) -> None:
-        msg = self.format(record)
-        self.append_log_statement.emit(msg)
+    @property
+    def level(self) -> int:
+        return self.handler.level
+
+    def handle(self, record: logging.LogRecord) -> bool:
+        return self.handler.handle(record)
 
 
 class EventViewerPanel(QPlainTextEdit):
@@ -56,14 +75,14 @@ class EventViewerPanel(QPlainTextEdit):
 @contextmanager
 def add_gui_log_handler() -> Iterator[GUILogHandler]:
     """
-    Context manager for the GUILogHandler class. Will make sure that the handler
-    is removed prior to program exit.
+    Context manager for the GUILogHandler singleton. Will make sure that the
+    handler is removed prior to program exit.
     """
     logger = logging.getLogger()
 
-    handler = GUILogHandler()
-    logger.addHandler(handler)
+    gui_handler = GUILogHandler()
+    logger.addHandler(gui_handler.handler)
 
-    yield handler
+    yield gui_handler
 
-    logger.removeHandler(handler)
+    logger.removeHandler(gui_handler.handler)
