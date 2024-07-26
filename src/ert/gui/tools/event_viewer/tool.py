@@ -4,7 +4,8 @@ from qtpy.QtCore import QObject, Slot
 from qtpy.QtGui import QIcon
 
 from ert.gui.tools import Tool
-from ert.gui.tools.event_viewer import EventViewerPanel, GUILogHandler
+
+from .panel import EventViewerPanel, GUILogHandler
 
 
 class EventViewerTool(Tool, QObject):
