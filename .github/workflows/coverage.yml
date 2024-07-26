@@ -32,28 +32,27 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-        cache: "pip"
-        cache-dependency-path: |
-          pyproject.toml
+        cache: "pipenv"
 
     - name: Install with dependencies
       run: |
-        pip install ".[dev]"
+        pip install pipenv
+        pipenv run pip install ".[dev]"
 
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'
       run: |
-        pytest tests/ --cov=ert -m "requires_window_manager" --cov-report=xml:cov.xml -v
+        pipenv run pytest tests/ --cov=ert -m "requires_window_manager" --cov-report=xml:cov.xml -v
 
     - name: Test Integration
       if: matrix.test-type == 'integration-tests'
       run: |
-        pytest tests/ -n logical --cov=ert -m "integration_test" --cov-report=xml:cov.xml
+        pipenv run pytest tests/ -n logical --cov=ert -m "integration_test" --cov-report=xml:cov.xml
 
     - name: Test units
       if: matrix.test-type == 'unit-tests'
       run: |
-        pytest tests/unit_tests -n logical --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml --dist loadgroup
+        pipenv run pytest tests/unit_tests -n logical --cov=ert -m "not integration_test and not requires_window_manager" --cov-report=xml:cov.xml --dist loadgroup
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v4
