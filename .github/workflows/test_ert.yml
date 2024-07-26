@@ -32,7 +32,7 @@ jobs:
 
     - name: Install uv
       run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
+        pip install uv
         echo "uv_cache_location=$(uv cache dir)" >> "$GITHUB_ENV"
 
     - uses: actions/cache@v4
