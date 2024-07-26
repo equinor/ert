@@ -40,6 +40,7 @@ jobs:
     - name: Install wheel
       run: |
         find . -name "*.whl" -exec pip install "{}[dev]" \;
+        pip list
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
