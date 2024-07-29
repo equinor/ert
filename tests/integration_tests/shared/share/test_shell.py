@@ -3,15 +3,15 @@ import os.path
 
 import pytest
 
-from tests.integration_tests.run_cli import run_cli
+from ert.plugins import ErtPluginManager
+from tests.integration_tests.run_cli import run_cli_with_pm
 
 
-@pytest.mark.usefixtures("using_scheduler")
 @pytest.mark.integration_test
 def test_shell_scripts_integration(tmpdir):
     """
     The following test is a regression test that
-    checks that the scripts under src/ert/shared/share/ert/shell_scripts
+    checks that the scripts under src/ert/resources/shell_scripts
     are not broken, and correctly installed through site-config.
     """
     with tmpdir.as_cwd():
@@ -37,7 +37,9 @@ FORWARD_MODEL DELETE_DIRECTORY(<DIRECTORY>=mydir)
         with open("file.txt", "w", encoding="utf-8") as file_h:
             file_h.write("something")
 
-        run_cli("test_run", "--disable-monitor", ert_config_fname)
+        run_cli_with_pm(
+            ["test_run", "--disable-monitor", ert_config_fname], ErtPluginManager()
+        )
 
         with open("realization-0/iter-0/moved.txt", encoding="utf-8") as output_file:
             assert output_file.read() == "something"

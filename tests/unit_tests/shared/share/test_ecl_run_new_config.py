@@ -24,15 +24,13 @@ from ._import_from_location import import_from_location
 ecl_config = import_from_location(
     "ecl_config",
     os.path.join(
-        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_config.py"
+        SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_config.py"
     ),
 )
 
 ecl_run = import_from_location(
     "ecl_run",
-    os.path.join(
-        SOURCE_DIR, "src/ert/shared/share/ert/forward-models/res/script/ecl_run.py"
-    ),
+    os.path.join(SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_run.py"),
 )
 
 
@@ -182,7 +180,7 @@ def test_failed_run(source_root):
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run_nonzero_returncode(monkeypatch):
-    Path("FOO.DATA").write_text("")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
     econfig = ecl_config.Ecl100Config()
     eclrun_config = ecl_config.EclrunConfig(econfig, "2021.3")
     erun = ecl_run.EclRun("FOO.DATA", None)

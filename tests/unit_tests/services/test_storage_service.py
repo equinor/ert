@@ -43,6 +43,6 @@ def test_that_service_can_be_started_with_existing_conn_info_json(tmp_path):
         "authtoken": "dummytoken",
     }
 
-    with open(tmp_path / "storage_server.json", mode="w") as f:
+    with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     StorageService.connect(project=tmp_path)

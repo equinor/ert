@@ -134,7 +134,13 @@ class EnsembleConfig:
         field_list = config_dict.get(ConfigKeys.FIELD, [])
         dims = None
         if grid_file_path is not None:
-            dims = get_shape(grid_file_path)
+            try:
+                dims = get_shape(grid_file_path)
+            except Exception as err:
+                raise ConfigValidationError.with_context(
+                    f"Could not read grid file {grid_file_path}: {err}",
+                    grid_file_path,
+                ) from err
 
         def make_field(field_list: List[str]) -> Field:
             if grid_file_path is None:

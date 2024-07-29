@@ -16,6 +16,7 @@ from tests.utils import poll
 
 from ert.scheduler import OpenPBSDriver
 from ert.scheduler.openpbs_driver import (
+    JOB_STATES,
     QDEL_JOB_HAS_FINISHED,
     QDEL_REQUEST_INVALID,
     QSUB_CONNECTION_REFUSED,
@@ -23,7 +24,6 @@ from ert.scheduler.openpbs_driver import (
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
     FinishedJob,
-    JobState,
     QueuedJob,
     RunningJob,
     StartedEvent,
@@ -32,7 +32,7 @@ from ert.scheduler.openpbs_driver import (
 )
 
 
-@given(st.lists(st.sampled_from(JobState.__args__)))
+@given(st.lists(st.sampled_from(JOB_STATES)))
 async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
     # Determine what to expect from the sequence:
     started = False

@@ -21,7 +21,7 @@ template_render = import_from_location(
     "template_render",
     os.path.join(
         SOURCE_DIR,
-        "src/ert/shared/share/ert/forward-models/templating/script/template_render.py",
+        "src/ert/resources/forward-models/templating/script/template_render.py",
     ),
 )
 
@@ -220,8 +220,8 @@ def test_template_executable():
         "--input_files other.json"
     )
     template_render_exec = str(
-        Path(importlib.util.find_spec("ert.shared").origin).parent
-        / "share/ert/forward-models/templating/script/template_render.py"
+        Path(importlib.util.find_spec("ert").origin).parent
+        / "resources/forward-models/templating/script/template_render.py"
     )
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)

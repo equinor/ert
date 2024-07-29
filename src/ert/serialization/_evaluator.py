@@ -1,13 +1,17 @@
-import datetime
 import json
+import sys
+from datetime import date, datetime
 from typing import Any
 
-from dateutil import parser
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
 
 
 class _EvaluatorEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
-        if isinstance(o, (datetime.date, datetime.datetime)):
+        if isinstance(o, (date, datetime)):
             return {"__type__": "isoformat8601", "value": o.isoformat()}
         return json.JSONEncoder.default(self, o)
 
@@ -26,7 +30,7 @@ def _object_hook(obj: Any) -> Any:
         return obj
 
     if obj["__type__"] == "isoformat8601":
-        return parser.parse(obj["value"])
+        return datetime.fromisoformat(obj["value"])
 
     return obj
 

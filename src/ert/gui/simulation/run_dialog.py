@@ -130,24 +130,23 @@ class JobOverview(QTableView):
                 index.data(IterNum),
                 self,
             )
-        else:
-            if JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
-                error_dialog = QDialog(self)
-                error_dialog.setWindowTitle("Error information")
-                layout = QVBoxLayout(error_dialog)
+        elif JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
+            error_dialog = QDialog(self)
+            error_dialog.setWindowTitle("Error information")
+            layout = QVBoxLayout(error_dialog)
 
-                error_textedit = QPlainTextEdit()
-                error_textedit.setReadOnly(True)
-                error_textedit.setWordWrapMode(QTextOption.NoWrap)
-                error_textedit.appendPlainText(index.data())
-                layout.addWidget(error_textedit)
+            error_textedit = QPlainTextEdit()
+            error_textedit.setReadOnly(True)
+            error_textedit.setWordWrapMode(QTextOption.NoWrap)
+            error_textedit.appendPlainText(index.data())
+            layout.addWidget(error_textedit)
 
-                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
-                dialog_button.accepted.connect(error_dialog.accept)
-                layout.addWidget(dialog_button)
-                error_dialog.resize(700, 300)
-                error_textedit.moveCursor(QTextCursor.Start)
-                error_dialog.exec_()
+            dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+            dialog_button.accepted.connect(error_dialog.accept)
+            layout.addWidget(dialog_button)
+            error_dialog.resize(700, 300)
+            error_textedit.moveCursor(QTextCursor.Start)
+            error_dialog.exec_()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if event:
@@ -430,7 +429,7 @@ class RunDialog(QDialog):
             self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
+                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
             self.update_total_progress(event.progress, event.phase_name)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
@@ -438,7 +437,7 @@ class RunDialog(QDialog):
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
-                    event.partial_snapshot, event.iteration
+                    event.partial_snapshot, str(event.iteration)
                 )
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count

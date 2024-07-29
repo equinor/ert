@@ -75,7 +75,7 @@ class EvaluateEnsemble(BaseRunModel):
         self.setPhaseCount(phase_count)
         self._evaluate_and_postprocess(prior_context, evaluator_server_config)
 
-        self.setPhase(phase_count, "Simulations completed.")
+        self.setPhase(phase_count, "Experiment completed.")
 
         return prior_context
 

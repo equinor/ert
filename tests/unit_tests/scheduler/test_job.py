@@ -258,7 +258,7 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
         }
     }
     # Create the file
-    Path(file_path).write_text("test")
+    Path(file_path).write_text("test", encoding="utf-8")
 
     log_msgs = []
     job = Job(scheduler, realization)

@@ -1,7 +1,8 @@
-import datetime
 import re
+import sys
 import typing
 from collections import defaultdict
+from datetime import datetime
 from typing import (
     Any,
     DefaultDict,
@@ -15,13 +16,17 @@ from typing import (
 )
 
 from cloudevents.http import CloudEvent
-from dateutil.parser import parse
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
+
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
@@ -71,12 +76,12 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 
 
 def convert_iso8601_to_datetime(
-    timestamp: Union[datetime.datetime, str],
-) -> datetime.datetime:
-    if isinstance(timestamp, datetime.datetime):
+    timestamp: Union[datetime, str],
+) -> datetime:
+    if isinstance(timestamp, datetime):
         return timestamp
 
-    return parse(timestamp)
+    return datetime.fromisoformat(timestamp)
 
 
 RealId = str
@@ -98,7 +103,7 @@ class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
         self._realization_states: Dict[
             str,
-            Dict[str, Union[bool, datetime.datetime, str, Dict[str, "ForwardModel"]]],
+            Dict[str, Union[bool, datetime, str, Dict[str, "ForwardModel"]]],
         ] = defaultdict(dict)
         """A shallow dictionary of realization states. The key is a string with
         realization number, pointing to a dict with keys active (bool),
@@ -134,8 +139,8 @@ class PartialSnapshot:
         self,
         real_id: str,
         status: str,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
     ) -> "PartialSnapshot":
         self._realization_states[real_id].update(
             _filter_nones(
@@ -166,7 +171,7 @@ class PartialSnapshot:
 
     def get_forward_model_status_for_all_reals(
         self,
-    ) -> Mapping[Tuple[str, str], Union[str, datetime.datetime]]:
+    ) -> Mapping[Tuple[str, str], str]:
         if self._snapshot:
             return self._snapshot.get_forward_model_status_for_all_reals()
         return {}
@@ -215,7 +220,7 @@ class PartialSnapshot:
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
             if "forward_models" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["forward_models"] = ForwardModel()
+                _dict["reals"][real_id]["forward_models"] = {}
 
             _dict["reals"][real_id]["forward_models"][fm_id] = fm_values_dict
 
@@ -417,8 +422,8 @@ class Snapshot:
 
 class ForwardModel(TypedDict, total=False):
     status: Optional[str]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
     index: Optional[str]
     current_memory_usage: Optional[str]
     max_memory_usage: Optional[str]
@@ -431,8 +436,8 @@ class ForwardModel(TypedDict, total=False):
 class RealizationSnapshot(BaseModel):
     status: Optional[str] = None
     active: Optional[bool] = None
-    start_time: Optional[datetime.datetime] = None
-    end_time: Optional[datetime.datetime] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
     forward_models: Dict[str, ForwardModel] = {}
 
 
@@ -450,8 +455,8 @@ class SnapshotBuilder(BaseModel):
         self,
         real_ids: Sequence[str],
         status: Optional[str],
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
     ) -> Snapshot:
         top = SnapshotDict(status=status, metadata=self.metadata)
         for r_id in real_ids:
@@ -472,8 +477,8 @@ class SnapshotBuilder(BaseModel):
         status: Optional[str],
         current_memory_usage: Optional[str] = None,
         max_memory_usage: Optional[str] = None,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":

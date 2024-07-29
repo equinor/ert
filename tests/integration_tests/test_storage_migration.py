@@ -89,14 +89,18 @@ def copy_shared(tmp_path, block_storage_path):
     ],
 )
 def test_that_storage_matches(
-    tmp_path, block_storage_path, snapshot, monkeypatch, ert_version
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
 ):
     shutil.copytree(
         block_storage_path / f"all_data_types/storage-{ert_version}",
         tmp_path / "all_data_types" / f"storage-{ert_version}",
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
@@ -215,7 +219,11 @@ def test_that_storage_matches(
     ],
 )
 def test_that_storage_works_with_missing_parameters_and_responses(
-    tmp_path, block_storage_path, snapshot, monkeypatch, ert_version
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
 ):
     storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
     shutil.copytree(
@@ -237,7 +245,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         os.remove(real_dir / "GEN.nc")
 
     monkeypatch.chdir(tmp_path / "all_data_types")
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent

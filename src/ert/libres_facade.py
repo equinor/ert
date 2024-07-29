@@ -32,7 +32,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.storage import Ensemble
 
 from .enkf_main import ensemble_context
-from .shared.plugins import ErtPluginContext
+from .plugins import ErtPluginContext
 
 _logger = logging.getLogger(__name__)
 
@@ -278,10 +278,8 @@ class LibresFacade:
     def from_config_file(
         cls, config_file: str, read_only: bool = False
     ) -> "LibresFacade":
-        with ErtPluginContext() as ctx:
+        with ErtPluginContext():
             return cls(
-                ErtConfig.with_plugins(
-                    forward_model_step_classes=ctx.plugin_manager.forward_model_steps
-                ).from_file(config_file),
+                ErtConfig.with_plugins().from_file(config_file),
                 read_only,
             )

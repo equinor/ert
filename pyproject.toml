@@ -1,14 +1,7 @@
 [build-system]
 requires = [
-    "setuptools<64; python_version < '3.12'",
-    "setuptools; python_version >= '3.12'",
-    "setuptools_scm[toml]>=8.1",
-    "wheel",
-    "scikit-build",
-    "cmake",
-    "ninja",
-    "conan<2",
-    "pybind11>=2.10.0",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
+    "setuptools",
+    "setuptools_scm>=8.1",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -39,11 +32,12 @@ classifiers=[
 dynamic = ["version"]
 dependencies=[
     "aiohttp",
+    "backports-datetime_fromisoformat; python_version < '3.11'",
     "cloudevents>=1.6.0",
     "cloudpickle",
     "cryptography",
-    "cwrap",
     "dask",  # extra dependency for xarray/pandas
+    "deprecation",
     "dnspython >= 2",
     "fastapi",
     "filelock",
@@ -51,7 +45,6 @@ dependencies=[
     "humanize",
     "importlib_resources;python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
-    "typing_extensions>=4.5",
     "jinja2",
     "lark",
     "lxml",
@@ -77,6 +70,7 @@ dependencies=[
     "tables<3.9;python_version == '3.8'",
     "tabulate",
     "tqdm>=4.62.0",
+    "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
     "websockets",
     "xarray",
@@ -124,7 +118,6 @@ dev = [
     "testpath",
 ]
 style = [
-    "cmake-format",
     "pre-commit",
 ]
 types = [
@@ -181,13 +174,11 @@ ignore = ["PLW2901",  # redefined-loop-name
           "PLR2004",  # magic-value-comparison
           "PLR0915",  # too-many-statements
           "PLR0912",  # too-many-branches
-          "PLR5501",  # collapsible-else-if
           "PLR0911",  # too-many-return-statements
           "PLC2701",  # import-private-name
           "PLR6201",  # literal-membership
           "PLR0914",  # too-many-locals
           "F841",  # unused-variable
-          "PLW1514",  # unspecified-encoding
           "PLR6104",  # non-augmented-assignment
           "PLR6301",  # no-self-use
           "PLW1641",  # eq-without-hash

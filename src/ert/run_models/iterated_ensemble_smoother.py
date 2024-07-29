@@ -22,6 +22,8 @@ from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     import numpy.typing as npt
 
     from ert.config import QueueConfig
@@ -84,7 +86,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self,
         prior_storage: Ensemble,
         posterior_storage: Ensemble,
-        ensemble_id: str,
+        ensemble_id: UUID,
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
@@ -197,7 +199,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 self.analyzeStep(
                     prior_storage=prior_context.ensemble,
                     posterior_storage=posterior_context.ensemble,
-                    ensemble_id=str(prior_context.ensemble.id),
+                    ensemble_id=prior_context.ensemble.id,
                     iteration=current_iter - 1,
                     initial_mask=initial_mask,
                 )

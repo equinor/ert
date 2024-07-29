@@ -7,7 +7,7 @@ import time
 from collections import namedtuple
 from dataclasses import dataclass
 from threading import Thread
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -17,12 +17,10 @@ from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
 from ert.run_context import RunContext
 from ert.runpaths import Runpaths
-from ert.scheduler import Scheduler, create_driver
-from ert.scheduler.job import State as JobState
+from ert.scheduler import JobStatus, Scheduler, create_driver
+from ert.scheduler import State as JobState
 from ert.workflow_runner import WorkflowRunner
 
-from ..job_queue import JobQueue, JobStatus
-from ..shared.feature_toggling import FeatureScheduler
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
@@ -43,7 +41,7 @@ def _slug(entity: str) -> str:
 
 def _run_forward_model(
     ert_config: "ErtConfig",
-    job_queue: Union["JobQueue", "Scheduler"],
+    job_queue: Scheduler,
     run_context: "RunContext",
 ) -> None:
     # run simplestep
@@ -52,7 +50,7 @@ def _run_forward_model(
 
 async def _submit_and_run_jobqueue(
     ert_config: "ErtConfig",
-    job_queue: Union["JobQueue", "Scheduler"],
+    job_queue: Scheduler,
     run_context: "RunContext",
 ) -> None:
     max_runtime: Optional[int] = ert_config.analysis_config.max_runtime
@@ -61,24 +59,16 @@ async def _submit_and_run_jobqueue(
     for index, run_arg in enumerate(run_context):
         if not run_context.is_active(index):
             continue
-        if isinstance(job_queue, JobQueue):
-            job_queue.add_job_from_run_arg(
-                run_arg,
-                ert_config.queue_config.job_script,
-                max_runtime,
-                ert_config.preferred_num_cpu,
-            )
-        else:
-            realization = Realization(
-                iens=run_arg.iens,
-                forward_models=[],
-                active=True,
-                max_runtime=max_runtime,
-                run_arg=run_arg,
-                num_cpu=ert_config.preferred_num_cpu,
-                job_script=ert_config.queue_config.job_script,
-            )
-            job_queue.set_realization(realization)
+        realization = Realization(
+            iens=run_arg.iens,
+            forward_models=[],
+            active=True,
+            max_runtime=max_runtime,
+            run_arg=run_arg,
+            num_cpu=ert_config.preferred_num_cpu,
+            job_script=ert_config.queue_config.job_script,
+        )
+        job_queue.set_realization(realization)
 
     required_realizations = 0
     if ert_config.queue_config.stop_long_running:
@@ -101,13 +91,10 @@ class BatchContext:
         Handle which can be used to query status and results for batch simulation.
         """
         ert_config = self.ert_config
-        if FeatureScheduler.is_enabled(ert_config.queue_config.queue_system):
-            driver = create_driver(ert_config.queue_config)
-            self._job_queue = Scheduler(
-                driver, max_running=self.ert_config.queue_config.max_running
-            )
-        else:
-            self._job_queue = JobQueue(ert_config.queue_config)
+        driver = create_driver(ert_config.queue_config)
+        self._job_queue = Scheduler(
+            driver, max_running=self.ert_config.queue_config.max_running
+        )
         # fill in the missing geo_id data
         global_substitutions = self.ert_config.substitution_list
         global_substitutions["<CASE_NAME>"] = _slug(self.ensemble.name)
@@ -168,31 +155,13 @@ class BatchContext:
 
         NB: Killed realizations are not reported.
         """
-        if isinstance(self._job_queue, Scheduler):
-            states = self._job_queue.count_states()
-            return Status(
-                running=states[JobState.RUNNING],
-                waiting=states[JobState.WAITING],
-                pending=states[JobState.PENDING],
-                complete=states[JobState.COMPLETED],
-                failed=states[JobState.FAILED],
-            )
+        states = self._job_queue.count_states()
         return Status(
-            running=self._job_queue.count_status(JobStatus.RUNNING)
-            if isinstance(self._job_queue, JobQueue)
-            else self._job_queue.count_states()[JobState.RUNNING],
-            waiting=self._job_queue.count_status(JobStatus.WAITING)
-            if isinstance(self._job_queue, JobQueue)
-            else self._job_queue.count_states()[JobState.WAITING],
-            pending=self._job_queue.count_status(JobStatus.PENDING)
-            if isinstance(self._job_queue, JobQueue)
-            else self._job_queue.count_states()[JobState.PENDING],
-            complete=self._job_queue.count_status(JobStatus.SUCCESS)
-            if isinstance(self._job_queue, JobQueue)
-            else self._job_queue.count_states()[JobState.COMPLETED],
-            failed=self._job_queue.count_status(JobStatus.FAILED)
-            if isinstance(self._job_queue, JobQueue)
-            else self._job_queue.count_states()[JobState.FAILED],
+            running=states[JobState.RUNNING],
+            waiting=states[JobState.WAITING],
+            pending=states[JobState.PENDING],
+            complete=states[JobState.COMPLETED],
+            failed=states[JobState.FAILED],
         )
 
     def results(self) -> List[Optional[Dict[str, "npt.NDArray[np.float64]"]]]:
@@ -245,17 +214,6 @@ class BatchContext:
 
     def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""
-        if isinstance(self._job_queue, JobQueue):
-            try:
-                run_arg = self._run_context[iens]
-            except IndexError as e:
-                raise KeyError(e) from e
-            queue_index = run_arg.queue_index
-            if queue_index is None:
-                # job was not submitted
-                return None
-            int_status = self._job_queue.job_list[queue_index].queue_status
-            return JobStatus(int_status)
         state_to_legacy = {
             JobState.WAITING: JobStatus.WAITING,
             JobState.SUBMITTING: JobStatus.SUBMITTED,
@@ -292,19 +250,11 @@ class BatchContext:
         except IndexError as e:
             raise KeyError(e) from e
 
-        if isinstance(self._job_queue, JobQueue):
-            queue_index = run_arg.queue_index
-            if queue_index is None:
-                # job was not submitted
-                return None
-            if self._job_queue.job_list[queue_index].queue_status == JobStatus.WAITING:
-                return None
-        else:
-            if (
-                iens not in self._job_queue._jobs
-                or self._job_queue._jobs[iens].state == JobState.WAITING
-            ):
-                return None
+        if (
+            iens not in self._job_queue._jobs
+            or self._job_queue._jobs[iens].state == JobState.WAITING
+        ):
+            return None
         return ForwardModelStatus.load(run_arg.runpath)
 
     def stop(self) -> None:

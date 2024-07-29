@@ -346,7 +346,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(prior_ensemble):
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
 
     run_context = ensemble_context(
         prior_ensemble,

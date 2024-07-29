@@ -104,6 +104,7 @@ class RealListModel(QAbstractProxyModel):
             return source_model.hasChildren(self.mapToSource(parent))
         return False
 
+    @override
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if proxyIndex.isValid():
             sm = self.sourceModel()
@@ -113,10 +114,11 @@ class RealListModel(QAbstractProxyModel):
                 return sm.index(proxyIndex.row(), proxyIndex.column(), iter_index)
         return QModelIndex()
 
-    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+    @override
+    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         return (
-            self.index(src_index.row(), src_index.column(), QModelIndex())
-            if src_index.isValid() and self._accept_index(src_index)
+            self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+            if sourceIndex.isValid() and self._accept_index(sourceIndex)
             else QModelIndex()
         )
 

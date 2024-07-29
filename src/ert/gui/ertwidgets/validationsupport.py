@@ -1,7 +1,14 @@
-import html
-from typing import Optional
+from __future__ import annotations
 
-from qtpy.QtCore import QObject, QPoint, Qt, Signal
+import html
+from typing import TYPE_CHECKING, Optional
+
+from qtpy.QtCore import (
+    QObject,
+    QPoint,
+    Qt,
+    Signal,
+)
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (
     QFrame,
@@ -10,6 +17,10 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+if TYPE_CHECKING:
+    from qtpy.QtCore import QEvent
+    from qtpy.QtGui import QHideEvent
 
 
 class ErrorPopup(QWidget):
@@ -79,29 +90,30 @@ class ValidationSupport(QObject):
         self._originalLeaveEvent = validation_target.leaveEvent
         self._originalHideEvent = validation_target.hideEvent
 
-        def enterEvent(event):
-            self._originalEnterEvent(event)
+        def enterEvent(a0: Optional[QEvent]) -> None:
+            self._originalEnterEvent(a0)
 
             if not self.isValid():
                 self._error_popup.presentError(
-                    self._validation_target, self._validation_message
+                    self._validation_target,
+                    self._validation_message if self._validation_message else "",
                 )
 
-        validation_target.enterEvent = enterEvent
+        validation_target.enterEvent = enterEvent  # type: ignore[method-assign]
 
-        def leaveEvent(event):
-            self._originalLeaveEvent(event)
+        def leaveEvent(a0: Optional[QEvent]) -> None:
+            self._originalLeaveEvent(a0)
 
             if self._error_popup is not None:
                 self._error_popup.hide()
 
-        validation_target.leaveEvent = leaveEvent
+        validation_target.leaveEvent = leaveEvent  # type: ignore[method-assign]
 
-        def hideEvent(hide_event):
+        def hideEvent(a0: Optional[QHideEvent]) -> None:
             self._error_popup.hide()
-            self._originalHideEvent(hide_event)
+            self._originalHideEvent(a0)
 
-        validation_target.hideEvent = hideEvent
+        validation_target.hideEvent = hideEvent  # type: ignore[method-assign]
 
     def setValidationMessage(
         self, message: str, validation_type: str = WARNING

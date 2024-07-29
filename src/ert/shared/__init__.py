@@ -1,12 +1,21 @@
 try:
-    from ert.shared.version import version as __version__
+    from .version import version as __version__
 except ImportError:
     __version__ = "0.0.0"
 
-# Other modules depend on the ert shared resources so we explicitly expose their path
-from ert.shared.hook_implementations.jobs import (
-    _resolve_ert_share_path as ert_share_path,
-)
-from ert.shared.port_handler import get_machine_name
+import importlib.util
+from pathlib import Path
+
+
+def ert_share_path() -> str:
+    spec = importlib.util.find_spec("ert.shared")
+    assert spec, "Could not find ert.shared in import path"
+    assert spec.has_location
+    spec_origin = spec.origin
+    assert spec_origin
+    return str(Path(spec_origin).parent.parent / "resources")
+
+
+from .port_handler import get_machine_name
 
 __all__ = ["ert_share_path", "get_machine_name", "__version__"]

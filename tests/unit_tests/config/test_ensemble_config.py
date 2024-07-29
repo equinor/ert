@@ -46,6 +46,14 @@ _________________________________________     _____    ____________________
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_ensemble_config_fails_on_non_sensical_grid_file():
+    grid_file = Path("CEST_PAS_UNE_GRID")
+    grid_file.write_text("a_grid_maybe?")
+    with pytest.raises(expected_exception=ConfigValidationError, match=str(grid_file)):
+        EnsembleConfig.from_dict(config_dict={ConfigKeys.GRID: grid_file})
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_ensemble_config_construct_refcase_and_grid():
     grid_file = "CASE.EGRID"
     refcase_file = "REFCASE_NAME"

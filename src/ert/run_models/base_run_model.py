@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import os
@@ -24,7 +25,6 @@ from typing import (
 import numpy as np
 from cloudevents.http import CloudEvent
 
-from _ert.async_utils import get_running_loop
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import (
     AnalysisCompleteEvent,
@@ -517,7 +517,7 @@ class BaseRunModel:
 
         return True
 
-    def run_ensemble_evaluator(
+    async def run_ensemble_evaluator_async(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> List[int]:
         if not self._end_queue.empty():
@@ -530,9 +530,10 @@ class BaseRunModel:
             ee_config,
             run_context.iteration,
         )
-        evaluator.start_running()
-
-        if not get_running_loop().run_until_complete(self.run_monitor(ee_config)):
+        evaluator_task = asyncio.create_task(
+            evaluator.run_and_get_successful_realizations()
+        )
+        if not (await self.run_monitor(ee_config)):
             return []
 
         event_logger.debug(
@@ -541,12 +542,21 @@ class BaseRunModel:
         # The model has finished, we indicate this by sending a DONE
         event_logger.debug("tasks complete")
 
-        evaluator.join()
         if not self._end_queue.empty():
             event_logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
             return []
-        return evaluator.get_successful_realizations()
+        await evaluator_task
+        return evaluator_task.result()
+
+    # This function needs to be there for the sake of testing that expects sync ee run
+    def run_ensemble_evaluator(
+        self, run_context: RunContext, ee_config: EvaluatorServerConfig
+    ) -> List[int]:
+        successful_realizations = asyncio.run(
+            self.run_ensemble_evaluator_async(run_context, ee_config)
+        )
+        return successful_realizations
 
     def _build_ensemble(
         self,
@@ -647,6 +657,7 @@ class BaseRunModel:
         successful_realizations = self.run_ensemble_evaluator(
             run_context, evaluator_server_config
         )
+
         starting_realizations = run_context.active_realizations
         failed_realizations = list(
             set(starting_realizations) - set(successful_realizations)

@@ -1,5 +1,4 @@
 import fileinput
-import importlib
 import json
 import logging
 import os
@@ -26,14 +25,12 @@ from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
-from _ert.async_utils import get_running_loop
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.services import StorageService
-from ert.shared.feature_toggling import FeatureScheduler
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -55,7 +52,7 @@ def log_check():
 
 @pytest.fixture(scope="session", autouse=True)
 def _reraise_thread_exceptions_on_main_thread():
-    """Allow `ert.shared.threading.ErtThread` to re-raise exceptions on main thread"""
+    """Allow `_ert.threading.ErtThread` to re-raise exceptions on main thread"""
     set_signal_handler()
 
 
@@ -92,9 +89,6 @@ def fixture_source_root():
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data"
-    request.cls.SHARE_ROOT = str(
-        Path(importlib.util.find_spec("ert.shared").origin).parent / "share"
-    )
     yield
 
 
@@ -302,24 +296,6 @@ def _qt_excepthook(monkeypatch):
         next_excepthook(cls, exc, tb)
 
     monkeypatch.setattr(sys, "excepthook", excepthook)
-
-
-@pytest.fixture(
-    params=[
-        pytest.param(False, id="using_job_queue"),
-        pytest.param(True, id="using_scheduler"),
-    ]
-)
-def using_scheduler(request, monkeypatch):
-    should_enable_scheduler = request.param
-    if should_enable_scheduler:
-        # Flaky - the new scheduler needs an event loop, which might not be initialized yet.
-        #  This might be a bug in python 3.8, but it does not occur locally.
-        _ = get_running_loop()
-
-    monkeypatch.setenv("ERT_FEATURE_SCHEDULER", "1" if should_enable_scheduler else "0")
-    monkeypatch.setattr(FeatureScheduler, "_value", should_enable_scheduler)
-    yield should_enable_scheduler
 
 
 def pytest_collection_modifyitems(config, items):

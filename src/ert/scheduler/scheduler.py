@@ -122,6 +122,8 @@ class Scheduler:
         self._ee_cert = ee_cert
         self._ee_token = ee_token
         self._publisher_done = asyncio.Event()
+        # this timeout makes sure we won't wait for the queue and the sentinel indefinitely
+        self._queue_timeout: float = 10.0
         self._consumer_started = asyncio.Event()
         self.checksum: Dict[str, Dict[str, Any]] = {}
         self.checksum_listener: Optional[asyncio.Task[None]] = None
@@ -273,8 +275,8 @@ class Scheduler:
                         event = await self._events.get()
                     if event == CLOSE_PUBLISHER_SENTINEL:
                         self._publisher_done.set()
-                        return
-                    await conn.send(event)
+                    else:
+                        await conn.send(event)
                     event = None
                     self._events.task_done()
             except ConnectionClosed:
@@ -318,8 +320,18 @@ class Scheduler:
 
             if not self.is_active():
                 if self._ee_uri is not None:
-                    await self._events.put(CLOSE_PUBLISHER_SENTINEL)
-                    await self._publisher_done.wait()
+                    try:
+                        await self._events.put(CLOSE_PUBLISHER_SENTINEL)
+                        await asyncio.wait_for(
+                            self._publisher_done.wait(), timeout=self._queue_timeout
+                        )
+                        await asyncio.wait_for(
+                            self._events.join(), timeout=self._queue_timeout
+                        )
+                    except asyncio.TimeoutError:
+                        logger.error(
+                            f"{self._events.qsize()} items left unprocessed in the queue!"
+                        )
                 for task in self._job_tasks.values():
                     if task.cancelled():
                         continue
@@ -402,8 +414,8 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "r") as fp:
+        with open(jobs_path, "r", encoding="utf-8") as fp:
             data = json.load(fp)
-        with open(jobs_path, "w") as fp:
+        with open(jobs_path, "w", encoding="utf-8") as fp:
             data.update(asdict(jobs))
             json.dump(data, fp, indent=4)

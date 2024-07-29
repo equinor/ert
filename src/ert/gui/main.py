@@ -35,8 +35,8 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
+from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -104,9 +104,7 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
 
-            ert_config = ErtConfig.with_plugins(
-                plugin_manager.forward_model_steps if plugin_manager else []
-            ).from_file(args.config)
+            ert_config = ErtConfig.with_plugins().from_file(args.config)
 
             local_storage_set_ert_config(ert_config)
         except ConfigValidationError as error:

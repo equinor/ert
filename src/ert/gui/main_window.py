@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
-from ert.shared.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager
 
 if TYPE_CHECKING:
     from ert.gui.tools import Tool

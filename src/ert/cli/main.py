@@ -22,9 +22,9 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
+from ert.plugins import ErtPluginManager
 from ert.run_models.base_run_model import StatusEvents
 from ert.run_models.model_factory import create_model
-from ert.shared.plugins import ErtPluginManager
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -44,9 +44,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
 
-    ert_config = ErtConfig.with_plugins(
-        plugin_manager.forward_model_steps if plugin_manager else []
-    ).from_file(args.config)
+    ert_config = ErtConfig.with_plugins().from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
 
