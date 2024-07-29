@@ -78,7 +78,7 @@ async def evaluator_to_use_fixture(make_ee_config):
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()
     yield evaluator
-    await evaluator._stop()
+    evaluator.stop()
     await run_task
 
 

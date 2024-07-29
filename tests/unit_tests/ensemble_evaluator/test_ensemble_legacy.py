@@ -23,7 +23,7 @@ def evaluator_to_use():
         try:
             yield evaluator
         finally:
-            await evaluator._stop()
+            evaluator.stop()
             await run_task
 
     return run_evaluator

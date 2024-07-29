@@ -173,7 +173,7 @@ class EnsembleEvaluator:
     async def _cancelled_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
             await self._append_message(self.ensemble.update_snapshot(events))
-            await self._stop()
+            self.stop()
 
     async def _failed_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status in (
@@ -188,7 +188,7 @@ class EnsembleEvaluator:
         if len(events) == 0:
             events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
         await self._append_message(self.ensemble.update_snapshot(events))
-        await self._signal_cancel()  # let ensemble know it should stop
+        self._signal_cancel()  # let ensemble know it should stop
 
     @property
     def ensemble(self) -> Ensemble:
@@ -250,11 +250,11 @@ class EnsembleEvaluator:
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    await self._signal_cancel()
+                    self._signal_cancel()
 
                 elif client_event["type"] == EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
-                    await self._stop()
+                    self.stop()
 
     @asynccontextmanager
     async def count_dispatcher(self) -> AsyncIterator[None]:
@@ -391,10 +391,10 @@ class EnsembleEvaluator:
             await self._messages_to_send.join()
         logger.debug("Async server exiting.")
 
-    async def _stop(self) -> None:
+    def stop(self) -> None:
         self._server_done.set()
 
-    async def _signal_cancel(self) -> None:
+    def _signal_cancel(self) -> None:
         """
         This is just a wrapper around logic for whether to signal cancel via
         a cancellable ensemble or to use internal stop-mechanism directly
@@ -409,7 +409,7 @@ class EnsembleEvaluator:
             self._loop.run_in_executor(None, self._ensemble.cancel)
         else:
             logger.debug("Stopping current ensemble")
-            await self._stop()
+            self.stop()
 
     async def _start_running(self) -> None:
         if not self._config:
