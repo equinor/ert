@@ -7,7 +7,7 @@ import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
 from qtpy.QtCore import Qt, Slot
-from qtpy.QtWidgets import QDockWidget, QMainWindow, QMessageBox, QTabWidget, QWidget
+from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 from ert.gui.plottery import PlotConfig, PlotContext
@@ -36,14 +36,11 @@ STD_DEV = "Std Dev"
 
 logger = logging.getLogger(__name__)
 
-from qtpy.QtCore import QTimer
-from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QTextEdit,
     QVBoxLayout,
 )
@@ -70,44 +67,21 @@ def create_error_dialog(title: str, content: str) -> QDialog:
     layout = QVBoxLayout()
     top_layout = QHBoxLayout()
     top_layout.addWidget(QLabel(title))
-    copy_button = QPushButton("")
-    copy_button.setMinimumHeight(35)
-    copy_button.setMaximumWidth(100)
-    top_layout.addWidget(copy_button)
-
-    restore_timer = QTimer()
-
-    def restore_text() -> None:
-        copy_button.setIcon(QIcon("img:copy.svg"))
-
-    restore_text()
-
-    def copy_text() -> None:
-        clipboard = QApplication.clipboard()
-        if clipboard:
-            clipboard.setText(text)
-        else:
-            QMessageBox.critical(
-                None,
-                "Error",
-                "Cannot copy text to clipboard because your system does not have a clipboard",
-                QMessageBox.Ok,
-            )
-        copy_button.setIcon(QIcon("img:check.svg"))
-
-        restore_timer.start(1000)
-
-    copy_button.clicked.connect(copy_text)
-    restore_timer.timeout.connect(restore_text)
-    layout.addLayout(top_layout)
 
     text = QTextEdit()
     text.setText(content)
     text.setReadOnly(True)
+
+    copy_button = _CopyButton(text)
+    copy_button.setObjectName("copy_button")
+    top_layout.addWidget(copy_button)
+    top_layout.addStretch(-1)
+
+    layout.addLayout(top_layout)
     layout.addWidget(text)
+
     qd.setLayout(layout)
-    QApplication.restoreOverrideCursor()
-    qd.exec()
+    return qd
 
 
 def open_error_dialog(title: str, content: str) -> None:
