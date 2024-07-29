@@ -40,6 +40,12 @@ async def test_when_task_fails_evaluator_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
+async def test_no_config_raises_valueerror_when_running():
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), None, 0)
+    with pytest.raises(ValueError, match="no config for evaluator"):
+        await evaluator.run_and_get_successful_realizations()
+
+
 @pytest.mark.parametrize(
     ("task, task_name"),
     [
