@@ -8,9 +8,7 @@ from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QMessageBox
 
 from ert.config import ErtConfig
-from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.listeditbox import ListEditBox
-from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.services import StorageService
 from ert.storage import open_storage

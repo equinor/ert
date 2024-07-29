@@ -7,10 +7,14 @@ from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, StringBox, TextModel
-from ert.gui.ertwidgets.copyablelabel import CopyableLabel
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
+from ert.gui.ertwidgets import (
+    ActiveRealizationsModel,
+    AnalysisModuleEdit,
+    CopyableLabel,
+    StringBox,
+    TargetEnsembleModel,
+    TextModel,
+)
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
