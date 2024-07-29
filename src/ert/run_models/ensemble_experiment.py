@@ -104,3 +104,7 @@ class EnsembleExperiment(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Ensemble experiment"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → evaluate (N realizations)"

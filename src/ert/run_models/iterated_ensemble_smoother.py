@@ -232,3 +232,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Iterated ensemble smoother"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → [Evaluate → update] for N iterations"

@@ -39,3 +39,7 @@ class SingleTestRun(EnsembleExperiment):
     @classmethod
     def name(cls) -> str:
         return "Single realization test-run"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Sample parameters → evaluate (one realization)"

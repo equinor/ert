@@ -259,3 +259,7 @@ class MultipleDataAssimilation(BaseRunModel):
     @classmethod
     def name(cls) -> str:
         return "Multiple Data Assimilation (ES MDA) - Recommended"
+
+    @classmethod
+    def description(cls) -> str:
+        return "[Sample|restart] → [Evaluate → update] for each weight"
