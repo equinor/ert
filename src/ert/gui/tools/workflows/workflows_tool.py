@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtGui import QIcon
 
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.workflows import RunWorkflowWidget
 

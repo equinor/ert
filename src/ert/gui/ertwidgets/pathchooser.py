@@ -8,7 +8,7 @@ from qtpy.QtCore import QSize
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
-from ert.gui.ertwidgets.validationsupport import ValidationSupport
+from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
     from .models.path_model import PathModel

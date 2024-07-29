@@ -36,9 +36,7 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -47,6 +45,7 @@ from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments.manage_experiments_tool import (
     ManageExperimentsTool,
 )
+from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import Storage, open_storage

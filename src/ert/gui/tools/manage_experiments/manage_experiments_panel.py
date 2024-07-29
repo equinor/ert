@@ -13,12 +13,15 @@ from qtpy.QtWidgets import (
 )
 
 from ert.enkf_main import sample_prior
-from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.gui.ertwidgets.checklist import CheckList
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
-from ert.gui.ertwidgets.storage_info_widget import StorageInfoWidget
-from ert.gui.ertwidgets.storage_widget import StorageWidget
+from ert.gui.ertwidgets import (
+    CheckList,
+    EnsembleSelector,
+    SelectableListModel,
+    showWaitCursorWhileWaiting,
+)
+
+from .storage_info_widget import StorageInfoWidget
+from .storage_widget import StorageWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig

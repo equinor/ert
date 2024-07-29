@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.gui.ertwidgets.summarypanel import SummaryPanel
+from ert.gui.summarypanel import SummaryPanel
 
 
 @pytest.mark.parametrize(
