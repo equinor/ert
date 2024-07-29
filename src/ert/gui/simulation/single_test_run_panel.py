@@ -4,7 +4,7 @@ from datetime import datetime
 from qtpy.QtWidgets import QFormLayout
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.copyablelabel import CopyableLabel
+from ert.gui.ertwidgets import CopyableLabel
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 

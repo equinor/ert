@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.export import ExportPanel
 from ert.shared.exporter import Exporter

@@ -18,7 +18,6 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.gui.ertwidgets import SummaryPanel
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
@@ -41,6 +40,7 @@ from ert.storage import Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
+from .summarypanel import SummaryPanel
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from qtpy.QtGui import QPalette
 from qtpy.QtWidgets import QLineEdit
 
-from ert.gui.ertwidgets import ValidationSupport
+from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
     from ert.validation import ArgumentDefinition

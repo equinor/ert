@@ -4,8 +4,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QPushButton
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets import ClosableDialog, showWaitCursorWhileWaiting
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
 from ert.libres_facade import LibresFacade

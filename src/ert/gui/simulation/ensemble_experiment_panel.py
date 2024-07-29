@@ -5,9 +5,12 @@ from qtpy.QtCore import Slot
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import StringBox, TextModel
-from ert.gui.ertwidgets.copyablelabel import CopyableLabel
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
+from ert.gui.ertwidgets import (
+    ActiveRealizationsModel,
+    CopyableLabel,
+    StringBox,
+    TextModel,
+)
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument

@@ -1,13 +1,19 @@
+from typing import Callable
+
 from qtpy.QtCore import (
     QAbstractItemModel,
     QItemSelectionModel,
     QModelIndex,
+    QSize,
     QSortFilterProxyModel,
     Qt,
     Signal,
 )
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
+    QHBoxLayout,
     QLineEdit,
+    QToolButton,
     QTreeView,
     QVBoxLayout,
     QWidget,
@@ -16,14 +22,41 @@ from qtpy.QtWidgets import (
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
-from ert.gui.ertwidgets.models.storage_model import (
+from ert.storage import Ensemble, Experiment
+
+from .storage_model import (
     EnsembleModel,
     ExperimentModel,
     RealizationModel,
     StorageModel,
 )
-from ert.storage import Ensemble, Experiment
+
+
+class AddWidget(QWidget):
+    """
+    A widget with an add button.
+    Parameters
+    ----------
+    addFunction: Callable to be connected to the add button.
+    """
+
+    def __init__(self, addFunction: Callable[[], None]) -> None:
+        super().__init__()
+
+        self.addButton = QToolButton(self)
+        self.addButton.setIcon(QIcon("img:add_circle_outlined.svg"))
+        self.addButton.setIconSize(QSize(16, 16))
+        self.addButton.clicked.connect(addFunction)
+
+        self.removeButton = None
+
+        self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonLayout.addStretch(1)
+        self.buttonLayout.addWidget(self.addButton)
+        self.buttonLayout.addSpacing(2)
+
+        self.setLayout(self.buttonLayout)
 
 
 class _SortingProxyModel(QSortFilterProxyModel):
