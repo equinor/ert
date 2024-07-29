@@ -13,11 +13,11 @@ from qtpy.QtWidgets import (
 )
 
 from ert.data import MeasuredData
-from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
 

@@ -4,14 +4,14 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.storage_info_widget import (
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
+from ert.gui.tools.manage_experiments.storage_info_widget import (
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
     _WidgetType,
 )
-from ert.gui.ertwidgets.storage_widget import StorageWidget
-from ert.gui.tools.manage_experiments import ManageExperimentsPanel
+from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.storage import Storage
 from ert.storage.realization_storage_state import RealizationStorageState
 

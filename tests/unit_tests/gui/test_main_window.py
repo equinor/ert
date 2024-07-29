@@ -27,11 +27,9 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
-from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -39,6 +37,7 @@ from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,

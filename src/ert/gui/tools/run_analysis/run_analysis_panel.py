@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Any
 from qtpy.QtWidgets import QFormLayout, QLineEdit, QWidget
 
 from ert.config import AnalysisModule
-from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.gui.ertwidgets import AnalysisModuleEdit, EnsembleSelector
 
 if TYPE_CHECKING:
     from ert.gui.ertnotifier import ErtNotifier
