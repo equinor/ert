@@ -38,6 +38,7 @@ from .models import (
 )
 from .copyablelabel import CopyableLabel
 from .message_box import ErtMessageBox
+from .copy_button import CopyButton
 
 __all__ = [
     "TextModel",
@@ -58,4 +59,5 @@ __all__ = [
     "ListEditBox",
     "CustomDialog",
     "PathChooser",
+    "CopyButton",
 ]
