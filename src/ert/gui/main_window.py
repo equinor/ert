@@ -113,6 +113,7 @@ class ErtMainWindow(QMainWindow):
         show_about = help_menu.addAction("About")
         assert show_about is not None
         show_about.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
+        show_about.setObjectName("about_action")
         show_about.triggered.connect(self.__showAboutMessage)
 
     def __saveSettings(self) -> None:

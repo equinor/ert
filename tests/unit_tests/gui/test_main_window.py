@@ -11,9 +11,11 @@ import numpy as np
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
+    QAction,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
+    QMenuBar,
     QMessageBox,
     QPushButton,
     QToolButton,
@@ -24,6 +26,7 @@ from xtgeo import RegularSurface
 
 import ert.gui
 from ert.config import ErtConfig
+from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
@@ -709,3 +712,23 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert len(ensemble_selector._ensemble_list()) == 1
 
         assert restart_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_help_menu(qtbot):
+    args = Mock()
+    args.config = "poly.ert"
+    ert_config = ErtConfig.from_file(args.config)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+        assert gui.windowTitle().startswith("ERT - poly.ert")
+        menu_bar = gui.menuBar()
+        assert isinstance(menu_bar, QMenuBar)
+        get_child(menu_bar, QAction, name="about_action").trigger()
+        about_dialog = wait_for_child(gui, qtbot, AboutDialog)
+        assert about_dialog.windowTitle() == "About"
+        qtbot.mouseClick(
+            get_child(about_dialog, QPushButton, name="close_button"), Qt.LeftButton
+        )
