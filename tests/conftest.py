@@ -492,3 +492,9 @@ def _mock_flaky_qstat(error_message_to_output: str):
         )
     )
     qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_logstart(nodeid, location):
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
+    print(f"\n[Worker: {worker_id}] Starting test: {nodeid}")
