@@ -161,7 +161,7 @@ def _get_observations_and_responses(
             all_responses = all_responses.reindex(
                 time=observation.time,
                 method="nearest",
-                tolerance="1s",  # type: ignore
+                tolerance="1s",
             )
         try:
             observations_and_responses = observation.merge(all_responses, join="left")
