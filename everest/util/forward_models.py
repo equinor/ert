@@ -14,7 +14,10 @@ def collect_forward_models():
 
 
 def collect_forward_model_schemas():
-    return pm.hook.get_forward_models_schemas().pop()
+    schemas = pm.hook.get_forward_models_schemas()
+    if schemas:
+        return schemas.pop()
+    return {}
 
 
 def lint_forward_model_job(job: str, args) -> List[str]:

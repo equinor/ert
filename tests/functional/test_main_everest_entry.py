@@ -13,7 +13,7 @@ from everest.detached import (
 )
 from ruamel.yaml import YAML
 from seba_sqlite.snapshot import SebaSnapshot
-from tests.utils import capture_streams, relpath, tmpdir
+from tests.utils import capture_streams, relpath, skipif_no_everest_models, tmpdir
 
 CONFIG_PATH = relpath("..", "examples", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
@@ -168,6 +168,8 @@ controls -> 0 -> initial_guess
 
 @tmpdir(EGG_CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 def test_everest_main_configdump_entry():
     # Setup command line arguments
     with capture_streams() as (out, err):

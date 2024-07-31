@@ -8,7 +8,7 @@ from everest.config import EverestConfig
 from everest.simulator.everest2res import everest2res
 from ruamel.yaml import YAML
 
-from tests.utils import MockParser, relpath, tmpdir
+from tests.utils import MockParser, relpath, skipif_no_everest_models, tmpdir
 
 snake_oil_folder = relpath("test_data", "snake_oil")
 
@@ -98,6 +98,8 @@ def test_valid_config_file():
 
 @tmpdir(relpath("test_data", "valid_config_file", "forward_models"))
 @pytest.mark.fails_on_macos_github_workflow
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 def test_valid_forward_model_config_files():
     parser = MockParser()
     EverestConfig.load_file_with_argparser(
@@ -108,6 +110,8 @@ def test_valid_forward_model_config_files():
 
 
 @tmpdir(relpath("test_data", "valid_config_file", "forward_models"))
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @pytest.mark.fails_on_macos_github_workflow
 def test_invalid_forward_model_config_files():
     parser = MockParser()

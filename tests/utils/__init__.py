@@ -1,4 +1,5 @@
 import contextlib
+import importlib.util
 import logging
 import os
 import pathlib
@@ -34,6 +35,13 @@ def skipif_no_simulator(function):
         condition=os.environ.get("NO_PROJECT_RES", False),
         reason="Skipping tests when no access to /project/res",
     )(function)
+
+
+def skipif_no_everest_models(function):
+    """Decorator to skip a test if everest-models is not available"""
+    spec = importlib.util.find_spec("everest_models")
+    not_found = spec is None
+    return pytest.mark.skipif(not_found, reason="everest-models not found")(function)
 
 
 def hide_opm(function):

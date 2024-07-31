@@ -5,7 +5,7 @@ import pytest
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
 
-from tests.utils import relpath, tmpdir
+from tests.utils import relpath, skipif_no_everest_models, tmpdir
 
 CONFIG_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "config_workflow.yml"
@@ -28,6 +28,8 @@ def test_workflow_run():
 
 
 @pytest.mark.integration_test
+@pytest.mark.everest_models_test
+@skipif_no_everest_models
 @pytest.mark.parametrize("config", ("array", "index"))
 def test_state_modifier_workflow_run(
     config: str, copy_testdata_tmpdir: Callable[[Optional[str]], Path]
