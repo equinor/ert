@@ -119,7 +119,7 @@ async def test_queue_config_properties_propagated_to_scheduler(
     monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)
     ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
     ensemble._config = MagicMock()
-    ensemble._job_queue = mocked_scheduler
+    ensemble._scheduler = mocked_scheduler
 
     # The properties we want to propagate from QueueConfig to the Scheduler object:
     monkeypatch.setattr(QueueConfig, "submit_sleep", 33)

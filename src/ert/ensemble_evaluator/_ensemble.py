@@ -118,7 +118,7 @@ class LegacyEnsemble:
     id_: str
 
     def __post_init__(self) -> None:
-        self._job_queue: Optional[_KillAllJobs] = None
+        self._scheduler: Optional[_KillAllJobs] = None
         self._config: Optional[EvaluatorServerConfig] = None
         self.snapshot: Snapshot = self._create_snapshot()
         self.status = self.snapshot.status
@@ -241,7 +241,7 @@ class LegacyEnsemble:
 
         try:
             driver = create_driver(self._queue_config)
-            queue = Scheduler(
+            self._scheduler = Scheduler(
                 driver,
                 self.active_reals,
                 max_submit=self._queue_config.max_submit,
@@ -255,7 +255,6 @@ class LegacyEnsemble:
             scheduler_logger.info(
                 f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
             )
-            self._job_queue = queue
 
             await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_STARTED, None))
 
@@ -265,8 +264,8 @@ class LegacyEnsemble:
                 else 0
             )
 
-            queue.add_dispatch_information_to_jobs_file()
-            result = await queue.execute(min_required_realizations)
+            self._scheduler.add_dispatch_information_to_jobs_file()
+            result = await self._scheduler.execute(min_required_realizations)
 
         except Exception as exc:
             logger.exception(
@@ -292,8 +291,8 @@ class LegacyEnsemble:
         return True
 
     def cancel(self) -> None:
-        if self._job_queue is not None:
-            self._job_queue.kill_all_jobs()
+        if self._scheduler is not None:
+            self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")
 
 
