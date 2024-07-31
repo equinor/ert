@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import traceback
 import uuid
@@ -232,7 +231,6 @@ class LegacyEnsemble:
         argument.
         """
         event_creator = self.generate_event_creator(experiment_id=experiment_id)
-        timeout_queue: Optional[asyncio.Queue[Any]] = None
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
