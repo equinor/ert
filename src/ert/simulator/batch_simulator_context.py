@@ -41,16 +41,16 @@ def _slug(entity: str) -> str:
 
 def _run_forward_model(
     ert_config: "ErtConfig",
-    job_queue: Scheduler,
+    scheduler: Scheduler,
     run_args: List[RunArg],
 ) -> None:
     # run simplestep
-    asyncio.run(_submit_and_run_jobqueue(ert_config, job_queue, run_args))
+    asyncio.run(_submit_and_run_jobqueue(ert_config, scheduler, run_args))
 
 
 async def _submit_and_run_jobqueue(
     ert_config: "ErtConfig",
-    job_queue: Scheduler,
+    scheduler: Scheduler,
     run_args: List[RunArg],
 ) -> None:
     max_runtime: Optional[int] = ert_config.analysis_config.max_runtime
@@ -68,13 +68,13 @@ async def _submit_and_run_jobqueue(
             num_cpu=ert_config.preferred_num_cpu,
             job_script=ert_config.queue_config.job_script,
         )
-        job_queue.set_realization(realization)
+        scheduler.set_realization(realization)
 
     required_realizations = 0
     if ert_config.queue_config.stop_long_running:
         required_realizations = ert_config.analysis_config.minimum_required_realizations
     with contextlib.suppress(asyncio.CancelledError):
-        await job_queue.execute(required_realizations)
+        await scheduler.execute(required_realizations)
 
 
 @dataclass
@@ -92,7 +92,7 @@ class BatchContext:
         """
         ert_config = self.ert_config
         driver = create_driver(ert_config.queue_config)
-        self._job_queue = Scheduler(
+        self._scheduler = Scheduler(
             driver, max_running=self.ert_config.queue_config.max_running
         )
         # fill in the missing geo_id data
@@ -125,7 +125,7 @@ class BatchContext:
 
         # Wait until the queue is active before we finish the creation
         # to ensure sane job status while running
-        while self.running() and not self._job_queue.is_active():
+        while self.running() and not self._scheduler.is_active():
             time.sleep(0.1)
 
     def __len__(self) -> int:
@@ -137,7 +137,7 @@ class BatchContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = ErtThread(
             target=lambda: _run_forward_model(
-                self.ert_config, self._job_queue, self.run_args
+                self.ert_config, self._scheduler, self.run_args
             )
         )
         sim_thread.start()
@@ -151,7 +151,7 @@ class BatchContext:
             time.sleep(1)
 
     def running(self) -> bool:
-        return self._sim_thread.is_alive() or self._job_queue.is_active()
+        return self._sim_thread.is_alive() or self._scheduler.is_active()
 
     @property
     def status(self) -> Status:
@@ -160,7 +160,7 @@ class BatchContext:
 
         NB: Killed realizations are not reported.
         """
-        states = self._job_queue.count_states()
+        states = self._scheduler.count_states()
         return Status(
             running=states[JobState.RUNNING],
             waiting=states[JobState.WAITING],
@@ -229,7 +229,7 @@ class BatchContext:
             JobState.FAILED: JobStatus.FAILED,
             JobState.ABORTED: JobStatus.IS_KILLED,
         }
-        return state_to_legacy[self._job_queue._jobs[iens].state]
+        return state_to_legacy[self._scheduler._jobs[iens].state]
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
         """Will return a detailed progress of the job.
@@ -256,14 +256,14 @@ class BatchContext:
             raise KeyError(e) from e
 
         if (
-            iens not in self._job_queue._jobs
-            or self._job_queue._jobs[iens].state == JobState.WAITING
+            iens not in self._scheduler._jobs
+            or self._scheduler._jobs[iens].state == JobState.WAITING
         ):
             return None
         return ForwardModelStatus.load(run_arg.runpath)
 
     def stop(self) -> None:
-        self._job_queue.kill_all_jobs()
+        self._scheduler.kill_all_jobs()
         self._sim_thread.join()
 
     def run_path(self, iens: int) -> str:
