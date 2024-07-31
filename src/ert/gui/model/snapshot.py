@@ -1,5 +1,4 @@
 import logging
-import os
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
@@ -430,7 +429,6 @@ class SnapshotModel(QAbstractItemModel):
                 if node.parent
                 else None
             )
-
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = JOB_COLUMNS[index.column()]
