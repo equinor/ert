@@ -379,6 +379,11 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
     snake_oil_case_storage: ErtConfig, qtbot: QtBot
 ):
+    """
+    This is a regression test for a crash happening when
+    closing the RunDialog with a file open.
+    """
+
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
@@ -673,7 +678,6 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 
         qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
 
-        # assert run_dialog.findChild(FileDialog) is not None
         qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
 
         with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
