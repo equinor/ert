@@ -17,7 +17,7 @@ from ert.scheduler import Scheduler
 def evaluator_to_use():
     @asynccontextmanager
     async def run_evaluator(ensemble, ee_config):
-        evaluator = EnsembleEvaluator(ensemble, ee_config, 0)
+        evaluator = EnsembleEvaluator(ensemble, ee_config)
         run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
         await evaluator._server_started.wait()
         try:

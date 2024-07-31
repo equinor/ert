@@ -30,7 +30,7 @@ async def test_when_task_fails_evaluator_raises_exception(
     async def mock_failure(message, *args, **kwargs):
         raise RuntimeError(message)
 
-    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config(), 0)
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
     monkeypatch.setattr(
         EnsembleEvaluator,
         task,
@@ -41,7 +41,7 @@ async def test_when_task_fails_evaluator_raises_exception(
 
 
 async def test_no_config_raises_valueerror_when_running():
-    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), None, 0)
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), None)
     with pytest.raises(ValueError, match="no config for evaluator"):
         await evaluator.run_and_get_successful_realizations()
 
@@ -60,7 +60,7 @@ async def test_when_task_prematurely_ends_raises_exception(
     async def mock_done_prematurely(message, *args, **kwargs):
         await asyncio.sleep(0.5)
 
-    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config(), 0)
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
     monkeypatch.setattr(
         EnsembleEvaluator,
         task,
@@ -74,7 +74,7 @@ async def test_when_task_prematurely_ends_raises_exception(
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config(), 0)
+    evaluator = EnsembleEvaluator(ensemble, make_ee_config())
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()
     yield evaluator
