@@ -15,6 +15,7 @@ from tests.utils import (
     everest_default_jobs,
     hide_opm,
     relpath,
+    skipif_no_everest_models,
     skipif_no_opm,
     skipif_no_simulator,
     tmpdir,
@@ -580,6 +581,8 @@ def test_egg_model_convert():
 
 @hide_opm
 @tmpdir(relpath(ROOT))
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 def test_egg_model_convert_no_opm():
     config = EverestConfig.load_file(CONFIG_FILE)
     ert_config = everest2res(config)
@@ -595,8 +598,12 @@ def test_egg_model_convert_no_opm():
     assert exp_ert_config == ert_config
 
 
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @tmpdir(relpath(ROOT))
 def test_opm_fail_default_summary_keys():
+    pytest.importorskip("everest_models")
+
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.model.data_file = os.path.realpath(CONFIG_FILE)
@@ -617,6 +624,8 @@ def test_opm_fail_default_summary_keys():
     assert exp_ert_config == ert_config
 
 
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @skipif_no_opm
 @tmpdir(relpath(ROOT))
 def test_opm_fail_explicit_summary_keys():
@@ -661,6 +670,8 @@ def test_opm_fail_explicit_summary_keys():
     assert exp_ert_config == ert_config
 
 
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @pytest.mark.integration_test
 @tmpdir(relpath(ROOT))
 def test_init_egg_model():
@@ -669,6 +680,8 @@ def test_init_egg_model():
     ErtConfig.with_plugins().from_dict(config_dict=ert_config)
 
 
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @skipif_no_simulator
 @pytest.mark.simulation_test
 @tmpdir(relpath(ROOT))
@@ -774,6 +787,8 @@ def test_run_egg_model():
         assert expected_key in columns
 
 
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
 @skipif_no_opm
 @tmpdir(relpath(ROOT))
 def test_egg_model_wells_json_output_no_none():
