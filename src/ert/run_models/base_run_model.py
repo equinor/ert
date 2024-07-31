@@ -416,11 +416,10 @@ class BaseRunModel:
             )
         )
 
-    def send_snapshot_event(self, event: CloudEvent) -> None:
+    def send_snapshot_event(self, event: CloudEvent, iteration: int) -> None:
         if event["type"] == EVTYPE_EE_SNAPSHOT:
-            iter_ = event.data["iter"]
             snapshot = Snapshot(event.data)
-            self._iter_snapshot[iter_] = snapshot
+            self._iter_snapshot[iteration] = snapshot
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 FullSnapshotEvent(
@@ -430,19 +429,20 @@ class BaseRunModel:
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
-                    iteration=iter_,
+                    iteration=iteration,
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
         elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
-            iter_ = event.data["iter"]
-            if iter_ not in self._iter_snapshot:
+            if iteration not in self._iter_snapshot:
                 raise OutOfOrderSnapshotUpdateException(
                     f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
-                    f"snapshot for iter {iter_}"
+                    f"snapshot for iter {iteration}"
                 )
-            partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(event)
-            self._iter_snapshot[iter_].merge_event(partial)
+            partial = PartialSnapshot(self._iter_snapshot[iteration]).from_cloudevent(
+                event
+            )
+            self._iter_snapshot[iteration].merge_event(partial)
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 SnapshotUpdateEvent(
@@ -452,12 +452,14 @@ class BaseRunModel:
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
-                    iteration=iter_,
+                    iteration=iteration,
                     partial_snapshot=partial,
                 )
             )
 
-    async def run_monitor(self, ee_config: EvaluatorServerConfig) -> bool:
+    async def run_monitor(
+        self, ee_config: EvaluatorServerConfig, iteration: int
+    ) -> bool:
         try:
             event_logger.debug("connecting to new monitor...")
             async with Monitor(ee_config.get_connection_info()) as monitor:
@@ -467,7 +469,7 @@ class BaseRunModel:
                         EVTYPE_EE_SNAPSHOT,
                         EVTYPE_EE_SNAPSHOT_UPDATE,
                     ):
-                        self.send_snapshot_event(event)
+                        self.send_snapshot_event(event, iteration)
                         if event.data.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
@@ -516,12 +518,11 @@ class BaseRunModel:
         evaluator = EnsembleEvaluator(
             ee_ensemble,
             ee_config,
-            ensemble.iteration,
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-        if not (await self.run_monitor(ee_config)):
+        if not (await self.run_monitor(ee_config, ensemble.iteration)):
             return []
 
         event_logger.debug(
