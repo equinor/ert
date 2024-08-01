@@ -10,7 +10,7 @@ import pandas as pd
 from ert.analysis.event import DataSection
 
 if TYPE_CHECKING:
-    from ert.config import WorkflowJob
+    from ert.config import ErtConfig, WorkflowJob
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.workflow_runner import WorkflowJobRunner
@@ -24,9 +24,9 @@ class Exporter:
         export_job: Optional[WorkflowJob],
         runpath_job: Optional[WorkflowJob],
         notifier: ErtNotifier,
-        runpath_file: Path,
+        config: ErtConfig,
     ):
-        self.runpath_file = runpath_file
+        self.config = config
         self.export_job = export_job
         self.runpath_job = runpath_job
         self._notifier = notifier
@@ -51,7 +51,11 @@ class Exporter:
         runpath_job_runner = WorkflowJobRunner(self.runpath_job)
 
         runpath_job_runner.run(
-            fixtures={"storage": self._notifier.storage},
+            fixtures={
+                "storage": self._notifier.storage,
+                "ert_config": self.config,
+                "workflow_args": [],
+            },
             arguments=[],
         )
         if runpath_job_runner.hasFailed():
@@ -59,9 +63,9 @@ class Exporter:
 
         export_job_runner = WorkflowJobRunner(self.export_job)
         user_warn = export_job_runner.run(
-            fixtures={"storage": self._notifier.storage},
+            fixtures={"storage": self._notifier.storage, "ert_config": self.config},
             arguments=[
-                str(self.runpath_file),
+                str(self.config.runpath_file),
                 parameters["output_file"],
                 parameters["time_index"],
                 parameters["column_keys"],

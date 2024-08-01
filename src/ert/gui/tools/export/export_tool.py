@@ -26,7 +26,7 @@ class ExportTool(Tool):
             config.workflow_jobs.get("CSV_EXPORT2"),
             config.workflow_jobs.get("EXPORT_RUNPATH"),
             notifier,
-            config.runpath_file,
+            config,
         )
         self.setEnabled(self.__exporter.is_valid())
 
