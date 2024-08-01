@@ -14,7 +14,8 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.export import ExportPanel
-from ert.shared.exporter import Exporter
+
+from .exporter import Exporter
 
 
 class ExportTool(Tool):
