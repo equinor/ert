@@ -55,11 +55,12 @@ class ClosableDialog(QDialog):
         ):
             QDialog.keyPressEvent(self, a0)
 
-    def addButton(self, caption: str, listener: QT_SLOT) -> None:
+    def addButton(self, caption: str, listener: QT_SLOT) -> QPushButton:
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
         self.__button_layout.insertWidget(1, button)
         button.clicked.connect(listener)
+        return button
 
     def toggleButton(self, caption: str, enabled: bool) -> None:
         button = self.findChild(QPushButton, str(caption).capitalize())
