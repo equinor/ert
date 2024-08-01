@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, no_type_check
+from typing import TYPE_CHECKING, Any, cast, no_type_check
 from weakref import ref
 
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -41,19 +41,23 @@ class ExportTool(Tool):
             ClosableDialog("Export", self.__export_widget(), self.parent())
         )
         self.__export_widget().updateExportButton.connect(self.__dialog().toggleButton)
-        self.__dialog().addButton("Export", self.export)
+        export_button = self.__dialog().addButton("Export", self.export)
+        export_button.setObjectName("Export button")
         self.__dialog().show()
 
     def _run_export(self, params: dict[str, Any]) -> None:
         try:
             self.__exporter.run_export(params)
             QMessageBox.information(
-                None, "Success", """Export completed!""", QMessageBox.Ok
+                cast(QWidget, self.parent()),
+                "Success",
+                """Export completed!""",
+                QMessageBox.Ok,
             )
         except UserWarning as usrwarning:
             logging.error(str(usrwarning))
             QMessageBox.warning(
-                None,
+                cast(QWidget, self.parent()),
                 "Failure",
                 f"Export failed with the following message:\n{usrwarning}",
                 QMessageBox.Ok,

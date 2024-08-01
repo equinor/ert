@@ -37,7 +37,7 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view import RealizationWidget
@@ -46,6 +46,7 @@ from ert.gui.tools.manage_experiments.manage_experiments_tool import (
     ManageExperimentsTool,
 )
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
+from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import Storage, open_storage
@@ -58,7 +59,7 @@ def opened_main_window(
 ) -> Generator[ErtMainWindow, None, None]:
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
-    with _open_main_window(tmp_path) as (
+    with _open_main_window(tmp_path / "poly.ert") as (
         gui,
         storage,
         config,
@@ -102,25 +103,39 @@ def _add_default_ensemble(storage: Storage, gui: ErtMainWindow, config: ErtConfi
 def _open_main_window(
     path,
 ) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
-    config = ErtConfig.from_file(path / "poly.ert")
-
     args_mock = Mock()
-    args_mock.config = "poly.ert"
-    # handler defined here to ensure lifetime until end of function, if inlined
-    # it will cause the following error:
-    # RuntimeError: wrapped C/C++ object of type GUILogHandler
-    handler = GUILogHandler()
-    with open_storage(config.ens_path, mode="w") as storage:
-        gui = _setup_main_window(config, args_mock, handler, storage)
-        yield gui, storage, config
-        gui.close()
+    args_mock.config = str(path)
+    with ErtPluginContext() as plugin_context:
+        config = ErtConfig.with_plugins().from_file(path)
+        with open_storage(
+            config.ens_path, mode="w"
+        ) as storage, add_gui_log_handler() as log_handler:
+            gui = _setup_main_window(config, args_mock, log_handler, storage)
+            yield gui, storage, config
+            gui.close()
 
 
 @pytest.fixture
 def opened_main_window_clean(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
-    with _open_main_window(tmp_path) as (gui, _, config), StorageService.init_service(
+    with _open_main_window(tmp_path / "poly.ert") as (
+        gui,
+        _,
+        config,
+    ), StorageService.init_service(
+        project=os.path.abspath(config.ens_path),
+    ):
+        yield gui
+
+
+@pytest.fixture
+def opened_main_window_snake_oil(snake_oil_case_storage):
+    with _open_main_window(Path("./snake_oil.ert")) as (
+        gui,
+        _,
+        config,
+    ), StorageService.init_service(
         project=os.path.abspath(config.ens_path),
     ):
         yield gui
@@ -130,7 +145,7 @@ def opened_main_window_clean(source_root, tmp_path, monkeypatch):
 def _esmda_run(run_experiment, source_root, tmp_path_factory):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
-    with pytest.MonkeyPatch.context() as mp, _open_main_window(path) as (
+    with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
         gui,
         storage,
         config,
@@ -152,7 +167,7 @@ def _ensemble_experiment_run(
 ):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
-    with pytest.MonkeyPatch.context() as mp, _open_main_window(path) as (
+    with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
         gui,
         storage,
         config,
@@ -202,7 +217,7 @@ def _ensemble_experiment_run(
 def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copytree(_esmda_run, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path) as (
+    with _open_main_window(tmp_path / "poly.ert") as (
         gui,
         _,
         config,
@@ -221,7 +236,7 @@ def ensemble_experiment_has_run(
         run_experiment, source_root, tmp_path_factory, True
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path) as (
+    with _open_main_window(tmp_path / "poly.ert") as (
         gui,
         _,
         config,
@@ -240,7 +255,7 @@ def ensemble_experiment_has_run_no_failure(
         run_experiment, source_root, tmp_path_factory, False
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path) as (
+    with _open_main_window(tmp_path / "poly.ert") as (
         gui,
         _,
         config,
