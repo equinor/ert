@@ -6,7 +6,7 @@ import pytest
 from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QToolButton
+from qtpy.QtWidgets import QComboBox, QToolButton, QWidget
 
 import ert
 from ert.config import ErtConfig
@@ -19,11 +19,16 @@ from ert.ensemble_evaluator.event import (
 from ert.ensemble_evaluator.snapshot import PartialSnapshot, SnapshotBuilder
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
+from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.run_models import BaseRunModel
+from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.services import StorageService
+from ert.storage import open_storage
+from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from ..conftest import wait_for_child
 
@@ -372,49 +377,65 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
 
 
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
-    opened_main_window_clean, qtbot: QtBot
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot
 ):
     """
     This is a regression test for a crash happening when
     closing the RunDialog with a file open.
     """
-    gui = opened_main_window_clean
 
-    run_experiment = gui.findChild(QToolButton, name="run_experiment")
+    snake_oil_case = snake_oil_case_storage
+    args_mock = Mock()
+    args_mock.config = "snake_oil.ert"
 
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    with StorageService.init_service(
+        project=os.path.abspath(snake_oil_case.ens_path),
+    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
+        experiment_panel = gui.findChild(ExperimentPanel)
 
-    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-    run_dialog = gui.findChild(RunDialog)
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-    job_overview = run_dialog._job_overview
-    qtbot.waitUntil(job_overview.isVisible, timeout=20000)
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
 
-    realization_widget = run_dialog.findChild(RealizationWidget)
-
-    click_pos = realization_widget._real_view.rectForIndex(
-        realization_widget._real_list_model.index(0, 0)
-    ).center()
-
-    with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
-        qtbot.mouseClick(
-            realization_widget._real_view.viewport(),
-            Qt.LeftButton,
-            pos=click_pos,
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
         )
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
-    click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
-    qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        job_overview = run_dialog._job_overview
 
-    qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=3000)
+        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
-    with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
-        run_dialog.close()  # Close the run dialog by pressing 'x' close button
+        realization_widget = run_dialog.findChild(RealizationWidget)
 
-    # Ensure that once the run dialog is closed
-    # another simulation can be started
-    assert run_experiment.isEnabled()
+        click_pos = realization_widget._real_view.rectForIndex(
+            realization_widget._real_list_model.index(0, 0)
+        ).center()
+
+        with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
+            qtbot.mouseClick(
+                realization_widget._real_view.viewport(),
+                Qt.LeftButton,
+                pos=click_pos,
+            )
+
+        click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
+        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+
+        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
+
+        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+            run_dialog.close()  # Close the run dialog by pressing 'x' close button
+
+        # Ensure that once the run dialog is closed
+        # another simulation can be started
+        assert run_experiment.isEnabled()
 
 
 @pytest.mark.parametrize(
@@ -590,3 +611,74 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+
+
+def test_that_stdout_and_stderr_buttons_react_to_file_content(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot
+):
+    snake_oil_case = snake_oil_case_storage
+    args_mock = Mock()
+    args_mock.config = "snake_oil.ert"
+
+    with StorageService.init_service(
+        project=os.path.abspath(snake_oil_case.ens_path),
+    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
+        experiment_panel = gui.findChild(ExperimentPanel)
+
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
+        assert isinstance(simulation_mode_combo, QComboBox)
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
+
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
+
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        )
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        job_overview = run_dialog._job_overview
+
+        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+
+        realization_widget = run_dialog.findChild(RealizationWidget)
+
+        click_pos = realization_widget._real_view.rectForIndex(
+            realization_widget._real_list_model.index(0, 0)
+        ).center()
+
+        with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
+            qtbot.mouseClick(
+                realization_widget._real_view.viewport(),
+                Qt.LeftButton,
+                pos=click_pos,
+            )
+
+        job_stdout = job_overview.model().index(0, 4)
+        job_stderr = job_overview.model().index(0, 5)
+
+        assert job_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
+        assert job_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
+        assert job_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
+        assert job_stderr.data(Qt.ItemDataRole.ForegroundRole) == None
+
+        assert job_stdout.data(Qt.ItemDataRole.FontRole).underline() == True
+        assert job_stderr.data(Qt.ItemDataRole.FontRole) == None
+
+        click_pos = job_overview.visualRect(job_stdout).center()
+
+        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+
+        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
+
+        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+            run_dialog.close()

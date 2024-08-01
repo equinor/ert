@@ -61,7 +61,11 @@ from ert.run_models import (
     StatusEvents,
 )
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
-from ert.shared.status.utils import byte_with_unit, format_running_time
+from ert.shared.status.utils import (
+    byte_with_unit,
+    file_has_content,
+    format_running_time,
+)
 
 from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
@@ -116,7 +120,7 @@ class JobOverview(QTableView):
         file_dialog = self.findChild(QDialog, name=selected_file)
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
-        elif selected_file:
+        elif selected_file and file_has_content(selected_file):
             job_name = index.siblingAtColumn(0).data()
             FileDialog(
                 selected_file,
@@ -149,7 +153,9 @@ class JobOverview(QTableView):
             index = self.indexAt(event.pos())
             if index.isValid():
                 data_name = JOB_COLUMNS[index.column()]
-                if data_name in [ids.STDOUT, ids.STDERR]:
+                if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+                    index.data(FileRole)
+                ):
                     self.setCursor(Qt.CursorShape.PointingHandCursor)
                 else:
                     self.setCursor(Qt.CursorShape.ArrowCursor)
