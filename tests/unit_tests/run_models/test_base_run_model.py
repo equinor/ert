@@ -94,7 +94,7 @@ def test_check_if_runpath_exists(
         None,
         active_realizations=active_mask,
         start_iteration=start_iteration,
-        number_of_iterations=number_of_iterations,
+        total_iterations=number_of_iterations,
     )
     brm.facade = MagicMock(
         run_path=run_path,
@@ -131,7 +131,7 @@ def test_get_number_of_existing_runpaths(
         MagicMock(),
         active_realizations=active_mask,
         start_iteration=start_iteration,
-        number_of_iterations=number_of_iterations,
+        total_iterations=number_of_iterations,
     )
     brm.facade = MagicMock(
         run_path=run_path,

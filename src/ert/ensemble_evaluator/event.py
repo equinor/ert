@@ -6,9 +6,9 @@ from .snapshot import PartialSnapshot, Snapshot
 
 @dataclass
 class _UpdateEvent:
-    phase_name: str
-    current_phase: int
-    total_phases: int
+    iteration_label: str
+    current_iteration: int
+    total_iterations: int
     progress: float
     realization_count: int
     status_count: Dict[str, int]

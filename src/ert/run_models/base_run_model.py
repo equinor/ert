@@ -138,8 +138,7 @@ class BaseRunModel:
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
         active_realizations: List[bool],
-        phase_count: int = 1,
-        number_of_iterations: int = 1,
+        total_iterations: int = 1,
         start_iteration: int = 0,
         random_seed: Optional[int] = None,
         minimum_required_realizations: int = 0,
@@ -149,9 +148,9 @@ class BaseRunModel:
         and contains logic for interacting with the Ensemble Evaluator by running
         the forward model and passing events back through the supplied queue.
         """
-        self._phase: int = 0
-        self._phase_count = phase_count
-        self._phase_name: str = "Starting..."
+        self.current_iteration: int = 0
+        self._total_iterations = total_iterations
+        self._current_iteration_label: str = "Starting..."
 
         self.start_time: Optional[int] = None
         self.stop_time: Optional[int] = None
@@ -182,7 +181,6 @@ class BaseRunModel:
         # This holds state about the run model
         self.minimum_required_realizations = minimum_required_realizations
         self.active_realizations = copy.copy(active_realizations)
-        self.number_of_iterations = number_of_iterations
         self.start_iteration = start_iteration
         self.validate()
 
@@ -246,7 +244,7 @@ class BaseRunModel:
         self._failed = False
         self._error_messages = []
         self._exception = None
-        self._phase = 0
+        self.current_iteration = 0
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -336,24 +334,8 @@ class BaseRunModel:
     ) -> None:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    def phaseCount(self) -> int:
-        return self._phase_count
-
-    def setPhaseCount(self, phase_count: int) -> None:
-        self._phase_count = phase_count
-        self.setPhase(0, "")
-
-    def currentPhase(self) -> int:
-        return self._phase
-
-    def setPhaseName(self, phase_name: str) -> None:
-        self._phase_name = phase_name
-
-    def getPhaseName(self) -> str:
-        return self._phase_name
-
     def isFinished(self) -> bool:
-        return self._phase == self._phase_count or self.hasRunFailed()
+        return self.current_iteration == self._total_iterations or self._failed
 
     def hasRunFailed(self) -> bool:
         return self._failed
@@ -364,15 +346,16 @@ class BaseRunModel:
             return msg
         return f"{self._exception}\n{msg}"
 
-    def setPhase(self, phase: int, phase_name: str) -> None:
-        if not 0 <= phase <= self._phase_count:
+    def getCurrentIterationLabel(self) -> str:
+        return self._current_iteration_label
+
+    def setCurrentIteration(self, iteration: int) -> None:
+        if not 0 <= iteration <= self._total_iterations:
             raise ValueError(
-                f"Phase must be integer between (inclusive) 0 and {self._phase_count}"
+                f"Phase must be integer between (inclusive) 0 and {self._total_iterations}"
             )
 
-        self.setPhaseName(phase_name)
-
-        self._phase = phase
+        self.current_iteration = iteration
 
     def get_runtime(self) -> int:
         if self.start_time is None:
@@ -401,8 +384,8 @@ class BaseRunModel:
 
             realization_progress = float(done_realizations) / len(all_realizations)
             current_progress = (
-                (current_iter + realization_progress) / self.phaseCount()
-                if self.phaseCount() != 1
+                (current_iter + realization_progress) / self._total_iterations
+                if self._total_iterations != 1
                 else realization_progress
             )
 
@@ -423,9 +406,9 @@ class BaseRunModel:
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 FullSnapshotEvent(
-                    phase_name=self.getPhaseName(),
-                    current_phase=self.currentPhase(),
-                    total_phases=self.phaseCount(),
+                    iteration_label=self._current_iteration_label,
+                    current_iteration=self.current_iteration,
+                    total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
@@ -446,9 +429,9 @@ class BaseRunModel:
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 SnapshotUpdateEvent(
-                    phase_name=self.getPhaseName(),
-                    current_phase=self.currentPhase(),
-                    total_phases=self.phaseCount(),
+                    iteration_label=self._current_iteration_label,
+                    current_iteration=self.current_iteration,
+                    total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
@@ -579,11 +562,8 @@ class BaseRunModel:
     @property
     def paths(self) -> List[str]:
         run_paths = []
-        number_of_iterations = self.number_of_iterations
         active_realizations = np.where(self.active_realizations)[0]
-        for iteration in range(
-            self.start_iteration, self.start_iteration + number_of_iterations
-        ):
+        for iteration in range(self.start_iteration, self._total_iterations):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 
@@ -634,8 +614,8 @@ class BaseRunModel:
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
         iteration = ensemble.iteration
-        phase_string = f"Running simulation for iteration: {iteration}"
-        self.setPhase(iteration, phase_string)
+        self.current_iteration = iteration
+        self._current_iteration_label = f"Running simulation for iteration: {iteration}"
         create_run_path(
             run_args,
             ensemble,
@@ -643,12 +623,11 @@ class BaseRunModel:
             self.run_paths,
         )
 
-        phase_string = f"Pre processing for iteration: {iteration}"
-        self.setPhaseName(phase_string)
+        self._current_iteration_label = f"Pre processing for iteration: {iteration}"
         self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
 
         phase_string = f"Running forecast for iteration: {iteration}"
-        self.setPhaseName(phase_string)
+        self._current_iteration_label = phase_string
 
         successful_realizations = self.run_ensemble_evaluator(
             run_args,
@@ -679,7 +658,7 @@ class BaseRunModel:
         event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
 
         phase_string = f"Post processing for iteration: {iteration}"
-        self.setPhaseName(phase_string)
+        self._current_iteration_label = phase_string
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
 
         return num_successful_realizations
