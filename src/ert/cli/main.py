@@ -127,7 +127,9 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
         monitor = Monitor(out=out, color_always=args.color_always)
         thread.start()
         try:
-            monitor.monitor(status_queue, ert_config.analysis_config.log_path)
+            end_event = monitor.monitor(
+                status_queue, ert_config.analysis_config.log_path
+            )
         except (SystemExit, KeyboardInterrupt, OSError):
             print("\nKilling simulations...")
             model.cancel()
@@ -135,4 +137,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     thread.join()
     storage.close()
 
-    model.reraise_exception(ErtCliError)
+    if end_event.failed:
+        # If monitor has not reported, give some info if the job failed
+        msg = end_event.failed_msg if args.disable_monitoring else ""
+        raise ErtCliError(msg)

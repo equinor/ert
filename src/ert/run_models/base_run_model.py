@@ -18,7 +18,6 @@ from typing import (
     List,
     MutableSequence,
     Optional,
-    Type,
     Union,
 )
 
@@ -364,15 +363,6 @@ class BaseRunModel:
         if self._exception is None:
             return msg
         return f"{self._exception}\n{msg}"
-
-    def reraise_exception(self, exctype: Type[Exception]) -> None:
-        """
-        Re-raise an exception if it was set, otherwise return
-        """
-        if self._exception is not None:
-            raise exctype(self.getFailMessage()).with_traceback(
-                self._exception.__traceback__
-            )
 
     def setPhase(self, phase: int, phase_name: str) -> None:
         if not 0 <= phase <= self._phase_count:
