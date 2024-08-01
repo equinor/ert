@@ -55,6 +55,8 @@ logger = logging.getLogger(__name__)
 
 EVENT_HANDLER = Callable[[List[CloudEvent]], Awaitable[None]]
 
+CLOSE_EVENT_SENTINEL = object()
+
 
 class EnsembleEvaluator:
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
@@ -66,7 +68,7 @@ class EnsembleEvaluator:
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
-        self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
+        self._events: asyncio.Queue[Any] = asyncio.Queue()
         self._messages_to_send: asyncio.Queue[str] = asyncio.Queue()
 
         self._result = None
@@ -136,12 +138,18 @@ class EnsembleEvaluator:
             ):
                 try:
                     event = await asyncio.wait_for(self._events.get(), timeout=0.1)
+                    if event is CLOSE_EVENT_SENTINEL:
+                        if batch:
+                            await self._batch_processing_queue.put(batch)
+                        self._events.task_done()
+                        return
                     function = event_handler[event["type"]]
                     batch.append((function, event))
                     self._events.task_done()
                 except asyncio.TimeoutError:
                     continue
-            await self._batch_processing_queue.put(batch)
+            if batch:
+                await self._batch_processing_queue.put(batch)
 
     async def _fm_handler(self, events: List[CloudEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
@@ -271,23 +279,10 @@ class EnsembleEvaluator:
                             f"ignoring since I am {self.ensemble.id_}"
                         )
                         continue
-                    try:
-                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                            await self.forward_checksum(event)
-                        else:
-                            await self._events.put(event)
-                    except BaseException as ex:
-                        # Exceptions include asyncio.InvalidStateError, and
-                        # anything that self._*_handler() can raise (updates
-                        # snapshots)
-                        logger.warning(
-                            "cannot handle event - "
-                            f"closing connection to dispatcher: {ex}"
-                        )
-                        await websocket.close(
-                            code=1011, reason=f"failed handling {event}"
-                        )
-                        return
+                    if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                        await self.forward_checksum(event)
+                    else:
+                        await self._events.put(event)
 
                     if event["type"] in [
                         EVTYPE_ENSEMBLE_SUCCEEDED,
@@ -378,6 +373,7 @@ class EnsembleEvaluator:
                 data_marshaller=cloudpickle.dumps,
             )
             await self._messages_to_send.put(message)
+            await self._events.put(CLOSE_EVENT_SENTINEL)
             await self._events.join()
             await self._batch_processing_queue.join()
             await self._messages_to_send.join()
@@ -437,7 +433,7 @@ class EnsembleEvaluator:
                     raise task_exception
                 elif task.get_name() == "server_task":
                     return
-                elif task.get_name() == "ensemble_task":
+                elif task.get_name() in ["ensemble_task", "dispatcher_task"]:
                     continue
                 else:
                     msg = (
