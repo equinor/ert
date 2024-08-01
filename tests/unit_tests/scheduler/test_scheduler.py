@@ -14,7 +14,7 @@ from cloudevents.http import from_json
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator import Realization
-from ert.job_queue.queue import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
+from ert.event_type_constants import EVTYPE_ENSEMBLE_CANCELLED, EVTYPE_ENSEMBLE_STOPPED
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
 from ert.scheduler.job import State
@@ -598,6 +598,7 @@ async def test_scheduler_publishes_to_websocket(
         driver, [realization], ee_uri=f"ws://127.0.0.1:{unused_tcp_port}"
     )
     await sch.execute()
+
     # publisher_done is set only if CLOSE_PUBLISHER_SENTINEL was received
     assert sch._publisher_done.is_set()
 
@@ -610,6 +611,29 @@ async def test_scheduler_publishes_to_websocket(
     assert (
         sch._events.empty()
     ), "Schedulers internal event queue must be empty before finish"
+
+
+async def test_scheduler_finish_when_evaluator_quits_prematurely(
+    mock_driver, realization, unused_tcp_port, caplog
+):
+    set_when_done = asyncio.Event()
+
+    websocket_server_task = asyncio.create_task(
+        _mock_ws(set_when_done, None, unused_tcp_port)
+    )
+
+    driver = mock_driver()
+    sch = scheduler.Scheduler(
+        driver, [realization], ee_uri=f"ws://127.0.0.1:{unused_tcp_port}"
+    )
+    scheduler._queue_timeout = 0.1
+    set_when_done.set()
+    await sch.execute()
+
+    await websocket_server_task
+
+    assert sch._events.qsize() == 6  # we expect 5 events + the sentinel object
+    assert "6 items left unprocessed in the queue!" in caplog.text
 
 
 @pytest.mark.timeout(5)
@@ -660,6 +684,7 @@ def test_scheduler_create_lsf_driver():
     exclude_host = "host1,host2"
     queue_config_dict = {
         "QUEUE_SYSTEM": "LSF",
+        "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
             ("LSF", "BSUB_CMD", bsub_cmd),
             ("LSF", "BKILL_CMD", bkill_cmd),
@@ -671,6 +696,7 @@ def test_scheduler_create_lsf_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
+    queue_options = queue_config.queue_options_as_dict
     driver: LsfDriver = create_driver(queue_config)
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
@@ -679,6 +705,7 @@ def test_scheduler_create_lsf_driver():
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource
     assert driver._exclude_hosts == ["host1", "host2"]
+    assert driver._project_code == queue_options["PROJECT_CODE"]
 
 
 def test_scheduler_create_openpbs_driver():
@@ -694,6 +721,7 @@ def test_scheduler_create_openpbs_driver():
     qstat_cmd = "bar_qstat_cmd"
     queue_config_dict = {
         "QUEUE_SYSTEM": "TORQUE",
+        "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
             ("TORQUE", "QUEUE", queue_name),
             ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
@@ -708,6 +736,7 @@ def test_scheduler_create_openpbs_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
+    queue_option_dict = queue_config.queue_options_as_dict
     driver: OpenPBSDriver = create_driver(queue_config)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
@@ -719,3 +748,4 @@ def test_scheduler_create_openpbs_driver():
     assert str(driver._qsub_cmd) == qsub_cmd
     assert str(driver._qstat_cmd) == qstat_cmd
     assert str(driver._qdel_cmd) == qdel_cmd
+    assert driver._project_code == queue_option_dict["PROJECT_CODE"]

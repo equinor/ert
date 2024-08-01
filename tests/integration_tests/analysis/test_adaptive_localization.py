@@ -29,7 +29,7 @@ def run_cli_ES_with_case(poly_config):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     set_adaptive_localization_1 = dedent(
         """
@@ -58,8 +58,44 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     assert np.allclose(posterior_sample, prior_sample)
 
 
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_adaptive_localization_works_with_a_single_observation():
+    """This is a regression test as ert would crash if adaptive localization
+    was run with a single observation.
+    """
+    set_adaptive_localization_0 = dedent(
+        """
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+        ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
+        """
+    )
+
+    with open("poly.ert", "r+", encoding="utf-8") as f:
+        lines = f.readlines()
+        lines.insert(9, set_adaptive_localization_0)
+
+    content = """GENERAL_OBSERVATION POLY_OBS {
+        DATA       = POLY_RES;
+        INDEX_LIST = 0;
+        OBS_FILE   = poly_obs_data.txt;
+    };"""
+
+    with open("observations", "w", encoding="utf-8") as file:
+        file.write(content)
+
+    content = "2.1457049781272213 0.6"
+
+    with open("poly_obs_data.txt", "w", encoding="utf-8") as file:
+        file.write(content)
+
+    with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+
+
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     """
     Note that "RANDOM_SEED" in both ert configs needs to be the same to obtain
@@ -97,7 +133,7 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_generalized_variance_increases_in_cutoff():
     rng = np.random.default_rng(42)
     cutoff1 = rng.uniform(0, 1)

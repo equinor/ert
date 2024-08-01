@@ -89,14 +89,18 @@ def copy_shared(tmp_path, block_storage_path):
     ],
 )
 def test_that_storage_matches(
-    tmp_path, block_storage_path, snapshot, monkeypatch, ert_version
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
 ):
     shutil.copytree(
         block_storage_path / f"all_data_types/storage-{ert_version}",
         tmp_path / "all_data_types" / f"storage-{ert_version}",
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
@@ -131,29 +135,23 @@ def test_that_storage_matches(
             str(experiment.response_configuration) + "\n", "responses"
         )
 
-        assert ensemble.has_combined_response_dataset("gen_data")
-        assert ensemble.has_combined_response_dataset("summary")
-
         summary_data = ensemble.load_responses(
             "summary",
-            tuple(ensemble.get_realization_with_responses("summary")),
+            tuple(ensemble.get_realization_list_with_responses("summary")),
         )
         snapshot.assert_match(
-            summary_data.to_dataframe(dim_order=["realization", "name", "time"])
+            summary_data.to_dataframe(dim_order=["time", "name", "realization"])
             .transform(np.sort)
             .to_csv(),
             "summary_data",
         )
-
-        expect_dir = {}
-        for group, ds in experiment.observations["gen_data"].groupby(
-            "obs_name", squeeze=True
-        ):
-            expect_dir[group] = (
-                ds.drop("obs_name").squeeze("name", drop=True).to_dataframe().to_csv()
-            )
-
-        snapshot.assert_match_dir(expect_dir, "observations")
+        snapshot.assert_match_dir(
+            {
+                key: value.to_dataframe().to_csv()
+                for key, value in experiment.observations.items()
+            },
+            "observations",
+        )
 
 
 @pytest.mark.usefixtures("copy_shared")
@@ -221,7 +219,11 @@ def test_that_storage_matches(
     ],
 )
 def test_that_storage_works_with_missing_parameters_and_responses(
-    tmp_path, block_storage_path, snapshot, monkeypatch, ert_version
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
 ):
     storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
     shutil.copytree(
@@ -243,7 +245,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         os.remove(real_dir / "GEN.nc")
 
     monkeypatch.chdir(tmp_path / "all_data_types")
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
@@ -256,13 +258,10 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
         ens_dir_contents = set(os.listdir(ensemble_path))
         assert {
-            "BPR.nc",
-            "PORO.nc",
             "index.json",
-            "summary.nc",
         }.issubset(ens_dir_contents)
 
         assert "TOP.nc" not in ens_dir_contents
 
         with pytest.raises(KeyError):
-            ensembles[0].load_responses("GEN")
+            ensembles[0].load_responses("GEN", (0,))

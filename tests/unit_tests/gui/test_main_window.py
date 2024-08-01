@@ -11,9 +11,11 @@ import numpy as np
 import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
+    QAction,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
+    QMenuBar,
     QMessageBox,
     QPushButton,
     QToolButton,
@@ -24,31 +26,29 @@ from xtgeo import RegularSurface
 
 import ert.gui
 from ert.config import ErtConfig
+from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.customdialog import CustomDialog
-from ert.gui.ertwidgets.ensemblelist import AddWidget
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
-from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
-from ert.gui.tools.manage_experiments.manage_experiments_tool import (
-    ManageExperimentsTool,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,
 )
 from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
+from ert.plugins import ErtPluginManager
 from ert.run_models import SingleTestRun
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 
 from .conftest import (
     add_experiment_manually,
@@ -155,7 +155,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config", "using_scheduler")
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
     """
     This is a regression test for a bug where the plot window opened from run dialog
@@ -336,7 +336,6 @@ def test_that_ert_changes_to_config_directory(qtbot):
         assert gui.windowTitle().startswith("ERT - snake_oil_surface.ert")
 
 
-@pytest.mark.usefixtures("using_scheduler")
 def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
@@ -425,7 +424,7 @@ def test_that_the_manage_experiments_tool_can_be_used(
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # Open the tab
     experiments_panel.setCurrentIndex(0)
@@ -545,7 +544,7 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # Open the create new ensembles tab
     experiments_panel.setCurrentIndex(0)
@@ -594,7 +593,6 @@ def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot)
     load_results_manually(qtbot, esmda_has_run)
 
 
-@pytest.mark.usefixtures("using_scheduler")
 def test_that_a_failing_job_shows_error_message_with_context(
     opened_main_window_clean, qtbot
 ):
@@ -714,3 +712,23 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert len(ensemble_selector._ensemble_list()) == 1
 
         assert restart_button.isEnabled()
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_help_menu(qtbot):
+    args = Mock()
+    args.config = "poly.ert"
+    ert_config = ErtConfig.from_file(args.config)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+        assert gui.windowTitle().startswith("ERT - poly.ert")
+        menu_bar = gui.menuBar()
+        assert isinstance(menu_bar, QMenuBar)
+        get_child(menu_bar, QAction, name="about_action").trigger()
+        about_dialog = wait_for_child(gui, qtbot, AboutDialog)
+        assert about_dialog.windowTitle() == "About"
+        qtbot.mouseClick(
+            get_child(about_dialog, QPushButton, name="close_button"), Qt.LeftButton
+        )

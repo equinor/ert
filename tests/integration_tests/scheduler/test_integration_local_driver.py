@@ -1,5 +1,6 @@
 import asyncio
 import os
+import signal
 from pathlib import Path
 from textwrap import dedent
 
@@ -8,7 +9,7 @@ import pytest
 
 def create_ert_config(path: Path):
     ert_config_path = Path(path / "ert_config.ert")
-    Path(path / "TEST_JOB").write_text("EXECUTABLE test_script.sh")
+    Path(path / "TEST_JOB").write_text("EXECUTABLE test_script.sh", encoding="utf-8")
     Path(path / "test_script.sh").write_text(
         dedent(
             """\
@@ -16,7 +17,8 @@ def create_ert_config(path: Path):
             echo $$ > forward_model_pid
             sleep 20
             """
-        )
+        ),
+        encoding="utf-8",
     )
     os.chmod(path / "test_script.sh", 0o755)
     ert_config_path.write_text(
@@ -36,7 +38,6 @@ def create_ert_config(path: Path):
     )
 
 
-@pytest.mark.usefixtures("using_scheduler")
 @pytest.mark.integration_test
 async def test_subprocesses_live_on_after_ert_dies(tmp_path):
     # Have ERT run a forward model that writes in PID to a file, then sleeps
@@ -65,3 +66,6 @@ async def test_subprocesses_live_on_after_ert_dies(tmp_path):
     # Child process should still exist
     ps_process = await asyncio.create_subprocess_exec("ps", "-p", child_process_id)
     assert await ps_process.wait() == 0
+
+    # Clean up the child process
+    os.killpg(os.getpgid(int(child_process_id)), signal.SIGKILL)

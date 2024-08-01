@@ -74,6 +74,7 @@ class SlurmDriver(Driver):
         memory_per_cpu: Optional[str] = None,
         max_runtime: Optional[str] = None,
         squeue_timeout: Optional[str] = None,
+        project_code: Optional[str] = None,
     ) -> None:
         super().__init__()
         self._submit_locks: dict[int, asyncio.Lock] = {}
@@ -104,6 +105,7 @@ class SlurmDriver(Driver):
         self._sleep_time_between_cmd_retries = 3
         self._sleep_time_between_kills = 30
         self._poll_period = 2 if squeue_timeout is None else int(squeue_timeout)
+        self._project_code = project_code
 
     def _submit_cmd(
         self,
@@ -133,6 +135,8 @@ class SlurmDriver(Driver):
             sbatch_with_args.append(f"--mem-per-cpu={self._memory_per_cpu}")
         if self._queue_name:
             sbatch_with_args.append(f"--partition={self._queue_name}")
+        if self._project_code:
+            sbatch_with_args.append(f"--account={self._project_code}")
         return sbatch_with_args
 
     async def submit(

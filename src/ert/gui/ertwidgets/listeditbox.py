@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets.validationsupport import ValidationSupport
+from .validationsupport import ValidationSupport
 
 
 class AutoCompleteLineEdit(QLineEdit):

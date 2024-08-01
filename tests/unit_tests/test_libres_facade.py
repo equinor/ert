@@ -187,17 +187,16 @@ def test_summary_collector(
     snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_3.csv")
     assert data.shape == (200, 2)
     non_existing_realization_index = 150
-    summary_data = snake_oil_default_storage.load_all_summary_data(
-        ["WWCT:OP1", "WWCT:OP2"],
-        realization_index=non_existing_realization_index,
-    )
-
-    assert summary_data.empty
+    with pytest.raises(IndexError):
+        _ = snake_oil_default_storage.load_all_summary_data(
+            ["WWCT:OP1", "WWCT:OP2"],
+            realization_index=non_existing_realization_index,
+        )
 
 
 def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
-    data = facade.load_all_misfit_data(snake_oil_default_storage).round(decimals=5)
+    data = facade.load_all_misfit_data(snake_oil_default_storage)
     snapshot.assert_match(data.to_csv(), "misfit_collector.csv")
 
     with pytest.raises(KeyError):

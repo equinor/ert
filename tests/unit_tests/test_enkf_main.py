@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path, ensemble_context, sample_prior
+from ert.enkf_main import create_run_path, sample_prior
+from ert.run_arg import create_run_arguments
 
 
 @pytest.mark.parametrize(
@@ -14,27 +15,19 @@ from ert.enkf_main import create_run_path, ensemble_context, sample_prior
         {"JOBNAME": "name<IENS>"},
     ],
 )
-def test_create_run_context(prior_ensemble, config_dict):
+def test_create_run_args(prior_ensemble, config_dict, run_paths):
     iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict(config_dict)
 
-    run_context = ensemble_context(
-        prior_ensemble,
-        [True] * ensemble_size,
-        iteration=iteration,
-        substitution_list=None,
-        jobname_format=config.model_config.jobname_format_string,
-        runpath_format=config.model_config.runpath_format_string,
-        runpath_file=config.runpath_file,
+    run_args = create_run_arguments(
+        run_paths(config), [True] * ensemble_size, prior_ensemble
     )
-    assert run_context.ensemble.name == "prior"
-    assert run_context.mask == [True] * ensemble_size
-    assert [real.runpath for real in run_context] == [
+    assert [real.runpath for real in run_args] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
         for i in range(ensemble_size)
     ]
-    assert [real.job_name for real in run_context] == [
+    assert [real.job_name for real in run_args] == [
         f"name{i}" for i in range(ensemble_size)
     ]
 
@@ -44,27 +37,19 @@ def test_create_run_context(prior_ensemble, config_dict):
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_context_separate_base_and_name(prior_ensemble):
+def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
     iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
-
-    run_context = ensemble_context(
-        prior_ensemble,
-        [True] * ensemble_size,
-        iteration=iteration,
-        substitution_list=None,
-        jobname_format=config.model_config.jobname_format_string,
-        runpath_format=config.model_config.runpath_format_string,
-        runpath_file=config.runpath_file,
+    run_args = create_run_arguments(
+        run_paths(config), [True] * ensemble_size, prior_ensemble
     )
-    assert run_context.ensemble.name == "prior"
-    assert run_context.mask == [True] * ensemble_size
-    assert [real.runpath for real in run_context] == [
+
+    assert [real.runpath for real in run_args] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
         for i in range(ensemble_size)
     ]
-    assert [real.job_name for real in run_context] == [
+    assert [real.job_name for real in run_args] == [
         f"name{i}" for i in range(ensemble_size)
     ]
 
@@ -74,7 +59,7 @@ def test_create_run_context_separate_base_and_name(prior_ensemble):
     assert substitutions.get("<ECLBASE>") == "base<IENS>"
 
 
-def test_assert_symlink_deleted(snake_oil_field_example, storage):
+def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
@@ -86,29 +71,36 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage):
     )
 
     # create directory structure
-    run_context = ensemble_context(
-        prior_ensemble,
+    runpaths = run_paths(ert_config)
+    run_args = create_run_arguments(
+        runpaths,
         [True] * prior_ensemble.ensemble_size,
-        0,
-        None,
-        "",
-        "path_%",
-        "name",
+        prior_ensemble,
     )
     config = snake_oil_field_example
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
-    create_run_path(run_context, config)
+    create_run_path(
+        run_args,
+        prior_ensemble,
+        config,
+        runpaths,
+    )
 
     # replace field file with symlink
-    linkpath = f"{run_context[0].runpath}/permx.grdecl"
-    targetpath = f"{run_context[0].runpath}/permx.grdecl.target"
+    linkpath = f"{run_args[0].runpath}/permx.grdecl"
+    targetpath = f"{run_args[0].runpath}/permx.grdecl.target"
     with open(targetpath, "a", encoding="utf-8"):
         pass
     os.remove(linkpath)
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    create_run_path(run_context, config)
+    create_run_path(
+        run_args,
+        prior_ensemble,
+        config,
+        runpaths,
+    )
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)

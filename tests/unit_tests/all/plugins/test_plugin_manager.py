@@ -2,8 +2,8 @@ import logging
 import tempfile
 from unittest.mock import Mock
 
-import ert.shared.hook_implementations
-from ert.shared.plugins import ErtPluginManager
+import ert.plugins.hook_implementations
+from ert.plugins import ErtPluginManager
 from tests.unit_tests.all.plugins import dummy_plugins
 from tests.unit_tests.all.plugins.dummy_plugins import (
     DummyFMStep,
@@ -11,13 +11,13 @@ from tests.unit_tests.all.plugins.dummy_plugins import (
 
 
 def test_no_plugins():
-    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations])
+    pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
     assert pm.get_flow_config_path() is None
     assert pm.get_ecl100_config_path() is None
     assert pm.get_ecl300_config_path() is None
 
-    assert len(pm.get_installable_jobs()) > 0
+    assert len(pm.forward_model_steps) > 0
     assert len(pm._get_config_workflow_jobs()) > 0
 
     assert pm._site_config_lines() == [
@@ -29,7 +29,7 @@ def test_no_plugins():
 
 
 def test_with_plugins():
-    pm = ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
+    pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations, dummy_plugins])
     assert pm.get_help_links() == {
         "GitHub page": "https://github.com/equinor/ert",
         "test": "test",

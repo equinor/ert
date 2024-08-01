@@ -1,48 +1,39 @@
 import logging
 
-from ert.config.forward_model_step import ForwardModelStepPlugin
-from ert.shared.plugins.plugin_manager import hook_implementation
-from ert.shared.plugins.plugin_response import plugin_response
+from ert import ForwardModelStepPlugin, plugin
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def help_links():
     return {"test": "test", "test2": "test"}
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def ecl100_config_path():
     return "/dummy/path/ecl100_config.yml"
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def ecl300_config_path():
     return "/dummy/path/ecl300_config.yml"
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def flow_config_path():
     return "/dummy/path/flow_config.yml"
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def installable_jobs():
     return {"job1": "/dummy/path/job1", "job2": "/dummy/path/job2"}
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def installable_workflow_jobs():
     return {"wf_job1": "/dummy/path/wf_job1", "wf_job2": "/dummy/path/wf_job2"}
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def legacy_ertscript_workflow(config):
     def some_func():
         pass
@@ -50,14 +41,12 @@ def legacy_ertscript_workflow(config):
     config.add_workflow(some_func)
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def site_config_lines():
     return ["JOB_SCRIPT job_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"]
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def job_documentation(job_name):
     if job_name == "job1":
         return {
@@ -76,7 +65,7 @@ class ExamplePlugin:
         pass
 
 
-@hook_implementation
+@plugin(name="dummy")
 def add_log_handle_to_root():
     fh = logging.FileHandler("spam.log")
     fh.setLevel(logging.DEBUG)
@@ -92,7 +81,6 @@ class DummyFMStep(ForwardModelStepPlugin):
         super().__init__(name="DummyForwardModel", command=["touch", "dummy.out"])
 
 
-@hook_implementation
-@plugin_response(plugin_name="dummy")
+@plugin(name="dummy")
 def installable_forward_model_steps():
     return [DummyFMStep]

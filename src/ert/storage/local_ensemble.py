@@ -1,38 +1,24 @@
 from __future__ import annotations
 
 import contextlib
-import glob
-import json
 import logging
 import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from pandas import DataFrame
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
+from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
-from ert.config.observations import ObservationsIndices
 from ert.storage.mode import BaseMode, Mode, require_write
 
-from ..config import GenDataConfig, ResponseTypes
-from .ensure_correct_xr_coordinate_order import ensure_correct_coordinate_order
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -58,52 +44,6 @@ class _Failure(BaseModel):
     type: RealizationStorageState
     message: str
     time: datetime
-
-
-class ObservationsAndResponsesData:
-    def __init__(self, observations_and_responses: pd.DataFrame) -> None:
-        self._observations_and_responses = observations_and_responses
-
-    def to_long_dataframe(self) -> pd.DataFrame:
-        return self._observations_and_responses.set_index(
-            ["name", "key_index"], verify_integrity=True
-        )
-
-    def index(self) -> npt.NDArray[np.str_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observation primary key.
-        """
-        return self._observations_and_responses.loc[:, "key_index"].values
-
-    def observation_keys(self) -> npt.NDArray[np.str_]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observation name.
-        """
-        return self._observations_and_responses.loc[:, "name"].values
-
-    def errors(self) -> npt.NDArray[np.float64]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the std. error of the observed value.
-        """
-        return self._observations_and_responses.loc[:, "STD"].values
-
-    def observations(self) -> npt.NDArray[np.float64]:
-        """
-        Extracts a ndarray with the shape (num_obs,).
-        Each cell holds the observed value.
-        """
-        return self._observations_and_responses.loc[:, "OBS"].values
-
-    def responses(self) -> npt.NDArray[np.float64]:
-        """
-        Extracts a ndarray with the shape (num_obs, num_reals).
-        Each cell holds the response value corresponding to the observation/realization
-        indicated by the index.
-        """
-        return self._observations_and_responses.iloc[:, 4:].values
 
 
 class LocalEnsemble(BaseMode):
@@ -300,23 +240,17 @@ class LocalEnsemble(BaseMode):
         self, key: Optional[str] = None
     ) -> npt.NDArray[np.bool_]:
         """
-        Generates a mask array indicating which realizations have
-        associated responses based on a given key.
-        If no key is provided,
-        it checks for any responses associated with each realization.
+        Mask array indicating realizations with associated responses.
 
         Parameters
         ----------
-        key : Optional[str]
-            The specific response key to filter realizations.
-            If `None`, all types of responses are considered.
+        key : str, optional
+            Response key to filter realizations. If None, all responses are considered.
 
         Returns
         -------
-        NDArray[np.bool_]
-            A boolean numpy array where each element is `True`
-            if the corresponding realization has associated responses,
-            and `False` otherwise.
+        masks : ndarray of bool
+            Boolean array where True means responses are associated.
         """
 
         return np.array(
@@ -345,79 +279,39 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
         return all(
-            (
-                self.has_combined_parameter_dataset(parameter)
-                and realization
-                in self._load_combined_parameter_dataset(parameter)["realizations"]
-            )
-            or (path / f"{parameter}.nc").exists()
+            (path / f"{parameter}.nc").exists()
             for parameter in self.experiment.parameter_configuration
         )
-
-    def has_combined_response_dataset(self, key: str) -> bool:
-        ds_key = self._find_unified_dataset_for_response(key)
-        return (self._path / f"{ds_key}.nc").exists()
-
-    def has_combined_parameter_dataset(self, key: str) -> bool:
-        return (self._path / f"{key}.nc").exists()
-
-    def _load_combined_response_dataset(self, key: str) -> xr.Dataset:
-        ds_key = self._find_unified_dataset_for_response(key)
-
-        unified_ds = xr.open_dataset(self._path / f"{ds_key}.nc")
-
-        if key != ds_key:
-            return unified_ds.sel(name=key, drop=True)
-
-        return unified_ds
-
-    def _load_combined_parameter_dataset(self, key: str) -> xr.Dataset:
-        unified_ds = xr.open_dataset(self._path / f"{key}.nc")
-
-        return unified_ds
 
     def _responses_exist_for_realization(
         self, realization: int, key: Optional[str] = None
     ) -> bool:
         """
-        Determines whether responses exist for a specified realization
-        in the ensemble, potentially filtered by a response key.
+        Returns true if there are responses in the experiment and they have
+        all been saved in the ensemble
 
         Parameters
         ----------
         realization : int
-            The index of the realization within the ensemble to check.
+            Realization index.
         key : str, optional
-            Response key to filter realizations.
-            If None, all responses are considered.
+            Response key to filter realizations. If None, all responses are considered.
 
         Returns
         -------
-        bool
-            `True` if the specified responses exist for the given realization;
-            otherwise, `False`.
+        exists : bool
+            True if responses exist for realization.
         """
 
         if not self.experiment.response_configuration:
             return True
+        path = self._realization_dir(realization)
 
-        real_dir = self._realization_dir(realization)
         if key:
-            if self.has_combined_response_dataset(key):
-                return (
-                    realization
-                    in self._load_combined_response_dataset(key)["realization"]
-                )
-            else:
-                return (real_dir / f"{key}.nc").exists()
+            return (path / f"{key}.nc").exists()
 
         return all(
-            (real_dir / f"{response}.nc").exists()
-            or (
-                self.has_combined_response_dataset(response)
-                and realization
-                in self._load_combined_response_dataset(response)["realization"].values
-            )
+            (path / f"{response}.nc").exists()
             for response in self.experiment.response_configuration
         )
 
@@ -441,11 +335,6 @@ class LocalEnsemble(BaseMode):
                 for parameter in self.experiment.parameter_configuration.values()
                 if not parameter.forward_init
             )
-            or all(
-                (self._path / f"{parameter.name}.nc").exists()
-                for parameter in self.experiment.parameter_configuration.values()
-                if not parameter.forward_init
-            )
         ]
 
     def has_data(self) -> List[int]:
@@ -461,8 +350,8 @@ class LocalEnsemble(BaseMode):
             i
             for i in range(self.ensemble_size)
             if all(
-                self._responses_exist_for_realization(i, response_key)
-                for response_key in self.experiment.response_configuration
+                (self._realization_dir(i) / f"{response}.nc").exists()
+                for response in self.experiment.response_configuration
             )
         ]
 
@@ -489,25 +378,25 @@ class LocalEnsemble(BaseMode):
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
-    def get_realization_with_responses(
+    def get_realization_list_with_responses(
         self, key: Optional[str] = None
-    ) -> npt.NDArray[np.int_]:
+    ) -> List[int]:
         """
-        Get an array of indices for realizations that have associated responses.
+        List of realization indices with associated responses.
 
         Parameters
         ----------
-        key : Optional[str], default None
+        key : str, optional
             Response key to filter realizations. If None, all responses are considered.
 
         Returns
         -------
-        npt.NDArray[np.int_]
-            Array of realization indices with associated responses.
+        realizations : list of int
+            List of realization indices with associated responses.
         """
 
         mask = self.get_realization_mask_with_responses(key)
-        return np.flatnonzero(mask)
+        return np.where(mask)[0].tolist()
 
     def set_failure(
         self,
@@ -619,15 +508,19 @@ class LocalEnsemble(BaseMode):
             List of summary keys.
         """
 
-        paths_to_check = [*self._path.glob("realization-*/summary.nc")]
+        try:
+            summary_data = self.load_responses(
+                "summary",
+                tuple(self.get_realization_list_with_responses("summary")),
+            )
+            return sorted(summary_data["name"].values)
+        except (ValueError, KeyError):
+            return []
 
-        if os.path.exists(self._path / "summary.nc"):
-            paths_to_check.append(self._path / "summary.nc")
-
-        for p in paths_to_check:
-            return sorted(xr.open_dataset(p)["name"].values)
-
-        return []
+    def _get_gen_data_config(self, key: str) -> GenDataConfig:
+        config = self.experiment.response_configuration[key]
+        assert isinstance(config, GenDataConfig)
+        return config
 
     def _load_single_dataset(
         self,
@@ -644,10 +537,27 @@ class LocalEnsemble(BaseMode):
                 f"No dataset '{group}' in storage for realization {realization}"
             ) from e
 
-    def load_parameters(
+    def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, Iterable[int], None] = None,
+        realizations: Union[int, npt.NDArray[np.int_], None],
+    ) -> xr.Dataset:
+        if isinstance(realizations, int):
+            return self._load_single_dataset(group, realizations).isel(
+                realizations=0, drop=True
+            )
+
+        if realizations is None:
+            datasets = [
+                xr.open_dataset(p, engine="scipy")
+                for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+            ]
+        else:
+            datasets = [self._load_single_dataset(group, i) for i in realizations]
+        return xr.combine_nested(datasets, concat_dim="realizations")
+
+    def load_parameters(
+        self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
     ) -> xr.Dataset:
         """
         Load parameters for group and realizations into xarray Dataset.
@@ -665,119 +575,7 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with parameters.
         """
 
-        drop_reals_dim = isinstance(realizations, int)
-        selected_realizations: Union[None, int, List[int]]
-        if realizations is None:
-            selected_realizations = None
-        elif isinstance(realizations, int):
-            assert isinstance(realizations, int)
-            drop_reals_dim = True
-            selected_realizations = realizations
-        elif isinstance(realizations, (np.ndarray, tuple, list)):
-            selected_realizations = list(realizations)
-        else:
-            raise ValueError(f"Invalid type for realizations: {type(realizations)}")
-
-        try:
-            ds = self.open_unified_parameter_dataset(group)
-            if selected_realizations is None:
-                return ds
-
-            return ds.sel(realizations=selected_realizations, drop=drop_reals_dim)
-
-        except (ValueError, KeyError, FileNotFoundError):
-            # Fallback to check for real folder
-            try:
-                if isinstance(selected_realizations, int) and drop_reals_dim:
-                    return xr.open_dataset(
-                        self._path
-                        / f"realization-{selected_realizations}"
-                        / f"{group}.nc"
-                    ).squeeze("realizations", drop=True)
-                if selected_realizations is None:
-                    return xr.combine_nested(
-                        [
-                            xr.open_dataset(p)
-                            for p in self._path.glob(
-                                f"realization-*/{glob.escape(group)}.nc"
-                            )
-                        ],
-                        concat_dim="realizations",
-                    )
-                elif isinstance(selected_realizations, int):
-                    return xr.open_dataset(
-                        self._path
-                        / f"realization-{selected_realizations}"
-                        / f"{group}.nc"
-                    )
-                else:
-                    assert isinstance(selected_realizations, list)
-                    return xr.combine_nested(
-                        [
-                            xr.open_dataset(
-                                self._path / f"realization-{real}" / f"{group}.nc"
-                            )
-                            for real in selected_realizations
-                        ],
-                        concat_dim="realizations",
-                    )
-            except FileNotFoundError as e:
-                raise KeyError(
-                    f"No dataset '{group}' in storage for "
-                    f"realization {selected_realizations}"
-                ) from e
-
-    def _find_unified_dataset_for_response(self, key: str) -> str:
-        all_gen_data_keys = {
-            k
-            for k, c in self.experiment.response_configuration.items()
-            if isinstance(c, GenDataConfig)
-        }
-
-        if key == ResponseTypes.gen_data or key in all_gen_data_keys:
-            return "gen_data"
-
-        if key == ResponseTypes.summary or key in self.get_summary_keyset():
-            return "summary"
-
-        if key not in self.experiment.response_configuration:
-            raise ValueError(f"{key} is not a response")
-
-        return key
-
-    def open_unified_response_dataset(self, key: str) -> xr.Dataset:
-        dataset_key = self._find_unified_dataset_for_response(key)
-        nc_path = self._path / f"{dataset_key}.nc"
-
-        ds = None
-        if os.path.exists(nc_path):
-            ds = xr.open_dataset(nc_path)
-
-        if not ds:
-            raise FileNotFoundError(
-                f"Dataset file for "
-                f"{'response type' if key == dataset_key else 'response'} "
-                f"{key} not found (tried {key}.nc)"
-            )
-
-        if key != dataset_key:
-            return ds.sel(name=key, drop=True)
-
-        return ds
-
-    def open_unified_parameter_dataset(self, key: str) -> xr.Dataset:
-        nc_path = self._path / f"{key}.nc"
-
-        ds = None
-        if os.path.exists(nc_path):
-            ds = xr.open_dataset(nc_path)
-
-        if not ds:
-            raise FileNotFoundError(
-                f"Dataset file for group {key} not found (tried {key}.nc)"
-            )
-
-        return ds
+        return self._load_dataset(group, realizations)
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
@@ -808,12 +606,11 @@ class LocalEnsemble(BaseMode):
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
         dataset.to_netcdf(path=file_path, engine="scipy")
 
-    def load_responses(
-        self, key: str, realizations: Union[Tuple[int, ...], None] = None
-    ) -> xr.Dataset:
+    @lru_cache  # noqa: B019
+    def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
         """Load responses for key and realizations into xarray Dataset.
 
-        For each given realization, response data is loaded from the
+        For each given realization, response data is loaded from the NetCDF
         file whose filename matches the given key parameter.
 
         Parameters
@@ -829,49 +626,16 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with responses.
         """
 
-        try:
-            ds = self.open_unified_response_dataset(key)
-            if realizations:
-                try:
-                    return ds.sel(realization=list(realizations))
-                except KeyError as err:
-                    raise KeyError(
-                        f"No response for key {key}, realization: {realizations}"
-                    ) from err
-
-            return ds
-        except FileNotFoundError:
-            # If the unified dataset does not exist,
-            # we fall back to checking within the individual realization folders.
-            if key == "gen_data":
-                gen_data_keys = {
-                    k
-                    for k, c in self.experiment.response_configuration.items()
-                    if isinstance(c, GenDataConfig)
-                }
-                return xr.concat(
-                    [
-                        self.load_responses(k, realizations).expand_dims(name=[k])
-                        for k in gen_data_keys
-                    ],
-                    dim="name",
-                ).transpose("realization", "name", "index", "report_step")
-
-            datasets = [
-                xr.open_dataset(self._path / f"realization-{real}" / f"{key}.nc")
-                for real in (
-                    realizations
-                    if realizations is not None
-                    else self.get_realization_with_responses(key).tolist()
-                )
-            ]
-
-            if len(datasets) == 0:
-                raise KeyError(
-                    f"No response for key {key}, realization: {realizations}"
-                ) from None
-
-            return xr.combine_nested(datasets, concat_dim="realization")
+        if key not in self.experiment.response_configuration:
+            raise ValueError(f"{key} is not a response")
+        loaded = []
+        for realization in realizations:
+            input_path = self._realization_dir(realization) / f"{key}.nc"
+            if not input_path.exists():
+                raise KeyError(f"No response for key {key}, realization: {realization}")
+            ds = xr.open_dataset(input_path, engine="scipy")
+            loaded.append(ds)
+        return xr.combine_nested(loaded, concat_dim="realization")
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
@@ -881,38 +645,45 @@ class LocalEnsemble(BaseMode):
     ) -> pd.DataFrame:
         """
         Load all summary data for realizations into pandas DataFrame.
+
         Parameters
         ----------
         keys : list of str, optional
             List of keys to load. If None, all keys are loaded.
         realization_index : int, optional
+
         Returns
         -------
         summary_data : DataFrame
             Loaded pandas DataFrame with summary data.
         """
 
-        try:
-            ds = self.load_responses(ResponseTypes.summary)
-            if realization_index is not None:
-                ds = ds.sel(realization=realization_index)
+        realizations = self.get_realization_list_with_responses()
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
 
-            df = ds.to_dataframe().pivot_table(
-                index=["realization", "time"], columns="name", values="values"
+        summary_keys = self.get_summary_keyset()
+
+        try:
+            df = self.load_responses("summary", tuple(realizations)).to_dataframe(
+                dim_order=["time", "name", "realization"]
             )
-            df.index = df.index.rename(
-                {"time": "Date", "realization": "Realization"}
-            ).reorder_levels(["Realization", "Date"])
-            df.axes[1].rename("", inplace=True)
-            if keys:
-                summary_keys = self.get_summary_keyset()
-                summary_keys = sorted(
-                    [key for key in keys if key in summary_keys]
-                )  # ignore keys that doesn't exist
-                return df[summary_keys]
-            return df
-        except (ValueError, KeyError, FileNotFoundError):
+        except (ValueError, KeyError):
             return pd.DataFrame()
+
+        df = df.unstack(level="name")
+        df.columns = [col[1] for col in df.columns.values]
+        df.index = df.index.rename(
+            {"time": "Date", "realization": "Realization"}
+        ).reorder_levels(["Realization", "Date"])
+        if keys:
+            summary_keys = sorted(
+                [key for key in keys if key in summary_keys]
+            )  # ignore keys that doesn't exist
+            return df[summary_keys]
+        return df
 
     def load_all_gen_kw_data(
         self,
@@ -939,8 +710,16 @@ class LocalEnsemble(BaseMode):
         -----
         Any provided keys that are not gen_kw will be ignored.
         """
+        if realization_index is not None:
+            realizations = np.array([realization_index])
+        else:
+            ens_mask = (
+                self.get_realization_mask_with_responses()
+                + self.get_realization_mask_with_parameters()
+            )
+            realizations = np.flatnonzero(ens_mask)
 
-        dataframes: List[DataFrame] = []
+        dataframes = []
         gen_kws = [
             config
             for config in self.experiment.parameter_configuration.values()
@@ -950,17 +729,11 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                ds = self.load_parameters(key.name)
-
-                if realization_index is not None:
-                    ds = ds.sel(realizations=realization_index)
-
-                da = ds["transformed_values"]
+                da = self.load_parameters(key.name, realizations)["transformed_values"]
                 assert isinstance(da, xr.DataArray)
                 da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
-                df = da.to_dataframe().pivot_table(
-                    index="realizations", columns="names", values="transformed_values"
-                )
+                df = da.to_dataframe().unstack(level="names")
+                df.columns = df.columns.droplevel()
                 for parameter in df.columns:
                     if key.shouldUseLogScale(parameter.split(":")[1]):
                         df[f"LOG10_{parameter}"] = np.log10(df[parameter])
@@ -973,42 +746,6 @@ class LocalEnsemble(BaseMode):
         dataframe.index.name = "Realization"
 
         return dataframe.sort_index(axis=1)
-
-    def _validate_parameters_dataset(self, group: str, dataset: xr.Dataset) -> None:
-        if "values" not in dataset.variables:
-            raise ValueError(
-                f"Dataset for parameter group '{group}' "
-                f"must contain a 'values' variable"
-            )
-
-        if dataset["values"].size == 0:
-            raise ValueError(
-                f"Parameters {group} are empty. Cannot proceed with saving to storage."
-            )
-
-        if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
-            logger.warning(
-                "Dataset uses 'float64' for fields/surfaces. Use 'float32' to save memory."
-            )
-
-        if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
-
-    def _assert_dataset_not_already_created(
-        self, group: str, realization: Optional[int] = None
-    ) -> None:
-        path_in_base_folder = self._path / f"{group}.nc"
-        if os.path.exists(path_in_base_folder):
-            f"There already exists a combined dataset for parameter group {group}"
-            f" for group {group} @ {path_in_base_folder}. Parameters should be saved only once."
-
-        if realization is not None:
-            path_in_real_folder = self._realization_dir(realization) / f"{group}.nc"
-            if os.path.exists(path_in_real_folder):
-                raise KeyError(
-                    "Detected attempt at overwriting already saved parameter"
-                    f" for group {group} @ {path_in_real_folder}. Parameters should be saved only once."
-                )
 
     @require_write
     def save_parameters(
@@ -1034,16 +771,29 @@ class LocalEnsemble(BaseMode):
             a 1d-vector.
         """
 
-        self._assert_dataset_not_already_created(group)
-        self._validate_parameters_dataset(group, dataset)
+        if "values" not in dataset.variables:
+            raise ValueError(
+                f"Dataset for parameter group '{group}' "
+                f"must contain a 'values' variable"
+            )
+
+        if dataset["values"].size == 0:
+            raise ValueError(
+                f"Parameters {group} are empty. Cannot proceed with saving to storage."
+            )
+
+        if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
+            logger.warning(
+                "Dataset uses 'float64' for fields/surfaces. Use 'float32' to save memory."
+            )
+
+        if group not in self.experiment.parameter_configuration:
+            raise ValueError(f"{group} is not registered to the experiment.")
 
         path = self._realization_dir(realization) / f"{group}.nc"
         path.parent.mkdir(exist_ok=True)
 
-        if "realizations" not in dataset.dims:
-            dataset = dataset.expand_dims(realizations=[realization])
-
-        dataset.to_netcdf(path, engine="scipy")
+        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
@@ -1073,7 +823,6 @@ class LocalEnsemble(BaseMode):
 
         if "realization" not in data.dims:
             data = data.expand_dims({"realization": [realization]})
-
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
@@ -1083,10 +832,6 @@ class LocalEnsemble(BaseMode):
         if not parameter_group in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
-        path_unified = self._path / f"{parameter_group}.nc"
-        if os.path.exists(path_unified):
-            return xr.open_dataset(path_unified).std("realizations")
-
         path = self._path / "realization-*" / f"{parameter_group}.nc"
         try:
             ds = xr.open_mfdataset(str(path))
@@ -1095,307 +840,24 @@ class LocalEnsemble(BaseMode):
 
         return ds.std("realizations")
 
-    def get_observations_and_responses(
-        self,
-        observation_keys: List[str],
-        active_realizations: Optional[npt.NDArray[np.int_]] = None,
-    ) -> ObservationsAndResponsesData:
-        """Return data grouped by observation name, showing the
-        observation + std values, and accompanying simulated values per realization.
-
-        * key_index is the "{time}" for summary, "{index},{report_step}" for gen_obs
-        * Numbers 0...N correspond to the realization index
-
-        Example output
-                                  OBS  STD          0  ...        48         49
-        name     key_index                             ...
-        POLY_OBS [0, 0]      2.145705  0.6   3.721637  ...  0.862469   2.625992
-                 [2, 0]      8.769220  1.4   6.419814  ...  1.304883   4.650068
-                 [4, 0]     12.388015  3.0  12.796416  ...  2.535165   8.349348
-                 [6, 0]     25.600465  5.4  22.851445  ...  4.553314  13.723831
-                 [8, 0]     42.352048  8.6  36.584901  ...  7.359332  20.773518
-
-        Arguments:
-            observation_keys: List of observation names to include in the dataset
-            active_realizations: List of active realization indices
-        """
-
-        numerical_data = []
-        index_data = []
-
-        reals_with_responses_mask = self.get_realization_with_responses()
-        if active_realizations is not None:
-            reals_with_responses_mask = np.intersect1d(
-                active_realizations, reals_with_responses_mask
-            )
-
-        for response_type in self.experiment.observations:
-            obs_datasets = self.experiment.observations[response_type]
-            obs_names_to_check = set(obs_datasets["obs_name"].data).intersection(
-                observation_keys
-            )
-            responses_ds = self.load_responses(
-                response_type,
-                realizations=tuple(reals_with_responses_mask),
-            )
-
-            index = ObservationsIndices[ResponseTypes(response_type)]
-            for obs_name in obs_names_to_check:
-                obs_ds = obs_datasets.sel(obs_name=obs_name, drop=True)
-
-                obs_ds = obs_ds.dropna("name", subset=["observations"], how="all")
-                for k in index:
-                    obs_ds = obs_ds.dropna(dim=k, how="all")
-
-                response_names_to_check = obs_ds["name"].data
-
-                for response_name in response_names_to_check:
-                    observations_for_response = obs_ds.sel(
-                        name=response_name, drop=True
-                    )
-
-                    responses_matching_obs = responses_ds.sel(
-                        name=response_name, drop=True
-                    )
-
-                    combined = observations_for_response.merge(
-                        responses_matching_obs, join="left"
-                    )
-
-                    response_vals_per_real = (
-                        combined["values"].stack(key=index).values.T
-                    )
-
-                    key_index_1d = np.array(
-                        [
-                            (
-                                x.strftime("%Y-%m-%d")
-                                if isinstance(x, pd.Timestamp)
-                                else json.dumps(x)
-                            )
-                            for x in combined[index].coords.to_index()
-                        ]
-                    )
-                    obs_vals_1d = combined["observations"].data
-                    std_vals_1d = combined["std"].data
-
-                    num_obs = len(obs_vals_1d)
-                    obs_names_1d = np.array([obs_name] * num_obs)
-
-                    if (
-                        len(key_index_1d) != num_obs
-                        or response_vals_per_real.shape[0] != num_obs
-                        or len(std_vals_1d) != num_obs
-                    ):
-                        raise IndexError(
-                            "Axis 0 misalignment, expected axis 0 length to "
-                            f"correspond to observation names {num_obs}. Got:\n"
-                            f"len(response_vals_per_real)={len(response_vals_per_real)}\n"
-                            f"len(obs_names_1d)={len(obs_names_1d)}\n"
-                            f"len(std_vals_1d)={len(std_vals_1d)}"
-                        )
-
-                    if response_vals_per_real.shape[1] != len(
-                        reals_with_responses_mask
-                    ):
-                        raise IndexError(
-                            "Axis 1 misalignment, expected axis 1 of"
-                            f" response_vals_per_real to be the same as number of realizations"
-                            f" with responses ({len(reals_with_responses_mask)}),"
-                            f"but got response_vals_per_real.shape[1]"
-                            f"={response_vals_per_real.shape[1]}"
-                        )
-
-                    _index_data = np.concatenate(
-                        [
-                            obs_names_1d.reshape(-1, 1),
-                            key_index_1d.reshape(-1, 1),
-                        ],
-                        axis=1,
-                    )
-                    index_data.append(_index_data)
-                    _numerical_data = np.concatenate(
-                        [
-                            obs_vals_1d.reshape(-1, 1),
-                            std_vals_1d.reshape(-1, 1),
-                            response_vals_per_real,
-                        ],
-                        axis=1,
-                    )
-                    numerical_data.append(_numerical_data)
-
-        if not index_data:
-            msg = (
-                "No observation: "
-                + (", ".join(observation_keys) if observation_keys is not None else "*")
-                + " in ensemble"
-            )
-            raise KeyError(msg)
-
-        index_df = pd.DataFrame(
-            np.concatenate(index_data), columns=["name", "key_index"]
-        )
-        numerical_df = pd.DataFrame(
-            np.concatenate(numerical_data),
-            columns=["OBS", "STD"] + list(range(response_vals_per_real.shape[1])),
-        )
-        result_df = pd.concat([index_df, numerical_df], axis=1)
-        result_df.sort_values(by=["name", "key_index"], inplace=True)
-        return ObservationsAndResponsesData(result_df)
-
-    def _unify_datasets(
-        self,
-        groups: List[str],
-        concat_dim: Literal["realization", "realizations"],
-        delete_after: bool = True,
-    ) -> None:
-        for group in groups:
-            combined_ds_path = self._path / f"{group}.nc"
-            has_existing_combined = os.path.exists(combined_ds_path)
-
-            paths = sorted(
-                self.mount_point.glob(f"realization-*/{glob.escape(group)}.nc")
-            )
-
-            if len(paths) > 0:
-                new_combined = xr.combine_nested(
-                    [xr.open_dataset(p, engine="scipy") for p in paths],
-                    concat_dim=concat_dim,
-                )
-
-                if has_existing_combined:
-                    # Merge new combined into old
-                    old_combined = xr.open_dataset(combined_ds_path)
-                    reals_to_replace = new_combined[concat_dim].data
-                    reals_to_drop_from_old = set(reals_to_replace).intersection(
-                        set(old_combined[concat_dim].data)
-                    )
-
-                    if reals_to_drop_from_old:
-                        old_combined = old_combined.drop_sel(
-                            {concat_dim: list(reals_to_drop_from_old)}
-                        )
-
-                    new_combined = old_combined.merge(new_combined)
-                    os.remove(combined_ds_path)
-
-                new_combined = ensure_correct_coordinate_order(new_combined)
-
-                if not new_combined:
-                    raise ValueError("Unified dataset somehow ended up empty")
-
-                new_combined.to_netcdf(combined_ds_path, engine="scipy")
-
-                if delete_after:
-                    for p in paths:
-                        os.remove(p)
-
-    def unify_responses(self, key: Optional[str] = None) -> None:
-        if key is None:
-            for response_key in self.experiment.response_configuration:
-                self.unify_responses(response_key)
-                key = response_key
-
-        gen_data_keys = {
-            k
-            for k, c in self.experiment.response_configuration.items()
-            if isinstance(c, GenDataConfig)
-        }
-
-        if key == ResponseTypes.gen_data or key in gen_data_keys:
-            has_existing_combined = os.path.exists(self._path / "gen_data.nc")
-
-            # If gen data, combine across reals,
-            # but also across all name(s) into one gen_data.nc
-
-            files_to_remove = []
-            to_concat = []
-            for group in gen_data_keys:
-                paths = sorted(
-                    self.mount_point.glob(f"realization-*/{glob.escape(group)}.nc")
-                )
-
-                if len(paths) > 0:
-                    ds_for_group = xr.concat(
-                        [
-                            ds.expand_dims(name=[group], axis=1)
-                            for ds in [
-                                xr.open_dataset(p, engine="scipy") for p in paths
-                            ]
-                        ],
-                        dim="realization",
-                    )
-                    to_concat.append(ds_for_group)
-
-                    files_to_remove.extend(paths)
-
-            # Ensure deterministic ordering wrt name and real
-            if to_concat:
-                new_combined_ds = xr.concat(to_concat, dim="name").sortby(
-                    ["realization", "name"]
-                )
-                new_combined_ds = ensure_correct_coordinate_order(new_combined_ds)
-
-                if has_existing_combined:
-                    old_combined = xr.load_dataset(self._path / "gen_data.nc")
-                    updated_realizations = new_combined_ds["realization"].data
-                    updated_realizations_in_old_combined = set(
-                        updated_realizations
-                    ).intersection(set(old_combined["realization"].data))
-
-                    if updated_realizations_in_old_combined:
-                        old_combined = old_combined.drop_sel(
-                            {"realization": list(updated_realizations_in_old_combined)}
-                        )
-
-                    new_combined_ds = old_combined.merge(new_combined_ds)
-                    os.remove(self._path / "gen_data.nc")
-
-                new_combined_ds.to_netcdf(self._path / "gen_data.nc", engine="scipy")
-                for f in files_to_remove:
-                    os.remove(f)
-
-        else:
-            # If it is a summary, just combined across reals
-            self._unify_datasets(
-                (
-                    [key]
-                    if key is not None
-                    else list(self.experiment.response_configuration.keys())
-                ),
-                "realization",
-            )
-
-    def unify_parameters(self, key: Optional[str] = None) -> None:
-        self._unify_datasets(
-            (
-                [key]
-                if key is not None
-                else list(self.experiment.parameter_configuration.keys())
-            ),
-            "realizations",
-        )
-
     def get_parameter_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
+        path = self._realization_dir(realization)
         return {
-            parameter: (
-                RealizationStorageState.INITIALIZED
-                if self._parameters_exist_for_realization(realization)
-                else RealizationStorageState.UNDEFINED
-            )
-            for parameter in self.experiment.parameter_configuration
+            e: RealizationStorageState.INITIALIZED
+            if (path / f"{e}.nc").exists()
+            else RealizationStorageState.UNDEFINED
+            for e in self.experiment.parameter_configuration
         }
 
     def get_response_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
+        path = self._realization_dir(realization)
         return {
-            response_key: (
-                RealizationStorageState.HAS_DATA
-                if self._responses_exist_for_realization(realization)
-                else RealizationStorageState.UNDEFINED
-            )
-            for response_key in self.experiment.response_configuration
+            e: RealizationStorageState.HAS_DATA
+            if (path / f"{e}.nc").exists()
+            else RealizationStorageState.UNDEFINED
+            for e in self.experiment.response_configuration
         }

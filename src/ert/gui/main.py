@@ -18,7 +18,6 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.gui.ertwidgets import SummaryPanel
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
@@ -35,12 +34,13 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
+from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginManager
 from ert.storage import Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
+from .summarypanel import SummaryPanel
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig
@@ -105,9 +105,7 @@ def _start_initial_gui_window(
             # the config file to be the base name of the original config
             args.config = os.path.basename(args.config)
 
-            ert_config = ErtConfig.with_plugins(
-                plugin_manager.forward_model_steps if plugin_manager else []
-            ).from_file(args.config)
+            ert_config = ErtConfig.with_plugins().from_file(args.config)
 
             local_storage_set_ert_config(ert_config)
         except ConfigValidationError as error:
@@ -270,7 +268,7 @@ def _setup_main_window(
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
     window.addTool(RunAnalysisTool(config, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
-    event_viewer = EventViewerTool(log_handler)
+    event_viewer = EventViewerTool(log_handler, config_file)
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()

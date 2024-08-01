@@ -4,20 +4,20 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, List
 
 from qtpy.QtCore import Slot
+from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
-    ActiveLabel,
+    ActiveRealizationsModel,
     AnalysisModuleEdit,
+    CopyableLabel,
     EnsembleSelector,
     StringBox,
+    TargetEnsembleModel,
     TextModel,
+    ValueModel,
 )
-from ert.gui.ertwidgets.copyablelabel import CopyableLabel
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.targetensemblemodel import TargetEnsembleModel
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
@@ -31,6 +31,7 @@ from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
+    from ert.gui.ertwidgets import ValueModel
 
 
 @dataclass
@@ -176,7 +177,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
 
         normalized_weights_model = ValueModel()
-        normalized_weights_widget = ActiveLabel(normalized_weights_model)
+        normalized_weights_widget = _ActiveLabel(normalized_weights_model)
         layout.addRow("Normalized weights:", normalized_weights_widget)
 
         def updateVisualizationOfNormalizedWeights() -> None:
@@ -233,3 +234,26 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         if ensemble:
             mask = ensemble.get_realization_mask_with_parameters()
             self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+
+
+class _ActiveLabel(QLabel):
+    def __init__(self, model: ValueModel) -> None:
+        QLabel.__init__(self)
+
+        self._model = model
+
+        font = self.font()
+        font.setWeight(QFont.Bold)
+        self.setFont(font)
+
+        self._model.valueChanged.connect(self.updateLabel)
+
+        self.updateLabel()
+
+    def updateLabel(self) -> None:
+        """Retrieves data from the model and inserts it into the edit line"""
+        model_value = self._model.getValue()
+        if model_value is None:
+            model_value = ""
+
+        self.setText(str(model_value))

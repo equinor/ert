@@ -20,7 +20,6 @@ from typing import (
     Type,
     Union,
     cast,
-    get_args,
     get_type_hints,
 )
 
@@ -30,7 +29,7 @@ from .event import Event, FinishedEvent, StartedEvent
 logger = logging.getLogger(__name__)
 
 _POLL_PERIOD = 2.0  # seconds
-JobState = Literal[
+JOB_STATES = [
     "B",  # Begun
     "E",  # Exiting with or without errors
     "F",  # Finished (completed, failed or deleted)
@@ -119,7 +118,7 @@ def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, str]]:
             continue
         tokens = line.split(maxsplit=6)
         if len(tokens) >= 5 and tokens[0] and tokens[5]:
-            if tokens[4] not in get_args(JobState):
+            if tokens[4] not in JOB_STATES:
                 logger.error(
                     f"Unknown state {tokens[4]} obtained from "
                     f"PBS for jobid {tokens[0]}, ignored."
@@ -136,6 +135,7 @@ class OpenPBSDriver(Driver):
         self,
         *,
         queue_name: Optional[str] = None,
+        project_code: Optional[str] = None,
         keep_qsub_output: Optional[str] = None,
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
@@ -149,6 +149,7 @@ class OpenPBSDriver(Driver):
         super().__init__()
 
         self._queue_name = queue_name
+        self._project_code = project_code
         self._keep_qsub_output = keep_qsub_output in ["1", "True", "TRUE", "T"]
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
@@ -225,6 +226,7 @@ class OpenPBSDriver(Driver):
             runpath = Path.cwd()
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
+        arg_project_code = ["-A", self._project_code] if self._project_code else []
         arg_keep_qsub_output = (
             [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
         )
@@ -240,6 +242,7 @@ class OpenPBSDriver(Driver):
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
             *arg_queue_name,
+            *arg_project_code,
             *arg_keep_qsub_output,
             *self._build_resource_string(num_cpu=num_cpu or 1),
         ]

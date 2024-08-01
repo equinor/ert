@@ -3,30 +3,33 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
+from dataclasses import dataclass
+from datetime import datetime
 from typing import (
     Any,
     Dict,
     List,
     Optional,
+    Sequence,
     Type,
     Union,
     no_type_check,
     overload,
 )
 
-import xarray as xr
+import numpy as np
+import numpy.typing as npt
 
-from ert.config.gen_data_config import GenDataConfig
-from ert.config.response_config import ResponseConfig
-from ert.config.summary_config import SummaryConfig
 from ert.field_utils import get_shape
 
 from ._read_summary import read_summary
-from .commons import Refcase
 from .field import Field
+from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .response_config import ResponseConfig
+from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
 logger = logging.getLogger(__name__)
@@ -46,6 +49,28 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
     if file is not None:
         file = os.path.realpath(file)
     return file
+
+
+@dataclass(eq=False)
+class Refcase:
+    start_date: datetime
+    keys: List[str]
+    dates: Sequence[datetime]
+    values: npt.NDArray[Any]
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Refcase):
+            return False
+        return bool(
+            self.start_date == other.start_date
+            and self.keys == other.keys
+            and self.dates == other.dates
+            and np.all(self.values == other.values)
+        )
+
+    @property
+    def all_dates(self) -> List[datetime]:
+        return [self.start_date] + list(self.dates)
 
 
 class EnsembleConfig:
@@ -69,7 +94,6 @@ class EnsembleConfig:
         self._grid_file = _get_abs_path(grid_file)
         self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
-        self.observations: Dict[str, xr.Dataset] = {}
         self.refcase = refcase
         self.eclbase = eclbase
 
@@ -110,7 +134,13 @@ class EnsembleConfig:
         field_list = config_dict.get(ConfigKeys.FIELD, [])
         dims = None
         if grid_file_path is not None:
-            dims = get_shape(grid_file_path)
+            try:
+                dims = get_shape(grid_file_path)
+            except Exception as err:
+                raise ConfigValidationError.with_context(
+                    f"Could not read grid file {grid_file_path}: {err}",
+                    grid_file_path,
+                ) from err
 
         def make_field(field_list: List[str]) -> Field:
             if grid_file_path is None:

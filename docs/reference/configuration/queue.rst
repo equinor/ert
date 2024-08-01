@@ -31,11 +31,13 @@ Options that affect all queue systems
 In addition to the queue-specific settings, the following options affect
 all queue systems. These are documented in :ref:`ert_kw_full_doc`.
 
-* ``MAX_SUBMIT`` — see :ref:`List of keywords<max_submit>`
+* ``JOB_SCRIPT`` — see :ref:`List of keywords<job_script>`
+* ``MAX_RUNNING`` — see :ref:`List of keywords<max_running>`
 * ``MAX_RUNTIME`` — see :ref:`List of keywords<max_runtime>`
-* ``STOP_LONG_RUNNING`` — see :ref:`List of keywords<stop_long_running>`
-* ``JOBNAME`` — see :ref:`List of keywords<jobname>`
+* ``MAX_SUBMIT`` — see :ref:`List of keywords<max_submit>`
 * ``NUM_CPU`` — see :ref:`List of keywords<num_cpu>`
+* ``STOP_LONG_RUNNING`` — see :ref:`List of keywords<stop_long_running>`
+* ``SUBMIT_SLEEP`` — see :ref:`List of keywords<submit_sleep>`
 
 
 .. _local-queue:
@@ -194,11 +196,23 @@ The following is a list of available LSF configuration options:
 .. _project_code:
 .. topic:: PROJECT_CODE
 
+  String identifier used to map hardware resource usage to a project or account.
+  The project or account does not have to exist.
+
   Equates to the ``-P`` parameter for e.g. ``bsub``.
-  `See docs. <https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.__p.1.html>`_
+  `See docs. <https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.__p.1.html>`__
   For example, to register jobs in the ``foo`` project::
 
     QUEUE_OPTION LSF PROJECT_CODE foo
+
+  If the option is not set in the config file and the forward model section contains
+  any of the following simulator jobs [RMS, FLOW, ECLIPSE100, ECLIPSE300]
+  a default will be set.::
+
+    FORWARD_MODEL RMS <args>
+    FORWARD_MODEL ECLIPSE100 <args>
+
+  This will set the PROJECT_CODE option to ``rms+eclipse100``
 
 .. _exclude_host:
 .. topic:: EXCLUDE_HOST
@@ -355,6 +369,26 @@ The following is a list of all queue-specific configuration options:
 
     QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
 
+.. _torque_project_code:
+.. topic:: PROJECT_CODE
+
+  String identifier used to map hardware resource usage to a project or account.
+  The project or account does not have to exist.
+
+  Equates to the ``-A`` parameter for``qsub``
+  `see docs. <https://www.jlab.org/hpc/PBS/qsub.html>`__
+  For example, to register jobs under the ``foo`` account::
+
+    QUEUE_OPTION TORQUE PROJECT_CODE foo
+
+  If the option is not set in the config file and the forward model section contains
+  any of the following simulator jobs [RMS, FLOW, ECLIPSE100, ECLIPSE300]
+  a default will be set.::
+
+    FORWARD_MODEL RMS <args>
+    FORWARD_MODEL ECLIPSE100 <args>
+
+  This will set the PROJECT_CODE option to ``rms+eclipse100``
 
 .. _slurm-systems:
 
@@ -467,6 +501,43 @@ only the most necessary options have been added.
   submitted to the queue when using the queue system, where ``n`` is a positive
   integer::
 
-    QUEUE_OPTION TORQUE MAX_RUNNING n
+    QUEUE_OPTION SLURM MAX_RUNNING n
 
   If ``n`` is zero (the default), then it is set to the number of realizations.
+
+.. _slurm_project_code:
+.. topic:: PROJECT_CODE
+
+  String identifier used to map hardware resource usage to a project or account.
+  The project or account does not have to exist.
+
+  Equates to the ``-A`` parameter for ``sbatch``
+  `see docs. <https://slurm.schedmd.com/sbatch.html#OPT_account>`__
+  For example, to register jobs under the ``foo`` account::
+
+    QUEUE_OPTION SLURM PROJECT_CODE foo
+
+  If the option is not set in the config file and the forward model section contains a
+  any of the following simulator jobs [RMS, FLOW, ECLIPSE100, ECLIPSE300]
+  a default will be set.::
+
+    FORWARD_MODEL RMS <args>
+    FORWARD_MODEL ECLIPSE100 <args>
+
+  This will set the PROJECT_CODE option to ``rms+eclipse100``
+
+GENERIC queue options
+---------------------
+
+There are a number of queue options valid for all queue systems and for those we can use
+the `GENERIC` keyword. ::
+
+    QUEUE_SYSTEM LSF
+    QUEUE_OPTION GENERIC MAX_RUNNING 10
+    QUEUE_OPTION GENERIC SUBMIT_SLEEP 2
+
+Is equivalent to::
+
+    QUEUE_SYSTEM LSF
+    QUEUE_OPTION LSF MAX_RUNNING 10
+    QUEUE_OPTION LSF SUBMIT_SLEEP 2

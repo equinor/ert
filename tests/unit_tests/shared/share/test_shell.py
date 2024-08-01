@@ -31,9 +31,7 @@ class Shell:
             source_root,
             "src",
             "ert",
-            "shared",
-            "share",
-            "ert",
+            "resources",
             "shell_scripts",
         )
 
@@ -440,7 +438,7 @@ def minimal_case(tmpdir):
 
 
 def test_shell_script_jobs_availability(minimal_case):
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     fm_shell_jobs = {}
     for fm_step in ert_config.installed_forward_model_steps.values():
         exe = fm_step.executable

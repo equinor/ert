@@ -16,6 +16,7 @@ from tests.utils import poll
 
 from ert.scheduler import OpenPBSDriver
 from ert.scheduler.openpbs_driver import (
+    JOB_STATES,
     QDEL_JOB_HAS_FINISHED,
     QDEL_REQUEST_INVALID,
     QSUB_CONNECTION_REFUSED,
@@ -23,7 +24,6 @@ from ert.scheduler.openpbs_driver import (
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
     FinishedJob,
-    JobState,
     QueuedJob,
     RunningJob,
     StartedEvent,
@@ -32,7 +32,7 @@ from ert.scheduler.openpbs_driver import (
 )
 
 
-@given(st.lists(st.sampled_from(JobState.__args__)))
+@given(st.lists(st.sampled_from(JOB_STATES)))
 async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
     # Determine what to expect from the sequence:
     started = False
@@ -566,3 +566,13 @@ def test_create_job_class_raises_error_on_invalid_state():
     with pytest.raises(TypeError, match=r"Invalid job state"):
         invalid_job_dict = {"job_state": "foobar"}
         _create_job_class(invalid_job_dict)
+
+
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_submit_project_code():
+    project_code = "testing+testing123"
+    driver = OpenPBSDriver(project_code=project_code)
+    await driver.submit(0, "sleep")
+    assert f" -A {project_code} " in Path("captured_qsub_args").read_text(
+        encoding="utf-8"
+    )

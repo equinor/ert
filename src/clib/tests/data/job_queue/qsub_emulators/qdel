@@ -1,5 +1,0 @@
-#!/bin/sh
-echo "#!/bin/sh" > qstat
-echo "echo \"Job Id: 1612427.st-lcmm\"" >> qstat
-echo "echo \"  job_state = F\"" >> qstat
-echo "echo \"  Exit_status = 1\"" >> qsta

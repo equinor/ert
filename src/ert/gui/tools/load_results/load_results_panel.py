@@ -3,11 +3,13 @@ from __future__ import annotations
 from qtpy.QtWidgets import QFormLayout, QMessageBox, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert.gui.ertwidgets.stringbox import StringBox
+from ert.gui.ertwidgets import (
+    ActiveRealizationsModel,
+    EnsembleSelector,
+    ErtMessageBox,
+    StringBox,
+    ValueModel,
+)
 from ert.libres_facade import LibresFacade
 from ert.run_models.base_run_model import captured_logs
 from ert.validation import IntegerArgument, RangeStringArgument

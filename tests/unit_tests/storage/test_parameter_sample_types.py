@@ -106,7 +106,8 @@ def test_surface_param(
 
                 # Once data has been internalised, ERT will generate the
                 # parameter files
-                create_runpath(storage, "config.ert", ensemble=fs, iteration=1)
+                fs._index.iteration = 1
+                create_runpath(storage, "config.ert", ensemble=fs)
             expected_iter = 1 if expect_forward_init else 0
             actual_surface = Surface(
                 f"simulations/realization-0/iter-{expected_iter}/surf.irap"
@@ -208,7 +209,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = fs.load_parameters("KW_NAME", list(range(3)))["values"].values.ravel()
+        prior = fs.load_parameters("KW_NAME", range(3))["values"].values.ravel()
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
 

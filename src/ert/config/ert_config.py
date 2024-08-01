@@ -7,7 +7,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from fnmatch import fnmatch
-from functools import cached_property
 from os import path
 from pathlib import Path
 from typing import (
@@ -24,12 +23,11 @@ from typing import (
     overload,
 )
 
+import xarray as xr
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
-from ert.config.observations import group_observations_by_response_type
-from ert.config.response_config import ObsArgs
-from ert.config.summary_config import SummaryConfig
+from ert.plugins import ErtPluginManager
 from ert.substitution_list import SubstitutionList
 
 from ._get_num_cpu import get_num_cpu_from_data_file
@@ -66,7 +64,7 @@ from .parsing.observations_parser import (
     parse,
 )
 from .queue_config import QueueConfig
-from .response_properties import ResponseTypes
+from .summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -77,8 +75,7 @@ def site_config_location() -> str:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     return str(
-        Path(importlib.util.find_spec("ert.shared").origin).parent
-        / "share/ert/site-config"
+        Path(importlib.util.find_spec("ert").origin).parent / "resources/site-config"
     )
 
 
@@ -121,21 +118,19 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-
-        self.observations = self._create_observations_and_find_summary_keys()
-
-        if ResponseTypes.summary in self.observations:
-            summary_ds = self.observations[ResponseTypes.summary]
-            names_in_ds = summary_ds["name"].data.tolist()
-            self.summary_keys.extend(names_in_ds)
+        self.enkf_obs: EnkfObs = self._create_observations()
 
         if len(self.summary_keys) != 0:
             self.ensemble_config.addNode(self._create_summary_config())
+        self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @staticmethod
     def with_plugins(
-        forward_model_step_classes: List[Type[ForwardModelStepPlugin]],
+        forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,
     ) -> Type["ErtConfig"]:
+        if forward_model_step_classes is None:
+            forward_model_step_classes = ErtPluginManager().forward_model_steps
+
         preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
@@ -148,14 +143,6 @@ class ErtConfig:
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
-
-    @cached_property
-    def observation_keys(self):
-        keys = []
-        for ds in self.observations.datasets.values():
-            keys.extend(ds["obs_name"].data)
-
-        return sorted(keys)
 
     @classmethod
     def from_file(cls, user_config_file: str) -> Self:
@@ -738,7 +725,15 @@ class ErtConfig:
                     config_file=workflow_job[0],
                     name=None if len(workflow_job) == 1 else workflow_job[1],
                 )
-                workflow_jobs[new_job.name] = new_job
+                name = new_job.name
+                if name in workflow_jobs:
+                    ConfigWarning.ert_context_warn(
+                        f"Duplicate workflow jobs with name {name!r}, choosing "
+                        f"{new_job.executable or new_job.script!r} over "
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                        name,
+                    )
+                workflow_jobs[name] = new_job
             except ErtScriptLoadFailure as err:
                 ConfigWarning.ert_context_warn(
                     f"Loading workflow job {workflow_job[0]!r}"
@@ -752,7 +747,15 @@ class ErtConfig:
             for file_name in _get_files_in_directory(job_path, errors):
                 try:
                     new_job = WorkflowJob.from_file(config_file=file_name)
-                    workflow_jobs[new_job.name] = new_job
+                    name = new_job.name
+                    if name in workflow_jobs:
+                        ConfigWarning.ert_context_warn(
+                            f"Duplicate workflow jobs with name {name!r}, choosing "
+                            f"{new_job.executable or new_job.script!r} over "
+                            f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                            name,
+                        )
+                    workflow_jobs[name] = new_job
                 except ErtScriptLoadFailure as err:
                     ConfigWarning.ert_context_warn(
                         f"Loading workflow job {file_name!r}"
@@ -881,16 +884,14 @@ class ErtConfig:
             refcase=time_map,
         )
 
-    def _create_observations_and_find_summary_keys(self) -> EnkfObs:
+    def _create_observations(self) -> EnkfObs:
         obs_vectors: Dict[str, ObsVector] = {}
         obs_config_file = self.model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
-
         if self.ensemble_config.refcase is not None:
             obs_time_list = self.ensemble_config.refcase.all_dates
         elif self.model_config.time_map is not None:
             obs_time_list = self.model_config.time_map
-
         if obs_config_file:
             if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
                 raise ObservationConfigError.with_context(
@@ -903,35 +904,46 @@ class ErtConfig:
                     f" config file {obs_config_file!r}",
                     obs_config_file,
                 )
-
             obs_config_content = parse(obs_config_file)
+            history = self.model_config.history_source
+            std_cutoff = self.analysis_config.std_cutoff
+            time_len = len(obs_time_list)
             ensemble_config = self.ensemble_config
-
             config_errors: List[ErrorInfo] = []
             for obs_name, values in obs_config_content:
-                obs_args = ObsArgs(
-                    values=values,
-                    std_cutoff=self.analysis_config.std_cutoff,
-                    obs_name=obs_name,
-                    refcase=ensemble_config.refcase,
-                    history=self.model_config.history_source,
-                    obs_time_list=obs_time_list,
-                )
-
                 try:
-                    if type(values) is HistoryValues or type(values) is SummaryValues:
-                        obs_vectors.update(**SummaryConfig.parse_observation(obs_args))
-                    elif type(values) is GenObsValues:
-                        has_gen_data = ensemble_config.hasNodeGenData(values.data)
-
-                        config_for_response = (
-                            ensemble_config.getNodeGenData(values.data)
-                            if has_gen_data
-                            else None
+                    if type(values) == HistoryValues:
+                        self.summary_keys.append(obs_name)
+                        obs_vectors.update(
+                            **EnkfObs._handle_history_observation(
+                                ensemble_config,
+                                values,
+                                obs_name,
+                                std_cutoff,
+                                history,
+                                time_len,
+                            )
                         )
-
-                        obs_args.config_for_response = config_for_response
-                        obs_vectors.update(**GenDataConfig.parse_observation(obs_args))
+                    elif type(values) == SummaryValues:
+                        self.summary_keys.append(values.key)
+                        obs_vectors.update(
+                            **EnkfObs._handle_summary_observation(
+                                values,
+                                obs_name,
+                                obs_time_list,
+                                bool(ensemble_config.refcase),
+                            )
+                        )
+                    elif type(values) == GenObsValues:
+                        obs_vectors.update(
+                            **EnkfObs._handle_general_observation(
+                                ensemble_config,
+                                values,
+                                obs_name,
+                                obs_time_list,
+                                bool(ensemble_config.refcase),
+                            )
+                        )
                     else:
                         config_errors.append(
                             ErrorInfo(
@@ -949,7 +961,7 @@ class ErtConfig:
             if config_errors:
                 raise ObservationConfigError.from_collected(config_errors)
 
-        return group_observations_by_response_type(obs_vectors, obs_time_list)
+        return EnkfObs(obs_vectors, obs_time_list)
 
 
 def _get_files_in_directory(job_path, errors):

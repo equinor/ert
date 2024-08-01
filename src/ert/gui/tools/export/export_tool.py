@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, no_type_check
+from typing import TYPE_CHECKING, Any, cast, no_type_check
 from weakref import ref
 
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.export import ExportPanel
-from ert.shared.exporter import Exporter
+
+from .exporter import Exporter
 
 
 class ExportTool(Tool):
@@ -26,7 +27,7 @@ class ExportTool(Tool):
             config.workflow_jobs.get("CSV_EXPORT2"),
             config.workflow_jobs.get("EXPORT_RUNPATH"),
             notifier,
-            config.runpath_file,
+            config,
         )
         self.setEnabled(self.__exporter.is_valid())
 
@@ -40,19 +41,23 @@ class ExportTool(Tool):
             ClosableDialog("Export", self.__export_widget(), self.parent())
         )
         self.__export_widget().updateExportButton.connect(self.__dialog().toggleButton)
-        self.__dialog().addButton("Export", self.export)
+        export_button = self.__dialog().addButton("Export", self.export)
+        export_button.setObjectName("Export button")
         self.__dialog().show()
 
     def _run_export(self, params: dict[str, Any]) -> None:
         try:
             self.__exporter.run_export(params)
             QMessageBox.information(
-                None, "Success", """Export completed!""", QMessageBox.Ok
+                cast(QWidget, self.parent()),
+                "Success",
+                """Export completed!""",
+                QMessageBox.Ok,
             )
         except UserWarning as usrwarning:
             logging.error(str(usrwarning))
             QMessageBox.warning(
-                None,
+                cast(QWidget, self.parent()),
                 "Failure",
                 f"Export failed with the following message:\n{usrwarning}",
                 QMessageBox.Ok,

@@ -13,13 +13,11 @@ from qtpy.QtWidgets import (
 )
 
 from ert.data import MeasuredData
-from ert.gui.ertwidgets.storage_widget import StorageWidget
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.tools.manage_experiments.manage_experiments_tool import (
-    ManageExperimentsTool,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import rangestring_to_mask
 
@@ -78,7 +76,7 @@ def test_that_the_manual_analysis_tool_works(ensemble_experiment_has_run, qtbot)
     manage_tool.trigger()
 
     assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._ensemble_management_widget
+    experiments_panel = manage_tool._manage_experiments_panel
 
     # In the "create new case" tab, it should now contain "iter-1"
     experiments_panel.setCurrentIndex(0)

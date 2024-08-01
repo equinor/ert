@@ -5,11 +5,11 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
 from _ert.async_utils import new_event_loop
-from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import Client
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble, identifiers
 from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization
+from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
@@ -35,14 +35,7 @@ def _mock_ws(host, port, messages, delay_startup=0):
     loop.close()
 
 
-def send_dispatch_event(client, event_type, source, event_id, data, **extra_attrs):
-    event1 = CloudEvent(
-        {"type": event_type, "source": source, "id": event_id, **extra_attrs}, data
-    )
-    client.send(to_json(event1))
-
-
-async def send_dispatch_event_async(
+async def send_dispatch_event(
     client, event_type, source, event_id, data, **extra_attrs
 ):
     event = CloudEvent(
@@ -76,10 +69,15 @@ class TestEnsemble(Ensemble):
         ]
         super().__init__(the_reals, {}, QueueConfig(), 0, id_)
 
-    def _evaluate(self, url):
+    async def evaluate(self, config):
         event_id = 0
-        with Client(url + "/dispatch") as dispatch:
-            send_dispatch_event(
+        await wait_for_evaluator(
+            base_url=config.url,
+            token=config.token,
+            cert=config.cert,
+        )
+        async with Client(config.url + "/dispatch") as dispatch:
+            await send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
                 f"/ert/ensemble/{self.id_}",
@@ -90,7 +88,7 @@ class TestEnsemble(Ensemble):
             event_id = event_id + 1
             for real in range(0, self.test_reals):
                 job_failed = False
-                send_dispatch_event(
+                await send_dispatch_event(
                     dispatch,
                     identifiers.EVTYPE_REALIZATION_UNKNOWN,
                     f"/ert/ensemble/{self.id_}/real/{real}",
@@ -99,7 +97,7 @@ class TestEnsemble(Ensemble):
                 )
                 event_id = event_id + 1
                 for job in range(0, self.jobs):
-                    send_dispatch_event(
+                    await send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
@@ -107,7 +105,7 @@ class TestEnsemble(Ensemble):
                         {"current_memory_usage": 1000},
                     )
                     event_id = event_id + 1
-                    send_dispatch_event(
+                    await send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
@@ -116,7 +114,7 @@ class TestEnsemble(Ensemble):
                     )
                     event_id = event_id + 1
                 if job_failed:
-                    send_dispatch_event(
+                    await send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_REALIZATION_FAILURE,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
@@ -125,9 +123,9 @@ class TestEnsemble(Ensemble):
                     )
                     event_id = event_id + 1
                 else:
-                    send_dispatch_event(
+                    await send_dispatch_event(
                         dispatch,
-                        identifiers.EVTYPE_FM_STEP_SUCCESS,
+                        identifiers.EVTYPE_REALIZATION_SUCCESS,
                         f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
                         f"event-{event_id}",
                         {},
@@ -136,7 +134,9 @@ class TestEnsemble(Ensemble):
 
             data = self.result if self.result else None
             extra_attrs = {}
-            send_dispatch_event(
+            if self.result_datacontenttype:
+                extra_attrs["datacontenttype"] = self.result_datacontenttype
+            await send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
                 f"/ert/ensemble/{self.id_}",
@@ -144,19 +144,6 @@ class TestEnsemble(Ensemble):
                 data,
                 **extra_attrs,
             )
-
-    def join(self):
-        self._eval_thread.join()
-
-    def evaluate(self, config):
-        self._eval_thread = ErtThread(
-            target=self._evaluate,
-            args=(config.dispatch_uri,),
-            name="TestEnsemble",
-        )
-
-    def start(self):
-        self._eval_thread.start()
 
     @property
     def cancellable(self) -> bool:

@@ -205,7 +205,7 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
     Path("mock_jobs").mkdir()
-    Path("mock_jobs/pendingtimemillis").write_text("100")
+    Path("mock_jobs/pendingtimemillis").write_text("100", encoding="utf-8")
     driver._poll_period = 0.01
 
     bhist_called = False

@@ -4,10 +4,12 @@ from textwrap import dedent
 
 from ert import LibresFacade
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path, ensemble_context
+from ert.enkf_main import create_run_path
 
 
-def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, storage):
+def test_load_summary_response_restart_not_zero(
+    tmpdir, snapshot, request, storage, run_paths, run_args
+):
     """
     This is a regression test for summary responses where the index map
     was not correctly loaded, this is relevant for restart cases from eclipse.
@@ -36,23 +38,18 @@ def test_load_summary_response_restart_not_zero(tmpdir, snapshot, request, stora
             name="prior",
             ensemble_size=ert_config.model_config.num_realizations,
         )
-        prior = ensemble_context(
-            ensemble,
-            [True],
-            0,
-            None,
-            "",
-            ert_config.model_config.runpath_format_string,
-            "name",
-        )
 
-        create_run_path(prior, ert_config)
+        create_run_path(
+            run_args(ert_config, ensemble),
+            ensemble,
+            ert_config,
+            run_paths(ert_config),
+        )
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 
         facade = LibresFacade.from_config_file("config.ert")
         facade.load_from_forward_model(ensemble, [True], 0)
-        ensemble.unify_responses()
 
         df = ensemble.load_responses("summary", (0,)).to_dataframe()
         df = df.unstack(level="name")

@@ -4,16 +4,14 @@ from qtpy.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.storage_info_widget import (
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
+from ert.gui.tools.manage_experiments.storage_info_widget import (
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
     _WidgetType,
 )
-from ert.gui.ertwidgets.storage_widget import StorageWidget
-from ert.gui.tools.manage_experiments.ensemble_init_configuration import (
-    EnsembleInitializationConfigurationPanel,
-)
+from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.storage import Storage
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -37,7 +35,7 @@ def test_init_prior(qtbot, storage):
         == [RealizationStorageState.UNDEFINED] * config.model_config.num_realizations
     )
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
     qtbot.mouseClick(
@@ -59,14 +57,14 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
         responses=config.ensemble_config.response_configuration,
-        observations=config.observations.datasets,
+        observations=config.observations,
         name="my-experiment",
     ).create_ensemble(
         ensemble_size=config.model_config.num_realizations, name="default"
     )
     notifier.set_current_ensemble(ensemble)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -126,7 +124,7 @@ def test_experiment_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -158,7 +156,7 @@ def test_ensemble_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -216,7 +214,7 @@ def test_realization_view(
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
 
-    tool = EnsembleInitializationConfigurationPanel(
+    tool = ManageExperimentsPanel(
         config, notifier, config.model_config.num_realizations
     )
 
@@ -239,7 +237,6 @@ def test_realization_view(
     realization_widget = tool._storage_info_widget._content_layout.currentWidget()
 
     assert realization_widget._state_label.text() == "Realization state: HAS_DATA"
-    # Fix these. They should not be UNDEFINED
     assert (
         realization_widget._response_text_edit.toPlainText()
         == "\nSNAKE_OIL_OPR_DIFF - HAS_DATA\nSNAKE_OIL_WPR_DIFF - HAS_DATA\nSNAKE_OIL_GPR_DIFF - HAS_DATA\nsummary - HAS_DATA\n"

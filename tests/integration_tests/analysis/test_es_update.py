@@ -39,31 +39,18 @@ def uniform_parameter():
 
 @pytest.fixture
 def obs():
-    observations = np.array([1.0, 1.0, 1.0])
-    errors = np.array([0.1, 1.0, 10.0])
     return xr.Dataset(
         {
-            "observations": (
-                ["name", "obs_name", "index", "report_step"],
-                np.reshape(observations, (1, 1, 3, 1)),
-            ),
-            "std": (
-                ["name", "obs_name", "index", "report_step"],
-                np.reshape(errors, (1, 1, 3, 1)),
-            ),
+            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
+            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
         },
-        coords={
-            "name": ["RESPONSE"],
-            "obs_name": ["OBSERVATION"],
-            "index": [0, 1, 2],
-            "report_step": [0],
-        },
-        attrs={"response": "gen_data"},
+        coords={"index": [0, 1, 2], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
     )
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_poly_case", "using_scheduler")
+@pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
@@ -96,7 +83,7 @@ def test_that_posterior_has_lower_variance_than_prior():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
+@pytest.mark.usefixtures("copy_snake_oil_field")
 def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     """This is a regression test to make sure ert does not use the wrong order
     (row-major / column-major) when working with surfaces.
@@ -172,7 +159,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("copy_snake_oil_field", "using_scheduler")
+@pytest.mark.usefixtures("copy_snake_oil_field")
 def test_update_multiple_param():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
@@ -200,28 +187,16 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(name="RESPONSE")
     obs = xr.Dataset(
         {
-            "observations": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[1.0]]]],
-            ),
-            "std": (
-                ["name", "obs_name", "report_step", "index"],
-                [[[[0.1]]]],
-            ),
+            "observations": (["report_step", "index"], [[1.0]]),
+            "std": (["report_step", "index"], [[0.1]]),
         },
-        coords={
-            "obs_name": ["obs_name"],
-            "name": ["RESPONSE"],  # Has to correspond to actual response name
-            "index": [1000],
-            "report_step": [0],
-        },
-        attrs={"response": "gen_data"},
+        coords={"index": [1000], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
     )
-
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"gen_data": obs},
+        observations={"OBSERVATION": obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -252,10 +227,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ),
             iens,
         )
-
-    prior.unify_responses()
-    prior.unify_parameters()
-
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -263,7 +234,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="posterior",
         prior_ensemble=prior,
     )
-
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
@@ -316,10 +286,6 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             ),
             iens,
         )
-
-    prior.unify_responses()
-    prior.unify_parameters()
-
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -410,10 +376,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             ),
             iens,
         )
-
-    prior.unify_responses()
-    prior.unify_parameters()
-
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -488,17 +450,3 @@ def test_that_update_works_with_failed_realizations():
             for idx, v in enumerate(prior.get_ensemble_state())
             if v == RealizationStorageState.LOAD_FAILURE
         )
-
-
-def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
-    """
-    The order of the observations influence the update as it affects the
-    perturbations, so we make sure we maintain the order throughout.
-    """
-    ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
-    assert ert_config.observation_keys == prior_ens.experiment.observation_keys
-    for observations in prior_ens.experiment.observations.values():
-        assert observations["observations"].dims[0:2] == ("name", "obs_name")
-        primary_key = observations["observations"].dims[2:]
-        assert observations.sortby(*primary_key).equals(observations)

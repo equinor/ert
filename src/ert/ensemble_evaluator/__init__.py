@@ -1,10 +1,5 @@
-from ._ensemble import (
-    ForwardModelStep,
-    Realization,
-)
-from ._ensemble import (
-    LegacyEnsemble as Ensemble,
-)
+from ._ensemble import ForwardModelStep, Realization
+from ._ensemble import LegacyEnsemble as Ensemble
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator

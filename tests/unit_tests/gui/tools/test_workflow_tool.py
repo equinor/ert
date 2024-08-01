@@ -8,14 +8,14 @@ import pytest
 from qtpy.QtCore import Qt, QTimer
 
 from ert.config import ErtConfig
-from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.gui.tools.workflows import RunWorkflowWidget
+from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment
 from ert.services import StorageService
-from ert.shared.plugins.plugin_manager import ErtPluginContext
 from ert.storage import Storage, open_storage
 
 from ..conftest import get_child, wait_for_child

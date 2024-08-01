@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
-from ert.shared.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager
 
 if TYPE_CHECKING:
     from ert.gui.tools import Tool
@@ -113,6 +113,7 @@ class ErtMainWindow(QMainWindow):
         show_about = help_menu.addAction("About")
         assert show_about is not None
         show_about.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
+        show_about.setObjectName("about_action")
         show_about.triggered.connect(self.__showAboutMessage)
 
     def __saveSettings(self) -> None:

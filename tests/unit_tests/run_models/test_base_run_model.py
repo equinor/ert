@@ -5,9 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import ErtConfig, ModelConfig
-from ert.run_context import RunContext
 from ert.run_models import BaseRunModel
-from ert.runpaths import Runpaths
 from ert.substitution_list import SubstitutionList
 
 
@@ -183,7 +181,7 @@ def test_delete_run_path(run_path_format, active_realizations):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_is_propagated_from_config_to_ensemble(storage):
+def test_num_cpu_is_propagated_from_config_to_ensemble(storage, run_args):
     # Given NUM_CPU in the config file has a special value
     Path("num_cpu_config.ert").write_text(
         "NUM_REALIZATIONS 2\nNUM_CPU 42", encoding="utf-8"
@@ -199,15 +197,11 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(storage):
         status_queue=None,
         active_realizations=[True],
     )
-    run_context = RunContext(
-        storage.create_experiment().create_ensemble(name="test", ensemble_size=2),
-        Runpaths("real-%d", "", ""),
-        initial_mask=[True, True],
-    )
+    run_args = run_args(config, MagicMock())
 
     # Instead of running the BaseRunModel, we only test its implementation detail which is to
     # use _build_ensemble() just prior to running
-    ensemble = brm._build_ensemble(run_context)
+    ensemble = brm._build_ensemble(run_args, "id")
 
     # Assert the built ensemble has the correct NUM_CPU information
     assert ensemble.reals[0].num_cpu == 42

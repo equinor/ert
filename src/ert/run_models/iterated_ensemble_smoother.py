@@ -12,16 +12,18 @@ from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_context import RunContext
 from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import Ensemble, Storage
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
+from ..run_arg import create_run_arguments
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     import numpy.typing as npt
 
     from ert.config import QueueConfig
@@ -84,7 +86,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self,
         prior_storage: Ensemble,
         posterior_storage: Ensemble,
-        ensemble_id: str,
+        ensemble_id: UUID,
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
@@ -96,7 +98,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 posterior_storage,
                 self.sies_smoother,
                 parameters=prior_storage.experiment.update_parameters,
-                observations=prior_storage.experiment.observation_keys,
+                observations=prior_storage.experiment.observations.keys(),
                 update_settings=self.update_settings,
                 analysis_config=self.analysis_config,
                 sies_step_length=self.sies_step_length,
@@ -115,8 +117,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig
-    ) -> RunContext:
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+    ) -> None:
         iteration_count = self.number_of_iterations
         phase_count = iteration_count + 1
         self.setPhaseCount(phase_count)
@@ -131,7 +133,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations.datasets,
+            observations=self.ert_config.observations,
             responses=self.ert_config.ensemble_config.response_configuration,
             name=self.experiment_name,
         )
@@ -144,33 +146,32 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
 
         initial_mask = np.array(self.active_realizations, dtype=bool)
-        prior_context = RunContext(
+        prior_args = create_run_arguments(
+            self.run_paths,
+            np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
-            runpaths=self.run_paths,
-            initial_mask=initial_mask,
-            iteration=0,
         )
 
         sample_prior(
-            prior_context.ensemble,
-            prior_context.active_realizations,
+            prior,
+            np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
-        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
-
-        self.run_workflows(
-            HookRuntime.PRE_FIRST_UPDATE, self._storage, prior_context.ensemble
+        self._evaluate_and_postprocess(
+            prior_args,
+            prior,
+            evaluator_server_config,
         )
+
+        self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
         for current_iter in range(1, iteration_count + 1):
             self.send_event(
-                RunModelUpdateBeginEvent(
-                    iteration=current_iter - 1, run_id=prior_context.run_id
-                )
+                RunModelUpdateBeginEvent(iteration=current_iter - 1, run_id=prior.id)
             )
             self.send_event(
                 RunModelStatusEvent(
                     iteration=current_iter - 1,
-                    run_id=prior_context.run_id,
+                    run_id=prior.id,
                     msg="Creating posterior ensemble..",
                 )
             )
@@ -178,26 +179,21 @@ class IteratedEnsembleSmoother(BaseRunModel):
             posterior = self._storage.create_ensemble(
                 experiment,
                 name=target_ensemble_format % current_iter,  # noqa
-                ensemble_size=prior_context.ensemble.ensemble_size,
+                ensemble_size=prior.ensemble_size,
                 iteration=current_iter,
-                prior_ensemble=prior_context.ensemble,
+                prior_ensemble=prior,
             )
-            posterior_context = RunContext(
+            posterior_args = create_run_arguments(
+                self.run_paths,
+                self.active_realizations,
                 ensemble=posterior,
-                runpaths=self.run_paths,
-                initial_mask=(
-                    prior_context.ensemble.get_realization_mask_with_parameters()
-                    * prior_context.ensemble.get_realization_mask_with_responses()
-                    * prior_context.ensemble.get_realization_mask_without_failure()
-                ),
-                iteration=current_iter,
             )
             update_success = False
             for _iteration in range(self.num_retries_per_iter):
                 self.analyzeStep(
-                    prior_storage=prior_context.ensemble,
-                    posterior_storage=posterior_context.ensemble,
-                    ensemble_id=str(prior_context.ensemble.id),
+                    prior_storage=prior,
+                    posterior_storage=posterior,
+                    ensemble_id=prior.id,
                     iteration=current_iter - 1,
                     initial_mask=initial_mask,
                 )
@@ -206,11 +202,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 if analysis_success:
                     update_success = True
                     break
-                self._evaluate_and_postprocess(prior_context, evaluator_server_config)
+                self._evaluate_and_postprocess(
+                    prior_args,
+                    prior,
+                    evaluator_server_config,
+                )
 
             if update_success:
                 self._evaluate_and_postprocess(
-                    posterior_context, evaluator_server_config
+                    posterior_args,
+                    posterior,
+                    evaluator_server_config,
                 )
             else:
                 raise ErtRunError(
@@ -221,11 +223,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
                         f"for iteration {current_iter}"
                     )
                 )
-            prior_context = posterior_context
+            prior = posterior
 
         self.setPhase(phase_count, "Experiment completed.")
-
-        return posterior_context
 
     @classmethod
     def name(cls) -> str:

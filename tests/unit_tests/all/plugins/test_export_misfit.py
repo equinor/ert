@@ -4,10 +4,10 @@ import pandas as pd
 import pytest
 
 from ert.exceptions import StorageError
-from ert.shared.hook_implementations.workflows.export_misfit_data import (
+from ert.plugins import ErtPluginManager
+from ert.plugins.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
 )
-from ert.shared.plugins import ErtPluginManager
 
 
 @pytest.mark.skipif(
@@ -16,7 +16,7 @@ from ert.shared.plugins import ErtPluginManager
 )
 def test_export_misfit(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     ExportMisfitDataJob().run(snake_oil_case_storage, snake_oil_default_storage, [])
-    result = pd.read_hdf("misfit.hdf").round(10)
+    result = pd.read_hdf("misfit.hdf")
     snapshot.assert_match(
         result.to_csv(),
         "csv_data.csv",

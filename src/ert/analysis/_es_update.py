@@ -125,8 +125,6 @@ def _save_param_ensemble_array_to_disk(
             ensemble, param_group, realization, param_ensemble_array[:, i]
         )
 
-    ensemble.unify_parameters()
-
 
 def _load_param_ensemble_array(
     ensemble: Ensemble,
@@ -135,6 +133,83 @@ def _load_param_ensemble_array(
 ) -> npt.NDArray[np.float64]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
     return config_node.load_parameters(ensemble, param_group, iens_active_index)
+
+
+def _get_observations_and_responses(
+    ensemble: Ensemble,
+    selected_observations: Iterable[str],
+    iens_active_index: npt.NDArray[np.int_],
+) -> Tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.str_],
+    npt.NDArray[np.str_],
+]:
+    """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
+    filtered_responses = []
+    observation_keys = []
+    observation_values = []
+    observation_errors = []
+    indexes = []
+    observations = ensemble.experiment.observations
+    for obs in selected_observations:
+        observation = observations[obs]
+        group = observation.attrs["response"]
+        all_responses = ensemble.load_responses(group, tuple(iens_active_index))
+        if "time" in observation.coords:
+            all_responses = all_responses.reindex(
+                time=observation.time,
+                method="nearest",
+                tolerance="1s",
+            )
+        try:
+            observations_and_responses = observation.merge(all_responses, join="left")
+        except KeyError as e:
+            raise ErtAnalysisError(
+                f"Mismatched index for: "
+                f"Observation: {obs} attached to response: {group}"
+            ) from e
+
+        observation_keys.append([obs] * observations_and_responses["observations"].size)
+
+        if group == "summary":
+            indexes.append(
+                [
+                    np.datetime_as_string(e, unit="s")
+                    for e in observations_and_responses["time"].data
+                ]
+            )
+        else:
+            indexes.append(
+                [
+                    f"{e[0]}, {e[1]}"
+                    for e in zip(
+                        list(observations_and_responses["report_step"].data)
+                        * len(observations_and_responses["index"].data),
+                        observations_and_responses["index"].data,
+                    )
+                ]
+            )
+
+        observation_values.append(
+            observations_and_responses["observations"].data.ravel()
+        )
+        observation_errors.append(observations_and_responses["std"].data.ravel())
+
+        filtered_responses.append(
+            observations_and_responses["values"]
+            .transpose(..., "realization")
+            .values.reshape((-1, len(observations_and_responses.realization)))
+        )
+    ensemble.load_responses.cache_clear()
+    return (
+        np.concatenate(filtered_responses),
+        np.concatenate(observation_values),
+        np.concatenate(observation_errors),
+        np.concatenate(observation_keys),
+        np.concatenate(indexes),
+    )
 
 
 def _expand_wildcards(
@@ -176,19 +251,11 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    try:
-        observations_and_responses = ensemble.get_observations_and_responses(
-            [*selected_observations], iens_active_index
-        )
-    except KeyError as e:
-        # Exit early if some observations are pointing to non-existing responses
-        raise ErtAnalysisError("No active observations for update step") from e
-
-    responses = observations_and_responses.responses()
-    observations = observations_and_responses.observations()
-    errors = observations_and_responses.errors()
-    observation_keys = observations_and_responses.observation_keys()
-    indexes = observations_and_responses.index()
+    S, observations, errors, obs_keys, indexes = _get_observations_and_responses(
+        ensemble,
+        selected_observations,
+        iens_active_index,
+    )
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
@@ -198,22 +265,22 @@ def _load_observations_and_responses(
     scaled_errors = errors * scaling
 
     # Identifies non-outlier observations based on responses.
-    ens_mean = responses.mean(axis=1)
-    ens_std = responses.std(ddof=0, axis=1)
+    ens_mean = S.mean(axis=1)
+    ens_std = S.std(ddof=0, axis=1)
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     if auto_scale_observations:
         for input_group in auto_scale_observations:
-            group = _expand_wildcards(observation_keys, input_group)
+            group = _expand_wildcards(obs_keys, input_group)
             logger.info(f"Scaling observation group: {group}")
-            obs_group_mask = np.isin(observation_keys, group) & obs_mask
+            obs_group_mask = np.isin(obs_keys, group) & obs_mask
             if not any(obs_group_mask):
                 logger.error(f"No observations active for group: {input_group}")
                 continue
             scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                responses[obs_group_mask], scaled_errors[obs_group_mask]
+                S[obs_group_mask], scaled_errors[obs_group_mask]
             )
             scaling[obs_group_mask] *= scaling_factors
             progress_callback(
@@ -229,7 +296,7 @@ def _load_observations_and_responses(
                         ],
                         data=np.array(
                             (
-                                observation_keys[obs_group_mask],
+                                obs_keys[obs_group_mask],
                                 indexes[obs_group_mask],
                                 clusters,
                                 nr_components.astype(int),
@@ -252,7 +319,7 @@ def _load_observations_and_responses(
         response_std_mask,
         index,
     ) in zip(
-        observation_keys,
+        obs_keys,
         observations,
         errors,
         scaling,
@@ -276,10 +343,10 @@ def _load_observations_and_responses(
             )
         )
 
-    for missing_obs in observation_keys[~obs_mask]:
+    for missing_obs in obs_keys[~obs_mask]:
         logger.warning(f"Deactivating observation: {missing_obs}")
 
-    return responses[obs_mask], (
+    return S[obs_mask], (
         observations[obs_mask],
         scaled_errors[obs_mask],
         update_snapshot,
@@ -472,7 +539,7 @@ def analysis_ES(
         )
 
         # Pre-calculate cov_YY
-        cov_YY = np.cov(S)
+        cov_YY = np.atleast_2d(np.cov(S))
 
         D = smoother_adaptive_es.perturb_observations(
             ensemble_size=ensemble_size, alpha=1.0

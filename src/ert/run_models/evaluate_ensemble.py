@@ -6,10 +6,10 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_context import RunContext
 from ert.run_models.run_arguments import EvaluateEnsembleRunArguments
 from ert.storage import Ensemble, Storage
 
+from ..run_arg import create_run_arguments
 from . import BaseRunModel
 
 if TYPE_CHECKING:
@@ -50,9 +50,8 @@ class EvaluateEnsemble(BaseRunModel):
         self.ensemble_id = simulation_arguments.ensemble_id
 
     def run_experiment(
-        self,
-        evaluator_server_config: EvaluatorServerConfig,
-    ) -> RunContext:
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+    ) -> None:
         self.setPhaseName("Running evaluate experiment...")
 
         ensemble_id = self.ensemble_id
@@ -64,21 +63,21 @@ class EvaluateEnsemble(BaseRunModel):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
-        prior_context = RunContext(
+        prior_args = create_run_arguments(
+            self.run_paths,
+            np.array(self.active_realizations, dtype=bool),
             ensemble=ensemble,
-            runpaths=self.run_paths,
-            initial_mask=np.array(self.active_realizations, dtype=bool),
-            iteration=ensemble.iteration,
         )
 
-        iteration = prior_context.iteration
-        phase_count = iteration + 1
+        phase_count = ensemble.iteration + 1
         self.setPhaseCount(phase_count)
-        self._evaluate_and_postprocess(prior_context, evaluator_server_config)
+        self._evaluate_and_postprocess(
+            prior_args,
+            ensemble,
+            evaluator_server_config,
+        )
 
-        self.setPhase(phase_count, "Simulations completed.")
-
-        return prior_context
+        self.setPhase(phase_count, "Experiment completed.")
 
     @classmethod
     def name(cls) -> str:

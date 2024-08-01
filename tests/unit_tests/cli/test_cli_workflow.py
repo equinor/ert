@@ -5,7 +5,7 @@ import pytest
 
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig
-from ert.shared.plugins.plugin_manager import ErtPluginContext
+from ert.plugins.plugin_manager import ErtPluginContext
 
 
 @pytest.mark.usefixtures("copy_poly_case")

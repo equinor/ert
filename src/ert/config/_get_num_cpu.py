@@ -76,7 +76,7 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
 
     """
     try:
-        with open(data_file, "r") as file:
+        with open(data_file, "r", encoding="utf-8") as file:
             return _get_num_cpu(iter(file), data_file)
     except OSError as err:
         ConfigWarning.ert_context_warn(

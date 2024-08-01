@@ -5,9 +5,15 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import Optional
 
-from PyQt5.QtGui import QMouseEvent
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie, QTextCursor, QTextOption
+from qtpy.QtGui import (
+    QCloseEvent,
+    QKeyEvent,
+    QMouseEvent,
+    QMovie,
+    QTextCursor,
+    QTextOption,
+)
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -37,7 +43,13 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.snapshot import COLUMNS, FileRole, IterNum, RealIens, SnapshotModel
+from ert.gui.model.snapshot import (
+    JOB_COLUMNS,
+    FileRole,
+    IterNum,
+    RealIens,
+    SnapshotModel,
+)
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
@@ -49,11 +61,13 @@ from ert.run_models import (
     StatusEvents,
 )
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
-from ert.shared.status.utils import byte_with_unit, format_running_time
+from ert.shared.status.utils import (
+    byte_with_unit,
+    file_has_content,
+    format_running_time,
+)
 
-from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
-from ..model.node import NodeType
 from .queue_emitter import QueueEmitter
 from .view import ProgressWidget, RealizationWidget, UpdateWidget
 
@@ -76,7 +90,17 @@ class JobOverview(QTableView):
 
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
-        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        for section in range(horizontal_header.count()):
+            horizontal_header.resizeSection(section, 140)
+            # Only last section should be stretch
+            horizontal_header.setSectionResizeMode(
+                section,
+                QHeaderView.Stretch
+                if section == horizontal_header.count() - 1
+                else QHeaderView.Interactive,
+            )
+
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setMinimumWidth(20)
@@ -95,7 +119,7 @@ class JobOverview(QTableView):
         file_dialog = self.findChild(QDialog, name=selected_file)
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
-        elif selected_file:
+        elif selected_file and file_has_content(selected_file):
             job_name = index.siblingAtColumn(0).data()
             FileDialog(
                 selected_file,
@@ -105,31 +129,32 @@ class JobOverview(QTableView):
                 index.data(IterNum),
                 self,
             )
-        else:
-            if COLUMNS[NodeType.REAL][index.column()] == ids.ERROR and index.data():
-                error_dialog = QDialog(self)
-                error_dialog.setWindowTitle("Error information")
-                layout = QVBoxLayout(error_dialog)
+        elif JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
+            error_dialog = QDialog(self)
+            error_dialog.setWindowTitle("Error information")
+            layout = QVBoxLayout(error_dialog)
 
-                error_textedit = QPlainTextEdit()
-                error_textedit.setReadOnly(True)
-                error_textedit.setWordWrapMode(QTextOption.NoWrap)
-                error_textedit.appendPlainText(index.data())
-                layout.addWidget(error_textedit)
+            error_textedit = QPlainTextEdit()
+            error_textedit.setReadOnly(True)
+            error_textedit.setWordWrapMode(QTextOption.NoWrap)
+            error_textedit.appendPlainText(index.data())
+            layout.addWidget(error_textedit)
 
-                dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
-                dialog_button.accepted.connect(error_dialog.accept)
-                layout.addWidget(dialog_button)
-                error_dialog.resize(700, 300)
-                error_textedit.moveCursor(QTextCursor.Start)
-                error_dialog.exec_()
+            dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+            dialog_button.accepted.connect(error_dialog.accept)
+            layout.addWidget(dialog_button)
+            error_dialog.resize(700, 300)
+            error_textedit.moveCursor(QTextCursor.Start)
+            error_dialog.exec_()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if event:
             index = self.indexAt(event.pos())
             if index.isValid():
-                data_name = COLUMNS[NodeType.REAL][index.column()]
-                if data_name in [ids.STDOUT, ids.STDERR]:
+                data_name = JOB_COLUMNS[index.column()]
+                if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+                    index.data(FileRole)
+                ):
                     self.setCursor(Qt.CursorShape.PointingHandCursor)
                 else:
                     self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -188,7 +213,6 @@ class RunDialog(QDialog):
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
         self._job_label = QLabel(self)
-
         self._job_overview = JobOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
@@ -316,7 +340,7 @@ class RunDialog(QDialog):
         elif self.killJobs() != QMessageBox.Yes and a0 is not None:
             a0.ignore()
 
-    def run_experiment(self) -> None:
+    def run_experiment(self, restart: bool = False) -> None:
         self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
@@ -329,6 +353,7 @@ class RunDialog(QDialog):
         def run() -> None:
             self._run_model.start_simulations_thread(
                 evaluator_server_config=evaluator_server_config,
+                restart=restart,
             )
 
         simulation_thread = ErtThread(
@@ -388,7 +413,7 @@ class RunDialog(QDialog):
         runtime = self._run_model.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
-        maximum_memory_usage = self._snapshot_model.root.data.max_memory_usage
+        maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
         if maximum_memory_usage:
             self.memory_usage.setText(
@@ -403,7 +428,7 @@ class RunDialog(QDialog):
             self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, event.iteration)
+                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
             self.update_total_progress(event.progress, event.phase_name)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
@@ -411,7 +436,7 @@ class RunDialog(QDialog):
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 self._snapshot_model._add_partial_snapshot(
-                    event.partial_snapshot, event.iteration
+                    event.partial_snapshot, str(event.iteration)
                 )
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
@@ -449,9 +474,7 @@ class RunDialog(QDialog):
         ):
             name = event.name if hasattr(event, "name") else "Report"
             if event.data:
-                csv_event_to_report(
-                    name, event.data, self.output_path / str(event.run_id)
-                )
+                event.data.to_csv(name, self.output_path / str(event.run_id))
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(0, self._tab_widget.count()):
@@ -488,8 +511,7 @@ class RunDialog(QDialog):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
-            self._run_model.restart()
-            self.run_experiment()
+            self.run_experiment(restart=True)
 
     @Slot()
     def toggle_detailed_progress(self) -> None:

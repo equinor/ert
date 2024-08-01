@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from qtpy.QtCore import QRect, QSize, Signal
 from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
@@ -54,6 +54,8 @@ class ColorBox(QFrame):
         return self._color
 
     @color.setter
-    def color(self, color: str) -> None:
-        self._color = QColor(color)
+    def color(self, color: Tuple[str, float]) -> None:
+        new_color = QColor(color[0])
+        new_color.setAlphaF(color[1])
+        self._color = new_color
         self.update()

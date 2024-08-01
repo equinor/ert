@@ -2,29 +2,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Any, Optional
+from typing import Optional, cast
 
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import ForwardModel
 
 
-class NodeType(Enum):
-    ROOT = auto()
-    ITER = auto()
-    REAL = auto()
-    JOB = auto()
-
-
 @dataclass
 class _Node(ABC):
-    id_: int
-    data: dict[Any, Any] = field(default_factory=dict)
+    id_: str
     parent: Optional[RootNode | IterNode | RealNode] = None
-    children: dict[int, IterNode | RealNode | ForwardModelStepNode] = field(
-        default_factory=dict
-    )
+    children: (
+        dict[str, IterNode] | dict[str, RealNode] | dict[str, ForwardModelStepNode]
+    ) = field(default_factory=dict)
+    _index: Optional[int] = None
 
     def __repr__(self) -> str:
         parent = "no " if self.parent is None else ""
@@ -32,75 +24,50 @@ class _Node(ABC):
         return f"Node<{type(self).__name__}>@{self.id_} with {parent}parent and {children}children"
 
     @abstractmethod
-    def add_child(
-        self,
-        node: IterNode | RealNode | ForwardModelStepNode,
-        node_id: Optional[int] = None,
-    ) -> None:
+    def add_child(self, node: _Node) -> None:
         pass
 
     def row(self) -> int:
-        if "index" in self.data:
-            return int(self.data["index"])
-        if self.parent:
-            return list(self.parent.children.keys()).index(self.id_)
-        raise ValueError(f"{self} had no parent")
-
-
-@dataclass
-class RootNodeData:
-    current_memory_usage: Optional[int] = None
-    max_memory_usage: Optional[int] = None
+        if not self._index:
+            if self.parent:
+                self._index = list(self.parent.children.keys()).index(self.id_)
+            else:
+                raise ValueError(f"{self} had no parent")
+        return self._index
 
 
 @dataclass
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
-    children: dict[int, IterNode] = field(default_factory=dict)
-    data: RootNodeData = field(default_factory=RootNodeData)
+    children: dict[str, IterNode] = field(default_factory=dict)
+    max_memory_usage: Optional[int] = None
 
-    def add_child(self, node: IterNode, node_id: Optional[int] = None) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(IterNode, node)
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[node_id] = node
+        self.children[node.id_] = node
 
 
 @dataclass
 class IterNodeData:
     index: Optional[str] = None
     status: Optional[str] = None
-    sorted_realization_ids: list[str] = field(default_factory=list)
-    sorted_forward_model_step_ids_by_realization_id: dict[str, list[str]] = field(
-        default_factory=dict
-    )
-    current_memory_usage: Optional[int] = None
-    max_memory_usage: Optional[int] = None
 
 
 @dataclass
 class IterNode(_Node):
-    parent: RootNode
-    data: IterNodeData
+    parent: Optional[RootNode] = None
+    data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
-    def add_child(self, node: RealNode, node_id: Optional[int] = None) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(RealNode, node)
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[str(node_id)] = node
-
-    def row(self) -> int:
-        if self.data.index is not None:
-            return int(self.data.index)
-        if self.parent:
-            return list(self.parent.children.keys()).index(self.id_)
-        raise ValueError(f"{self} had no parent")
+        self.children[node.id_] = node
 
 
 @dataclass
 class RealNodeData:
-    index: Optional[str] = None
     status: Optional[str] = None
     active: Optional[bool] = False
     forward_model_step_status_color_by_id: dict[str, QColor] = field(
@@ -113,30 +80,20 @@ class RealNodeData:
 
 @dataclass
 class RealNode(_Node):
-    parent: IterNode
-    data: RealNodeData
+    parent: Optional[IterNode] = None
+    data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
-    def add_child(
-        self, node: ForwardModelStepNode, node_id: Optional[int] = None
-    ) -> None:
+    def add_child(self, node: _Node) -> None:
+        node = cast(ForwardModelStepNode, node)
         node.parent = self
-        if node_id is None:
-            node_id = node.id_
-        self.children[str(node_id)] = node
-
-    def row(self) -> int:
-        if self.data.index is not None:
-            return int(self.data.index)
-        if self.parent:
-            return list(self.parent.children.keys()).index(str(self.id_))
-        raise ValueError(f"{self} had no parent")
+        self.children[node.id_] = node
 
 
 @dataclass
 class ForwardModelStepNode(_Node):
-    parent: RealNode
-    data: ForwardModel
+    parent: Optional[RealNode]
+    data: ForwardModel = field(default_factory=lambda: ForwardModel())
 
-    def add_child(self, *args, **kwargs):
+    def add_child(self, _: _Node) -> None:
         pass

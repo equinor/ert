@@ -4,6 +4,7 @@ from pathlib import Path
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QMessageBox,
+    QPushButton,
 )
 
 from ert.gui.ertwidgets.customdialog import CustomDialog
@@ -76,3 +77,23 @@ def test_csv_export(esmda_has_run, qtbot):
             f"{i},0,,default_0,{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
             in file_content
         )
+
+
+def test_that_export_tool_generates_a_file(qtbot, opened_main_window_snake_oil):
+    gui = opened_main_window_snake_oil
+
+    export_tool = gui.tools["Export data"]
+
+    def handle_export_dialog():
+        export_button = wait_for_child(gui, qtbot, QPushButton, name="Export button")
+
+        def close_message_box():
+            messagebox = wait_for_child(gui, qtbot, QMessageBox)
+            messagebox.close()
+
+        QTimer.singleShot(500, close_message_box)
+        qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
+
+    QTimer.singleShot(500, handle_export_dialog)
+    export_tool.trigger()
+    qtbot.waitUntil(lambda: os.path.exists("export.csv"))
