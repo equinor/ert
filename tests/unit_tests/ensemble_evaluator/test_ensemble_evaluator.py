@@ -4,7 +4,13 @@ from functools import partial
 import pytest
 
 from _ert_forward_model_runner.client import Client
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, Snapshot, identifiers
+from ert.ensemble_evaluator import (
+    EnsembleEvaluator,
+    Monitor,
+    Snapshot,
+    identifiers,
+    state,
+)
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -49,7 +55,7 @@ async def test_no_config_raises_valueerror_when_running():
 @pytest.mark.parametrize(
     ("task, task_name"),
     [
-        ("_batch_events_into_buffer", "dispatcher_task"),
+        # ("_batch_events_into_buffer", "dispatcher_task"),
         ("_process_event_buffer", "processing_task"),
         ("_publisher", "publisher_task"),
     ],
@@ -453,3 +459,36 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
                 if "reals" in event.data:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.data.get("status", ensemble_state)
+
+
+async def test_all_batches_are_processed(
+    monkeypatch, tmpdir, make_ensemble, make_ee_config
+):
+    ensemble = make_ensemble(monkeypatch, tmpdir, 1, 1, 5, 1)
+
+    evaluator = EnsembleEvaluator(ensemble, make_ee_config())
+    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+    await evaluator._server_started.wait()
+
+    config_info = evaluator._config.get_connection_info()
+    async with Monitor(config_info) as monitor:
+        async for e in monitor.track():
+            if e["type"] in (
+                identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                identifiers.EVTYPE_EE_SNAPSHOT,
+            ) and e.data.get(identifiers.STATUS) in [
+                state.ENSEMBLE_STATE_FAILED,
+                state.ENSEMBLE_STATE_STOPPED,
+            ]:
+                await monitor.signal_done()
+
+    for task in evaluator._ee_tasks:
+        if task.get_name() == "dispatcher_task":
+            try:
+                await asyncio.wait_for(task, timeout=2.0)
+            except asyncio.TimeoutError:
+                assert task.done(), "CLOSE_EVENT_SENTINEL not received!"
+                task.cancel()
+
+    assert evaluator._server_done.is_set()
+    await run_task

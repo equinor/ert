@@ -190,7 +190,7 @@ class LegacyEnsemble:
     async def evaluate(
         self,
         config: EvaluatorServerConfig,
-        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        scheduler_queue: Optional[asyncio.Queue[Any]] = None,
         manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
     ) -> None:
         self._config = config
@@ -220,7 +220,7 @@ class LegacyEnsemble:
         self,
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         experiment_id: Optional[str] = None,
-        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        scheduler_queue: Optional[asyncio.Queue[Any]] = None,
         manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
     ) -> None:
         """

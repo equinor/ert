@@ -75,7 +75,7 @@ class Scheduler:
         driver: Driver,
         realizations: Optional[Sequence[Realization]] = None,
         manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
-        ensemble_evaluator_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        ensemble_evaluator_queue: Optional[asyncio.Queue[Any]] = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,

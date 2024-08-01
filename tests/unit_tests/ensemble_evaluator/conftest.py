@@ -62,7 +62,9 @@ def queue_config_fixture():
 
 @pytest.fixture
 def make_ensemble(queue_config):
-    def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
+    def _make_ensemble_builder(
+        monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0, max_runtime=10
+    ):
         async def load_successful(_):
             return (LoadStatus.LOAD_SUCCESSFUL, "")
 
@@ -118,7 +120,7 @@ def make_ensemble(queue_config):
                         iens=iens,
                         forward_models=forward_model_list,
                         job_script="job_dispatch.py",
-                        max_runtime=10,
+                        max_runtime=max_runtime,
                         num_cpu=1,
                         run_arg=RunArg(
                             str(iens),
