@@ -74,7 +74,7 @@ class Monitor:
         self,
         event_queue: SimpleQueue[StatusEvents],
         output_path: Optional[Path] = None,
-    ) -> None:
+    ) -> EndEvent:
         self._start_time = datetime.now()
         while True:
             event = event_queue.get()
@@ -89,7 +89,7 @@ class Monitor:
             if isinstance(event, EndEvent):
                 self._print_result(event.failed, event.failed_msg)
                 self._print_job_errors()
-                return
+                return event
 
             if (
                 isinstance(
