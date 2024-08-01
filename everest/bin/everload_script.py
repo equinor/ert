@@ -20,7 +20,8 @@ from everest.util import version_info
 
 
 def everload_entry(args=None):
-    options = setup_args(args)
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
         # Remove the null handler if set:
@@ -71,8 +72,12 @@ def everload_entry(args=None):
     reload_data(config, backup_path=backup_path)
 
 
-def setup_args(args):
-    arg_parser = argparse.ArgumentParser()
+def _build_args_parser():
+    """Build arg parser"""
+    arg_parser = argparse.ArgumentParser(
+        description="Load Eclipse data from an existing simulation folder",
+        usage="""everest load <config_file>""",
+    )
 
     def batch(batch_str, parser=arg_parser):
         batch_str = "{}".format(
@@ -111,7 +116,7 @@ def setup_args(args):
         help="Display debug information in the terminal",
     )
 
-    return arg_parser.parse_args(args=args)
+    return arg_parser
 
 
 def user_confirms(simulation_path, storage_path=None, backup_path=None):

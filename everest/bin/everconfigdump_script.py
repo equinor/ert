@@ -8,15 +8,21 @@ from ruamel.yaml import YAML
 from everest.config import EverestConfig
 
 
-def config_dump_entry(args=None):
+def _build_args_parser():
+    """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
-        description="Print to console the contents of the config file",
+        description="Display the configuration data loaded from a config file after replacing templated arguments.",
         usage="""everest show <config_file>""",
     )
     arg_parser.add_argument(
         "config_file", help="The path to the everest configuration file"
     )
-    options = arg_parser.parse_args(args)
+    return arg_parser
+
+
+def config_dump_entry(args=None):
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
 
     config = EverestConfig.load_file(options.config_file)
 

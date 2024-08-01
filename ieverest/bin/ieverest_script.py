@@ -23,7 +23,8 @@ def ieverest_entry(args=None):
     app.setOrganizationName("Equinor/TNO")
     app.setApplicationName("IEverest")
 
-    options = setup_args(args)
+    parser = _build_args_parser()
+    options, _ = parser.parse_known_args(args)
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
         # Remove the null handler if set:
@@ -35,7 +36,8 @@ def ieverest_entry(args=None):
     sys.exit(app.exec_())
 
 
-def setup_args(argv):
+def _build_args_parser():
+    """Build arg parser"""
     arg_parser = ArgumentParser(
         description="Everest graphical user interface",
         usage="everest gui [<config_file>]",
@@ -49,9 +51,7 @@ def setup_args(argv):
         default=None,
         help="Start IEverest with the given configuration file",
     )
-
-    options, _ = arg_parser.parse_known_args(args=argv)
-    return options
+    return arg_parser
 
 
 if __name__ == "__main__":

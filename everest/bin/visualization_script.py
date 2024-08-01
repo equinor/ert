@@ -9,7 +9,7 @@ from everest.detached import ServerStatus, everserver_status
 from everest.plugins.hook_manager import EverestPluginManager
 
 
-def visualization_entry(args=None):
+def _build_args_parser():
     arg_parser = argparse.ArgumentParser(
         description="Start possible plugin containing everest visualization",
         usage="""everest results <config_file>""",
@@ -19,8 +19,12 @@ def visualization_entry(args=None):
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file",
     )
+    return arg_parser
 
-    options = arg_parser.parse_args(args)
+
+def visualization_entry(args=None):
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
     config = options.config_file
 
     server_state = everserver_status(config)
