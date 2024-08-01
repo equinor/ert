@@ -140,16 +140,16 @@ class Monitor:
             )
 
     def _print_progress(self, event: SnapshotUpdateEvent) -> None:
-        current_phase = min(event.total_phases, event.current_phase + 1)
+        current_iteration = min(event.total_iterations, event.current_iteration + 1)
         if self._start_time is not None:
             elapsed = datetime.now() - self._start_time
         else:
             elapsed = timedelta()
 
-        nphase = f" {current_phase}/{event.total_phases}"
+        nphase = f" {current_iteration}/{event.total_iterations}"
 
         bar_format = "   {desc} |{bar}| {percentage:3.0f}% {unit}"
-        tqdm.write(f"    --> {event.phase_name}", file=self._out)
+        tqdm.write(f"    --> {event.iteration_label}", file=self._out)
         tqdm.write("\n", end="", file=self._out)
         with tqdm(total=100, ncols=100, bar_format=bar_format, file=self._out) as pbar:
             pbar.set_description_str(nphase, refresh=False)

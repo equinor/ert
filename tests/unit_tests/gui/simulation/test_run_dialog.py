@@ -124,9 +124,9 @@ def test_large_snapshot(
     events = [
         FullSnapshotEvent(
             snapshot=large_snapshot,
-            phase_name="Foo",
-            current_phase=0,
-            total_phases=1,
+            iteration_label="Foo",
+            current_iteration=0,
+            total_iterations=1,
             progress=0.5,
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
@@ -134,9 +134,9 @@ def test_large_snapshot(
         ),
         FullSnapshotEvent(
             snapshot=large_snapshot,
-            phase_name="Foo",
-            current_phase=0,
-            total_phases=1,
+            iteration_label="Foo",
+            current_iteration=0,
+            total_iterations=1,
             progress=0.5,
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
@@ -178,9 +178,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -192,9 +192,9 @@ def test_large_snapshot(
                             [], status=state.REALIZATION_STATE_FINISHED
                         )
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
@@ -220,9 +220,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -234,9 +234,9 @@ def test_large_snapshot(
                             ["0"], status=state.REALIZATION_STATE_FINISHED
                         )
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
@@ -266,9 +266,9 @@ def test_large_snapshot(
                         )
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
@@ -285,9 +285,9 @@ def test_large_snapshot(
                         )
                         .build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
@@ -304,9 +304,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FAILED)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
@@ -330,9 +330,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Pending": 1, "Unknown": 3},
@@ -349,9 +349,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -454,9 +454,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -475,9 +475,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_RUNNING)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
@@ -496,9 +496,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FINISHED)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=1,
                     realization_count=4,
                     status_count={"Finished": 4},

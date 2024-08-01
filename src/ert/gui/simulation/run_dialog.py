@@ -71,7 +71,7 @@ from ..find_ert_info import find_ert_info
 from .queue_emitter import QueueEmitter
 from .view import ProgressWidget, RealizationWidget, UpdateWidget
 
-_TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
+_TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 
 
 class JobOverview(QTableView):
@@ -196,7 +196,7 @@ class RunDialog(QDialog):
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
-                total_progress=0, phase_name=run_model.getPhaseName()
+                total_progress=0, iteration_label=run_model.getCurrentIterationLabel()
             ),
             self,
         )
@@ -397,7 +397,7 @@ class RunDialog(QDialog):
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
-        self.update_total_progress(1.0, self._run_model.getPhaseName())
+        self.update_total_progress(1.0, self._run_model.getCurrentIterationLabel())
         self._notifier.set_is_simulation_running(False)
         if failed:
             self.fail_msg_box = ErtMessageBox(
@@ -429,7 +429,7 @@ class RunDialog(QDialog):
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
-            self.update_total_progress(event.progress, event.phase_name)
+            self.update_total_progress(event.progress, event.iteration_label)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
             )
@@ -441,7 +441,7 @@ class RunDialog(QDialog):
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
             )
-            self.update_total_progress(event.progress, event.phase_name)
+            self.update_total_progress(event.progress, event.iteration_label)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
@@ -483,7 +483,9 @@ class RunDialog(QDialog):
                 return widget
         raise ValueError("Could not find UpdateWidget")
 
-    def update_total_progress(self, progress_value: float, phase_name: str) -> None:
+    def update_total_progress(
+        self, progress_value: float, iteration_label: str
+    ) -> None:
         progress = int(progress_value * 100)
         if not (0 <= progress <= 100):
             logger = logging.getLogger(__name__)
@@ -491,7 +493,7 @@ class RunDialog(QDialog):
         self._total_progress_bar.setValue(progress)
         self._total_progress_label.setText(
             _TOTAL_PROGRESS_TEMPLATE.format(
-                total_progress=progress, phase_name=phase_name
+                total_progress=progress, iteration_label=iteration_label
             )
         )
 

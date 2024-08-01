@@ -45,6 +45,7 @@ class EnsembleExperiment(BaseRunModel):
             storage,
             queue_config,
             status_queue,
+            total_iterations=1,
             active_realizations=simulation_arguments.active_realizations,
             random_seed=simulation_arguments.random_seed,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
@@ -55,7 +56,7 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
-        self.setPhaseName(self.run_message())
+        self._current_iteration_label = self.run_message()
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
@@ -77,7 +78,6 @@ class EnsembleExperiment(BaseRunModel):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self.ensemble.id))
 
-        iteration = 0
         run_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
@@ -89,15 +89,14 @@ class EnsembleExperiment(BaseRunModel):
             random_seed=self.random_seed,
         )
 
-        phase_count = iteration + 1
-        self.setPhaseCount(phase_count)
         self._evaluate_and_postprocess(
             run_args,
             self.ensemble,
             evaluator_server_config,
         )
 
-        self.setPhase(phase_count, "Experiment completed.")
+        self._current_iteration_label = "Experiment completed."
+        self.current_iteration = 1
 
     @classmethod
     def run_message(cls) -> str:
