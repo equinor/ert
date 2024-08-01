@@ -67,7 +67,6 @@ from ert.shared.status.utils import (
     format_running_time,
 )
 
-from ...shared.exporter import csv_event_to_report
 from ..find_ert_info import find_ert_info
 from .queue_emitter import QueueEmitter
 from .view import ProgressWidget, RealizationWidget, UpdateWidget
@@ -475,9 +474,7 @@ class RunDialog(QDialog):
         ):
             name = event.name if hasattr(event, "name") else "Report"
             if event.data:
-                csv_event_to_report(
-                    name, event.data, self.output_path / str(event.run_id)
-                )
+                event.data.to_csv(name, self.output_path / str(event.run_id))
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(0, self._tab_widget.count()):

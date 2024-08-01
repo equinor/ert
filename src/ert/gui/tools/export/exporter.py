@@ -1,13 +1,7 @@
 from __future__ import annotations
 
 import logging
-import re
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
-
-import pandas as pd
-
-from ert.analysis.event import DataSection
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, WorkflowJob
@@ -73,17 +67,3 @@ class Exporter:
         )
         if export_job_runner.hasFailed():
             raise UserWarning(f"Failed to execute {self.export_job.name}\n{user_warn}")
-
-
-def csv_event_to_report(name: str, data: DataSection, output_path: Path) -> None:
-    fname = str(name).strip().replace(" ", "_")
-    fname = re.sub(r"(?u)[^-\w]", "", fname)
-    f_path = output_path / fname
-    f_path.parent.mkdir(parents=True, exist_ok=True)
-    df = pd.DataFrame(data.data, columns=data.header)
-    with open(f_path.with_suffix(".report"), "w", encoding="utf-8") as fout:
-        if data.extra:
-            for k, v in data.extra.items():
-                fout.write(f"{k}: {v}\n")
-        fout.write(df.to_markdown(tablefmt="simple_outline", floatfmt=".4f"))
-    df.to_csv(f_path.with_suffix(".csv"))
