@@ -320,14 +320,15 @@ class BaseRunModel:
             self._completed_realizations_mask = []
             self._failed = True
             self._exception = e
-            self._simulationEnded()
         except UserWarning as e:
             self._exception = e
-            self._simulationEnded()
         except Exception as e:
             self._failed = True
             self._exception = e
-            self._simulationEnded()
+        finally:
+            self._clean_env_context()
+            self.stop_time = int(time.time())
+            self.send_end_event()
 
     def run_experiment(
         self,
@@ -373,11 +374,6 @@ class BaseRunModel:
                 self._exception.__traceback__
             )
 
-    def _simulationEnded(self) -> None:
-        self._clean_env_context()
-        self.stop_time = int(time.time())
-        self.send_end_event()
-
     def setPhase(self, phase: int, phase_name: str) -> None:
         if not 0 <= phase <= self._phase_count:
             raise ValueError(
@@ -385,9 +381,6 @@ class BaseRunModel:
             )
 
         self.setPhaseName(phase_name)
-
-        if phase == self._phase_count:
-            self._simulationEnded()
 
         self._phase = phase
 
@@ -428,7 +421,7 @@ class BaseRunModel:
     def send_end_event(self) -> None:
         self.send_event(
             EndEvent(
-                failed=self.hasRunFailed(),
+                failed=self._failed,
                 failed_msg=self.getFailMessage(),
             )
         )
