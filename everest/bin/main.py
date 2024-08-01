@@ -50,43 +50,44 @@ def _create_dump_action(dumps, extended=False):
     return _DumpAction
 
 
+def _build_args_parser():
+    """Build arg parser"""
+    arg_parser = argparse.ArgumentParser(
+        description="Tool for performing reservoir management optimization",
+        usage=(
+            "everest <command> [<args>]\n\n"
+            "The most commonly used everest commands are:\n"
+            "{commands}\n\n"
+            "Run everest <command> --help for more information on a command"
+        ).format(commands=EverestMain.methods_help()),
+    )
+    arg_parser.add_argument("command", help="Subcommand to run")
+    arg_parser.add_argument(
+        "--docs",
+        action=_create_dump_action(docs.generate_docs_pydantic_to_rst, extended=False),
+        help="dump everest config documentation and exit",
+    )
+    arg_parser.add_argument(
+        "--manual",
+        action=_create_dump_action(docs.generate_docs_pydantic_to_rst, extended=True),
+        help="dump extended everest config documentation and exit",
+    )
+    arg_parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s {version}".format(version=everest_version),
+    )
+    return arg_parser
+
+
 class EverestMain(object):
     def __init__(self, args):
-        arg_parser = argparse.ArgumentParser(
-            description="Tool for performing reservoir management optimization",
-            usage=(
-                "everest <command> [<args>]\n\n"
-                "The most commonly used everest commands are:\n"
-                "{commands}\n\n"
-                "Run everest <command> --help for more information on a command"
-            ).format(commands=self._methods_help()),
-        )
-        arg_parser.add_argument("command", help="Subcommand to run")
-        arg_parser.add_argument(
-            "--docs",
-            action=_create_dump_action(
-                docs.generate_docs_pydantic_to_rst, extended=False
-            ),
-            help="dump everest config documentation and exit",
-        )
-        arg_parser.add_argument(
-            "--manual",
-            action=_create_dump_action(
-                docs.generate_docs_pydantic_to_rst, extended=True
-            ),
-            help="dump extended everest config documentation and exit",
-        )
-        arg_parser.add_argument(
-            "--version",
-            action="version",
-            version="%(prog)s {version}".format(version=everest_version),
-        )
-
+        parser = _build_args_parser()
         # Parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
-        parsed_args = arg_parser.parse_args(args[1:2])
+        parsed_args = parser.parse_args(args[1:2])
         if not hasattr(self, parsed_args.command):
-            arg_parser.error("Unrecognized command")
+            parser.error("Unrecognized command")
 
         # Somewhere some logging to the root is done, this leads to logging going to
         # the console. Install a null handler to prevent this:
@@ -98,9 +99,10 @@ class EverestMain(object):
         getattr(self, parsed_args.command)(args[2:])
 
     @classmethod
-    def _methods_help(cls):
+    def methods_help(cls):
         """Return documentation of the public methods in this class"""
         pubmets = [m for m in dir(cls) if not m.startswith("_")]
+        pubmets.remove("methods_help")  # Current method should not show up in desc
         maxlen = max(len(m) for m in pubmets)
         docstrs = [getattr(cls, m).__doc__ for m in pubmets]
         doclist = [m.ljust(maxlen + 1) + d for m, d in zip(pubmets, docstrs)]

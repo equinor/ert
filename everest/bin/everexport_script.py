@@ -11,7 +11,8 @@ from everest.strings import EVEREST
 
 
 def everexport_entry(args=None):
-    options = setup_args(args)
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
     logger = logging.getLogger(EVEREST)
     if options.debug:
         logger.setLevel(logging.DEBUG)
@@ -35,10 +36,11 @@ def everexport_entry(args=None):
     export_to_csv(config, export_ecl=export_ecl)
 
 
-def setup_args(args):
+def _build_args_parser():
+    """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Export data from a completed optimization case",
-        usage="everest export <config_file> [arguments]",
+        usage="everest export <config_file>",
     )
     arg_parser.add_argument(
         "config_file",
@@ -58,7 +60,7 @@ def setup_args(args):
         help="Display debug information in the terminal",
     )
 
-    return arg_parser.parse_args(args=args)
+    return arg_parser
 
 
 if __name__ == "__main__":

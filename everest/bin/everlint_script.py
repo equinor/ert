@@ -6,7 +6,8 @@ from functools import partial
 from everest.config import EverestConfig
 
 
-def lint_entry(args=None):
+def _build_args_parser():
+    """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Check if a config file is valid",
         usage="""everest lint <config_file>""",
@@ -16,8 +17,12 @@ def lint_entry(args=None):
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file",
     )
+    return arg_parser
 
-    options = arg_parser.parse_args(args)
+
+def lint_entry(args=None):
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
     parsed_config = options.config_file
     conf_file = parsed_config.config_path
 

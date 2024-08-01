@@ -17,7 +17,8 @@ from everest.util import version_info
 
 def kill_entry(args=None):
     """Entry point for running an optimization."""
-    options = setup_args(args)
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
 
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -33,11 +34,11 @@ def kill_entry(args=None):
     kill_everest(options)
 
 
-def setup_args(argv):
-    """Parse the given argv and return the options object."""
+def _build_args_parser():
+    """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description="Everest console runner",
+        description="Kill a running optimization case based on a given config file",
         usage="everest kill <config_file>",
     )
     arg_parser.add_argument(
@@ -49,7 +50,7 @@ def setup_args(argv):
         "--debug", action="store_true", help="Display debug information in the terminal"
     )
 
-    return arg_parser.parse_args(args=argv)
+    return arg_parser
 
 
 def _handle_keyboard_interrupt(signal, frame, after=False):

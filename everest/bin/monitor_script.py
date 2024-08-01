@@ -18,7 +18,8 @@ from .utils import (
 
 def monitor_entry(args=None):
     """Entry point for monitoring an optimization."""
-    options = setup_args(args)
+    parser = _build_args_parser()
+    options = parser.parse_args(args)
 
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -34,12 +35,12 @@ def monitor_entry(args=None):
     monitor_everest(options)
 
 
-def setup_args(argv):
-    """Parse the given argv and return the options object."""
+def _build_args_parser():
+    """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description="Everest console monitor",
-        usage="everest monitor <config_file> [arguments]",
+        description="Everest console monitor a running optimization case based on a config file",
+        usage="everest monitor <config_file>",
     )
     arg_parser.add_argument(
         "config",
@@ -55,7 +56,7 @@ def setup_args(argv):
         help="Display all jobs executed from the forward model",
     )
 
-    return arg_parser.parse_args(args=argv)
+    return arg_parser
 
 
 def monitor_everest(options):
