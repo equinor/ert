@@ -29,7 +29,6 @@ from ert.run_models.event import (
     RunModelErrorEvent,
     RunModelUpdateEndEvent,
 )
-from ert.shared.exporter import csv_event_to_report
 from ert.shared.status.utils import format_running_time
 
 Color = Tuple[int, int, int]
@@ -101,9 +100,7 @@ class Monitor:
             ):
                 name = event.name if hasattr(event, "name") else "Report"
                 if event.data:
-                    csv_event_to_report(
-                        name, event.data, output_path / str(event.run_id)
-                    )
+                    event.data.to_csv(name, output_path / str(event.run_id))
 
     def _print_job_errors(self) -> None:
         failed_jobs: Dict[Optional[str], int] = {}
