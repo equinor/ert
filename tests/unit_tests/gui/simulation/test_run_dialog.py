@@ -36,7 +36,7 @@ from ..conftest import wait_for_child
 @pytest.fixture
 def run_model():
     run_model = MagicMock(spec=BaseRunModel)
-    run_model.getFailMessage.return_value = ""
+    run_model.format_error.return_value = ""
     run_model.get_runtime.return_value = 1
     run_model.support_restart = True
     return run_model
