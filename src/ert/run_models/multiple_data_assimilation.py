@@ -181,7 +181,6 @@ class MultipleDataAssimilation(BaseRunModel):
         self._current_iteration_label = (
             f"Analyzing iteration: {posterior_ensemble.iteration} with weight {weight}"
         )
-        self.current_iteration += 1
         try:
             return smoother_update(
                 prior_ensemble,
