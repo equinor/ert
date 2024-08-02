@@ -222,7 +222,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
             prior = posterior
 
-        self._current_iteration_label = "Experiment completed."
         self.setCurrentIteration(self._total_iterations)
 
     @classmethod

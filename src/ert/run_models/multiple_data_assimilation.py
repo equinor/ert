@@ -173,7 +173,6 @@ class MultipleDataAssimilation(BaseRunModel):
             prior = posterior
 
         self.setCurrentIteration(self._total_iterations)
-        self._current_iteration_label = "Experiment completed."
 
     def update(
         self,

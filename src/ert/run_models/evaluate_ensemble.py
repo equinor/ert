@@ -76,7 +76,6 @@ class EvaluateEnsemble(BaseRunModel):
             evaluator_server_config,
         )
 
-        self._current_iteration_label = "Experiment completed."
         self.current_iteration = ensemble.iteration + 1
 
     @classmethod

@@ -147,7 +147,6 @@ class EnsembleSmoother(BaseRunModel):
             evaluator_server_config,
         )
 
-        self._current_iteration_label = "Experiment completed."
         self.current_iteration = 2
 
     @classmethod

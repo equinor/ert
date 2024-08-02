@@ -393,9 +393,7 @@ class BaseRunModel:
             EndEvent(
                 failed=self._failed,
                 msg=(
-                    self.getFailMessage()
-                    if self._failed
-                    else self._current_iteration_label
+                    self.getFailMessage() if self._failed else "Experiment completed."
                 ),
             )
         )
