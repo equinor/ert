@@ -196,7 +196,7 @@ class RunDialog(QDialog):
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
-                total_progress=0, iteration_label=run_model.getCurrentIterationLabel()
+                total_progress=0, iteration_label="Starting..."
             ),
             self,
         )
@@ -392,17 +392,15 @@ class RunDialog(QDialog):
         return kill_job
 
     @Slot(bool, str)
-    def _on_simulation_done(self, failed: bool, failed_msg: str) -> None:
+    def _on_simulation_done(self, failed: bool, msg: str) -> None:
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
-        self.update_total_progress(1.0, self._run_model.getCurrentIterationLabel())
+        self.update_total_progress(1.0, msg)
         self._notifier.set_is_simulation_running(False)
         if failed:
-            self.fail_msg_box = ErtMessageBox(
-                "ERT experiment failed!", failed_msg, self
-            )
+            self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
             self.fail_msg_box.exec_()
 
     def _show_done_button(self) -> None:
@@ -423,7 +421,7 @@ class RunDialog(QDialog):
     @Slot(object)
     def _on_event(self, event: object) -> None:
         if isinstance(event, EndEvent):
-            self.simulation_done.emit(event.failed, event.failed_msg)
+            self.simulation_done.emit(event.failed, event.msg)
             self._ticker.stop()
             self._show_done_button()
         elif isinstance(event, FullSnapshotEvent):

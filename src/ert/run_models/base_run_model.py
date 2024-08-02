@@ -346,9 +346,6 @@ class BaseRunModel:
             return msg
         return f"{self._exception}\n{msg}"
 
-    def getCurrentIterationLabel(self) -> str:
-        return self._current_iteration_label
-
     def setCurrentIteration(self, iteration: int) -> None:
         if not 0 <= iteration <= self._total_iterations:
             raise ValueError(
@@ -395,7 +392,11 @@ class BaseRunModel:
         self.send_event(
             EndEvent(
                 failed=self._failed,
-                failed_msg=self.getFailMessage(),
+                msg=(
+                    self.getFailMessage()
+                    if self._failed
+                    else self._current_iteration_label
+                ),
             )
         )
 

@@ -87,7 +87,7 @@ class Monitor:
                     self._snapshots[event.iteration].merge_event(event.partial_snapshot)
                 self._print_progress(event)
             if isinstance(event, EndEvent):
-                self._print_result(event.failed, event.failed_msg)
+                self._print_result(event.failed, event.msg)
                 self._print_job_errors()
                 return event
 
