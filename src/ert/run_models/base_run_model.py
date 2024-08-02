@@ -154,9 +154,6 @@ class BaseRunModel:
 
         self.start_time: Optional[int] = None
         self.stop_time: Optional[int] = None
-        self._failed: bool = False
-        self._exception: Optional[Exception] = None
-        self._error_messages: MutableSequence[str] = []
         self._queue_config: QueueConfig = queue_config
         self._initial_realizations_mask: List[bool] = copy.copy(active_realizations)
         self._completed_realizations_mask: List[bool] = []
@@ -241,9 +238,6 @@ class BaseRunModel:
         self._end_queue.put("END")
 
     def reset(self) -> None:
-        self._failed = False
-        self._error_messages = []
-        self._exception = None
         self.current_iteration = 0
 
     def has_failed_realizations(self) -> bool:
@@ -294,10 +288,13 @@ class BaseRunModel:
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
+        failed = False
+        exception: Optional[Exception] = None
+        error_messages: MutableSequence[str] = []
         try:
             self.start_time = int(time.time())
             self.stop_time = None
-            with captured_logs(self._error_messages):
+            with captured_logs(error_messages):
                 self._set_default_env_context()
                 self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
@@ -315,17 +312,26 @@ class BaseRunModel:
                     )
         except ErtRunError as e:
             self._completed_realizations_mask = []
-            self._failed = True
-            self._exception = e
+            failed = True
+            exception = e
         except UserWarning as e:
-            self._exception = e
+            exception = e
         except Exception as e:
-            self._failed = True
-            self._exception = e
+            failed = True
+            exception = e
         finally:
             self._clean_env_context()
             self.stop_time = int(time.time())
-            self.send_end_event()
+            self.send_event(
+                EndEvent(
+                    failed=failed,
+                    msg=(
+                        self.format_error(exception, error_messages)
+                        if failed
+                        else "Experiment completed."
+                    ),
+                )
+            )
 
     def run_experiment(
         self,
@@ -334,11 +340,14 @@ class BaseRunModel:
     ) -> None:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    def getFailMessage(self) -> str:
-        msg = "\n".join(self._error_messages)
-        if self._exception is None:
+    @staticmethod
+    def format_error(
+        exception: Optional[Exception], error_messages: MutableSequence[str]
+    ) -> str:
+        msg = "\n".join(error_messages)
+        if exception is None:
             return msg
-        return f"{self._exception}\n{msg}"
+        return f"{exception}\n{msg}"
 
     def setCurrentIteration(self, iteration: int) -> None:
         if not 0 <= iteration <= self._total_iterations:
@@ -381,16 +390,6 @@ class BaseRunModel:
             )
 
         return status, current_progress, realization_count
-
-    def send_end_event(self) -> None:
-        self.send_event(
-            EndEvent(
-                failed=self._failed,
-                msg=(
-                    self.getFailMessage() if self._failed else "Experiment completed."
-                ),
-            )
-        )
 
     def send_snapshot_event(self, event: CloudEvent, iteration: int) -> None:
         if event["type"] == EVTYPE_EE_SNAPSHOT:
