@@ -310,7 +310,6 @@ class BaseRunModel:
                     self._completed_realizations_mask = copy.copy(
                         self.active_realizations
                     )
-                self.current_iteration = self._total_iterations
         except ErtRunError as e:
             self._completed_realizations_mask = []
             failed = True
