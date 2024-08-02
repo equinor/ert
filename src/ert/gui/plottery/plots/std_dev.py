@@ -2,6 +2,7 @@ import io
 from typing import Any, Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
@@ -26,10 +27,16 @@ class StdDevPlot:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer
         if layer is not None:
+            vmin, vmax = float("inf"), float("-inf")
+            axes = []
+            images = []
+
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
-                images = std_dev_images[ensemble.name]
-                if not images:
+                axes.append(ax)
+
+                image_data = std_dev_images[ensemble.name]
+                if not image_data:
                     ax.set_axis_off()
                     ax.text(
                         0.5,
@@ -38,14 +45,24 @@ class StdDevPlot:
                         ha="center",
                         va="center",
                     )
+                    images.append(None)
                 else:
-                    img = plt.imread(io.BytesIO(images))
-                    ax.imshow(img)
-                    ax.set_title(
-                        f"{ensemble.experiment_name} : {ensemble.name} layer={layer}"
-                    )
-                    p = ax.pcolormesh(img)
-                    self._colorbar(p)
+                    img = plt.imread(io.BytesIO(image_data))
+                    images.append(img)
+                    vmin = min(vmin, np.min(img))
+                    vmax = max(vmax, np.max(img))
+
+                ax.set_title(
+                    f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
+                    wrap=True,
+                )
+
+            for ax, img in zip(axes, images):
+                if img is not None:
+                    im = ax.imshow(img, vmin=vmin, vmax=vmax)
+                    self._colorbar(im)
+
+            figure.tight_layout()
 
     @staticmethod
     def _colorbar(mappable: QuadMesh) -> Any:
