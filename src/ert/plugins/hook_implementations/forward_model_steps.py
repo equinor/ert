@@ -443,9 +443,8 @@ class MoveDirectory(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`MOVE_DIRECTORY` job will move directory to target directory.
-If directory already exists, this job will move directory to the target directory
-and then replace the existing directory.
+The :code:`MOVE_DIRECTORY` job will move a directory.
+If the target directory already exists, it will be replaced.
 """,
             examples="""
             .. code-block:: bash
