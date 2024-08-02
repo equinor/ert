@@ -402,6 +402,7 @@ The above change takes effect for the following shell scripts:
   - ``MAKE_DIRECTORY``
   - ``MAKE_SYMLINK``
   - ``MOVE_FILE``
+  - ``MOVE_DIRECTORY``
   - ``SCRIPT``
   - ``SYMLINK``
 

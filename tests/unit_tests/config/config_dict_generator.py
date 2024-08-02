@@ -159,6 +159,7 @@ def default_forward_model_names():
         st.sampled_from(
             [
                 "DELETE_FILE",
+                "move_directory",
                 "move_file",
                 "make_directory",
                 "rms",
@@ -174,6 +175,7 @@ def default_forward_model_names():
                 "FLOW",
                 "ECLIPSE300",
                 "eclipse300",
+                "MOVE_DIRECTORY",
                 "MOVE_FILE",
                 "template_render",
                 "TEMPLATE_RENDER",
