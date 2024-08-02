@@ -310,6 +310,7 @@ class BaseRunModel:
                     self._completed_realizations_mask = copy.copy(
                         self.active_realizations
                     )
+                self.current_iteration = self._total_iterations
         except ErtRunError as e:
             self._completed_realizations_mask = []
             failed = True
@@ -348,14 +349,6 @@ class BaseRunModel:
         if exception is None:
             return msg
         return f"{exception}\n{msg}"
-
-    def setCurrentIteration(self, iteration: int) -> None:
-        if not 0 <= iteration <= self._total_iterations:
-            raise ValueError(
-                f"Phase must be integer between (inclusive) 0 and {self._total_iterations}"
-            )
-
-        self.current_iteration = iteration
 
     def get_runtime(self) -> int:
         if self.start_time is None:

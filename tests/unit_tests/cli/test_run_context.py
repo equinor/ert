@@ -34,7 +34,6 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     )
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "validate", MagicMock())
-    monkeypatch.setattr(MultipleDataAssimilation, "setCurrentIteration", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "set_env_key", MagicMock())
     monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
 
