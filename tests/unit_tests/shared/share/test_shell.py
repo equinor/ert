@@ -66,6 +66,9 @@ class Shell:
     def move_file(self, *args):
         return self._call_script("move_file.py", args)
 
+    def move_directory(self, *args):
+        return self._call_script("move_directory.py", args)
+
 
 @pytest.fixture
 def shell(source_root):
@@ -169,6 +172,39 @@ def test_move_file(shell):
         f.write("123")
 
     shell.move_file("global_variables.ipl", "rms/ipl/global_variables.ipl")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_move_directory(shell):
+    # Test moving directory that does not exist
+    err = shell.move_directory("dir1", "path/file2").stderr
+    assert b"Input argument dir1 is not an existing directory" in err
+
+    # Test happy path
+    shell.mkdir("dir1")
+    Path("dir1/file").write_text("Hei!", encoding="utf-8")
+    shell.move_directory("dir1", "dir2")
+    assert os.path.exists("dir2")
+    assert os.path.exists("dir2/file")
+    assert not os.path.exists("dir1")
+
+    # Test overwriting directory
+    shell.mkdir("dir1")
+    Path("dir1/file2").write_text("Hei!", encoding="utf-8")
+    shell.move_directory("dir1", "dir2")
+    assert os.path.exists("dir2")
+    assert os.path.exists("dir2/file2")
+    assert not os.path.exists("dir2/file")
+    assert not os.path.exists("dir1")
+
+    # Test moving directory inside already existing direcotry
+    shell.mkdir("dir1")
+    Path("dir1/file3").write_text("Hei!", encoding="utf-8")
+    shell.move_directory("dir1", "dir2/dir1")
+    assert os.path.exists("dir2/dir1")
+    assert os.path.exists("dir2/file2")
+    assert os.path.exists("dir2/dir1/file3")
+    assert not os.path.exists("dir1")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -460,6 +496,7 @@ def test_shell_script_jobs_names(minimal_case):
         "COPY_DIRECTORY",
         "MAKE_SYMLINK",
         "MOVE_FILE",
+        "MOVE_DIRECTORY",
         "MAKE_DIRECTORY",
         "CAREFUL_COPY_FILE",
         "SYMLINK",

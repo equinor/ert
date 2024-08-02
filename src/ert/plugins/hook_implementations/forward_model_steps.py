@@ -422,6 +422,38 @@ and then replace the existing file.
         )
 
 
+class MoveDirectory(ForwardModelStepPlugin):
+    def __init__(self) -> None:
+        super().__init__(
+            name="MOVE_DIRECTORY",
+            command=[
+                str(
+                    (
+                        Path(__file__)
+                        / "../../../resources/shell_scripts/move_directory.py"
+                    ).resolve()
+                ),
+                "<FROM>",
+                "<TO>",
+            ],
+        )
+
+    @staticmethod
+    def documentation() -> Optional[ForwardModelStepDocumentation]:
+        return ForwardModelStepDocumentation(
+            category="utility.file_system",
+            description="""
+The :code:`MOVE_DIRECTORY` job will move a directory.
+If the target directory already exists, it will be replaced.
+""",
+            examples="""
+            .. code-block:: bash
+
+                FORWARD_MODEL MOVE_DIRECTORY(<FROM>=dir/to/move,<TO>=to/new/path)
+""",
+        )
+
+
 class Symlink(ForwardModelStepPlugin):
     def __init__(self) -> None:
         super().__init__(
@@ -529,6 +561,7 @@ _UpperCaseFMSteps: List[Type[ForwardModelStepPlugin]] = [
     MakeDirectory,
     MakeSymlink,
     MoveFile,
+    MoveDirectory,
     Symlink,
     TemplateRender,
 ]
