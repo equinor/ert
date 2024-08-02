@@ -151,6 +151,9 @@ def terminate_on_parent_death() -> None:
 
 
 if __name__ == "__main__":
+    import coverage
+
+    coverage.process_startup()
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
         logging.config.dictConfig(logging_conf)

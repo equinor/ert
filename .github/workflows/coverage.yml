@@ -36,6 +36,11 @@ jobs:
         cache-dependency-path: |
           pyproject.toml
 
+
+    - name: Setup sitecustomize.py
+      run: |
+        echo "import coverage; coverage.process_startup()" > src/ert/sitecustomize.py
+
     - name: Install with dependencies
       run: |
         pip install ".[dev]"
