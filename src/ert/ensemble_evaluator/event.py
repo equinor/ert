@@ -28,4 +28,4 @@ class SnapshotUpdateEvent(_UpdateEvent):
 @dataclass
 class EndEvent:
     failed: bool
-    failed_msg: Optional[str] = None
+    msg: Optional[str] = None

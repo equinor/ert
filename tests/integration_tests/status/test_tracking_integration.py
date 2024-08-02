@@ -406,7 +406,7 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
             f"summary file matching case path "
             f"{Path().absolute()}/simulations/realization-0/"
             "iter-0/ECLIPSE_CASE"
-        ) in failures[0].failed_msg
+        ) in failures[0].msg
         case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
         assert (
             f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
@@ -415,4 +415,4 @@ def test_tracking_missing_ecl(tmpdir, caplog, storage):
         assert (
             f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
             f"file {case}.SMSPEC not created by forward model!"
-        ) in failures[0].failed_msg
+        ) in failures[0].msg

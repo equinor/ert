@@ -139,5 +139,5 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
 
     if end_event.failed:
         # If monitor has not reported, give some info if the job failed
-        msg = end_event.failed_msg if args.disable_monitoring else ""
+        msg = end_event.msg if args.disable_monitoring else ""
         raise ErtCliError(msg)
