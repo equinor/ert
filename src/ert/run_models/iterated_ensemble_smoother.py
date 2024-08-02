@@ -222,8 +222,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
             prior = posterior
 
-        self.setCurrentIteration(self._total_iterations)
-
     @classmethod
     def name(cls) -> str:
         return "Iterated ensemble smoother"
