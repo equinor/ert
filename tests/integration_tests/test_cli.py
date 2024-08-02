@@ -566,7 +566,9 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 @pytest.fixture(name="mock_cli_run")
 def fixture_mock_cli_run(monkeypatch):
-    mocked_monitor = Mock()
+    end_event = Mock()
+    end_event.failed = False
+    mocked_monitor = Mock(return_value=end_event)
     mocked_thread_start = Mock()
     mocked_thread_join = Mock()
     monkeypatch.setattr(threading.Thread, "start", mocked_thread_start)
@@ -868,19 +870,20 @@ from ert.scheduler.driver import Driver
 
 @pytest.mark.timeout(15)
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_driver__init__exceptions_are_propagated(monkeypatch):
+def test_that_driver__init__exceptions_are_propagated(monkeypatch, capsys):
     def mocked__init__(*args, **kwargs) -> None:
         raise ValueError("Foobar error")
 
     monkeypatch.setattr(Driver, "__init__", mocked__init__)
     with pytest.raises(
         ErtCliError,
-        match="Foobar error",
     ):
         run_cli(
             TEST_RUN_MODE,
             "poly.ert",
         )
+    captured = capsys.readouterr()
+    assert "Foobar error" in captured.err
 
 
 @pytest.mark.integration_test

@@ -63,8 +63,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             queue_config,
             status_queue,
             active_realizations=simulation_arguments.active_realizations,
-            phase_count=2,
-            number_of_iterations=simulation_arguments.number_of_iterations,
+            total_iterations=simulation_arguments.number_of_iterations,
             random_seed=simulation_arguments.random_seed,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
@@ -75,7 +74,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.num_retries_per_iter = simulation_arguments.num_retries_per_iter
 
     @property
-    def iteration(self) -> int:
+    def sies_iteration(self) -> int:
         """Returns the SIES iteration number, starting at 1."""
         if self.sies_smoother is None:
             return 1
@@ -90,7 +89,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
-        self.setPhaseName("Pre processing update...")
+        self._current_iteration_label = "Pre processing update..."
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
             smoother_snapshot, self.sies_smoother = iterative_smoother_update(
@@ -113,22 +112,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 f"Update algorithm failed with the following error: {e}"
             ) from e
 
-        self.setPhaseName("Post processing update...")
+        self._current_iteration_label = "Post processing update..."
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        iteration_count = self.number_of_iterations
-        phase_count = iteration_count + 1
-        self.setPhaseCount(phase_count)
-
         log_msg = (
-            f"Running SIES for {iteration_count} "
-            f'iteration{"s" if (iteration_count != 1) else ""}.'
+            f"Running SIES for {self._total_iterations} "
+            f'iteration{"s" if (self._total_iterations != 1) else ""}.'
         )
         logger.info(log_msg)
-        self.setPhaseName(log_msg)
+        self._current_iteration_label = log_msg
 
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
@@ -164,13 +159,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
 
         self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
-        for current_iter in range(1, iteration_count + 1):
+        for prior_iter in range(self._total_iterations):
             self.send_event(
-                RunModelUpdateBeginEvent(iteration=current_iter - 1, run_id=prior.id)
+                RunModelUpdateBeginEvent(iteration=prior_iter, run_id=prior.id)
             )
             self.send_event(
                 RunModelStatusEvent(
-                    iteration=current_iter - 1,
+                    iteration=prior_iter,
                     run_id=prior.id,
                     msg="Creating posterior ensemble..",
                 )
@@ -178,9 +173,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
             posterior = self._storage.create_ensemble(
                 experiment,
-                name=target_ensemble_format % current_iter,  # noqa
+                name=target_ensemble_format % (prior_iter + 1),  # noqa
                 ensemble_size=prior.ensemble_size,
-                iteration=current_iter,
+                iteration=prior_iter + 1,
                 prior_ensemble=prior,
             )
             posterior_args = create_run_arguments(
@@ -194,11 +189,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     prior_storage=prior,
                     posterior_storage=posterior,
                     ensemble_id=prior.id,
-                    iteration=current_iter - 1,
+                    iteration=prior_iter,
                     initial_mask=initial_mask,
                 )
 
-                analysis_success = current_iter < self.iteration
+                # sies iteration starts at 1, we keep iters at 0,
+                # so we subtract sies to be 0-indexed
+                analysis_success = prior_iter < (self.sies_iteration - 1)
                 if analysis_success:
                     update_success = True
                     break
@@ -220,12 +217,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
                         "Iterated ensemble smoother stopped: "
                         "maximum number of iteration retries "
                         f"({self.num_retries_per_iter} retries) reached "
-                        f"for iteration {current_iter}"
+                        f"for iteration {prior_iter}"
                     )
                 )
             prior = posterior
 
-        self.setPhase(phase_count, "Experiment completed.")
+        self.setCurrentIteration(self._total_iterations)
 
     @classmethod
     def name(cls) -> str:

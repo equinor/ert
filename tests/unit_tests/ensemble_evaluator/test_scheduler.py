@@ -60,7 +60,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
             use_token=False,
             generate_cert=False,
         )
-        evaluator = EnsembleEvaluator(ensemble, config, 0)
+        evaluator = EnsembleEvaluator(ensemble, config)
         with caplog.at_level(logging.DEBUG):
             run_task = asyncio.create_task(
                 evaluator.run_and_get_successful_realizations()

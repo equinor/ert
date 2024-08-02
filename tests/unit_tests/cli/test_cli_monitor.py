@@ -67,9 +67,9 @@ def test_print_progress():
     monitor._snapshots[0] = Snapshot(sd.model_dump())
     monitor._start_time = datetime.now()
     general_event = SnapshotUpdateEvent(
-        phase_name="Test Phase",
-        current_phase=0,
-        total_phases=2,
+        iteration_label="Test Phase",
+        current_iteration=0,
+        total_iterations=2,
         progress=0.5,
         realization_count=100,
         status_count={"Finished": 50, "Waiting": 50},

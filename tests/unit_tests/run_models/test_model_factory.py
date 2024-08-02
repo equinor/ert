@@ -162,7 +162,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         model.active_realizations
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
-    assert model.number_of_iterations == 10
+    assert model._total_iterations == 10
     assert poly_case.analysis_config.num_iterations == 10
 
 

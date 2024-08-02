@@ -57,13 +57,7 @@ EVENT_HANDLER = Callable[[List[CloudEvent]], Awaitable[None]]
 
 
 class EnsembleEvaluator:
-    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig, iter_: int):
-        # Without information on the iteration, the events emitted from the
-        # evaluator are ambiguous. In the future, an experiment authority* will
-        # "own" the evaluators and can add iteration information to events they
-        # emit. In the meantime, it is added here.
-        # * https://github.com/equinor/ert/issues/1250
-        self._iter: int = iter_
+    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
@@ -201,8 +195,6 @@ class EnsembleEvaluator:
         extra_attrs: Optional[Dict[str, Any]] = None,
     ) -> CloudEvent:
         """Returns a CloudEvent with the given properties"""
-        if isinstance(data, dict):
-            data["iter"] = self._iter
         if extra_attrs is None:
             extra_attrs = {}
 

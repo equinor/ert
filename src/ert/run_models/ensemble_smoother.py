@@ -44,8 +44,7 @@ class EnsembleSmoother(BaseRunModel):
             queue_config,
             status_queue,
             active_realizations=simulation_arguments.active_realizations,
-            phase_count=2,
-            number_of_iterations=2,
+            total_iterations=2,
             random_seed=simulation_arguments.random_seed,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )
@@ -62,7 +61,7 @@ class EnsembleSmoother(BaseRunModel):
     ) -> None:
         log_msg = "Running ES"
         logger.info(log_msg)
-        self.setPhaseName(log_msg)
+        self._current_iteration_label = log_msg
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -98,7 +97,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.send_event(RunModelUpdateBeginEvent(iteration=0, run_id=prior.id))
 
-        self.setPhaseName("Running ES update step")
+        self._current_iteration_label = "Running ES update step"
         self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
 
@@ -148,7 +147,7 @@ class EnsembleSmoother(BaseRunModel):
             evaluator_server_config,
         )
 
-        self.setPhase(2, "Experiment completed.")
+        self.current_iteration = 2
 
     @classmethod
     def name(cls) -> str:

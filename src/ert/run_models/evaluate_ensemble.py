@@ -52,7 +52,7 @@ class EvaluateEnsemble(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        self.setPhaseName("Running evaluate experiment...")
+        self._current_iteration_label = "Running evaluate experiment..."
 
         ensemble_id = self.ensemble_id
         ensemble_uuid = UUID(ensemble_id)
@@ -69,15 +69,14 @@ class EvaluateEnsemble(BaseRunModel):
             ensemble=ensemble,
         )
 
-        phase_count = ensemble.iteration + 1
-        self.setPhaseCount(phase_count)
+        self._total_iterations = ensemble.iteration + 1
         self._evaluate_and_postprocess(
             prior_args,
             ensemble,
             evaluator_server_config,
         )
 
-        self.setPhase(phase_count, "Experiment completed.")
+        self.current_iteration = ensemble.iteration + 1
 
     @classmethod
     def name(cls) -> str:

@@ -64,7 +64,7 @@ def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
     qtbot: QtBot, run_dialog, event_queue
 ):
     run_dialog.run_experiment()
-    event_queue.put(EndEvent(failed=False, failed_msg=""))
+    event_queue.put(EndEvent(failed=False, msg=""))
     qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=1000)
     assert not run_dialog.done_button.isHidden()
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
@@ -74,7 +74,7 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog, event_queue
 ):
     run_dialog.run_experiment()
-    event_queue.put(EndEvent(failed=False, failed_msg=""))
+    event_queue.put(EndEvent(failed=False, msg=""))
 
     with qtbot.waitSignal(run_dialog.finished, timeout=30000):
 
@@ -109,7 +109,7 @@ def test_run_dialog_polls_run_model_for_runtime(
     qtbot.waitUntil(
         lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
     )
-    event_queue.put(EndEvent(failed=False, failed_msg=""))
+    event_queue.put(EndEvent(failed=False, msg=""))
     qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden())
     run_dialog.close()
 
@@ -124,9 +124,9 @@ def test_large_snapshot(
     events = [
         FullSnapshotEvent(
             snapshot=large_snapshot,
-            phase_name="Foo",
-            current_phase=0,
-            total_phases=1,
+            iteration_label="Foo",
+            current_iteration=0,
+            total_iterations=1,
             progress=0.5,
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
@@ -134,15 +134,15 @@ def test_large_snapshot(
         ),
         FullSnapshotEvent(
             snapshot=large_snapshot,
-            phase_name="Foo",
-            current_phase=0,
-            total_phases=1,
+            iteration_label="Foo",
+            current_iteration=0,
+            total_iterations=1,
             progress=0.5,
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
             iteration=1,
         ),
-        EndEvent(failed=False, failed_msg=""),
+        EndEvent(failed=False, msg=""),
     ]
 
     run_dialog.run_experiment()
@@ -178,9 +178,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -192,15 +192,15 @@ def test_large_snapshot(
                             [], status=state.REALIZATION_STATE_FINISHED
                         )
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, failed_msg=""),
+                EndEvent(failed=False, msg=""),
             ],
             1,
             id="real_less_partial",
@@ -220,9 +220,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -234,15 +234,15 @@ def test_large_snapshot(
                             ["0"], status=state.REALIZATION_STATE_FINISHED
                         )
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
                 ),
-                EndEvent(failed=False, failed_msg=""),
+                EndEvent(failed=False, msg=""),
             ],
             1,
             id="jobless_partial",
@@ -266,9 +266,9 @@ def test_large_snapshot(
                         )
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
@@ -285,9 +285,9 @@ def test_large_snapshot(
                         )
                         .build(["1"], status=state.REALIZATION_STATE_RUNNING)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
@@ -304,15 +304,15 @@ def test_large_snapshot(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FAILED)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                     iteration=0,
                 ),
-                EndEvent(failed=False, failed_msg=""),
+                EndEvent(failed=False, msg=""),
             ],
             1,
             id="two_job_updates_over_two_partials",
@@ -330,9 +330,9 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Pending": 1, "Unknown": 3},
@@ -349,15 +349,15 @@ def test_large_snapshot(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=1,
                 ),
-                EndEvent(failed=False, failed_msg=""),
+                EndEvent(failed=False, msg=""),
             ],
             2,
             id="two_iterations",
@@ -454,9 +454,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.25,
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
@@ -475,9 +475,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_RUNNING)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=0.5,
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
@@ -496,15 +496,15 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                         )
                         .build(["0"], status=state.REALIZATION_STATE_FINISHED)
                     ),
-                    phase_name="Foo",
-                    current_phase=0,
-                    total_phases=1,
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
                     progress=1,
                     realization_count=4,
                     status_count={"Finished": 4},
                     iteration=0,
                 ),
-                EndEvent(failed=False, failed_msg=""),
+                EndEvent(failed=False, msg=""),
             ],
             1,
             id="running_job_with_memory_usage",

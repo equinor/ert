@@ -13,6 +13,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.gui.tools.search_bar import SearchBar
+
 from .file_update_worker import FileUpdateWorker
 
 
@@ -80,7 +82,7 @@ class FileDialog(QDialog):
         scroll_bar.valueChanged.connect(self._update_cursor)
 
         self._view.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
-
+        self._search_bar = SearchBar(self._view)
         self._follow_mode = False
 
         self._init_layout()
@@ -114,6 +116,7 @@ class FileDialog(QDialog):
         self._enable_follow_mode(self._follow_mode)
 
         layout = QVBoxLayout(self)
+        layout.addLayout(self._search_bar.get_layout())
         layout.addWidget(self._view)
         layout.addWidget(dialog_buttons)
 

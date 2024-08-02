@@ -47,13 +47,6 @@ class MultipleDataAssimilation(BaseRunModel):
         self.weights = self.parse_weights(simulation_arguments.weights)
         self.es_settings = es_settings
         self.update_settings = update_settings
-        if simulation_arguments.starting_iteration == 0:
-            # If a regular run we also need to account for the prior
-            number_of_iterations = len(self.weights) + 1
-        else:
-            number_of_iterations = len(
-                self.weights[simulation_arguments.starting_iteration - 1 :]
-            )
 
         self.target_ensemble_format = simulation_arguments.target_ensemble
         self.experiment_name = simulation_arguments.experiment_name
@@ -71,8 +64,7 @@ class MultipleDataAssimilation(BaseRunModel):
             queue_config,
             status_queue,
             active_realizations=simulation_arguments.active_realizations,
-            phase_count=2,
-            number_of_iterations=number_of_iterations,
+            total_iterations=len(self.weights) + 1,
             start_iteration=simulation_arguments.starting_iteration,
             random_seed=simulation_arguments.random_seed,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
@@ -81,11 +73,9 @@ class MultipleDataAssimilation(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        self.setPhaseCount(self.start_iteration + self.number_of_iterations)
-
         log_msg = f"Running ES-MDA with normalized weights {self.weights}"
         logger.info(log_msg)
-        self.setPhaseName(log_msg)
+        self._current_iteration_label = log_msg
 
         if self.restart_run:
             id = self.prior_ensemble_id
@@ -182,9 +172,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             prior = posterior
 
-        self.setPhaseName("Post processing...")
-
-        self.setPhase(self.phaseCount(), "Experiment completed.")
+        self.setCurrentIteration(self._total_iterations)
 
     def update(
         self,
@@ -192,10 +180,10 @@ class MultipleDataAssimilation(BaseRunModel):
         posterior_ensemble: Ensemble,
         weight: float,
     ) -> SmootherSnapshot:
-        phase_string = (
+        self._current_iteration_label = (
             f"Analyzing iteration: {posterior_ensemble.iteration} with weight {weight}"
         )
-        self.setPhase(self.currentPhase() + 1, phase_string)
+        self.setCurrentIteration(self.current_iteration + 1)
         try:
             return smoother_update(
                 prior_ensemble,
