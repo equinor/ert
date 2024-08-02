@@ -32,7 +32,7 @@ from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
 from ert.services import StorageService
 from ert.storage import Ensemble, open_storage
 
@@ -151,6 +151,11 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 
 
 @pytest.fixture()
+def snake_oil_field_storage(copy_snake_oil_field_storage):
+    return ErtConfig.from_file("snake_oil_field.ert")
+
+
+@pytest.fixture()
 def snake_oil_case(setup_case):
     return setup_case("snake_oil", "snake_oil.ert")
 
@@ -202,6 +207,17 @@ def copy_snake_oil_case(copy_case):
 def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copytree(_shared_snake_oil_case, "test_data")
+    monkeypatch.chdir("test_data")
+
+
+@pytest.fixture(
+    name="copy_snake_oil_field_storage",
+)
+def fixture_copy_snake_oil_field_storage(
+    _shared_snake_oil_field, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(_shared_snake_oil_field, "test_data")
     monkeypatch.chdir("test_data")
 
 
@@ -371,6 +387,31 @@ def _run_snake_oil(source_root):
     run_cli(parsed)
 
 
+def _run_snake_oil_field(source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "snake_oil_field"), "test_data"
+    )
+    os.chdir("test_data")
+    with fileinput.input("snake_oil_field.ert", inplace=True) as fin:
+        for line in fin:
+            if "NUM_REALIZATIONS 25" in line:
+                print("NUM_REALIZATIONS 5", end="")
+            else:
+                print(line, end="")
+
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ES_MDA_MODE,
+            "--disable-monitor",
+            "snake_oil_field.ert",
+        ],
+    )
+
+    run_cli(parsed)
+
+
 @pytest.fixture
 def _shared_snake_oil_case(request, monkeypatch, source_root):
     """This fixture will run the snake_oil case to populate storage,
@@ -383,6 +424,24 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
         _run_snake_oil(source_root)
+    else:
+        monkeypatch.chdir("test_data")
+
+    yield os.getcwd()
+
+
+@pytest.fixture
+def _shared_snake_oil_field(request, monkeypatch, source_root):
+    """This fixture will run the snake_oil case to populate storage,
+    this is quite slow, but the results will be cached. If something comes
+    out of sync, clear the cache and start again.
+    """
+    snake_path = request.config.cache.mkdir(
+        "snake_oil_field_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
+    )
+    monkeypatch.chdir(snake_path)
+    if not os.listdir(snake_path):
+        _run_snake_oil_field(source_root)
     else:
         monkeypatch.chdir("test_data")
 
