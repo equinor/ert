@@ -49,14 +49,14 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     ert_config = ErtConfig.with_plugins().from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
-    all_fm_steps = [fms.name for fms in ert_config.forward_model_steps]
+    counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
     for fm_step in ert_config.forward_model_steps:
         if fm_step.name not in forward_models:
-            count_fm_step = Counter(all_fm_steps).get(fm_step.name)
+            count_fm_step = counter_fm_steps.get(fm_step.name)
             logger.info(
                 "Config contains forward model step %s %d time(s)",
                 fm_step.name,

@@ -153,11 +153,11 @@ def _start_initial_gui_window(
         if w.category == ConfigWarning
         and cast(ConfigWarning, w.message).info.is_deprecation
     ]
-    all_fm_steps = [fms.name for fms in ert_config.forward_model_steps]
+    counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
 
     for fm_step in ert_config.forward_model_steps:
         if fm_step.name not in forward_models:
-            count_fm_step = Counter(all_fm_steps).get(fm_step.name)
+            count_fm_step = counter_fm_steps.get(fm_step.name)
             logger.info(
                 "Config contains forward model step %s %d time(s)",
                 fm_step.name,
