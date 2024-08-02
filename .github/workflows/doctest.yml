@@ -8,6 +8,9 @@ on:
    tags: "*"
  pull_request:
 
+env:
+  UV_SYSTEM_PYTHON: 1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -19,17 +22,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        python-version: ['3.12']
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       id: setup_python
       with:
-        python-version: '3.11'
-        cache: "pip"
-        cache-dependency-path: |
-          pyproject.toml
-    - run: pip install -e ".[dev]"
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      run: pip install uv
+
+    - run: |
+        uv pip install -e ".[dev]"
 
     - name: Test doctest
       run: |
