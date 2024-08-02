@@ -476,7 +476,6 @@ def active_realizations_fixture() -> Mock:
 def runmodel(active_realizations) -> Mock:
     brm = Mock()
     brm.get_runtime = Mock(return_value=100)
-    brm.hasRunFailed = Mock(return_value=False)
     brm.getFailMessage = Mock(return_value="")
     brm.support_restart = True
     brm.simulation_arguments = {"active_realizations": active_realizations}

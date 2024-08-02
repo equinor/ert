@@ -334,12 +334,6 @@ class BaseRunModel:
     ) -> None:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    def isFinished(self) -> bool:
-        return self.current_iteration == self._total_iterations or self._failed
-
-    def hasRunFailed(self) -> bool:
-        return self._failed
-
     def getFailMessage(self) -> str:
         msg = "\n".join(self._error_messages)
         if self._exception is None:

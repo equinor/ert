@@ -332,10 +332,7 @@ class RunDialog(QDialog):
         )
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
-        if self._run_model.isFinished():
-            self.simulation_done.emit(
-                self._run_model.hasRunFailed(), self._run_model.getFailMessage()
-            )
+        if not self._notifier.is_simulation_running:
             self.accept()
         elif self.killJobs() != QMessageBox.Yes and a0 is not None:
             a0.ignore()
@@ -403,9 +400,6 @@ class RunDialog(QDialog):
             self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
             self.fail_msg_box.exec_()
 
-    def _show_done_button(self) -> None:
-        self.done_button.setHidden(False)
-
     @Slot()
     def _on_ticker(self) -> None:
         runtime = self._run_model.get_runtime()
@@ -423,7 +417,7 @@ class RunDialog(QDialog):
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.msg)
             self._ticker.stop()
-            self._show_done_button()
+            self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
