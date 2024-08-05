@@ -279,10 +279,23 @@ class EnsembleEvaluator:
                             f"ignoring since I am {self.ensemble.id_}"
                         )
                         continue
-                    if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                        await self.forward_checksum(event)
-                    else:
-                        await self._events.put(event)
+                    try:
+                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                            await self.forward_checksum(event)
+                        else:
+                            await self._events.put(event)
+                    except BaseException as ex:
+                        # Exceptions include asyncio.InvalidStateError, and
+                        # anything that self._*_handler() can raise (updates
+                        # snapshots)
+                        logger.warning(
+                            "cannot handle event - "
+                            f"closing connection to dispatcher: {ex}"
+                        )
+                        await websocket.close(
+                            code=1011, reason=f"failed handling {event}"
+                        )
+                        return
 
                     if event["type"] in [
                         EVTYPE_ENSEMBLE_SUCCEEDED,
