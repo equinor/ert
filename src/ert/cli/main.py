@@ -6,6 +6,7 @@ import logging
 import os
 import queue
 import sys
+from collections import Counter
 from typing import Optional, TextIO
 
 from _ert.threading import ErtThread
@@ -47,12 +48,17 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     ert_config = ErtConfig.with_plugins().from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
+    counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
-    for fm_step in ert_config.forward_model_steps:
-        logger.info("Config contains forward model step %s", fm_step.name)
+    for fm_step_name, count in counter_fm_steps.items():
+        logger.info(
+            "Config contains forward model step %s %d time(s)",
+            fm_step_name,
+            count,
+        )
 
     if not ert_config.observations and args.mode not in [
         ENSEMBLE_EXPERIMENT_MODE,

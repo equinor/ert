@@ -13,6 +13,8 @@ if sys.version_info >= (3, 9):
 else:
     from importlib_resources import files
 
+from collections import Counter
+
 from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
@@ -150,8 +152,14 @@ def _start_initial_gui_window(
         if w.category == ConfigWarning
         and cast(ConfigWarning, w.message).info.is_deprecation
     ]
-    for fm_step in ert_config.forward_model_steps:
-        logger.info("Config contains forward model step %s", fm_step.name)
+    counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
+
+    for fm_step_name, count in counter_fm_steps.items():
+        logger.info(
+            "Config contains forward model step %s %d time(s)",
+            fm_step_name,
+            count,
+        )
 
     for wm in all_warnings:
         if wm.category != ConfigWarning:
