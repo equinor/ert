@@ -471,7 +471,7 @@ async def test_all_batches_are_processed(
 ):
     ensemble = make_ensemble(monkeypatch, tmpdir, 1, 1, 5, 1)
 
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config(), 0)
+    evaluator = EnsembleEvaluator(ensemble, make_ee_config())
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()
 
