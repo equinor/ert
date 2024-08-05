@@ -1,6 +1,7 @@
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QApplication, QPlainTextEdit
+from qtpy.QtWidgets import QPlainTextEdit
 
 from ert.gui.tools.search_bar import SearchBar
 
@@ -26,8 +27,7 @@ from ert.gui.tools.search_bar import SearchBar
         pytest.param("Testing search functionality.", "", id="Empty selection"),
     ],
 )
-def test_search_bar(text, search):
-    _ = QApplication([])
+def test_search_bar(text, search, qtbot: QtBot):
     text_box = QPlainTextEdit()
     text_box.setPlainText(text)
     search_bar = SearchBar(text_box)
