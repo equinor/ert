@@ -96,7 +96,6 @@ def _start_initial_gui_window(
     error_messages = []
     config_warnings = []
     ert_config = None
-    forward_models = []
 
     with warnings.catch_warnings(record=True) as all_warnings:
         try:
@@ -155,15 +154,12 @@ def _start_initial_gui_window(
     ]
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
 
-    for fm_step in ert_config.forward_model_steps:
-        if fm_step.name not in forward_models:
-            count_fm_step = counter_fm_steps.get(fm_step.name)
-            logger.info(
-                "Config contains forward model step %s %d time(s)",
-                fm_step.name,
-                count_fm_step,
-            )
-            forward_models.append(fm_step.name)
+    for fm_step_name, count in counter_fm_steps.items():
+        logger.info(
+            "Config contains forward model step %s %d time(s)",
+            fm_step_name,
+            count,
+        )
 
     for wm in all_warnings:
         if wm.category != ConfigWarning:
