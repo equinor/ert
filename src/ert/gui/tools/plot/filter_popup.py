@@ -66,9 +66,9 @@ class FilterPopup(QDialog):
 
         self.__layout.addWidget(check_box)
 
-    def leaveEvent(self, a0: Optional[QEvent]) -> None:
-        QWidget.leaveEvent(self, QEvent)  # type: ignore
+    def leaveEvent(self, event: Optional[QEvent]) -> None:
         self.hide()
+        QWidget.leaveEvent(self, event)
 
     def show(self) -> None:
         QWidget.show(self)
