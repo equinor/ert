@@ -153,11 +153,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     @Slot(bool)
     def update_experiment_edit(self, checked: bool) -> None:
         if checked:
+            self._experiment_name_field.disable_validation()
             self._experiment_name_field.setText(
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
             self._experiment_name_field.setEnabled(False)
         else:
+            self._experiment_name_field.enable_validation()
             self._experiment_name_field.clear()
             self._experiment_name_field.setEnabled(True)
 

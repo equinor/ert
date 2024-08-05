@@ -36,6 +36,8 @@ class StringBox(QLineEdit):
         self._validation = ValidationSupport(self)
         self._validator: Optional[ArgumentDefinition] = None
         self._model = model
+        self._disable_validation = False
+
         if placeholder_text:
             self.setPlaceholderText(placeholder_text)
         self.editingFinished.connect(self.stringBoxChanged)
@@ -53,6 +55,8 @@ class StringBox(QLineEdit):
         self.modelChanged()
 
     def validateString(self) -> None:
+        if self._disable_validation:
+            return
         string_to_validate = str(self.text())
         if not string_to_validate and self.placeholderText():
             string_to_validate = self.placeholderText()
@@ -108,3 +112,9 @@ class StringBox(QLineEdit):
     @property
     def get_text(self) -> str:
         return self.text() if self.text() else self.placeholderText()
+
+    def enable_validation(self) -> None:
+        self._disable_validation = False
+
+    def disable_validation(self) -> None:
+        self._disable_validation = True
