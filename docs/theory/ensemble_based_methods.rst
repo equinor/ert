@@ -198,7 +198,7 @@ Now let
 which allows us to write the updated position as
 
 .. math::
-   x_k = Kd_k + (1 - K)x_k^{\ast} = x_k^{\ast} + K(x_k^{\ast} - d_k)
+   x_k = Kd_k + (1 - K)x_k^{\ast} = x_k^{\ast} + K(d_k - x_k^{\ast})
 
 :math:`K` is the Kalman gain which is a weight term, :math:`0 < K < 1`, that chooses an update value :math:`x_k` that lies between the prediction and measurement.
 
