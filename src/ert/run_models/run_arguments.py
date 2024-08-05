@@ -33,6 +33,12 @@ class ESRunArguments(SimulationArguments):
     experiment_name: str
 
 
+@dataclass
+class ManualUpdateArguments(SimulationArguments):
+    target_ensemble: str
+    ensemble_id: str
+
+
 # pylint: disable=R0902
 @dataclass
 class ESMDARunArguments(SimulationArguments):

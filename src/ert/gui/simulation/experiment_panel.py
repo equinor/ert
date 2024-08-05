@@ -30,6 +30,7 @@ from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
 from .experiment_config_panel import ExperimentConfigPanel
 from .iterated_ensemble_smoother_panel import IteratedEnsembleSmootherPanel
+from .manual_update_panel import ManualUpdatePanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
 from .single_test_run_panel import SingleTestRunPanel
@@ -119,6 +120,10 @@ class ExperimentPanel(QWidget):
         analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(

@@ -27,6 +27,18 @@
 Highlighted changes
 ===================
 
+Version 10.3
+------------
+
+Changes when running an update manually
+#######################################
+
+The manual update button has been replaced with a run model for doing an manual
+update, this change means that when doing a manual update, the analysis hooks
+are run before and after the update. The PRE_FIRST_UPDATE hook is only run if the
+prior iteration is 0.
+
+
 Version 10.0
 ------------
 

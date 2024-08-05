@@ -32,7 +32,6 @@ from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
-from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
@@ -241,7 +240,6 @@ def _setup_main_window(
         )
     )
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
-    window.addTool(RunAnalysisTool(config, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler, config_file)
     window.addTool(event_viewer)
