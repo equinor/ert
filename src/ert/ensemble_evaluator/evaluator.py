@@ -295,7 +295,7 @@ class EnsembleEvaluator:
                     ]:
                         return
             except ConnectionClosedError as connection_error:
-                # Dispatchers my close the connection apruptly in the case of
+                # Dispatchers may close the connection abruptly in the case of
                 #  * flaky network (then the dispatcher will try to reconnect)
                 #  * job being killed due to MAX_RUNTIME
                 #  * job being killed by user
