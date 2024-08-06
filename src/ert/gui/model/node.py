@@ -80,6 +80,8 @@ class RealNodeData:
     real_status_color: Optional[QColor] = None
     current_memory_usage: Optional[int] = None
     max_memory_usage: Optional[int] = None
+    stderr: Optional[str] = None
+    callback_status_message: Optional[str] = None
 
 
 @dataclass

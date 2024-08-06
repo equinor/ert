@@ -8,7 +8,7 @@ import uuid
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
@@ -268,8 +268,12 @@ class Job:
 
     async def _send(self, state: JobState) -> None:
         self.state = state
+        event_data: Dict[str, JobState | str] = {
+            "queue_event_type": state,
+        }
         if state == JobState.FAILED:
             await self._handle_failure()
+            event_data["callback_status_message"] = self._callback_status_msg
 
         elif state == JobState.ABORTED:
             await self._handle_aborted()
@@ -284,9 +288,7 @@ class Job:
                 "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
                 "datacontenttype": "application/json",
             },
-            {
-                "queue_event_type": state,
-            },
+            event_data,
         )
         await self._scheduler._events.put(to_json(event))
 

@@ -113,7 +113,9 @@ class Snapshot:
         ] = defaultdict(dict)
         """A shallow dictionary of realization states. The key is a string with
         realization number, pointing to a dict with keys active (bool),
-        start_time (datetime), end_time (datetime) and status (str)."""
+        start_time (datetime), end_time (datetime), callback_status_message (str) and status (str).
+        callback_status_message is the error message from the data internalization process at the end of the forward model,
+        and status is the error status from the forward model steps"""
 
         self._forward_model_states: DefaultDict[Tuple[str, str], ForwardModel] = (
             defaultdict(ForwardModel)  # type: ignore
@@ -145,6 +147,9 @@ class Snapshot:
                     "active": realization_data.get("active"),
                     "start_time": realization_data.get("start_time"),
                     "end_time": realization_data.get("end_time"),
+                    "callback_status_message": realization_data.get(
+                        "callback_status_message"
+                    ),
                 }
             )
             for forward_model_id, job in realization_data.get(
@@ -262,10 +267,16 @@ class Snapshot:
         status: str,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
+        callback_status_message: Optional[str] = None,
     ) -> "Snapshot":
         self._realization_states[real_id].update(
             _filter_nones(
-                {"status": status, "start_time": start_time, "end_time": end_time}
+                {
+                    "status": status,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "callback_status_message": callback_status_message,
+                }
             )
         )
         return self
@@ -282,6 +293,8 @@ class Snapshot:
             status = _FM_TYPE_EVENT_TO_STATUS[e_type]
             start_time = None
             end_time = None
+            callback_status_message = None
+
             if e_type == ids.EVTYPE_REALIZATION_RUNNING:
                 start_time = convert_iso8601_to_datetime(timestamp)
             elif e_type in {
@@ -289,10 +302,15 @@ class Snapshot:
                 ids.EVTYPE_REALIZATION_FAILURE,
                 ids.EVTYPE_REALIZATION_TIMEOUT,
             }:
+                if event.data and event.data.get("callback_status_message"):
+                    callback_status_message = event.data["callback_status_message"]
                 end_time = convert_iso8601_to_datetime(timestamp)
-
             self.update_realization(
-                _get_real_id(e_source), status, start_time, end_time
+                _get_real_id(e_source),
+                status,
+                start_time,
+                end_time,
+                callback_status_message,
             )
 
             if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
@@ -403,6 +421,7 @@ class RealizationSnapshot(BaseModel):
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     forward_models: Dict[str, ForwardModel] = {}
+    callback_status_message: Optional[str] = None
 
 
 class SnapshotDict(BaseModel):
@@ -421,6 +440,7 @@ class SnapshotBuilder(BaseModel):
         status: Optional[str],
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
+        callback_status_message: Optional[str] = None,
     ) -> Snapshot:
         top = SnapshotDict(status=status, metadata=self.metadata)
         for r_id in real_ids:
@@ -430,6 +450,7 @@ class SnapshotBuilder(BaseModel):
                 start_time=start_time,
                 end_time=end_time,
                 status=status,
+                callback_status_message=callback_status_message,
             )
         return Snapshot.from_nested_dict(top.model_dump())
 
