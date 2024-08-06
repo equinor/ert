@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QFormLayout, QMessageBox, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -7,6 +8,7 @@ from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     EnsembleSelector,
     ErtMessageBox,
+    QApplication,
     StringBox,
     ValueModel,
 )
@@ -86,6 +88,8 @@ class LoadResultsPanel(QWidget):
                 ),
             )
             return False
+
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         messages: list[str] = []
         with captured_logs(messages):
             loaded = self._facade.load_from_forward_model(
@@ -93,6 +97,7 @@ class LoadResultsPanel(QWidget):
                 realizations,  # type: ignore
                 iteration_int,
             )
+        QApplication.restoreOverrideCursor()
 
         if loaded == realizations.count(True):
             QMessageBox.information(

@@ -1,10 +1,9 @@
 from typing import Any, Optional
 
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QPushButton
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import ClosableDialog, showWaitCursorWhileWaiting
+from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
 from ert.libres_facade import LibresFacade
@@ -30,14 +29,12 @@ class LoadResultsTool(Tool):
             self.parent(),  # type: ignore
         )
         self._dialog.setObjectName("load_results_manually_tool")
-        self._dialog.addButton("Load", self.load)
+        loadButton = self._dialog.addButton("Load", self.load)
         if not self._import_widget._ensemble_selector.isEnabled():
-            button = self._dialog.findChild(QPushButton, "Load")
-            button.setEnabled(False)
-            button.setToolTip("Must load into a ensemble")
+            loadButton.setEnabled(False)
+            loadButton.setToolTip("Must load into a ensemble")
         self._dialog.exec_()
 
-    @showWaitCursorWhileWaiting
     def load(self, _: Any) -> None:
         assert self._dialog is not None
         assert self._import_widget is not None
