@@ -91,7 +91,8 @@ NUM_REALIZATIONS
 
 This is the size of the ensemble, i.e. the number of
 realizations/members in the ensemble. All configs must contain this
-keyword.
+keyword. Bear in mind that experiments that require update step must contain
+at least 2 realizations.
 
 *Example:*
 

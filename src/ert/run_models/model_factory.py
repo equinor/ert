@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 
-from ert.config import ConfigWarning, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -173,6 +173,17 @@ def _setup_evaluate_ensemble(
     )
 
 
+def _validate_num_realizations(
+    args: Namespace, config: ErtConfig
+) -> npt.NDArray[np.bool_]:
+    active_realizations = _realizations(args, config.model_config.num_realizations)
+    if int(np.sum(active_realizations)) <= 1:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+    return active_realizations
+
+
 def _setup_ensemble_smoother(
     config: ErtConfig,
     storage: Storage,
@@ -180,12 +191,11 @@ def _setup_ensemble_smoother(
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleSmoother:
+    active_realizations = _validate_num_realizations(args, config)
     return EnsembleSmoother(
         ESRunArguments(
             random_seed=config.random_seed,
-            active_realizations=_realizations(
-                args, config.model_config.num_realizations
-            ).tolist(),
+            active_realizations=active_realizations.tolist(),
             target_ensemble=args.target_ensemble,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
@@ -227,13 +237,11 @@ def _setup_multiple_data_assimilation(
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)
-
+    active_realizations = _validate_num_realizations(args, config)
     return MultipleDataAssimilation(
         ESMDARunArguments(
             random_seed=config.random_seed,
-            active_realizations=_realizations(
-                args, config.model_config.num_realizations
-            ).tolist(),
+            active_realizations=active_realizations.tolist(),
             target_ensemble=_iterative_ensemble_format(config, args),
             weights=args.weights,
             restart_run=restart_run,
@@ -262,12 +270,11 @@ def _setup_iterative_ensemble_smoother(
     status_queue: SimpleQueue[StatusEvents],
 ) -> IteratedEnsembleSmoother:
     experiment_name = "ies" if args.experiment_name is None else args.experiment_name
+    active_realizations = _validate_num_realizations(args, config)
     return IteratedEnsembleSmoother(
         SIESRunArguments(
             random_seed=config.random_seed,
-            active_realizations=_realizations(
-                args, config.model_config.num_realizations
-            ).tolist(),
+            active_realizations=active_realizations.tolist(),
             target_ensemble=_iterative_ensemble_format(config, args),
             number_of_iterations=_num_iterations(config, args),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
