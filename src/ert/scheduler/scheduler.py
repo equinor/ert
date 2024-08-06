@@ -39,8 +39,7 @@ from ert.serialization import evaluator_unmarshaller
 
 from .driver import Driver
 from .event import FinishedEvent
-from .job import Job
-from .job import State as JobState
+from .job import Job, JobState
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization

@@ -5,8 +5,8 @@ import time
 import pytest
 
 from ert.config import ErtConfig
-from ert.scheduler import JobStatus
-from ert.simulator import BatchSimulator
+from ert.scheduler import JobState
+from ert.simulator import BatchContext, BatchSimulator
 
 
 class MockMonitor:
@@ -17,13 +17,13 @@ class MockMonitor:
         self.sim_context = args[0]
 
 
-def _wait_for_completion(ctx):
+def _wait_for_completion(ctx: BatchContext):
     while ctx.running():
         status = ctx.status
         time.sleep(1)
         sys.stderr.write(f"status: {status}\n")
         for job_index in range(len(ctx)):
-            status = ctx.job_status(job_index)
+            status = ctx.get_job_state(job_index)
             progress = ctx.job_progress(job_index)
             if progress:
                 for job in progress.steps:
@@ -408,26 +408,27 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
             assert f.readline(1) == str(idx)
 
 
-def assertContextStatusOddFailures(batch_ctx, final_state_only=False):
+def assertContextStatusOddFailures(batch_ctx: BatchContext, final_state_only=False):
     running_status = {
-        JobStatus.WAITING,
-        JobStatus.SUBMITTED,
-        JobStatus.PENDING,
-        JobStatus.RUNNING,
-        JobStatus.UNKNOWN,
-        JobStatus.EXIT,
-        JobStatus.DONE,
+        JobState.WAITING,
+        JobState.SUBMITTING,
+        JobState.PENDING,
+        JobState.RUNNING,
+        JobState.ABORTING,
+        JobState.ABORTED,
+        JobState.FAILED,
+        JobState.COMPLETED,
         None,  # job is not submitted yet but ok for this test
     }
 
     for idx in range(len(batch_ctx)):
-        status = batch_ctx.job_status(idx)
+        status = batch_ctx.get_job_state(idx)
         if not final_state_only and status in running_status:
             continue
         if idx % 2 == 0:
-            assert status == JobStatus.SUCCESS
+            assert status == JobState.COMPLETED
         else:
-            assert status == JobStatus.FAILED
+            assert status == JobState.FAILED
 
 
 def test_batch_ctx_status_failing_jobs(setup_case, storage):

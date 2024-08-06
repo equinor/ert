@@ -20,7 +20,7 @@ from ert.event_type_constants import (
 )
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
-from ert.scheduler.job import State
+from ert.scheduler.job import JobState
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -411,7 +411,7 @@ async def test_job_exception_correctly_propagates(mock_driver, realization, capl
     with pytest.raises(RuntimeError, match="Job submission failed!"):
         await execute_task
 
-    assert sch._jobs[0].state == State.FAILED
+    assert sch._jobs[0].state == JobState.FAILED
     assert "Exception in LocalDriver: Job submission failed!" in caplog.text
 
 
@@ -610,7 +610,7 @@ async def test_scheduler_publishes_to_websocket(
     await websocket_server_task
     assert [
         json.loads(event)["data"]["queue_event_type"] for event in events_received
-    ] == ["WAITING", "SUBMITTED", "PENDING", "RUNNING", "SUCCESS"]
+    ] == ["WAITING", "SUBMITTING", "PENDING", "RUNNING", "COMPLETED"]
 
     assert (
         sch._events.empty()
