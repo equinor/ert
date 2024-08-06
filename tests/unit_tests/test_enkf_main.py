@@ -16,7 +16,6 @@ from ert.run_arg import create_run_arguments
     ],
 )
 def test_create_run_args(prior_ensemble, config_dict, run_paths):
-    iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict(config_dict)
 
@@ -38,7 +37,6 @@ def test_create_run_args(prior_ensemble, config_dict, run_paths):
 
 
 def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
-    iteration = 0
     ensemble_size = 10
     config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
     run_args = create_run_arguments(

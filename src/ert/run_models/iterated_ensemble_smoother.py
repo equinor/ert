@@ -92,7 +92,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._current_iteration_label = "Pre processing update..."
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
-            smoother_snapshot, self.sies_smoother = iterative_smoother_update(
+            _, self.sies_smoother = iterative_smoother_update(
                 prior_storage,
                 posterior_storage,
                 self.sies_smoother,

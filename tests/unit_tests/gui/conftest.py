@@ -105,7 +105,7 @@ def _open_main_window(
 ) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
     args_mock = Mock()
     args_mock.config = str(path)
-    with ErtPluginContext() as plugin_context:
+    with ErtPluginContext():
         config = ErtConfig.with_plugins().from_file(path)
         with open_storage(
             config.ens_path, mode="w"

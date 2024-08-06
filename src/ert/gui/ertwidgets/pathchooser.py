@@ -150,7 +150,7 @@ class PathChooser(QWidget):
 
     def contentsChanged(self) -> None:
         """Called whenever the path is changed."""
-        path_is_valid, message = self.isPathValid(self.getPath())
+        path_is_valid, _ = self.isPathValid(self.getPath())
 
         if not self._editing and path_is_valid:
             self._model.setPath(self.getPath())
