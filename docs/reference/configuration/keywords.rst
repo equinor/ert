@@ -494,11 +494,11 @@ RUNPATH_FILE
 ------------
 .. _runpath_file:
 
-When running workflows based on external scripts it is necessary to 'tell' the
-external script in some way or another were all the realisations are located in
+When running workflows based on external scripts, it is necessary to 'tell' the
+external script where all the realisations are located in
 the filesystem. Since the number of realisations can be quite high this will
-easily overflow the commandline buffer; the solution which is used is therefore
-to let ERT write a regular file which looks like this::
+easily overflow the commandline buffer; the solution used is
+to let ERT write a regular file. It looks like this::
 
         0   /path/to/realization-0   CASE0   iter
         1   /path/to/realization-1   CASE1   iter
