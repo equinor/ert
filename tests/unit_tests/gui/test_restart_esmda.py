@@ -1,5 +1,5 @@
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QCheckBox, QComboBox, QDialogButtonBox, QMessageBox, QWidget
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QCheckBox, QComboBox, QWidget
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -26,17 +26,8 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
     restart_checkbox.click()
     assert restart_checkbox.isChecked()
 
-    def handle_dialog():
-        qtbot.waitUntil(lambda: gui.findChild(QMessageBox) is not None)
-        confirm_restart_dialog = gui.findChild(QMessageBox)
-        assert isinstance(confirm_restart_dialog, QMessageBox)
-        dialog_buttons = confirm_restart_dialog.findChild(QDialogButtonBox).buttons()
-        yes_button = [b for b in dialog_buttons if "Yes" in b.text()][0]
-        qtbot.mouseClick(yes_button, Qt.LeftButton)
-
     es_mda_panel._ensemble_selector.setCurrentText("iter-0")
     assert es_mda_panel._ensemble_selector.selected_ensemble.name == "iter-0"
-    QTimer.singleShot(500, handle_dialog)
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
