@@ -5,7 +5,7 @@ from uuid import uuid1
 import pytest
 
 import ert
-from ert.config import ErtConfig
+from ert.config import ConfigValidationError, ErtConfig, ModelConfig
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,
@@ -169,9 +169,27 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
 @pytest.mark.parametrize(
     "restart_from_iteration, expected_path",
     [
-        [0, ["realization-0/iter-1", "realization-0/iter-2", "realization-0/iter-3"]],
-        [1, ["realization-0/iter-2", "realization-0/iter-3"]],
-        [2, ["realization-0/iter-3"]],
+        [
+            0,
+            [
+                "realization-0/iter-1",
+                "realization-0/iter-2",
+                "realization-0/iter-3",
+                "realization-1/iter-1",
+                "realization-1/iter-2",
+                "realization-1/iter-3",
+            ],
+        ],
+        [
+            1,
+            [
+                "realization-0/iter-2",
+                "realization-0/iter-3",
+                "realization-1/iter-2",
+                "realization-1/iter-3",
+            ],
+        ],
+        [2, ["realization-0/iter-3", "realization-1/iter-3"]],
         [3, []],
     ],
 )
@@ -180,7 +198,7 @@ def test_multiple_data_assimilation_restart_paths(
 ):
     monkeypatch.chdir(tmp_path)
     args = Namespace(
-        realizations="0",
+        realizations="0,1",
         weights="6,4,2",
         target_ensemble="restart_case_%d",
         restart_run=True,
@@ -193,11 +211,37 @@ def test_multiple_data_assimilation_restart_paths(
     storage_mock = MagicMock()
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
-    config = ErtConfig()
+    config = ErtConfig(model_config=ModelConfig(num_realizations=2))
     storage_mock.get_ensemble.return_value = ensemble_mock
     model = model_factory._setup_multiple_data_assimilation(
         config, storage_mock, args, MagicMock(), MagicMock()
     )
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
-    assert model.paths == expected_path
+    assert set(model.paths) == set(expected_path)
+
+
+@pytest.mark.parametrize(
+    "analysis_mode",
+    [
+        model_factory._setup_multiple_data_assimilation,
+        model_factory._setup_ensemble_smoother,
+        model_factory._setup_iterative_ensemble_smoother,
+    ],
+)
+def test_num_realizations_specified_incorrectly_raises(analysis_mode):
+    config = ErtConfig(model_config=ModelConfig(num_realizations=1))
+    args = Namespace(
+        realizations="0",
+        weights="6,4,2",
+        target_ensemble="restart_case_%d",
+        restart_run=True,
+        prior_ensemble_id=str(uuid1()),
+        experiment_name=None,
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Number of active realizations must be at least 2 for an update step",
+    ):
+        analysis_mode(config, MagicMock(), args, MagicMock(), MagicMock())
