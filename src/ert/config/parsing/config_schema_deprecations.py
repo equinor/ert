@@ -236,4 +236,10 @@ deprecated_keywords_list = [
         "the future. Replace by REALIZATION_MEMORY.",
         check=lambda line: "MEMORY" in line,
     ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="MEMORY_PER_CPU as QUEUE_OPTION to SLURM is deprecated and will be removed in "
+        "the future. Use REALIZATION_MEMORY instead.",
+        check=lambda line: "MEMORY_PER_CPU" in line,
+    ),
 ]
