@@ -192,7 +192,6 @@ class ExperimentPanel(QWidget):
             return
 
         QApplication.restoreOverrideCursor()
-        delete_runpath = False
         if model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUN_PATH_WARNING_BOX")
@@ -227,30 +226,26 @@ class ExperimentPanel(QWidget):
             if msg_box_res == QMessageBox.No:
                 return
 
-            delete_runpath = (
-                delete_runpath_checkbox is not None
-                and delete_runpath_checkbox.checkState() == Qt.CheckState.Checked
-            )
-        if delete_runpath:
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            try:
-                model.rm_run_path()
-            except OSError as e:
+            if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                try:
+                    model.rm_run_path()
+                except OSError as e:
+                    QApplication.restoreOverrideCursor()
+                    msg_box = QMessageBox(self)
+                    msg_box.setObjectName("RUN_PATH_ERROR_BOX")
+                    msg_box.setIcon(QMessageBox.Warning)
+                    msg_box.setText("ERT could not delete the existing runpath")
+                    msg_box.setInformativeText(
+                        (f"{e}\n\n" "Continue without deleting the runpath?")
+                    )
+                    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                    msg_box.setDefaultButton(QMessageBox.No)
+                    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+                    msg_box_res = msg_box.exec()
+                    if msg_box_res == QMessageBox.No:
+                        return
                 QApplication.restoreOverrideCursor()
-                msg_box = QMessageBox(self)
-                msg_box.setObjectName("RUN_PATH_ERROR_BOX")
-                msg_box.setIcon(QMessageBox.Warning)
-                msg_box.setText("ERT could not delete the existing runpath")
-                msg_box.setInformativeText(
-                    (f"{e}\n\n" "Continue without deleting the runpath?")
-                )
-                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                msg_box.setDefaultButton(QMessageBox.No)
-                msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-                msg_box_res = msg_box.exec()
-                if msg_box_res == QMessageBox.No:
-                    return
-            QApplication.restoreOverrideCursor()
 
         dialog = RunDialog(
             self._config_file,
