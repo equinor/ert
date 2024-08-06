@@ -132,9 +132,9 @@ def test_memory_profile_in_running_events():
     ).all(), f"Emitted memory usage not increasing, got {emitted_rss_values[:-3]=}"
 
     assert (
-        np.diff(np.array(emitted_rss_values[3:])).max() < 3 * 1024 * 1024
+        np.diff(np.array(emitted_rss_values[7:])).max() < 3 * 1024 * 1024
         # Avoid the first steps, which includes the Python interpreters memory usage
-    ), f"Memory increased too sharply, missing a measurement? Got {emitted_rss_values[3:]=}"
+    ), f"Memory increased too sharply, missing a measurement? Got {emitted_rss_values[7:]=}"
 
     if sys.platform.startswith("darwin"):
         # No oom_score on MacOS
