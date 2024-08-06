@@ -33,6 +33,7 @@ FileRole = UserRole + 6
 RealIens = UserRole + 7
 IterNum = UserRole + 12
 MemoryUsageRole = UserRole + 13
+CallbackStatusMessageRole = UserRole + 14
 
 # Indicates what type the underlying data is
 IsEnsembleRole = UserRole + 8
@@ -176,7 +177,10 @@ class SnapshotModel(QAbstractItemModel):
                         real_id
                     ]
                 reals_changed.append(real_node.row())
-
+                if real.callback_status_message:
+                    real_node.data.callback_status_message = (
+                        real.callback_status_message
+                    )
             jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
 
             for (
@@ -250,6 +254,7 @@ class SnapshotModel(QAbstractItemModel):
                     real_status_color=metadata.get(
                         "real_status_colors", defaultdict(None)
                     )[real_id],
+                    callback_status_message=real.callback_status_message,
                 ),
             )
             snapshot_tree.add_child(real_node)
@@ -383,6 +388,9 @@ class SnapshotModel(QAbstractItemModel):
             return node.data.status
         if role == MemoryUsageRole:
             return node.data.max_memory_usage
+        if role == CallbackStatusMessageRole:
+            return node.data.callback_status_message
+
         return QVariant()
 
     @staticmethod

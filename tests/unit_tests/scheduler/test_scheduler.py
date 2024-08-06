@@ -18,8 +18,9 @@ from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_SUCCEEDED,
 )
+from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
-from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, scheduler
+from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
 from ert.scheduler.job import JobState
 
 
@@ -751,3 +752,29 @@ def test_scheduler_create_openpbs_driver():
     assert str(driver._qstat_cmd) == qstat_cmd
     assert str(driver._qdel_cmd) == qdel_cmd
     assert driver._project_code == queue_config.selected_queue_options["PROJECT_CODE"]
+
+
+async def test_callback_status_message_present_in_event_on_load_failure(
+    realization, mock_driver, monkeypatch
+):
+    expected_error = "foo bar error"
+
+    async def mocked_forward_model_ok(*args, **kwargs):
+        return LoadResult(LoadStatus.LOAD_FAILURE, expected_error)
+
+    monkeypatch.setattr(job, "forward_model_ok", mocked_forward_model_ok)
+
+    sch = scheduler.Scheduler(mock_driver(), [realization])
+
+    async def mock_publisher(*args, **kwargs):
+        return
+
+    sch._publisher = mock_publisher
+
+    await sch.execute()
+
+    event = None
+    while not sch._events.empty():
+        event = await sch._events.get()
+
+    assert expected_error in from_json(event).data["callback_status_message"]
