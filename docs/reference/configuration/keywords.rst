@@ -1843,7 +1843,7 @@ flow of execution where you can hook in a workflow:
 - after the update step using :code:`POST_UPDATE` and
 - only before the first update using :code:`PRE_FIRST_UPDATE`.
 
-For non interactive algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
+For non-iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
 The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
 ::
