@@ -99,7 +99,7 @@ class RealNode(_Node):
 @dataclass
 class ForwardModelStepNode(_Node):
     parent: Optional[RealNode]
-    data: ForwardModel = field(default_factory=lambda: ForwardModel())
+    data: ForwardModel = field(default_factory=lambda: ForwardModel())  # noqa: PLW0108
 
     def add_child(self, _: _Node) -> None:
         pass
