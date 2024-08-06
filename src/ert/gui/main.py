@@ -6,7 +6,7 @@ import sys
 import warnings
 import webbrowser
 from signal import SIG_DFL, SIGINT, signal
-from typing import TYPE_CHECKING, List, Optional, Tuple, cast
+from typing import Optional, Tuple, cast
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -44,9 +44,6 @@ from ert.storage.local_storage import local_storage_set_ert_config
 from .suggestor import Suggestor
 from .summarypanel import SummaryPanel
 
-if TYPE_CHECKING:
-    from ert.config import ParameterConfig
-
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
     # Replace Python's exception handler for SIGINT with the system default.
@@ -64,9 +61,7 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     with add_gui_log_handler() as log_handler:
-        window, ens_path, ensemble_size, parameter_config = _start_initial_gui_window(
-            args, log_handler, plugin_manager
-        )
+        window, ens_path = _start_initial_gui_window(args, log_handler, plugin_manager)
 
         def show_window() -> int:
             window.show()
@@ -89,7 +84,7 @@ def _start_initial_gui_window(
     args: Namespace,
     log_handler: GUILogHandler,
     plugin_manager: Optional[ErtPluginManager] = None,
-) -> Tuple[QWidget, Optional[str], Optional[int], Optional[List[ParameterConfig]]]:
+) -> Tuple[QWidget, Optional[str]]:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
@@ -136,8 +131,6 @@ def _start_initial_gui_window(
                         else {}
                     ),
                 ),
-                None,
-                None,
                 None,
             )
     config_warnings = [
@@ -191,15 +184,11 @@ def _start_initial_gui_window(
         return (
             suggestor,
             ert_config.ens_path,
-            ert_config.model_config.num_realizations,
-            ert_config.ensemble_config.parameter_configuration,
         )
     else:
         return (
             _main_window,
             ert_config.ens_path,
-            ert_config.model_config.num_realizations,
-            ert_config.ensemble_config.parameter_configuration,
         )
 
 

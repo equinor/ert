@@ -58,7 +58,7 @@ def test_find_available_port(unused_tcp_port):
 
 def test_find_available_port_forced(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port)
-    host, port, sock = port_handler.find_available_port(
+    _, port, sock = port_handler.find_available_port(
         custom_range=custom_range, custom_host="127.0.0.1"
     )
     assert port == unused_tcp_port
@@ -134,7 +134,7 @@ def _simulate_server(host, port, sock: socket.socket):
             self.port = port
             sock.listen()
             ready_event.set()
-            conn, addr = sock.accept()
+            conn, _ = sock.accept()
             with contextlib.suppress(Exception):
                 self.data = conn.recv(1024).decode()
                 conn.sendall(b"Who's there?")
@@ -335,7 +335,7 @@ def test_reuse_active_live_nok_nok(unused_tcp_port):
         )
 
     with pytest.raises(port_handler.NoPortsInRangeException):
-        _, port, sock = port_handler.find_available_port(
+        _, port, _ = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
             will_close_then_reopen_socket=True,
@@ -365,13 +365,13 @@ def test_def_active_live_nok_nok(unused_tcp_port):
 
     # Immediately trying to bind to the same port fails...
     with pytest.raises(port_handler.NoPortsInRangeException):
-        host, port, sock = port_handler.find_available_port(
+        host, port, _ = port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
     # ... also using will_close_then_reopen_socket=True
     with pytest.raises(port_handler.NoPortsInRangeException):
-        host, port, sock = port_handler.find_available_port(
+        host, port, _ = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
             will_close_then_reopen_socket=True,
@@ -453,14 +453,14 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
 
     # Immediately trying to bind to the same port fails
     with pytest.raises(port_handler.NoPortsInRangeException):
-        host, port, sock = port_handler.find_available_port(
+        host, port, _ = port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
     # On Linux, setting will_close_then_reopen_socket=True in subsequent calls do
     # NOT allow reusing the port in this case
     with pytest.raises(port_handler.NoPortsInRangeException):
-        host, port, sock = port_handler.find_available_port(
+        host, port, _ = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
             will_close_then_reopen_socket=True,
