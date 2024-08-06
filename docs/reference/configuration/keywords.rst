@@ -142,17 +142,14 @@ This does two things:
     data file is limited, and using explicit templating with :ref:`RUN_TEMPLATE
     <run_template>` is recommended where possible.
 
-2. Set :ref:`NUM_CPU <num_cpu>`
+2. Implicitly set the keyword :ref:`NUM_CPU <num_cpu>`
 
-    Ert will search for ``PARALLEL`` in the data file, and if not found, will
-    search for ``SLAVES`` and update :ref:`NUM_CPU <num_cpu>` according to how
-    many nodes are found.
-    The fifth entry of the keyword ``SLAVES`` determines the number of processors
-    to run the slave on.
-    Ert does not parse the data files of the nodes, and assumes one CPU per node
-    where the fifth entry is not set.
-    The number of CPUs available for the master node is the number specified in the
-    fifth entry of ``SLAVES`` plus one.
+    Ert will search for ``PARALLEL`` in the data file and infer the number of
+    CPUs each realization will need, and update :ref:`NUM_CPU <num_cpu>` accordingly.
+
+    If the Eclipse DATA file represents a coupled simulation setup, it will sum
+    the needed CPU count for each slave model from the ``SLAVES`` keyword and
+    add 1 for the parent simulation.
 
 Example:
 
@@ -257,25 +254,25 @@ NUM_CPU
 .. _num_cpu:
 
 
-This keyword is set right in your configuration file:
+This keyword tells the compute system (LSF/Torque/Slurm) how many cpus/cores
+each realization needs.
+
+*Example:*
 
 .. code-block:: none
 
-  NUM_CPU 42
+  NUM_CPU 4
 
-Its meaning varies depending on context. For LSF it equates to the ``-n``
-parameter. See more here https://www.ibm.com/support/knowledgecenter/SSWRJV_10.1.0/lsf_command_ref/bsub.n.1.html.
-E.g. ``NUM_CPU 10`` can be understood as a way for a job to make sure it can
-execute on ``10`` processors. This means that a higher number may *increase*
-wait times, since LSF might need to wait until resources are freed in order to
-allocate 10 processors.
+Note that if you are using Eclipse and the :ref:`DATA_FILE <data_file>` keyword,
+this is implicitly set. If you need to override, use ``NUM_CPU`` explicitly.
 
-For TORQUE, it literally is a check that ``NUM_CPU`` is larger than the amount
-of resources TORQUE wants to allocate (number_of_nodes \* cpus_per_node). See
-:ref:`NUM_NODES|NUM_CPUS_PER_NODE <torque_nodes_cpus>` for details.
+This number affects scheduling in the queue system, in that a realization will
+not start until sufficient CPU resources are assumed available. Setting this
+incorrectly can cause instability for yours and others realizations.
 
 For the local queue system, ``NUM_CPU`` is ignored.
 
+Default is 1.
 
 DATA_KW
 -------
