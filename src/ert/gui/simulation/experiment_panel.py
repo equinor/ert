@@ -175,7 +175,6 @@ class ExperimentPanel(QWidget):
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
-        abort = False
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
@@ -190,11 +189,11 @@ class ExperimentPanel(QWidget):
             QMessageBox.warning(
                 self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
             )
-            abort = True
+            return
 
         QApplication.restoreOverrideCursor()
         delete_runpath = False
-        if not abort and model.check_if_runpath_exists():
+        if model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUN_PATH_WARNING_BOX")
 
@@ -226,13 +225,13 @@ class ExperimentPanel(QWidget):
 
             msg_box_res = msg_box.exec()
             if msg_box_res == QMessageBox.No:
-                abort = True
+                return
 
             delete_runpath = (
                 delete_runpath_checkbox is not None
                 and delete_runpath_checkbox.checkState() == Qt.CheckState.Checked
             )
-        if not abort and delete_runpath:
+        if delete_runpath:
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
                 model.rm_run_path()
@@ -249,30 +248,30 @@ class ExperimentPanel(QWidget):
                 msg_box.setDefaultButton(QMessageBox.No)
                 msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
                 msg_box_res = msg_box.exec()
-                abort = msg_box_res == QMessageBox.No
+                if msg_box_res == QMessageBox.No:
+                    return
             QApplication.restoreOverrideCursor()
 
-        if not abort:
-            dialog = RunDialog(
-                self._config_file,
-                model,
-                event_queue,
-                self._notifier,
-                self.parent(),  # type: ignore
-                output_path=self.config.analysis_config.log_path,
-            )
-            self.run_button.setEnabled(False)
-            self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
-            dialog.run_experiment()
-            dialog.show()
+        dialog = RunDialog(
+            self._config_file,
+            model,
+            event_queue,
+            self._notifier,
+            self.parent(),  # type: ignore
+            output_path=self.config.analysis_config.log_path,
+        )
+        self.run_button.setEnabled(False)
+        self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
+        dialog.run_experiment()
+        dialog.show()
 
-            def exit_handler() -> None:
-                self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
-                self.run_button.setEnabled(True)
-                self.toggleExperimentType()
-                self._notifier.emitErtChange()
+        def exit_handler() -> None:
+            self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
+            self.run_button.setEnabled(True)
+            self.toggleExperimentType()
+            self._notifier.emitErtChange()
 
-            dialog.finished.connect(exit_handler)
+        dialog.finished.connect(exit_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
