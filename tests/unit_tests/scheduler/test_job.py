@@ -16,7 +16,7 @@ from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
-from ert.scheduler.job import STATE_TO_LEGACY, Job, State, log_info_from_exit_file
+from ert.scheduler.job import Job, State, log_info_from_exit_file
 
 
 def create_scheduler():
@@ -53,14 +53,14 @@ def realization():
 async def assert_scheduler_events(
     scheduler: Scheduler, expected_job_events: List[State]
 ) -> None:
-    for job_event in expected_job_events:
+    for expected_job_event in expected_job_events:
         assert (
             scheduler._events.qsize()
-        ), f"Expected to find {job_event=} in the event queue"
+        ), f"Expected to find {expected_job_event=} in the event queue"
         queue_event = scheduler._events.get_nowait()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
-        assert event == STATE_TO_LEGACY[job_event]
+        assert event == expected_job_event
     # should be no more events
     assert scheduler._events.empty()
 

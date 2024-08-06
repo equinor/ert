@@ -17,7 +17,7 @@ from .libres_facade import LibresFacade
 from .simulator import BatchSimulator, BatchContext
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
-from .scheduler import JobStatus
+from .scheduler import JobStatus, State as JobState
 
 __all__ = [
     "MeasuredData",
@@ -26,6 +26,7 @@ __all__ = [
     "BatchContext",
     "ErtScript",
     "JobStatus",
+    "JobState",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",
     "ForwardModelStepValidationError",

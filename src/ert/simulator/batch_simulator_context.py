@@ -10,6 +10,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from typing_extensions import deprecated
 
 from _ert.threading import ErtThread
 from ert.config import HookRuntime
@@ -205,7 +206,7 @@ class BatchContext:
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
-            if self.job_status(sim_id) != JobStatus.SUCCESS:
+            if self.get_job_state(iens=sim_id) != JobState.COMPLETED:
                 logging.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
@@ -217,6 +218,7 @@ class BatchContext:
 
         return res
 
+    @deprecated("'job_status()' is deprecated. Use 'get_job_state()' instead'")
     def job_status(self, iens: int) -> Optional["JobStatus"]:
         """Will query the queue system for the status of the job."""
         state_to_legacy = {
@@ -230,6 +232,10 @@ class BatchContext:
             JobState.ABORTED: JobStatus.IS_KILLED,
         }
         return state_to_legacy[self._scheduler._jobs[iens].state]
+
+    def get_job_state(self, iens: int) -> Optional["JobState"]:
+        """Will query the queue system for the status of the job."""
+        return self._scheduler._jobs[iens].state
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
         """Will return a detailed progress of the job.

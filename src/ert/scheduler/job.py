@@ -21,7 +21,6 @@ from ert.event_type_constants import (
     EVTYPE_REALIZATION_PENDING,
     EVTYPE_REALIZATION_RUNNING,
     EVTYPE_REALIZATION_SUCCESS,
-    EVTYPE_REALIZATION_UNKNOWN,
     EVTYPE_REALIZATION_WAITING,
 )
 from ert.load_status import LoadStatus
@@ -51,32 +50,15 @@ class State(str, Enum):
     ABORTED = "ABORTED"
 
 
-STATE_TO_LEGACY = {
-    State.WAITING: "WAITING",
-    State.SUBMITTING: "SUBMITTED",
-    State.PENDING: "PENDING",
-    State.RUNNING: "RUNNING",
-    State.ABORTING: "DO_KILL",
-    State.COMPLETED: "SUCCESS",
-    State.FAILED: "FAILED",
-    State.ABORTED: "IS_KILLED",
-}
-
-_queue_state_event_type = {
-    "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
-    "WAITING": EVTYPE_REALIZATION_WAITING,
-    "SUBMITTED": EVTYPE_REALIZATION_WAITING,
-    "PENDING": EVTYPE_REALIZATION_PENDING,
-    "RUNNING": EVTYPE_REALIZATION_RUNNING,
-    "DONE": EVTYPE_REALIZATION_RUNNING,
-    "EXIT": EVTYPE_REALIZATION_RUNNING,
-    "IS_KILLED": EVTYPE_REALIZATION_FAILURE,
-    "DO_KILL": EVTYPE_REALIZATION_FAILURE,
-    "SUCCESS": EVTYPE_REALIZATION_SUCCESS,
-    "STATUS_FAILURE": EVTYPE_REALIZATION_UNKNOWN,
-    "FAILED": EVTYPE_REALIZATION_FAILURE,
-    "DO_KILL_NODE_FAILURE": EVTYPE_REALIZATION_FAILURE,
-    "UNKNOWN": EVTYPE_REALIZATION_UNKNOWN,
+_queue_jobstate_event_type = {
+    State.WAITING: EVTYPE_REALIZATION_WAITING,
+    State.SUBMITTING: EVTYPE_REALIZATION_WAITING,
+    State.PENDING: EVTYPE_REALIZATION_PENDING,
+    State.RUNNING: EVTYPE_REALIZATION_RUNNING,
+    State.ABORTING: EVTYPE_REALIZATION_FAILURE,
+    State.COMPLETED: EVTYPE_REALIZATION_SUCCESS,
+    State.FAILED: EVTYPE_REALIZATION_FAILURE,
+    State.ABORTED: EVTYPE_REALIZATION_FAILURE,
 }
 
 
@@ -295,15 +277,14 @@ class Job:
             self._end_time = time.time()
             await self._scheduler.completed_jobs.put(self.iens)
 
-        status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {
-                "type": _queue_state_event_type[status],
+                "type": _queue_jobstate_event_type[state],
                 "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
                 "datacontenttype": "application/json",
             },
             {
-                "queue_event_type": status,
+                "queue_event_type": state,
             },
         )
         await self._scheduler._events.put(to_json(event))
