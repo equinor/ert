@@ -33,6 +33,7 @@ FileRole = UserRole + 6
 RealIens = UserRole + 7
 IterNum = UserRole + 12
 MemoryUsageRole = UserRole + 13
+ErrorMessageRole = UserRole + 14
 
 # Indicates what type the underlying data is
 IsEnsembleRole = UserRole + 8
@@ -218,7 +219,8 @@ class SnapshotModel(QAbstractItemModel):
 
                 # Errors may be unset as the queue restarts the job
                 job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
-
+                if ids.STDERR in job:
+                    real_node.data.stderr = job[ids.STDERR]
             for real_idx, changed_jobs in jobs_changed_by_real.items():
                 real_node = iter_node.children[real_idx]
                 real_index = self.index(real_node.row(), 0, iter_index)
@@ -397,6 +399,12 @@ class SnapshotModel(QAbstractItemModel):
                 node.data.current_memory_usage,
                 node.data.max_memory_usage,
             )
+        if role == ErrorMessageRole:
+            if stderr_file_path := node.data.stderr:
+                with open(stderr_file_path, encoding="utf-8") as stderr_file:
+                    return stderr_file.read(1500)
+
+            return ""
         return QVariant()
 
     @staticmethod

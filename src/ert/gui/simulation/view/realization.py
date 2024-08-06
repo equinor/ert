@@ -23,7 +23,12 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import MemoryUsageRole, RealJobColorHint, RealLabelHint
+from ert.gui.model.snapshot import (
+    ErrorMessageRole,
+    MemoryUsageRole,
+    RealJobColorHint,
+    RealLabelHint,
+)
 from ert.shared.status.utils import byte_with_unit
 
 
@@ -147,15 +152,20 @@ class RealizationDelegate(QStyledItemDelegate):
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():
+                tooltip_text = ""
                 (current_memory_usage, maximum_memory_usage) = index.data(
                     MemoryUsageRole
                 )
                 if current_memory_usage and maximum_memory_usage:
-                    txt = (
+                    tooltip_text += (
                         f"Current memory usage:\t{byte_with_unit(current_memory_usage)}\n"
                         f"Maximum memory usage:\t{byte_with_unit(maximum_memory_usage)}"
                     )
-                    QToolTip.showText(view.mapToGlobal(mouse_pos), txt)
+                error_msg = index.data(ErrorMessageRole)
+                if error_msg:
+                    tooltip_text += f"\nRealization failed with error: '{error_msg}'"
+                if tooltip_text:
+                    QToolTip.showText(view.mapToGlobal(mouse_pos), tooltip_text)
                     return True
 
         return super().eventFilter(object, event)
