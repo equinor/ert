@@ -66,7 +66,7 @@ async def test_happy_path(
     for received_event, expected_type, expected_queue_event_type in zip(
         [mock_ws_task.result()[0], mock_ws_task.result()[-1]],
         ["waiting", "success"],
-        [first_expected_queue_event_type, "SUCCESS"],
+        [first_expected_queue_event_type, "COMPLETED"],
     ):
         assert from_json(received_event)["source"] == "/ert/ensemble/ee_0/real/0"
         assert (

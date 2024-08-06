@@ -1,9 +1,22 @@
-from ert import JobStatus
+import pytest
+
+from ert import JobState, JobStatus
 from ert.simulator import BatchContext
 from tests.utils import wait_until
 
 
-def test_simulation_context(setup_case, storage):
+@pytest.mark.parametrize(
+    "success_state, failure_state, status_check_method_name",
+    [
+        pytest.param(
+            JobState.COMPLETED, JobState.FAILED, "get_job_state", id="current"
+        ),
+        pytest.param(JobStatus.SUCCESS, JobStatus.FAILED, "job_status", id="legacy"),
+    ],
+)
+def test_simulation_context(
+    success_state, failure_state, status_check_method_name, setup_case, storage
+):
     ert_config = setup_case("batch_sim", "sleepy_time.ert")
 
     size = 4
@@ -28,9 +41,9 @@ def test_simulation_context(setup_case, storage):
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert even_ctx.job_status(iens) != JobStatus.SUCCESS
+            assert getattr(even_ctx, status_check_method_name)(iens) != success_state
         else:
-            assert odd_ctx.job_status(iens) != JobStatus.SUCCESS
+            assert getattr(odd_ctx, status_check_method_name)(iens) != success_state
 
     wait_until(lambda: not even_ctx.running() and not odd_ctx.running(), timeout=90)
 
@@ -54,8 +67,8 @@ def test_simulation_context(setup_case, storage):
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert even_ctx.job_status(iens) != JobStatus.FAILED
-            assert even_ctx.job_status(iens) == JobStatus.SUCCESS
+            assert getattr(even_ctx, status_check_method_name)(iens) != failure_state
+            assert getattr(even_ctx, status_check_method_name)(iens) == success_state
         else:
-            assert odd_ctx.job_status(iens) != JobStatus.FAILED
-            assert odd_ctx.job_status(iens) == JobStatus.SUCCESS
+            assert getattr(odd_ctx, status_check_method_name)(iens) != failure_state
+            assert getattr(odd_ctx, status_check_method_name)(iens) == success_state

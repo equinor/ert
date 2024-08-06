@@ -16,7 +16,7 @@ from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
-from ert.scheduler.job import STATE_TO_LEGACY, Job, State, log_info_from_exit_file
+from ert.scheduler.job import Job, JobState, log_info_from_exit_file
 
 
 def create_scheduler():
@@ -52,7 +52,7 @@ def realization():
 
 
 async def assert_scheduler_events(
-    scheduler: Scheduler, expected_job_events: List[State]
+    scheduler: Scheduler, expected_job_events: List[JobState]
 ) -> None:
     for expected_job_event in expected_job_events:
         assert (
@@ -61,7 +61,7 @@ async def assert_scheduler_events(
         queue_event = scheduler._events.get_nowait()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
-        assert event == STATE_TO_LEGACY[expected_job_event]
+        assert event == expected_job_event
     # should be no more events
     assert scheduler._events.empty()
 
@@ -82,7 +82,13 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 
     await assert_scheduler_events(
         scheduler,
-        [State.WAITING, State.SUBMITTING, State.PENDING, State.ABORTING, State.ABORTED],
+        [
+            JobState.WAITING,
+            JobState.SUBMITTING,
+            JobState.PENDING,
+            JobState.ABORTING,
+            JobState.ABORTED,
+        ],
     )
     scheduler.driver.kill.assert_called_with(job.iens)
     scheduler.driver.kill.assert_called_once()
@@ -91,14 +97,14 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 @pytest.mark.parametrize(
     "return_code, max_submit, forward_model_ok_result, expected_final_event",
     [
-        [0, 1, LoadStatus.LOAD_SUCCESSFUL, State.COMPLETED],
-        [1, 1, LoadStatus.LOAD_SUCCESSFUL, State.FAILED],
-        [0, 1, LoadStatus.LOAD_FAILURE, State.FAILED],
-        [1, 1, LoadStatus.LOAD_FAILURE, State.FAILED],
-        [0, 2, LoadStatus.LOAD_SUCCESSFUL, State.COMPLETED],
-        [1, 2, LoadStatus.LOAD_SUCCESSFUL, State.FAILED],
-        [0, 2, LoadStatus.LOAD_FAILURE, State.FAILED],
-        [1, 2, LoadStatus.LOAD_FAILURE, State.FAILED],
+        [0, 1, LoadStatus.LOAD_SUCCESSFUL, JobState.COMPLETED],
+        [1, 1, LoadStatus.LOAD_SUCCESSFUL, JobState.FAILED],
+        [0, 1, LoadStatus.LOAD_FAILURE, JobState.FAILED],
+        [1, 1, LoadStatus.LOAD_FAILURE, JobState.FAILED],
+        [0, 2, LoadStatus.LOAD_SUCCESSFUL, JobState.COMPLETED],
+        [1, 2, LoadStatus.LOAD_SUCCESSFUL, JobState.FAILED],
+        [0, 2, LoadStatus.LOAD_FAILURE, JobState.FAILED],
+        [1, 2, LoadStatus.LOAD_FAILURE, JobState.FAILED],
     ],
 )
 @pytest.mark.asyncio
@@ -106,7 +112,7 @@ async def test_job_run_sends_expected_events(
     return_code: int,
     max_submit: int,
     forward_model_ok_result,
-    expected_final_event: State,
+    expected_final_event: JobState,
     realization: Realization,
     monkeypatch,
 ):
@@ -145,7 +151,8 @@ async def test_job_run_sends_expected_events(
 
     await assert_scheduler_events(
         scheduler,
-        [State.WAITING, State.SUBMITTING, State.PENDING, State.RUNNING] * max_submit
+        [JobState.WAITING, JobState.SUBMITTING, JobState.PENDING, JobState.RUNNING]
+        * max_submit
         + [expected_final_event],
     )
     scheduler.driver.submit.assert_called_with(

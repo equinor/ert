@@ -6,6 +6,7 @@ import logging
 import time
 from collections import namedtuple
 from dataclasses import dataclass
+from enum import Enum, auto
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -16,8 +17,7 @@ from ert.config import HookRuntime
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
 from ert.runpaths import Runpaths
-from ert.scheduler import JobStatus, Scheduler, create_driver
-from ert.scheduler import State as JobState
+from ert.scheduler import JobState, Scheduler, create_driver
 from ert.workflow_runner import WorkflowRunner
 
 from ..run_arg import RunArg, create_run_arguments
@@ -32,6 +32,35 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 Status = namedtuple("Status", "waiting pending running complete failed")
+
+
+class DeprecatedJobStatus(Enum):
+    # This value is used in external query routines - for jobs which are
+    # (currently) not active.
+    NOT_ACTIVE = auto()
+    WAITING = auto()  # A node which is waiting in the internal queue.
+    # Internal status: It has has been submitted - the next status update will
+    # (should) place it as pending or running.
+    SUBMITTED = auto()
+    # A node which is pending - a status returned by the external system. I.e LSF
+    PENDING = auto()
+    RUNNING = auto()  # The job is running
+    # The job is done - but we have not yet checked if the target file is
+    # produced
+    DONE = auto()
+    # The job has exited - check attempts to determine if we retry or go to
+    # complete_fail
+    EXIT = auto()
+    # The job has been killed, following a  DO_KILL - can restart.
+    IS_KILLED = auto()
+    # The the job should be killed, either due to user request, or automated
+    # measures - the job can NOT be restarted..
+    DO_KILL = auto()
+    SUCCESS = auto()
+    STATUS_FAILURE = auto()
+    FAILED = auto()
+    DO_KILL_NODE_FAILURE = auto()
+    UNKNOWN = auto()
 
 
 def _slug(entity: str) -> str:
@@ -206,7 +235,7 @@ class BatchContext:
 
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
-            if self.job_status(sim_id) != JobStatus.SUCCESS:
+            if self.get_job_state(iens=sim_id) != JobState.COMPLETED:
                 logging.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
@@ -218,19 +247,36 @@ class BatchContext:
 
         return res
 
-    def job_status(self, iens: int) -> Optional["JobStatus"]:
+    def job_status(self, iens: int) -> Optional["DeprecatedJobStatus"]:
         """Will query the queue system for the status of the job."""
         state_to_legacy = {
-            JobState.WAITING: JobStatus.WAITING,
-            JobState.SUBMITTING: JobStatus.SUBMITTED,
-            JobState.PENDING: JobStatus.PENDING,
-            JobState.RUNNING: JobStatus.RUNNING,
-            JobState.ABORTING: JobStatus.DO_KILL,
-            JobState.COMPLETED: JobStatus.SUCCESS,
-            JobState.FAILED: JobStatus.FAILED,
-            JobState.ABORTED: JobStatus.IS_KILLED,
+            JobState.WAITING: DeprecatedJobStatus.WAITING,
+            JobState.SUBMITTING: DeprecatedJobStatus.SUBMITTED,
+            JobState.PENDING: DeprecatedJobStatus.PENDING,
+            JobState.RUNNING: DeprecatedJobStatus.RUNNING,
+            JobState.ABORTING: DeprecatedJobStatus.DO_KILL,
+            JobState.COMPLETED: DeprecatedJobStatus.SUCCESS,
+            JobState.FAILED: DeprecatedJobStatus.FAILED,
+            JobState.ABORTED: DeprecatedJobStatus.IS_KILLED,
         }
         return state_to_legacy[self._scheduler._jobs[iens].state]
+
+    def is_job_completed(self, iens: int) -> bool:
+        return self.get_job_state(iens) == JobState.COMPLETED
+
+    def has_job_failed(self, iens: int) -> bool:
+        return self.get_job_state(iens) == JobState.FAILED
+
+    def is_job_waiting(self, iens: int) -> bool:
+        return self.get_job_state(iens) in [
+            JobState.WAITING,
+            JobState.SUBMITTING,
+            JobState.PENDING,
+        ]
+
+    def get_job_state(self, iens: int) -> Optional["JobState"]:
+        """Will query the queue system for the status of the job."""
+        return self._scheduler._jobs[iens].state
 
     def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
         """Will return a detailed progress of the job.

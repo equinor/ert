@@ -14,10 +14,10 @@ from .config import (
 )
 from .data import MeasuredData
 from .libres_facade import LibresFacade
-from .simulator import BatchSimulator, BatchContext
+from .simulator import BatchSimulator, BatchContext, JobStatus
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
-from .scheduler import JobStatus
+from .scheduler import JobState
 
 __all__ = [
     "MeasuredData",
@@ -25,6 +25,7 @@ __all__ = [
     "BatchSimulator",
     "BatchContext",
     "ErtScript",
+    "JobState",
     "JobStatus",
     "ForwardModelStepPlugin",
     "ForwardModelStepJSON",

@@ -21,7 +21,6 @@ from ert.event_type_constants import (
     EVTYPE_REALIZATION_PENDING,
     EVTYPE_REALIZATION_RUNNING,
     EVTYPE_REALIZATION_SUCCESS,
-    EVTYPE_REALIZATION_UNKNOWN,
     EVTYPE_REALIZATION_WAITING,
 )
 from ert.load_status import LoadStatus
@@ -40,7 +39,7 @@ logger = logging.getLogger(__name__)
 EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 
-class State(str, Enum):
+class JobState(str, Enum):
     WAITING = "WAITING"
     SUBMITTING = "SUBMITTING"
     PENDING = "PENDING"
@@ -51,32 +50,15 @@ class State(str, Enum):
     ABORTED = "ABORTED"
 
 
-STATE_TO_LEGACY = {
-    State.WAITING: "WAITING",
-    State.SUBMITTING: "SUBMITTED",
-    State.PENDING: "PENDING",
-    State.RUNNING: "RUNNING",
-    State.ABORTING: "DO_KILL",
-    State.COMPLETED: "SUCCESS",
-    State.FAILED: "FAILED",
-    State.ABORTED: "IS_KILLED",
-}
-
-_queue_state_event_type = {
-    "NOT_ACTIVE": EVTYPE_REALIZATION_WAITING,
-    "WAITING": EVTYPE_REALIZATION_WAITING,
-    "SUBMITTED": EVTYPE_REALIZATION_WAITING,
-    "PENDING": EVTYPE_REALIZATION_PENDING,
-    "RUNNING": EVTYPE_REALIZATION_RUNNING,
-    "DONE": EVTYPE_REALIZATION_RUNNING,
-    "EXIT": EVTYPE_REALIZATION_RUNNING,
-    "IS_KILLED": EVTYPE_REALIZATION_FAILURE,
-    "DO_KILL": EVTYPE_REALIZATION_FAILURE,
-    "SUCCESS": EVTYPE_REALIZATION_SUCCESS,
-    "STATUS_FAILURE": EVTYPE_REALIZATION_UNKNOWN,
-    "FAILED": EVTYPE_REALIZATION_FAILURE,
-    "DO_KILL_NODE_FAILURE": EVTYPE_REALIZATION_FAILURE,
-    "UNKNOWN": EVTYPE_REALIZATION_UNKNOWN,
+_queue_jobstate_event_type = {
+    JobState.WAITING: EVTYPE_REALIZATION_WAITING,
+    JobState.SUBMITTING: EVTYPE_REALIZATION_WAITING,
+    JobState.PENDING: EVTYPE_REALIZATION_PENDING,
+    JobState.RUNNING: EVTYPE_REALIZATION_RUNNING,
+    JobState.ABORTING: EVTYPE_REALIZATION_FAILURE,
+    JobState.COMPLETED: EVTYPE_REALIZATION_SUCCESS,
+    JobState.FAILED: EVTYPE_REALIZATION_FAILURE,
+    JobState.ABORTED: EVTYPE_REALIZATION_FAILURE,
 }
 
 
@@ -89,7 +71,7 @@ class Job:
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
-        self.state = State.WAITING
+        self.state = JobState.WAITING
         self.started = asyncio.Event()
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self._aborted = False
@@ -116,14 +98,14 @@ class Job:
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
-        await self._send(State.WAITING)
+        await self._send(JobState.WAITING)
         await sem.acquire()
         timeout_task: Optional[asyncio.Task[None]] = None
 
         try:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
-            await self._send(State.SUBMITTING)
+            await self._send(JobState.SUBMITTING)
             await self.driver.submit(
                 self.real.iens,
                 self.real.job_script,
@@ -134,22 +116,22 @@ class Job:
                 runpath=Path(self.real.run_arg.runpath),
             )
 
-            await self._send(State.PENDING)
+            await self._send(JobState.PENDING)
             await self.started.wait()
             self._start_time = time.time()
 
-            await self._send(State.RUNNING)
+            await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
 
             await self.returncode
 
         except asyncio.CancelledError:
-            await self._send(State.ABORTING)
+            await self._send(JobState.ABORTING)
             await self.driver.kill(self.iens)
             with suppress(asyncio.CancelledError):
                 self.returncode.cancel()
-            await self._send(State.ABORTED)
+            await self._send(JobState.ABORTED)
         finally:
             if timeout_task and not timeout_task.done():
                 timeout_task.cancel()
@@ -178,7 +160,7 @@ class Job:
                 self.returncode = asyncio.Future()
                 self.started.clear()
             else:
-                await self._send(State.FAILED)
+                await self._send(JobState.FAILED)
 
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
@@ -249,10 +231,10 @@ class Job:
             self._callback_status_msg += f"\nstatus from done callback: {status_msg}"
 
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
-            await self._send(State.COMPLETED)
+            await self._send(JobState.COMPLETED)
         else:
             assert callback_status == LoadStatus.LOAD_FAILURE
-            await self._send(State.FAILED)
+            await self._send(JobState.FAILED)
 
     async def _handle_failure(self) -> None:
         assert self._requested_max_submit is not None
@@ -284,27 +266,26 @@ class Job:
         )
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
-    async def _send(self, state: State) -> None:
+    async def _send(self, state: JobState) -> None:
         self.state = state
-        if state == State.FAILED:
+        if state == JobState.FAILED:
             await self._handle_failure()
 
-        elif state == State.ABORTED:
+        elif state == JobState.ABORTED:
             await self._handle_aborted()
 
-        elif state == State.COMPLETED:
+        elif state == JobState.COMPLETED:
             self._end_time = time.time()
             await self._scheduler.completed_jobs.put(self.iens)
 
-        status = STATE_TO_LEGACY[state]
         event = CloudEvent(
             {
-                "type": _queue_state_event_type[status],
+                "type": _queue_jobstate_event_type[state],
                 "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
                 "datacontenttype": "application/json",
             },
             {
-                "queue_event_type": status,
+                "queue_event_type": state,
             },
         )
         await self._scheduler._events.put(to_json(event))
