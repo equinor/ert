@@ -23,11 +23,6 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.mode_definitions import (
-    ENSEMBLE_SMOOTHER_MODE,
-    ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-)
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -180,140 +175,104 @@ class ExperimentPanel(QWidget):
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
-        if args.mode == ES_MDA_MODE:
-            if args.restart_run:
-                message = (
-                    "Are you sure you want to restart from ensemble"
-                    f" '{self._notifier.current_ensemble_name}'?"
-                )
-            else:
-                message = (
-                    "Are you sure you want to use "
-                    f"target ensemble format '{args.target_ensemble}'?"
-                )
-        elif args.mode in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE]:
-            message = (
-                "Are you sure you want to use ensemble "
-                f"'{self._notifier.current_ensemble_name}' for initialization"
-                " of the initial ensemble when running the experiment?"
+        abort = False
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+        try:
+            model = create_model(
+                self.config,
+                self._notifier.storage,
+                args,
+                event_queue,
             )
-        else:
-            message = ""
-        if (
-            not message
-            or message
-            and (
-                QMessageBox.question(
-                    self, "Run experiments?", message, QMessageBox.Yes | QMessageBox.No
-                )
-                == QMessageBox.Yes
+
+        except ValueError as e:
+            QMessageBox.warning(
+                self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
             )
-        ):
-            abort = False
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-            try:
-                model = create_model(
-                    self.config,
-                    self._notifier.storage,
-                    args,
-                    event_queue,
+            abort = True
+
+        QApplication.restoreOverrideCursor()
+        delete_runpath = False
+        if not abort and model.check_if_runpath_exists():
+            msg_box = QMessageBox(self)
+            msg_box.setObjectName("RUN_PATH_WARNING_BOX")
+
+            msg_box.setIcon(QMessageBox.Warning)
+
+            msg_box.setText("Run experiments")
+            msg_box.setInformativeText(
+                (
+                    "ERT is running in an existing runpath.\n\n"
+                    "Please be aware of the following:\n"
+                    "- Previously generated results "
+                    "might be overwritten.\n"
+                    "- Previously generated files might "
+                    "be used if not configured correctly.\n"
+                    f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
+                    "are running in existing runpaths.\n"
+                    "Are you sure you want to continue?"
                 )
+            )
 
-            except ValueError as e:
-                QMessageBox.warning(
-                    self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
-                )
-                abort = True
+            delete_runpath_checkbox = QCheckBox()
+            delete_runpath_checkbox.setText("Delete run_path")
+            msg_box.setCheckBox(delete_runpath_checkbox)
 
-            QApplication.restoreOverrideCursor()
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.No)
 
-            delete_runpath_checkbox = None
+            msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
 
-            if not abort and model.check_if_runpath_exists():
-                msg_box = QMessageBox(self)
-                msg_box.setObjectName("RUN_PATH_WARNING_BOX")
-
-                msg_box.setIcon(QMessageBox.Warning)
-
-                msg_box.setText("Run experiments")
-                msg_box.setInformativeText(
-                    (
-                        "ERT is running in an existing runpath.\n\n"
-                        "Please be aware of the following:\n"
-                        "- Previously generated results "
-                        "might be overwritten.\n"
-                        "- Previously generated files might "
-                        "be used if not configured correctly.\n"
-                        f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
-                        "are running in existing runpaths.\n"
-                        "Are you sure you want to continue?"
-                    )
-                )
-
-                delete_runpath_checkbox = QCheckBox()
-                delete_runpath_checkbox.setText("Delete run_path")
-                msg_box.setCheckBox(delete_runpath_checkbox)
-
-                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                msg_box.setDefaultButton(QMessageBox.No)
-
-                msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-
-                msg_box_res = msg_box.exec()
-
-            if (
-                not abort
-                and model.check_if_runpath_exists()
-                and msg_box_res == QMessageBox.No
-            ):
+            msg_box_res = msg_box.exec()
+            if msg_box_res == QMessageBox.No:
                 abort = True
 
             delete_runpath = (
                 delete_runpath_checkbox is not None
                 and delete_runpath_checkbox.checkState() == Qt.CheckState.Checked
             )
-            if not abort and delete_runpath:
-                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-                try:
-                    model.rm_run_path()
-                except OSError as e:
-                    QApplication.restoreOverrideCursor()
-                    msg_box = QMessageBox(self)
-                    msg_box.setObjectName("RUN_PATH_ERROR_BOX")
-                    msg_box.setIcon(QMessageBox.Warning)
-                    msg_box.setText("ERT could not delete the existing runpath")
-                    msg_box.setInformativeText(
-                        (f"{e}\n\n" "Continue without deleting the runpath?")
-                    )
-                    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                    msg_box.setDefaultButton(QMessageBox.No)
-                    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-                    msg_box_res = msg_box.exec()
-                    abort = msg_box_res == QMessageBox.No
+        if not abort and delete_runpath:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                model.rm_run_path()
+            except OSError as e:
                 QApplication.restoreOverrideCursor()
-
-            if not abort:
-                dialog = RunDialog(
-                    self._config_file,
-                    model,
-                    event_queue,
-                    self._notifier,
-                    self.parent(),  # type: ignore
-                    output_path=self.config.analysis_config.log_path,
+                msg_box = QMessageBox(self)
+                msg_box.setObjectName("RUN_PATH_ERROR_BOX")
+                msg_box.setIcon(QMessageBox.Warning)
+                msg_box.setText("ERT could not delete the existing runpath")
+                msg_box.setInformativeText(
+                    (f"{e}\n\n" "Continue without deleting the runpath?")
                 )
-                self.run_button.setEnabled(False)
-                self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
-                dialog.run_experiment()
-                dialog.show()
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg_box.setDefaultButton(QMessageBox.No)
+                msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+                msg_box_res = msg_box.exec()
+                abort = msg_box_res == QMessageBox.No
+            QApplication.restoreOverrideCursor()
 
-                def exit_handler() -> None:
-                    self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
-                    self.run_button.setEnabled(True)
-                    self.toggleExperimentType()
-                    self._notifier.emitErtChange()
+        if not abort:
+            dialog = RunDialog(
+                self._config_file,
+                model,
+                event_queue,
+                self._notifier,
+                self.parent(),  # type: ignore
+                output_path=self.config.analysis_config.log_path,
+            )
+            self.run_button.setEnabled(False)
+            self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
+            dialog.run_experiment()
+            dialog.show()
 
-                dialog.finished.connect(exit_handler)
+            def exit_handler() -> None:
+                self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
+                self.run_button.setEnabled(True)
+                self.toggleExperimentType()
+                self._notifier.emitErtChange()
+
+            dialog.finished.connect(exit_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()

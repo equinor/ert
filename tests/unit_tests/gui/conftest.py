@@ -287,10 +287,6 @@ def run_experiment_fixture(request):
         run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
 
         def handle_dialog():
-            qtbot.mouseClick(
-                wait_for_child(gui, qtbot, QMessageBox).buttons()[0], Qt.LeftButton
-            )
-
             QTimer.singleShot(
                 500,
                 lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
