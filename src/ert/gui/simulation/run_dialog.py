@@ -104,7 +104,7 @@ class JobOverview(QTableView):
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setMinimumWidth(20)
-
+        self.setMinimumHeight(140)
         self.setMouseTracking(True)
 
     @Slot(int, int)
@@ -209,6 +209,7 @@ class RunDialog(QDialog):
         self._progress_widget = ProgressWidget()
 
         self._tab_widget = QTabWidget(self)
+        self._tab_widget.setMinimumHeight(200)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
