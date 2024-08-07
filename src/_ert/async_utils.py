@@ -22,8 +22,9 @@ def get_running_loop() -> asyncio.AbstractEventLoop:
     try:
         return asyncio.get_running_loop()
     except RuntimeError:
-        asyncio.set_event_loop(new_event_loop())
-        return asyncio.get_event_loop()
+        loop = new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
 
 
 def _create_task(
