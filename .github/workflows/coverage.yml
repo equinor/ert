@@ -63,6 +63,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
         files: cov.xml
+        flags: ${{ matrix.test-type }}
     - name: codecov retry sleep
       if: steps.codecov1.outcome == 'failure'
       run: |
