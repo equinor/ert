@@ -1,10 +1,10 @@
 import io
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -29,7 +29,7 @@ class StdDevPlot:
         if layer is not None:
             vmin, vmax = float("inf"), float("-inf")
             axes = []
-            images = []
+            images: List[npt.NDArray[np.float64]] = []
 
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
@@ -45,7 +45,6 @@ class StdDevPlot:
                         ha="center",
                         va="center",
                     )
-                    images.append(None)
                 else:
                     img = plt.imread(io.BytesIO(image_data))
                     images.append(img)
@@ -65,7 +64,7 @@ class StdDevPlot:
             figure.tight_layout()
 
     @staticmethod
-    def _colorbar(mappable: QuadMesh) -> Any:
+    def _colorbar(mappable: Any) -> Any:
         # https://joseph-long.com/writing/colorbars/
         last_axes = plt.gca()
         ax = mappable.axes
