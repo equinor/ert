@@ -28,7 +28,6 @@ from pydantic.dataclasses import dataclass
 from websockets import ConnectionClosed, Headers
 from websockets.client import connect
 
-from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
 from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_CANCELLED,
@@ -102,7 +101,7 @@ class Scheduler:
             real.iens: Job(self, real) for real in (realizations or [])
         }
 
-        self._loop = get_running_loop()
+        self._loop = asyncio.get_running_loop()
         self._events: asyncio.Queue[Any] = asyncio.Queue()
 
         self._average_job_runtime: float = 0

@@ -18,14 +18,6 @@ def new_event_loop() -> asyncio.AbstractEventLoop:
     return loop
 
 
-def get_running_loop() -> asyncio.AbstractEventLoop:
-    try:
-        return asyncio.get_running_loop()
-    except RuntimeError:
-        asyncio.set_event_loop(new_event_loop())
-        return asyncio.get_event_loop()
-
-
 def _create_task(
     loop: asyncio.AbstractEventLoop,
     coro: Union[Coroutine[Any, Any, _T], Generator[Any, None, _T]],
