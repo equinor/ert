@@ -1,9 +1,10 @@
 import io
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -26,10 +27,16 @@ class StdDevPlot:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer
         if layer is not None:
+            vmin, vmax = float("inf"), float("-inf")
+            axes = []
+            images: List[npt.NDArray[np.float64]] = []
+
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
-                images = std_dev_images[ensemble.name]
-                if not images:
+                axes.append(ax)
+
+                image_data = std_dev_images[ensemble.name]
+                if not image_data:
                     ax.set_axis_off()
                     ax.text(
                         0.5,
@@ -39,16 +46,25 @@ class StdDevPlot:
                         va="center",
                     )
                 else:
-                    img = plt.imread(io.BytesIO(images))
-                    ax.imshow(img)
-                    ax.set_title(
-                        f"{ensemble.experiment_name} : {ensemble.name} layer={layer}"
-                    )
-                    p = ax.pcolormesh(img)
-                    self._colorbar(p)
+                    img = plt.imread(io.BytesIO(image_data))
+                    images.append(img)
+                    vmin = min(vmin, np.min(img))
+                    vmax = max(vmax, np.max(img))
+
+                ax.set_title(
+                    f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
+                    wrap=True,
+                )
+
+            for ax, img in zip(axes, images):
+                if img is not None:
+                    im = ax.imshow(img, vmin=vmin, vmax=vmax)
+                    self._colorbar(im)
+
+            figure.tight_layout()
 
     @staticmethod
-    def _colorbar(mappable: QuadMesh) -> Any:
+    def _colorbar(mappable: Any) -> Any:
         # https://joseph-long.com/writing/colorbars/
         last_axes = plt.gca()
         ax = mappable.axes
