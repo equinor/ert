@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from qtpy.QtWidgets import QFormLayout
+from qtpy import QtCore
+from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CopyableLabel
@@ -25,6 +26,10 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         self.setObjectName("Single_test_run_panel")
 
         layout = QFormLayout()
+        lab = QLabel(" ".join(SingleTestRun.__doc__.split()))  # type: ignore
+        lab.setWordWrap(True)
+        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        layout.addRow(lab)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
