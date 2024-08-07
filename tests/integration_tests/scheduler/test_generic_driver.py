@@ -123,27 +123,26 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
 @pytest.mark.flaky(reruns=5)
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
     """Submits are allowed to be repeated for the same iens, and are to be
-    handled according to FIFO, but this cannot be guaranteed as it depends
+    handled according to FIFO, but this order cannot be guaranteed as it depends
     on the host operating system."""
     os.chdir(tmp_path)
     await driver.submit(
         0,
         "sh",
         "-c",
-        f"echo started > {tmp_path}/submit1; echo submit1 > {tmp_path}/submissionrace",
+        f"echo submit1 > {tmp_path}/submissionrace; touch {tmp_path}/submit1",
         name="submit1",
     )
     await driver.submit(
         0,
         "sh",
         "-c",
-        f"echo started > {tmp_path}/submit2; echo submit2 > {tmp_path}/submissionrace",
+        f"echo submit2 > {tmp_path}/submissionrace; touch {tmp_path}/submit2",
         name="submit2",
     )
     # Wait until both submissions have done their thing:
     while not Path("submit1").exists() or not Path("submit2").exists():
         await asyncio.sleep(0.1)
-    await asyncio.sleep(0.1)
     assert Path("submissionrace").read_text(encoding="utf-8") == "submit2\n"
 
 
