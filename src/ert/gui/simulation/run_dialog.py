@@ -104,7 +104,7 @@ class JobOverview(QTableView):
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setMinimumWidth(20)
-
+        self.setMinimumHeight(140)
         self.setMouseTracking(True)
 
     @Slot(int, int)
@@ -188,7 +188,7 @@ class RunDialog(QDialog):
         self._event_queue = event_queue
         self._notifier = notifier
 
-        self._isDetailedDialog = False
+        self._isDetailedDialog = True
         self._minimum_width = 1200
 
         self._ticker = QTimer(self)
@@ -209,6 +209,7 @@ class RunDialog(QDialog):
         self._progress_widget = ProgressWidget()
 
         self._tab_widget = QTabWidget(self)
+        self._tab_widget.setMinimumHeight(200)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
@@ -276,7 +277,7 @@ class RunDialog(QDialog):
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumWidth(self._minimum_width)
-        self._setSimpleDialog()
+        self._setDetailedDialog()
         self.finished.connect(self._on_finished)
 
         self.on_run_model_event.connect(self._on_event)

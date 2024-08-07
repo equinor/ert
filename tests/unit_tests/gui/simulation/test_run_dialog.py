@@ -406,12 +406,14 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         job_overview = run_dialog._job_overview
 
         qtbot.waitUntil(job_overview.isVisible, timeout=20000)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(job_overview.isHidden, timeout=20000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 
@@ -645,11 +647,12 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         job_overview = run_dialog._job_overview
-
         qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(job_overview.isHidden, timeout=20000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 
