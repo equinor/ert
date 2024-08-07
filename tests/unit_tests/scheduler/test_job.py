@@ -12,7 +12,7 @@ from lxml import etree
 
 import ert
 from ert.ensemble_evaluator import Realization
-from ert.load_status import LoadResult, LoadStatus
+from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
@@ -54,14 +54,14 @@ def realization():
 async def assert_scheduler_events(
     scheduler: Scheduler, expected_job_events: List[State]
 ) -> None:
-    for job_event in expected_job_events:
+    for expected_job_event in expected_job_events:
         assert (
             scheduler._events.qsize()
-        ), f"Expected to find {job_event=} in the event queue"
+        ), f"Expected to find {expected_job_event=} in the event queue"
         queue_event = scheduler._events.get_nowait()
         output = json.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
-        assert event == STATE_TO_LEGACY[job_event]
+        assert event == STATE_TO_LEGACY[expected_job_event]
     # should be no more events
     assert scheduler._events.empty()
 
@@ -110,11 +110,10 @@ async def test_job_run_sends_expected_events(
     realization: Realization,
     monkeypatch,
 ):
-    monkeypatch.setattr(
-        ert.scheduler.job,
-        "forward_model_ok",
-        lambda _: LoadResult(forward_model_ok_result, ""),
-    )
+    async def load_result(_):
+        return (forward_model_ok_result, "")
+
+    monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_result)
     scheduler = create_scheduler()
     monkeypatch.setattr(
         scheduler.driver,
@@ -122,10 +121,6 @@ async def test_job_run_sends_expected_events(
         lambda *args: "",
     )
 
-    scheduler.job.forward_model_ok = MagicMock()
-    scheduler.job.forward_model_ok.return_value = LoadResult(
-        forward_model_ok_result, ""
-    )
     job = Job(scheduler, realization)
     job._verify_checksum = partial(job._verify_checksum, timeout=0)
     job.started.set()

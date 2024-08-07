@@ -62,11 +62,10 @@ def queue_config_fixture():
 @pytest.fixture
 def make_ensemble(queue_config):
     def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
-        monkeypatch.setattr(
-            ert.scheduler.job,
-            "forward_model_ok",
-            lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
-        )
+        async def load_successful(_):
+            return (LoadStatus.LOAD_SUCCESSFUL, "")
+
+        monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_successful)
         with tmpdir.as_cwd():
             forward_model_list = []
             for job_index in range(0, num_jobs):
