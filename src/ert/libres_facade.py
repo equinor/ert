@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 import warnings
@@ -52,7 +53,7 @@ def _load_realization(
     realisation: int,
     run_args: List[RunArg],
 ) -> Tuple[LoadResult, int]:
-    result = forward_model_ok(run_args[realisation])
+    result = asyncio.run(forward_model_ok(run_args[realisation]))
     return result, realisation
 
 
