@@ -188,7 +188,7 @@ class RunDialog(QDialog):
         self._event_queue = event_queue
         self._notifier = notifier
 
-        self._isDetailedDialog = False
+        self._isDetailedDialog = True
         self._minimum_width = 1200
 
         self._ticker = QTimer(self)
@@ -276,7 +276,7 @@ class RunDialog(QDialog):
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumWidth(self._minimum_width)
-        self._setSimpleDialog()
+        self._setDetailedDialog()
         self.finished.connect(self._on_finished)
 
         self.on_run_model_event.connect(self._on_event)
