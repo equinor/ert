@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
+import orjson
 import pytest
-from cloudevents.http import from_json
 from websockets.server import serve
 
 from _ert.async_utils import get_running_loop
@@ -20,8 +20,8 @@ async def mock_ws(host, port, done):
         while True:
             event = await websocket.recv()
             events.append(event)
-            cloud_event = from_json(event)
-            if cloud_event["type"] == "com.equinor.ert.realization.success":
+            event = orjson.loads(event)
+            if event["type"] == "com.equinor.ert.realization.success":
                 break
 
     async with serve(_handler, host, port, process_request=process_request):
@@ -68,11 +68,8 @@ async def test_happy_path(
         ["waiting", "success"],
         [first_expected_queue_event_type, "SUCCESS"],
     ):
-        assert from_json(received_event)["source"] == "/ert/ensemble/ee_0/real/0"
-        assert (
-            from_json(received_event)["type"]
-            == f"com.equinor.ert.realization.{expected_type}"
-        )
-        assert from_json(received_event).data == {
-            "queue_event_type": expected_queue_event_type
-        }
+        event = orjson.loads(received_event)
+        assert event["ensemble"] == "ee_0"
+        assert event["real"] == 0
+        assert event["type"] == f"com.equinor.ert.realization.{expected_type}"
+        assert event["data"] == {"queue_event_type": expected_queue_event_type}

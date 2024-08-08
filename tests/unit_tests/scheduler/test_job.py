@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import shutil
 from functools import partial
@@ -7,6 +6,7 @@ from pathlib import Path
 from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
+import orjson
 import pytest
 from lxml import etree
 
@@ -21,6 +21,7 @@ from ert.scheduler.job import STATE_TO_LEGACY, Job, State, log_info_from_exit_fi
 
 def create_scheduler():
     sch = AsyncMock()
+    sch._ens_id = 0
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch.wait_for_checksum = lambda: False
@@ -58,7 +59,7 @@ async def assert_scheduler_events(
             scheduler._events.qsize()
         ), f"Expected to find {job_event=} in the event queue"
         queue_event = scheduler._events.get_nowait()
-        output = json.loads(queue_event.decode("utf-8"))
+        output = orjson.loads(queue_event.decode("utf-8"))
         event = output.get("data").get("queue_event_type")
         assert event == STATE_TO_LEGACY[job_event]
     # should be no more events

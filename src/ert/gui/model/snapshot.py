@@ -30,15 +30,6 @@ if sys.version_info < (3, 11):
 
     MonkeyPatch.patch_fromisoformat()
 
-
-def convert_iso8601_to_datetime(
-    timestamp: Union[datetime, str],
-) -> datetime:
-    if isinstance(timestamp, datetime):
-        return timestamp
-    return datetime.fromisoformat(timestamp)
-
-
 logger = logging.getLogger(__name__)
 
 UserRole = Qt.ItemDataRole.UserRole
@@ -206,8 +197,6 @@ class SnapshotModel(QAbstractItemModel):
                     ]
                 reals_changed.append(real_node.row())
 
-            jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
-
             for (
                 real_id,
                 forward_model_id,
@@ -215,11 +204,12 @@ class SnapshotModel(QAbstractItemModel):
                 real_node = iter_node.children[real_id]
                 job_node = real_node.children[forward_model_id]
 
-                jobs_changed_by_real[real_id].append(job_node.row())
                 if "start_time" in job:
                     job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
                 if "end_time" in job:
                     job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
+                # Errors may be unset as the queue restarts the job
+                job[ids.ERROR] = job.get(ids.ERROR, "")
                 job_node.data.update(job)
                 if (
                     "current_memory_usage" in job
@@ -237,16 +227,13 @@ class SnapshotModel(QAbstractItemModel):
                         self.root.max_memory_usage or 0, max_mem_usage
                     )
 
-                # Errors may be unset as the queue restarts the job
-                job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
-
-            for real_idx, changed_jobs in jobs_changed_by_real.items():
-                real_node = iter_node.children[real_idx]
+            for real_idx in reals_changed:
+                real_node = iter_node.children[str(real_idx)]
                 real_index = self.index(real_node.row(), 0, iter_index)
 
-                job_top_left = self.index(min(changed_jobs), 0, real_index)
+                job_top_left = self.index(0, 0, real_index)
                 job_bottom_right = self.index(
-                    max(changed_jobs),
+                    self.rowCount(real_index),
                     self.columnCount(real_index) - 1,
                     real_index,
                 )

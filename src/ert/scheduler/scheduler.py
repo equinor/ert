@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import ssl
@@ -21,9 +20,8 @@ from typing import (
     Sequence,
 )
 
+import orjson
 from aiohttp import ClientError
-from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import from_json
 from pydantic.dataclasses import dataclass
 from websockets import ConnectionClosed, Headers
 from websockets.client import connect
@@ -35,7 +33,6 @@ from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
-from ert.serialization import evaluator_unmarshaller
 
 from .driver import Driver
 from .event import FinishedEvent
@@ -234,12 +231,10 @@ class Scheduler:
                 self._consumer_started.set()
                 async for message in conn:
                     try:
-                        event = from_json(
-                            str(message), data_unmarshaller=evaluator_unmarshaller
-                        )
+                        event = orjson.loads(message)
                         if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                            self.checksum.update(event.data)
-                    except DataUnmarshallerError:
+                            self.checksum.update(event["data"])
+                    except:
                         logger.error(
                             "Scheduler checksum consumer received unknown message"
                         )
@@ -414,8 +409,8 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "r", encoding="utf-8") as fp:
-            data = json.load(fp)
-        with open(jobs_path, "w", encoding="utf-8") as fp:
+        with open(jobs_path, "rb") as fp:
+            data = orjson.loads(fp.read())
+        with open(jobs_path, "wb") as fp:
             data.update(asdict(jobs))
-            json.dump(data, fp, indent=4)
+            fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))

@@ -1,4 +1,3 @@
-import re
 import sys
 import typing
 from collections import defaultdict
@@ -15,7 +14,6 @@ from typing import (
     Union,
 )
 
-from cloudevents.http import CloudEvent
 from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
@@ -27,26 +25,6 @@ if sys.version_info < (3, 11):
     from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
 
     MonkeyPatch.patch_fromisoformat()
-
-_regexp_pattern = r"(?<=/{token}/)[^/]+"
-
-
-def _match_token(token: str, source: str) -> str:
-    f_pattern = _regexp_pattern.format(token=token)
-    match = re.search(f_pattern, source)
-    return match if match is None else match.group()  # type: ignore
-
-
-def _get_real_id(source: str) -> str:
-    return _match_token("real", source)
-
-
-def _get_forward_model_id(source: str) -> str:
-    return _match_token("forward_model", source)
-
-
-def _get_forward_model_index(source: str) -> str:
-    return _match_token("index", source)
 
 
 class UnsupportedOperationException(ValueError):
@@ -239,9 +217,8 @@ class PartialSnapshot:
             self._forward_model_states[forward_model_id].update(other_fm_data)
         return self
 
-    def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
+    def from_cloudevent(self, event: Dict) -> "PartialSnapshot":
         e_type = event["type"]
-        e_source = event["source"]
         timestamp = event["time"]
 
         if self._snapshot is None:
@@ -262,23 +239,18 @@ class PartialSnapshot:
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
-            self.update_realization(
-                _get_real_id(e_source), status, start_time, end_time
-            )
+            self.update_realization(event["real"], status, start_time, end_time)
 
             if e_type == ids.EVTYPE_REALIZATION_TIMEOUT:
                 for (
                     forward_model_id,
                     forward_model,
-                ) in self._snapshot.get_forward_models_for_real(
-                    _get_real_id(e_source)
-                ).items():
+                ) in self._snapshot.get_forward_models_for_real(event["real"]).items():
                     if (
                         forward_model.get(ids.STATUS)
                         != state.FORWARD_MODEL_STATE_FINISHED
                     ):
-                        real_id = _get_real_id(e_source)
-                        forward_model_idx = (real_id, forward_model_id)
+                        forward_model_idx = (event["real"], forward_model_id)
                         if forward_model_idx not in self._forward_model_states:
                             self._forward_model_states[forward_model_idx] = {}
                         self._forward_model_states[forward_model_idx].update(
@@ -304,14 +276,14 @@ class PartialSnapshot:
                 end_time = convert_iso8601_to_datetime(timestamp)
                 # Make sure error msg from previous failed run is replaced
                 error = ""
-                if event.data is not None:
-                    error = event.data.get(ids.ERROR_MSG)
+                if event.get("data") is not None:
+                    error = event["data"].get(ids.ERROR_MSG)
 
             fm = ForwardModel(
                 **_filter_nones(  # type: ignore
                     {
                         ids.STATUS: status,
-                        ids.INDEX: _get_forward_model_index(e_source),
+                        ids.INDEX: event["fm_step"],
                         ids.START_TIME: start_time,
                         ids.END_TIME: end_time,
                         ids.ERROR: error,
@@ -320,22 +292,24 @@ class PartialSnapshot:
             )
 
             if e_type == ids.EVTYPE_FORWARD_MODEL_RUNNING:
-                fm[ids.CURRENT_MEMORY_USAGE] = event.data.get(ids.CURRENT_MEMORY_USAGE)
-                fm[ids.MAX_MEMORY_USAGE] = event.data.get(ids.MAX_MEMORY_USAGE)
+                fm[ids.CURRENT_MEMORY_USAGE] = event["data"].get(
+                    ids.CURRENT_MEMORY_USAGE
+                )
+                fm[ids.MAX_MEMORY_USAGE] = event["data"].get(ids.MAX_MEMORY_USAGE)
             if e_type == ids.EVTYPE_FORWARD_MODEL_START:
-                fm[ids.STDOUT] = event.data.get(ids.STDOUT)
-                fm[ids.STDERR] = event.data.get(ids.STDERR)
+                fm[ids.STDOUT] = event["data"].get(ids.STDOUT)
+                fm[ids.STDERR] = event["data"].get(ids.STDERR)
 
             self.update_forward_model(
-                _get_real_id(e_source),
-                _get_forward_model_id(e_source),
+                event["real"],
+                event["fm_step"],
                 fm,
             )
 
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type]
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
-            other_partial = _from_nested_dict(event.data)
+            other_partial = _from_nested_dict(event["data"])
             self._merge(other_partial)
         else:
             raise ValueError(f"Unknown type: {e_type}")
@@ -502,6 +476,9 @@ class SnapshotBuilder(BaseModel):
 
 def _from_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
     partial = PartialSnapshot()
+    if data is None:
+        return partial
+
     if "metadata" in data:
         partial._metadata = data["metadata"]
     if "status" in data:

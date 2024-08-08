@@ -22,7 +22,6 @@ from typing import (
 )
 
 import numpy as np
-from cloudevents.http import CloudEvent
 
 from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
 from ert.analysis.event import (
@@ -383,9 +382,9 @@ class BaseRunModel:
 
         return status, current_progress, realization_count
 
-    def send_snapshot_event(self, event: CloudEvent, iteration: int) -> None:
+    def send_snapshot_event(self, event: Dict, iteration: int) -> None:
         if event["type"] == EVTYPE_EE_SNAPSHOT:
-            snapshot = Snapshot(event.data)
+            snapshot = Snapshot(event["data"])
             self._iter_snapshot[iteration] = snapshot
             status, current_progress, realization_count = self._current_status()
             self.send_event(
@@ -437,7 +436,7 @@ class BaseRunModel:
                         EVTYPE_EE_SNAPSHOT_UPDATE,
                     ):
                         self.send_snapshot_event(event, iteration)
-                        if event.data.get(STATUS) in [
+                        if event["data"].get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
                         ]:
@@ -446,7 +445,7 @@ class BaseRunModel:
                             )
                             await monitor.signal_done()
 
-                        if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
+                        if event["data"].get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                             event_logger.debug(
                                 "observed evaluation cancelled event, exit drainer"
                             )

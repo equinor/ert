@@ -6,12 +6,12 @@ import logging
 import time
 import uuid
 from contextlib import suppress
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent
+import orjson
 from lxml import etree
 
 from ert.callbacks import forward_model_ok
@@ -182,15 +182,15 @@ class Job:
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
         await asyncio.sleep(self.real.max_runtime)
-        timeout_event = CloudEvent(
-            {
-                "type": EVTYPE_REALIZATION_TIMEOUT,
-                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
-                "id": str(uuid.uuid1()),
-            }
-        )
+        timeout_event = {
+            "type": EVTYPE_REALIZATION_TIMEOUT,
+            "time": datetime.now(),
+            "real": self.iens,
+            "ensemble": self._scheduler._ens_id,
+            "id": str(uuid.uuid1()),
+        }
         assert self._scheduler._events is not None
-        await self._scheduler._events.put(to_json(timeout_event))
+        await self._scheduler._events.put(orjson.dumps(timeout_event))
         logger.error(
             f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
         )
@@ -296,17 +296,15 @@ class Job:
             await self._scheduler.completed_jobs.put(self.iens)
 
         status = STATE_TO_LEGACY[state]
-        event = CloudEvent(
-            {
-                "type": _queue_state_event_type[status],
-                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
-                "datacontenttype": "application/json",
-            },
-            {
-                "queue_event_type": status,
-            },
-        )
-        await self._scheduler._events.put(to_json(event))
+        event = {
+            "type": _queue_state_event_type[status],
+            "time": datetime.now(),
+            "real": self.iens,
+            "ensemble": self._scheduler._ens_id,
+            "datacontenttype": "application/json",
+            "data": {"queue_event_type": status},
+        }
+        await self._scheduler._events.put(orjson.dumps(event))
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:

@@ -1,8 +1,5 @@
 from datetime import datetime
 
-import pytest
-from cloudevents.http.event import CloudEvent
-
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
@@ -10,8 +7,6 @@ from ert.ensemble_evaluator.snapshot import (
     PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
-    _get_forward_model_id,
-    _get_real_id,
 )
 
 
@@ -76,69 +71,41 @@ def test_snapshot_merge(snapshot: Snapshot):
     )
 
 
-@pytest.mark.parametrize(
-    "source_string, expected_ids",
-    [
-        (
-            "/ert/ee/0/real/1111/forward_model/0",
-            {"real": "1111", "forward_model": "0"},
-        ),
-        (
-            "/ert/ee/0/real/1111",
-            {"real": "1111", "forward_model": None},
-        ),
-        (
-            "/ert/ee/0/real/1111",
-            {"real": "1111", "forward_model": None},
-        ),
-        (
-            "/ert/ee/0/real/1111",
-            {"real": "1111", "forward_model": None},
-        ),
-        (
-            "/ert/ee/0",
-            {"real": None, "forward_model": None},
-        ),
-    ],
-)
-def test_source_get_ids(source_string, expected_ids):
-    assert _get_real_id(source_string) == expected_ids["real"]
-    assert _get_forward_model_id(source_string) == expected_ids["forward_model"]
-
-
 def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
-        CloudEvent(
-            attributes={
-                "id": "0",
-                "type": ids.EVTYPE_FORWARD_MODEL_RUNNING,
-                "source": "/real/0/forward_model/0",
-            },
-            data={
+        {
+            "id": "0",
+            "time": datetime.now(),
+            "type": ids.EVTYPE_FORWARD_MODEL_RUNNING,
+            "real": "0",
+            "fm_step": "0",
+            "data": {
                 "current_memory_usage": 5,
                 "max_memory_usage": 6,
             },
-        )
+        },
     )
     partial.from_cloudevent(
-        CloudEvent(
-            {
-                "id": "0",
-                "type": ids.EVTYPE_FORWARD_MODEL_FAILURE,
-                "source": "/real/0/forward_model/0",
-            },
-            {ids.ERROR_MSG: "failed"},
-        )
+        {
+            "id": "0",
+            "time": datetime.now(),
+            "type": ids.EVTYPE_FORWARD_MODEL_FAILURE,
+            "source": "/real/0/forward_model/0",
+            "real": "0",
+            "fm_step": "0",
+            "data": {ids.ERROR_MSG: "failed"},
+        },
     )
     partial.from_cloudevent(
-        CloudEvent(
-            {
-                "id": "1",
-                "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
-                "source": "/real/0/forward_model/1",
-            }
-        )
+        {
+            "id": "1",
+            "time": datetime.now(),
+            "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
+            "source": "/real/0/forward_model/1",
+            "real": "0",
+            "fm_step": "1",
+        }
     )
     forward_models = partial.to_dict()["reals"]["0"]["forward_models"]
     assert forward_models["0"]["status"] == state.FORWARD_MODEL_STATE_FAILURE
@@ -149,12 +116,11 @@ def test_that_realization_success_message_updates_state(snapshot):
     snapshot = SnapshotBuilder().build(["0"], status="Unknown")
     partial = PartialSnapshot(snapshot)
     partial.from_cloudevent(
-        CloudEvent(
-            {
-                "id": "0",
-                "type": ids.EVTYPE_REALIZATION_SUCCESS,
-                "source": "/real/0",
-            }
-        )
+        {
+            "id": "0",
+            "time": datetime.now(),
+            "type": ids.EVTYPE_REALIZATION_SUCCESS,
+            "real": "0",
+        }
     )
     assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED

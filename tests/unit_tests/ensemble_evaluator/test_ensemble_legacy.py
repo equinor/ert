@@ -51,7 +51,7 @@ async def test_run_legacy_ensemble(
                 if e["type"] in (
                     identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
                     identifiers.EVTYPE_EE_SNAPSHOT,
-                ) and e.data.get(identifiers.STATUS) in [
+                ) and e["data"].get(identifiers.STATUS) in [
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
                 ]:

@@ -3,10 +3,9 @@ import logging
 import queue
 import threading
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent
+import orjson
 
 from _ert.threading import ErtThread
 from _ert_forward_model_runner.client import (
@@ -33,9 +32,7 @@ _FORWARD_MODEL_SUCCESS = "com.equinor.ert.forward_model_job.success"
 _FORWARD_MODEL_CHECKSUM = "com.equinor.ert.forward_model_job.checksum"
 _FORWARD_MODEL_FAILURE = "com.equinor.ert.forward_model_job.failure"
 
-_CONTENT_TYPE = "datacontenttype"
 _JOB_MSG_TYPE = "type"
-_JOB_SOURCE = "source"
 _RUN_PATH = "run_path"
 
 logger = logging.getLogger(__name__)
@@ -105,7 +102,7 @@ class Event(Reporter):
                     if event is self._sentinel:
                         break
                 try:
-                    client.send(to_json(event).decode())
+                    client.send(event)
                     event = None
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
@@ -119,13 +116,11 @@ class Event(Reporter):
     def report(self, msg):
         self._statemachine.transition(msg)
 
-    def _dump_event(self, attributes: Dict[str, str], data: Any = None):
-        if data is None and _CONTENT_TYPE in attributes:
-            attributes.pop(_CONTENT_TYPE)
-
-        event = CloudEvent(attributes=attributes, data=data)
-        logger.debug(f'Schedule {type(event)} "{event["type"]}" for delivery')
-        self._event_queue.put(event)
+    def _dump_event(self, event: Any = None):
+        event["time"] = datetime.datetime.now()
+        event["data"] = event.get("data", None)
+        logger.debug(f'Schedule "{event["type"]}" for delivery')
+        self._event_queue.put(orjson.dumps(event))
 
     def _init_handler(self, msg):
         self._ens_id = msg.ens_id
@@ -133,37 +128,35 @@ class Event(Reporter):
         self._event_publisher_thread.start()
 
     def _job_handler(self, msg: Message):
+        assert msg.job
         job_name = msg.job.name()
-        job_msg_attrs = {
-            _JOB_SOURCE: (
-                f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/"
-                f"forward_model/{msg.job.index}/index/{msg.job.index}"
-            ),
-            _CONTENT_TYPE: "application/json",
+        job_msg = {
+            _JOB_MSG_TYPE: None,
+            "ensemble": self._ens_id,
+            "real": self._real_id,
+            "fm_step": msg.job.index,
+            "index": msg.job.index,
         }
         if isinstance(msg, Start):
             logger.debug(f"Job {job_name} was successfully started")
-            self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_START, **job_msg_attrs},
-                data={
-                    "stdout": str(Path(msg.job.std_out).resolve()),
-                    "stderr": str(Path(msg.job.std_err).resolve()),
-                },
-            )
+            start_msg = job_msg.copy()
+            start_msg[_JOB_MSG_TYPE] = _FORWARD_MODEL_START
+            start_msg["data"] = {
+                "stdout": str(Path(msg.job.std_out).resolve()),
+                "stderr": str(Path(msg.job.std_err).resolve()),
+            }
+            self._dump_event(start_msg)
             if not msg.success():
                 logger.error(f"Job {job_name} FAILED to start")
-                self._dump_event(
-                    attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_FAILURE, **job_msg_attrs},
-                    data={
-                        "error_msg": msg.error_message,
-                    },
-                )
+                fail_msg = job_msg.copy()
+                fail_msg[_JOB_MSG_TYPE] = _FORWARD_MODEL_FAILURE
+                fail_msg["data"] = {"error_msg": msg.error_message}
+                self._dump_event(fail_msg)
 
         elif isinstance(msg, Exited):
-            data = None
             if msg.success():
                 logger.debug(f"Job {job_name} exited successfully")
-                attributes = {_JOB_MSG_TYPE: _FORWARD_MODEL_SUCCESS, **job_msg_attrs}
+                job_msg[_JOB_MSG_TYPE] = _FORWARD_MODEL_SUCCESS
             else:
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(
@@ -172,22 +165,21 @@ class Event(Reporter):
                         error_message=msg.error_message,
                     )
                 )
-                attributes = {_JOB_MSG_TYPE: _FORWARD_MODEL_FAILURE, **job_msg_attrs}
-                data = {
+                job_msg[_JOB_MSG_TYPE] = _FORWARD_MODEL_FAILURE
+                job_msg["data"] = {
                     "exit_code": msg.exit_code,
                     "error_msg": msg.error_message,
                 }
-            self._dump_event(attributes=attributes, data=data)
+            self._dump_event(job_msg)
 
         elif isinstance(msg, Running):
             logger.debug(f"{job_name} job is running")
-            self._dump_event(
-                attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_RUNNING, **job_msg_attrs},
-                data={
-                    "max_memory_usage": msg.memory_status.max_rss,
-                    "current_memory_usage": msg.memory_status.rss,
-                },
-            )
+            job_msg[_JOB_MSG_TYPE] = _FORWARD_MODEL_RUNNING
+            job_msg["data"] = {
+                "max_memory_usage": msg.memory_status.max_rss,
+                "current_memory_usage": msg.memory_status.rss,
+            }
+            self._dump_event(job_msg)
 
     def _finished_handler(self, msg):
         self._event_queue.put(self._sentinel)
@@ -199,12 +191,11 @@ class Event(Reporter):
             self._event_publisher_thread.join()
 
     def _checksum_handler(self, msg):
-        job_msg_attrs = {
-            _JOB_SOURCE: (f"/ert/ensemble/{self._ens_id}/real/{self._real_id}"),
-            _CONTENT_TYPE: "application/json",
+        job_msg = {
+            _JOB_MSG_TYPE: _FORWARD_MODEL_CHECKSUM,
+            "ensemble": self._ens_id,
+            "real": self._real_id,
             _RUN_PATH: msg.run_path,
+            "data": msg.data,
         }
-        self._dump_event(
-            attributes={_JOB_MSG_TYPE: _FORWARD_MODEL_CHECKSUM, **job_msg_attrs},
-            data=msg.data,
-        )
+        self._dump_event(job_msg)

@@ -1,20 +1,17 @@
 import asyncio
 import logging
-import pickle
 import ssl
 import uuid
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Union
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, Optional, Union
 
+import orjson
 from aiohttp import ClientError
-from cloudevents.conversion import to_json
-from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import CloudEvent, from_json
 from websockets import ConnectionClosed, Headers, WebSocketClientProtocol
 from websockets.client import connect
 
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
-from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
@@ -31,7 +28,7 @@ class Monitor:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
-        self._event_queue: asyncio.Queue[Union[CloudEvent, CloseTrackerEvent]] = (
+        self._event_queue: asyncio.Queue[Union[Dict, CloseTrackerEvent]] = (
             asyncio.Queue()
         )
         self._connection: Optional[WebSocketClientProtocol] = None
@@ -72,16 +69,13 @@ class Monitor:
         await self._event_queue.put(CloseTrackerEvent())
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._connection.send(
-            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
-        )
+        out_event = {
+            "type": identifiers.EVTYPE_EE_USER_CANCEL,
+            "time": datetime.now(),
+            "monitor": self._id,
+            "id": str(uuid.uuid1()),
+        }
+        await self._connection.send(orjson.dumps(out_event))
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
     async def signal_done(self) -> None:
@@ -90,21 +84,18 @@ class Monitor:
         await self._event_queue.put(CloseTrackerEvent())
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_DONE,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._connection.send(
-            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
-        )
+        out_event = {
+            "type": identifiers.EVTYPE_EE_USER_DONE,
+            "time": datetime.now(),
+            "monitor": self._id,
+            "id": str(uuid.uuid1()),
+        }
+        await self._connection.send(orjson.dumps(out_event))
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
         self, heartbeat_interval: Optional[float] = None
-    ) -> AsyncGenerator[Optional[CloudEvent], None]:
+    ) -> AsyncGenerator[Optional[Dict], None]:
         """Yield events from the internal event queue with optional heartbeats.
 
         Heartbeats are represented by None being yielded.
@@ -166,12 +157,9 @@ class Monitor:
                 self._connection = conn
                 self._connected.set()
                 async for message in self._connection:
-                    try:
-                        event = from_json(
-                            str(message), data_unmarshaller=evaluator_unmarshaller
-                        )
-                    except DataUnmarshallerError:
-                        event = from_json(str(message), data_unmarshaller=pickle.loads)
+                    if not message or len(message) == 0:
+                        logger.error("oh noes!")
+                    event = orjson.loads(message)
                     await self._event_queue.put(event)
             except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
                 self._connection = None
