@@ -5,7 +5,7 @@ from qtpy.QtGui import QColor
 from ert.ensemble_evaluator.state import COLOR_FAILED
 from ert.gui.model.snapshot import RealJobColorHint, RealStatusColorHint, SnapshotModel
 
-from .gui_models_utils import partial_snapshot
+from .gui_models_utils import finish_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
@@ -19,9 +19,9 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
-    partial = partial_snapshot(SnapshotModel.prerender(full_snapshot))
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
-    model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
+    snapshot = finish_snapshot(SnapshotModel.prerender(full_snapshot))
+    model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
+    model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
 
     qtmodeltester.check(model, force_py=True)
 

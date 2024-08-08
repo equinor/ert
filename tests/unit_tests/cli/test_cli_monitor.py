@@ -3,7 +3,11 @@ from io import StringIO
 
 from ert.cli.monitor import Monitor
 from ert.ensemble_evaluator.event import SnapshotUpdateEvent
-from ert.ensemble_evaluator.snapshot import RealizationSnapshot, Snapshot, SnapshotDict
+from ert.ensemble_evaluator.snapshot import (
+    RealizationSnapshot,
+    Snapshot,
+    SnapshotDict,
+)
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_RUNNING,
@@ -24,7 +28,7 @@ def test_legends():
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
         sd.reals[str(i)] = RealizationSnapshot(status=status, active=True)
-    monitor._snapshots[0] = Snapshot(sd.model_dump())
+    monitor._snapshots[0] = Snapshot.from_nested_dict(sd.model_dump())
     legends = monitor._get_legends()
 
     assert (
@@ -64,7 +68,7 @@ def test_print_progress():
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
         sd.reals[str(i)] = RealizationSnapshot(status=status, active=True)
-    monitor._snapshots[0] = Snapshot(sd.model_dump())
+    monitor._snapshots[0] = Snapshot.from_nested_dict(sd.model_dump())
     monitor._start_time = datetime.now()
     general_event = SnapshotUpdateEvent(
         iteration_label="Test Phase",
