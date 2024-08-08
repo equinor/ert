@@ -2,13 +2,13 @@ import logging
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Dict, Final, List, Optional, Sequence, Union, cast, overload
+from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
 
-from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
+from ert.ensemble_evaluator import Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.snapshot import SnapshotMetadata
 from ert.gui.model.node import (
@@ -81,9 +81,7 @@ class SnapshotModel(QAbstractItemModel):
         self.root: RootNode = RootNode("0")
 
     @staticmethod
-    def prerender(
-        snapshot: Union[Snapshot, PartialSnapshot],
-    ) -> Optional[Union[Snapshot, PartialSnapshot]]:
+    def prerender(snapshot: Snapshot) -> Optional[Snapshot]:
         """Pre-render some data that is required by this model. Ideally, this
         is called outside the GUI thread. This is a requirement of the model,
         so it has to be called."""
@@ -107,11 +105,8 @@ class SnapshotModel(QAbstractItemModel):
                     state.REAL_STATE_TO_COLOR[real.status]
                 ]
 
-        isSnapshot = False
-        if isinstance(snapshot, Snapshot):
-            isSnapshot = True
-            metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
-            metadata["sorted_forward_model_ids"] = defaultdict(list)
+        metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
+        metadata["sorted_forward_model_ids"] = defaultdict(list)
 
         running_forward_model_id: Dict[str, int] = {}
         for (
@@ -125,8 +120,7 @@ class SnapshotModel(QAbstractItemModel):
             real_id,
             forward_model_id,
         ), forward_model_status in forward_model_states.items():
-            if isSnapshot:
-                metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
+            metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
             if (
                 real_id in running_forward_model_id
                 and int(forward_model_id) > running_forward_model_id[real_id]
@@ -141,31 +135,27 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata["aggr_job_status_colors"][real_id][forward_model_id] = color
 
-        if isSnapshot:
-            snapshot = cast(Snapshot, snapshot)
-            snapshot.merge_metadata(metadata)
-        elif isinstance(snapshot, PartialSnapshot):
-            snapshot.update_metadata(metadata)
+        snapshot.merge_metadata(metadata)
         return snapshot
 
-    def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: str) -> None:
-        metadata = partial.metadata
+    def _update_snapshot(self, snapshot: Snapshot, iter_: str) -> None:
+        metadata = snapshot.metadata
         if not metadata:
-            logger.debug("no metadata in partial, ignoring partial")
+            logger.debug("no metadata in update snapshot, ignoring snapshot")
             return
 
         if iter_ not in self.root.children:
-            logger.debug("no full snapshot yet, ignoring partial")
+            logger.debug("no full snapshot to update yet, ignoring snapshot")
             return
 
-        job_infos = partial.get_all_forward_models()
-        reals = partial.reals
+        job_infos = snapshot.get_all_forward_models()
+        reals = snapshot.reals
         if not reals and not job_infos:
-            logger.debug(f"no realizations in partial for iter {iter_}")
+            logger.debug(f"no realizations in snapshot for iter {iter_}")
             return
 
         # Stack onto which we push change events for entities, since we branch
-        # the code based on what is in the partial. This way we're guaranteed
+        # the code based on what is in the snapshot. This way we're guaranteed
         # that the change events will be emitted when the stack is unwound.
         with ExitStack() as stack:
             iter_node = self.root.children[iter_]

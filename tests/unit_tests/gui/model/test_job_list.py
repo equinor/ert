@@ -7,7 +7,7 @@ from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
+from ert.ensemble_evaluator.snapshot import ForwardModel
 from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_RUNNING,
@@ -16,7 +16,7 @@ from ert.ensemble_evaluator.state import (
 from ert.gui.model.job_list import JobListProxyModel
 from ert.gui.model.snapshot import DURATION, JOB_COLUMNS, SnapshotModel
 
-from .gui_models_utils import partial_snapshot
+from .gui_models_utils import finish_snapshot
 
 
 def _id_to_col(identifier):
@@ -24,7 +24,7 @@ def _id_to_col(identifier):
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
-    partial = partial_snapshot(full_snapshot)
+    snapshot = finish_snapshot(full_snapshot)
     source_model = SnapshotModel()
 
     model = JobListProxyModel(None, 0, 0)
@@ -38,8 +38,8 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
+    source_model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
+    source_model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
 
     qtmodeltester.check(model, force_py=True)
 
@@ -59,10 +59,10 @@ def test_changes(full_snapshot):
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
-    partial = PartialSnapshot(full_snapshot)
+    snapshot = full_snapshot
     start_time = datetime(year=2020, month=10, day=27, hour=12)
     end_time = datetime(year=2020, month=10, day=28, hour=13)
-    partial.update_forward_model(
+    snapshot.update_forward_model(
         "0",
         "0",
         forward_model=ForwardModel(
@@ -71,7 +71,7 @@ def test_changes(full_snapshot):
             end_time=end_time,
         ),
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
+    source_model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
     assert (
         model.index(0, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:00:00"
     )
@@ -101,7 +101,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         == FORWARD_MODEL_STATE_START
     )
 
-    partial = PartialSnapshot(full_snapshot)
+    snapshot = full_snapshot
     start_time = datetime(year=2020, month=10, day=27, hour=12, tzinfo=timezone)
     # mock only datetime.now()
     mock_datetime.now.return_value = datetime(
@@ -114,7 +114,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         microsecond=5,  # Note that microseconds are intended to be removed
         tzinfo=timezone,
     )
-    partial.update_forward_model(
+    snapshot.update_forward_model(
         "0",
         "2",
         forward_model=ForwardModel(
@@ -122,7 +122,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
             start_time=start_time,
         ),
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "0")
+    source_model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
     assert (
         model.index(2, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:12:11"
     )
@@ -143,11 +143,11 @@ def test_no_cross_talk(full_snapshot):
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
     # Test that changes to iter=1 does not bleed into iter=0
-    partial = PartialSnapshot(full_snapshot)
-    partial.update_forward_model(
+    snapshot = full_snapshot
+    snapshot.update_forward_model(
         "0", "0", forward_model=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
     )
-    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), "1")
+    source_model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
         == FORWARD_MODEL_STATE_START

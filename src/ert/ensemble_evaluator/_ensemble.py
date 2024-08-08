@@ -31,7 +31,6 @@ from .config import EvaluatorServerConfig
 from .identifiers import EVTYPE_ENSEMBLE_FAILED, EVTYPE_ENSEMBLE_STARTED
 from .snapshot import (
     ForwardModel,
-    PartialSnapshot,
     RealizationSnapshot,
     Snapshot,
     SnapshotDict,
@@ -149,16 +148,18 @@ class LegacyEnsemble:
             metadata=self.metadata,
         )
 
-        return Snapshot(top.model_dump())
+        return Snapshot.from_nested_dict(top.model_dump())
 
     def get_successful_realizations(self) -> List[int]:
         return self.snapshot.get_successful_realizations()
 
-    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
-        snapshot_mutate_event = PartialSnapshot(self.snapshot)
+    def update_snapshot(self, events: List[CloudEvent]) -> Snapshot:
+        snapshot_mutate_event = Snapshot()
         for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
-        self.snapshot.merge_event(snapshot_mutate_event)
+            snapshot_mutate_event = snapshot_mutate_event.update_from_cloudevent(
+                event, source_snapshot=self.snapshot
+            )
+        self.snapshot.merge_snapshot(snapshot_mutate_event)
         if self.snapshot.status is not None and self.status != self.snapshot.status:
             self.status = self._status_tracker.update_state(self.snapshot.status)
         return snapshot_mutate_event

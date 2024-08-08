@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict
 
 import pytest
 from jsonpath_ng import parse
@@ -20,6 +21,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator.snapshot import Snapshot
 from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
@@ -205,18 +207,14 @@ def test_tracking(
     )
     thread.start()
 
-    snapshots = {}
+    snapshots: Dict[str, Snapshot] = {}
 
     thread.join()
-
     for event in queue:
         if isinstance(event, FullSnapshotEvent):
             snapshots[event.iteration] = event.snapshot
-        if (
-            isinstance(event, SnapshotUpdateEvent)
-            and event.partial_snapshot is not None
-        ):
-            snapshots[event.iteration].merge(event.partial_snapshot.data())
+        if isinstance(event, SnapshotUpdateEvent) and event.snapshot is not None:
+            snapshots[event.iteration].merge_snapshot(event.snapshot)
         if isinstance(event, EndEvent):
             pass
 

@@ -94,7 +94,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         # first snapshot before any event occurs
         events = monitor.track()
         snapshot_event = await events.__anext__()
-        snapshot = Snapshot(snapshot_event.data)
+        snapshot = Snapshot.from_nested_dict(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -130,10 +130,9 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             except AssertionError:
                 return False
 
-        final_snapshot = Snapshot({})
+        final_snapshot = Snapshot()
         async for event in monitor.track():
-            new_snapshot = Snapshot(event.data)
-            final_snapshot.merge(new_snapshot.data())
+            final_snapshot.update_from_cloudevent(event)
             if is_completed_snapshot(final_snapshot):
                 break
 
@@ -166,10 +165,9 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             except AssertionError:
                 return False
 
-        final_snapshot = Snapshot({})
+        final_snapshot = Snapshot()
         async for event in new_monitor.track():
-            new_snapshot = Snapshot(event.data)
-            final_snapshot.merge(new_snapshot.data())
+            final_snapshot = final_snapshot.update_from_cloudevent(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
 
@@ -223,7 +221,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 {"current_memory_usage": 1000},
             )
 
-        final_snapshot = Snapshot({})
+        final_snapshot = Snapshot()
 
         def check_if_all_fm_running(snapshot: Snapshot) -> bool:
             try:
@@ -241,9 +239,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 return False
 
         async for event in monitor.track():
-            new_snapshot = Snapshot(event.data)
-
-            final_snapshot.merge(new_snapshot.data())
+            final_snapshot = final_snapshot.update_from_cloudevent(event)
             if check_if_all_fm_running(final_snapshot):
                 break
         assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
@@ -296,10 +292,9 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
 
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
-        final_snapshot = Snapshot({})
+        final_snapshot = Snapshot()
         async for event in new_monitor.track():
-            new_snapshot = Snapshot(event.data)
-            final_snapshot.merge(new_snapshot.data())
+            final_snapshot = final_snapshot.update_from_cloudevent(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
 
@@ -318,7 +313,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         url = evaluator._config.url
         # first snapshot before any event occurs
         snapshot_event = await events.__anext__()
-        snapshot = Snapshot(snapshot_event.data)
+        snapshot = Snapshot.from_nested_dict(snapshot_event.data)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -370,7 +365,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 {identifiers.ERROR_MSG: "error"},
             )
             evt = await events.__anext__()
-            snapshot = Snapshot(evt.data)
+            snapshot = Snapshot.from_nested_dict(evt.data)
             assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
             assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
@@ -380,7 +375,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             events2 = monitor2.track()
             full_snapshot_event = await events2.__anext__()
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
-            snapshot = Snapshot(full_snapshot_event.data)
+            snapshot = Snapshot.from_nested_dict(full_snapshot_event.data)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
             assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
             assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING

@@ -50,10 +50,11 @@ class QueueEmitter(QObject):
                 continue
 
             # pre-rendering in this thread to avoid work in main rendering thread
-            if isinstance(event, FullSnapshotEvent) and event.snapshot:
+            if (
+                isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent))
+                and event.snapshot
+            ):
                 SnapshotModel.prerender(event.snapshot)
-            elif isinstance(event, SnapshotUpdateEvent) and event.partial_snapshot:
-                SnapshotModel.prerender(event.partial_snapshot)
 
             logger.debug(f"emit {event}")
             self.new_event.emit(event)
