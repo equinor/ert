@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import shutil
 from functools import partial
@@ -16,14 +15,19 @@ from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
-from ert.scheduler.job import Job, JobState, log_info_from_exit_file
+from ert.scheduler.job import (
+    Job,
+    JobState,
+    _queue_jobstate_event_type,
+    log_info_from_exit_file,
+)
 
 
 def create_scheduler():
     sch = AsyncMock()
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
-    sch.wait_for_checksum = lambda: False
+    sch._manifest_queue = None
     sch._cancelled = False
     return sch
 
@@ -59,9 +63,8 @@ async def assert_scheduler_events(
             scheduler._events.qsize()
         ), f"Expected to find {expected_job_event=} in the event queue"
         queue_event = scheduler._events.get_nowait()
-        output = json.loads(queue_event.decode("utf-8"))
-        event = output.get("data").get("queue_event_type")
-        assert event == expected_job_event
+        assert queue_event["type"] == _queue_jobstate_event_type[expected_job_event]
+
     # should be no more events
     assert scheduler._events.empty()
 
@@ -214,7 +217,7 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     realization: Realization, monkeypatch
 ):
     scheduler = create_scheduler()
-    scheduler.wait_for_checksum = lambda: True
+    scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
     scheduler.checksum = {
         "test_runpath": {
@@ -243,7 +246,7 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
     realization: Realization, monkeypatch
 ):
     scheduler = create_scheduler()
-    scheduler.wait_for_checksum = lambda: True
+    scheduler._manifest_queue = asyncio.Queue()
     file_path = "does/not/exist"
     error = f"Expected file {file_path} not created by forward model!"
     scheduler.checksum = {
@@ -273,7 +276,7 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
     realization: Realization,
 ):
     scheduler = create_scheduler()
-    scheduler.wait_for_checksum = lambda: True
+    scheduler._manifest_queue = asyncio.Queue()
     file_path = "invalid_md5sum"
     scheduler.checksum = {
         "test_runpath": {
@@ -305,7 +308,7 @@ async def test_when_no_checksum_info_is_received_a_warning_is_logged(
     realization: Realization, mocker
 ):
     scheduler = create_scheduler()
-    scheduler.wait_for_checksum = lambda: True
+    scheduler._manifest_queue = asyncio.Queue()
     scheduler.checksum = {}
     # Create the file
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import traceback
 import uuid
@@ -29,12 +30,7 @@ from ert.serialization import evaluator_marshaller
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
 from .identifiers import EVTYPE_ENSEMBLE_FAILED, EVTYPE_ENSEMBLE_STARTED
-from .snapshot import (
-    ForwardModel,
-    RealizationSnapshot,
-    Snapshot,
-    SnapshotDict,
-)
+from .snapshot import ForwardModel, RealizationSnapshot, Snapshot, SnapshotDict
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -191,7 +187,12 @@ class LegacyEnsemble:
 
         return event_builder
 
-    async def evaluate(self, config: EvaluatorServerConfig) -> None:
+    async def evaluate(
+        self,
+        config: EvaluatorServerConfig,
+        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+    ) -> None:
         self._config = config
         ce_unary_send_method_name = "_ce_unary_send"
         setattr(
@@ -210,13 +211,17 @@ class LegacyEnsemble:
             cert=self._config.cert,
         )
         await self._evaluate_inner(
-            cloudevent_unary_send=getattr(self, ce_unary_send_method_name)
+            cloudevent_unary_send=getattr(self, ce_unary_send_method_name),
+            scheduler_queue=scheduler_queue,
+            manifest_queue=manifest_queue,
         )
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
         experiment_id: Optional[str] = None,
+        scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
     ) -> None:
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
@@ -242,6 +247,8 @@ class LegacyEnsemble:
             self._scheduler = Scheduler(
                 driver,
                 self.active_reals,
+                manifest_queue,
+                scheduler_queue,
                 max_submit=self._queue_config.max_submit,
                 max_running=self._queue_config.max_running,
                 submit_sleep=self._queue_config.submit_sleep,

@@ -70,7 +70,7 @@ class TestEnsemble(Ensemble):
         ]
         super().__init__(the_reals, {}, QueueConfig(), 0, id_)
 
-    async def evaluate(self, config):
+    async def evaluate(self, config, _, __):
         event_id = 0
         await wait_for_evaluator(
             base_url=config.url,

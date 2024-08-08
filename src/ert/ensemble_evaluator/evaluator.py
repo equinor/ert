@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import pickle
+import traceback
 from contextlib import asynccontextmanager, contextmanager
 from http import HTTPStatus
 from typing import (
@@ -68,6 +69,7 @@ class EnsembleEvaluator:
 
         self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._messages_to_send: asyncio.Queue[str] = asyncio.Queue()
+        self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._result = None
 
@@ -311,9 +313,11 @@ class EnsembleEvaluator:
             },
             {event["run_path"]: event.data},
         )
+        # clients still need to receive events via ws
         await self._messages_to_send.put(
             to_json(forward_event, data_marshaller=evaluator_marshaller).decode()
         )
+        await self._manifest_queue.put(forward_event)
 
     async def connection_handler(
         self, websocket: WebSocketServerProtocol, path: str
@@ -417,10 +421,13 @@ class EnsembleEvaluator:
         ]
         # now we wait for the server to actually start
         await self._server_started.wait()
-        # let's run
+
         self._ee_tasks.append(
             asyncio.create_task(
-                self._ensemble.evaluate(self._config), name="ensemble_task"
+                self._ensemble.evaluate(
+                    self._config, self._events, self._manifest_queue
+                ),
+                name="ensemble_task",
             )
         )
 
@@ -433,7 +440,17 @@ class EnsembleEvaluator:
             )
             for task in done:
                 if task_exception := task.exception():
-                    logger.error((f"Exception in evaluator task: {task_exception}"))
+                    exc_traceback = "".join(
+                        traceback.format_exception(
+                            None, task_exception, task_exception.__traceback__
+                        )
+                    )
+                    logger.error(
+                        (
+                            f"Exception in evaluator task {task.get_name()}: {task_exception}\n"
+                            f"Traceback: {exc_traceback}"
+                        )
+                    )
                     raise task_exception
                 elif task.get_name() == "server_task":
                     return
