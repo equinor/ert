@@ -181,23 +181,6 @@ class LocalEnsemble(BaseMode):
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
-    def get_realization_mask_without_parent_failure(self) -> npt.NDArray[np.bool_]:
-        """
-        Mask array indicating realizations without a parent failure.
-
-        Returns
-        -------
-        parent_failures : ndarray of bool
-            Boolean array where True means no parent failure.
-        """
-
-        return np.array(
-            [
-                (e != RealizationStorageState.PARENT_FAILURE)
-                for e in self.get_ensemble_state()
-            ]
-        )
-
     def get_realization_mask_without_failure(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations without any failure.
