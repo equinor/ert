@@ -10,7 +10,6 @@ from qtpy.QtWidgets import (
     QAction,
     QApplication,
     QCheckBox,
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -25,6 +24,7 @@ from qtpy.QtWidgets import (
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
+from ..ertwidgets.combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -60,7 +60,7 @@ class ExperimentPanel(QWidget):
         self.setObjectName("experiment_panel")
         layout = QVBoxLayout()
 
-        self._experiment_type_combo = QComboBox()
+        self._experiment_type_combo = QComboBoxWithDescription()
         self._experiment_type_combo.setObjectName("experiment_type")
 
         self._experiment_type_combo.currentIndexChanged.connect(
@@ -143,7 +143,9 @@ class ExperimentPanel(QWidget):
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
         self._experiment_widgets[experiment_type] = panel
-        self._experiment_type_combo.addItem(experiment_type.name(), experiment_type)
+        self._experiment_type_combo.addItem(
+            experiment_type.name(), experiment_type.description()
+        )
 
         if not mode_enabled:
             item_count = self._experiment_type_combo.count() - 1
@@ -160,8 +162,9 @@ class ExperimentPanel(QWidget):
         return []
 
     def get_current_experiment_type(self) -> Any:
-        return self._experiment_type_combo.itemData(
-            self._experiment_type_combo.currentIndex(), Qt.ItemDataRole.UserRole
+        experiment_type_name = self._experiment_type_combo.currentText()
+        return next(
+            w for w in self._experiment_widgets if w.name() == experiment_type_name
         )
 
     def get_experiment_arguments(self) -> Any:
