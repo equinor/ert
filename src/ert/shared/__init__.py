@@ -16,6 +16,6 @@ def ert_share_path() -> str:
     return str(Path(spec_origin).parent.parent / "resources")
 
 
-from .port_handler import get_machine_name
+from .port_handler import get_machine_name, find_available_port
 
-__all__ = ["ert_share_path", "get_machine_name", "__version__"]
+__all__ = ["ert_share_path", "get_machine_name", "find_available_port", "__version__"]
