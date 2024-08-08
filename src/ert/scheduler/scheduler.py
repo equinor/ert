@@ -47,8 +47,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-CLOSE_PUBLISHER_SENTINEL = object()
-
 
 @dataclass
 class _JobsJson:
@@ -294,18 +292,7 @@ class Scheduler:
 
             if not self.is_active():
                 if self._ee_uri is not None:
-                    try:
-                        # await self._events.put(CLOSE_PUBLISHER_SENTINEL)
-                        # await asyncio.wait_for(
-                        #     self._publisher_done.wait(), timeout=self._queue_timeout
-                        # )
-                        await asyncio.wait_for(
-                            self._events.join(), timeout=self._queue_timeout
-                        )
-                    except asyncio.TimeoutError:
-                        logger.error(
-                            f"{self._events.qsize()} items left unprocessed in the queue!"
-                        )
+                    await self._events.join()
                 for task in self._job_tasks.values():
                     if task.cancelled():
                         continue
