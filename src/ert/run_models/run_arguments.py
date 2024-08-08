@@ -14,27 +14,23 @@ class SimulationArguments:
 class EnsembleExperimentRunArguments(SimulationArguments):
     experiment_name: str
     ensemble_name: str = "prior"
-    ensemble_type: str = "Ensemble experiment"
 
 
 @dataclass
 class SingleTestRunArguments(EnsembleExperimentRunArguments):
     experiment_name: str
     ensemble_name: str = "prior"
-    ensemble_type: str = "Single test"
 
 
 @dataclass
 class EvaluateEnsembleRunArguments(SimulationArguments):
     ensemble_id: str
-    ensemble_type: str = "Evaluate ensemble"
 
 
 @dataclass
 class ESRunArguments(SimulationArguments):
     target_ensemble: str
     experiment_name: str
-    ensemble_type: str = "ES"
 
 
 # pylint: disable=R0902
@@ -46,7 +42,6 @@ class ESMDARunArguments(SimulationArguments):
     prior_ensemble_id: str
     starting_iteration: int
     experiment_name: Optional[str]
-    ensemble_type: str = "ES_MDA"
 
 
 @dataclass
@@ -55,4 +50,3 @@ class SIESRunArguments(SimulationArguments):
     num_retries_per_iter: int
     experiment_name: str
     number_of_iterations: int = 3
-    ensemble_type: str = "IES"
