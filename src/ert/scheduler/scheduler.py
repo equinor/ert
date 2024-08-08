@@ -121,9 +121,7 @@ class Scheduler:
         self._ens_id = ens_id
         self._ee_cert = ee_cert
         self._ee_token = ee_token
-        self._publisher_done = asyncio.Event()
-        # this timeout makes sure we won't wait for the queue and the sentinel indefinitely
-        self._queue_timeout: float = 10.0
+
         self._consumer_started = asyncio.Event()
         self.checksum: Dict[str, Dict[str, Any]] = {}
         self.checksum_listener: Optional[asyncio.Task[None]] = None
