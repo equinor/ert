@@ -12,7 +12,7 @@ from tqdm import tqdm
 from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
-    Snapshot,
+    NewSnapshot,
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator import identifiers as ids
@@ -59,7 +59,7 @@ class Monitor:
 
     def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
-        self._snapshots: Dict[int, Snapshot] = {}
+        self._snapshots: Dict[int, NewSnapshot] = {}
         self._start_time: Optional[datetime] = None
         self._colorize = ansi_color
         # If out is not (like) a tty, disable colors.
