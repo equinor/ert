@@ -418,6 +418,7 @@ class EnsembleEvaluator:
         # now we wait for the server to actually start
         await self._server_started.wait()
         # let's run
+        self._ensemble.scheduler_queue = self._events
         self._ee_tasks.append(
             asyncio.create_task(
                 self._ensemble.evaluate(self._config), name="ensemble_task"

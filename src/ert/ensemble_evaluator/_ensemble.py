@@ -126,6 +126,8 @@ class LegacyEnsemble:
         else:
             self._status_tracker = _EnsembleStateTracker()
 
+        self.scheduler_queue: Any = None
+
     @property
     def active_reals(self) -> Sequence[Realization]:
         return list(filter(lambda real: real.active, self.reals))
@@ -241,6 +243,7 @@ class LegacyEnsemble:
             driver = create_driver(self._queue_config)
             self._scheduler = Scheduler(
                 driver,
+                self.scheduler_queue,
                 self.active_reals,
                 max_submit=self._queue_config.max_submit,
                 max_running=self._queue_config.max_running,

@@ -81,6 +81,7 @@ class Scheduler:
     def __init__(
         self,
         driver: Driver,
+        ee_queue: asyncio.Queue[Any],
         realizations: Optional[Sequence[Realization]] = None,
         *,
         max_submit: int = 1,
@@ -92,6 +93,7 @@ class Scheduler:
         ee_token: Optional[str] = None,
     ) -> None:
         self.driver = driver
+        self._ee_queue = ee_queue
         self._job_tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
         self.submit_sleep_state: Optional[SubmitSleeper] = None
@@ -250,38 +252,10 @@ class Scheduler:
                 )
 
     async def _publisher(self) -> None:
-        if not self._ee_uri:
-            return
-        tls: Optional[ssl.SSLContext] = None
-        if self._ee_cert:
-            tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            tls.load_verify_locations(cadata=self._ee_cert)
-        headers = Headers()
-        if self._ee_token:
-            headers["token"] = self._ee_token
-        event = None
-        async for conn in connect(
-            self._ee_uri,
-            ssl=tls,
-            extra_headers=headers,
-            open_timeout=60,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
-            try:
-                while True:
-                    if event is None:
-                        event = await self._events.get()
-                    if event == CLOSE_PUBLISHER_SENTINEL:
-                        self._publisher_done.set()
-                    else:
-                        await conn.send(event)
-                    event = None
-                    self._events.task_done()
-            except ConnectionClosed:
-                logger.debug("Connection to EnsembleEvalutor went down, reconnecting.")
-                continue
+        while True:
+            event = await self._events.get()
+            await self._ee_queue.put(event)
+            self._events.task_done()
 
     def add_dispatch_information_to_jobs_file(self) -> None:
         for job in self._jobs.values():
@@ -321,10 +295,10 @@ class Scheduler:
             if not self.is_active():
                 if self._ee_uri is not None:
                     try:
-                        await self._events.put(CLOSE_PUBLISHER_SENTINEL)
-                        await asyncio.wait_for(
-                            self._publisher_done.wait(), timeout=self._queue_timeout
-                        )
+                        # await self._events.put(CLOSE_PUBLISHER_SENTINEL)
+                        # await asyncio.wait_for(
+                        #     self._publisher_done.wait(), timeout=self._queue_timeout
+                        # )
                         await asyncio.wait_for(
                             self._events.join(), timeout=self._queue_timeout
                         )

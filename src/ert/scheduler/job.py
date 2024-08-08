@@ -307,7 +307,7 @@ class Job:
                 "queue_event_type": status,
             },
         )
-        await self._scheduler._events.put(to_json(event))
+        await self._scheduler._events.put(event)
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:
