@@ -700,7 +700,6 @@ def test_scheduler_create_lsf_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    queue_options = queue_config.queue_options_as_dict
     driver: LsfDriver = create_driver(queue_config)
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
@@ -709,7 +708,7 @@ def test_scheduler_create_lsf_driver():
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource
     assert driver._exclude_hosts == ["host1", "host2"]
-    assert driver._project_code == queue_options["PROJECT_CODE"]
+    assert driver._project_code == queue_config.selected_queue_options["PROJECT_CODE"]
 
 
 def test_scheduler_create_openpbs_driver():
@@ -730,8 +729,8 @@ def test_scheduler_create_openpbs_driver():
             ("TORQUE", "QUEUE", queue_name),
             ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
             ("TORQUE", "MEMORY_PER_JOB", memory_per_job),
-            ("TORQUE", "NUM_NODES", num_nodes),
-            ("TORQUE", "NUM_CPUS_PER_NODE", num_cpus_per_node),
+            ("TORQUE", "NUM_NODES", str(num_nodes)),
+            ("TORQUE", "NUM_CPUS_PER_NODE", str(num_cpus_per_node)),
             ("TORQUE", "CLUSTER_LABEL", cluster_label),
             ("TORQUE", "JOB_PREFIX", job_prefix),
             ("TORQUE", "QSUB_CMD", qsub_cmd),
@@ -740,7 +739,6 @@ def test_scheduler_create_openpbs_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    queue_option_dict = queue_config.queue_options_as_dict
     driver: OpenPBSDriver = create_driver(queue_config)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
@@ -752,4 +750,4 @@ def test_scheduler_create_openpbs_driver():
     assert str(driver._qsub_cmd) == qsub_cmd
     assert str(driver._qstat_cmd) == qstat_cmd
     assert str(driver._qdel_cmd) == qdel_cmd
-    assert driver._project_code == queue_option_dict["PROJECT_CODE"]
+    assert driver._project_code == queue_config.selected_queue_options["PROJECT_CODE"]

@@ -39,7 +39,7 @@ def test_project_code_is_set_when_forward_model_contains_selected_simulator(
             ConfigKeys.QUEUE_SYSTEM: queue_system,
         }
     )
-    project_code = queue_config.queue_options_as_dict.get("PROJECT_CODE")
+    project_code = queue_config.selected_queue_options.get("PROJECT_CODE")
 
     assert project_code is not None
     assert "flow" in project_code and "rms" in project_code
@@ -56,7 +56,7 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
             ],
         }
     )
-    project_code = queue_config.queue_options_as_dict.get("PROJECT_CODE")
+    project_code = queue_config.selected_queue_options.get("PROJECT_CODE")
 
     assert project_code == "test_code"
 
@@ -274,8 +274,12 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
         f.write(f"QUEUE_OPTION {queue_system} {queue_system_option}\n")
         f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING\n")
     config_object = ErtConfig.from_file(filename)
-    for options in config_object.queue_config.queue_options[queue_system]:
-        assert isinstance(options, tuple)
+
+    if queue_system == "LSF":
+        assert config_object.queue_config.selected_queue_options["LSF_QUEUE"] == ""  # noqa
+    if queue_system == "SLURM":
+        assert config_object.queue_config.selected_queue_options["SQUEUE"] == ""  # noqa
+    assert config_object.queue_config.selected_queue_options["MAX_RUNNING"] == ""  # noqa
 
 
 @pytest.mark.usefixtures("use_tmpdir")

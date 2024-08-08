@@ -6,7 +6,7 @@ import shutil
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Tuple, no_type_check
+from typing import Any, Dict, List, Mapping, no_type_check
 
 from .parsing import (
     ConfigDict,
@@ -173,9 +173,7 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = field(
-        default_factory=dict
-    )
+    queue_options: Dict[QueueSystem, Dict[str, str]] = field(default_factory=dict)
     stop_long_running: bool = False
 
     @no_type_check
@@ -192,7 +190,7 @@ class QueueConfig:
         )
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
-        queue_options: Dict[QueueSystem, List[Tuple[str, str]]] = defaultdict(list)
+        queue_options: Dict[QueueSystem, Dict[str, str]] = defaultdict(dict)
         for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
             if queue_system == QueueSystem.GENERIC:
                 queue_system = selected_queue_system
@@ -202,25 +200,29 @@ class QueueConfig:
                     f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
                 )
 
-            queue_options[queue_system].append(
-                (option_name, values[0] if values else "")
-            )
+            value = values[0] if values else ""
+            if (
+                option_name in queue_options[queue_system]
+                and queue_options[queue_system][option_name] != value
+            ):
+                logging.info(
+                    f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
+                    f" \n Old value: {queue_options[queue_system][option_name]} \n New value: {value}"
+                )
+            queue_options[queue_system][option_name] = value
+
         queue_options[selected_queue_system] = _add_generic_queue_options(
             config_dict, queue_options[selected_queue_system]
         )
 
-        if "PROJECT_CODE" not in _option_list_to_dict(
-            queue_options[selected_queue_system]
-        ):
+        if "PROJECT_CODE" not in queue_options[selected_queue_system]:
             tags = {
                 fm_name.lower()
                 for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
                 if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
             }
             if tags:
-                queue_options[selected_queue_system].append(
-                    ("PROJECT_CODE", "+".join(tags))
-                )
+                queue_options[selected_queue_system]["PROJECT_CODE"] = "+".join(tags)
         _check_queue_option_settings(
             selected_queue_system, queue_options, config_dict, realization_memory
         )
@@ -245,48 +247,34 @@ class QueueConfig:
         )
 
     @property
+    def selected_queue_options(self) -> Dict[str, str]:
+        return self.queue_options.get(self.queue_system, {})
+
+    @property
     def max_running(self) -> int:
-        max_running = 0
-        for key, val in self.queue_options.get(self.queue_system, []):
-            if key == "MAX_RUNNING":
-                max_running = int(val)
-        return max_running
+        return int(self.selected_queue_options.get("MAX_RUNNING", 0))
 
     @property
     def submit_sleep(self) -> float:
-        return float(
-            dict(self.queue_options.get(self.queue_system, [])).get("SUBMIT_SLEEP", 0.0)
-        )
-
-    @property
-    def queue_options_as_dict(self) -> Dict[str, str]:
-        return dict(self.queue_options.get(self.queue_system, []))
+        return float(self.selected_queue_options.get("SUBMIT_SLEEP", 0.0))
 
 
 @no_type_check
 def _check_queue_option_settings(
     selected_queue_system: QueueSystem,
-    queue_options: List[Tuple[str, str]],
+    queue_options: Dict[QueueSystem, Dict[str, str]],
     config_dict: ConfigDict,
     realization_memory: int,
 ) -> None:
-    for queue_system, queue_system_settings in queue_options.items():
-        if queue_system_settings:
+    for queue_system, queue_system_options in queue_options.items():
+        if queue_system_options:
             _validate_queue_driver_settings(
-                queue_system_settings,
+                queue_system_options,
                 realization_memory,
                 QueueSystem(queue_system).name,
                 throw_error=(queue_system == selected_queue_system),
             )
 
-    if (
-        selected_queue_system != QueueSystem.LOCAL
-        and queue_options[selected_queue_system]
-    ):
-        _check_for_overwritten_queue_system_options(
-            selected_queue_system,
-            queue_options[selected_queue_system],
-        )
     if selected_queue_system == QueueSystem.TORQUE:
         _check_num_cpu_requirement(
             config_dict.get("NUM_CPU", 1),
@@ -294,39 +282,17 @@ def _check_queue_option_settings(
         )
 
 
-def _option_list_to_dict(option_list: List[Tuple[str, str]]) -> Dict[str, List[str]]:
-    temp_dict: Dict[str, List[str]] = defaultdict(list)
-    for option_string in option_list:
-        temp_dict[option_string[0]].append(option_string[1])
-    return temp_dict
-
-
-def _check_for_overwritten_queue_system_options(
-    selected_queue_system: QueueSystem,
-    queue_system_options: List[Tuple[str, str]],
-) -> None:
-    for option_name, option_values in _option_list_to_dict(
-        queue_system_options
-    ).items():
-        if len(option_values) > 1 and option_values[0] != option_values[-1]:
-            logging.info(
-                f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
-                f" \n Old value: {option_values[0]} \n New value: {option_values[-1]}"
-            )
-
-
 def _check_num_cpu_requirement(
     num_cpu: int,
-    queue_system_options: List[Tuple[str, str]],
+    queue_system_options: Dict[str, str],
 ) -> None:
-    torque_options = _option_list_to_dict(queue_system_options)
-    num_nodes_str = torque_options.get("NUM_NODES", [""])[-1]
-    num_cpus_per_node_str = torque_options.get("NUM_CPUS_PER_NODE", [""])[-1]
-    if not num_nodes_str and not num_cpus_per_node_str:
-        # NUM_CPU will take precedence when deprecated options are not set
+    if (
+        "NUM_NODES" not in queue_system_options
+        and "NUM_CPUS_PER_NODE" not in queue_system_options
+    ):
         return
-    num_nodes = int(num_nodes_str) if num_nodes_str else 1
-    num_cpus_per_node = int(num_cpus_per_node_str) if num_cpus_per_node_str else 1
+    num_nodes = int(queue_system_options.get("NUM_NODES", 1) or "1")
+    num_cpus_per_node = int(queue_system_options.get("NUM_CPUS_PER_NODE", 1) or "1")
     if num_cpu != num_nodes * num_cpus_per_node:
         raise ConfigValidationError(
             f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({num_nodes}) "
@@ -377,12 +343,12 @@ def throw_error_or_warning(
 
 
 def _validate_queue_driver_settings(
-    queue_system_options: List[Tuple[str, str]],
+    queue_system_options: Dict[str, str],
     realization_memory: int,
     queue_type: str,
     throw_error: bool,
 ) -> None:
-    for option_name, option_value in queue_system_options:
+    for option_name, option_value in queue_system_options.items():
         if not option_value:  # This is equivalent to the option not being set
             continue
         elif option_name in queue_memory_options[queue_type]:
@@ -449,11 +415,10 @@ def _validate_queue_driver_settings(
 
 @no_type_check
 def _add_generic_queue_options(
-    config_dict: ConfigDict, queue_options: List[Tuple[str, str]]
-) -> List[Tuple[str, str]]:
-    options_dict = _option_list_to_dict(queue_options)
+    config_dict: ConfigDict, queue_options: Dict[str, str]
+) -> Dict[str, str]:
     for generic_option in GENERIC_QUEUE_OPTIONS:
         value = config_dict.get(generic_option, None)
-        if generic_option not in options_dict and value is not None:
-            queue_options.append((generic_option, value))
+        if generic_option not in queue_options and value is not None:
+            queue_options[generic_option] = value
     return queue_options
