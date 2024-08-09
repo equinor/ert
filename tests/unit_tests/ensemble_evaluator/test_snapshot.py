@@ -7,7 +7,6 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
-    PartialSnapshot,
     Snapshot,
     SnapshotBuilder,
     _get_forward_model_id,
@@ -16,7 +15,7 @@ from ert.ensemble_evaluator.snapshot import (
 
 
 def test_snapshot_merge(snapshot: Snapshot):
-    update_event = PartialSnapshot(snapshot)
+    update_event = snapshot
     update_event.update_forward_model(
         real_id="1",
         forward_model_id="0",
@@ -107,8 +106,7 @@ def test_source_get_ids(source_string, expected_ids):
 
 
 def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
-    partial = PartialSnapshot(snapshot)
-    partial.from_cloudevent(
+    snapshot.update_from_cloudevent_and_generate_update_snapshot(
         CloudEvent(
             attributes={
                 "id": "0",
@@ -119,9 +117,9 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
                 "current_memory_usage": 5,
                 "max_memory_usage": 6,
             },
-        )
+        ),
     )
-    partial.from_cloudevent(
+    snapshot.update_from_cloudevent_and_generate_update_snapshot(
         CloudEvent(
             {
                 "id": "0",
@@ -131,7 +129,7 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
             {ids.ERROR_MSG: "failed"},
         )
     )
-    partial.from_cloudevent(
+    snapshot.update_from_cloudevent_and_generate_update_snapshot(
         CloudEvent(
             {
                 "id": "1",
@@ -140,15 +138,14 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
             }
         )
     )
-    forward_models = partial.to_dict()["reals"]["0"]["forward_models"]
+    forward_models = snapshot.to_dict()["reals"]["0"]["forward_models"]
     assert forward_models["0"]["status"] == state.FORWARD_MODEL_STATE_FAILURE
     assert forward_models["1"]["status"] == state.FORWARD_MODEL_STATE_FINISHED
 
 
-def test_that_realization_success_message_updates_state(snapshot):
+def test_that_realization_success_message_updates_state():
     snapshot = SnapshotBuilder().build(["0"], status="Unknown")
-    partial = PartialSnapshot(snapshot)
-    partial.from_cloudevent(
+    snapshot.update_from_cloudevent_and_generate_update_snapshot(
         CloudEvent(
             {
                 "id": "0",
@@ -157,4 +154,6 @@ def test_that_realization_success_message_updates_state(snapshot):
             }
         )
     )
-    assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
+    assert (
+        snapshot.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
+    )

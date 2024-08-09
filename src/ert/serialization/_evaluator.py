@@ -16,13 +16,17 @@ class _EvaluatorEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def evaluator_marshaller(content: Any) -> Any:
+def _evaluator_marshaller(content: Any) -> Any:
     if content is None:
         return None
     try:
         return json.dumps(content, cls=_EvaluatorEncoder)
     except TypeError:
         return content
+
+
+def evaluator_marshaller(content: Any) -> Any:
+    return _evaluator_marshaller(content)
 
 
 def _object_hook(obj: Any) -> Any:
@@ -35,7 +39,7 @@ def _object_hook(obj: Any) -> Any:
     return obj
 
 
-def evaluator_unmarshaller(content: Any) -> Any:
+def _evaluator_unmarshaller(content: Any) -> Any:
     """
     Due to internals of CloudEvent content is double-encoded, therefore double-decoding
     """
@@ -46,3 +50,10 @@ def evaluator_unmarshaller(content: Any) -> Any:
         return json.loads(content, object_hook=_object_hook)
     except TypeError:
         return content
+
+
+def evaluator_unmarshaller(content: Any) -> Any:
+    """
+    Due to internals of CloudEvent content is double-encoded, therefore double-decoding
+    """
+    return _evaluator_unmarshaller(content)

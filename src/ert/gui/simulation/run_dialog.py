@@ -419,18 +419,8 @@ class RunDialog(QDialog):
             self.simulation_done.emit(event.failed, event.msg)
             self._ticker.stop()
             self.done_button.setHidden(False)
-        elif isinstance(event, FullSnapshotEvent):
-            if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
-            self.update_total_progress(event.progress, event.iteration_label)
-            self._progress_widget.update_progress(
-                event.status_count, event.realization_count
-            )
-        elif isinstance(event, SnapshotUpdateEvent):
-            if event.partial_snapshot is not None:
-                self._snapshot_model._add_partial_snapshot(
-                    event.partial_snapshot, str(event.iteration)
-                )
+        elif isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
+            self._snapshot_model.process_snapshot_event(event)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
             )

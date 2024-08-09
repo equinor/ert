@@ -387,7 +387,7 @@ def full_snapshot() -> Snapshot:
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.model_dump())
+    return Snapshot.from_nested_dict(snapshot.model_dump())
 
 
 @pytest.fixture()
@@ -417,7 +417,7 @@ def fail_snapshot() -> Snapshot:
     for i in range(0, 1):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.model_dump())
+    return Snapshot.from_nested_dict(snapshot.model_dump())
 
 
 @pytest.fixture()
