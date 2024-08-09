@@ -164,8 +164,7 @@ class Job:
                 break
 
             if self.returncode.result() == 0:
-                if self._scheduler.wait_for_checksum():
-                    await self._verify_checksum()
+                await self._verify_checksum()
                 await self._handle_finished_forward_model()
                 break
 
