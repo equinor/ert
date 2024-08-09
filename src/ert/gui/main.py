@@ -15,7 +15,7 @@ else:
 
 from collections import Counter
 
-from qtpy.QtCore import QDir, QLocale, Qt
+from qtpy.QtCore import QDir, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
@@ -94,7 +94,6 @@ def _start_initial_gui_window(
 
     with warnings.catch_warnings(record=True) as all_warnings:
         try:
-            _check_locale()
             ert_dir = os.path.abspath(os.path.dirname(args.config))
             os.chdir(ert_dir)
             # Changing current working directory means we need to update
@@ -190,24 +189,6 @@ def _start_initial_gui_window(
             _main_window,
             ert_config.ens_path,
         )
-
-
-def _check_locale() -> None:
-    # There seems to be a setlocale() call deep down in the initialization of
-    # QApplication, if the user has set the LC_NUMERIC environment variables to
-    # a locale with decimalpoint different from "." the application will fail
-    # hard quite quickly.
-    current_locale = QLocale()
-    decimal_point = str(current_locale.decimalPoint())
-    if decimal_point != ".":
-        msg = f"""You are using a locale with decimalpoint: '{decimal_point}'
-the ert application is written with the assumption that '.' is  used as
-decimalpoint, and chances are that something will break if you continue with
-this locale. It is highly recommended that you set the decimalpoint to '.'
-using one of the environment variables 'LANG', LC_ALL', or 'LC_NUMERIC' to
-either the 'C' locale or alternatively a locale which uses '.' as
-decimalpoint.\n"""  # noqa
-        warnings.warn(msg, category=ConfigWarning, stacklevel=1)
 
 
 def _clicked_help_button(menu_label: str, link: str) -> None:
