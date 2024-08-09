@@ -37,8 +37,6 @@ class ESRunArguments(SimulationArguments):
 class ManualUpdateArguments(SimulationArguments):
     target_ensemble: str
     ensemble_id: str
-    evaluate_posterior: bool
-    ensemble_type: str = "Manual update"
 
 
 # pylint: disable=R0902

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import numpy as np
-from PyQt5.QtWidgets import QCheckBox
 from qtpy import QtCore
 from qtpy.QtWidgets import QFormLayout, QLabel
 
@@ -27,7 +26,6 @@ class Arguments:
     realizations: str
     ensemble_id: str
     target_ensemble: str
-    evaluate_posterior: bool
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -80,10 +78,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self.evaluate_posterior_checkbox = QCheckBox("Evaluate posterior")
-        self.evaluate_posterior_checkbox.setChecked(True)
-        layout.addRow("Evaluate posterior", self.evaluate_posterior_checkbox)
-
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
@@ -108,7 +102,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             ensemble_id=str(self._ensemble_selector.selected_ensemble.id),
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
-            evaluate_posterior=self.evaluate_posterior_checkbox.isChecked(),
         )
 
     def _realizations_from_fs(self) -> None:

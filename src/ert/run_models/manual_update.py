@@ -50,7 +50,6 @@ class ManualUpdate(BaseRunModel):
         self.prior_ensemble_id = simulation_arguments.ensemble_id
         self.target_ensemble_format = simulation_arguments.target_ensemble
         self.ensemble_size = simulation_arguments.ensemble_size
-        self.evaluate_posterior = simulation_arguments.evaluate_posterior
         self.es_settings = es_settings
         self.update_settings = update_settings
         self.support_restart = False

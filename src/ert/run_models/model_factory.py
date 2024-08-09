@@ -205,7 +205,6 @@ def _setup_manual_update(
             ensemble_id=args.ensemble_id,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
-            evaluate_posterior=args.evaluate_posterior,
             target_ensemble=args.target_ensemble,
         ),
         config,
