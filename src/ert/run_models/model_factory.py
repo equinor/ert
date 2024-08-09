@@ -14,6 +14,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
 from ert.validation import ActiveRange
@@ -23,14 +24,13 @@ from .ensemble_experiment import EnsembleExperiment
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother
+from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_arguments import (
-    EnsembleExperimentRunArguments,
     ESMDARunArguments,
     ESRunArguments,
-    EvaluateEnsembleRunArguments,
+    ManualUpdateArguments,
     SIESRunArguments,
-    SingleTestRunArguments,
 )
 from .single_test_run import SingleTestRun
 
@@ -76,6 +76,10 @@ def create_model(
         return _setup_iterative_ensemble_smoother(
             config, storage, args, update_settings, status_queue
         )
+    elif args.mode == MANUAL_UPDATE_MODE:
+        return _setup_manual_update(
+            config, storage, args, update_settings, status_queue
+        )
 
     else:
         raise NotImplementedError(f"Run type not supported {args.mode}")
@@ -92,17 +96,12 @@ def _setup_single_test_run(
     )
 
     return SingleTestRun(
-        SingleTestRunArguments(
-            random_seed=config.random_seed,
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=1,
-            ensemble_size=1,
-            experiment_name=experiment_name,
-            active_realizations=[True],
-        ),
-        config,
-        storage,
-        status_queue,
+        random_seed=config.random_seed,
+        ensemble_name=args.current_ensemble,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        status_queue=status_queue,
     )
 
 
@@ -126,17 +125,14 @@ def _setup_ensemble_experiment(
     assert experiment_name is not None
 
     return EnsembleExperiment(
-        EnsembleExperimentRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            ensemble_size=config.model_config.num_realizations,
-            experiment_name=experiment_name,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_name=args.current_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         status_queue=status_queue,
     )
 
@@ -159,16 +155,49 @@ def _setup_evaluate_ensemble(
         )
 
     return EvaluateEnsemble(
-        EvaluateEnsembleRunArguments(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        status_queue=status_queue,
+    )
+
+
+def _setup_manual_update(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: UpdateSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> ManualUpdate:
+    min_realizations_count = config.analysis_config.minimum_required_realizations
+    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations_count = int(np.sum(active_realizations))
+    if active_realizations_count < min_realizations_count:
+        config.analysis_config.minimum_required_realizations = active_realizations_count
+        ConfigWarning.ert_context_warn(
+            "Adjusted MIN_REALIZATIONS to the current number of active realizations "
+            f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
+            f"({min_realizations_count}) that was specified in the config file."
+        )
+
+    return ManualUpdate(
+        ManualUpdateArguments(
             random_seed=config.random_seed,
             active_realizations=active_realizations.tolist(),
             ensemble_id=args.ensemble_id,
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
+            target_ensemble=args.target_ensemble,
         ),
         config,
         storage,
         config.queue_config,
+        es_settings=config.analysis_config.es_module,
+        update_settings=update_settings,
         status_queue=status_queue,
     )
 

@@ -11,26 +11,15 @@ class SimulationArguments:
 
 
 @dataclass
-class EnsembleExperimentRunArguments(SimulationArguments):
-    experiment_name: str
-    ensemble_name: str = "prior"
-
-
-@dataclass
-class SingleTestRunArguments(EnsembleExperimentRunArguments):
-    experiment_name: str
-    ensemble_name: str = "prior"
-
-
-@dataclass
-class EvaluateEnsembleRunArguments(SimulationArguments):
-    ensemble_id: str
-
-
-@dataclass
 class ESRunArguments(SimulationArguments):
     target_ensemble: str
     experiment_name: str
+
+
+@dataclass
+class ManualUpdateArguments(SimulationArguments):
+    target_ensemble: str
+    ensemble_id: str
 
 
 # pylint: disable=R0902

@@ -98,7 +98,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 6
+        assert combo_box.count() == 7
 
         for i in range(combo_box.count()):
             assert combo_box.model().item(i).isEnabled()
@@ -118,7 +118,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 6
+        assert combo_box.count() == 7
 
         for i in range(3):
             assert combo_box.model().item(i).isEnabled()
@@ -145,7 +145,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 6
+        assert combo_box.count() == 7
 
         for i in range(3):
             assert combo_box.model().item(i).isEnabled()
@@ -287,7 +287,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        combo_box.setCurrentIndex(4)
+        combo_box.setCurrentIndex(5)
 
         assert (
             combo_box.currentText()
@@ -687,8 +687,8 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 6
-        combo_box.setCurrentIndex(4)
+        assert combo_box.count() == 7
+        combo_box.setCurrentIndex(5)
 
         assert (
             combo_box.currentText()

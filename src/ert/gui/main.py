@@ -15,7 +15,7 @@ else:
 
 from collections import Counter
 
-from qtpy.QtCore import QDir, QLocale, Qt
+from qtpy.QtCore import QDir, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
@@ -32,7 +32,6 @@ from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
-from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
@@ -94,7 +93,6 @@ def _start_initial_gui_window(
 
     with warnings.catch_warnings(record=True) as all_warnings:
         try:
-            _check_locale()
             ert_dir = os.path.abspath(os.path.dirname(args.config))
             os.chdir(ert_dir)
             # Changing current working directory means we need to update
@@ -192,24 +190,6 @@ def _start_initial_gui_window(
         )
 
 
-def _check_locale() -> None:
-    # There seems to be a setlocale() call deep down in the initialization of
-    # QApplication, if the user has set the LC_NUMERIC environment variables to
-    # a locale with decimalpoint different from "." the application will fail
-    # hard quite quickly.
-    current_locale = QLocale()
-    decimal_point = str(current_locale.decimalPoint())
-    if decimal_point != ".":
-        msg = f"""You are using a locale with decimalpoint: '{decimal_point}'
-the ert application is written with the assumption that '.' is  used as
-decimalpoint, and chances are that something will break if you continue with
-this locale. It is highly recommended that you set the decimalpoint to '.'
-using one of the environment variables 'LANG', LC_ALL', or 'LC_NUMERIC' to
-either the 'C' locale or alternatively a locale which uses '.' as
-decimalpoint.\n"""  # noqa
-        warnings.warn(msg, category=ConfigWarning, stacklevel=1)
-
-
 def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
     logger.info(f"Pressed help button {menu_label}")
@@ -260,7 +240,6 @@ def _setup_main_window(
         )
     )
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
-    window.addTool(RunAnalysisTool(config, window.notifier))
     window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler, config_file)
     window.addTool(event_viewer)

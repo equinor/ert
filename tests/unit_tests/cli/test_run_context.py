@@ -5,7 +5,6 @@ import pytest
 from ert.run_models import (
     MultipleDataAssimilation,
     base_run_model,
-    multiple_data_assimilation,
 )
 from ert.run_models.run_arguments import ESMDARunArguments
 
@@ -35,7 +34,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "validate", MagicMock())
     monkeypatch.setattr(MultipleDataAssimilation, "set_env_key", MagicMock())
-    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
+    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
 
     test_class = MultipleDataAssimilation(
         minimum_args,

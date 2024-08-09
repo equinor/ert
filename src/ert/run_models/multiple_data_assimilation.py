@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, List
@@ -8,8 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.analysis import ErtAnalysisError, SmootherSnapshot, smoother_update
-from ert.config import ErtConfig, HookRuntime
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.run_arguments import ESMDARunArguments
@@ -18,8 +16,7 @@ from ert.storage import Ensemble, Storage
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
+from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -27,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-class MultipleDataAssimilation(BaseRunModel):
+class MultipleDataAssimilation(UpdateRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
@@ -45,8 +42,6 @@ class MultipleDataAssimilation(BaseRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         self.weights = self.parse_weights(simulation_arguments.weights)
-        self.es_settings = es_settings
-        self.update_settings = update_settings
 
         self.target_ensemble_format = simulation_arguments.target_ensemble
         self.experiment_name = simulation_arguments.experiment_name
@@ -59,6 +54,8 @@ class MultipleDataAssimilation(BaseRunModel):
         elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
         super().__init__(
+            es_settings,
+            update_settings,
             config,
             storage,
             queue_config,
@@ -130,78 +127,22 @@ class MultipleDataAssimilation(BaseRunModel):
         weights_to_run = enumerated_weights[prior.iteration :]
 
         for iteration, weight in weights_to_run:
-            is_first_iteration = iteration == 0
-
-            self.send_event(
-                RunModelUpdateBeginEvent(iteration=iteration, run_id=prior.id)
-            )
-            if is_first_iteration:
-                self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
-            self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
-
-            self.send_event(
-                RunModelStatusEvent(
-                    iteration=iteration,
-                    run_id=prior.id,
-                    msg="Creating posterior ensemble..",
-                )
-            )
-            posterior = self._storage.create_ensemble(
-                experiment,
-                name=self.target_ensemble_format % (iteration + 1),  # noqa
-                ensemble_size=prior.ensemble_size,
-                iteration=iteration + 1,
-                prior_ensemble=prior,
+            posterior = self.update(
+                prior,
+                self.target_ensemble_format % (iteration + 1),
+                weight=weight,
             )
             posterior_args = create_run_arguments(
                 self.run_paths,
                 self.active_realizations,
                 ensemble=posterior,
             )
-            self.update(
-                prior,
-                posterior,
-                weight=weight,
-            )
-            self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
-
             self._evaluate_and_postprocess(
                 posterior_args,
                 posterior,
                 evaluator_server_config,
             )
             prior = posterior
-
-    def update(
-        self,
-        prior_ensemble: Ensemble,
-        posterior_ensemble: Ensemble,
-        weight: float,
-    ) -> SmootherSnapshot:
-        self._current_iteration_label = (
-            f"Analyzing iteration: {posterior_ensemble.iteration} with weight {weight}"
-        )
-        try:
-            return smoother_update(
-                prior_ensemble,
-                posterior_ensemble,
-                analysis_config=self.update_settings,
-                es_settings=self.es_settings,
-                parameters=prior_ensemble.experiment.update_parameters,
-                observations=prior_ensemble.experiment.observations.keys(),
-                global_scaling=weight,
-                rng=self.rng,
-                progress_callback=functools.partial(
-                    self.send_smoother_event,
-                    prior_ensemble.iteration,
-                    prior_ensemble.id,
-                ),
-            )
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                "Update algorithm failed for iteration:"
-                f"{posterior_ensemble.iteration}. The following error occurred {e}"
-            ) from e
 
     @staticmethod
     def parse_weights(weights: str) -> List[float]:

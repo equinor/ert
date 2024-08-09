@@ -10,7 +10,6 @@ from ert.run_models import EnsembleExperiment
 if TYPE_CHECKING:
     from queue import SimpleQueue
 
-    from ert.run_models.run_arguments import SingleTestRunArguments
     from ert.storage import Storage
 
     from .base_run_model import StatusEvents
@@ -26,14 +25,24 @@ class SingleTestRun(EnsembleExperiment):
 
     def __init__(
         self,
-        simulation_arguments: SingleTestRunArguments,
+        ensemble_name: str,
+        experiment_name: str,
+        random_seed: int,
         config: ErtConfig,
         storage: Storage,
         status_queue: SimpleQueue[StatusEvents],
     ):
         local_queue_config = config.queue_config.create_local_copy()
         super().__init__(
-            simulation_arguments, config, storage, local_queue_config, status_queue
+            ensemble_name=ensemble_name,
+            experiment_name=experiment_name,
+            active_realizations=[True],
+            minimum_required_realizations=1,
+            config=config,
+            storage=storage,
+            queue_config=local_queue_config,
+            status_queue=status_queue,
+            random_seed=random_seed,
         )
 
     @override
