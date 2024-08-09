@@ -79,7 +79,7 @@ class Scheduler:
     def __init__(
         self,
         driver: Driver,
-        ee_queue: asyncio.Queue[Any],
+        ee_queue: Optional[asyncio.Queue[Any]] = None,
         realizations: Optional[Sequence[Realization]] = None,
         *,
         max_submit: int = 1,
@@ -91,7 +91,10 @@ class Scheduler:
         ee_token: Optional[str] = None,
     ) -> None:
         self.driver = driver
-        self._ee_queue = ee_queue
+        if ee_queue:
+            self._ee_queue = ee_queue
+        else:
+            self._ee_queue = asyncio.Queue()
         self._job_tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
         self.submit_sleep_state: Optional[SubmitSleeper] = None
