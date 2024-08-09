@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
@@ -10,7 +11,10 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import PartialSnapshot, Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import SnapshotMetadata
+from ert.ensemble_evaluator.snapshot import (
+    SnapshotMetadata,
+    convert_iso8601_to_datetime,
+)
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -20,6 +24,11 @@ from ert.gui.model.node import (
     RootNode,
 )
 from ert.shared.status.utils import byte_with_unit, file_has_content
+
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
 
 logger = logging.getLogger(__name__)
 
@@ -188,8 +197,6 @@ class SnapshotModel(QAbstractItemModel):
                     ]
                 reals_changed.append(real_node.row())
 
-            jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
-
             for (
                 real_id,
                 forward_model_id,
@@ -197,8 +204,12 @@ class SnapshotModel(QAbstractItemModel):
                 real_node = iter_node.children[real_id]
                 job_node = real_node.children[forward_model_id]
 
-                jobs_changed_by_real[real_id].append(job_node.row())
-
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
+                # Errors may be unset as the queue restarts the job
+                job[ids.ERROR] = job.get(ids.ERROR, "")
                 job_node.data.update(job)
                 if (
                     "current_memory_usage" in job
@@ -216,16 +227,13 @@ class SnapshotModel(QAbstractItemModel):
                         self.root.max_memory_usage or 0, max_mem_usage
                     )
 
-                # Errors may be unset as the queue restarts the job
-                job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
-
-            for real_idx, changed_jobs in jobs_changed_by_real.items():
-                real_node = iter_node.children[real_idx]
+            for real_idx in reals_changed:
+                real_node = iter_node.children[str(real_idx)]
                 real_index = self.index(real_node.row(), 0, iter_index)
 
-                job_top_left = self.index(min(changed_jobs), 0, real_index)
+                job_top_left = self.index(0, 0, real_index)
                 job_bottom_right = self.index(
-                    max(changed_jobs),
+                    self.rowCount(real_index),
                     self.columnCount(real_index) - 1,
                     real_index,
                 )
@@ -269,6 +277,10 @@ class SnapshotModel(QAbstractItemModel):
                 "sorted_forward_model_ids", defaultdict(None)
             )[real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
+                if "start_time" in job:
+                    job["start_time"] = convert_iso8601_to_datetime(job["start_time"])
+                if "end_time" in job:
+                    job["end_time"] = convert_iso8601_to_datetime(job["end_time"])
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
                 )

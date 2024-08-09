@@ -52,6 +52,7 @@ dependencies=[
     "matplotlib",
     "netCDF4",
     "numpy<2",
+    "orjson",
     "packaging",
     "pandas",
     "pluggy>=1.3.0",

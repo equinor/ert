@@ -7,9 +7,9 @@ from functools import partial
 from pathlib import Path
 from typing import List
 
+import orjson
 import pytest
 import websockets
-from cloudevents.http import from_json
 
 from ert.config import QueueConfig
 from ert.constant_filenames import CERT_FILE
@@ -223,7 +223,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
         event = await sch._events.get()
-        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
+        if orjson.loads(event)["type"] == "com.equinor.ert.realization.timeout":
             timeouteventfound = True
     assert timeouteventfound
 
@@ -323,7 +323,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
         event = await sch._events.get()
-        if from_json(event)["type"] == "com.equinor.ert.realization.timeout":
+        if orjson.loads(event)["type"] == "com.equinor.ert.realization.timeout":
             timeouteventfound = True
 
     # Assert that a timeout_event is actually emitted, because killing took a
@@ -373,7 +373,7 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
     while not sch._events.empty():
         event = await sch._events.get()
     assert event is not None
-    assert from_json(event)["type"] == "com.equinor.ert.realization.failure"
+    assert orjson.loads(event)["type"] == "com.equinor.ert.realization.failure"
 
 
 async def test_is_active(mock_driver, realization):

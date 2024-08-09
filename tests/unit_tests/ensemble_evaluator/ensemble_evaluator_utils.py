@@ -1,8 +1,8 @@
 import asyncio
+from datetime import datetime
 
+import orjson
 import websockets
-from cloudevents.conversion import to_json
-from cloudevents.http import CloudEvent
 
 from _ert.async_utils import new_event_loop
 from _ert_forward_model_runner.client import Client
@@ -36,12 +36,21 @@ def _mock_ws(host, port, messages, delay_startup=0):
 
 
 async def send_dispatch_event(
-    client, event_type, source, event_id, data, **extra_attrs
+    client, type, id, ensemble, data, real=None, fm_step=None
 ):
-    event = CloudEvent(
-        {"type": event_type, "source": source, "id": event_id, **extra_attrs}, data
-    )
-    await client._send(to_json(event))
+    event = {
+        "type": type,
+        "time": datetime.now(),
+        "id": id,
+        "ensemble": str(ensemble),
+        "data": data,
+    }
+    if real is not None:
+        event["real"] = str(real)
+    if fm_step is not None:
+        event["fm_step"] = str(fm_step)
+
+    await client._send(orjson.dumps(event))
 
 
 class TestEnsemble(Ensemble):
@@ -79,71 +88,77 @@ class TestEnsemble(Ensemble):
         )
         async with Client(config.url + "/dispatch") as dispatch:
             await send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ensemble/{self.id_}",
-                f"event-{event_id}",
-                None,
+                client=dispatch,
+                type=identifiers.EVTYPE_ENSEMBLE_STARTED,
+                id="event1",
+                ensemble=self.id_,
+                data=None,
             )
 
             event_id += 1
             for real in range(0, self.test_reals):
                 job_failed = False
+
                 await send_dispatch_event(
-                    dispatch,
-                    identifiers.EVTYPE_REALIZATION_UNKNOWN,
-                    f"/ert/ensemble/{self.id_}/real/{real}",
-                    f"event-{event_id}",
-                    None,
+                    client=dispatch,
+                    type=identifiers.EVTYPE_REALIZATION_UNKNOWN,
+                    id=f"event-{event_id}",
+                    real=real,
+                    ensemble=self.id_,
+                    data=None,
                 )
                 event_id += 1
                 for job in range(0, self.jobs):
                     await send_dispatch_event(
-                        dispatch,
-                        identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
-                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
-                        f"event-{event_id}",
-                        {"current_memory_usage": 1000},
+                        client=dispatch,
+                        type=identifiers.EVTYPE_FORWARD_MODEL_RUNNING,
+                        id=f"event-{event_id}",
+                        real=real,
+                        ensemble=self.id_,
+                        fm_step=job,
+                        data={"current_memory_usage": 1000},
                     )
                     event_id += 1
                     await send_dispatch_event(
-                        dispatch,
-                        identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
-                        f"event-{event_id}",
-                        {"current_memory_usage": 1000},
+                        client=dispatch,
+                        type=identifiers.EVTYPE_FORWARD_MODEL_SUCCESS,
+                        id=f"event-{event_id}",
+                        real=real,
+                        ensemble=self.id_,
+                        fm_step=job,
+                        data={"current_memory_usage": 1000},
                     )
                     event_id += 1
                 if job_failed:
                     await send_dispatch_event(
-                        dispatch,
-                        identifiers.EVTYPE_REALIZATION_FAILURE,
-                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
-                        f"event-{event_id}",
-                        {},
+                        client=dispatch,
+                        type=identifiers.EVTYPE_REALIZATION_FAILURE,
+                        id=f"event-{event_id}",
+                        real=real,
+                        ensemble=self.id_,
+                        fm_step=job,
+                        data={},
                     )
                     event_id += 1
                 else:
                     await send_dispatch_event(
-                        dispatch,
-                        identifiers.EVTYPE_REALIZATION_SUCCESS,
-                        f"/ert/ensemble/{self.id_}/real/{real}/forward_model/{job}",
-                        f"event-{event_id}",
-                        {},
+                        client=dispatch,
+                        type=identifiers.EVTYPE_REALIZATION_SUCCESS,
+                        id=f"event-{event_id}",
+                        real=real,
+                        ensemble=self.id_,
+                        fm_step=job,
+                        data={},
                     )
                     event_id += 1
 
             data = self.result if self.result else None
-            extra_attrs = {}
-            if self.result_datacontenttype:
-                extra_attrs["datacontenttype"] = self.result_datacontenttype
             await send_dispatch_event(
-                dispatch,
-                identifiers.EVTYPE_ENSEMBLE_SUCCEEDED,
-                f"/ert/ensemble/{self.id_}",
-                f"event-{event_id}",
-                data,
-                **extra_attrs,
+                client=dispatch,
+                type=identifiers.EVTYPE_ENSEMBLE_SUCCEEDED,
+                id=f"event-{event_id}",
+                ensemble=self.id_,
+                data=data,
             )
 
     @property

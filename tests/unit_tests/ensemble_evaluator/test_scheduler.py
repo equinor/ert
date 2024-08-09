@@ -35,7 +35,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
                 if e["type"] in (
                     identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
                     identifiers.EVTYPE_EE_SNAPSHOT,
-                ) and e.data.get(identifiers.STATUS) in [
+                ) and e["data"].get(identifiers.STATUS) in [
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
                 ]:

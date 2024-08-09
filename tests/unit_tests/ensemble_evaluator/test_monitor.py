@@ -2,9 +2,9 @@ import asyncio
 import logging
 from http import HTTPStatus
 
+import orjson
 import pytest
 import websockets
-from cloudevents.http import from_json
 from websockets.exceptions import ConnectionClosedOK
 
 from ert.ensemble_evaluator import Monitor
@@ -44,7 +44,7 @@ async def test_immediate_stop(unused_tcp_port):
 
     async def mock_ws_event_handler(websocket):
         async for event in websocket:
-            cloud_event = from_json(event)
+            cloud_event = orjson.loads(event)
             assert cloud_event["type"] == "com.equinor.ert.ee.user_done"
             break
         await websocket.close()
@@ -97,7 +97,7 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
 
     async def mock_ws_event_handler(websocket):
         async for event in websocket:
-            cloud_event = from_json(event)
+            cloud_event = orjson.loads(event)
             assert cloud_event["type"] == "com.equinor.ert.ee.user_cancel"
             break
         await websocket.close()

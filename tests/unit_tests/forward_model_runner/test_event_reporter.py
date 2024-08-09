@@ -51,7 +51,10 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     assert len(lines) == 1
     event = json.loads(lines[0])
     assert event["type"] == _FORWARD_MODEL_START
-    assert event["source"] == "/ert/ensemble/ens_id/real/0/forward_model/0/index/0"
+    assert event["ensemble"] == "ens_id"
+    assert event["real"] == "0"
+    assert event["fm_step"] == "0"
+    assert event["index"] == "0"
     assert os.path.basename(event["data"]["stdout"]) == "stdout"
     assert os.path.basename(event["data"]["stderr"]) == "stderr"
 
