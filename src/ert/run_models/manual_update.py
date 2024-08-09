@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
 
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.run_arguments import ManualUpdateArguments
 from ert.storage import Storage
 
 from ..config.analysis_config import UpdateSettings
@@ -26,7 +25,11 @@ class ManualUpdate(UpdateRunModel):
 
     def __init__(
         self,
-        simulation_arguments: ManualUpdateArguments,
+        ensemble_id: str,
+        target_ensemble: str,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        random_seed: Optional[int],
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -41,14 +44,14 @@ class ManualUpdate(UpdateRunModel):
             storage,
             queue_config,
             status_queue,
-            active_realizations=simulation_arguments.active_realizations,
+            active_realizations=active_realizations,
             total_iterations=1,
             start_iteration=0,
-            random_seed=simulation_arguments.random_seed,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
         )
-        self.prior_ensemble_id = simulation_arguments.ensemble_id
-        self.target_ensemble_format = simulation_arguments.target_ensemble
+        self.prior_ensemble_id = ensemble_id
+        self.target_ensemble_format = target_ensemble
         self.support_restart = False
 
     def run_experiment(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
@@ -14,9 +14,6 @@ from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
-    from ert.run_models.run_arguments import (
-        EnsembleExperimentRunArguments,
-    )
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -28,14 +25,18 @@ class EnsembleExperiment(BaseRunModel):
 
     def __init__(
         self,
-        simulation_arguments: EnsembleExperimentRunArguments,
+        ensemble_name: str,
+        experiment_name: str,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        random_seed: Optional[int],
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.ensemble_name = simulation_arguments.ensemble_name
-        self.experiment_name = simulation_arguments.experiment_name
+        self.ensemble_name = ensemble_name
+        self.experiment_name = experiment_name
         self.experiment: Experiment | None = None
         self.ensemble: Ensemble | None = None
 
@@ -45,9 +46,9 @@ class EnsembleExperiment(BaseRunModel):
             queue_config,
             status_queue,
             total_iterations=1,
-            active_realizations=simulation_arguments.active_realizations,
-            random_seed=simulation_arguments.random_seed,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            active_realizations=active_realizations,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
         )
 
     def run_experiment(

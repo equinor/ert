@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import json
 from datetime import datetime
 from functools import cached_property
@@ -27,9 +26,6 @@ from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
-    from ert.run_models.run_arguments import (
-        SimulationArguments,
-    )
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
 
@@ -100,7 +96,7 @@ class LocalExperiment(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[SimulationArguments] = None,
+        simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         """
@@ -155,9 +151,7 @@ class LocalExperiment(BaseMode):
                 dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
         with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
-            simulation_data = (
-                dataclasses.asdict(simulation_arguments) if simulation_arguments else {}
-            )
+            simulation_data = simulation_arguments if simulation_arguments else {}
             json.dump(simulation_data, f, cls=ContextBoolEncoder)
 
         return cls(storage, path, Mode.WRITE)

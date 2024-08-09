@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 from iterative_ensemble_smoother import steplength_exponential
@@ -12,7 +12,6 @@ from ert.analysis import ErtAnalysisError, iterative_smoother_update
 from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.run_arguments import SIESRunArguments
 from ert.storage import Ensemble, Storage
 
 from ..config.analysis_config import UpdateSettings
@@ -35,7 +34,13 @@ logger = logging.getLogger(__file__)
 class IteratedEnsembleSmoother(BaseRunModel):
     def __init__(
         self,
-        simulation_arguments: SIESRunArguments,
+        target_ensemble: str,
+        experiment_name: str,
+        num_retries_per_iter: int,
+        number_of_iterations: int,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        random_seed: Optional[int],
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -53,24 +58,24 @@ class IteratedEnsembleSmoother(BaseRunModel):
             max_steplength=analysis_config.ies_max_steplength,
             halflife=analysis_config.ies_dec_steplength,
         )
-        self.target_ensemble_format = simulation_arguments.target_ensemble
-        self.experiment_name = simulation_arguments.experiment_name
+        self.target_ensemble_format = target_ensemble
+        self.experiment_name = experiment_name
 
         super().__init__(
             config,
             storage,
             queue_config,
             status_queue,
-            active_realizations=simulation_arguments.active_realizations,
-            total_iterations=simulation_arguments.number_of_iterations,
-            random_seed=simulation_arguments.random_seed,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            active_realizations=active_realizations,
+            total_iterations=number_of_iterations,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
         )
 
         # Initialize sies_smoother to None
         # It is initialized later, but kept track of here
         self.sies_smoother = None
-        self.num_retries_per_iter = simulation_arguments.num_retries_per_iter
+        self.num_retries_per_iter = num_retries_per_iter
 
     @property
     def sies_iteration(self) -> int:

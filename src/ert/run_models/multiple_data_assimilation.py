@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
 
 import numpy as np
@@ -10,7 +10,6 @@ import numpy as np
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.run_arguments import ESMDARunArguments
 from ert.storage import Ensemble, Storage
 
 from ..config.analysis_config import UpdateSettings
@@ -33,7 +32,14 @@ class MultipleDataAssimilation(UpdateRunModel):
 
     def __init__(
         self,
-        simulation_arguments: ESMDARunArguments,
+        target_ensemble: str,
+        experiment_name: Optional[str],
+        restart_run: bool,
+        prior_ensemble_id: str,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        random_seed: Optional[int],
+        weights: str,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -41,15 +47,17 @@ class MultipleDataAssimilation(UpdateRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.weights = self.parse_weights(simulation_arguments.weights)
+        self.weights = self.parse_weights(weights)
 
-        self.target_ensemble_format = simulation_arguments.target_ensemble
-        self.experiment_name = simulation_arguments.experiment_name
-        self.restart_run = simulation_arguments.restart_run
-        self.prior_ensemble_id = simulation_arguments.prior_ensemble_id
+        self.target_ensemble_format = target_ensemble
+        self.experiment_name = experiment_name
+        self.restart_run = restart_run
+        self.prior_ensemble_id = prior_ensemble_id
+        start_iteration = 0
         if self.restart_run:
             if not self.prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
+            start_iteration = storage.get_ensemble(prior_ensemble_id).iteration + 1
         elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
         super().__init__(
@@ -59,11 +67,11 @@ class MultipleDataAssimilation(UpdateRunModel):
             storage,
             queue_config,
             status_queue,
-            active_realizations=simulation_arguments.active_realizations,
+            active_realizations=active_realizations,
             total_iterations=len(self.weights) + 1,
-            start_iteration=simulation_arguments.starting_iteration,
-            random_seed=simulation_arguments.random_seed,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            start_iteration=start_iteration,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
         )
 
     def run_experiment(

@@ -9,6 +9,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Generator,
     List,
@@ -37,7 +38,6 @@ from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
-    from ert.run_models.run_arguments import SimulationArguments
 
 logger = logging.getLogger(__name__)
 
@@ -293,7 +293,7 @@ class LocalStorage(BaseMode):
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[SimulationArguments] = None,
+        simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
         """
