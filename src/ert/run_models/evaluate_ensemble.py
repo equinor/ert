@@ -44,6 +44,8 @@ class EvaluateEnsemble(BaseRunModel):
             storage,
             queue_config,
             status_queue,
+            start_iteration=0,
+            total_iterations=1,
             active_realizations=simulation_arguments.active_realizations,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
         )

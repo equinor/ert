@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import functools
 import logging
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, HookRuntime
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.run_arguments import ESRunArguments
@@ -17,8 +15,7 @@ from ert.storage import Storage
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
+from .base_run_model import StatusEvents, UpdateRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -27,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__file__)
 
 
-class EnsembleSmoother(BaseRunModel):
+class EnsembleSmoother(UpdateRunModel):
     def __init__(
         self,
         simulation_arguments: ESRunArguments,
@@ -39,11 +36,14 @@ class EnsembleSmoother(BaseRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
+            es_settings,
+            update_settings,
             config,
             storage,
             queue_config,
             status_queue,
             active_realizations=simulation_arguments.active_realizations,
+            start_iteration=0,
             total_iterations=2,
             random_seed=simulation_arguments.random_seed,
             minimum_required_realizations=simulation_arguments.minimum_required_realizations,
@@ -52,8 +52,6 @@ class EnsembleSmoother(BaseRunModel):
         self.experiment_name = simulation_arguments.experiment_name
         self.ensemble_size = simulation_arguments.ensemble_size
 
-        self.es_settings = es_settings
-        self.update_settings = update_settings
         self.support_restart = False
 
     def run_experiment(
@@ -94,52 +92,13 @@ class EnsembleSmoother(BaseRunModel):
             prior,
             evaluator_server_config,
         )
+        posterior = self.update(prior, ensemble_format % 1)
 
-        self.send_event(RunModelUpdateBeginEvent(iteration=0, run_id=prior.id))
-
-        self._current_iteration_label = "Running ES update step"
-        self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
-        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
-
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=0,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-        posterior = self._storage.create_ensemble(
-            experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=1,
-            name=ensemble_format % 1,
-            prior_ensemble=prior,
-        )
         posterior_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )
-        try:
-            smoother_update(
-                prior,
-                posterior,
-                analysis_config=self.update_settings,
-                es_settings=self.es_settings,
-                parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observations.keys(),
-                rng=self.rng,
-                progress_callback=functools.partial(
-                    self.send_smoother_event, 0, prior.id
-                ),
-            )
-
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                f"Analysis of experiment failed with the following error: {e}"
-            ) from e
-
-        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
 
         self._evaluate_and_postprocess(
             posterior_args,

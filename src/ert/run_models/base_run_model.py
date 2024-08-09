@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import functools
 import logging
 import os
 import shutil
@@ -24,13 +25,19 @@ from typing import (
 import numpy as np
 from cloudevents.http import CloudEvent
 
-from ert.analysis import AnalysisEvent, AnalysisStatusEvent, AnalysisTimeEvent
+from ert.analysis import (
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+    ErtAnalysisError,
+    smoother_update,
+)
 from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
     AnalysisErrorEvent,
 )
-from ert.config import ErtConfig, HookRuntime, QueueSystem
+from ert.config import ErtConfig, ESSettings, HookRuntime, QueueSystem
 from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
@@ -64,6 +71,7 @@ from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.workflow_runner import WorkflowRunner
 
+from ..config.analysis_config import UpdateSettings
 from ..run_arg import RunArg
 from .event import (
     RunModelDataEvent,
@@ -653,3 +661,83 @@ class BaseRunModel:
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
 
         return num_successful_realizations
+
+
+class UpdateRunModel(BaseRunModel):
+    def __init__(
+        self,
+        es_settings: ESSettings,
+        update_settings: UpdateSettings,
+        config: ErtConfig,
+        storage: Storage,
+        queue_config: QueueConfig,
+        status_queue: SimpleQueue[StatusEvents],
+        active_realizations: List[bool],
+        total_iterations: int,
+        start_iteration: int,
+        random_seed: Optional[int],
+        minimum_required_realizations: int,
+    ):
+        self.es_settings = es_settings
+        self.update_settings = update_settings
+        super().__init__(
+            config,
+            storage,
+            queue_config,
+            status_queue,
+            active_realizations=active_realizations,
+            total_iterations=total_iterations,
+            start_iteration=start_iteration,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
+        )
+
+    def update(
+        self, prior: Ensemble, posterior_name: str, weight: float = 1.0
+    ) -> Ensemble:
+        self.send_event(
+            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
+        )
+        self.send_event(
+            RunModelStatusEvent(
+                iteration=0,
+                run_id=prior.id,
+                msg="Creating posterior ensemble..",
+            )
+        )
+        posterior = self._storage.create_ensemble(
+            prior.experiment,
+            ensemble_size=prior.ensemble_size,
+            iteration=prior.iteration + 1,
+            name=posterior_name,
+            prior_ensemble=prior,
+        )
+        if prior.iteration == 0:
+            self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
+        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+        self._current_iteration_label = (
+            f"Analyzing iteration: {prior.iteration} with weight {weight}"
+        )
+        try:
+            smoother_update(
+                prior,
+                posterior,
+                analysis_config=self.update_settings,
+                es_settings=self.es_settings,
+                parameters=prior.experiment.update_parameters,
+                observations=prior.experiment.observations.keys(),
+                global_scaling=weight,
+                rng=self.rng,
+                progress_callback=functools.partial(
+                    self.send_smoother_event,
+                    prior.iteration,
+                    prior.id,
+                ),
+            )
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                "Update algorithm failed for iteration:"
+                f"{posterior.iteration}. The following error occurred {e}"
+            ) from e
+        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
+        return posterior

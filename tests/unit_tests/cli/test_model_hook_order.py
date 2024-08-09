@@ -45,9 +45,14 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     """
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
+    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
+
+    ens_mock = MagicMock()
+    ens_mock.iteration = 0
+    storage_mock = MagicMock()
+    storage_mock.create_ensemble.return_value = ens_mock
 
     minimum_args = ESRunArguments(
         random_seed=None,
@@ -60,7 +65,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     test_class = EnsembleSmoother(
         minimum_args,
         MagicMock(),
-        MagicMock(),
+        storage_mock,
         MagicMock(),
         MagicMock(),
         MagicMock(),
@@ -96,7 +101,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     )
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
-    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
+    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
