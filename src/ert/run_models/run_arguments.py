@@ -11,12 +11,6 @@ class SimulationArguments:
 
 
 @dataclass
-class EnsembleExperimentRunArguments(SimulationArguments):
-    experiment_name: str
-    ensemble_name: str = "prior"
-
-
-@dataclass
 class EvaluateEnsembleRunArguments(SimulationArguments):
     ensemble_id: str
 

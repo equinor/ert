@@ -27,7 +27,6 @@ from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_arguments import (
-    EnsembleExperimentRunArguments,
     ESMDARunArguments,
     ESRunArguments,
     EvaluateEnsembleRunArguments,
@@ -98,17 +97,13 @@ def _setup_single_test_run(
     )
 
     return SingleTestRun(
-        EnsembleExperimentRunArguments(
-            random_seed=config.random_seed,
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=1,
-            ensemble_size=1,
-            experiment_name=experiment_name,
-            active_realizations=[True],
-        ),
-        config,
-        storage,
-        status_queue,
+        random_seed=config.random_seed,
+        ensemble_name=args.current_ensemble,
+        experiment_name=experiment_name,
+        active_realizations=[True],
+        config=config,
+        storage=storage,
+        status_queue=status_queue,
     )
 
 
@@ -132,17 +127,14 @@ def _setup_ensemble_experiment(
     assert experiment_name is not None
 
     return EnsembleExperiment(
-        EnsembleExperimentRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            ensemble_size=config.model_config.num_realizations,
-            experiment_name=experiment_name,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_name=args.current_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         status_queue=status_queue,
     )
 
