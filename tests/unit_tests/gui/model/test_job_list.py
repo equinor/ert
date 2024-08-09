@@ -7,7 +7,7 @@ from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import ForwardModel, PartialSnapshot
+from ert.ensemble_evaluator.snapshot import ForwardModel
 from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_RUNNING,
@@ -59,7 +59,7 @@ def test_changes(full_snapshot):
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
-    partial = PartialSnapshot(full_snapshot)
+    partial = full_snapshot
     start_time = datetime(year=2020, month=10, day=27, hour=12)
     end_time = datetime(year=2020, month=10, day=28, hour=13)
     partial.update_forward_model(
@@ -101,7 +101,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
         == FORWARD_MODEL_STATE_START
     )
 
-    partial = PartialSnapshot(full_snapshot)
+    partial = full_snapshot
     start_time = datetime(year=2020, month=10, day=27, hour=12, tzinfo=timezone)
     # mock only datetime.now()
     mock_datetime.now.return_value = datetime(
@@ -143,7 +143,7 @@ def test_no_cross_talk(full_snapshot):
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
 
     # Test that changes to iter=1 does not bleed into iter=0
-    partial = PartialSnapshot(full_snapshot)
+    partial = full_snapshot
     partial.update_forward_model(
         "0", "0", forward_model=ForwardModel(status=FORWARD_MODEL_STATE_FAILURE)
     )

@@ -5,13 +5,7 @@ from .config import EvaluatorServerConfig
 from .evaluator import EnsembleEvaluator
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
-from .snapshot import (
-    ForwardModel,
-    PartialSnapshot,
-    RealizationSnapshot,
-    Snapshot,
-    SnapshotDict,
-)
+from .snapshot import ForwardModel, NewSnapshot, RealizationSnapshot, SnapshotDict
 
 __all__ = (
     "EndEvent",
@@ -21,8 +15,7 @@ __all__ = (
     "ForwardModelStep",
     "FullSnapshotEvent",
     "Monitor",
-    "PartialSnapshot",
-    "Snapshot",
+    "NewSnapshot",
     "SnapshotUpdateEvent",
     "wait_for_evaluator",
     "RealizationSnapshot",

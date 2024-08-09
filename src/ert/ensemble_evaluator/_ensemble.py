@@ -31,9 +31,8 @@ from .config import EvaluatorServerConfig
 from .identifiers import EVTYPE_ENSEMBLE_FAILED, EVTYPE_ENSEMBLE_STARTED
 from .snapshot import (
     ForwardModel,
-    PartialSnapshot,
+    NewSnapshot,
     RealizationSnapshot,
-    Snapshot,
     SnapshotDict,
 )
 from .state import (
@@ -119,7 +118,7 @@ class LegacyEnsemble:
     def __post_init__(self) -> None:
         self._scheduler: Optional[_KillAllJobs] = None
         self._config: Optional[EvaluatorServerConfig] = None
-        self.snapshot: Snapshot = self._create_snapshot()
+        self.snapshot: NewSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
         if self.snapshot.status:
             self._status_tracker = _EnsembleStateTracker(self.snapshot.status)
@@ -130,7 +129,7 @@ class LegacyEnsemble:
     def active_reals(self) -> Sequence[Realization]:
         return list(filter(lambda real: real.active, self.reals))
 
-    def _create_snapshot(self) -> Snapshot:
+    def _create_snapshot(self) -> NewSnapshot:
         reals: Dict[str, RealizationSnapshot] = {}
         for real in self.active_reals:
             reals[str(real.iens)] = RealizationSnapshot(
@@ -149,15 +148,15 @@ class LegacyEnsemble:
             metadata=self.metadata,
         )
 
-        return Snapshot(top.model_dump())
+        return NewSnapshot._from_nested_dict(top.model_dump())
 
     def get_successful_realizations(self) -> List[int]:
         return self.snapshot.get_successful_realizations()
 
-    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
-        snapshot_mutate_event = PartialSnapshot(self.snapshot)
+    def update_snapshot(self, events: List[CloudEvent]) -> NewSnapshot:
+        snapshot_mutate_event = NewSnapshot()
         for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
+            snapshot_mutate_event.update_from_cloudevent(event, based_on=self.snapshot)
         self.snapshot.merge_event(snapshot_mutate_event)
         if self.snapshot.status is not None and self.status != self.snapshot.status:
             self.status = self._status_tracker.update_state(self.snapshot.status)

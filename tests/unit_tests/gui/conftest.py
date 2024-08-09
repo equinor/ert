@@ -21,8 +21,8 @@ from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QW
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
+    NewSnapshot,
     RealizationSnapshot,
-    Snapshot,
     SnapshotBuilder,
     SnapshotDict,
 )
@@ -325,7 +325,7 @@ def run_experiment_fixture(request):
 
 
 @pytest.fixture()
-def full_snapshot() -> Snapshot:
+def full_snapshot() -> NewSnapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_RUNNING,
         active=True,
@@ -387,11 +387,11 @@ def full_snapshot() -> Snapshot:
     for i in range(0, 100):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.model_dump())
+    return NewSnapshot._from_nested_dict(snapshot.model_dump())
 
 
 @pytest.fixture()
-def fail_snapshot() -> Snapshot:
+def fail_snapshot() -> NewSnapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_FAILED,
         active=True,
@@ -417,11 +417,11 @@ def fail_snapshot() -> Snapshot:
     for i in range(0, 1):
         snapshot.reals[str(i)] = copy.deepcopy(real)
 
-    return Snapshot(snapshot.model_dump())
+    return NewSnapshot._from_nested_dict(snapshot.model_dump())
 
 
 @pytest.fixture()
-def large_snapshot() -> Snapshot:
+def large_snapshot() -> NewSnapshot:
     builder = SnapshotBuilder()
     for i in range(0, 150):
         builder.add_forward_model(
@@ -441,7 +441,7 @@ def large_snapshot() -> Snapshot:
 
 
 @pytest.fixture()
-def small_snapshot() -> Snapshot:
+def small_snapshot() -> NewSnapshot:
     builder = SnapshotBuilder()
     for i in range(0, 2):
         builder.add_forward_model(
