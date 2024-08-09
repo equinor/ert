@@ -72,7 +72,7 @@ class ManualUpdate(UpdateRunModel):
         posterior = self._storage.create_ensemble(
             experiment,
             ensemble_size=prior.ensemble_size,
-            iteration=1,
+            iteration=prior.iteration + 1,
             name=ensemble_format % 1,
             prior_ensemble=prior,
         )
