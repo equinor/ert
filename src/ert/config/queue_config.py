@@ -201,7 +201,10 @@ class QueueConfig:
                 )
 
             value = values[0] if values else ""
-            if queue_options[queue_system].get(option_name, "") != value:
+            if (
+                option_name in queue_options[queue_system]
+                and queue_options[queue_system][option_name] != value
+            ):
                 logging.info(
                     f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
                     f" \n Old value: {queue_options[queue_system][option_name]} \n New value: {value}"
@@ -283,6 +286,8 @@ def _check_num_cpu_requirement(
     num_cpu: int,
     queue_system_options: Dict[str, str],
 ) -> None:
+    if not queue_system_options.get("NUM_NODES", [""]):
+        return
     num_nodes_str = queue_system_options.get("NUM_NODES", [""])[-1]
     num_cpus_per_node_str = queue_system_options.get("NUM_CPUS_PER_NODE", [""])[-1]
     if not num_nodes_str and not num_cpus_per_node_str:
