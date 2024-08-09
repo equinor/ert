@@ -33,7 +33,6 @@ from .run_arguments import (
     EvaluateEnsembleRunArguments,
     ManualUpdateArguments,
     SIESRunArguments,
-    SingleTestRunArguments,
 )
 from .single_test_run import SingleTestRun
 
@@ -99,7 +98,7 @@ def _setup_single_test_run(
     )
 
     return SingleTestRun(
-        SingleTestRunArguments(
+        EnsembleExperimentRunArguments(
             random_seed=config.random_seed,
             ensemble_name=args.current_ensemble,
             minimum_required_realizations=1,

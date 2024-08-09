@@ -10,7 +10,9 @@ from ert.run_models import EnsembleExperiment
 if TYPE_CHECKING:
     from queue import SimpleQueue
 
-    from ert.run_models.run_arguments import SingleTestRunArguments
+    from ert.run_models.run_arguments import (
+        EnsembleExperimentRunArguments,
+    )
     from ert.storage import Storage
 
     from .base_run_model import StatusEvents
@@ -26,7 +28,7 @@ class SingleTestRun(EnsembleExperiment):
 
     def __init__(
         self,
-        simulation_arguments: SingleTestRunArguments,
+        simulation_arguments: EnsembleExperimentRunArguments,
         config: ErtConfig,
         storage: Storage,
         status_queue: SimpleQueue[StatusEvents],
