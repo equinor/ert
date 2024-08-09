@@ -733,3 +733,4 @@ class UpdateRunModel(BaseRunModel):
                 f"{posterior.iteration}. The following error occurred {e}"
             ) from e
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
+        return posterior
