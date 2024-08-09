@@ -234,9 +234,10 @@ class Scheduler:
                         event = orjson.loads(message)
                         if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
                             self.checksum.update(event["data"])
-                    except:
+                    except BaseException as e:
                         logger.error(
-                            "Scheduler checksum consumer received unknown message"
+                            "Scheduler checksum consumer received unknown message: "
+                            + str(e)
                         )
             except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
                 self._consumer_started.clear()

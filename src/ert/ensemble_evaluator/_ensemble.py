@@ -184,7 +184,7 @@ class LegacyEnsemble:
                 "id": str(uuid.uuid1()),
             }
             if real_id is not None:
-                msg["real"] = real_id
+                msg["real"] = str(real_id)
             return msg
 
         return event_builder

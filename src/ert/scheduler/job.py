@@ -185,7 +185,7 @@ class Job:
         timeout_event = {
             "type": EVTYPE_REALIZATION_TIMEOUT,
             "time": datetime.now(),
-            "real": self.iens,
+            "real": str(self.iens),
             "ensemble": self._scheduler._ens_id,
             "id": str(uuid.uuid1()),
         }
@@ -299,7 +299,7 @@ class Job:
         event = {
             "type": _queue_state_event_type[status],
             "time": datetime.now(),
-            "real": self.iens,
+            "real": str(self.iens),
             "ensemble": self._scheduler._ens_id,
             "datacontenttype": "application/json",
             "data": {"queue_event_type": status},

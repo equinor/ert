@@ -70,6 +70,6 @@ async def test_happy_path(
     ):
         event = orjson.loads(received_event)
         assert event["ensemble"] == "ee_0"
-        assert event["real"] == 0
+        assert event["real"] == "0"
         assert event["type"] == f"com.equinor.ert.realization.{expected_type}"
         assert event["data"] == {"queue_event_type": expected_queue_event_type}

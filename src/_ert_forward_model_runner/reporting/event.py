@@ -123,8 +123,8 @@ class Event(Reporter):
         self._event_queue.put(orjson.dumps(event))
 
     def _init_handler(self, msg):
-        self._ens_id = msg.ens_id
-        self._real_id = msg.real_id
+        self._ens_id = str(msg.ens_id)
+        self._real_id = str(msg.real_id)
         self._event_publisher_thread.start()
 
     def _job_handler(self, msg: Message):
@@ -134,8 +134,8 @@ class Event(Reporter):
             _JOB_MSG_TYPE: None,
             "ensemble": self._ens_id,
             "real": self._real_id,
-            "fm_step": msg.job.index,
-            "index": msg.job.index,
+            "fm_step": str(msg.job.index),
+            "index": str(msg.job.index),
         }
         if isinstance(msg, Start):
             logger.debug(f"Job {job_name} was successfully started")

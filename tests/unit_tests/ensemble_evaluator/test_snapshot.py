@@ -91,7 +91,6 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
             "id": "0",
             "time": datetime.now(),
             "type": ids.EVTYPE_FORWARD_MODEL_FAILURE,
-            "source": "/real/0/forward_model/0",
             "real": "0",
             "fm_step": "0",
             "data": {ids.ERROR_MSG: "failed"},
@@ -102,7 +101,6 @@ def test_update_forward_models_in_partial_from_multiple_cloudevents(snapshot):
             "id": "1",
             "time": datetime.now(),
             "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
-            "source": "/real/0/forward_model/1",
             "real": "0",
             "fm_step": "1",
         }

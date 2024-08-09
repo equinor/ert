@@ -39,7 +39,7 @@ class ForwardModelRunner:
 
     def _populate_checksums(self, manifest):
         if not manifest:
-            return None
+            return {}
         for info in manifest.values():
             path = Path(info["path"])
             if path.exists():
@@ -80,7 +80,7 @@ class ForwardModelRunner:
                 yield status_update
 
                 if not status_update.success():
-                    yield Checksum(checksum_dict=None, run_path=os.getcwd())
+                    yield Checksum(checksum_dict={}, run_path=os.getcwd())
                     yield Finish().with_error("Not all jobs completed successfully.")
                     return
 
