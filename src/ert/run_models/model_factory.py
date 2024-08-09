@@ -29,7 +29,6 @@ from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_arguments import (
     ESMDARunArguments,
     ESRunArguments,
-    EvaluateEnsembleRunArguments,
     ManualUpdateArguments,
     SIESRunArguments,
 )
@@ -156,16 +155,13 @@ def _setup_evaluate_ensemble(
         )
 
     return EvaluateEnsemble(
-        EvaluateEnsembleRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_id=args.ensemble_id,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            ensemble_size=config.model_config.num_realizations,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         status_queue=status_queue,
     )
 

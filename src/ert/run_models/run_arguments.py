@@ -11,11 +11,6 @@ class SimulationArguments:
 
 
 @dataclass
-class EvaluateEnsembleRunArguments(SimulationArguments):
-    ensemble_id: str
-
-
-@dataclass
 class ESRunArguments(SimulationArguments):
     target_ensemble: str
     experiment_name: str
