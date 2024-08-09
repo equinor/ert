@@ -1,3 +1,13 @@
+-- By default, NumPy utilizes multiple threads, which is beneficial for parallelizable computations.
+-- However, the heat equation implementation in this case does not benefit from parallel execution within a single realization.
+-- When ERT runs multiple realizations, each one by default uses multiple threads for NumPy operations,
+-- leading to resource contention and slower overall execution.
+-- Setting these thread counts to 1 ensures each realization uses minimal resources,
+-- allowing more realizations to run concurrently and significantly speeding up the entire experiment.
+SETENV  MKL_NUM_THREADS 1
+SETENV  NUMEXPR_NUM_THREADS 1
+SETENV  OMP_NUM_THREADS 1
+
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 100
 
