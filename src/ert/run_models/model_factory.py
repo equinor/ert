@@ -26,15 +26,6 @@ from .evaluate_ensemble import EvaluateEnsemble
 from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
-from .run_arguments import (
-    EnsembleExperimentRunArguments,
-    ESMDARunArguments,
-    ESRunArguments,
-    EvaluateEnsembleRunArguments,
-    ManualUpdateArguments,
-    SIESRunArguments,
-    SingleTestRunArguments,
-)
 from .single_test_run import SingleTestRun
 
 if TYPE_CHECKING:
@@ -99,17 +90,12 @@ def _setup_single_test_run(
     )
 
     return SingleTestRun(
-        SingleTestRunArguments(
-            random_seed=config.random_seed,
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=1,
-            ensemble_size=1,
-            experiment_name=experiment_name,
-            active_realizations=[True],
-        ),
-        config,
-        storage,
-        status_queue,
+        random_seed=config.random_seed,
+        ensemble_name=args.current_ensemble,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        status_queue=status_queue,
     )
 
 
@@ -133,17 +119,14 @@ def _setup_ensemble_experiment(
     assert experiment_name is not None
 
     return EnsembleExperiment(
-        EnsembleExperimentRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_name=args.current_ensemble,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            ensemble_size=config.model_config.num_realizations,
-            experiment_name=experiment_name,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_name=args.current_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         status_queue=status_queue,
     )
 
@@ -166,16 +149,13 @@ def _setup_evaluate_ensemble(
         )
 
     return EvaluateEnsemble(
-        EvaluateEnsembleRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_id=args.ensemble_id,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            ensemble_size=config.model_config.num_realizations,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         status_queue=status_queue,
     )
 
@@ -210,16 +190,14 @@ def _setup_manual_update(
         )
 
     return ManualUpdate(
-        ManualUpdateArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            ensemble_id=args.ensemble_id,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            target_ensemble=args.target_ensemble,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        target_ensemble=args.target_ensemble,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
         status_queue=status_queue,
@@ -235,16 +213,14 @@ def _setup_ensemble_smoother(
 ) -> EnsembleSmoother:
     active_realizations = _validate_num_realizations(args, config)
     return EnsembleSmoother(
-        ESRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            target_ensemble=args.target_ensemble,
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            experiment_name=getattr(args, "experiment_name", ""),
-        ),
-        config,
-        storage,
-        config.queue_config,
+        target_ensemble=args.target_ensemble,
+        experiment_name=getattr(args, "experiment_name", ""),
+        active_realizations=active_realizations.tolist(),
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        random_seed=config.random_seed,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
         status_queue=status_queue,
@@ -280,22 +256,17 @@ def _setup_multiple_data_assimilation(
     restart_run, prior_ensemble = _determine_restart_info(args)
     active_realizations = _validate_num_realizations(args, config)
     return MultipleDataAssimilation(
-        ESMDARunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            target_ensemble=_iterative_ensemble_format(config, args),
-            weights=args.weights,
-            restart_run=restart_run,
-            prior_ensemble_id=prior_ensemble,
-            starting_iteration=(
-                storage.get_ensemble(prior_ensemble).iteration + 1 if restart_run else 0
-            ),
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            experiment_name=args.experiment_name,
-        ),
-        config,
-        storage,
-        config.queue_config,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        target_ensemble=_iterative_ensemble_format(config, args),
+        weights=args.weights,
+        restart_run=restart_run,
+        prior_ensemble_id=prior_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=args.experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
         es_settings=config.analysis_config.es_module,
         update_settings=update_settings,
         status_queue=status_queue,
@@ -312,19 +283,17 @@ def _setup_iterative_ensemble_smoother(
     experiment_name = "ies" if args.experiment_name is None else args.experiment_name
     active_realizations = _validate_num_realizations(args, config)
     return IteratedEnsembleSmoother(
-        SIESRunArguments(
-            random_seed=config.random_seed,
-            active_realizations=active_realizations.tolist(),
-            target_ensemble=_iterative_ensemble_format(config, args),
-            number_of_iterations=_num_iterations(config, args),
-            minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-            num_retries_per_iter=config.analysis_config.num_retries_per_iter,
-            experiment_name=experiment_name,
-        ),
-        config,
-        storage,
-        config.queue_config,
-        config.analysis_config.ies_module,
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        target_ensemble=_iterative_ensemble_format(config, args),
+        number_of_iterations=_num_iterations(config, args),
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        num_retries_per_iter=config.analysis_config.num_retries_per_iter,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        analysis_config=config.analysis_config.ies_module,
         update_settings=update_settings,
         status_queue=status_queue,
     )

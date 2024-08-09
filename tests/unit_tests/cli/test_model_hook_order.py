@@ -13,11 +13,6 @@ from ert.run_models import (
     iterated_ensemble_smoother,
     multiple_data_assimilation,
 )
-from ert.run_models.run_arguments import (
-    ESMDARunArguments,
-    ESRunArguments,
-    SIESRunArguments,
-)
 
 EXPECTED_CALL_ORDER = [
     HookRuntime.PRE_SIMULATION,
@@ -47,6 +42,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -54,24 +50,11 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
 
-    minimum_args = ESRunArguments(
-        random_seed=None,
-        active_realizations=[True],
-        target_ensemble="smooth_%d",
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-    )
     test_class = EnsembleSmoother(
-        minimum_args,
-        MagicMock(),
-        storage_mock,
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
+        *[MagicMock()] * 11,
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
+    test_class._storage = storage_mock
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
@@ -87,22 +70,16 @@ def test_hook_call_order_es_mda(monkeypatch):
     across different models.
     """
 
-    minimum_args = ESMDARunArguments(
-        random_seed=None,
-        active_realizations=[True],
-        target_ensemble="target_%d",
-        weights="1",
-        restart_run=False,
-        prior_ensemble_id="",
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-        starting_iteration=0,
-    )
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
+    monkeypatch.setattr(
+        multiple_data_assimilation.MultipleDataAssimilation,
+        "parse_weights",
+        MagicMock(return_value=[1]),
+    )
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -110,14 +87,10 @@ def test_hook_call_order_es_mda(monkeypatch):
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
     test_class = MultipleDataAssimilation(
-        minimum_args,
-        MagicMock(),
-        storage_mock,
-        MagicMock(),
-        es_settings=MagicMock(),
-        update_settings=MagicMock(),
-        status_queue=MagicMock(),
+        *[MagicMock()] * 14,
     )
+    test_class._storage = storage_mock
+    test_class.restart_run = False
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
@@ -136,27 +109,10 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
+    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
-    minimum_args = SIESRunArguments(
-        random_seed=None,
-        active_realizations=[True],
-        target_ensemble="target_%d",
-        number_of_iterations=1,
-        num_retries_per_iter=1,
-        minimum_required_realizations=0,
-        ensemble_size=1,
-        experiment_name="no-name",
-    )
-    test_class = IteratedEnsembleSmoother(
-        minimum_args,
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-        MagicMock(),
-    )
+    test_class = IteratedEnsembleSmoother(*[MagicMock()] * 13)
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
 
     # Mock the return values of iterative_smoother_update

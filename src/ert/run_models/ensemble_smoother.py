@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
 from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.run_arguments import ESRunArguments
 from ert.storage import Storage
 
 from ..config.analysis_config import UpdateSettings
@@ -27,7 +26,11 @@ logger = logging.getLogger(__file__)
 class EnsembleSmoother(UpdateRunModel):
     def __init__(
         self,
-        simulation_arguments: ESRunArguments,
+        target_ensemble: str,
+        experiment_name: str,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        random_seed: Optional[int],
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -42,14 +45,14 @@ class EnsembleSmoother(UpdateRunModel):
             storage,
             queue_config,
             status_queue,
-            active_realizations=simulation_arguments.active_realizations,
+            active_realizations=active_realizations,
             start_iteration=0,
             total_iterations=2,
-            random_seed=simulation_arguments.random_seed,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            random_seed=random_seed,
+            minimum_required_realizations=minimum_required_realizations,
         )
-        self.target_ensemble_format = simulation_arguments.target_ensemble
-        self.experiment_name = simulation_arguments.experiment_name
+        self.target_ensemble_format = target_ensemble
+        self.experiment_name = experiment_name
 
         self.support_restart = False
 

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
 
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.run_arguments import EvaluateEnsembleRunArguments
 from ert.storage import Ensemble, Storage
 
 from ..run_arg import create_run_arguments
@@ -33,7 +32,10 @@ class EvaluateEnsemble(BaseRunModel):
 
     def __init__(
         self,
-        simulation_arguments: EvaluateEnsembleRunArguments,
+        active_realizations: List[bool],
+        minimum_required_realizations: int,
+        ensemble_id: str,
+        random_seed: Optional[int],
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -46,10 +48,11 @@ class EvaluateEnsemble(BaseRunModel):
             status_queue,
             start_iteration=0,
             total_iterations=1,
-            active_realizations=simulation_arguments.active_realizations,
-            minimum_required_realizations=simulation_arguments.minimum_required_realizations,
+            active_realizations=active_realizations,
+            minimum_required_realizations=minimum_required_realizations,
+            random_seed=random_seed,
         )
-        self.ensemble_id = simulation_arguments.ensemble_id
+        self.ensemble_id = ensemble_id
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
