@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import os
-import ssl
 import time
 import traceback
 from collections import defaultdict
@@ -21,12 +20,7 @@ from typing import (
     Sequence,
 )
 
-from aiohttp import ClientError
-from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import from_json
 from pydantic.dataclasses import dataclass
-from websockets import ConnectionClosed, Headers
-from websockets.client import connect
 
 from _ert.async_utils import get_running_loop
 from ert.constant_filenames import CERT_FILE
@@ -35,7 +29,6 @@ from ert.event_type_constants import (
     EVTYPE_ENSEMBLE_SUCCEEDED,
     EVTYPE_FORWARD_MODEL_CHECKSUM,
 )
-from ert.serialization import evaluator_unmarshaller
 
 from .driver import Driver
 from .event import FinishedEvent
@@ -79,6 +72,7 @@ class Scheduler:
     def __init__(
         self,
         driver: Driver,
+        manifest_queue: Optional[asyncio.Queue[Any]] = None,
         ee_queue: Optional[asyncio.Queue[Any]] = None,
         realizations: Optional[Sequence[Realization]] = None,
         *,
@@ -95,6 +89,12 @@ class Scheduler:
             self._ee_queue = ee_queue
         else:
             self._ee_queue = asyncio.Queue()
+
+        if manifest_queue:
+            self._manifest_queue = manifest_queue
+        else:
+            self._manifest_queue = asyncio.Queue()
+
         self._job_tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
         self.submit_sleep_state: Optional[SubmitSleeper] = None
@@ -119,28 +119,19 @@ class Scheduler:
             )
         self._max_submit = max_submit
         self._max_running = max_running
-
         self._ee_uri = ee_uri
         self._ens_id = ens_id
         self._ee_cert = ee_cert
         self._ee_token = ee_token
 
-        self._consumer_started = asyncio.Event()
         self.checksum: Dict[str, Dict[str, Any]] = {}
         self.checksum_listener: Optional[asyncio.Task[None]] = None
 
     async def start_manifest_listener(self) -> Optional[asyncio.Task[None]]:
-        if self._ee_uri is None or "dispatch" not in self._ee_uri:
-            return None
-
         self.checksum_listener = asyncio.create_task(
             self._checksum_consumer(), name="consumer_task"
         )
-        await self._consumer_started.wait()
         return self.checksum_listener
-
-    def wait_for_checksum(self) -> bool:
-        return self._consumer_started.is_set()
 
     def kill_all_jobs(self) -> None:
         assert self._loop
@@ -210,45 +201,11 @@ class Scheduler:
         return counts
 
     async def _checksum_consumer(self) -> None:
-        if not self._ee_uri:
-            return
-        tls: Optional[ssl.SSLContext] = None
-        if self._ee_cert:
-            tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            tls.load_verify_locations(cadata=self._ee_cert)
-        headers = Headers()
-        if self._ee_token:
-            headers["token"] = self._ee_token
-        event = None
-        async for conn in connect(
-            self._ee_uri.replace("dispatch", "client"),
-            ssl=tls,
-            extra_headers=headers,
-            max_size=2**26,
-            max_queue=500,
-            open_timeout=5,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
-            try:
-                self._consumer_started.set()
-                async for message in conn:
-                    try:
-                        event = from_json(
-                            str(message), data_unmarshaller=evaluator_unmarshaller
-                        )
-                        if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                            self.checksum.update(event.data)
-                    except DataUnmarshallerError:
-                        logger.error(
-                            "Scheduler checksum consumer received unknown message"
-                        )
-            except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
-                self._consumer_started.clear()
-                logger.debug(
-                    f"Scheduler connection to EnsembleEvaluator went down: {exc}"
-                )
+        while True:
+            event = await self._manifest_queue.get()
+            if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
+                self.checksum.update(event.data)
+            self._manifest_queue.task_done()
 
     async def _publisher(self) -> None:
         while True:
@@ -292,8 +249,7 @@ class Scheduler:
                         raise task_exception
 
             if not self.is_active():
-                if self._ee_uri is not None:
-                    await self._events.join()
+                await self._events.join()
                 for task in self._job_tasks.values():
                     if task.cancelled():
                         continue

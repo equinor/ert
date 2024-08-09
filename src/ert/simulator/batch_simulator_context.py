@@ -96,6 +96,7 @@ class BatchContext:
         self._scheduler = Scheduler(
             driver,
             None,
+            None,
             max_running=self.ert_config.queue_config.max_running,
         )
         # fill in the missing geo_id data
