@@ -687,7 +687,9 @@ class UpdateRunModel(BaseRunModel):
             minimum_required_realizations=minimum_required_realizations,
         )
 
-    def update(self, prior: Ensemble, posterior_name, weight: float = 1.0) -> Ensemble:
+    def update(
+        self, prior: Ensemble, posterior_name: str, weight: float = 1.0
+    ) -> Ensemble:
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
         )
