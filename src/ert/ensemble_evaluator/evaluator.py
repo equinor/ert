@@ -68,6 +68,7 @@ class EnsembleEvaluator:
 
         self._events: asyncio.Queue[CloudEvent] = asyncio.Queue()
         self._messages_to_send: asyncio.Queue[str] = asyncio.Queue()
+        self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._result = None
 
@@ -311,9 +312,10 @@ class EnsembleEvaluator:
             },
             {event["run_path"]: event.data},
         )
-        await self._messages_to_send.put(
-            to_json(forward_event, data_marshaller=evaluator_marshaller).decode()
-        )
+        # await self._messages_to_send.put(
+        #     to_json(forward_event, data_marshaller=evaluator_marshaller).decode()
+        # )
+        await self._manifest_queue.put(forward_event)
 
     async def connection_handler(
         self, websocket: WebSocketServerProtocol, path: str
@@ -417,6 +419,9 @@ class EnsembleEvaluator:
         ]
         # now we wait for the server to actually start
         await self._server_started.wait()
+        # setup message queues
+        self._ensemble.scheduler_queue = self._events
+        self._ensemble.manifest_queue = self._manifest_queue
         # let's run
         self._ee_tasks.append(
             asyncio.create_task(

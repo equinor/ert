@@ -164,8 +164,7 @@ class Job:
                 break
 
             if self.returncode.result() == 0:
-                if self._scheduler.wait_for_checksum():
-                    await self._verify_checksum()
+                await self._verify_checksum()
                 await self._handle_finished_forward_model()
                 break
 
@@ -307,7 +306,7 @@ class Job:
                 "queue_event_type": status,
             },
         )
-        await self._scheduler._events.put(to_json(event))
+        await self._scheduler._events.put(event)
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:

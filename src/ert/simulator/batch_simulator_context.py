@@ -94,7 +94,10 @@ class BatchContext:
         ert_config = self.ert_config
         driver = create_driver(ert_config.queue_config)
         self._scheduler = Scheduler(
-            driver, max_running=self.ert_config.queue_config.max_running
+            driver,
+            None,
+            None,
+            max_running=self.ert_config.queue_config.max_running,
         )
         # fill in the missing geo_id data
         global_substitutions = self.ert_config.substitution_list
