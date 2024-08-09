@@ -688,7 +688,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         assert combo_box.count() == 7
-        combo_box.setCurrentIndex(4)
+        combo_box.setCurrentIndex(5)
 
         assert (
             combo_box.currentText()
