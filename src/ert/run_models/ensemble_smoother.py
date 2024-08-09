@@ -16,7 +16,6 @@ from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from ..run_arg import create_run_arguments
 from .base_run_model import StatusEvents, UpdateRunModel
-from .event import RunModelStatusEvent
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -93,27 +92,14 @@ class EnsembleSmoother(UpdateRunModel):
             prior,
             evaluator_server_config,
         )
+        posterior = self.update(prior, ensemble_format % 1)
 
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=0,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-        posterior = self._storage.create_ensemble(
-            experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=1,
-            name=ensemble_format % 1,
-            prior_ensemble=prior,
-        )
         posterior_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )
-        self.update(prior, posterior)
+
         self._evaluate_and_postprocess(
             posterior_args,
             posterior,

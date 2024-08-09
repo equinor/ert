@@ -687,9 +687,23 @@ class UpdateRunModel(BaseRunModel):
             minimum_required_realizations=minimum_required_realizations,
         )
 
-    def update(self, prior: Ensemble, posterior: Ensemble, weight: float = 1.0) -> None:
+    def update(self, prior: Ensemble, posterior_name, weight: float = 1.0) -> Ensemble:
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
+        )
+        self.send_event(
+            RunModelStatusEvent(
+                iteration=0,
+                run_id=prior.id,
+                msg="Creating posterior ensemble..",
+            )
+        )
+        posterior = self._storage.create_ensemble(
+            prior.experiment,
+            ensemble_size=prior.ensemble_size,
+            iteration=prior.iteration + 1,
+            name=posterior_name,
+            prior_ensemble=prior,
         )
         if prior.iteration == 0:
             self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)

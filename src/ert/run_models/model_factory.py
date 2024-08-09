@@ -100,7 +100,6 @@ def _setup_single_test_run(
         random_seed=config.random_seed,
         ensemble_name=args.current_ensemble,
         experiment_name=experiment_name,
-        active_realizations=[True],
         config=config,
         storage=storage,
         status_queue=status_queue,

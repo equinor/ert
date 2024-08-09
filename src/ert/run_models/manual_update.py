@@ -69,14 +69,7 @@ class ManualUpdate(UpdateRunModel):
             raise ErtRunError(
                 f"Prior ensemble with ID: {ensemble_id} does not exists"
             ) from err
-        posterior = self._storage.create_ensemble(
-            experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=prior.iteration + 1,
-            name=ensemble_format % 1,
-            prior_ensemble=prior,
-        )
-        self.update(prior, posterior)
+        self.update(prior, ensemble_format % (prior.iteration + 1))
 
     @classmethod
     def name(cls) -> str:

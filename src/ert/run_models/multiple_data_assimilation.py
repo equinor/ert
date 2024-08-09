@@ -17,7 +17,6 @@ from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
-from .event import RunModelStatusEvent
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -128,31 +127,16 @@ class MultipleDataAssimilation(UpdateRunModel):
         weights_to_run = enumerated_weights[prior.iteration :]
 
         for iteration, weight in weights_to_run:
-            self.send_event(
-                RunModelStatusEvent(
-                    iteration=iteration,
-                    run_id=prior.id,
-                    msg="Creating posterior ensemble..",
-                )
-            )
-            posterior = self._storage.create_ensemble(
-                experiment,
-                name=self.target_ensemble_format % (iteration + 1),  # noqa
-                ensemble_size=prior.ensemble_size,
-                iteration=iteration + 1,
-                prior_ensemble=prior,
+            posterior = self.update(
+                prior,
+                self.target_ensemble_format % (iteration + 1),
+                weight=weight,
             )
             posterior_args = create_run_arguments(
                 self.run_paths,
                 self.active_realizations,
                 ensemble=posterior,
             )
-            self.update(
-                prior,
-                posterior,
-                weight=weight,
-            )
-
             self._evaluate_and_postprocess(
                 posterior_args,
                 posterior,
