@@ -216,6 +216,12 @@ class SnapshotModel(QAbstractItemModel):
                         self.root.max_memory_usage or 0, max_mem_usage
                     )
 
+                real_node.data.finished_forward_model_steps = sum(
+                    1
+                    for color in real_node.data.forward_model_step_status_color_by_id.values()
+                    if color == COLOR_FINISHED
+                )
+
                 # Errors may be unset as the queue restarts the job
                 job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
 
@@ -373,15 +379,11 @@ class SnapshotModel(QAbstractItemModel):
     @staticmethod
     def _real_data(_: QModelIndex, node: RealNode, role: int) -> Any:
         if role == RealJobColorHint:
-            total_count = len(node.data.forward_model_step_status_color_by_id)
-            finished_count = sum(
-                1
-                for color in node.data.forward_model_step_status_color_by_id.values()
-                if color == COLOR_FINISHED
+            return (
+                node.data.real_status_color,
+                node.data.finished_forward_model_steps,
+                len(node.data.forward_model_step_status_color_by_id),
             )
-
-            queue_color = node.data.real_status_color
-            return queue_color, finished_count, total_count
         if role == RealLabelHint:
             return node.id_
         if role == RealIens:
