@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+from pathlib import Path
 
 import numpy
 import py
@@ -14,6 +15,14 @@ from resdata.summary import Summary
 
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
+
+
+def source_dir() -> Path:
+    current_path = Path(__file__)
+    source = current_path.parent.parent
+    if not (source / "test-data" / "poly_template").exists():
+        raise RuntimeError("Cannot find the source folder")
+    return source
 
 
 def write_summary_spec(file, keywords):
@@ -150,9 +159,12 @@ if __name__ == "__main__":
             folder.remove()
     else:
         folder = py.path.local(tempfile.mkdtemp())
+
+    source_dir = source_dir()
+
     make_poly_example(
-        folder,
-        "test-data/poly_template",
+        folder=folder,
+        source=source_dir / "test-data/poly_template",
         gen_data_count=3400,
         gen_data_entries=150,
         summary_data_entries=100,
