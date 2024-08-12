@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import time
+import traceback
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager
@@ -347,7 +348,8 @@ class BaseRunModel:
         msg = "\n".join(error_messages)
         if exception is None:
             return msg
-        return f"{exception}\n{msg}"
+
+        return f"{exception}\n{msg}\n{traceback.format_tb(exception.__traceback__)}"
 
     def get_runtime(self) -> int:
         if self.start_time is None:
