@@ -93,4 +93,7 @@ Note that the following behaviour provides identical results:
 see example :ref:`create_script`
 
 .. _Pre-configured jobs:
+
+Pre-configured forward models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. ert_forward_model::
