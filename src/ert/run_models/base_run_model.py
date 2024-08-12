@@ -243,7 +243,7 @@ class BaseRunModel:
         return self._queue_config.queue_system
 
     @property
-    def _ensemble_size(self) -> int:
+    def ensemble_size(self) -> int:
         return len(self._initial_realizations_mask)
 
     def cancel(self) -> None:
@@ -645,13 +645,13 @@ class BaseRunModel:
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
         )
         event_logger.info(
-            f"Experiment ran with number of realizations: {self._ensemble_size}"
+            f"Experiment ran with number of realizations: {self.ensemble_size}"
         )
         event_logger.info(
             f"Experiment run ended with number of realizations succeeding: {num_successful_realizations}"
         )
         event_logger.info(
-            f"Experiment run ended with number of realizations failing: {self._ensemble_size - num_successful_realizations}"
+            f"Experiment run ended with number of realizations failing: {self.ensemble_size - num_successful_realizations}"
         )
         event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
 

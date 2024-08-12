@@ -49,7 +49,6 @@ class ManualUpdate(UpdateRunModel):
         )
         self.prior_ensemble_id = simulation_arguments.ensemble_id
         self.target_ensemble_format = simulation_arguments.target_ensemble
-        self.ensemble_size = simulation_arguments.ensemble_size
         self.support_restart = False
 
     def run_experiment(

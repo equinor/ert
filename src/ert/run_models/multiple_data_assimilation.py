@@ -45,7 +45,6 @@ class MultipleDataAssimilation(UpdateRunModel):
 
         self.target_ensemble_format = simulation_arguments.target_ensemble
         self.experiment_name = simulation_arguments.experiment_name
-        self.ensemble_size = simulation_arguments.ensemble_size
         self.restart_run = simulation_arguments.restart_run
         self.prior_ensemble_id = simulation_arguments.prior_ensemble_id
         if self.restart_run:

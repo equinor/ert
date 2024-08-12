@@ -35,7 +35,7 @@ def test_active_realizations(initials):
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
-    assert brm._ensemble_size == len(initials)
+    assert brm.ensemble_size == len(initials)
 
 
 @pytest.mark.parametrize(

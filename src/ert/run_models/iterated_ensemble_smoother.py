@@ -55,7 +55,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         self.target_ensemble_format = simulation_arguments.target_ensemble
         self.experiment_name = simulation_arguments.experiment_name
-        self.ensemble_size = simulation_arguments.ensemble_size
 
         super().__init__(
             config,

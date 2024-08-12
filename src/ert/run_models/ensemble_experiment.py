@@ -36,7 +36,6 @@ class EnsembleExperiment(BaseRunModel):
     ):
         self.ensemble_name = simulation_arguments.ensemble_name
         self.experiment_name = simulation_arguments.experiment_name
-        self.ensemble_size = simulation_arguments.ensemble_size
         self.experiment: Experiment | None = None
         self.ensemble: Ensemble | None = None
 

@@ -6,7 +6,6 @@ from typing import List, Optional
 class SimulationArguments:
     random_seed: Optional[int]
     minimum_required_realizations: int
-    ensemble_size: int
     active_realizations: List[bool]
 
 
