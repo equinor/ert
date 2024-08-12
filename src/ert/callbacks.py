@@ -71,6 +71,9 @@ async def _write_responses_to_storage(
             errors.append(str(err))
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
+
+    run_arg.ensemble_storage.combine_responses_within_realization(run_arg.iens)
+
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
 
 

@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Set
 from uuid import UUID
 
 import numpy as np
@@ -294,3 +294,47 @@ class LocalExperiment(BaseMode):
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
         }
+
+    @cached_property
+    def response_key_to_response_type(self) -> Dict[str, str]:
+        response_key_to_type = {}
+
+        for config in self.response_configuration.values():
+            response_key_to_type[config.name] = config.response_type
+
+        return response_key_to_type
+
+    @cached_property
+    def all_response_types(self) -> Set[str]:
+        return set(self.response_key_to_response_type.values())
+
+    @cached_property
+    def all_response_types_with_one_file_per_key(self) -> Set[str]:
+        return {
+            config.response_type
+            for config in self.response_configuration.values()
+            if config.dataset_cardinality == "one_file_per_key"
+        }
+
+    @cached_property
+    def all_response_types_with_one_file_per_realization(self) -> Set[str]:
+        return {
+            config.response_type
+            for config in self.response_configuration.values()
+            if config.dataset_cardinality == "one_file_per_realization"
+        }
+
+    @cached_property
+    def response_type_to_response_keys(self) -> Dict[str, List[str]]:
+        response_keys_per_response_type: Dict[str, List[str]] = {}
+
+        for config in self.response_configuration.values():
+            if config.dataset_cardinality != "one_file_per_key":
+                continue
+
+            if config.response_type not in response_keys_per_response_type:
+                response_keys_per_response_type[config.response_type] = []
+
+            response_keys_per_response_type[config.response_type].append(config.name)
+
+        return response_keys_per_response_type

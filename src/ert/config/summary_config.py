@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Set, Union
+from typing import TYPE_CHECKING, Literal, Set, Union
 
 import xarray as xr
 
@@ -45,3 +45,13 @@ class SummaryConfig(ResponseConfig):
             coords={"time": time_map, "name": keys},
         )
         return ds.drop_duplicates("time")
+
+    @property
+    def dataset_cardinality(
+        self,
+    ) -> Literal["one_file_per_key", "one_file_per_realization"]:
+        return "one_file_per_realization"
+
+    @property
+    def response_type(self) -> str:
+        return "summary"

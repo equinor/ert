@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import numpy as np
 import xarray as xr
@@ -105,3 +105,13 @@ class GenDataConfig(ResponseConfig):
         if errors:
             raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
         return xr.combine_nested(datasets, concat_dim="report_step")
+
+    @property
+    def dataset_cardinality(
+        self,
+    ) -> Literal["one_file_per_key", "one_file_per_realization"]:
+        return "one_file_per_key"
+
+    @property
+    def response_type(self) -> str:
+        return "gen_data"

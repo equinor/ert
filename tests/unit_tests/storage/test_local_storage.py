@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import tempfile
 from dataclasses import dataclass, field
@@ -9,6 +10,7 @@ from uuid import UUID
 
 import hypothesis.strategies as st
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 from hypothesis import assume
@@ -327,6 +329,65 @@ def test_get_unique_experiment_name(snake_oil_storage):
         assert snake_oil_storage.get_unique_experiment_name("name") == "name"
         assert snake_oil_storage.get_unique_experiment_name("__name__") == "__name__"
         assert snake_oil_storage.get_unique_experiment_name("") == "default_0"
+
+
+def test_that_only_gen_datas_are_combined_per_realization(tmp_path):
+    num_reals = 19
+    with open_storage(tmp_path, mode="w") as storage:
+        gen_data_keys = [f"GEN_DATA_{i}" for i in range(num_reals)]
+        experiment = storage.create_experiment(
+            name="test-experiment",
+            responses=[
+                *[GenDataConfig(k) for k in gen_data_keys],
+                SummaryConfig(
+                    name="summary",
+                    input_file="dont_care",
+                    keys=["WOPR_OP1", "WOPR_OP2"],
+                ),
+            ],
+        )
+
+        experiment_path = Path(storage.path / "experiments" / str(experiment.id))
+        assert experiment_path.exists()
+
+        assert (experiment_path / experiment._parameter_file).exists()
+        assert (experiment_path / experiment._responses_file).exists()
+
+        ens = experiment.create_ensemble(ensemble_size=num_reals, name="ens")
+
+        rng = np.random.default_rng(1234)
+
+        for _realization in range(num_reals):
+            smry_data = np.random.default_rng().uniform(0.01, 10.2, (10, 10))
+            smry_dates = [
+                (pd.to_datetime("1970-01-01") + pd.DateOffset(years=i))
+                for i in range(10)
+            ]
+            smry_keys = [f"smry_{i}" for i in range(10)]
+
+            ens.save_response(
+                "summary",
+                xr.Dataset(
+                    {"values": (["name", "time"], smry_data)},
+                    coords={"time": smry_dates, "name": smry_keys},
+                ),
+                realization=_realization,
+            )
+
+            for k in gen_data_keys:
+                data = rng.uniform(0.8, 1, 3)
+                ds = xr.Dataset(
+                    {"values": (["report_step", "index"], [data])},
+                    coords={"index": range(len(data)), "report_step": [0]},
+                )
+
+                ens.save_response(k, ds, realization=_realization)
+
+            ens.combine_responses_within_realization(realization=_realization)
+
+        for _realization in range(num_reals):
+            realdir = ens._realization_dir(_realization)
+            assert set(os.listdir(realdir)) == {"summary.nc", "gen_data.nc"}
 
 
 def add_to_name(prefix: str):

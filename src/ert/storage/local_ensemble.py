@@ -290,13 +290,53 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
 
-        if key:
-            return (path / f"{key}.nc").exists()
+        def _ds_exists_for_key(
+            _key: str, datasets_per_response_type: Dict[str, Optional[xr.Dataset]]
+        ) -> bool:
+            nonlocal realization
+            response_type = self.experiment.response_key_to_response_type.get(
+                _key, _key
+            )
+            if (
+                response_type
+                in self.experiment.all_response_types_with_one_file_per_realization
+            ):
+                return (path / f"{response_type}.nc").exists()
+            if (
+                response_type
+                in self.experiment.all_response_types_with_one_file_per_key
+            ):
+                ds_for_response_type = datasets_per_response_type[response_type]
 
-        return all(
-            (path / f"{response}.nc").exists()
-            for response in self.experiment.response_configuration
-        )
+                if ds_for_response_type is not None:
+                    return _key in ds_for_response_type["name"]
+
+                return (path / f"{_key}.nc").exists()
+
+            return False
+
+        if key is not None:
+            response_type = self.experiment.response_key_to_response_type.get(key, key)
+            ds_for_type = (
+                xr.open_dataset(path / f"{response_type}.nc")
+                if (path / f"{response_type}.nc").exists()
+                else None
+            )
+            return _ds_exists_for_key(key, {response_type: ds_for_type})
+        else:
+            preloaded_datasets = {
+                response_type: (
+                    xr.open_dataset(path / f"{response_type}.nc")
+                    if (path / f"{response_type}.nc").exists()
+                    else None
+                )
+                for response_type in self.experiment.all_response_types
+            }
+
+            return all(
+                _ds_exists_for_key(response, preloaded_datasets)
+                for response in self.experiment.response_configuration
+            )
 
     def is_initalized(self) -> List[int]:
         """
@@ -329,14 +369,7 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with responses
         """
-        return [
-            i
-            for i in range(self.ensemble_size)
-            if all(
-                (self._realization_dir(i) / f"{response}.nc").exists()
-                for response in self.experiment.response_configuration
-            )
-        ]
+        return self.get_realization_list_with_responses()
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
         """
@@ -589,6 +622,20 @@ class LocalEnsemble(BaseMode):
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
         dataset.to_netcdf(path=file_path, engine="scipy")
 
+    def _load_response(self, key: str, realization: int) -> xr.Dataset:
+        real_dir = self._realization_dir(realization)
+        input_path = real_dir / f"{key}.nc"
+        if input_path.exists():
+            return xr.open_dataset(input_path, engine="scipy")
+
+        if key in self.experiment.response_key_to_response_type:
+            response_type = self.experiment.response_key_to_response_type.get(key, key)
+            combined_path = real_dir / f"{response_type}.nc"
+            if combined_path.exists():
+                return xr.open_dataset(combined_path).sel(name=key, drop=True)
+
+        raise KeyError(f"No response for key {key}, realization: {realization}")
+
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
         """Load responses for key and realizations into xarray Dataset.
@@ -611,13 +658,11 @@ class LocalEnsemble(BaseMode):
 
         if key not in self.experiment.response_configuration:
             raise ValueError(f"{key} is not a response")
+
         loaded = []
         for realization in realizations:
-            input_path = self._realization_dir(realization) / f"{key}.nc"
-            if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
-            ds = xr.open_dataset(input_path, engine="scipy")
-            loaded.append(ds)
+            loaded.append(self._load_response(key, realization))
+
         return xr.combine_nested(loaded, concat_dim="realization")
 
     @deprecated("Use load_responses")
@@ -828,19 +873,48 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.INITIALIZED
-            if (path / f"{e}.nc").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.INITIALIZED
+                if (path / f"{e}.nc").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
     def get_response_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
-        path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.HAS_DATA
-            if (path / f"{e}.nc").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.HAS_DATA
+                if self._responses_exist_for_realization(realization, e)
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.response_configuration
         }
+
+    def combine_responses_within_realization(self, realization: int) -> None:
+        """
+        Within one, this will combine
+        responses with dataset_cardinality == "one_file_per_key"
+        into a new file named {response_type}.nc
+        """
+        real_dir = self._realization_dir(realization)
+
+        for (
+            _response_type,
+            _keys,
+        ) in self.experiment.response_type_to_response_keys.items():
+            ds_paths = [real_dir / f"{name}.nc" for name in _keys]
+
+            combined = xr.concat(
+                [
+                    xr.open_dataset(_path).expand_dims(name=[_key])
+                    for _key, _path in zip(_keys, ds_paths)
+                ],
+                dim="name",
+            )
+            combined.to_netcdf(real_dir / f"{_response_type}.nc", engine="scipy")
+
+            for _old_ds_path in ds_paths:
+                os.remove(_old_ds_path)
