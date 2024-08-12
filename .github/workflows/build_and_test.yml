@@ -17,60 +17,18 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  build-linux:
+
+  build-wheels:
     strategy:
       fail-fast: false
       matrix:
         python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
-    uses: ./.github/workflows/build-wheels-linux.yml
+
+    uses: ./.github/workflows/build-wheels.yml
     with:
       python-version: ${{ matrix.python-version }}
-
-  build-mac-for-tags:
-    if: github.ref_type == 'tag' # only build all variants for tags
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
-        # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
-        os: [ 'macos-13', 'macos-14', 'macos-14-large']
-        exclude:
-          - os: 'macos-14'
-            python-version: '3.8'
-          - os: 'macos-14'
-            python-version: '3.9'
-          - os: 'macos-14'
-            python-version: '3.10'
-          - os: 'macos-14-large'
-            python-version: '3.8'
-          - os: 'macos-14-large'
-            python-version: '3.9'
-          - os: 'macos-14-large'
-            python-version: '3.10'
-          - os: 'macos-13'
-            python-version: '3.11'
-          - os: 'macos-13'
-            python-version: '3.12'
-
-    uses: ./.github/workflows/build-wheels-macos.yml
-    with:
-      python-version: ${{ matrix.python-version }}
-      os: ${{ matrix.os }}
-
-  build-mac:
-    if: github.ref_type != 'tag' # one combination when not tag
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.12' ]
-        os: [ 'macos-latest' ]
-    uses: ./.github/workflows/build-wheels-macos.yml
-    with:
-      python-version: ${{ matrix.python-version }}
-      os: ${{ matrix.os }}
 
   test-linux:
-    needs: [build-linux]
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +42,6 @@ jobs:
       test-type: ${{ matrix.test-type }}
 
   test-slurm:
-    needs: [build-linux]
     strategy:
       fail-fast: false
       matrix:
@@ -97,7 +54,6 @@ jobs:
 
   test-mac-for-tags:
     if: github.ref_type == 'tag' # only test all variants for tags
-    needs: [build-mac-for-tags]
     strategy:
       fail-fast: false
       matrix:
@@ -120,7 +76,6 @@ jobs:
 
   test-mac:
     if: github.ref_type != 'tag' # one combination when not tag
-    needs: [build-mac]
     strategy:
       fail-fast: false
       matrix:
@@ -135,7 +90,6 @@ jobs:
 
   docs-ert:
     name: Test ert docs
-    needs: [build-linux]
     strategy:
       fail-fast: false
       matrix:
@@ -164,14 +118,9 @@ jobs:
         cache-dependency-path: |
           pyproject.toml
 
-    - name: Get wheels
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel
+    - name: Install ert
       run: |
-        find . -name "*.whl" -exec pip install "{}[dev]" \;
+        pip install ".[dev]"
 
     - name: Make test directory
       run: |
@@ -187,7 +136,7 @@ jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [test-linux, test-mac-for-tags, docs-ert]
+    needs: [build-wheels, test-linux, test-mac-for-tags, docs-ert]
     permissions:
       id-token: write
 

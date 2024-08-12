@@ -24,14 +24,9 @@ jobs:
           setup.py
           pyproject.toml
 
-    - name: Get wheels
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.os }} Python ${{ inputs.python-version }} wheel
-
-    - name: Install wheel
+    - name: Install ert
       run: |
-        find . -name "*.whl" -exec pip install "{}[dev]" \;
+        pip install ".[dev]"
 
     - name: Install and setup slurm
       run: |
