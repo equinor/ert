@@ -213,6 +213,7 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
 @pytest.fixture(
     name="copy_snake_oil_field_storage",
 )
+@pytest.mark.xdist_group(name="snake_oil_case_field_storage")
 def fixture_copy_snake_oil_field_storage(
     _shared_snake_oil_field, tmp_path, monkeypatch
 ):
