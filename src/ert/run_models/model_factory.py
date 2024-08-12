@@ -246,9 +246,9 @@ def _setup_multiple_data_assimilation(
             weights=args.weights,
             restart_run=restart_run,
             prior_ensemble_id=prior_ensemble,
-            starting_iteration=storage.get_ensemble(prior_ensemble).iteration + 1
-            if restart_run
-            else 0,
+            starting_iteration=(
+                storage.get_ensemble(prior_ensemble).iteration + 1 if restart_run else 0
+            ),
             minimum_required_realizations=config.analysis_config.minimum_required_realizations,
             ensemble_size=config.model_config.num_realizations,
             experiment_name=args.experiment_name,
