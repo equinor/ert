@@ -116,10 +116,16 @@ class PlotApi:
                     self._check_response(response)
                     for key, value in response.json().items():
                         assert isinstance(key, str)
+
+                        has_observation = value["has_observations"]
+                        k = all_keys.get(key)
+                        if k and k.observations:
+                            has_observation = True
+
                         all_keys[key] = PlotApiKeyDefinition(
                             key=key,
                             index_type="VALUE",
-                            observations=value["has_observations"],
+                            observations=has_observation,
                             dimensionality=2,
                             metadata=value["userdata"],
                             log_scale=key.startswith("LOG10_"),
