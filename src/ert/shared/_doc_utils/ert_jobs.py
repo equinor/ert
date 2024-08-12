@@ -240,6 +240,45 @@ class _ErtDocumentation(SphinxDirective):
                 category_section_node.append(nodes.transition())
         return [main_node]
 
+    def _generate_job_documentation_without_title(
+        self,
+        jobs: Union[
+            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
+        ],
+    ) -> List[nodes.section]:
+        job_categories = _ErtDocumentation._divide_into_categories(jobs)
+        node_list = []
+
+        for category_index, category in enumerate(sorted(job_categories.keys())):
+            category_section_node = _create_section_with_title(
+                section_id=category + "-category", title=category.capitalize()
+            )
+            sub_jobs_map = job_categories[category]
+            for sub_i, sub in enumerate(sorted(sub_jobs_map.keys())):
+                sub_section_node = _create_section_with_title(
+                    section_id=category + "-" + sub + "-subcategory",
+                    title=sub.capitalize(),
+                )
+
+                for job in sub_jobs_map[sub]:
+                    job_section_node = job.create_node(self.state)
+                    sub_section_node.append(job_section_node)
+
+                # A section is not allowed to end with a transition,
+                # so we don't add after the last sub-category
+                if sub_i < len(sub_jobs_map) - 1:
+                    sub_section_node.append(nodes.transition())
+
+                category_section_node.append(sub_section_node)
+
+            node_list.append(category_section_node)
+
+            # A section is not allowed to end with a transition,
+            # so we don't add after the last category
+            if category_index < len(job_categories) - 1:
+                category_section_node.append(nodes.transition())
+        return node_list
+
 
 def _parse_raw_rst(rst_string: str, node: nodes.Node, state: Any) -> None:
     string_list = docutils.statemachine.StringList(list(rst_string.split("\n")))
@@ -267,14 +306,10 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
         **pm.get_documentation_for_jobs(),
         **pm.get_documentation_for_forward_model_steps(),
     }
-    _TITLE = "Pre-configured forward models"
-    _SECTION_ID = "ert-forward-models"
 
     def run(self) -> List[nodes.section]:
-        section_id = ErtForwardModelDocumentation._SECTION_ID
-        title = ErtForwardModelDocumentation._TITLE
-        return self._generate_job_documentation(
-            ErtForwardModelDocumentation._JOBS, section_id, title
+        return self._generate_job_documentation_without_title(
+            ErtForwardModelDocumentation._JOBS,
         )
 
 
