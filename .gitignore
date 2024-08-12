@@ -1,36 +1,48 @@
-*.o
-*.so
-.svn/
-*/.svn/
-*.pyc
-*~
-*.user
-*.user.*
+# NFS files marked for deletion
 .nfs*
+
+# Temporary files when editing
 *.swp
+*~
+
+# IDE ignore
+## IntelliJ/PyCharm
 .idea
+*.iml
+## VS code
 .vscode
+## Eclipse?
+/.project
+
+# pytest ignores
 .pytest_cache
+
+# bytecode compiled python
 __pycache__
-/build
-/src/build
-/test-data/Equinor
+
+# GNU tags
 /GPATH
 /GRTAGS
 /GTAGS
 /gtags.sh
-/cmake.sh
-scratch.sparsebundle
-*.iml
+
+# MacOS
 *.DS_Store
-/.project
-*.egg*
-/dist
-src/ert/shared/version.py
+scratch.sparsebundle
+
+# Common Python virtual env dir
 /venv
+
+# python package. by distutils
+*.egg*
+
+# pip install
+src/ert/shared/version.py
+## pip install without -e
+/build
+
+# cache folder for hypothesis framework
 .hypothesis
-/_skbuild
-.libs
-/compile_commands.json
-*_pb2.py
-*_pb2.pyi
+
+# config for pyright
+pyrightconfig.json
