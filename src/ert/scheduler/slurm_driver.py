@@ -73,8 +73,8 @@ class SlurmDriver(Driver):
         realization_memory: Optional[int] = 0,
         queue_name: Optional[str] = None,
         memory_per_cpu: Optional[str] = None,
-        max_runtime: Optional[str] = None,
-        squeue_timeout: Optional[str] = None,
+        max_runtime: Optional[float] = None,
+        squeue_timeout: float = 2,
         project_code: Optional[str] = None,
     ) -> None:
         """
@@ -125,7 +125,7 @@ class SlurmDriver(Driver):
 
         self._sleep_time_between_cmd_retries = 3
         self._sleep_time_between_kills = 30
-        self._poll_period = 2 if squeue_timeout is None else int(squeue_timeout)
+        self._poll_period = squeue_timeout
         self._project_code = project_code
 
     def _submit_cmd(

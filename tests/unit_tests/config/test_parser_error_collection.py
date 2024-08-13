@@ -105,7 +105,9 @@ def find_and_assert_errors_matching_message(
     re_match = re.compile(match)
     matching_errors = [err for err in errors if re.search(re_match, err.message)]
 
-    assert len(matching_errors) > 0, f"Expected to find error matching message {match}"
+    assert (
+        len(matching_errors) > 0
+    ), f"Expected to find error matching message {match} {errors}"
 
     return matching_errors
 
@@ -477,7 +479,7 @@ def test_queue_option_max_running_non_int():
             line=4,
             column=32,
             end_column=33,
-            match=r"'s' for MAX_RUNNING is not a valid positive integer.",
+            match=r"Input should be a valid integer, unable to parse string as an integer",
         ),
     )
 
@@ -675,7 +677,7 @@ def test_queue_option_max_running_negative():
             line=4,
             column=32,
             end_column=34,
-            match="'-1' for MAX_RUNNING is not a valid positive integer.",
+            match="Input should be greater than or equal to 0. Got input '-1'.",
         ),
     )
 

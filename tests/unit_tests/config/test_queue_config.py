@@ -12,6 +12,13 @@ from ert.config import (
     QueueSystem,
 )
 from ert.config.parsing import ConfigKeys
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
+from ert.scheduler import LocalDriver, LsfDriver, OpenPBSDriver, SlurmDriver
 
 
 def test_create_local_copy_is_a_copy_with_local_queue_system():
@@ -39,7 +46,7 @@ def test_project_code_is_set_when_forward_model_contains_selected_simulator(
             ConfigKeys.QUEUE_SYSTEM: queue_system,
         }
     )
-    project_code = queue_config.selected_queue_options.get("PROJECT_CODE")
+    project_code = queue_config.queue_options.project_code
 
     assert project_code is not None
     assert "flow" in project_code and "rms" in project_code
@@ -52,13 +59,11 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
             ConfigKeys.FORWARD_MODEL: [("FLOW",), ("RMS",)],
             ConfigKeys.QUEUE_SYSTEM: queue_system,
             "QUEUE_OPTION": [
-                (queue_system, "PROJECT_CODE", "test_code"),
+                [queue_system, "PROJECT_CODE", "test_code"],
             ],
         }
     )
-    project_code = queue_config.selected_queue_options.get("PROJECT_CODE")
-
-    assert project_code == "test_code"
+    assert queue_config.queue_options.project_code == "test_code"
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -161,7 +166,7 @@ def test_conflicting_realization_slurm_memory(tmpdir):
         f.write("NUM_REALIZATIONS 1\n")
         f.write("REALIZATION_MEMORY 10Mb\n")
         f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY 20m\n")
+        f.write("QUEUE_OPTION SLURM MEMORY 20M\n")
 
     with pytest.raises(ConfigValidationError), pytest.warns(
         ConfigWarning, match="deprecated"
@@ -175,7 +180,7 @@ def test_conflicting_realization_slurm_memory_per_cpu(tmpdir):
         f.write("NUM_REALIZATIONS 1\n")
         f.write("REALIZATION_MEMORY 10Mb\n")
         f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 20m\n")
+        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 20M\n")
 
     with pytest.raises(ConfigValidationError):
         ErtConfig.from_file(filename)
@@ -187,7 +192,7 @@ def test_conflicting_realization_openpbs_memory_per_job(tmpdir):
         f.write("NUM_REALIZATIONS 1\n")
         f.write("REALIZATION_MEMORY 10Mb\n")
         f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20m\n")
+        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n")
 
     with pytest.raises(ConfigValidationError), pytest.warns(
         ConfigWarning, match="deprecated"
@@ -203,7 +208,7 @@ def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only
         f.write("NUM_REALIZATIONS 1\n")
         f.write("REALIZATION_MEMORY 10Mb\n")
         f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20m\n")
+        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n")
 
     with pytest.warns(ConfigWarning):
         ErtConfig.from_file(filename)
@@ -276,18 +281,18 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     config_object = ErtConfig.from_file(filename)
 
     if queue_system == "LSF":
-        assert config_object.queue_config.selected_queue_options["LSF_QUEUE"] == ""  # noqa
+        assert config_object.queue_config.queue_options.lsf_queue is None
     if queue_system == "SLURM":
-        assert config_object.queue_config.selected_queue_options["SQUEUE"] == ""  # noqa
-    assert config_object.queue_config.selected_queue_options["MAX_RUNNING"] == ""  # noqa
+        assert config_object.queue_config.queue_options.squeue == "squeue"
+    assert config_object.queue_config.queue_options.max_running == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_option, queue_value, err_msg",
     [
-        ("SLURM", "SQUEUE_TIMEOUT", "5a", "is not a valid integer or float"),
-        ("TORQUE", "NUM_NODES", "3.5", "is not a valid positive integer"),
+        ("SLURM", "SQUEUE_TIMEOUT", "5a", "should be a valid number"),
+        ("TORQUE", "NUM_NODES", "3.5", "should be a valid integer"),
     ],
 )
 def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_msg):
@@ -313,12 +318,12 @@ def test_that_configuring_another_queue_system_gives_warning():
         f.write("QUEUE_SYSTEM LSF\n")
         f.write("QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n")
 
-    with pytest.warns(ConfigWarning, match="is not a valid integer or float"):
+    with pytest.warns(ConfigWarning, match="should be a valid number"):
         ErtConfig.from_file(filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_slurm_queue_mem_options_are_corrected():
+def test_that_slurm_queue_mem_options_are_validated():
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
@@ -326,13 +331,11 @@ def test_that_slurm_queue_mem_options_are_corrected():
         f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n")
 
     with pytest.raises(ConfigValidationError) as e:
-        ert_config = ErtConfig.from_file(filename)
-        slurm_opts = ert_config.queue_config.queue_options[QueueSystem.SLURM]
-        assert slurm_opts[0][1] == "5mb"
+        ErtConfig.from_file(filename)
 
     info = e.value.errors[0]
 
-    assert "'5mb' for MEMORY_PER_CPU is not a valid" in info.message
+    assert "Value error, wrong memory format. Got input '5mb'." in info.message
     assert info.line == 3
     assert info.column == 35
     assert info.end_column == info.column + 3
@@ -359,22 +362,23 @@ def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
     ["5", "5g"],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_torque_queue_mem_options_are_corrected(mem_per_job):
+def test_that_torque_queue_mem_options_are_corrected(mem_per_job: str):
     filename = "config.ert"
     with open(filename, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1\n")
         f.write("QUEUE_SYSTEM TORQUE\n")
         f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
 
-    with pytest.raises(ConfigValidationError) as e:
-        with pytest.warns(ConfigWarning, match="deprecated"):
-            ert_config = ErtConfig.from_file(filename)
-        torque_opts = ert_config.queue_config.queue_options[QueueSystem.TORQUE]
-        assert torque_opts[0][1] == mem_per_job
+    with pytest.raises(ConfigValidationError) as e, pytest.warns(
+        ConfigWarning, match="deprecated"
+    ):
+        ErtConfig.from_file(filename)
 
     info = e.value.errors[0]
 
-    assert f"'{mem_per_job}' for MEMORY_PER_JOB is not a valid" in info.message
+    assert (
+        f"Value error, wrong memory format. Got input '{mem_per_job}'." in info.message
+    )
     assert info.line == 3
     assert info.column == 36
     assert info.end_column == info.column + len(mem_per_job)
@@ -524,12 +528,9 @@ def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, v
         f.write("NUM_REALIZATIONS 1\n")
         f.write(f"QUEUE_SYSTEM {queue_system}\n")
         f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
-    error_msg = (
-        "is not a valid positive integer."
-        if key == "MAX_RUNNING"
-        else "is not a valid integer or float."
-    )
-    with pytest.raises(ConfigValidationError, match=error_msg):
+    with pytest.raises(
+        ConfigValidationError, match="Input should be greater than or equal to 0"
+    ):
         ErtConfig.from_file("config.ert")
 
     with open("config.ert", mode="w", encoding="utf-8") as f:
@@ -537,9 +538,24 @@ def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, v
         f.write(f"QUEUE_SYSTEM {queue_system}\n")
         f.write(f"{key} {value}\n")
     error_msg = (
-        "must have a positive integer value as argument 1"
+        "must have a positive integer value"
         if key == "MAX_RUNNING"
-        else "is not a valid integer or float."
+        else "Input should be greater than or equal to 0"
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "queue_system",
+    (QueueSystem.LSF, QueueSystem.TORQUE, QueueSystem.LOCAL, QueueSystem.SLURM),
+)
+def test_driver_initialization_from_defaults(queue_system):
+    if queue_system == QueueSystem.LSF:
+        LsfDriver(**LsfQueueOptions().driver_options)
+    if queue_system == QueueSystem.TORQUE:
+        OpenPBSDriver(**TorqueQueueOptions().driver_options)
+    if queue_system == QueueSystem.LOCAL:
+        LocalDriver(**LocalQueueOptions().driver_options)
+    if queue_system == QueueSystem.SLURM:
+        SlurmDriver(**SlurmQueueOptions().driver_options)

@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 import re
 import shutil
-from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, no_type_check
+from dataclasses import asdict, dataclass, field, fields
+from typing import Any, Dict, List, Mapping, Optional, no_type_check
+
+import pydantic
+from typing_extensions import Annotated
 
 from .parsing import (
     ConfigDict,
@@ -18,123 +20,159 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
-GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING", "SUBMIT_SLEEP"]
-LSF_DRIVER_OPTIONS = [
-    "BHIST_CMD",
-    "BJOBS_CMD",
-    "BKILL_CMD",
-    "BSUB_CMD",
-    "EXCLUDE_HOST",
-    "LSF_QUEUE",
-    "LSF_RESOURCE",
-    "PROJECT_CODE",
-]
-OPENPBS_DRIVER_OPTIONS: List[str] = [
-    "CLUSTER_LABEL",
-    "JOB_PREFIX",
-    "KEEP_QSUB_OUTPUT",
-    "MEMORY_PER_JOB",
-    "NUM_CPUS_PER_NODE",
-    "NUM_NODES",
-    "PROJECT_CODE",
-    "QDEL_CMD",
-    "QSTAT_CMD",
-    "QSTAT_OPTIONS",
-    "QSUB_CMD",
-    "QUEUE",
-    "QUEUE_QUERY_TIMEOUT",
-]
-SLURM_DRIVER_OPTIONS: List[str] = [
-    "EXCLUDE_HOST",
-    "INCLUDE_HOST",
-    "MEMORY",
-    "MEMORY_PER_CPU",
-    "PARTITION",
-    "PROJECT_CODE",
-    "SBATCH",
-    "SCANCEL",
-    "SCONTROL",
-    "SQUEUE",
-    "SQUEUE_TIMEOUT",
-]
+NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
 
-VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
-    QueueSystem.LOCAL: [] + GENERIC_QUEUE_OPTIONS,  # No specific options in driver
-    QueueSystem.LSF: LSF_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
-    QueueSystem.SLURM: SLURM_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
-    QueueSystem.TORQUE: OPENPBS_DRIVER_OPTIONS + GENERIC_QUEUE_OPTIONS,
-    QueueSystem.GENERIC: GENERIC_QUEUE_OPTIONS,
-}
-queue_string_options: Mapping[str, List[str]] = {
-    "LSF": [
-        "LSF_RESOURCE",
-        "LSF_QUEUE",
-        "BSUB_CMD",
-        "BJOBS_CMD",
-        "BKILL_CMD",
-        "BHIST_CMD",
-        "EXCLUDE_HOST",
-        "PROJECT_CODE",
-    ],
-    "SLURM": [
-        "SBATCH",
-        "SCANCEL",
-        "SCONTROL",
-        "SQUEUE",
-        "PARTITION",
-        "INCLUDE_HOST",
-        "EXCLUDE_HOST",
-        "PROJECT_CODE",
-    ],
-    "TORQUE": [
-        "QSUB_CMD",
-        "QSTAT_CMD",
-        "QDEL_CMD",
-        "QSTAT_OPTIONS",
-        "QUEUE",
-        "CLUSTER_LABEL",
-        "JOB_PREFIX",
-        "PROJECT_CODE",
-    ],
-    "LOCAL": ["PROJECT_CODE"],
-    "GENERIC": [],
-}
-queue_positive_int_options: Mapping[str, List[str]] = {
-    "LSF": [
-        "MAX_RUNNING",
-    ],
-    "SLURM": [
-        "MAX_RUNNING",
-    ],
-    "TORQUE": [
-        "NUM_NODES",
-        "NUM_CPUS_PER_NODE",
-        "MAX_RUNNING",
-    ],
-    "LOCAL": ["MAX_RUNNING"],
-    "GENERIC": ["MAX_RUNNING"],
-}
-queue_positive_number_options: Mapping[str, List[str]] = {
-    "LSF": ["SUBMIT_SLEEP"],
-    "SLURM": ["SUBMIT_SLEEP", "SQUEUE_TIMEOUT", "MAX_RUNTIME"],
-    "TORQUE": ["SUBMIT_SLEEP", "QUEUE_QUERY_TIMEOUT"],
-    "LOCAL": ["SUBMIT_SLEEP"],
-    "GENERIC": ["SUBMIT_SLEEP"],
-}
-queue_bool_options: Mapping[str, List[str]] = {
-    "LSF": [],
-    "SLURM": [],
-    "TORQUE": ["KEEP_QSUB_OUTPUT"],
-    "LOCAL": [],
-    "GENERIC": [],
-}
-queue_memory_options: Mapping[str, List[str]] = {
-    "LSF": [],
-    "SLURM": ["MEMORY_PER_CPU", "MEMORY"],
-    "TORQUE": ["MEMORY_PER_JOB"],
-    "LOCAL": [],
-    "GENERIC": [],
-}
+
+@pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
+class QueueOptions:
+    max_running: pydantic.NonNegativeInt = 0
+    submit_sleep: pydantic.NonNegativeFloat = 0.0
+    project_code: Optional[str] = None
+
+    @staticmethod
+    def create_queue_options(
+        queue_system: QueueSystem,
+        options: Dict[str, Any],
+        is_selected_queue_system: bool,
+    ) -> Optional[QueueOptions]:
+        lower_case_options = {key.lower(): value for key, value in options.items()}
+        try:
+            if queue_system == QueueSystem.LSF:
+                return LsfQueueOptions(**lower_case_options)
+            elif queue_system == QueueSystem.SLURM:
+                return SlurmQueueOptions(**lower_case_options)
+            elif queue_system == QueueSystem.TORQUE:
+                return TorqueQueueOptions(**lower_case_options)
+            elif queue_system == QueueSystem.LOCAL:
+                return LocalQueueOptions(**lower_case_options)
+            elif queue_system == QueueSystem.GENERIC:
+                return QueueOptions(**lower_case_options)
+        except pydantic.ValidationError as exception:
+            for error in exception.errors():
+                _throw_error_or_warning(
+                    f"{error['msg']}. Got input '{error['input']}'.",
+                    error["input"],
+                    is_selected_queue_system,
+                )
+            return None
+
+    def add_global_queue_options(self, config_dict: ConfigDict) -> None:
+        for generic_option in fields(QueueOptions):
+            if (
+                generic_value := config_dict.get(generic_option.name.upper(), None)  # type: ignore
+            ) and self.__dict__[generic_option.name] == generic_option.default:
+                try:
+                    setattr(self, generic_option.name, generic_value)
+                except pydantic.ValidationError as exception:
+                    for error in exception.errors():
+                        _throw_error_or_warning(
+                            f"{error['msg']}. Got input '{error['input']}'.",
+                            error["input"],
+                            True,
+                        )
+
+    @property
+    def driver_options(self) -> Dict[str, Any]:
+        """Translate the queue options to the key-value API provided by each driver"""
+        return {}
+
+
+@pydantic.dataclasses.dataclass
+class LocalQueueOptions(QueueOptions):
+    @property
+    def driver_options(self) -> Dict[str, Any]:
+        return {}
+
+
+@pydantic.dataclasses.dataclass
+class LsfQueueOptions(QueueOptions):
+    bhist_cmd: Optional[NonEmptyString] = None
+    bjobs_cmd: Optional[NonEmptyString] = None
+    bkill_cmd: Optional[NonEmptyString] = None
+    bsub_cmd: Optional[NonEmptyString] = None
+    exclude_host: Optional[str] = None
+    lsf_queue: Optional[NonEmptyString] = None
+    lsf_resource: Optional[str] = None
+
+    @property
+    def driver_options(self) -> Dict[str, Any]:
+        driver_dict = asdict(self)
+        driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
+        driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
+        driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
+        driver_dict.pop("submit_sleep")
+        driver_dict.pop("max_running")
+        return driver_dict
+
+
+@pydantic.dataclasses.dataclass
+class TorqueQueueOptions(QueueOptions):
+    qsub_cmd: Optional[NonEmptyString] = None
+    qstat_cmd: Optional[NonEmptyString] = None
+    qdel_cmd: Optional[NonEmptyString] = None
+    queue: Optional[NonEmptyString] = None
+    memory_per_job: Optional[NonEmptyString] = None
+    num_cpus_per_node: pydantic.PositiveInt = 1
+    num_nodes: pydantic.PositiveInt = 1
+    cluster_label: Optional[NonEmptyString] = None
+    job_prefix: Optional[NonEmptyString] = None
+    keep_qsub_output: bool = False
+
+    qstat_options: Optional[str] = pydantic.Field(default=None, deprecated=True)
+    queue_query_timeout: Optional[str] = pydantic.Field(default=None, deprecated=True)
+
+    @property
+    def driver_options(self) -> Dict[str, Any]:
+        driver_dict = asdict(self)
+        driver_dict["queue_name"] = driver_dict.pop("queue")
+        driver_dict.pop("max_running")
+        driver_dict.pop("submit_sleep")
+        driver_dict.pop("qstat_options")
+        driver_dict.pop("queue_query_timeout")
+        return driver_dict
+
+    @pydantic.field_validator("memory_per_job")
+    @classmethod
+    def check_memory_per_job(cls, value: str) -> str:
+        if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
+            raise ValueError("wrong memory format")
+        return value
+
+
+@pydantic.dataclasses.dataclass
+class SlurmQueueOptions(QueueOptions):
+    sbatch: NonEmptyString = "sbatch"
+    scancel: NonEmptyString = "scancel"
+    scontrol: NonEmptyString = "scontrol"
+    squeue: NonEmptyString = "squeue"
+    exclude_host: str = ""
+    include_host: str = ""
+    memory: str = ""
+    memory_per_cpu: Optional[NonEmptyString] = None
+    partition: Optional[NonEmptyString] = None  # aka queue_name
+    squeue_timeout: pydantic.PositiveFloat = 2
+    max_runtime: Optional[pydantic.NonNegativeFloat] = None
+
+    @property
+    def driver_options(self) -> Dict[str, Any]:
+        driver_dict = asdict(self)
+        driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
+        driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
+        driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
+        driver_dict["squeue_cmd"] = driver_dict.pop("squeue")
+        driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
+        driver_dict["include_hosts"] = driver_dict.pop("include_host")
+        driver_dict["queue_name"] = driver_dict.pop("partition")
+        driver_dict.pop("max_running")
+        driver_dict.pop("submit_sleep")
+        return driver_dict
+
+    @pydantic.field_validator("memory", "memory_per_cpu")
+    @classmethod
+    def check_memory_per_job(cls, value: str) -> str:
+        if not queue_memory_usage_formats[QueueSystem.SLURM].validate(value):
+            raise ValueError("wrong memory format")
+        return value
 
 
 @dataclass
@@ -152,9 +190,61 @@ class QueueMemoryStringFormat:
 
 
 queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
-    "SLURM": QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
-    "TORQUE": QueueMemoryStringFormat(suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]),
+    QueueSystem.SLURM: QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
+    QueueSystem.TORQUE: QueueMemoryStringFormat(
+        suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]
+    ),
 }
+valid_options: Dict[str, List[str]] = {
+    QueueSystem.LOCAL.name: [field.name.upper() for field in fields(LocalQueueOptions)],
+    QueueSystem.LSF.name: [field.name.upper() for field in fields(LsfQueueOptions)],
+    QueueSystem.SLURM.name: [field.name.upper() for field in fields(SlurmQueueOptions)],
+    QueueSystem.TORQUE.name: [
+        field.name.upper() for field in fields(TorqueQueueOptions)
+    ],
+    QueueSystem.GENERIC.name: [field.name.upper() for field in fields(QueueOptions)],
+}
+
+
+def _log_duplicated_queue_options(queue_config_list: List[List[str]]) -> None:
+    processed_options: Dict[str, str] = {}
+    for queue_system, option_name, *values in queue_config_list:
+        value = values[0] if values else ""
+        if (
+            option_name in processed_options
+            and processed_options.get(option_name) != value
+        ):
+            logger.info(
+                f"Overwriting QUEUE_OPTION {queue_system} {option_name}:"
+                f" \n Old value: {processed_options[option_name]} \n New value: {value}"
+            )
+        processed_options[option_name] = value
+
+
+def _raise_for_defaulted_invalid_options(queue_config_list: List[List[str]]) -> None:
+    # Invalid options names with no values (i.e. defaulted) are not passed to
+    # the validation system, thus we neeed to catch them expliclitly
+    for queue_system, option_name, *_ in queue_config_list:
+        if option_name not in valid_options[queue_system]:
+            raise ConfigValidationError(
+                f"Invalid QUEUE_OPTION for {queue_system}: '{option_name}'. "
+                f"Valid choices are {sorted(valid_options[queue_system])}."
+            )
+
+
+def _group_queue_options_by_queue_system(
+    queue_config_list: List[List[str]],
+) -> Dict[QueueSystem, Dict[str, str]]:
+    grouped: Dict[QueueSystem, Dict[str, str]] = {}
+    for system in QueueSystem:
+        grouped[system] = {
+            option_line[1]: option_line[2]
+            for option_line in queue_config_list
+            if option_line[0] in (QueueSystem.GENERIC, system)
+            # Empty option values are ignored, yields defaults:
+            and len(option_line) > 2
+        }
+    return grouped
 
 
 @dataclass
@@ -163,7 +253,7 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: Dict[QueueSystem, Dict[str, str]] = field(default_factory=dict)
+    queue_options: QueueOptions = field(default_factory=QueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
@@ -180,42 +270,80 @@ class QueueConfig:
         )
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
-        queue_options: Dict[QueueSystem, Dict[str, str]] = defaultdict(dict)
-        for queue_system, option_name, *values in config_dict.get("QUEUE_OPTION", []):
-            if queue_system == QueueSystem.GENERIC:
-                queue_system = selected_queue_system
-            if option_name not in VALID_QUEUE_OPTIONS[queue_system]:
-                raise ConfigValidationError(
-                    f"Invalid QUEUE_OPTION for {queue_system.name}: '{option_name}'. "
-                    f"Valid choices are {sorted(VALID_QUEUE_OPTIONS[queue_system])}."
-                )
 
-            value = values[0] if values else ""
-            if (
-                option_name in queue_options[queue_system]
-                and queue_options[queue_system][option_name] != value
-            ):
-                logger.info(
-                    f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
-                    f" \n Old value: {queue_options[queue_system][option_name]} \n New value: {value}"
-                )
-            queue_options[queue_system][option_name] = value
-
-        queue_options[selected_queue_system] = _add_generic_queue_options(
-            config_dict, queue_options[selected_queue_system]
+        _raw_queue_options = config_dict.get("QUEUE_OPTION", [])
+        _grouped_queue_options = _group_queue_options_by_queue_system(
+            _raw_queue_options
         )
 
-        if "PROJECT_CODE" not in queue_options[selected_queue_system]:
+        _log_duplicated_queue_options(_raw_queue_options)
+        _raise_for_defaulted_invalid_options(_raw_queue_options)
+
+        _all_validated_queue_options = {
+            selected_queue_system: QueueOptions.create_queue_options(
+                selected_queue_system,
+                _grouped_queue_options[selected_queue_system],
+                True,
+            )
+        }
+        _all_validated_queue_options.update(
+            {
+                _queue_system: QueueOptions.create_queue_options(
+                    _queue_system, _grouped_queue_options[_queue_system], False
+                )
+                for _queue_system in QueueSystem
+                if _queue_system != selected_queue_system
+            }
+        )
+
+        queue_options = _all_validated_queue_options[selected_queue_system]
+        queue_options.add_global_queue_options(config_dict)
+
+        if queue_options.project_code is None:
             tags = {
                 fm_name.lower()
                 for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
                 if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
             }
             if tags:
-                queue_options[selected_queue_system]["PROJECT_CODE"] = "+".join(tags)
-        _check_queue_option_settings(
-            selected_queue_system, queue_options, config_dict, realization_memory
-        )
+                queue_options.project_code = "+".join(tags)
+
+        if selected_queue_system == QueueSystem.TORQUE:
+            _check_num_cpu_requirement(
+                config_dict.get("NUM_CPU", 1), queue_options, _raw_queue_options
+            )
+
+        for _queue_vals in _all_validated_queue_options.values():
+            if (
+                isinstance(_queue_vals, TorqueQueueOptions)
+                and _queue_vals.memory_per_job
+                and realization_memory
+            ):
+                _throw_error_or_warning(
+                    "Do not specify both REALIZATION_MEMORY and TORQUE option MEMORY_PER_JOB",
+                    "MEMORY_PER_JOB",
+                    selected_queue_system == QueueSystem.TORQUE,
+                )
+            if (
+                isinstance(_queue_vals, SlurmQueueOptions)
+                and _queue_vals.memory
+                and realization_memory
+            ):
+                _throw_error_or_warning(
+                    "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY",
+                    "MEMORY",
+                    selected_queue_system == QueueSystem.SLURM,
+                )
+            if (
+                isinstance(_queue_vals, SlurmQueueOptions)
+                and _queue_vals.memory_per_cpu
+                and realization_memory
+            ):
+                _throw_error_or_warning(
+                    "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY_PER_CPU",
+                    "MEMORY_PER_CPU",
+                    selected_queue_system == QueueSystem.SLURM,
+                )
 
         return QueueConfig(
             job_script,
@@ -237,56 +365,27 @@ class QueueConfig:
         )
 
     @property
-    def selected_queue_options(self) -> Dict[str, str]:
-        return self.queue_options.get(self.queue_system, {})
-
-    @property
     def max_running(self) -> int:
-        return int(self.selected_queue_options.get("MAX_RUNNING", 0))
+        return self.queue_options.max_running
 
     @property
     def submit_sleep(self) -> float:
-        return float(self.selected_queue_options.get("SUBMIT_SLEEP", 0.0))
-
-
-@no_type_check
-def _check_queue_option_settings(
-    selected_queue_system: QueueSystem,
-    queue_options: Dict[QueueSystem, Dict[str, str]],
-    config_dict: ConfigDict,
-    realization_memory: int,
-) -> None:
-    for queue_system, queue_system_options in queue_options.items():
-        if queue_system_options:
-            _validate_queue_driver_settings(
-                queue_system_options,
-                realization_memory,
-                QueueSystem(queue_system).name,
-                throw_error=(queue_system == selected_queue_system),
-            )
-
-    if selected_queue_system == QueueSystem.TORQUE:
-        _check_num_cpu_requirement(
-            config_dict.get("NUM_CPU", 1),
-            queue_options[selected_queue_system],
-        )
+        return self.queue_options.submit_sleep
 
 
 def _check_num_cpu_requirement(
-    num_cpu: int,
-    queue_system_options: Dict[str, str],
+    num_cpu: int, torque_options: TorqueQueueOptions, raw_queue_options: List[List[str]]
 ) -> None:
+    flattened_raw_options = [item for line in raw_queue_options for item in line]
     if (
-        "NUM_NODES" not in queue_system_options
-        and "NUM_CPUS_PER_NODE" not in queue_system_options
+        "NUM_NODES" not in flattened_raw_options
+        and "NUM_CPUS_PER_NODE" not in flattened_raw_options
     ):
         return
-    num_nodes = int(queue_system_options.get("NUM_NODES", 1) or "1")
-    num_cpus_per_node = int(queue_system_options.get("NUM_CPUS_PER_NODE", 1) or "1")
-    if num_cpu != num_nodes * num_cpus_per_node:
+    if num_cpu != torque_options.num_nodes * torque_options.num_cpus_per_node:
         raise ConfigValidationError(
-            f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({num_nodes}) "
-            f"and NUM_CPUS_PER_NODE ({num_cpus_per_node}) must be equal."
+            f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({torque_options.num_nodes}) "
+            f"and NUM_CPUS_PER_NODE ({torque_options.num_cpus_per_node}) must be equal."
         )
 
 
@@ -314,98 +413,16 @@ def _parse_realization_memory_str(realization_memory_str: str) -> int:
     return int(match.group(1)) * multipliers[match.group(2).lower()]
 
 
-def throw_error_or_warning(
+def _throw_error_or_warning(
     error_msg: str, option_value: MaybeWithContext, throw_error: bool
 ) -> None:
     if throw_error:
         raise ConfigValidationError.with_context(
             error_msg,
             option_value,
-        )
+        ) from None
     else:
         ConfigWarning.warn(
             error_msg,
             option_value,
         )
-
-
-def _validate_queue_driver_settings(
-    queue_system_options: Dict[str, str],
-    realization_memory: int,
-    queue_type: str,
-    throw_error: bool,
-) -> None:
-    for option_name, option_value in queue_system_options.items():
-        if not option_value:  # This is equivalent to the option not being set
-            continue
-        elif option_name in queue_memory_options[queue_type]:
-            option_format = queue_memory_usage_formats[queue_type]
-
-            if realization_memory:
-                throw_error_or_warning(
-                    f"Do not specify both REALIZATION_MEMORY and {queue_type} option {option_name}",
-                    option_value,
-                    throw_error,
-                )
-
-            if not option_format.validate(str(option_value)):
-                throw_error_or_warning(
-                    f"'{option_value}' for {option_name} is not a valid string type.",
-                    option_value,
-                    throw_error,
-                )
-        elif option_name in queue_string_options[queue_type] and not isinstance(
-            option_value, str
-        ):
-            throw_error_or_warning(
-                f"'{option_value}' for {option_name} is not a valid string type.",
-                option_value,
-                throw_error,
-            )
-
-        elif option_name in queue_positive_number_options[queue_type] and (
-            re.match(r"^\d+(\.\d+)?$", str(option_value)) is None
-        ):
-            throw_error_or_warning(
-                f"'{option_value}' for {option_name} is not a valid integer or float.",
-                option_value,
-                throw_error,
-            )
-
-        elif option_name in queue_positive_int_options[queue_type] and (
-            re.match(r"^\d+$", str(option_value)) is None
-        ):
-            throw_error_or_warning(
-                f"'{option_value}' for {option_name} is not a valid positive integer.",
-                option_value,
-                throw_error,
-            )
-
-        elif option_name in queue_bool_options[queue_type] and not str(
-            option_value
-        ) in [
-            "TRUE",
-            "FALSE",
-            "0",
-            "1",
-            "T",
-            "F",
-            "True",
-            "False",
-        ]:
-            throw_error_or_warning(
-                f"The '{option_value}' for {option_name} should be either TRUE or FALSE.",
-                option_value,
-                throw_error,
-            )
-
-
-@no_type_check
-def _add_generic_queue_options(
-    config_dict: ConfigDict, queue_options: Dict[str, str]
-) -> Dict[str, str]:
-    for generic_option in GENERIC_QUEUE_OPTIONS:
-        value = config_dict.get(generic_option, None)
-        if generic_option not in queue_options and value is not None:
-            queue_options[generic_option] = value
-    return queue_options

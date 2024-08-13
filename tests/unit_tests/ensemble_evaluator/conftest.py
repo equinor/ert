@@ -9,6 +9,7 @@ import pytest
 import ert.ensemble_evaluator
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_file
+from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
@@ -55,7 +56,7 @@ def queue_config_fixture():
         job_script="job_dispatch.py",
         max_submit=1,
         queue_system=QueueSystem.LOCAL,
-        queue_options={QueueSystem.LOCAL: {"MAX_RUNNING": "50"}},
+        queue_options=LocalQueueOptions(max_running=50),
     )
 
 

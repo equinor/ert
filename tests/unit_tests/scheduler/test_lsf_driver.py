@@ -188,10 +188,9 @@ async def test_submit_with_project_code():
     queue_config = QueueConfig.from_dict(queue_config_dict)
     driver: LsfDriver = create_driver(queue_config)
     await driver.submit(0, "sleep")
-    project_code = queue_config.selected_queue_options["PROJECT_CODE"]
-    assert f"-P {project_code}" in Path("captured_bsub_args").read_text(
-        encoding="utf-8"
-    )
+    assert f"-P {queue_config.queue_options.project_code}" in Path(
+        "captured_bsub_args"
+    ).read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_bsub")

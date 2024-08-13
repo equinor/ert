@@ -136,7 +136,7 @@ class OpenPBSDriver(Driver):
         *,
         queue_name: Optional[str] = None,
         project_code: Optional[str] = None,
-        keep_qsub_output: Optional[str] = None,
+        keep_qsub_output: Optional[bool] = None,
         memory_per_job: Optional[str] = None,
         num_nodes: Optional[int] = None,
         num_cpus_per_node: Optional[int] = None,
@@ -150,7 +150,7 @@ class OpenPBSDriver(Driver):
 
         self._queue_name = queue_name
         self._project_code = project_code
-        self._keep_qsub_output = keep_qsub_output in ["1", "True", "TRUE", "T"]
+        self._keep_qsub_output = keep_qsub_output
         self._memory_per_job = memory_per_job
         self._num_nodes: Optional[int] = num_nodes
         self._num_cpus_per_node: Optional[int] = num_cpus_per_node
