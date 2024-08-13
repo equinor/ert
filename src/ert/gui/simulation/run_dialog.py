@@ -25,6 +25,7 @@ from qtpy.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QSplitter,
     QTableView,
     QTabWidget,
     QVBoxLayout,
@@ -190,6 +191,7 @@ class RunDialog(QDialog):
 
         self._isDetailedDialog = True
         self._minimum_width = 1200
+        self._minimum_height = 800
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -209,7 +211,7 @@ class RunDialog(QDialog):
         self._progress_widget = ProgressWidget()
 
         self._tab_widget = QTabWidget(self)
-        self._tab_widget.setMinimumHeight(200)
+        self._tab_widget.setMinimumHeight(250)
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
@@ -263,9 +265,14 @@ class RunDialog(QDialog):
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_widget)
-        layout.addWidget(self._tab_widget)
         layout.addWidget(self._job_label)
-        layout.addWidget(self._job_overview)
+
+        adjustable_splitter_layout = QSplitter()
+        adjustable_splitter_layout.setOrientation(Qt.Orientation.Vertical)
+        adjustable_splitter_layout.addWidget(self._tab_widget)
+        adjustable_splitter_layout.addWidget(self._job_overview)
+
+        layout.addWidget(adjustable_splitter_layout)
         layout.addWidget(button_widget_container)
 
         self.setLayout(layout)
@@ -276,7 +283,7 @@ class RunDialog(QDialog):
         self.show_details_button.clicked.connect(self.toggle_detailed_progress)
         self.simulation_done.connect(self._on_simulation_done)
 
-        self.setMinimumWidth(self._minimum_width)
+        self.setMinimumSize(self._minimum_width, self._minimum_height)
         self._setDetailedDialog()
         self.finished.connect(self._on_finished)
 
