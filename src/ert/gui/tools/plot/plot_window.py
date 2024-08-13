@@ -194,7 +194,7 @@ class PlotWindow(QMainWindow):
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
-                        selected_ensembles[0].name, key
+                        [ensembles.name for ensembles in selected_ensembles], key
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
