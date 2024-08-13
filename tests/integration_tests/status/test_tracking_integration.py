@@ -223,7 +223,7 @@ def test_tracking(
     for snapshot in snapshots.values():
         successful_reals = list(
             filter(
-                lambda item: item[1].status == REALIZATION_STATE_FINISHED,
+                lambda item: item[1]["status"] == REALIZATION_STATE_FINISHED,
                 snapshot.reals.items(),
             )
         )

@@ -106,7 +106,7 @@ class Monitor:
         failed_jobs: Dict[Optional[str], int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
-                for job in real.forward_models.values():
+                for job in real["forward_models"].values():
                     if job.get(ids.STATUS) == FORWARD_MODEL_STATE_FAILURE:
                         err = job.get(ids.ERROR)
                         result = failed_jobs.get(err, 0)
@@ -120,7 +120,7 @@ class Monitor:
         total_count = len(latest_snapshot.reals)
         aggregate = latest_snapshot.aggregate_real_states()
         for state_ in ALL_REALIZATION_STATES:
-            count = aggregate.get(state_, 0)
+            count = aggregate[state_]
             _countstring = f"{count}/{total_count}"
             out = (
                 f"{self._colorize(self.dot, color=REAL_STATE_TO_COLOR[state_])}"

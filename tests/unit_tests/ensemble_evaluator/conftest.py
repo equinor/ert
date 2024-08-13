@@ -12,10 +12,10 @@ from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
+from tests import SnapshotBuilder
 
 
 @pytest.fixture
@@ -46,6 +46,7 @@ def snapshot():
             name="forward_model3",
             status="Unknown",
         )
+        # .build(["0","1"], status="Unknown")
         .build(["0", "1", "3", "4", "5", "9"], status="Unknown")
     )
 

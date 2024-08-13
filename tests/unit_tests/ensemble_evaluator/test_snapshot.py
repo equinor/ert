@@ -10,8 +10,8 @@ from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
     Snapshot,
-    SnapshotBuilder,
 )
+from tests import SnapshotBuilder
 
 
 def test_snapshot_merge(snapshot: Snapshot):

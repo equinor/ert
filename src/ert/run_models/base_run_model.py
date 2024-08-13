@@ -375,9 +375,9 @@ class BaseRunModel(ABC):
 
         if all_realizations:
             for real in all_realizations.values():
-                status[str(real.status)] += 1
+                status[str(real["status"])] += 1
 
-                if real.status in [
+                if real["status"] in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
                 ]:

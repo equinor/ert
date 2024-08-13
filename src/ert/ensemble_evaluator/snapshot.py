@@ -4,19 +4,19 @@ from collections import defaultdict
 from datetime import datetime
 from typing import (
     Any,
+    Counter,
     DefaultDict,
     Dict,
     List,
     Mapping,
     Optional,
-    Sequence,
     Tuple,
+    TypeVar,
     Union,
     cast,
     get_args,
 )
 
-from pydantic import BaseModel
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
 
@@ -98,10 +98,6 @@ class SnapshotMetadata(TypedDict, total=False):
     sorted_forward_model_ids: DefaultDict[RealId, List[FmStepId]]
 
 
-def _filter_nones(some_dict: Dict[str, Any]) -> Dict[str, Any]:
-    return {key: value for key, value in some_dict.items() if value is not None}
-
-
 class Snapshot:
     """The snapshot class is how we communicate the state of the ensemble between ensemble_evaluator and monitors.
     We start with an empty snapshot and as realizations progress, we send smaller snapshots only
@@ -110,19 +106,16 @@ class Snapshot:
     """
 
     def __init__(self) -> None:
-        self._realization_states: Dict[
-            str,
-            Dict[str, Union[bool, datetime, str, Dict[str, "ForwardModel"]]],
-        ] = defaultdict(dict)
-        """A shallow dictionary of realization states. The key is a string with
-        realization number, pointing to a dict with keys active (bool),
-        start_time (datetime), end_time (datetime), callback_status_message (str) and status (str).
-        callback_status_message is the error message from the data internalization process at the end of the forward model,
-        and status is the error status from the forward model steps"""
+        self._realization_states: DefaultDict[
+            RealId,
+            RealizationSnapshot,
+        ] = defaultdict(RealizationSnapshot)  # type: ignore
+        """A shallow dictionary of realization snapshots. The key is a string with
+        realization number."""
 
-        self._forward_model_states: DefaultDict[Tuple[str, str], ForwardModel] = (
-            defaultdict(ForwardModel)  # type: ignore
-        )
+        self._forward_model_states: DefaultDict[
+            Tuple[RealId, FmStepId], ForwardModel
+        ] = defaultdict(ForwardModel)  # type: ignore
         """A shallow dictionary of forward_model states. The key is a tuple of two
         strings with realization id and forward_model id, pointing to a ForwardModel."""
 
@@ -146,24 +139,21 @@ class Snapshot:
         if "status" in data:
             snapshot._ensemble_state = data["status"]
         for real_id, realization_data in data.get("reals", {}).items():
-            snapshot._realization_states[real_id] = _filter_nones(
-                {
-                    "status": realization_data.get("status"),
-                    "active": realization_data.get("active"),
-                    "start_time": realization_data.get("start_time"),
-                    "end_time": realization_data.get("end_time"),
-                    "callback_status_message": realization_data.get(
-                        "callback_status_message"
-                    ),
-                }
+            snapshot.add_realization(
+                real_id, _realization_dict_to_realization_snapshot(realization_data)
             )
-            for forward_model_id, job in realization_data.get(
-                "forward_models", {}
-            ).items():
-                forward_model_idx = (real_id, forward_model_id)
-                snapshot._forward_model_states[forward_model_idx] = job
-
         return snapshot
+
+    def add_realization(
+        self, real_id: RealId, realization_snapshot: "RealizationSnapshot"
+    ) -> None:
+        self._realization_states[real_id] = realization_snapshot
+
+        for forward_model_id, job in realization_snapshot.get(
+            "forward_models", {}
+        ).items():
+            forward_model_idx = (real_id, forward_model_id)
+            self._forward_model_states[forward_model_idx] = job
 
     def merge_snapshot(self, other_snapshot: "Snapshot") -> "Snapshot":
         self._metadata.update(other_snapshot._metadata)
@@ -182,8 +172,7 @@ class Snapshot:
         self._metadata.update(metadata)
 
     def to_dict(self) -> Dict[str, Any]:
-        """used to send snapshot updates - for thread safety, this method should not
-        access the _snapshot property"""
+        """used to send snapshot updates"""
         _dict: Dict[str, Any] = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
@@ -214,7 +203,7 @@ class Snapshot:
 
     def get_all_forward_models(
         self,
-    ) -> Mapping[Tuple[str, str], "ForwardModel"]:
+    ) -> Mapping[Tuple[RealId, FmStepId], "ForwardModel"]:
         return self._forward_model_states.copy()
 
     def get_forward_model_status_for_all_reals(
@@ -229,38 +218,39 @@ class Snapshot:
 
     @property
     def reals(self) -> Mapping[str, "RealizationSnapshot"]:
-        return {
-            real_id: RealizationSnapshot(**real_data)
-            for real_id, real_data in self._realization_states.items()
-        }
+        return self._realization_states
 
-    def get_forward_models_for_real(self, real_id: str) -> Dict[str, "ForwardModel"]:
+    def get_forward_models_for_real(
+        self, real_id: RealId
+    ) -> Dict[FmStepId, "ForwardModel"]:
         return {
             fm_idx[1]: forward_model_data.copy()
             for fm_idx, forward_model_data in self._forward_model_states.items()
             if fm_idx[0] == real_id
         }
 
-    def get_real(self, real_id: str) -> "RealizationSnapshot":
-        return RealizationSnapshot(**self._realization_states[real_id])
+    def get_real(self, real_id: RealId) -> "RealizationSnapshot":
+        return self._realization_states[real_id]
 
-    def get_job(self, real_id: str, forward_model_id: str) -> "ForwardModel":
+    def get_job(self, real_id: RealId, forward_model_id: FmStepId) -> "ForwardModel":
         return self._forward_model_states[(real_id, forward_model_id)].copy()
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
             int(real_idx)
             for real_idx, real_data in self._realization_states.items()
-            if real_data.get(ids.STATUS, "") == state.REALIZATION_STATE_FINISHED
+            if real_data.get("status", "") == state.REALIZATION_STATE_FINISHED
         ]
 
-    def aggregate_real_states(self) -> typing.Dict[str, int]:
-        states: Dict[str, int] = defaultdict(int)
-        for real in self._realization_states.values():
-            status = real["status"]
-            assert isinstance(status, str)
-            states[status] += 1
-        return states
+    def aggregate_real_states(self) -> Counter[str]:
+        counter = Counter(
+            (
+                real["status"]
+                for real in self._realization_states.values()
+                if real.get("status") is not None
+            )
+        )
+        return counter  # type: ignore
 
     def data(self) -> Mapping[str, Any]:
         # The gui uses this
@@ -276,12 +266,12 @@ class Snapshot:
     ) -> "Snapshot":
         self._realization_states[real_id].update(
             _filter_nones(
-                {
-                    "status": status,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "callback_status_message": callback_status_message,
-                }
+                RealizationSnapshot(
+                    status=status,
+                    start_time=start_time,
+                    end_time=end_time,
+                    callback_status_message=callback_status_message,
+                )
             )
         )
         return self
@@ -356,24 +346,22 @@ class Snapshot:
                     # Make sure error msg from previous failed run is replaced
                     error = ""
 
-            fm = ForwardModel(
-                **_filter_nones(  # type: ignore
-                    {
-                        ids.STATUS: status,
-                        ids.INDEX: event.fm_step,
-                        ids.START_TIME: start_time,
-                        ids.END_TIME: end_time,
-                        ids.ERROR: error,
-                    }
+            fm = _filter_nones(
+                ForwardModel(
+                    status=status,
+                    index=event.fm_step,
+                    start_time=start_time,
+                    end_time=end_time,
+                    error=error,
                 )
             )
 
             if type(event) is ForwardModelStepRunning:
-                fm[ids.CURRENT_MEMORY_USAGE] = event.current_memory_usage
-                fm[ids.MAX_MEMORY_USAGE] = event.max_memory_usage
+                fm["current_memory_usage"] = event.current_memory_usage
+                fm["max_memory_usage"] = event.max_memory_usage
             if type(event) is ForwardModelStepStart:
-                fm[ids.STDOUT] = event.std_out
-                fm[ids.STDERR] = event.std_err
+                fm["stdout"] = event.std_out
+                fm["stderr"] = event.std_err
 
             self.update_forward_model(
                 event.real,
@@ -407,79 +395,39 @@ class ForwardModel(TypedDict, total=False):
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     index: Optional[str]
-    current_memory_usage: Optional[str]
-    max_memory_usage: Optional[str]
+    current_memory_usage: Optional[int]
+    max_memory_usage: Optional[int]
     name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]
     stderr: Optional[str]
 
 
-class RealizationSnapshot(BaseModel):
-    status: Optional[str] = None
-    active: Optional[bool] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    forward_models: Dict[str, ForwardModel] = {}
-    callback_status_message: Optional[str] = None
+class RealizationSnapshot(TypedDict, total=False):
+    status: Optional[str]
+    active: Optional[bool]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    forward_models: Dict[str, ForwardModel]
+    callback_status_message: Optional[str]
 
 
-class SnapshotDict(BaseModel):
-    status: Optional[str] = state.ENSEMBLE_STATE_UNKNOWN
-    reals: Dict[str, RealizationSnapshot] = {}
-    metadata: Dict[str, Any] = {}
+def _realization_dict_to_realization_snapshot(
+    realization_data: Dict[str, Any],
+) -> RealizationSnapshot:
+    realization_snapshot = RealizationSnapshot(
+        status=realization_data.get("status"),
+        active=realization_data.get("active"),
+        start_time=realization_data.get("start_time"),
+        end_time=realization_data.get("end_time"),
+        callback_status_message=realization_data.get("callback_status_message"),
+        forward_models=realization_data.get("forward_models", {}),
+    )
+    return _filter_nones(realization_snapshot)
 
 
-class SnapshotBuilder(BaseModel):
-    forward_models: Dict[str, ForwardModel] = {}
-    metadata: Dict[str, Any] = {}
+T = TypeVar("T", RealizationSnapshot, ForwardModel)
 
-    def build(
-        self,
-        real_ids: Sequence[str],
-        status: Optional[str],
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        callback_status_message: Optional[str] = None,
-    ) -> Snapshot:
-        top = SnapshotDict(status=status, metadata=self.metadata)
-        for r_id in real_ids:
-            top.reals[r_id] = RealizationSnapshot(
-                active=True,
-                forward_models=self.forward_models,
-                start_time=start_time,
-                end_time=end_time,
-                status=status,
-                callback_status_message=callback_status_message,
-            )
-        return Snapshot.from_nested_dict(top.model_dump())
 
-    def add_forward_model(
-        self,
-        forward_model_id: str,
-        index: str,
-        name: Optional[str],
-        status: Optional[str],
-        current_memory_usage: Optional[str] = None,
-        max_memory_usage: Optional[str] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        stdout: Optional[str] = None,
-        stderr: Optional[str] = None,
-    ) -> "SnapshotBuilder":
-        self.forward_models[forward_model_id] = ForwardModel(
-            **_filter_nones(  # type: ignore
-                {
-                    ids.STATUS: status,
-                    ids.INDEX: index,
-                    ids.START_TIME: start_time,
-                    ids.END_TIME: end_time,
-                    ids.NAME: name,
-                    ids.STDOUT: stdout,
-                    ids.STDERR: stderr,
-                    ids.CURRENT_MEMORY_USAGE: current_memory_usage,
-                    ids.MAX_MEMORY_USAGE: max_memory_usage,
-                }
-            )
-        )
-        return self
+def _filter_nones(input: T) -> T:
+    return cast(T, {k: v for k, v in input.items() if v is not None})
