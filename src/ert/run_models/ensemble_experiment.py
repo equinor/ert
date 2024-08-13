@@ -95,8 +95,6 @@ class EnsembleExperiment(BaseRunModel):
             evaluator_server_config,
         )
 
-        self.current_iteration = 1
-
     @classmethod
     def run_message(cls) -> str:
         return "Running ensemble experiment..."

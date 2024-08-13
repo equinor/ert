@@ -340,7 +340,6 @@ class RunDialog(QDialog):
             a0.ignore()
 
     def run_experiment(self, restart: bool = False) -> None:
-        self._run_model.reset()
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
