@@ -185,6 +185,10 @@ class BaseRunModel:
     def name(cls) -> str:
         return "Base run model"
 
+    @classmethod
+    def description(cls) -> str:
+        return "Base run model"
+
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
 
