@@ -93,7 +93,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
-        self._current_iteration_label = "Pre processing update..."
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
             _, self.sies_smoother = iterative_smoother_update(
@@ -115,8 +114,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             raise ErtRunError(
                 f"Update algorithm failed with the following error: {e}"
             ) from e
-
-        self._current_iteration_label = "Post processing update..."
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
     def run_experiment(
@@ -127,7 +124,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
             f'iteration{"s" if (self._total_iterations != 1) else ""}.'
         )
         logger.info(log_msg)
-        self._current_iteration_label = log_msg
 
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(

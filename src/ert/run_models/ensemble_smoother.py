@@ -59,9 +59,7 @@ class EnsembleSmoother(UpdateRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        log_msg = "Running ES"
-        logger.info(log_msg)
-        self._current_iteration_label = log_msg
+        logger.info("Running ES")
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,

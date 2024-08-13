@@ -157,7 +157,6 @@ class BaseRunModel:
         the forward model and passing events back through the supplied queue.
         """
         self._total_iterations = total_iterations
-        self._current_iteration_label: str = "Starting..."
 
         self.start_time: Optional[int] = None
         self.stop_time: Optional[int] = None
@@ -398,7 +397,7 @@ class BaseRunModel:
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 FullSnapshotEvent(
-                    iteration_label=self._current_iteration_label,
+                    iteration_label=f"Running forecast for iteration: {iteration}",
                     current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
@@ -422,7 +421,7 @@ class BaseRunModel:
             status, current_progress, realization_count = self._current_status()
             self.send_event(
                 SnapshotUpdateEvent(
-                    iteration_label=self._current_iteration_label,
+                    iteration_label=f"Running forecast for iteration: {iteration}",
                     current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
@@ -608,8 +607,6 @@ class BaseRunModel:
         ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
-        iteration = ensemble.iteration
-        self._current_iteration_label = f"Running simulation for iteration: {iteration}"
         create_run_path(
             run_args,
             ensemble,
@@ -617,12 +614,7 @@ class BaseRunModel:
             self.run_paths,
         )
 
-        self._current_iteration_label = f"Pre processing for iteration: {iteration}"
         self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
-
-        phase_string = f"Running forecast for iteration: {iteration}"
-        self._current_iteration_label = phase_string
-
         successful_realizations = self.run_ensemble_evaluator(
             run_args,
             ensemble,
@@ -650,9 +642,6 @@ class BaseRunModel:
             f"Experiment run ended with number of realizations failing: {self.ensemble_size - num_successful_realizations}"
         )
         event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
-
-        phase_string = f"Post processing for iteration: {iteration}"
-        self._current_iteration_label = phase_string
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
 
         return num_successful_realizations
@@ -710,9 +699,6 @@ class UpdateRunModel(BaseRunModel):
         if prior.iteration == 0:
             self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
-        self._current_iteration_label = (
-            f"Analyzing iteration: {prior.iteration} with weight {weight}"
-        )
         try:
             smoother_update(
                 prior,

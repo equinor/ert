@@ -57,8 +57,6 @@ class EvaluateEnsemble(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        self._current_iteration_label = "Running evaluate experiment..."
-
         ensemble_id = self.ensemble_id
         ensemble_uuid = UUID(ensemble_id)
         ensemble = self._storage.get_ensemble(ensemble_uuid)
