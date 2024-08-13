@@ -56,7 +56,6 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
-        self._current_iteration_label = self.run_message()
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
@@ -94,10 +93,6 @@ class EnsembleExperiment(BaseRunModel):
             self.ensemble,
             evaluator_server_config,
         )
-
-    @classmethod
-    def run_message(cls) -> str:
-        return "Running ensemble experiment..."
 
     @classmethod
     def name(cls) -> str:

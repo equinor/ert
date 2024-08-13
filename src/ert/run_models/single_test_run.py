@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from typing_extensions import override
-
 from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment
 
@@ -44,11 +42,6 @@ class SingleTestRun(EnsembleExperiment):
             status_queue=status_queue,
             random_seed=random_seed,
         )
-
-    @override
-    @classmethod
-    def run_message(cls) -> str:
-        return "Running single realisation test ..."
 
     @classmethod
     def name(cls) -> str:
