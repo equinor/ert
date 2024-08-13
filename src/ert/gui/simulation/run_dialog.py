@@ -319,9 +319,10 @@ class RunDialog(QDialog):
             widget.setSnapshotModel(self._snapshot_model)
             widget.currentChanged.connect(self._select_real)
 
-            self._tab_widget.addTab(
+            tab_index = self._tab_widget.addTab(
                 widget, f"Realizations for iteration {index.internalPointer().id_}"
             )
+            self._tab_widget.setCurrentIndex(tab_index)
 
     @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
@@ -438,7 +439,8 @@ class RunDialog(QDialog):
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
-            self._tab_widget.addTab(widget, f"Update {iteration}")
+            tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
+            self._tab_widget.setCurrentIndex(tab_index)
             widget.begin(event)
 
         elif isinstance(event, RunModelUpdateEndEvent):
