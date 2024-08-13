@@ -167,30 +167,6 @@ class MeasuredData:
 
         return pd.concat(measured_data, axis=1)
 
-    def filter_ensemble_std(self, std_cutoff: float) -> None:
-        """
-        Filters on ensemble variation versus a user defined standard
-        deviation cutoff. If there is not enough variation in the measurements
-        the data point is removed.
-        """
-        ens_std = self.get_simulated_data().std()
-        std_filter = ens_std <= std_cutoff
-        self._set_data(self.data.drop(columns=std_filter[std_filter].index))
-
-    def filter_ensemble_mean_obs(self, alpha: float) -> None:
-        """
-        Filters on distance between the observed data and the ensemble mean
-        based on variation and a user defined alpha.
-        """
-        ens_mean = self.get_simulated_data().mean()
-        ens_std = self.get_simulated_data().std()
-        obs_values = self.data.loc["OBS"]
-        obs_std = self.data.loc["STD"]
-
-        mean_filter = abs(obs_values - ens_mean) > alpha * (ens_std + obs_std)
-
-        self._set_data(self.data.drop(columns=mean_filter[mean_filter].index))
-
     def filter_on_column_index(
         self,
         obs_keys: List[str],
