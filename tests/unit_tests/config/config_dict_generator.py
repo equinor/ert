@@ -3,9 +3,10 @@ import datetime
 import os
 import os.path
 import stat
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 from warnings import filterwarnings
 
 import hypothesis.strategies as st
@@ -13,18 +14,17 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
-from ert.config import (
-    QueueSystem,
-    queue_bool_options,
-    queue_memory_options,
-    queue_positive_int_options,
-    queue_positive_number_options,
-    queue_string_options,
-)
+from ert.config import QueueSystem
 from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import ConfigKeys, HistorySource
-from ert.config.queue_config import VALID_QUEUE_OPTIONS
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    QueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
@@ -117,23 +117,60 @@ memory_with_unit = {
     QueueSystem.GENERIC: memory_with_unit_lsf,  # Just a dummy value
 }
 
+queue_systems_and_options = {
+    QueueSystem.LOCAL: LocalQueueOptions,
+    QueueSystem.LSF: LsfQueueOptions,
+    QueueSystem.TORQUE: TorqueQueueOptions,
+    QueueSystem.SLURM: SlurmQueueOptions,
+    QueueSystem.GENERIC: QueueOptions,
+}
+
 
 def valid_queue_options(queue_system: str):
-    return VALID_QUEUE_OPTIONS[queue_system]
+    return [
+        field.name.upper()
+        for field in fields(queue_systems_and_options[QueueSystem(queue_system)])
+    ]
+
+
+queue_options_by_type: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
+for system, options in queue_systems_and_options.items():
+    queue_options_by_type["string"][system.name] = [
+        field.name.upper()
+        for field in fields(options)
+        if ("String" in field.type or "str" in field.type)
+        and "memory" not in field.name
+    ]
+    queue_options_by_type["bool"][system.name] = [
+        field.name.upper() for field in fields(options) if field.type == "bool"
+    ]
+    queue_options_by_type["posint"][system.name] = [
+        field.name.upper()
+        for field in fields(options)
+        if "PositiveInt" in field.type or "NonNegativeInt" in field.type
+    ]
+    queue_options_by_type["posfloat"][system.name] = [
+        field.name.upper()
+        for field in fields(options)
+        if "NonNegativeFloat" in field.type or "PositiveFloat" in field.type
+    ]
+    queue_options_by_type["memory"][system.name] = [
+        field.name.upper() for field in fields(options) if "memory" in field.name
+    ]
 
 
 def valid_queue_values(option_name, queue_system):
-    if option_name in queue_string_options[queue_system]:
+    if option_name in queue_options_by_type["string"][queue_system]:
         return words
-    elif option_name in queue_positive_number_options[queue_system]:
+    elif option_name in queue_options_by_type["posfloat"][queue_system]:
         return small_floats.map(str)
-    elif option_name in queue_positive_int_options[queue_system]:
+    elif option_name in queue_options_by_type["posint"][queue_system]:
         if option_name in ["NUM_NODES", "NUM_CPUS_PER_NODE"]:
             return st.just("1")
         return positives.map(str)
-    elif option_name in queue_bool_options[queue_system]:
+    elif option_name in queue_options_by_type["bool"][queue_system]:
         return booleans.map(str)
-    elif option_name in queue_memory_options[queue_system]:
+    elif option_name in queue_options_by_type["memory"][queue_system]:
         return memory_with_unit[queue_system]()
     else:
         raise ValueError(

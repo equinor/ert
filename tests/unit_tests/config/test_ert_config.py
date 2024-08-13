@@ -581,9 +581,9 @@ ENSPATH storage
 @pytest.mark.parametrize(
     "max_running_value, expected_error",
     [
-        (100, None),  # positive integer
-        (-1, "is not a valid positive integer"),  # negative integer
-        ("not_an_integer", "is not a valid positive integer"),  # non-integer
+        (100, None),
+        (-1, "Input should be greater than or equal to 0"),
+        ("not_an_integer", "Input should be a valid integer"),
     ],
 )
 def test_queue_config_max_running_invalid_values(max_running_value, expected_error):

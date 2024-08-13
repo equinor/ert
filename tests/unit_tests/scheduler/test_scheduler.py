@@ -639,7 +639,8 @@ def test_scheduler_create_lsf_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver: LsfDriver = create_driver(queue_config)
+    driver = create_driver(queue_config)
+    assert isinstance(driver, LsfDriver)
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
     assert str(driver._bjobs_cmd) == bjobs_cmd
@@ -647,7 +648,7 @@ def test_scheduler_create_lsf_driver():
     assert driver._queue_name == queue_name
     assert driver._resource_requirement == lsf_resource
     assert driver._exclude_hosts == ["host1", "host2"]
-    assert driver._project_code == queue_config.selected_queue_options["PROJECT_CODE"]
+    assert driver._project_code == queue_config.queue_options.project_code
 
 
 def test_scheduler_create_openpbs_driver():
@@ -678,7 +679,8 @@ def test_scheduler_create_openpbs_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver: OpenPBSDriver = create_driver(queue_config)
+    driver = create_driver(queue_config)
+    assert isinstance(driver, OpenPBSDriver)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
     assert driver._memory_per_job == memory_per_job
@@ -689,7 +691,7 @@ def test_scheduler_create_openpbs_driver():
     assert str(driver._qsub_cmd) == qsub_cmd
     assert str(driver._qstat_cmd) == qstat_cmd
     assert str(driver._qdel_cmd) == qdel_cmd
-    assert driver._project_code == queue_config.selected_queue_options["PROJECT_CODE"]
+    assert driver._project_code == queue_config.queue_options.project_code
 
 
 async def test_callback_status_message_present_in_event_on_load_failure(
