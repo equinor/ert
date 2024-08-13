@@ -81,8 +81,6 @@ class EvaluateEnsemble(BaseRunModel):
             evaluator_server_config,
         )
 
-        self.current_iteration = ensemble.iteration + 1
-
     @classmethod
     def name(cls) -> str:
         return "Evaluate ensemble"

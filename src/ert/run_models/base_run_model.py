@@ -156,7 +156,6 @@ class BaseRunModel:
         and contains logic for interacting with the Ensemble Evaluator by running
         the forward model and passing events back through the supplied queue.
         """
-        self.current_iteration: int = 0
         self._total_iterations = total_iterations
         self._current_iteration_label: str = "Starting..."
 
@@ -248,9 +247,6 @@ class BaseRunModel:
 
     def cancel(self) -> None:
         self._end_queue.put("END")
-
-    def reset(self) -> None:
-        self.current_iteration = 0
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -403,7 +399,7 @@ class BaseRunModel:
             self.send_event(
                 FullSnapshotEvent(
                     iteration_label=self._current_iteration_label,
-                    current_iteration=self.current_iteration,
+                    current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
@@ -427,7 +423,7 @@ class BaseRunModel:
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=self._current_iteration_label,
-                    current_iteration=self.current_iteration,
+                    current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
@@ -613,7 +609,6 @@ class BaseRunModel:
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
         iteration = ensemble.iteration
-        self.current_iteration = iteration
         self._current_iteration_label = f"Running simulation for iteration: {iteration}"
         create_run_path(
             run_args,

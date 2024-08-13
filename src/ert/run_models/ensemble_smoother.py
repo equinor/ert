@@ -108,8 +108,6 @@ class EnsembleSmoother(UpdateRunModel):
             evaluator_server_config,
         )
 
-        self.current_iteration = 2
-
     @classmethod
     def name(cls) -> str:
         return "Ensemble smoother"
