@@ -116,10 +116,16 @@ class PlotApi:
                     self._check_response(response)
                     for key, value in response.json().items():
                         assert isinstance(key, str)
+
+                        has_observation = value["has_observations"]
+                        k = all_keys.get(key)
+                        if k and k.observations:
+                            has_observation = True
+
                         all_keys[key] = PlotApiKeyDefinition(
                             key=key,
                             index_type="VALUE",
-                            observations=value["has_observations"],
+                            observations=has_observation,
                             dimensionality=2,
                             metadata=value["userdata"],
                             log_scale=key.startswith("LOG10_"),
@@ -175,43 +181,49 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
+    def observations_for_key(self, ensemble_names: List[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
-        for a given ensemble. The row index is the realization number, and the column index
+        for a given ensembles. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
         used to relate the observation to the data point it relates to, and obs_index
         is the index for the observation itself"""
+        all_observations = pd.DataFrame()
+        for ensemble_name in ensemble_names:
+            ensemble = self._get_ensemble(ensemble_name)
+            if not ensemble:
+                continue
 
-        ensemble = self._get_ensemble(ensemble_name)
-        if not ensemble:
-            return pd.DataFrame()
+            with StorageService.session() as client:
+                response = client.get(
+                    f"/ensembles/{ensemble.id}/records/{key}/observations",
+                    timeout=self._timeout,
+                )
+                self._check_response(response)
+                if not response.json():
+                    continue
+                try:
+                    obs = response.json()[0]
+                except (KeyError, IndexError, JSONDecodeError) as e:
+                    raise httpx.RequestError(
+                        f"Observation schema might have changed key={key},  ensemble_name={ensemble_name}, e={e}"
+                    ) from e
+                try:
+                    int(obs["x_axis"][0])
+                    key_index = [int(v) for v in obs["x_axis"]]
+                except ValueError:
+                    key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
-        with StorageService.session() as client:
-            response = client.get(
-                f"/ensembles/{ensemble.id}/records/{key}/observations",
-                timeout=self._timeout,
-            )
-            self._check_response(response)
-            if not response.json():
-                return pd.DataFrame()
-            try:
-                obs = response.json()[0]
-            except (KeyError, IndexError, JSONDecodeError) as e:
-                raise httpx.RequestError(
-                    f"Observation schema might have changed key={key},  ensemble_name={ensemble_name}, e={e}"
-                ) from e
-            try:
-                int(obs["x_axis"][0])
-                key_index = [int(v) for v in obs["x_axis"]]
-            except ValueError:
-                key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                data_struct = {
+                    "STD": obs["errors"],
+                    "OBS": obs["values"],
+                    "key_index": key_index,
+                }
 
-            data_struct = {
-                "STD": obs["errors"],
-                "OBS": obs["values"],
-                "key_index": key_index,
-            }
-            return pd.DataFrame(data_struct).T
+                all_observations = pd.concat(
+                    [all_observations, pd.DataFrame(data_struct)]
+                )
+
+        return all_observations.T
 
     def history_data(self, key: str, ensembles: Optional[List[str]]) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a

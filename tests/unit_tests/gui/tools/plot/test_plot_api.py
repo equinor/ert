@@ -79,7 +79,7 @@ def test_can_load_data_and_observations(api):
     for key, value in keys.items():
         observations = value["observations"]
         if observations:
-            obs_data = api.observations_for_key(ensemble_name, key)
+            obs_data = api.observations_for_key([ensemble_name], key)
             assert not obs_data.empty
         data = api.data_for_key(ensemble_name, key)
         assert not data.empty
@@ -131,7 +131,7 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
 def test_plot_api_request_errors(api):
     ensemble_name = "default_0"
     with pytest.raises(httpx.RequestError):
-        api.observations_for_key(ensemble_name, "should_not_be_there")
+        api.observations_for_key([ensemble_name], "should_not_be_there")
 
     with pytest.raises(httpx.RequestError):
         api.data_for_key(ensemble_name, "should_not_be_there")
