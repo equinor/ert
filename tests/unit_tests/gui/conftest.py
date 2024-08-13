@@ -23,8 +23,6 @@ from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
     RealizationSnapshot,
     Snapshot,
-    SnapshotBuilder,
-    SnapshotDict,
 )
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
@@ -50,6 +48,7 @@ from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.services import StorageService
 from ert.storage import Storage, open_storage
+from tests import SnapshotBuilder
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 
@@ -377,14 +376,11 @@ def full_snapshot() -> Snapshot:
             ),
         },
     )
-    snapshot = SnapshotDict(
-        status=ENSEMBLE_STATE_STARTED,
-        reals={},
-    )
+    snapshot = Snapshot()
     for i in range(0, 100):
-        snapshot.reals[str(i)] = copy.deepcopy(real)
+        snapshot.add_realization(str(i), copy.deepcopy(real))
 
-    return Snapshot.from_nested_dict(snapshot.model_dump())
+    return snapshot
 
 
 @pytest.fixture()
@@ -407,14 +403,13 @@ def fail_snapshot() -> Snapshot:
             )
         },
     )
-    snapshot = SnapshotDict(
-        status=ENSEMBLE_STATE_STARTED,
-        reals={},
-    )
-    for i in range(0, 1):
-        snapshot.reals[str(i)] = copy.deepcopy(real)
+    snapshot = Snapshot()
+    snapshot._ensemble_state = ENSEMBLE_STATE_STARTED
 
-    return Snapshot.from_nested_dict(snapshot.model_dump())
+    for i in range(0, 1):
+        snapshot.add_realization(str(i), copy.deepcopy(real))
+
+    return snapshot
 
 
 @pytest.fixture()

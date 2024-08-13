@@ -1,5 +1,3 @@
-from typing import Dict
-
 import pytest
 
 from _ert.events import (
@@ -15,7 +13,6 @@ from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
     RealizationSnapshot,
     Snapshot,
-    SnapshotDict,
 )
 
 from ..unit_tests.gui.conftest import (  # noqa: F401
@@ -72,23 +69,21 @@ def test_gui_snapshot(
 def simulate_forward_model_event_handling(
     ensemble_size, forward_models, memory_reports
 ):
-    reals: Dict[str, RealizationSnapshot] = {}
+    snapshot = Snapshot()
+    snapshot._ensemble_state = state.ENSEMBLE_STATE_UNKNOWN
+    snapshot._metadata = {"foo": "bar"}
+
     for real in range(ensemble_size):
-        reals[str(real)] = RealizationSnapshot(
-            active=True,
-            status=state.REALIZATION_STATE_WAITING,
+        realization = RealizationSnapshot(
+            active=True, status=state.REALIZATION_STATE_WAITING, forward_models={}
         )
         for fm_idx in range(forward_models):
-            reals[f"{real}"].forward_models[str(fm_idx)] = ForwardModel(
+            realization["forward_models"][str(fm_idx)] = ForwardModel(
                 status=state.FORWARD_MODEL_STATE_START,
                 index=str(fm_idx),
                 name=f"FM_{fm_idx}",
             )
-    top = SnapshotDict(
-        reals=reals, status=state.ENSEMBLE_STATE_UNKNOWN, metadata={"foo": "bar"}
-    )
-
-    snapshot = Snapshot.from_nested_dict(top.model_dump())
+        snapshot.add_realization(str(real), realization)
 
     ens_id = "A"
     snapshot.update_from_event(EnsembleStarted(ensemble=ens_id))

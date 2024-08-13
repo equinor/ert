@@ -6,7 +6,6 @@ from ert.ensemble_evaluator.event import SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import (
     RealizationSnapshot,
     Snapshot,
-    SnapshotDict,
 )
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
@@ -24,11 +23,14 @@ def test_color_always():
 
 def test_legends():
     monitor = Monitor(out=StringIO())
-    sd = SnapshotDict(status="")
+    snapshot = Snapshot()
+    snapshot._ensemble_state = ""
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
-        sd.reals[str(i)] = RealizationSnapshot(status=status, active=True)
-    monitor._snapshots[0] = Snapshot.from_nested_dict(sd.model_dump())
+        snapshot.add_realization(
+            str(i), RealizationSnapshot(status=status, active=True)
+        )
+    monitor._snapshots[0] = snapshot
     legends = monitor._get_legends()
 
     assert (
@@ -64,11 +66,14 @@ def test_result_failure():
 def test_print_progress():
     out = StringIO()
     monitor = Monitor(out=out)
-    sd = SnapshotDict(status="")
+    snapshot = Snapshot()
+    snapshot._ensemble_state = ""
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
-        sd.reals[str(i)] = RealizationSnapshot(status=status, active=True)
-    monitor._snapshots[0] = Snapshot.from_nested_dict(sd.model_dump())
+        snapshot.add_realization(
+            str(i), RealizationSnapshot(status=status, active=True)
+        )
+    monitor._snapshots[0] = snapshot
     monitor._start_time = datetime.now()
     general_event = SnapshotUpdateEvent(
         iteration_label="Test Phase",

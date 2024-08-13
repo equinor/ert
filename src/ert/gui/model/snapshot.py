@@ -108,9 +108,9 @@ class SnapshotModel(QAbstractItemModel):
         )
 
         for real_id, real in reals.items():
-            if real.status:
+            if status := real.get("status"):
                 metadata["real_status_colors"][real_id] = _QCOLORS[
-                    state.REAL_STATE_TO_COLOR[real.status]
+                    state.REAL_STATE_TO_COLOR[status]
                 ]
 
         metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
@@ -172,8 +172,8 @@ class SnapshotModel(QAbstractItemModel):
 
             for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
-                if real and real.status:
-                    real_node.data.status = real.status
+                if real_status := real.get("status"):
+                    real_node.data.status = real_status
                 for real_forward_model_id, color in (
                     metadata["aggr_job_status_colors"].get(real_id, {}).items()
                 ):
@@ -185,10 +185,10 @@ class SnapshotModel(QAbstractItemModel):
                         real_id
                     ]
                 reals_changed.append(real_node.row())
-                if real.callback_status_message:
-                    real_node.data.callback_status_message = (
-                        real.callback_status_message
-                    )
+                if real.get("callback_status_message"):
+                    real_node.data.callback_status_message = real[
+                        "callback_status_message"
+                    ]
             jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
             for (
                 real_id,
@@ -250,15 +250,15 @@ class SnapshotModel(QAbstractItemModel):
             real_node = RealNode(
                 id_=real_id,
                 data=RealNodeData(
-                    status=real.status,
-                    active=real.active,
+                    status=real.get("status"),
+                    active=real.get("active"),
                     forward_model_step_status_color_by_id=metadata.get(
                         "aggr_job_status_colors", defaultdict(None)
                     )[real_id],
                     real_status_color=metadata.get(
                         "real_status_colors", defaultdict(None)
                     )[real_id],
-                    callback_status_message=real.callback_status_message,
+                    callback_status_message=real.get("callback_status_message"),
                 ),
             )
             snapshot_tree.add_child(real_node)
