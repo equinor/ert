@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, Tuple
 
 from qtpy.QtCore import QModelIndex, QPoint, QSize
-from qtpy.QtGui import QRegion
+from qtpy.QtGui import QColor, QRegion
 from qtpy.QtWidgets import (
     QComboBox,
     QLabel,
@@ -14,6 +14,9 @@ from qtpy.QtWidgets import (
 
 LABEL_ROLE = -3994
 DESCRIPTION_ROLE = -4893
+
+COLOR_HIGHLIGHT_LIGHT = QColor(230, 230, 230, 255)
+COLOR_HIGHLIGHT_DARK = QColor(60, 60, 60, 255)
 
 
 class ComboBoxItemWidget(QWidget):
@@ -29,7 +32,7 @@ class ComboBoxItemWidget(QWidget):
             """
             padding-top:5px;
             padding-left: 5px;
-            background: rgba(0,0,0,0.03);
+            background: rgba(0,0,0,0);
             font-weight: bold;
             font-size: 13px;
         """
@@ -38,9 +41,8 @@ class ComboBoxItemWidget(QWidget):
         self.description.setStyleSheet(
             """
             padding-bottom: 10px;
-            border-bottom: 1px dashed rgba(255,255,255,0.5);
             padding-left: 10px;
-            background: rgba(0,0,0,0.03);
+            background: rgba(0,0,0,0);
             font-style: italic;
             font-size: 12px;
         """
@@ -62,7 +64,10 @@ class ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
             option.state & QStyle.State_Selected  # type: ignore
             or option.state & QStyle.State_MouseOver  # type: ignore
         ):
-            painter.fillRect(option.rect, option.palette.highlight())
+            color = COLOR_HIGHLIGHT_LIGHT
+            if option.palette.text().color().value() > 150:
+                color = COLOR_HIGHLIGHT_DARK
+            painter.fillRect(option.rect, color)
 
         widget = ComboBoxItemWidget(label, description)
         widget.setStyle(option.widget.style())
