@@ -16,7 +16,6 @@ from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QMenuBar,
-    QMessageBox,
     QPushButton,
     QToolButton,
     QTreeView,
@@ -29,10 +28,7 @@ from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.ertwidgets.listeditbox import ListEditBox
-from ert.gui.ertwidgets.pathchooser import PathChooser
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -492,47 +488,6 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
 
     QTimer.singleShot(500, handle_analysis_module_panel)
     qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
-
-
-@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
-def test_that_csv_export_plugin_generates_a_file(qtbot, esmda_has_run):
-    gui = esmda_has_run
-
-    # Find EXPORT_CSV in the plugin menu
-    plugin_tool = gui.tools["Plugins"]
-    plugin_actions = plugin_tool.getAction().menu().actions()
-    export_csv_action = [a for a in plugin_actions if a.text() == "CSV Export"][0]
-    file_name = None
-
-    def handle_plugin_dialog():
-        nonlocal file_name
-
-        # Find the case selection box in the dialog
-        export_dialog = wait_for_child(gui, qtbot, CustomDialog)
-        case_selection = get_child(export_dialog, ListEditBox)
-
-        # Select default_0 as the case to be exported
-        case_selection._list_edit_line.setText("default_0")
-        path_chooser = get_child(export_dialog, PathChooser)
-        file_name = path_chooser._path_line.text()
-        assert case_selection.isValid()
-
-        qtbot.mouseClick(export_dialog.ok_button, Qt.LeftButton)
-
-    def handle_finished_box():
-        """
-        Click on the plugin finised dialog once it pops up
-        """
-        finished_message = wait_for_child(gui, qtbot, QMessageBox)
-        assert "completed" in finished_message.text()
-        qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
-
-    QTimer.singleShot(500, handle_plugin_dialog)
-    QTimer.singleShot(3000, handle_finished_box)
-    export_csv_action.trigger()
-
-    assert file_name == "output.csv"
-    qtbot.waitUntil(lambda: os.path.exists(file_name))
 
 
 def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(

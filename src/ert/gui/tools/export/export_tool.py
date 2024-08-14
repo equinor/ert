@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING, Any, cast, no_type_check
-from weakref import ref
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMessageBox, QWidget
@@ -11,9 +10,8 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
-from ert.gui.tools.export import ExportPanel
+from ert.gui.tools.export.export_panel import ExportDialog
 
 from .exporter import Exporter
 
@@ -21,31 +19,33 @@ from .exporter import Exporter
 class ExportTool(Tool):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier):
         super().__init__("Export data", QIcon("img:share.svg"))
-        self.__export_widget = None
-        self.__dialog = None
+        export_job = config.workflow_jobs.get("CSV_EXPORT")
+        self.setEnabled(export_job is not None)
         self.__exporter = Exporter(
-            config.workflow_jobs.get("CSV_EXPORT2"),
-            config.workflow_jobs.get("EXPORT_RUNPATH"),
+            export_job,
             notifier,
             config,
         )
-        self.setEnabled(self.__exporter.is_valid())
+        self.config = config
+        self.notifier = notifier
 
     @no_type_check
     def trigger(self) -> None:
-        if self.__export_widget is None:
-            self.__export_widget = ref(ExportPanel(self.parent()))
-            self.__export_widget().runExport.connect(self._run_export)
+        dialog = ExportDialog(self.config, self.notifier.storage, self.parent())
+        success = dialog.showAndTell()
 
-        self.__dialog = ref(
-            ClosableDialog("Export", self.__export_widget(), self.parent())
-        )
-        self.__export_widget().updateExportButton.connect(self.__dialog().toggleButton)
-        export_button = self.__dialog().addButton("Export", self.export)
-        export_button.setObjectName("Export button")
-        self.__dialog().show()
+        if success:
+            self._run_export(
+                [
+                    dialog.output_path,
+                    dialog.ensemble_list,
+                    dialog.design_matrix_path,
+                    True,
+                    dialog.drop_const_columns,
+                ]
+            )
 
-    def _run_export(self, params: dict[str, Any]) -> None:
+    def _run_export(self, params: list[Any]) -> None:
         try:
             self.__exporter.run_export(params)
             QMessageBox.information(
@@ -62,8 +62,3 @@ class ExportTool(Tool):
                 f"Export failed with the following message:\n{usrwarning}",
                 QMessageBox.Ok,
             )
-
-    @no_type_check
-    def export(self) -> None:
-        self.__export_widget().export()
-        self.__dialog().accept()

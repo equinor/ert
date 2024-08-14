@@ -1,71 +1,74 @@
-from typing import Optional
+from __future__ import annotations
 
-from qtpy.QtCore import QDir, Signal
-from qtpy.QtWidgets import (
-    QFileDialog,
-    QFormLayout,
-    QHBoxLayout,
-    QLineEdit,
-    QToolButton,
-    QWidget,
+from typing import TYPE_CHECKING, Optional
+
+from qtpy.QtWidgets import QCheckBox, QWidget
+
+from ert.gui.ertwidgets import (
+    CustomDialog,
+    ListEditBox,
+    PathChooser,
+    PathModel,
 )
 
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
+    from ert.storage import LocalStorage
 
-class ExportPanel(QWidget):
-    updateExportButton = Signal(str, bool)
-    runExport = Signal(dict)
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        QWidget.__init__(self, parent)
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(200)
-        self._dynamic = False
+class ExportDialog(CustomDialog):
+    def __init__(
+        self,
+        ert_config: ErtConfig,
+        storage: LocalStorage,
+        parent: Optional[QWidget] = None,
+    ) -> None:
+        description = "The CSV export requires some information before it starts:"
+        super().__init__("export", description, parent)
 
-        self.setWindowTitle("Export data")
-        self.activateWindow()
+        subs_list = ert_config.substitution_list
+        default_csv_output_path = subs_list.get("<CSV_OUTPUT_PATH>", "output.csv")
+        self.output_path_model = PathModel(default_csv_output_path)
+        output_path_chooser = PathChooser(self.output_path_model)
 
-        layout = QFormLayout()
-
-        self._column_keys_input = QLineEdit()
-        self._column_keys_input.setMinimumWidth(250)
-        self._column_keys_input.setText("*")
-        layout.addRow("Columns to export:", self._column_keys_input)
-
-        self._time_index_input = QLineEdit()
-        self._time_index_input.setMinimumWidth(250)
-        self._time_index_input.setText("raw")
-        layout.addRow("Time index:", self._time_index_input)
-
-        file_name_button = QToolButton()
-        file_name_button.setText("Browse")
-        file_name_button.clicked.connect(self.selectFileDirectory)
-        self._defaultPath = QDir.currentPath() + "/export.csv"
-        self._file_name = QLineEdit()
-        self._file_name.setEnabled(False)
-        self._file_name.setText(self._defaultPath)
-        self._file_name.setMinimumWidth(250)
-
-        file_name_layout = QHBoxLayout()
-        file_name_layout.addWidget(self._file_name)
-        file_name_layout.addWidget(file_name_button)
-        layout.addRow("Select directory to save files to:", file_name_layout)
-
-        self.setLayout(layout)
-
-    def selectFileDirectory(self) -> None:
-        directory = QFileDialog(self).getExistingDirectory(
-            self, "Directory", self._file_name.text(), QFileDialog.ShowDirsOnly
+        design_matrix_default = subs_list.get("<DESIGN_MATRIX_PATH>", "")
+        self.design_matrix_path_model = PathModel(
+            design_matrix_default, is_required=False, must_exist=True
         )
-        if len(str(directory)) > 0:
-            self._file_name.setText(str(directory))
+        design_matrix_path_chooser = PathChooser(self.design_matrix_path_model)
 
-    def export(self) -> None:
-        path = self._file_name.text()
-        time_index = self._time_index_input.text()
-        column_keys = self._column_keys_input.text()
-        values = {
-            "output_file": path,
-            "time_index": time_index,
-            "column_keys": column_keys,
-        }
-        self.runExport.emit(values)
+        self.list_edit = ListEditBox(
+            [ensemble.name for ensemble in storage.ensembles if ensemble.has_data()]
+        )
+
+        self.drop_const_columns_check = QCheckBox()
+        self.drop_const_columns_check.setChecked(False)
+        self.drop_const_columns_check.setToolTip(
+            "If checked, exclude columns whose value is the same for every entry"
+        )
+
+        self.addLabeledOption("Output file path", output_path_chooser)
+        self.addLabeledOption("Design matrix path", design_matrix_path_chooser)
+        self.addLabeledOption("List of ensembles to export", self.list_edit)
+        self.addLabeledOption("Drop constant columns", self.drop_const_columns_check)
+
+        self.addButtons()
+
+    @property
+    def output_path(self) -> Optional[str]:
+        return self.output_path_model.getPath()
+
+    @property
+    def ensemble_list(self) -> str:
+        return ",".join(self.list_edit.getItems())
+
+    @property
+    def design_matrix_path(self) -> Optional[str]:
+        path = self.design_matrix_path_model.getPath()
+        if not path or not path.strip():
+            path = None
+        return path
+
+    @property
+    def drop_const_columns(self) -> bool:
+        return self.drop_const_columns_check.isChecked()

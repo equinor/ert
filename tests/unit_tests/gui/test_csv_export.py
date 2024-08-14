@@ -4,12 +4,11 @@ from pathlib import Path
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QMessageBox,
-    QPushButton,
 )
 
-from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.gui.tools.export.export_panel import ExportDialog
 from ert.libres_facade import LibresFacade
 
 from .conftest import (
@@ -21,18 +20,13 @@ from .conftest import (
 def test_csv_export(esmda_has_run, qtbot):
     gui = esmda_has_run
 
-    # Find EXPORT_CSV in the plugin menu
-    plugin_tool = gui.tools["Plugins"]
-    plugin_actions = plugin_tool.getAction().menu().actions()
-    export_csv_action = [a for a in plugin_actions if a.text() == "CSV Export"][0]
-
     file_name = None
 
-    def handle_plugin_dialog():
+    def handle_export_dialog():
         nonlocal file_name
 
         # Find the case selection box in the dialog
-        export_dialog = wait_for_child(gui, qtbot, CustomDialog)
+        export_dialog = wait_for_child(gui, qtbot, ExportDialog)
         case_selection = get_child(export_dialog, ListEditBox)
 
         # Select default_0 as the case to be exported
@@ -53,15 +47,10 @@ def test_csv_export(esmda_has_run, qtbot):
             finished_message.button(QMessageBox.Ok), Qt.MouseButton.LeftButton
         )
 
-    QTimer.singleShot(500, handle_plugin_dialog)
+    QTimer.singleShot(500, handle_export_dialog)
     QTimer.singleShot(3000, handle_finished_box)
-    export_csv_action.trigger()
 
-    runner = plugin_tool.get_plugin_runner("CSV Export")
-    assert runner.poll_thread is not None
-    if runner.poll_thread.is_alive():
-        runner.poll_thread.join()
-
+    gui.tools["Export data"].trigger()
     assert file_name == "output.csv"
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
@@ -77,23 +66,3 @@ def test_csv_export(esmda_has_run, qtbot):
             f"{i},0,,default_0,{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
             in file_content
         )
-
-
-def test_that_export_tool_generates_a_file(qtbot, opened_main_window_snake_oil):
-    gui = opened_main_window_snake_oil
-
-    export_tool = gui.tools["Export data"]
-
-    def handle_export_dialog():
-        export_button = wait_for_child(gui, qtbot, QPushButton, name="Export button")
-
-        def close_message_box():
-            messagebox = wait_for_child(gui, qtbot, QMessageBox)
-            messagebox.close()
-
-        QTimer.singleShot(500, close_message_box)
-        qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
-
-    QTimer.singleShot(500, handle_export_dialog)
-    export_tool.trigger()
-    qtbot.waitUntil(lambda: os.path.exists("export.csv"))
