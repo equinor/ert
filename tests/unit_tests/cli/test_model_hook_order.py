@@ -41,7 +41,6 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
-    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
@@ -78,7 +77,6 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(return_value=[1]),
     )
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
-    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
@@ -108,7 +106,6 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     """
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(base_run_model, "LibresFacade", MagicMock())
     monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
