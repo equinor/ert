@@ -8,6 +8,7 @@ import os
 import shutil
 import time
 import uuid
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
@@ -138,7 +139,7 @@ def captured_logs(
         root_logger.removeHandler(handler)
 
 
-class BaseRunModel:
+class BaseRunModel(ABC):
     def __init__(
         self,
         config: ErtConfig,
@@ -189,12 +190,12 @@ class BaseRunModel:
         self.validate()
 
     @classmethod
-    def name(cls) -> str:
-        return "Base run model"
+    @abstractmethod
+    def name(cls) -> str: ...
 
     @classmethod
-    def description(cls) -> str:
-        return "Base run model"
+    @abstractmethod
+    def description(cls) -> str: ...
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
@@ -341,12 +342,12 @@ class BaseRunModel:
                 )
             )
 
+    @abstractmethod
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
-    ) -> None:
-        raise NotImplementedError("Method must be implemented by inheritors!")
+    ) -> None: ...
 
     @staticmethod
     def format_error(
