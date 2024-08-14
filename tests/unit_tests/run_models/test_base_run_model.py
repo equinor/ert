@@ -9,6 +9,11 @@ from ert.run_models import BaseRunModel
 from ert.substitution_list import SubstitutionList
 
 
+@pytest.fixture(autouse=True)
+def patch_abstractmethods(monkeypatch):
+    monkeypatch.setattr(BaseRunModel, "__abstractmethods__", set())
+
+
 def test_base_run_model_supports_restart(minimum_case):
     BaseRunModel.validate = MagicMock()
     brm = BaseRunModel(minimum_case, None, None, minimum_case.queue_config, [True])
