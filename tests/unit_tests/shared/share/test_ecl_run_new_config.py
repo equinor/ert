@@ -28,6 +28,13 @@ ecl_config = import_from_location(
     ),
 )
 
+import_from_location(
+    "simulator_run",
+    os.path.join(
+        SOURCE_DIR, "src/ert/resources/forward-models/res/script/simulator_run.py"
+    ),
+)
+
 ecl_run = import_from_location(
     "ecl_run",
     os.path.join(SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_run.py"),

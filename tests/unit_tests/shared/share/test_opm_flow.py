@@ -22,6 +22,13 @@ ecl_config = import_from_location(
     SOURCE_DIR / "src/ert/resources/forward-models/res/script/ecl_config.py",
 )
 
+simulator_run = import_from_location(
+    "simulator_run",
+    os.path.join(
+        SOURCE_DIR, "src/ert/resources/forward-models/res/script/simulator_run.py"
+    ),
+)
+
 ecl_run = import_from_location(
     "ecl_run",
     SOURCE_DIR / "src/ert/resources/forward-models/res/script/ecl_run.py",
@@ -65,7 +72,7 @@ def fixture_init_flow_config(monkeypatch, tmpdir):
 
 
 def test_ecl_run_make_LSB_MCPU_machine_list():
-    assert ecl_run.make_LSB_MCPU_machine_list("host1 4 host2 4") == [
+    assert simulator_run.make_LSB_MCPU_machine_list("host1 4 host2 4") == [
         "host1",
         "host1",
         "host1",
@@ -268,19 +275,19 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
 
 
 def test_slurm_env_parsing():
-    host_list = ecl_run.make_SLURM_machine_list("ws", "2")
+    host_list = simulator_run.make_SLURM_machine_list("ws", "2")
     assert host_list == ["ws", "ws"]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws1,ws2", "2,3")
+    host_list = simulator_run.make_SLURM_machine_list("ws1,ws2", "2,3")
     assert host_list == ["ws1", "ws1", "ws2", "ws2", "ws2"]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws[1-3]", "1,2,3")
+    host_list = simulator_run.make_SLURM_machine_list("ws[1-3]", "1,2,3")
     assert host_list == ["ws1", "ws2", "ws2", "ws3", "ws3", "ws3"]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws[1,3]", "1,3")
+    host_list = simulator_run.make_SLURM_machine_list("ws[1,3]", "1,3")
     assert host_list == ["ws1", "ws3", "ws3", "ws3"]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws[1-3,6-8]", "1,2,3,1,2,3")
+    host_list = simulator_run.make_SLURM_machine_list("ws[1-3,6-8]", "1,2,3,1,2,3")
     assert host_list == [
         "ws1",
         "ws2",
@@ -296,7 +303,7 @@ def test_slurm_env_parsing():
         "ws8",
     ]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws[1-3,6-8]", "2(x2),3,1,2(x2)")
+    host_list = simulator_run.make_SLURM_machine_list("ws[1-3,6-8]", "2(x2),3,1,2(x2)")
     assert host_list == [
         "ws1",
         "ws1",
@@ -312,7 +319,9 @@ def test_slurm_env_parsing():
         "ws8",
     ]
 
-    host_list = ecl_run.make_SLURM_machine_list("ws[1-3,6],ws[7-8]", "2(x2),3,1,2(x2)")
+    host_list = simulator_run.make_SLURM_machine_list(
+        "ws[1-3,6],ws[7-8]", "2(x2),3,1,2(x2)"
+    )
     assert host_list == [
         "ws1",
         "ws1",

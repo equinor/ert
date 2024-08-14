@@ -20,6 +20,13 @@ ecl_config = import_from_location(
     ),
 )
 
+simulator_run = import_from_location(
+    "simulator_run",
+    os.path.join(
+        SOURCE_DIR, "src/ert/resources/forward-models/res/script/simulator_run.py"
+    ),
+)
+
 ecl_run = import_from_location(
     "ecl_run",
     os.path.join(SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_run.py"),
@@ -48,9 +55,9 @@ def test_await_process_tee():
         fh.write(bytearray(os.urandom(_maxBytes)))
 
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-        # ecl_run.await_process_tee() ensures the process is terminated
+        # simulator_run.await_process_tee() ensures the process is terminated
         process = Popen(["cat", "original"], stdout=PIPE)
-        ecl_run.await_process_tee(process, a_fh, b_fh)
+        simulator_run.await_process_tee(process, a_fh, b_fh)
 
     with open("a", "rb") as f:
         a_content = f.read()
@@ -70,10 +77,10 @@ def test_await_process_finished_tee():
         fh.write(bytearray(os.urandom(_maxBytes)))
 
     with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-        # ecl_run.await_process_tee() ensures the process is terminated
+        # simulator_run.await_process_tee() ensures the process is terminated
         process = Popen(["cat", "original"], stdout=PIPE)
         process.wait()
-        ecl_run.await_process_tee(process, a_fh, b_fh)
+        simulator_run.await_process_tee(process, a_fh, b_fh)
 
     with open("a", "rb") as f:
         a_content = f.read()
