@@ -684,7 +684,7 @@ class UpdateRunModel(BaseRunModel):
         )
         self.send_event(
             RunModelStatusEvent(
-                iteration=0,
+                iteration=prior.iteration,
                 run_id=prior.id,
                 msg="Creating posterior ensemble..",
             )
