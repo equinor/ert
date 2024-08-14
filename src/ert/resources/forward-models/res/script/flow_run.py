@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 
-from ecl_config import EclrunConfig
 from simulator_run import EclRun
 
 
@@ -18,13 +17,16 @@ def run(config, argv):
 
     options = parser.parse_args(argv)
 
-    eclrun_config = EclrunConfig(config, options.version)
-    assert eclrun_config.can_use_eclrun()
+    if options.num_cpu > 1:
+        sim = config.mpi_sim(version=options.version)
+    else:
+        sim = config.sim(version=options.version)
+
     run = EclRun(
         options.ecl_case,
-        None,
+        sim,
         num_cpu=options.num_cpu,
         check_status=not options.ignore_errors,
         summary_conversion=options.summary_conversion,
     )
-    run.runEclipse(eclrun_config=eclrun_config)
+    run.runEclipse()
