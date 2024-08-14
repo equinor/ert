@@ -16,9 +16,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0
         submodules: true
         lfs: true
+
+    - name: Checkout tags
+      # This seems necessary for setuptools_scm to be able to infer
+      # the correct version.
+      run: git fetch --unshallow --tags
 
     - uses: actions/setup-python@v5
       id: setup_python
