@@ -41,7 +41,6 @@ dependencies=[
     "dnspython >= 2",
     "fastapi",
     "filelock",
-    "fmu-ensemble>1.6.5",
     "httpx",
     "humanize",
     "importlib_resources;python_version <= '3.8'",
@@ -81,7 +80,6 @@ dependencies=[
 [project.scripts]
 ert = "ert.__main__:main"
 "job_dispatch.py" = "_ert_forward_model_runner.job_dispatch:main"
-csv_export2 = "ert.plugins.hook_implementations.workflows.csv_export2.csv_export2:cli"
 
 [project.urls]
 Repository = "https://github.com/equinor/ert"
@@ -111,7 +109,6 @@ dev = [
     "pytest>6",
     "resdata",
     "resfo",
-    "rstcheck-core",
     "scikit-learn",
     "sphinx",
     "sphinx-argparse",
