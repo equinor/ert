@@ -463,7 +463,6 @@ def summaries(
     time_deltas=time_delta_lists,
     summary_keys=summary_keys,
     use_days=None,
-    report_step_only=False,
 ):
     sum_keys = draw(summary_keys)
     first_date = draw(start_date)
@@ -494,8 +493,7 @@ def summaries(
     j = 0
     while len(ds) > 0:
         minis = []
-        max_val = 1 if report_step_only else len(ds)
-        for _ in range(draw(st.integers(min_value=1, max_value=max_val))):
+        for _ in range(draw(st.integers(min_value=1, max_value=len(ds)))):
             minis.append(
                 SummaryMiniStep(
                     i,

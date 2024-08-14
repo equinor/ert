@@ -1,6 +1,5 @@
 import ert
 
-from .csv_export2 import CsvExport2Job
 from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
 from .export_runpath import ExportRunpathJob
@@ -15,12 +14,6 @@ def legacy_ertscript_workflow(config):
 
     workflow = config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
     workflow.description = ExportRunpathJob.__doc__
-
-    workflow = config.add_workflow(CsvExport2Job, "CSV_EXPORT2")
-    workflow.parser = CsvExport2Job.parser
-    workflow.description = CsvExport2Job.description
-    workflow.examples = CsvExport2Job.examples
-    workflow.category = "export"
 
     workflow = config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
     workflow.description = DisableParametersUpdate.__doc__
