@@ -66,7 +66,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
-from ert.libres_facade import LibresFacade
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
@@ -166,7 +165,6 @@ class BaseRunModel(ABC):
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
-        self.facade = LibresFacade(self.ert_config)
         self._storage = storage
         self._context_env_keys: List[str] = []
         self.random_seed: int = _seed_sequence(random_seed)

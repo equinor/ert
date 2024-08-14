@@ -101,9 +101,6 @@ def test_check_if_runpath_exists(
         start_iteration=start_iteration,
         total_iterations=number_of_iterations,
     )
-    brm.facade = MagicMock(
-        run_path=run_path,
-    )
     assert brm.check_if_runpath_exists() == expected
 
 
@@ -133,9 +130,6 @@ def test_get_number_of_existing_runpaths(
         queue_config=MagicMock(),
         status_queue=MagicMock(),
         active_realizations=active_realizations_mask,
-    )
-    brm.facade = MagicMock(
-        run_path=run_path,
     )
     assert brm.get_number_of_existing_runpaths() == expected_number
 
