@@ -35,7 +35,6 @@ class UpdateSettings:
 class AnalysisConfig:
     def __init__(
         self,
-        std_cutoff: float = 1e-6,
         max_runtime: int = 0,
         min_realization: int = 0,
         update_log_path: Union[str, Path] = "update_log",
@@ -46,7 +45,6 @@ class AnalysisConfig:
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
-        self._std_cutoff = std_cutoff
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
         self.num_iterations = num_iterations
@@ -199,7 +197,6 @@ class AnalysisConfig:
             raise ConfigValidationError.from_collected(all_errors)
 
         config = cls(
-            std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
@@ -216,10 +213,6 @@ class AnalysisConfig:
     @log_path.setter
     def log_path(self, log_path: Union[str, Path]) -> None:
         self._update_log_path = Path(log_path)
-
-    @property
-    def std_cutoff(self) -> float:
-        return self._std_cutoff
 
     @property
     def max_runtime(self) -> Optional[int]:
