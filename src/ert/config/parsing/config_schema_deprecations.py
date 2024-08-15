@@ -10,6 +10,7 @@ REPLACE_WITH_GEN_KW = [
     "MULTFLT",
 ]
 JUST_REMOVE_KEYWORDS = [
+    "ITER_CASE",
     "UMASK",
     "LICENSE_PATH",
     "LOG_FILE",

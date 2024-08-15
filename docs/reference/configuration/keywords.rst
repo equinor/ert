@@ -46,7 +46,6 @@ Keyword name                                                            Required
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
-:ref:`ITER_CASE <iter_Case>`                                            NO                                      IES%d                           Case name format - iterated ensemble smoother
 :ref:`ITER_COUNT <iter_count>`                                          NO                                      4                               Number of iterations - iterated ensemble smoother
 :ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
 :ref:`JOBNAME <jobname>`                                                NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
@@ -1672,13 +1671,6 @@ UPDATE_LOG_PATH
 .. _update_log_path:
 
 A summary of the data used for updates are stored in this directory.
-
-ITER_CASE
----------
-.. _iter_case:
-
-Case name format - iterated ensemble smoother. By default, this value is
-set to ``default_%d``.
 
 ITER_COUNT
 ----------

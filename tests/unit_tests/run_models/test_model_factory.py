@@ -27,7 +27,7 @@ def test_iterative_ensemble_format(target_ensemble, expected, poly_case):
     args = Namespace(
         random_seed=None, current_ensemble="default", target_ensemble=target_ensemble
     )
-    assert model_factory._iterative_ensemble_format(poly_case, args) == expected
+    assert model_factory._iterative_ensemble_format(args) == expected
 
 
 def test_default_realizations(poly_case):

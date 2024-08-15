@@ -122,18 +122,14 @@ def test_analysis_config_modules(analysis_config):
 
 
 def test_analysis_config_iter_config_dict_initialisation():
-    expected_ensemble_format = "case_%d"
     analysis_config = AnalysisConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ITER_CASE: expected_ensemble_format,
             ConfigKeys.ITER_COUNT: 42,
             ConfigKeys.ITER_RETRY_COUNT: 24,
         }
     )
 
-    assert analysis_config.ensemble_format_is_set() is True
-    assert analysis_config.ensemble_format == expected_ensemble_format
     assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
 
@@ -146,18 +142,6 @@ def test_analysis_config_iter_config_default_initialisation(analysis_config):
     assert analysis_config.num_retries_per_iter == 4
     analysis_config.set_num_iterations(42)
     assert analysis_config.num_iterations == 42
-
-
-@pytest.mark.parametrize(
-    "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
-)
-def test_setting_ensemble_format(analysis_config):
-    assert analysis_config.ensemble_format is None
-    assert not analysis_config.ensemble_format_is_set()
-    expected_ensemble_format = "case_%d"
-    analysis_config.set_ensemble_format(expected_ensemble_format)
-    assert analysis_config.ensemble_format == expected_ensemble_format
-    assert analysis_config.ensemble_format_is_set()
 
 
 def test_incorrect_variable_raises_validation_error():

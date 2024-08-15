@@ -234,16 +234,6 @@ class AnalysisConfig:
         return realizations >= self.minimum_required_realizations
 
     @property
-    def ensemble_format(self) -> Optional[str]:
-        return self._analysis_iter_config.iter_case
-
-    def ensemble_format_is_set(self) -> bool:
-        return self._analysis_iter_config.iter_case is not None
-
-    def set_ensemble_format(self, ensemble_fmt: str) -> None:
-        self._analysis_iter_config.iter_case = ensemble_fmt
-
-    @property
     def num_retries_per_iter(self) -> int:
         return self._analysis_iter_config.iter_retry_count
 
