@@ -812,15 +812,10 @@ class LocalEnsemble(BaseMode):
         data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
-        if not parameter_group in self.experiment.parameter_configuration:
+        if parameter_group not in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
-        path = self._path / "realization-*" / f"{parameter_group}.nc"
-        try:
-            ds = xr.open_mfdataset(str(path))
-        except OSError as e:
-            raise e
-
+        ds = self.load_parameters(parameter_group)
         return ds.std("realizations")
 
     def get_parameter_state(
