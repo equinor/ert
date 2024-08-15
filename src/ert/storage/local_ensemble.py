@@ -290,11 +290,18 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
 
+        def _has_response(_key: str) -> bool:
+            if _key in self.experiment.response_key_to_response_type:
+                _response_type = self.experiment.response_key_to_response_type[_key]
+                return (path / f"{_response_type}.nc").exists()
+
+            return (path / f"{_key}.nc").exists()
+
         if key:
-            return (path / f"{key}.nc").exists()
+            return _has_response(key)
 
         return all(
-            (path / f"{response}.nc").exists()
+            _has_response(response)
             for response in self.experiment.response_configuration
         )
 
@@ -609,14 +616,27 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with responses.
         """
 
-        if key not in self.experiment.response_configuration:
+        select_key = False
+        if key in self.experiment.response_configuration:
+            response_type = key
+        elif key not in self.experiment.response_key_to_response_type:
             raise ValueError(f"{key} is not a response")
+        else:
+            response_type = self.experiment.response_key_to_response_type[key]
+            select_key = True
+
         loaded = []
         for realization in realizations:
-            input_path = self._realization_dir(realization) / f"{key}.nc"
+            input_path = self._realization_dir(realization) / f"{response_type}.nc"
             if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
+                raise KeyError(
+                    f"No response for key {response_type}, realization: {realization}"
+                )
             ds = xr.open_dataset(input_path, engine="scipy")
+
+            if select_key:
+                ds = ds.sel(name=key, drop=True)
+
             loaded.append(ds)
         return xr.combine_nested(loaded, concat_dim="realization")
 
@@ -779,7 +799,9 @@ class LocalEnsemble(BaseMode):
         dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
 
     @require_write
-    def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:
+    def save_response(
+        self, response_type: str, data: xr.Dataset, realization: int
+    ) -> None:
         """
         Save dataset as response under group and realization index.
 
@@ -795,13 +817,13 @@ class LocalEnsemble(BaseMode):
 
         if "values" not in data.variables:
             raise ValueError(
-                f"Dataset for response group '{group}' "
+                f"Dataset for response group '{response_type}' "
                 f"must contain a 'values' variable"
             )
 
         if data["values"].size == 0:
             raise ValueError(
-                f"Responses {group} are empty. Cannot proceed with saving to storage."
+                f"Responses {response_type} are empty. Cannot proceed with saving to storage."
             )
 
         if "realization" not in data.dims:
@@ -809,7 +831,7 @@ class LocalEnsemble(BaseMode):
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
-        data.to_netcdf(output_path / f"{group}.nc", engine="scipy")
+        data.to_netcdf(output_path / f"{response_type}.nc", engine="scipy")
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
@@ -823,9 +845,11 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.INITIALIZED
-            if (path / f"{e}.nc").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.INITIALIZED
+                if (path / f"{e}.nc").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
@@ -834,8 +858,10 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.HAS_DATA
-            if (path / f"{e}.nc").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.HAS_DATA
+                if (path / f"{e}.nc").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.response_configuration
         }

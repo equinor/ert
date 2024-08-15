@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import numpy as np
 import xarray as xr
@@ -16,12 +16,28 @@ from .response_config import ResponseConfig
 
 @dataclass
 class GenDataConfig(ResponseConfig):
-    input_file: str = ""
-    report_steps: Optional[List[int]] = None
-
     def __post_init__(self) -> None:
-        if isinstance(self.report_steps, list):
-            self.report_steps = list(set(self.report_steps))
+        if self.report_steps is not None:
+            assert isinstance(self.report_steps, list)
+            self.kwargs["report_steps"] = list(set(self.report_steps))
+
+    @property
+    def report_steps(self) -> Optional[List[int]]:
+        return self.kwargs.get("report_steps", None)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Only used for legacy compat with .to3() migrations.
+        .to3() migration should ideally be made independent of
+        this.
+        """
+        return {
+            "name": self.name,
+            "input_file": self.input_file,
+            "keys": self.keys,
+            "report_steps": self.report_steps,
+            "_ert_kind": self.__class__.__name__,
+        }
 
     @classmethod
     def from_config_list(cls, gen_data: List[str]) -> Self:
@@ -67,7 +83,9 @@ class GenDataConfig(ResponseConfig):
                     "RESULT_FILES must be configured using %d"
                 ).set_context_keyword(result_file_context)
             )
-        return cls(name=name, input_file=res_file, report_steps=report_steps)
+        return cls(
+            name=name, input_file=res_file, kwargs={"report_steps": report_steps}
+        )
 
     def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
         def _read_file(filename: Path, report_step: int) -> xr.Dataset:
@@ -104,4 +122,14 @@ class GenDataConfig(ResponseConfig):
                     errors.append(str(err))
         if errors:
             raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
-        return xr.combine_nested(datasets, concat_dim="report_step")
+        combined = xr.combine_nested(datasets, concat_dim="report_step")
+        combined.attrs["response"] = self.response_type
+        return combined
+
+    @property
+    def cardinality(self) -> Literal["one_per_key", "one_per_realization"]:
+        return "one_per_key"
+
+    @property
+    def response_type(self) -> str:
+        return "gen_data"

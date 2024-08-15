@@ -1,1 +1,1 @@
-{'GEN': GenDataConfig(name='GEN', input_file='gen%d.txt', report_steps=[1]), 'summary': SummaryConfig(name='summary', input_file='CASE', keys=['FOPR', 'RWPR'], refcase={})}
+{'summary': StandardResponseConfig(ert_kind='SummaryConfig', args_per_instance=[ResponseConfigArgs(name='summary', input_file='CASE', keys=['FOPR', 'RWPR'], kwargs={})]), 'gen_data': StandardResponseConfig(ert_kind='GenDataConfig', args_per_instance=[ResponseConfigArgs(name='GEN', input_file='gen%d.txt', keys=['GEN'], kwargs={'report_steps': [1]})])}

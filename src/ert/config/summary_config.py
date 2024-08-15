@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Set, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, Set, Union
 
 import xarray as xr
 
@@ -13,19 +13,34 @@ from .response_config import ResponseConfig
 if TYPE_CHECKING:
     from typing import List
 
-
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SummaryConfig(ResponseConfig):
-    input_file: str
-    keys: List[str]
-    refcase: Union[Set[datetime], List[str], None] = None
+    @property
+    def refcase(self) -> Union[Set[datetime], List[str], None]:
+        return self.kwargs.get("refcase", None)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Only used for legacy compat with .to3() migrations.
+        .to3() migration should ideally be made independent of
+        this.
+        """
+        return {
+            "name": self.name,
+            "input_file": self.input_file,
+            "keys": self.keys,
+            "refcase": [ts.strftime("%Y-%m-%d %H") for ts in self.refcase],
+            "_ert_kind": self.__class__.__name__,
+        }
 
     def __post_init__(self) -> None:
         if isinstance(self.refcase, list):
-            self.refcase = {datetime.fromisoformat(val) for val in self.refcase}
+            self.kwargs["refcase"] = {
+                datetime.fromisoformat(val) for val in self.refcase
+            }
         self.keys = sorted(set(self.keys))
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
@@ -45,3 +60,11 @@ class SummaryConfig(ResponseConfig):
             coords={"time": time_map, "name": keys},
         )
         return ds.drop_duplicates("time")
+
+    @property
+    def cardinality(self) -> Literal["one_per_key", "one_per_realization"]:
+        return "one_per_realization"
+
+    @property
+    def response_type(self) -> str:
+        return "summary"

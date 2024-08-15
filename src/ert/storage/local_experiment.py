@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 from uuid import UUID
 
 import numpy as np
@@ -22,6 +22,7 @@ from ert.config import (
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
+from ert.config.standardized_response_config import StandardResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -94,7 +95,9 @@ class LocalExperiment(BaseMode):
         path: Path,
         *,
         parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
+        responses: Optional[
+            Union[List[StandardResponseConfig], List[ResponseConfig]]
+        ] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
         simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
@@ -112,7 +115,7 @@ class LocalExperiment(BaseMode):
             File system path for storing experiment data.
         parameters : list of ParameterConfig, optional
             List of parameter configurations.
-        responses : list of ResponseConfig, optional
+        responses : list of StandardResponseConfig or list of ResponseConfig, optional
             List of response configurations.
         observations : dict of str: xr.Dataset, optional
             Observations dictionary.
@@ -138,9 +141,26 @@ class LocalExperiment(BaseMode):
         with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
             json.dump(parameter_data, f, indent=2)
 
+        if responses is not None and responses != []:
+            _first = responses[0]
+
+            if isinstance(_first, ResponseConfig):
+                # for mypy
+                responses_non_std: List[ResponseConfig] = [
+                    r for r in responses if isinstance(r, ResponseConfig)
+                ]
+                assert len(responses_non_std) == len(responses)
+
+                _standardized = StandardResponseConfig.standardize_configs(
+                    responses_non_std
+                )
+                responses = _standardized
+            else:
+                assert all(isinstance(r, StandardResponseConfig) for r in responses)
+
         response_data = {}
         for response in responses or []:
-            response_data.update({response.name: response.to_dict()})
+            response_data.update({response.response_type: response.to_dict()})
         with open(path / cls._responses_file, "w", encoding="utf-8") as f:
             json.dump(response_data, f, default=str, indent=2)
 
@@ -269,13 +289,14 @@ class LocalExperiment(BaseMode):
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
-    @cached_property
-    def response_configuration(self) -> Dict[str, ResponseConfig]:
-        params = {}
+    @property
+    def response_configuration(self) -> Dict[str, StandardResponseConfig]:
+        responses = {}
         for data in self.response_info.values():
-            param_type = data.pop("_ert_kind")
-            params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
-        return params
+            response_instance = StandardResponseConfig.from_dict(data)
+            responses[response_instance.response_type] = response_instance
+
+        return responses
 
     @cached_property
     def update_parameters(self) -> List[str]:
@@ -288,3 +309,12 @@ class LocalExperiment(BaseMode):
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
         }
+
+    @cached_property
+    def response_key_to_response_type(self) -> Dict[str, str]:
+        mapping = {}
+        for config in self.response_configuration.values():
+            for key in config.keys:
+                mapping[key] = config.response_type
+
+        return mapping

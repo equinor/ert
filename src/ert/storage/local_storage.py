@@ -26,6 +26,7 @@ from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
+from ert.config.standardized_response_config import StandardResponseConfig
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 6
+_LOCAL_STORAGE_VERSION = 7
 
 
 class _Migrations(BaseModel):
@@ -291,7 +292,9 @@ class LocalStorage(BaseMode):
     def create_experiment(
         self,
         parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
+        responses: Optional[
+            Union[List[StandardResponseConfig], List[ResponseConfig]]
+        ] = None,
         observations: Optional[Dict[str, xr.Dataset]] = None,
         simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
@@ -303,7 +306,7 @@ class LocalStorage(BaseMode):
         ----------
         parameters : list of ParameterConfig, optional
             The parameters for the experiment.
-        responses : list of ResponseConfig, optional
+        responses : list of ResponseConfig or StandardResponseConfig, optional
             The responses for the experiment.
         observations : dict of str to Dataset, optional
             The observations for the experiment.
@@ -443,6 +446,7 @@ class LocalStorage(BaseMode):
             to4,
             to5,
             to6,
+            to7,
         )
 
         try:
@@ -459,7 +463,7 @@ class LocalStorage(BaseMode):
                     f"Cannot migrate storage '{self.path}'. Storage version {version} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH"
                 )
             elif version < _LOCAL_STORAGE_VERSION:
-                migrations = list(enumerate([to2, to3, to4, to5, to6], start=1))
+                migrations = list(enumerate([to2, to3, to4, to5, to6, to7], start=1))
                 for from_version, migration in migrations[version - 1 :]:
                     print(f"* Updating storage to version: {from_version+1}")
                     migration.migrate(self.path)

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ert.config import GenDataConfig, GenKwConfig
+from ert.config import GenKwConfig
 from ert.config.field import Field
 from ert.storage import Ensemble, Experiment, Storage
 
@@ -54,13 +54,15 @@ def get_response_names(ensemble: Ensemble) -> List[str]:
 
 
 def gen_data_keys(ensemble: Ensemble) -> Iterator[str]:
-    for k, v in ensemble.experiment.response_configuration.items():
-        if isinstance(v, GenDataConfig):
-            if v.report_steps is None:
-                yield f"{k}@0"
-            else:
-                for report_step in v.report_steps:
-                    yield f"{k}@{report_step}"
+    for config in ensemble.experiment.response_configuration[
+        "gen_data"
+    ].args_per_instance:
+        report_steps = config.kwargs.get("report_steps")
+        if report_steps is None:
+            yield f"{config.name}@0"
+        else:
+            for report_step in report_steps:
+                yield f"{config.name}@{report_step}"
 
 
 def data_for_key(

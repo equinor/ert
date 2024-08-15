@@ -32,6 +32,7 @@ from ert.config.enkf_observation_implementation_type import (
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
+from ert.config.standardized_response_config import StandardResponseConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
@@ -367,7 +368,6 @@ response_configs = st.lists(
                 alphabet=st.characters(min_codepoint=65, max_codepoint=90)
             ),
             keys=summary_keys,
-            refcase=st.just(None),
         ),
     ),
     unique_by=lambda x: x.name,
@@ -655,10 +655,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
         assert sorted(model_experiment.ensembles) == sorted(
             e.id for e in storage_experiment.ensembles
         )
-        assert (
-            list(storage_experiment.response_configuration.values())
-            == model_experiment.responses
-        )
+        assert list(
+            storage_experiment.response_configuration.values()
+        ) == StandardResponseConfig.standardize_configs(model_experiment.responses)
+
         for obskey, obs in model_experiment.observations.items():
             assert obskey in storage_experiment.observations
             assert_allclose(obs, storage_experiment.observations[obskey])

@@ -24,16 +24,14 @@ def test_migrate_responses(setup_case, set_ert_config):
         response_info = json.loads(
             (experiment._path / "responses.json").read_text(encoding="utf-8")
         )
-        assert (
-            list(experiment.response_configuration.values())
-            == ert_config.ensemble_config.response_configuration
-        )
-    assert list(response_info) == [
-        "SNAKE_OIL_OPR_DIFF",
-        "SNAKE_OIL_WPR_DIFF",
-        "SNAKE_OIL_GPR_DIFF",
+        assert experiment.response_configuration == {
+            config.response_type: config
+            for config in ert_config.ensemble_config.standardized_response_configs
+        }
+    assert set(response_info) == {
+        "gen_data",
         "summary",
-    ]
+    }
 
 
 def test_migrate_gen_kw_config(setup_case, set_ert_config):

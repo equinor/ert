@@ -28,6 +28,7 @@ from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .response_config import ResponseConfig
+from .standardized_response_config import StandardResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
@@ -171,7 +172,7 @@ class EnsembleConfig:
                     name="summary",
                     input_file=eclbase,
                     keys=[i for val in summary_keys for i in val],
-                    refcase=time_map,
+                    kwargs={"refcase": time_map},
                 )
             )
 
@@ -242,3 +243,7 @@ class EnsembleConfig:
     @property
     def response_configuration(self) -> List[ResponseConfig]:
         return list(self.response_configs.values())
+
+    @property
+    def standardized_response_configs(self) -> List[StandardResponseConfig]:
+        return StandardResponseConfig.standardize_configs(self.response_configuration)

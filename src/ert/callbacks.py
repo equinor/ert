@@ -6,10 +6,11 @@ import time
 from pathlib import Path
 from typing import Iterable
 
-from ert.config import ParameterConfig, ResponseConfig
+from ert.config import ParameterConfig
 from ert.run_arg import RunArg
 from ert.storage.realization_storage_state import RealizationStorageState
 
+from .config.standardized_response_config import StandardResponseConfig
 from .load_status import LoadResult, LoadStatus
 
 logger = logging.getLogger(__name__)
@@ -47,24 +48,26 @@ async def _read_parameters(
 
 
 async def _write_responses_to_storage(
-    run_arg: RunArg, response_configs: Iterable[ResponseConfig]
+    run_arg: RunArg, response_configs: Iterable[StandardResponseConfig]
 ) -> LoadResult:
     errors = []
     for config in response_configs:
         try:
             start_time = time.perf_counter()
-            logger.debug(f"Starting to load response: {config.name}")
+            logger.debug(f"Starting to load response: {config.response_type}")
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
             await asyncio.sleep(0)
             logger.debug(
-                f"Loaded {config.name}",
+                f"Loaded {config.response_type}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
-            run_arg.ensemble_storage.save_response(config.name, ds, run_arg.iens)
+            run_arg.ensemble_storage.save_response(
+                config.response_type, ds, run_arg.iens
+            )
             await asyncio.sleep(0)
             logger.debug(
-                f"Saved {config.name} to storage",
+                f"Saved {config.response_type} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
         except ValueError as err:

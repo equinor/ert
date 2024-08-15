@@ -398,10 +398,14 @@ def test_smoother_snapshot_alpha(
         )
         data = rng.uniform(0.8, 1, 3)
         prior_storage.save_response(
-            "RESPONSE",
+            "gen_data",
             xr.Dataset(
-                {"values": (["report_step", "index"], [data])},
-                coords={"index": range(len(data)), "report_step": [0]},
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
             ),
             iens,
         )
@@ -559,10 +563,14 @@ def test_and_benchmark_adaptive_localization_with_fields(
         )
 
         prior_ensemble.save_response(
-            "RESPONSE",
+            "gen_data",
             xr.Dataset(
-                {"values": (["report_step", "index"], [Y[:, iens]])},
-                coords={"index": range(len(Y[:, iens])), "report_step": [0]},
+                {"values": (["name", "report_step", "index"], [[Y[:, iens]]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(Y[:, iens])),
+                    "report_step": [0],
+                },
             ),
             iens,
         )
