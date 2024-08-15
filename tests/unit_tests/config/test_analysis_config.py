@@ -143,21 +143,24 @@ def test_unknown_variable_raises_validation_error():
 
 def test_default_alpha_is_set():
     default_alpha = 3.0
-    assert AnalysisConfig.from_dict({}).enkf_alpha == default_alpha
-    assert AnalysisConfig().enkf_alpha == default_alpha
+    assert AnalysisConfig.from_dict({}).observation_settings.alpha == default_alpha
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_alpha_is_set_from_corresponding_key(value):
-    assert AnalysisConfig.from_dict({ConfigKeys.ENKF_ALPHA: value}).enkf_alpha == value
-    assert AnalysisConfig(alpha=value).enkf_alpha == value
+    assert (
+        AnalysisConfig.from_dict(
+            {ConfigKeys.ENKF_ALPHA: value}
+        ).observation_settings.alpha
+        == value
+    )
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_analysis_config_alpha_set_and_get(value):
     analysis_config = AnalysisConfig()
-    analysis_config.enkf_alpha = value
-    assert analysis_config.enkf_alpha == value
+    analysis_config.observation_settings.alpha = value
+    assert analysis_config.observation_settings.alpha == value
 
 
 def test_default_std_cutoff_is_set():
