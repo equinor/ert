@@ -34,3 +34,6 @@ src/ert/shared/version.py
 /compile_commands.json
 *_pb2.py
 *_pb2.pyi
+/test-data/bigpoly/*
+!/test-data/bigpoly/make_bigpoly.sh
+!/test-data/bigpoly/generate_eclsum.py
