@@ -198,9 +198,6 @@ class AnalysisConfig:
     def log_path(self) -> Path:
         return Path(realpath(self.update_log_path))
 
-    def have_enough_realisations(self, realizations: int) -> bool:
-        return realizations >= self.minimum_required_realizations
-
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
