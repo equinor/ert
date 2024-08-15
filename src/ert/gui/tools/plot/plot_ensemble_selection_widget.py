@@ -29,7 +29,7 @@ class EnsembleSelectionWidget(QWidget):
 
     def __init__(self, ensembles: List[EnsembleObject]):
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(ensembles)
+        self.__dndlist = EnsembleSelectListWidget(ensembles[::-1])
 
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
