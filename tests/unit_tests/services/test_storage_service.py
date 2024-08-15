@@ -4,12 +4,12 @@ import socket
 
 from ert.services import StorageService
 from ert.services._storage_main import _create_connection_info
-from ert.shared import port_handler
+from ert.shared import find_available_socket
 
 
 def test_create_connection_string():
     authtoken = "very_secret_token"
-    _, _, sock = port_handler.find_available_port()
+    sock = find_available_socket()
 
     _create_connection_info(sock, authtoken)
 

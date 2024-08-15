@@ -1,7 +1,7 @@
 import logging
 import random
 import socket
-from typing import Optional, Tuple
+from typing import Optional
 
 from dns import exception, resolver, reversename
 
@@ -46,11 +46,11 @@ def get_machine_name() -> str:
         return "localhost"
 
 
-def find_available_port(
+def find_available_socket(
     custom_host: Optional[str] = None,
     custom_range: Optional[range] = None,
     will_close_then_reopen_socket: bool = False,
-) -> Tuple[str, int, socket.socket]:
+) -> socket.socket:
     """
     The default and recommended approach here is to return a bound socket to the
     caller, requiring the caller to keep the socket-object alive as long as the
@@ -62,7 +62,7 @@ def find_available_port(
     but port is not ready to be re-bound yet, and 2) some other process managed to
     bind the port before the original caller gets around to re-bind.
 
-    Thus, we expect clients calling find_available_port() to keep the returned
+    Thus, we expect clients calling find_available_socket() to keep the returned
     socket-object alive and open as long as the port is needed. If a socket-object
     is passed to other modules like for example a websocket-server, use dup() to
     obtain a new Python socket-object bound to the same underlying socket (and hence
@@ -84,14 +84,10 @@ def find_available_port(
     random.shuffle(ports)
     for port in ports:
         try:
-            return (
-                current_host,
-                port,
-                _bind_socket(
-                    host=current_host,
-                    port=port,
-                    will_close_then_reopen_socket=will_close_then_reopen_socket,
-                ),
+            return _bind_socket(
+                host=current_host,
+                port=port,
+                will_close_then_reopen_socket=will_close_then_reopen_socket,
             )
         except PortAlreadyInUseException:
             continue
@@ -108,7 +104,7 @@ def _bind_socket(
 
         # Setting flags like SO_REUSEADDR and/or SO_REUSEPORT may have
         # undesirable side-effects but we allow it if caller insists. Refer to
-        # comment on find_available_port()
+        # comment on find_available_socket()
         #
         # See e.g.  https://stackoverflow.com/a/14388707 for an extensive
         # explanation of these flags, in particular the part about TIME_WAIT
@@ -133,10 +129,6 @@ def _bind_socket(
                 f"Port {port} already in use."
             ) from err_info
         raise OSError(f"Unknown `OSError` while binding port {port}") from err_info
-
-
-def get_family_for_localhost() -> socket.AddressFamily:
-    return get_family(_get_ip_address())
 
 
 def get_family(host: str) -> socket.AddressFamily:
