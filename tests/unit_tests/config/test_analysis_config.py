@@ -165,14 +165,20 @@ def test_analysis_config_alpha_set_and_get(value):
 
 def test_default_std_cutoff_is_set():
     default_std_cutoff = 1e-6
-    assert AnalysisConfig.from_dict({}).std_cutoff == default_std_cutoff
-    assert AnalysisConfig().std_cutoff == default_std_cutoff
+    assert (
+        AnalysisConfig.from_dict({}).observation_settings.std_cutoff
+        == default_std_cutoff
+    )
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_std_cutoff_is_set_from_corresponding_key(value):
-    assert AnalysisConfig.from_dict({ConfigKeys.STD_CUTOFF: value}).std_cutoff == value
-    assert AnalysisConfig(std_cutoff=value).std_cutoff == value
+    assert (
+        AnalysisConfig.from_dict(
+            {ConfigKeys.STD_CUTOFF: value}
+        ).observation_settings.std_cutoff
+        == value
+    )
 
 
 def test_default_max_runtime_is_unlimited():
