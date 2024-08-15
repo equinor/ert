@@ -212,7 +212,6 @@ class ErtConfigValues:
     runpath_file: str
     run_template: List[str]
     enkf_alpha: float
-    iter_retry_count: PositiveInt
     update_log_path: str
     std_cutoff: float
     max_runtime: PositiveInt
@@ -259,7 +258,6 @@ class ErtConfigValues:
             ConfigKeys.RUNPATH_FILE: self.runpath_file,
             ConfigKeys.RUN_TEMPLATE: self.run_template,
             ConfigKeys.ENKF_ALPHA: self.enkf_alpha,
-            ConfigKeys.ITER_RETRY_COUNT: self.iter_retry_count,
             ConfigKeys.UPDATE_LOG_PATH: self.update_log_path,
             ConfigKeys.STD_CUTOFF: self.std_cutoff,
             ConfigKeys.MAX_RUNTIME: self.max_runtime,
@@ -408,7 +406,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             std_cutoff=st.just(std_cutoff),
             enkf_alpha=small_floats,
-            iter_retry_count=positives,
             update_log_path=directory_names(),
             max_runtime=positives,
             min_realizations=st.builds(

@@ -46,7 +46,6 @@ Keyword name                                                            Required
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
-:ref:`ITER_RETRY_COUNT <iter_retry_count>`                              NO                                      4                               Number of retries for a iteration - iterated ensemble smoother
 :ref:`JOBNAME <jobname>`                                                NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
 :ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
@@ -1670,13 +1669,6 @@ UPDATE_LOG_PATH
 .. _update_log_path:
 
 A summary of the data used for updates are stored in this directory.
-
-ITER_RETRY_COUNT
-----------------
-.. _iter_retry_count:
-
-Number of retries for a iteration - iterated ensemble smoother.
-Defaults to 4.
 
 MAX_SUBMIT
 ----------

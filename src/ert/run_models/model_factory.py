@@ -290,7 +290,7 @@ def _setup_iterative_ensemble_smoother(
         if args.num_iterations is not None
         else 4,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-        num_retries_per_iter=config.analysis_config.num_retries_per_iter,
+        num_retries_per_iter=4,
         experiment_name=experiment_name,
         config=config,
         storage=storage,

@@ -121,24 +121,6 @@ def test_analysis_config_modules(analysis_config):
     assert isinstance(analysis_config.ies_module, IESSettings)
 
 
-def test_analysis_config_iter_config_dict_initialisation():
-    analysis_config = AnalysisConfig.from_dict(
-        {
-            ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ITER_RETRY_COUNT: 24,
-        }
-    )
-
-    assert analysis_config.num_retries_per_iter == 24
-
-
-@pytest.mark.parametrize(
-    "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
-)
-def test_analysis_config_iter_config_default_initialisation(analysis_config):
-    assert analysis_config.num_retries_per_iter == 4
-
-
 def test_incorrect_variable_raises_validation_error():
     with pytest.raises(
         ConfigValidationError, match="Input should be 'exact' or 'subspace'"

@@ -9,7 +9,6 @@ from typing import Any, Dict, Final, List, Optional, Tuple, Union, no_type_check
 
 from pydantic import ValidationError
 
-from .analysis_iter_config import AnalysisIterConfig
 from .analysis_module import ESSettings, IESSettings
 from .parsing import (
     AnalysisMode,
@@ -41,7 +40,6 @@ class AnalysisConfig:
         max_runtime: int = 0,
         min_realization: int = 0,
         update_log_path: Union[str, Path] = "update_log",
-        analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
         num_iterations: int = 1,
     ) -> None:
@@ -49,7 +47,6 @@ class AnalysisConfig:
         self.minimum_required_realizations = min_realization
         self._alpha = alpha
         self._std_cutoff = std_cutoff
-        self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
         self.num_iterations = num_iterations
@@ -203,7 +200,6 @@ class AnalysisConfig:
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
-            analysis_iter_config=AnalysisIterConfig(**config_dict),
             analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
         )
         return config
@@ -235,10 +231,6 @@ class AnalysisConfig:
     def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
 
-    @property
-    def num_retries_per_iter(self) -> int:
-        return self._analysis_iter_config.iter_retry_count
-
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
@@ -246,7 +238,6 @@ class AnalysisConfig:
             f"max_runtime={self._max_runtime}, "
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
-            f"analysis_iter_config={self._analysis_iter_config}, "
         )
 
     def __eq__(self, other: object) -> bool:
@@ -266,9 +257,6 @@ class AnalysisConfig:
             return False
 
         if self.es_module != other.es_module:
-            return False
-
-        if self._analysis_iter_config != other._analysis_iter_config:
             return False
 
         return self.minimum_required_realizations == other.minimum_required_realizations
