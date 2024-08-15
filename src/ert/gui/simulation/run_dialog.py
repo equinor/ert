@@ -92,8 +92,11 @@ class JobOverview(QTableView):
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
 
+        horizontal_header.resizeSections(QHeaderView.ResizeMode.ResizeToContents)
         for section in range(horizontal_header.count()):
-            horizontal_header.resizeSection(section, 140)
+            if horizontal_header.sectionSize(section) < 135:
+                horizontal_header.resizeSection(section, 135)
+
             # Only last section should be stretch
             horizontal_header.setSectionResizeMode(
                 section,
