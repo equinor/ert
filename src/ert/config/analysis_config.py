@@ -35,7 +35,6 @@ class UpdateSettings:
 class AnalysisConfig:
     def __init__(
         self,
-        alpha: float = 3.0,
         std_cutoff: float = 1e-6,
         max_runtime: int = 0,
         min_realization: int = 0,
@@ -47,7 +46,6 @@ class AnalysisConfig:
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
-        self._alpha = alpha
         self._std_cutoff = std_cutoff
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
@@ -201,7 +199,6 @@ class AnalysisConfig:
             raise ConfigValidationError.from_collected(all_errors)
 
         config = cls(
-            alpha=config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
@@ -221,14 +218,6 @@ class AnalysisConfig:
         self._update_log_path = Path(log_path)
 
     @property
-    def enkf_alpha(self) -> float:
-        return self._alpha
-
-    @enkf_alpha.setter
-    def enkf_alpha(self, value: float) -> None:
-        self._alpha = value
-
-    @property
     def std_cutoff(self) -> float:
         return self._std_cutoff
 
@@ -242,7 +231,6 @@ class AnalysisConfig:
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
-            f"alpha={self._alpha}, "
             f"max_runtime={self._max_runtime}, "
             f"min_realization={self._min_realization}, "
             f"update_log_path={self._update_log_path}, "
