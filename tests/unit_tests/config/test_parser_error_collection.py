@@ -1026,22 +1026,6 @@ DEFINE A <2>
                 ],
                 *[
                     ExpectedErrorInfo(
-                        line=20 + i,
-                        column=1,
-                        end_column=1 + len(kw),
-                        match=f"The {kw} keyword has been removed",
-                    )
-                    for i, kw in enumerate(
-                        [
-                            "LSF_SERVER",
-                            "LSF_QUEUE",
-                            "MAX_RUNNING_LSF",
-                            "MAX_RUNNING_LOCAL",
-                        ]
-                    )
-                ],
-                *[
-                    ExpectedErrorInfo(
                         line=25 + i,
                         column=1,
                         end_column=1 + len(kw),
