@@ -125,12 +125,10 @@ def test_analysis_config_iter_config_dict_initialisation():
     analysis_config = AnalysisConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.ITER_COUNT: 42,
             ConfigKeys.ITER_RETRY_COUNT: 24,
         }
     )
 
-    assert analysis_config.num_iterations == 42
     assert analysis_config.num_retries_per_iter == 24
 
 
@@ -138,10 +136,7 @@ def test_analysis_config_iter_config_dict_initialisation():
     "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
 )
 def test_analysis_config_iter_config_default_initialisation(analysis_config):
-    assert analysis_config.num_iterations == 4
     assert analysis_config.num_retries_per_iter == 4
-    analysis_config.set_num_iterations(42)
-    assert analysis_config.num_iterations == 42
 
 
 def test_incorrect_variable_raises_validation_error():

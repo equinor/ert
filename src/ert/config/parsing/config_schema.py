@@ -314,7 +314,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         int_keyword(ConfigKeys.MAX_RUNTIME),
         stop_long_running_keyword(),
         analysis_set_var_keyword(),
-        int_keyword(ConfigKeys.ITER_COUNT),
         int_keyword(ConfigKeys.ITER_RETRY_COUNT),
         # the two fault types are just added to the config object only to
         # be able to print suitable messages before exiting.

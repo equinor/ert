@@ -11,6 +11,7 @@ REPLACE_WITH_GEN_KW = [
 ]
 JUST_REMOVE_KEYWORDS = [
     "ITER_CASE",
+    "ITER_COUNT",
     "UMASK",
     "LICENSE_PATH",
     "LOG_FILE",

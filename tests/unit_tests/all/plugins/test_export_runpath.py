@@ -43,7 +43,7 @@ def test_export_runpath_star_parameter(writing_setup):
     writing_setup.export_job.run(config, ["* | *"])
 
     writing_setup.write_mock.assert_called_with(
-        list(range(4)),
+        list(range(1)),
         list(range(25)),
     )
 

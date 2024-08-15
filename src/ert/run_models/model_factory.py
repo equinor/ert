@@ -286,7 +286,9 @@ def _setup_iterative_ensemble_smoother(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         target_ensemble=_iterative_ensemble_format(args),
-        number_of_iterations=_num_iterations(config, args),
+        number_of_iterations=int(args.num_iterations)
+        if args.num_iterations is not None
+        else 4,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         num_retries_per_iter=config.analysis_config.num_retries_per_iter,
         experiment_name=experiment_name,
@@ -320,9 +322,3 @@ def _iterative_ensemble_format(args: Namespace) -> str:
         args.target_ensemble
         or f"{getattr(args, 'current_ensemble', None) or 'default'}_%d"
     )
-
-
-def _num_iterations(config: ErtConfig, args: Namespace) -> int:
-    if args.num_iterations is not None:
-        config.analysis_config.set_num_iterations(int(args.num_iterations))
-    return config.analysis_config.num_iterations
