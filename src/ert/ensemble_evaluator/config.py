@@ -17,8 +17,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
+from ert.shared import find_available_socket
 from ert.shared import get_machine_name as ert_shared_get_machine_name
-from ert.shared import port_handler
 
 from .evaluator_connection_info import EvaluatorConnectionInfo
 
@@ -128,16 +128,16 @@ class EvaluatorServerConfig:
         generate_cert: bool = True,
         custom_host: typing.Optional[str] = None,
     ) -> None:
-        self.host, self.port, self._socket_handle = port_handler.find_available_port(
+        self._socket_handle = find_available_socket(
             custom_range=custom_port_range, custom_host=custom_host
         )
+        host, port = self._socket_handle.getsockname()
         self.protocol = "wss" if generate_cert else "ws"
-        self.url = f"{self.protocol}://{self.host}:{self.port}"
+        self.url = f"{self.protocol}://{host}:{port}"
         self.client_uri = f"{self.url}/client"
         self.dispatch_uri = f"{self.url}/dispatch"
-
         if generate_cert:
-            cert, key, pw = _generate_certificate(ip_address=self.host)
+            cert, key, pw = _generate_certificate(host)
         else:
             cert, key, pw = None, None, None
         self.cert = cert
@@ -151,8 +151,6 @@ class EvaluatorServerConfig:
 
     def get_connection_info(self) -> EvaluatorConnectionInfo:
         return EvaluatorConnectionInfo(
-            self.host,
-            self.port,
             self.url,
             self.cert,
             self.token,

@@ -6,8 +6,6 @@ from typing import Optional, Union
 class EvaluatorConnectionInfo:
     """Read only server-info"""
 
-    host: str
-    port: int
     url: str
     cert: Optional[Union[str, bytes]] = None
     token: Optional[str] = None

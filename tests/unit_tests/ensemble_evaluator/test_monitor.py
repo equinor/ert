@@ -1,9 +1,10 @@
 import asyncio
 import logging
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 import pytest
-import websockets
+from websockets import server
 from websockets.exceptions import ConnectionClosedOK
 
 from _ert.events import EEUserCancel, EEUserDone, event_from_json
@@ -18,8 +19,9 @@ async def _mock_ws(
         if path == "/healthcheck":
             return HTTPStatus.OK, {}, b""
 
-    async with websockets.server.serve(
-        handler, ee_config.host, ee_config.port, process_request=process_request
+    url = urlparse(ee_config.url)
+    async with server.serve(
+        handler, url.hostname, url.port, process_request=process_request
     ):
         await set_when_done.wait()
 
@@ -36,9 +38,7 @@ async def test_no_connection_established(make_ee_config):
 
 
 async def test_immediate_stop(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(
-        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
-    )
+    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
 
     set_when_done = asyncio.Event()
 
@@ -59,9 +59,7 @@ async def test_immediate_stop(unused_tcp_port):
 
 
 async def test_unexpected_close(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(
-        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
-    )
+    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
 
     set_when_done = asyncio.Event()
     socket_closed = asyncio.Event()
@@ -89,9 +87,7 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
     unused_tcp_port, caplog
 ):
     caplog.set_level(logging.ERROR)
-    ee_con_info = EvaluatorConnectionInfo(
-        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
-    )
+    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
 
     set_when_done = asyncio.Event()
 
@@ -125,9 +121,7 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
     exit anytime. A heartbeat is a None event.
 
     If the heartbeat is never sent, this test function will hang and then timeout."""
-    ee_con_info = EvaluatorConnectionInfo(
-        "127.0.0.1", unused_tcp_port, f"ws://127.0.0.1:{unused_tcp_port}"
-    )
+    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
 
     set_when_done = asyncio.Event()
     websocket_server_task = asyncio.create_task(
