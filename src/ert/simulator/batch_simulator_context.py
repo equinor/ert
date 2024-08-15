@@ -156,7 +156,7 @@ class BatchContext:
 
         self._loop.run_until_complete(self.run_forward_model())
 
-    async def run_forward_model(self):
+    async def run_forward_model(self) -> None:
         self._sim_task = self._loop.create_task(
             _submit_and_run_jobqueue(self.ert_config, self._scheduler, self.run_args)
         )
