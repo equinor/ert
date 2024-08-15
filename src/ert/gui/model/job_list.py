@@ -88,7 +88,7 @@ class JobListProxyModel(QAbstractProxyModel):
                 header = JOB_COLUMNS[section]
                 if header in [ids.STDOUT, ids.STDERR]:
                     return header.upper()
-                elif header in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
+                elif header in [ids.MAX_MEMORY_USAGE]:
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:

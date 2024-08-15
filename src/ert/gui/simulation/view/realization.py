@@ -147,12 +147,9 @@ class RealizationDelegate(QStyledItemDelegate):
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():
-                (current_memory_usage, maximum_memory_usage) = index.data(
-                    MemoryUsageRole
-                )
-                if current_memory_usage and maximum_memory_usage:
+                maximum_memory_usage = index.data(MemoryUsageRole)
+                if maximum_memory_usage:
                     txt = (
-                        f"Current memory usage:\t{byte_with_unit(current_memory_usage)}\n"
                         f"Maximum memory usage:\t{byte_with_unit(maximum_memory_usage)}"
                     )
                     QToolTip.showText(view.mapToGlobal(mouse_pos), txt)
