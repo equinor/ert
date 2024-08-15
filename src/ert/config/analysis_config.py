@@ -198,10 +198,6 @@ class AnalysisConfig:
     def log_path(self) -> Path:
         return Path(realpath(self.update_log_path))
 
-    @log_path.setter
-    def log_path(self, log_path: Union[str, Path]) -> None:
-        self.update_log_path = Path(log_path)
-
     def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
 
