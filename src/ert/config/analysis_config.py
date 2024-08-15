@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Dict, Final, List, Optional, Tuple, Union, no_type_check
+from typing import Any, Dict, Final, List, Optional, Union, no_type_check
 
 from pydantic import ValidationError
 
@@ -40,7 +40,9 @@ class AnalysisConfig:
         max_runtime: int = 0,
         min_realization: int = 0,
         update_log_path: Union[str, Path] = "update_log",
-        analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
+        es_settings: ESSettings = None,
+        ies_settings: IESSettings = None,
+        update_settings: UpdateSettings = None,
         num_iterations: int = 1,
     ) -> None:
         self._max_runtime = max_runtime
@@ -50,15 +52,57 @@ class AnalysisConfig:
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
         self.num_iterations = num_iterations
+        self.es_module = es_settings if es_settings else ESSettings()
+        self.ies_module = ies_settings if ies_settings else IESSettings()
+        self.observation_settings = (
+            update_settings if update_settings else UpdateSettings()
+        )
 
+    @no_type_check
+    @classmethod
+    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
+        num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
+        min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
+        if "%" in min_realization_str:
+            try:
+                min_realization = ceil(
+                    num_realization * float(min_realization_str.strip("%")) / 100
+                )
+            except ValueError as err:
+                raise ConfigValidationError.with_context(
+                    f"MIN_REALIZATIONS {min_realization_str!r} contained %"
+                    " but was not a valid percentage",
+                    min_realization_str,
+                ) from err
+        else:
+            try:
+                min_realization = int(min_realization_str)
+            except ValueError as err:
+                raise ConfigValidationError.with_context(
+                    f"MIN_REALIZATIONS value is not integer {min_realization_str!r}",
+                    min_realization_str,
+                ) from err
+        # Make sure min_realization is not greater than num_realization
+        if min_realization == 0:
+            min_realization = num_realization
+
+        if min_realization > num_realization:
+            ConfigWarning.ert_context_warn(
+                "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
+                "will set required to successful realizations to 100%. "
+                "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
+                min_realization_str,
+            )
+
+        min_realization = min(min_realization, num_realization)
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         observation_settings: Dict[str, Any] = {
-            "alpha": alpha,
-            "std_cutoff": std_cutoff,
+            "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
+            "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             "auto_scale_observations": [],
             "min_required_realizations": min_realization,
         }
-        analysis_set_var = [] if analysis_set_var is None else analysis_set_var
+        analysis_set_var = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
         inversion_str_map: Final = {
             "STD_ENKF": {
                 **dict.fromkeys(["EXACT", "0"], "exact"),
@@ -143,9 +187,9 @@ class AnalysisConfig:
             )
 
         try:
-            self.es_module = ESSettings(**options["STD_ENKF"])
-            self.ies_module = IESSettings(**options["IES_ENKF"])
-            self.observation_settings = UpdateSettings(**observation_settings)
+            es_settings = ESSettings(**options["STD_ENKF"])
+            ies_settings = IESSettings(**options["IES_ENKF"])
+            obs_settings = UpdateSettings(**observation_settings)
         except ValidationError as err:
             for error in err.errors():
                 error["loc"] = tuple(
@@ -156,51 +200,15 @@ class AnalysisConfig:
         if all_errors:
             raise ConfigValidationError.from_collected(all_errors)
 
-    @no_type_check
-    @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
-        num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
-        min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
-        if "%" in min_realization_str:
-            try:
-                min_realization = ceil(
-                    num_realization * float(min_realization_str.strip("%")) / 100
-                )
-            except ValueError as err:
-                raise ConfigValidationError.with_context(
-                    f"MIN_REALIZATIONS {min_realization_str!r} contained %"
-                    " but was not a valid percentage",
-                    min_realization_str,
-                ) from err
-        else:
-            try:
-                min_realization = int(min_realization_str)
-            except ValueError as err:
-                raise ConfigValidationError.with_context(
-                    f"MIN_REALIZATIONS value is not integer {min_realization_str!r}",
-                    min_realization_str,
-                ) from err
-        # Make sure min_realization is not greater than num_realization
-        if min_realization == 0:
-            min_realization = num_realization
-
-        if min_realization > num_realization:
-            ConfigWarning.ert_context_warn(
-                "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
-                "will set required to successful realizations to 100%. "
-                "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
-                min_realization_str,
-            )
-
-        min_realization = min(min_realization, num_realization)
-
         config = cls(
             alpha=config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             std_cutoff=config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
             min_realization=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
-            analysis_set_var=config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, []),
+            update_settings=obs_settings,
+            es_settings=es_settings,
+            ies_settings=ies_settings,
         )
         return config
 
