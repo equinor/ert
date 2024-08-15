@@ -49,7 +49,6 @@ JOB_COLUMNS: Sequence[str] = [
     DURATION,  # Duration is based on two data fields, not coming directly from ert
     ids.STDOUT,
     ids.STDERR,
-    ids.CURRENT_MEMORY_USAGE,
     ids.MAX_MEMORY_USAGE,
 ]
 JOB_COLUMN_SIZE: Final[int] = len(JOB_COLUMNS)
@@ -383,10 +382,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == StatusRole:
             return node.data.status
         if role == MemoryUsageRole:
-            return (
-                node.data.current_memory_usage,
-                node.data.max_memory_usage,
-            )
+            return node.data.max_memory_usage
         return QVariant()
 
     @staticmethod
@@ -422,7 +418,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = JOB_COLUMNS[index.column()]
-            if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
+            if data_name in [ids.MAX_MEMORY_USAGE]:
                 data = node.data
                 _bytes: Optional[str] = data.get(data_name)  # type: ignore
                 if _bytes:

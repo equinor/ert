@@ -524,16 +524,7 @@ def test_run_dialog_memory_usage_showing(
     assert job_model._real == 0
 
     job_number = 0
-    current_memory_column_index = 6
-    max_memory_column_index = 7
-
-    current_memory_column_proxy_index = job_model.index(
-        job_number, current_memory_column_index
-    )
-    current_memory_value = job_model.data(
-        current_memory_column_proxy_index, Qt.DisplayRole
-    )
-    assert current_memory_value == "50.00 kB"
+    max_memory_column_index = 6
 
     max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
     max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
