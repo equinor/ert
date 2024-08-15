@@ -215,7 +215,12 @@ def test_min_realization_is_set_from_corresponding_keyword(value):
         ).minimum_required_realizations
         == value
     )
-    assert AnalysisConfig(min_realization=value).minimum_required_realizations == value
+    assert (
+        AnalysisConfig(
+            minimum_required_realizations=value
+        ).minimum_required_realizations
+        == value
+    )
 
 
 def test_giving_larger_min_than_num_realizations_warns():
