@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 
 from ert.config.ert_script import ErtScript
 from ert.runpaths import Runpaths
-from ert.validation import rangestring_to_mask
+from ert.validation import rangestring_to_list
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -67,8 +67,7 @@ class ExportRunpathJob(ErtScript):
         if rangestring == "*":
             return list(range(size))
         else:
-            mask = rangestring_to_mask(rangestring, size)
-            return [i for i, flag in enumerate(mask) if flag]
+            return rangestring_to_list(rangestring)
 
     def _get_rangestrings(
         self, args: List[str], number_of_realizations: int

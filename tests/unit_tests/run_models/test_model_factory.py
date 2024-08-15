@@ -149,7 +149,7 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
     args = Namespace(
         realizations="0-4,7,8",
         target_ensemble="test_case_%d",
-        num_iterations="10",
+        num_iterations=10,
         experiment_name=None,
     )
 
@@ -163,7 +163,6 @@ def test_setup_iterative_ensemble_smoother(poly_case, storage):
         == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
     )
     assert model._total_iterations == 10
-    assert poly_case.analysis_config.num_iterations == 10
 
 
 @pytest.mark.parametrize(

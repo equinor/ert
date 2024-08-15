@@ -157,6 +157,7 @@ class BaseRunModel:
         the forward model and passing events back through the supplied queue.
         """
         self._total_iterations = total_iterations
+        config.analysis_config.num_iterations = total_iterations
 
         self.start_time: Optional[int] = None
         self.stop_time: Optional[int] = None

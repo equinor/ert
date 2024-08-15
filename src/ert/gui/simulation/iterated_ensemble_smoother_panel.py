@@ -71,8 +71,7 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
         self._num_iterations_spinner = QSpinBox()
         self._num_iterations_spinner.setMinimum(1)
         self._num_iterations_spinner.setMaximum(100)
-        self._num_iterations_spinner.setValue(analysis_config.num_iterations)
-        self._num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
+        self._num_iterations_spinner.setValue(4)
 
         layout.addRow("Number of iterations:", self._num_iterations_spinner)
 
@@ -124,11 +123,6 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
                 ITERATIVE_ENSEMBLE_SMOOTHER_MODE
             )
         )
-
-    def setNumberIterations(self, iteration_count: int) -> None:
-        if iteration_count != self.analysis_config.num_iterations:
-            self.analysis_config.set_num_iterations(iteration_count)
-            self.notifier.emitErtChange()
 
     def isConfigurationValid(self) -> bool:
         return (

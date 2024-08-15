@@ -43,6 +43,7 @@ class AnalysisConfig:
         update_log_path: Union[str, Path] = "update_log",
         analysis_iter_config: Optional[AnalysisIterConfig] = None,
         analysis_set_var: Optional[List[Tuple[str, str, str]]] = None,
+        num_iterations: int = 1,
     ) -> None:
         self._max_runtime = max_runtime
         self.minimum_required_realizations = min_realization
@@ -51,6 +52,7 @@ class AnalysisConfig:
         self._analysis_iter_config = analysis_iter_config or AnalysisIterConfig()
         self._update_log_path = Path(update_log_path)
         self._min_realization = min_realization
+        self.num_iterations = num_iterations
 
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         observation_settings: Dict[str, Any] = {
@@ -236,13 +238,6 @@ class AnalysisConfig:
     @property
     def num_retries_per_iter(self) -> int:
         return self._analysis_iter_config.iter_retry_count
-
-    @property
-    def num_iterations(self) -> int:
-        return self._analysis_iter_config.iter_count
-
-    def set_num_iterations(self, num_iterations: int) -> None:
-        self._analysis_iter_config.iter_count = num_iterations
 
     def __repr__(self) -> str:
         return (
