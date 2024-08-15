@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict
 
+import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from numpy.typing import ArrayLike
 from pandas import DataFrame
 
 from ert.gui.plottery import PlotConfig, PlotContext, PlotStyle
@@ -14,6 +14,7 @@ from .observations import plotObservations
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
@@ -30,7 +31,7 @@ class StatisticsPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, DataFrame],
         _observation_data: DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_images: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
@@ -176,9 +177,9 @@ def _plotPercentiles(
 def _plotPercentile(
     axes: Axes,
     style: PlotStyle,
-    index_values: ArrayLike,
-    top_line_data: ArrayLike,
-    bottom_line_data: ArrayLike,
+    index_values: npt.ArrayLike,
+    top_line_data: npt.ArrayLike,
+    bottom_line_data: npt.ArrayLike,
     alpha_multiplier: float,
 ) -> None:
     alpha = style.alpha

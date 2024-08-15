@@ -1,4 +1,3 @@
-import io
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
@@ -22,21 +21,20 @@ class StdDevPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_data: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer
         if layer is not None:
-            vmin, vmax = float("inf"), float("-inf")
+            vmin: float = np.inf
+            vmax: float = -np.inf
             axes = []
-            images: List[npt.NDArray[np.float64]] = []
-
+            images: List[npt.NDArray[np.float32]] = []
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
                 axes.append(ax)
-
-                image_data = std_dev_images[ensemble.name]
-                if not image_data:
+                data = std_dev_data[ensemble.name]
+                if data.size == 0:
                     ax.set_axis_off()
                     ax.text(
                         0.5,
@@ -46,21 +44,19 @@ class StdDevPlot:
                         va="center",
                     )
                 else:
-                    img = plt.imread(io.BytesIO(image_data))
-                    images.append(img)
-                    vmin = min(vmin, np.min(img))
-                    vmax = max(vmax, np.max(img))
-
+                    images.append(data)
+                    vmin = min(vmin, float(np.min(data)))
+                    vmax = max(vmax, float(np.max(data)))
                 ax.set_title(
                     f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
                     wrap=True,
                 )
 
-            for ax, img in zip(axes, images):
-                if img is not None:
-                    im = ax.imshow(img, vmin=vmin, vmax=vmax)
+            norm = plt.Normalize(vmin, vmax)
+            for ax, data in zip(axes, images):
+                if data is not None:
+                    im = ax.imshow(data, norm=norm, cmap="viridis")
                     self._colorbar(im)
-
             figure.tight_layout()
 
     @staticmethod
