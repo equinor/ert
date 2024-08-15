@@ -43,7 +43,6 @@ snake_oil_structure_config = {
     "MAX_SUBMIT": 13,
     "QUEUE_SYSTEM": "LSF",
     "LSF_QUEUE": "mr",
-    "LSF_SERVER": "simulacrum",
     "LSF_RESOURCE": "select[x86_64Linux] same[type:model]",
     "MAX_RUNNING": "100",
     "DATA_FILE": "eclipse/model/SNAKE_OIL.DATA",

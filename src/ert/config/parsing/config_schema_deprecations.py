@@ -23,7 +23,6 @@ JUST_REMOVE_KEYWORDS = [
 ]
 RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
 USE_QUEUE_OPTION = [
-    "LSF_SERVER",
     "LSF_QUEUE",
     "MAX_RUNNING_LSF",
     "MAX_RUNNING_LOCAL",
@@ -180,22 +179,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="LSF_LOGIN_SHELL as QUEUE_OPTION to the LSF system will be removed in "
-        "the future, and it is not recommended to use this QUEUE_OPTION. "
-        "It has been used in the past to force the bsub command to use a "
-        "specific shell. The current ERT default is to use local shell.",
-        check=lambda line: "LSF_LOGIN_SHELL" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="LSF_RSH_CMD as QUEUE_OPTION to the LSF system will be removed in "
-        "the future, and it is not recommended to use this QUEUE_OPTION. "
-        "It has been used in the past to set the remote shell command. "
-        "The ERT default is to use /usr/bin/ssh.",
-        check=lambda line: "LSF_RSH_CMD" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION is ignored. "
         "Please remove the line.",
         check=lambda line: "QUEUE_QUERY_TIMEOUT" in line,
@@ -205,12 +188,6 @@ deprecated_keywords_list = [
         message="QSTAT_OPTIONS as QUEUE_OPTION to the TORQUE is ignored. "
         "Please remove the line.",
         check=lambda line: "QSTAT_OPTIONS" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="LSF_SERVER as QUEUE_OPTION is not needed and will be removed in "
-        "the future. Please remove the configuration line.",
-        check=lambda line: "LSF_SERVER" in line,
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",

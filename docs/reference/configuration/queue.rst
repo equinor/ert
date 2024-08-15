@@ -140,14 +140,6 @@ The following is a list of available LSF configuration options:
 
     QUEUE_OPTION LSF BHIST_CMD command
 
-.. _bjobs_timeout:
-.. topic:: BJOBS_TIMEOUT
-
-  Determines how long-lived the job cache is. Default: ``0`` (no cache).
-  To change it to 60 s::
-
-    QUEUE_OPTION LSF BJOBS_TIMEOUT 60
-
 .. _submit_sleep:
 .. topic:: SUBMIT_SLEEP
 
@@ -155,18 +147,6 @@ The following is a list of available LSF configuration options:
   Default: ``0``. To change it to 1 s::
 
     QUEUE_OPTION LSF SUBMIT_SLEEP 1
-
-.. _lsf_server:
-.. topic:: LSF_SERVER
-
-  This options tells ERT which server should be used when submitting.
-  So when your configuration file has the setting::
-
-    QUEUE_OPTION LSF LSF_SERVER be-grid01
-
-  ERT will use ``ssh`` to submit your jobs using shell commands on the server
-  ``be-grid01``. For this to work you must have passwordless ``ssh`` to the
-  server.
 
 .. _lsf_queue:
 .. topic:: LSF_QUEUE

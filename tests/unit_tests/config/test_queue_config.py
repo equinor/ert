@@ -286,7 +286,6 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
 @pytest.mark.parametrize(
     "queue_system, queue_option, queue_value, err_msg",
     [
-        ("LSF", "BJOBS_TIMEOUT", "-3", "is not a valid positive integer"),
         ("SLURM", "SQUEUE_TIMEOUT", "5a", "is not a valid integer or float"),
         ("TORQUE", "NUM_NODES", "3.5", "is not a valid positive integer"),
     ],

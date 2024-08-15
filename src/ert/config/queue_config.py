@@ -21,21 +21,15 @@ GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING", "SUBMIT_SLEEP"]
 LSF_DRIVER_OPTIONS = [
     "BHIST_CMD",
     "BJOBS_CMD",
-    "BJOBS_TIMEOUT",
     "BKILL_CMD",
     "BSUB_CMD",
-    "DEBUG_OUTPUT",
     "EXCLUDE_HOST",
-    "LSF_LOGIN_SHELL",
     "LSF_QUEUE",
     "LSF_RESOURCE",
-    "LSF_RSH_CMD",
-    "LSF_SERVER",
     "PROJECT_CODE",
 ]
 OPENPBS_DRIVER_OPTIONS: List[str] = [
     "CLUSTER_LABEL",
-    "DEBUG_OUTPUT",
     "JOB_PREFIX",
     "KEEP_QSUB_OUTPUT",
     "MEMORY_PER_JOB",
@@ -73,10 +67,7 @@ VALID_QUEUE_OPTIONS: Dict[Any, List[str]] = {
 queue_string_options: Mapping[str, List[str]] = {
     "LSF": [
         "LSF_RESOURCE",
-        "LSF_SERVER",
         "LSF_QUEUE",
-        "LSF_LOGIN_SHELL",
-        "LSF_RSH_CMD",
         "BSUB_CMD",
         "BJOBS_CMD",
         "BKILL_CMD",
@@ -102,7 +93,6 @@ queue_string_options: Mapping[str, List[str]] = {
         "QUEUE",
         "CLUSTER_LABEL",
         "JOB_PREFIX",
-        "DEBUG_OUTPUT",
         "PROJECT_CODE",
     ],
     "LOCAL": ["PROJECT_CODE"],
@@ -110,7 +100,6 @@ queue_string_options: Mapping[str, List[str]] = {
 }
 queue_positive_int_options: Mapping[str, List[str]] = {
     "LSF": [
-        "BJOBS_TIMEOUT",
         "MAX_RUNNING",
     ],
     "SLURM": [
@@ -132,7 +121,7 @@ queue_positive_number_options: Mapping[str, List[str]] = {
     "GENERIC": ["SUBMIT_SLEEP"],
 }
 queue_bool_options: Mapping[str, List[str]] = {
-    "LSF": ["DEBUG_OUTPUT"],
+    "LSF": [],
     "SLURM": [],
     "TORQUE": ["KEEP_QSUB_OUTPUT"],
     "LOCAL": [],

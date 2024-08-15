@@ -230,15 +230,11 @@ def test_that_suggester_gives_schedule_prediciton_migration(tmp_path):
 
 def test_that_suggester_gives_job_prefix_migration(tmp_path):
     (tmp_path / "config.ert").write_text(
-        "NUM_REALIZATIONS 1\nQUEUE_OPTION TORQUE JOB_PREFIX foo\nQUEUE_OPTION LSF LSF_RSH_CMD foo\n"
+        "NUM_REALIZATIONS 1\nQUEUE_OPTION TORQUE JOB_PREFIX foo\n"
     )
     suggestions = make_suggestion_list(str(tmp_path / "config.ert"))
 
     assert any(
         "JOB_PREFIX as QUEUE_OPTION to the TORQUE system is deprecated" in str(s)
-        for s in suggestions
-    )
-    assert any(
-        "LSF_RSH_CMD as QUEUE_OPTION to the LSF system will be removed" in str(s)
         for s in suggestions
     )

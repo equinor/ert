@@ -1832,9 +1832,9 @@ There are configuration options for the various queue systems, described in deta
 in :ref:`queue-system-chapter`. In brief, the queue systems have the following options:
 
 * :ref:`LOCAL <local-queue>` — no queue options.
-* :ref:`LSF <lsf-systems>` — ``LSF_SERVER``, ``LSF_QUEUE``, ``LSF_RESOURCE``,
+* :ref:`LSF <lsf-systems>` — ``LSF_QUEUE``, ``LSF_RESOURCE``,
   ``BSUB_CMD``, ``BJOBS_CMD``, ``BKILL_CMD``,
-  ``BHIST_CMD``, ``BJOBS_TIMEOUT``, ``SUBMIT_SLEEP``, ``PROJECT_CODE``, ``EXCLUDE_HOST``,
+  ``BHIST_CMD``, ``SUBMIT_SLEEP``, ``PROJECT_CODE``, ``EXCLUDE_HOST``,
   ``MAX_RUNNING``
 * :ref:`TORQUE <pbs-systems>` — ``QSUB_CMD``, ``QSTAT_CMD``, ``QDEL_CMD``,
   ``QSTAT_OPTIONS``, ``QUEUE``, ``CLUSTER_LABEL``, ``MAX_RUNNING``, ``NUM_NODES``,
