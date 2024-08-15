@@ -258,7 +258,7 @@ def _setup_multiple_data_assimilation(
     return MultipleDataAssimilation(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
-        target_ensemble=_iterative_ensemble_format(config, args),
+        target_ensemble=_iterative_ensemble_format(args),
         weights=args.weights,
         restart_run=restart_run,
         prior_ensemble_id=prior_ensemble,
@@ -285,7 +285,7 @@ def _setup_iterative_ensemble_smoother(
     return IteratedEnsembleSmoother(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
-        target_ensemble=_iterative_ensemble_format(config, args),
+        target_ensemble=_iterative_ensemble_format(args),
         number_of_iterations=_num_iterations(config, args),
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         num_retries_per_iter=config.analysis_config.num_retries_per_iter,
@@ -307,19 +307,17 @@ def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
     )
 
 
-def _iterative_ensemble_format(config: ErtConfig, args: Namespace) -> str:
+def _iterative_ensemble_format(args: Namespace) -> str:
     """
     When a RunModel runs multiple iterations, an ensemble format will be used.
     E.g. when starting from the ensemble 'ensemble', subsequent runs can be named
     'ensemble_0', 'ensemble_1', 'ensemble_2', etc.
 
-    This format can be set from the commandline via the `target_ensemble` option,
-    and via the config file via the `ITER_CASE` keyword. If none of these are
-    set we use the name of the current ensemble and add `_%d` to it.
+    This format can be set from the commandline via the `target_ensemble` option.
+    or we use the current ensemble and add `_%d` to it.
     """
     return (
         args.target_ensemble
-        or config.analysis_config.ensemble_format
         or f"{getattr(args, 'current_ensemble', None) or 'default'}_%d"
     )
 

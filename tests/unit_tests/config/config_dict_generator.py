@@ -212,7 +212,6 @@ class ErtConfigValues:
     runpath_file: str
     run_template: List[str]
     enkf_alpha: float
-    iter_case: str
     iter_count: PositiveInt
     iter_retry_count: PositiveInt
     update_log_path: str
@@ -261,7 +260,6 @@ class ErtConfigValues:
             ConfigKeys.RUNPATH_FILE: self.runpath_file,
             ConfigKeys.RUN_TEMPLATE: self.run_template,
             ConfigKeys.ENKF_ALPHA: self.enkf_alpha,
-            ConfigKeys.ITER_CASE: self.iter_case,
             ConfigKeys.ITER_COUNT: self.iter_count,
             ConfigKeys.ITER_RETRY_COUNT: self.iter_retry_count,
             ConfigKeys.UPDATE_LOG_PATH: self.update_log_path,
@@ -412,7 +410,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             std_cutoff=st.just(std_cutoff),
             enkf_alpha=small_floats,
-            iter_case=words,
             iter_count=positives,
             iter_retry_count=positives,
             update_log_path=directory_names(),

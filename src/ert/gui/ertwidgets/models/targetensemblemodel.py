@@ -28,12 +28,8 @@ class TargetEnsembleModel(ValueModel):
             ValueModel.setValue(self, value)
 
     def getDefaultValue(self) -> Optional[str]:
-        analysis_config = self.analysis_config
-        if analysis_config.ensemble_format_is_set():
-            return analysis_config.ensemble_format
-        else:
-            ensemble_name = self.notifier.current_ensemble_name
-            return f"{ensemble_name}_%d"
+        ensemble_name = self.notifier.current_ensemble_name
+        return f"{ensemble_name}_%d"
 
     def on_current_ensemble_changed(self, *args: Any) -> None:
         if not self._custom:
