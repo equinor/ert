@@ -680,6 +680,7 @@ class UpdateRunModel(BaseRunModel):
     def update(
         self, prior: Ensemble, posterior_name: str, weight: float = 1.0
     ) -> Ensemble:
+        self.validate()
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
         )

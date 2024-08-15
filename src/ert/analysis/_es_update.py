@@ -759,17 +759,6 @@ def analysis_IES(
     return sies_smoother
 
 
-def _assert_has_enough_realizations(
-    ens_mask: npt.NDArray[np.bool_], min_required_realizations: int
-) -> None:
-    active_realizations = ens_mask.sum()
-    if active_realizations < min_required_realizations:
-        raise ErtAnalysisError(
-            f"There are {active_realizations} active realisations left, which is "
-            "less than the minimum specified - stopping assimilation.",
-        )
-
-
 def _create_smoother_snapshot(
     prior_name: str,
     posterior_name: str,
@@ -804,7 +793,6 @@ def smoother_update(
     analysis_config = UpdateSettings() if analysis_config is None else analysis_config
     es_settings = ESSettings() if es_settings is None else es_settings
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    _assert_has_enough_realizations(ens_mask, analysis_config.min_required_realizations)
 
     smoother_snapshot = _create_smoother_snapshot(
         prior_storage.name,
@@ -873,7 +861,6 @@ def iterative_smoother_update(
         rng = np.random.default_rng()
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    _assert_has_enough_realizations(ens_mask, update_settings.min_required_realizations)
 
     smoother_snapshot = _create_smoother_snapshot(
         prior_storage.name,

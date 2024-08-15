@@ -93,6 +93,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
+        self.validate()
         self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
         try:
             _, self.sies_smoother = iterative_smoother_update(
