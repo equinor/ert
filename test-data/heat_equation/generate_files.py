@@ -12,7 +12,9 @@ import xtgeo
 from definition import Coordinate, obs_coordinates, obs_times
 from heat_equation import heat_equation, sample_prior_conductivity
 
-rng = np.random.default_rng(11223344)
+# Some seeds produce priors that yield poor results.
+# Worth playing around with.
+rng = np.random.default_rng(1234)
 
 
 def create_egrid_file():

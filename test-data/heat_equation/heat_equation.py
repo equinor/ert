@@ -9,6 +9,8 @@ import numpy as np
 import numpy.typing as npt
 from definition import dx, k_end, k_start, nx, obs_coordinates, obs_times, u_init
 
+from ert.field_utils.grdecl_io import export_grdecl, import_grdecl
+
 
 def heat_equation(
     u: npt.NDArray[np.float64],
@@ -58,21 +60,18 @@ def sample_prior_conductivity(ensemble_size, nx, rng):
 
 if __name__ == "__main__":
     iens = int(sys.argv[1])
+    iteration = int(sys.argv[2])
     rng = np.random.default_rng(iens)
     cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(nx, nx)
 
-    # Write the array to a GRDECL formatted file
-    with open("cond.grdecl", "w", encoding="utf-8") as f:
-        f.write("COND\n")  # Write the property name
-        f.write("-- Conductivity data\n")  # Optional comment line
+    if iteration == 0:
+        export_grdecl(cond, "cond.grdecl", "COND", binary=False)
+    else:
+        cond = import_grdecl("cond.grdecl", "COND", dimensions=(nx, nx))
 
-        # Write the data
-        for row in cond:
-            for value in row:
-                f.write(f"{value:.6f} ")
-            f.write("\n")
-
-        f.write("/\n")  # End the data section with a slash
+    # The update may give non-physical parameter values, which here means negative heat conductivity.
+    # Setting negative values to a small positive value but not zero because we want to be able to divide by them.
+    cond = cond.clip(min=1e-8)
 
     # Calculate maximum `dt`.
     # If higher values are used, the numerical solution will become unstable.
