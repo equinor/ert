@@ -32,27 +32,15 @@ class UpdateSettings:
     min_required_realizations: int = 2
 
 
+@dataclass
 class AnalysisConfig:
-    def __init__(
-        self,
-        max_runtime: int = 0,
-        min_realization: int = 0,
-        update_log_path: Union[str, Path] = "update_log",
-        es_settings: ESSettings = None,
-        ies_settings: IESSettings = None,
-        update_settings: UpdateSettings = None,
-        num_iterations: int = 1,
-    ) -> None:
-        self._max_runtime = max_runtime
-        self.minimum_required_realizations = min_realization
-        self._update_log_path = Path(update_log_path)
-        self._min_realization = min_realization
-        self.num_iterations = num_iterations
-        self.es_module = es_settings if es_settings else ESSettings()
-        self.ies_module = ies_settings if ies_settings else IESSettings()
-        self.observation_settings = (
-            update_settings if update_settings else UpdateSettings()
-        )
+    max_runtime: Optional[int] = None
+    minimum_required_realizations: int = 0
+    update_log_path: Union[str, Path] = "update_log"
+    es_module: ESSettings = field(default_factory=ESSettings)
+    ies_module: IESSettings = field(default_factory=IESSettings)
+    observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
+    num_iterations: int = 1
 
     @no_type_check
     @classmethod
@@ -197,26 +185,22 @@ class AnalysisConfig:
             raise ConfigValidationError.from_collected(all_errors)
 
         config = cls(
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
-            min_realization=min_realization,
+            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
+            minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
-            update_settings=obs_settings,
-            es_settings=es_settings,
-            ies_settings=ies_settings,
+            observation_settings=obs_settings,
+            es_module=es_settings,
+            ies_module=ies_settings,
         )
         return config
 
     @property
     def log_path(self) -> Path:
-        return Path(realpath(self._update_log_path))
+        return Path(realpath(self.update_log_path))
 
     @log_path.setter
     def log_path(self, log_path: Union[str, Path]) -> None:
-        self._update_log_path = Path(log_path)
-
-    @property
-    def max_runtime(self) -> Optional[int]:
-        return self._max_runtime if self._max_runtime > 0 else None
+        self.update_log_path = Path(log_path)
 
     def have_enough_realisations(self, realizations: int) -> bool:
         return realizations >= self.minimum_required_realizations
@@ -224,9 +208,9 @@ class AnalysisConfig:
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
-            f"max_runtime={self._max_runtime}, "
-            f"min_realization={self._min_realization}, "
-            f"update_log_path={self._update_log_path}, "
+            f"max_runtime={self.max_runtime}, "
+            f"min_realization={self.minimum_required_realizations}, "
+            f"update_log_path={self.update_log_path}, "
         )
 
     def __eq__(self, other: object) -> bool:
