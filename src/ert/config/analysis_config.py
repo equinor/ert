@@ -29,7 +29,6 @@ class UpdateSettings:
     std_cutoff: float = 1e-6
     alpha: float = 3.0
     auto_scale_observations: List[ObservationGroups] = field(default_factory=list)
-    min_required_realizations: int = 2
 
 
 @dataclass
@@ -84,7 +83,6 @@ class AnalysisConfig:
             "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             "auto_scale_observations": [],
-            "min_required_realizations": min_realization,
         }
         analysis_set_var = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
         inversion_str_map: Final = {
