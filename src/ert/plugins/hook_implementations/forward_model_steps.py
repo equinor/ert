@@ -1,6 +1,11 @@
+import os
+import shutil
+import subprocess
 from pathlib import Path
 from textwrap import dedent
 from typing import List, Optional, Type
+
+import yaml
 
 from ert import (
     ForwardModelStepDocumentation,
@@ -9,6 +14,7 @@ from ert import (
     ForwardModelStepValidationError,
     plugin,
 )
+from ert.config import ErtConfig
 
 
 class CarefulCopyFile(ForwardModelStepPlugin):
@@ -219,6 +225,12 @@ class Eclipse100(ForwardModelStepPlugin):
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE100 must be given a VERSION argument"
             )
+
+        _validate_ecl_version(
+            version=self.private_args["<VERSION>"],
+            sim_name="eclipse",
+            ecl_site_config="ECL100_SITE_CONFIG",
+        )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -598,3 +610,52 @@ for fm_step_subclass in _UpperCaseFMSteps:
 @plugin(name="ert")
 def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
+
+
+def _validate_ecl_version(version, sim_name, ecl_site_config):
+    def _get_eclrun_env(config: dict) -> dict:
+        if "eclrun_env" in config:
+            env: dict = os.environ.copy()
+            eclrun_env = config["eclrun_env"]
+            for key, value in eclrun_env.copy().items():
+                if key == "PATH":
+                    env[key] = value + os.pathsep + env[key]
+                elif value is not None and key in env:
+                    env[key] = value
+            return env
+        return {}
+
+    def _get_available_eclrun_versions(eclrun_env, sim_name) -> List[str]:
+        try:
+            return (
+                subprocess.check_output(
+                    ["eclrun", "--report-versions", sim_name],
+                    env=eclrun_env,
+                )
+                .decode("utf-8")
+                .strip()
+                .split(" ")
+            )
+        except subprocess.CalledProcessError:
+            return []
+
+    def _get_ecl_site_config(ecl_config: str) -> dict:
+        site_config = ErtConfig.read_site_config()
+        config_file = next(
+            v for k, v in site_config.get("SETENV", []) if k == ecl_config
+        )
+        with open(config_file, encoding="utf-8") as f:
+            try:
+                return yaml.safe_load(f)
+            except yaml.YAMLError as e:
+                raise ValueError(f"Failed parse: {config_file} as yaml") from e
+
+    if shutil.which("eclrun") is not None:
+        ecl_config = _get_ecl_site_config(ecl_site_config)
+        ecl_env = _get_eclrun_env(ecl_config)
+        available_versions = _get_available_eclrun_versions(ecl_env, sim_name)
+        if version not in available_versions:
+            raise ForwardModelStepValidationError(
+                f"Unavailable ECLIPSE version {version} current supported "
+                f"versions {available_versions}"
+            )
