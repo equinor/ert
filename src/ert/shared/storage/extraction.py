@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import logging
 from typing import Dict, Mapping, Union
 
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage import Experiment
-
-logger = logging.getLogger()
 
 _PRIOR_NAME_MAP = {
     "NORMAL": "normal",
