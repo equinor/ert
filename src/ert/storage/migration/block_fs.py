@@ -515,7 +515,7 @@ def _migrate_gen_data(
     ensemble: Ensemble,
     data_file: DataFile,
 ) -> None:
-    realizations = defaultdict(lambda: defaultdict(list))  # type: ignore
+    realizations = defaultdict(lambda: defaultdict(list))
     for block in data_file.blocks[Kind.GEN_DATA]:
         realizations[block.realization_index][block.name].append(
             {"values": data_file.load(block, 0), "report_step": block.report_step}

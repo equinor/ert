@@ -420,7 +420,7 @@ class SnapshotModel(QAbstractItemModel):
             data_name = JOB_COLUMNS[index.column()]
             if data_name in [ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: Optional[str] = data.get(data_name)  # type: ignore
+                _bytes: Optional[str] = data.get(data_name)
                 if _bytes:
                     return byte_with_unit(float(_bytes))
 

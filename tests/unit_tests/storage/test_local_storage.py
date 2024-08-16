@@ -578,7 +578,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 xr.DataArray(
                     field_data,
                     name="values",
-                    dims=["x", "y", "z"],  # type: ignore
+                    dims=["x", "y", "z"],
                 ).to_dataset(),
             )
 

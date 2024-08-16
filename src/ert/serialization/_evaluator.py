@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Any
 
 if sys.version_info < (3, 11):
-    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+    from backports.datetime_fromisoformat import MonkeyPatch
 
     MonkeyPatch.patch_fromisoformat()
 

@@ -24,7 +24,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
 if sys.version_info < (3, 11):
-    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+    from backports.datetime_fromisoformat import MonkeyPatch
 
     MonkeyPatch.patch_fromisoformat()
 
@@ -116,7 +116,7 @@ class Snapshot:
         start_time (datetime), end_time (datetime) and status (str)."""
 
         self._forward_model_states: DefaultDict[Tuple[str, str], ForwardModel] = (
-            defaultdict(ForwardModel)  # type: ignore
+            defaultdict(ForwardModel)
         )
         """A shallow dictionary of forward_model states. The key is a tuple of two
         strings with realization id and forward_model id, pointing to a ForwardModel."""
@@ -340,7 +340,7 @@ class Snapshot:
                     error = event.data.get(ids.ERROR_MSG)
 
             fm = ForwardModel(
-                **_filter_nones(  # type: ignore
+                **_filter_nones(
                     {
                         ids.STATUS: status,
                         ids.INDEX: _get_forward_model_index(e_source),
@@ -447,7 +447,7 @@ class SnapshotBuilder(BaseModel):
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
         self.forward_models[forward_model_id] = ForwardModel(
-            **_filter_nones(  # type: ignore
+            **_filter_nones(
                 {
                     ids.STATUS: status,
                     ids.INDEX: index,

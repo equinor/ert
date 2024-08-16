@@ -5,7 +5,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, BinaryIO, Optional, TextIO, Tuple, Union
 
 import numpy as np
-import roffio  # type: ignore
+import roffio
 
 if TYPE_CHECKING:
     from os import PathLike
