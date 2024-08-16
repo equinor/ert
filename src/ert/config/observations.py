@@ -95,7 +95,6 @@ class EnkfObs:
         ensemble_config: "EnsembleConfig",
         history_observation: HistoryValues,
         summary_key: str,
-        std_cutoff: float,
         history_type: HistorySource,
         time_len: int,
     ) -> Dict[str, ObsVector]:
@@ -151,14 +150,7 @@ class EnkfObs:
                 segment_instance,
             )
         data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
-        for i, (date, error, value) in enumerate(zip(refcase.dates, std_dev, values)):
-            if error <= std_cutoff:
-                ConfigWarning.ert_context_warn(
-                    "Too small observation error in observation"
-                    f" {summary_key}:{i} - ignored",
-                    summary_key,
-                )
-                continue
+        for date, error, value in zip(refcase.dates, std_dev, values):
             data[date] = SummaryObservation(summary_key, summary_key, value, error)
 
         return {
