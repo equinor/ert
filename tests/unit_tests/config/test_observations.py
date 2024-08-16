@@ -900,57 +900,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
 
 
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-def test_that_std_cutoff_is_applied(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        STD_CUTOFF 0.1
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    HISTORY_OBSERVATION  FOPR
-                    {
-                       ERROR       = 0.05;
-                       ERROR_MODE  = ABS;
-                    };
-                    HISTORY_OBSERVATION  FGPR
-                    {
-                       ERROR       = 0.1;
-                       ERROR_MODE  = REL;
-                    };
-                    """
-                )
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-        run_sim(
-            datetime(2014, 9, 10),
-            [(k, "SM3/DAY", None) for k in ["FOPR", "FOPRH", "FGPR", "FGPRH"]],
-            {"FOPRH": 20, "FGPRH": 15},
-        )
-
-        ert_config = ErtConfig.from_file("config.ert")
-
-        observations = ert_config.enkf_obs
-        assert observations["FGPR"].observation_key == "FGPR"
-        assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
-        assert observations["FGPR"].observations[datetime(2014, 9, 11)].std == 1.5
-
-        assert observations["FOPR"].observation_key == "FOPR"
-        assert len(observations["FOPR"]) == 0
-
-
 @pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
 @pytest.mark.parametrize(
     "obs_content, match",

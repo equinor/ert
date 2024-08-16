@@ -906,7 +906,6 @@ class ErtConfig:
                 )
             obs_config_content = parse(obs_config_file)
             history = self.model_config.history_source
-            std_cutoff = self.analysis_config.observation_settings.std_cutoff
             time_len = len(obs_time_list)
             ensemble_config = self.ensemble_config
             config_errors: List[ErrorInfo] = []
@@ -919,7 +918,6 @@ class ErtConfig:
                                 ensemble_config,
                                 values,
                                 obs_name,
-                                std_cutoff,
                                 history,
                                 time_len,
                             )
