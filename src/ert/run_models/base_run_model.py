@@ -82,7 +82,7 @@ from .event import (
     RunModelUpdateEndEvent,
 )
 
-event_logger = logging.getLogger("ert.event_log")
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -437,9 +437,9 @@ class BaseRunModel:
         self, ee_config: EvaluatorServerConfig, iteration: int
     ) -> bool:
         try:
-            event_logger.debug("connecting to new monitor...")
+            logger.debug("connecting to new monitor...")
             async with Monitor(ee_config.get_connection_info()) as monitor:
-                event_logger.debug("connected")
+                logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
                     if event is not None and event["type"] in (
                         EVTYPE_EE_SNAPSHOT,
@@ -450,29 +450,29 @@ class BaseRunModel:
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
                         ]:
-                            event_logger.debug(
+                            logger.debug(
                                 "observed evaluation stopped event, signal done"
                             )
                             await monitor.signal_done()
 
                         if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
-                            event_logger.debug(
+                            logger.debug(
                                 "observed evaluation cancelled event, exit drainer"
                             )
                             # Allow track() to emit an EndEvent.
                             return False
                     elif event is not None and event["type"] == EVTYPE_EE_TERMINATED:
-                        event_logger.debug("got terminator event")
+                        logger.debug("got terminator event")
 
                     if not self._end_queue.empty():
-                        event_logger.debug("Run model canceled - during evaluation")
+                        logger.debug("Run model canceled - during evaluation")
                         self._end_queue.get()
                         await monitor.signal_cancel()
-                        event_logger.debug(
+                        logger.debug(
                             "Run model canceled - during evaluation - cancel sent"
                         )
         except BaseException:
-            event_logger.exception("unexpected error: ")
+            logger.exception("unexpected error: ")
             # We really don't know what happened...  shut down
             # the thread and get out of here. The monitor has
             # been stopped by the ctx-mgr
@@ -487,7 +487,7 @@ class BaseRunModel:
         ee_config: EvaluatorServerConfig,
     ) -> List[int]:
         if not self._end_queue.empty():
-            event_logger.debug("Run model canceled - pre evaluation")
+            logger.debug("Run model canceled - pre evaluation")
             self._end_queue.get()
             return []
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
@@ -501,14 +501,12 @@ class BaseRunModel:
         if not (await self.run_monitor(ee_config, ensemble.iteration)):
             return []
 
-        event_logger.debug(
-            "observed that model was finished, waiting tasks completion..."
-        )
+        logger.debug("observed that model was finished, waiting tasks completion...")
         # The model has finished, we indicate this by sending a DONE
-        event_logger.debug("tasks complete")
+        logger.debug("tasks complete")
 
         if not self._end_queue.empty():
-            event_logger.debug("Run model canceled - post evaluation")
+            logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
             return []
         await evaluator_task
@@ -630,19 +628,15 @@ class BaseRunModel:
 
         num_successful_realizations = len(successful_realizations)
         self.validate()
-        event_logger.info(
-            f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
-        )
-        event_logger.info(
-            f"Experiment ran with number of realizations: {self.ensemble_size}"
-        )
-        event_logger.info(
+        logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
+        logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
+        logger.info(
             f"Experiment run ended with number of realizations succeeding: {num_successful_realizations}"
         )
-        event_logger.info(
+        logger.info(
             f"Experiment run ended with number of realizations failing: {self.ensemble_size - num_successful_realizations}"
         )
-        event_logger.info(f"Experiment run finished in: {self.get_runtime()}s")
+        logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
 
         return num_successful_realizations

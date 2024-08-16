@@ -277,9 +277,7 @@ class LegacyEnsemble:
             await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_FAILED, None))
             return
 
-        logger.info(
-            f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
-        )
+        logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
 
         # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
         await cloudevent_unary_send(event_creator(result, None))
