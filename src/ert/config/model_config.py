@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os.path
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, no_type_check
 
@@ -38,24 +39,21 @@ DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
 
 
+@dataclass
 class ModelConfig:
-    def __init__(
-        self,
-        num_realizations: int = 1,
-        history_source: HistorySource = DEFAULT_HISTORY_SOURCE,
-        runpath_format_string: str = DEFAULT_RUNPATH,
-        jobname_format_string: str = DEFAULT_JOBNAME_FORMAT,
-        eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT,
-        gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME,
-        obs_config_file: Optional[str] = None,
-        time_map: Optional[List[datetime]] = None,
-    ):
-        self.num_realizations = num_realizations
-        self.history_source = history_source
-        self.jobname_format_string = _replace_runpath_format(jobname_format_string)
-        self.eclbase_format_string = _replace_runpath_format(eclbase_format_string)
-        self.time_map = time_map
+    num_realizations: int = 1
+    history_source: HistorySource = DEFAULT_HISTORY_SOURCE
+    runpath_format_string: str = DEFAULT_RUNPATH
+    jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
+    eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
+    gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
+    obs_config_file: Optional[str] = None
+    time_map: Optional[List[datetime]] = None
 
+    def __post_init__(self):
+        jobname_format_string = _replace_runpath_format(self.jobname_format_string)
+        self.eclbase_format_string = _replace_runpath_format(self.eclbase_format_string)
+        runpath_format_string = self.runpath_format_string
         # do not combine styles
         if "%d" in runpath_format_string and any(
             x in runpath_format_string for x in ["<ITER>", "<IENS>"]
@@ -77,22 +75,19 @@ class ModelConfig:
                 f"RUNPATH cannot contain more than two value placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
 
-        if "/" in self.jobname_format_string:
+        if "/" in jobname_format_string:
             raise ConfigValidationError.with_context(
-                "JOBNAME cannot contain '/'.", jobname_format_string
+                "JOBNAME cannot contain '/'.", self.jobname_format_string
             )
 
         self.runpath_format_string = _replace_runpath_format(runpath_format_string)
-
+        self.jobname_format_string = jobname_format_string
         if not any(x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]):
             logger.warning(
                 "RUNPATH keyword contains no value placeholders: "
                 f"`{runpath_format_string}`. Valid example: "
                 f"`{DEFAULT_RUNPATH}` "
             )
-
-        self.gen_kw_export_name = gen_kw_export_name
-        self.obs_config_file = obs_config_file
 
     @no_type_check
     @classmethod
@@ -142,7 +137,6 @@ class ModelConfig:
             f"eclbase_format_string={self.eclbase_format_string}, "
             f"gen_kw_export_name={self.gen_kw_export_name}, "
             f"obs_config_file={self.obs_config_file}, "
-            f"time_map_file={self._time_map_file}"
             ")"
         )
 
@@ -161,7 +155,6 @@ class ModelConfig:
                 self.eclbase_format_string == other.eclbase_format_string,
                 self.gen_kw_export_name == other.gen_kw_export_name,
                 self.obs_config_file == other.obs_config_file,
-                self._time_map_file == other._time_map_file,
                 self.time_map == other.time_map,
             ]
         )
