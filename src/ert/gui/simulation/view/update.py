@@ -117,6 +117,7 @@ class UpdateWidget(QWidget):
         layout.addWidget(self._progress_bar)
         layout.addWidget(self._tab_widget)
 
+        self.setMinimumHeight(400)
         self.setLayout(layout)
 
     @property
