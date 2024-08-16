@@ -46,7 +46,6 @@ from .state import (
 )
 
 logger = logging.getLogger(__name__)
-scheduler_logger = logging.getLogger("ert.scheduler")
 
 _handle = Callable[..., Any]
 
@@ -251,7 +250,7 @@ class LegacyEnsemble:
                 ee_cert=self._config.cert,
                 ee_token=self._config.token,
             )
-            scheduler_logger.info(
+            logger.info(
                 f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
             )
 
@@ -278,7 +277,7 @@ class LegacyEnsemble:
             await cloudevent_unary_send(event_creator(EVTYPE_ENSEMBLE_FAILED, None))
             return
 
-        scheduler_logger.info(
+        logger.info(
             f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}"
         )
 
