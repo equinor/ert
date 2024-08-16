@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -61,7 +60,7 @@ class StdDevPlot:
             figure.tight_layout()
 
     @staticmethod
-    def _colorbar(mappable: QuadMesh) -> Any:
+    def _colorbar(mappable: Any) -> Any:
         # https://joseph-long.com/writing/colorbars/
         last_axes = plt.gca()
         ax = mappable.axes
