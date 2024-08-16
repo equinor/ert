@@ -7,9 +7,8 @@ from typing import Optional
 import geostat
 import numpy as np
 import numpy.typing as npt
+import resfo
 from definition import dx, k_end, k_start, nx, obs_coordinates, obs_times, u_init
-
-from ert.field_utils.grdecl_io import export_grdecl, import_grdecl
 
 
 def heat_equation(
@@ -65,9 +64,11 @@ if __name__ == "__main__":
     cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(nx, nx)
 
     if iteration == 0:
-        export_grdecl(cond, "cond.grdecl", "COND", binary=False)
+        resfo.write(
+            "cond.bgrdecl", [("COND    ", cond.flatten(order="F").astype(np.float32))]
+        )
     else:
-        cond = import_grdecl("cond.grdecl", "COND", dimensions=(nx, nx))
+        cond = resfo.read("cond.bgrdecl")[0][1].reshape(nx, nx)
 
     # The update may give non-physical parameter values, which here means negative heat conductivity.
     # Setting negative values to a small positive value but not zero because we want to be able to divide by them.
