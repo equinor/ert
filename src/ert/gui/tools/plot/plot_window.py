@@ -1,7 +1,8 @@
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
@@ -47,8 +48,22 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
 )
 
+from ert.gui.ertwidgets import CopyButton
 
-def open_error_dialog(title: str, content: str) -> None:
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+
+class _CopyButton(CopyButton):
+    def __init__(self, text_edit: QTextEdit) -> None:
+        super().__init__()
+        self.text_edit = text_edit
+
+    def copy(self) -> None:
+        self.copy_text(self.text_edit.toPlainText())
+
+
+def create_error_dialog(title: str, content: str) -> QDialog:
     qd = QDialog()
     qd.setModal(True)
     qd.setSizeGripEnabled(True)
@@ -91,6 +106,12 @@ def open_error_dialog(title: str, content: str) -> None:
     text.setReadOnly(True)
     layout.addWidget(text)
     qd.setLayout(layout)
+    QApplication.restoreOverrideCursor()
+    qd.exec()
+
+
+def open_error_dialog(title: str, content: str) -> None:
+    qd = create_error_dialog(title, content)
     QApplication.restoreOverrideCursor()
     qd.exec()
 
@@ -209,7 +230,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")
 
-            std_dev_images: Dict[str, bytes] = {}
+            std_dev_images: Dict[str, npt.NDArray[np.float32]] = {}
             if "FIELD" in key_def.metadata["data_origin"]:
                 plot_widget.showLayerWidget.emit(True)
 

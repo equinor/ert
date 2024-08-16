@@ -16,8 +16,3 @@ class RecordOut(_Record):
     name: str
     userdata: Mapping[str, Any]
     has_observations: Optional[bool]
-
-
-@dataclass(config=ConfigDict(from_attributes=True))
-class ImageOut(_Record):
-    image: bytes

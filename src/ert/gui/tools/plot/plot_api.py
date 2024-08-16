@@ -1,4 +1,3 @@
-import base64
 import io
 import logging
 from dataclasses import dataclass
@@ -7,6 +6,8 @@ from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import httpx
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pandas.errors import ParserError
 
@@ -251,17 +252,23 @@ class PlotApi:
 
         return pd.DataFrame()
 
-    def std_dev_for_parameter(self, key: str, ensemble_name: str, z: int) -> bytes:
+    def std_dev_for_parameter(
+        self, key: str, ensemble_name: str, z: int
+    ) -> npt.NDArray[np.float32]:
         ensemble = self._get_ensemble(ensemble_name)
         if not ensemble:
-            return bytearray()
+            return np.array([])
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{ensemble.id}/records/{key}/std_dev?z={z}",
+                f"/ensembles/{ensemble.id}/records/{key}/std_dev",
+                params={"z": z},
                 timeout=self._timeout,
             )
             self._check_response(response)
-            if not response.json()["image"]:
-                return bytearray()
-            return base64.b64decode(response.json()["image"])
+
+            if response.status_code == 200:
+                # Deserialize the numpy array
+                return np.load(io.BytesIO(response.content))
+            else:
+                return np.array([])
