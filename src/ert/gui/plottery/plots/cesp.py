@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, TypedDict
 
+import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -11,6 +12,7 @@ from ert.gui.tools.plot.plot_api import EnsembleObject
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
     from pandas import DataFrame
@@ -45,7 +47,7 @@ class CrossEnsembleStatisticsPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_images: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotCrossEnsembleStatistics(
             figure, plot_context, ensemble_to_data_map, observation_data

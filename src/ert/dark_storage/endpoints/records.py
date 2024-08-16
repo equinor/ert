@@ -1,11 +1,10 @@
-import base64
 import io
 from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
-import matplotlib.pyplot as plt
-from fastapi import APIRouter, Body, Depends, File, Header, status
+import numpy as np
+from fastapi import APIRouter, Body, Depends, File, Header, HTTPException, status
 from fastapi.responses import Response
 from typing_extensions import Annotated
 
@@ -141,22 +140,22 @@ def get_ensemble_responses(
     return response_map
 
 
-@router.get(
-    "/ensembles/{ensemble_id}/records/{key}/std_dev", response_model=js.ImageOut
-)
+@router.get("/ensembles/{ensemble_id}/records/{key}/std_dev")
 def get_std_dev(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
-) -> js.ImageOut:
+) -> Response:
     ensemble = storage.get_ensemble(ensemble_id)
     try:
         da = ensemble.calculate_std_dev_for_parameter(key)["values"]
-    except ValueError:
-        return js.ImageOut(image=bytearray())
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="Data not found") from e
 
     if z >= int(da.shape[2]):
-        return js.ImageOut(image=bytearray())
+        raise HTTPException(status_code=400, detail="Invalid z index")
+
+    data_2d = da[:, :, z]
 
     buffer = io.BytesIO()
-    plt.imsave(buffer, da[:, :, z])
+    np.save(buffer, data_2d)
 
-    return js.ImageOut(image=base64.b64encode(buffer.getvalue()))
+    return Response(content=buffer.getvalue(), media_type="application/octet-stream")

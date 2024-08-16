@@ -1,7 +1,8 @@
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
@@ -45,6 +46,9 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import CopyButton
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class _CopyButton(CopyButton):
@@ -200,7 +204,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(e)
                     open_error_dialog("Request failed", f"{e}")
 
-            std_dev_images: Dict[str, bytes] = {}
+            std_dev_images: Dict[str, npt.NDArray[np.float32]] = {}
             if "FIELD" in key_def.metadata["data_origin"]:
                 plot_widget.showLayerWidget.emit(True)
 
