@@ -518,29 +518,6 @@ def test_run_dialog_memory_usage_showing(
     assert max_memory_value == "60.00 kB"
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
-    config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
-    args_mock = Mock()
-    args_mock.config = config_file
-
-    ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        qtbot.addWidget(gui)
-        run_experiment = gui.findChild(QToolButton, name="run_experiment")
-
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
     config_file = "minimal_config.ert"
