@@ -129,36 +129,6 @@ class ModelConfig:
             time_map=time_map,
         )
 
-    def __repr__(self) -> str:
-        return (
-            "ModelConfig("
-            f"num_realizations={self.num_realizations}, "
-            f"history_source={self.history_source}, "
-            f"runpath_format_string={self.runpath_format_string}, "
-            f"jobname_format_string={self.jobname_format_string}, "
-            f"eclbase_format_string={self.eclbase_format_string}, "
-            f"gen_kw_export_name={self.gen_kw_export_name}, "
-            ")"
-        )
-
-    def __str__(self) -> str:
-        return repr(self)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ModelConfig):
-            return False
-        return all(
-            [
-                self.num_realizations == other.num_realizations,
-                self.history_source == other.history_source,
-                self.runpath_format_string == other.runpath_format_string,
-                self.jobname_format_string == other.jobname_format_string,
-                self.eclbase_format_string == other.eclbase_format_string,
-                self.gen_kw_export_name == other.gen_kw_export_name,
-                self.time_map == other.time_map,
-            ]
-        )
-
 
 def _replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
