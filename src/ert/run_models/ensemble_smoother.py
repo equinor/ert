@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ert.config import QueueConfig
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class EnsembleSmoother(UpdateRunModel):
