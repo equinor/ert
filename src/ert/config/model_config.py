@@ -48,12 +48,13 @@ class ModelConfig:
         eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT,
         gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME,
         obs_config_file: Optional[str] = None,
-        time_map_file: Optional[str] = None,
+        time_map: Optional[List[datetime]] = None,
     ):
         self.num_realizations = num_realizations
         self.history_source = history_source
         self.jobname_format_string = _replace_runpath_format(jobname_format_string)
         self.eclbase_format_string = _replace_runpath_format(eclbase_format_string)
+        self.time_map = time_map
 
         # do not combine styles
         if "%d" in runpath_format_string and any(
@@ -92,22 +93,22 @@ class ModelConfig:
 
         self.gen_kw_export_name = gen_kw_export_name
         self.obs_config_file = obs_config_file
-        self.time_map = None
-        self._time_map_file = (
-            os.path.abspath(time_map_file) if time_map_file is not None else None
-        )
-
-        if time_map_file is not None:
-            try:
-                self.time_map = _read_time_map(time_map_file)
-            except (ValueError, IOError) as err:
-                raise ConfigValidationError.with_context(
-                    f"Could not read timemap file {time_map_file}: {err}", time_map_file
-                ) from err
 
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> "ModelConfig":
+        time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
+        time_map_file = (
+            os.path.abspath(time_map_file) if time_map_file is not None else None
+        )
+        time_map = None
+        if time_map_file is not None:
+            try:
+                time_map = _read_time_map(time_map_file)
+            except (ValueError, IOError) as err:
+                raise ConfigValidationError.with_context(
+                    f"Could not read timemap file {time_map_file}: {err}", time_map_file
+                ) from err
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             history_source=config_dict.get(
@@ -128,7 +129,7 @@ class ModelConfig:
                 ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
             ),
             obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
-            time_map_file=config_dict.get(ConfigKeys.TIME_MAP),
+            time_map=time_map,
         )
 
     def __repr__(self) -> str:
