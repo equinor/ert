@@ -304,8 +304,6 @@ def run_experiment_fixture(request):
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
 
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 

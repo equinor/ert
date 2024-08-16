@@ -72,12 +72,9 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
-    # The Run dialog opens, click show details and wait until done appears
-    # then click it
+    # The Run dialog opens, wait until done appears, then click done
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
     run_dialog = gui.findChild(RunDialog)
-
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)

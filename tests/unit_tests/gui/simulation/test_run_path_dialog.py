@@ -90,7 +90,6 @@ def test_run_path_deleted_error(
 
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
@@ -136,7 +135,6 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
@@ -180,7 +178,6 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
         qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)

@@ -30,10 +30,8 @@ def test_single_test_run_after_ensemble_experiment(
 
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
-    # The Run dialog opens, click show details and wait until done appears
-    # then click it
+    # The Run dialog opens, wait until done appears, then click done
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
