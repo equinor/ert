@@ -675,32 +675,9 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
 
-    try:
-        with ErtPluginContext(logger=logging.getLogger()) as context:
-            logger.info(f"Running ert with {args}")
-            args.func(args, context.plugin_manager)
-    except (ErtCliError, ErtTimeoutError) as err:
-        logger.exception(str(err))
-        sys.exit(str(err))
-    except ConfigValidationError as err:
-        err_msg = err.cli_message()
-        logger.exception(err_msg)
-        sys.exit(err_msg)
-    except BaseException as err:
-        logger.exception(f'ERT crashed unexpectedly with "{err}"')
-
-        logfiles = set()  # Use set to avoid duplicates...
-        for loghandler in logging.getLogger().handlers:
-            if isinstance(loghandler, logging.FileHandler):
-                logfiles.add(loghandler.baseFilename)
-
-        msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
-        msg += "\n   " + "\n   ".join(logfiles)
-
-        sys.exit(msg)
-    finally:
-        log_process_usage()
-        os.environ.pop("ERT_LOG_DIR")
+    with ErtPluginContext(logger=logging.getLogger()) as context:
+        logger.info(f"Running ert with {args}")
+        args.func(args, context.plugin_manager)
 
 
 if __name__ == "__main__":

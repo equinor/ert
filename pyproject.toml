@@ -37,7 +37,7 @@ dependencies=[
     "dask",  # extra dependency for xarray/pandas
     "deprecation",
     "dnspython >= 2",
-    "fastapi",
+    "fastapi[standard]",
     "filelock",
     "httpx",
     "humanize",

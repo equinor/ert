@@ -26,9 +26,8 @@ class Workflow:
     def __iter__(self) -> Iterator[Tuple[WorkflowJob, Any]]:
         return iter(self.cmd_list)
 
-    @classmethod
+    @staticmethod
     def _parse_command_list(
-        cls,
         src_file: str,
         context: List[Tuple[str, str]],
         job_dict: Dict[str, WorkflowJob],

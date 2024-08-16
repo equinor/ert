@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
 from qtpy import QtCore
 from qtpy.QtCore import Slot
@@ -18,10 +18,11 @@ from ert.validation.range_string_argument import NotInStorage
 
 from .experiment_config_panel import ExperimentConfigPanel
 
+from typing import Literal
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["ensemble_experiment"]
     realizations: str
     current_ensemble: str
     experiment_name: str

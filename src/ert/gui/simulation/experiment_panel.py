@@ -35,6 +35,9 @@ from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
 from .single_test_run_panel import SingleTestRunPanel
 
+
+import requests
+
 if TYPE_CHECKING:
     from ert.config import ErtConfig
 
@@ -191,6 +194,11 @@ class ExperimentPanel(QWidget):
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        import dataclasses
+        from fastapi.encoders import jsonable_encoder
+        data = {"args": dataclasses.asdict(args), "ert_config": dataclasses.asdict(self.config)}
+        res = requests.post("http://127.0.0.1:8000/experiments/", json=jsonable_encoder(data))
+        print(res.text)
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
             model = create_model(

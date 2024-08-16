@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Slot
@@ -25,10 +25,11 @@ from .experiment_config_panel import ExperimentConfigPanel
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
 
+from typing import Literal
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["ensemble_smoother"]
     target_ensemble: str
     realizations: str
     experiment_name: str

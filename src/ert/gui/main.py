@@ -100,6 +100,8 @@ def _start_initial_gui_window(
             args.config = os.path.basename(args.config)
 
             ert_config = ErtConfig.with_plugins().from_file(args.config)
+            import dataclasses
+            print(dataclasses.asdict(ert_config))
 
             local_storage_set_ert_config(ert_config)
         except ConfigValidationError as error:
