@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
@@ -9,6 +10,7 @@ from ert.gui.tools.plot.plot_api import EnsembleObject
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
@@ -25,7 +27,7 @@ class DistributionPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_images: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)
 

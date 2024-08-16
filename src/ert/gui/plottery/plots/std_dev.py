@@ -1,7 +1,8 @@
-import io
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib.collections import QuadMesh
 from matplotlib.figure import Figure
@@ -21,15 +22,20 @@ class StdDevPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_data: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer
         if layer is not None:
+            vmin: float = np.inf
+            vmax: float = -np.inf
+            axes = []
+            images: List[npt.NDArray[np.float32]] = []
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax = figure.add_subplot(1, ensemble_count, i)
-                images = std_dev_images[ensemble.name]
-                if not images:
+                axes.append(ax)
+                data = std_dev_data[ensemble.name]
+                if data.size == 0:
                     ax.set_axis_off()
                     ax.text(
                         0.5,
@@ -39,13 +45,20 @@ class StdDevPlot:
                         va="center",
                     )
                 else:
-                    img = plt.imread(io.BytesIO(images))
-                    ax.imshow(img)
-                    ax.set_title(
-                        f"{ensemble.experiment_name} : {ensemble.name} layer={layer}"
-                    )
-                    p = ax.pcolormesh(img)
-                    self._colorbar(p)
+                    images.append(data)
+                    vmin = min(vmin, float(np.min(data)))
+                    vmax = max(vmax, float(np.max(data)))
+                ax.set_title(
+                    f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
+                    wrap=True,
+                )
+
+            norm = plt.Normalize(vmin, vmax)
+            for ax, data in zip(axes, images):
+                if data is not None:
+                    im = ax.imshow(data, norm=norm, cmap="viridis")
+                    self._colorbar(im)
+            figure.tight_layout()
 
     @staticmethod
     def _colorbar(mappable: QuadMesh) -> Any:
