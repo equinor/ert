@@ -7,5 +7,5 @@ from .observation import (
     ObservationTransformationOut,
 )
 from .prior import Prior
-from .record import ImageOut, RecordOut
+from .record import RecordOut
 from .update import UpdateIn, UpdateOut

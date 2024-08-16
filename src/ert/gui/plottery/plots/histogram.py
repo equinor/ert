@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil, floor, log10, sqrt
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
-import numpy
+import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
 
@@ -12,9 +12,9 @@ from ert.gui.tools.plot.plot_api import EnsembleObject
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
-    from numpy.typing import NDArray
 
     from ert.gui.plottery import PlotContext, PlotStyle
 
@@ -29,7 +29,7 @@ class HistogramPlot:
         plot_context: PlotContext,
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_images: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map, observation_data)
 
@@ -173,7 +173,7 @@ def _plotCategoricalHistogram(
 ) -> Rectangle:
     counts = data.value_counts()
     freq = [counts.get(category, 0) for category in categories]
-    pos = numpy.arange(len(categories))
+    pos = np.arange(len(categories))
     width = 1.0
     axes.set_xticks(pos + (width / 2.0))
     axes.set_xticklabels(categories)
@@ -199,7 +199,7 @@ def _plotHistogram(
         if use_log_scale:
             bins = _histogramLogBins(bin_count, minimum, maximum)  # type: ignore
         else:
-            bins = numpy.linspace(minimum, maximum, bin_count)  # type: ignore
+            bins = np.linspace(minimum, maximum, bin_count)  # type: ignore
 
         if minimum == maximum:
             minimum -= 0.5
@@ -218,7 +218,7 @@ def _plotHistogram(
 
 def _histogramLogBins(
     bin_count: int, minimum: float, maximum: float
-) -> NDArray[numpy.floating[Any]]:
+) -> npt.NDArray[np.floating[Any]]:
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 
@@ -235,4 +235,4 @@ def _histogramLogBins(
         else:
             log_bin_count = bin_count
 
-    return 10 ** numpy.linspace(minimum, maximum, log_bin_count)
+    return 10 ** np.linspace(minimum, maximum, log_bin_count)

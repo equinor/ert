@@ -2,6 +2,8 @@ import sys
 import traceback
 from typing import TYPE_CHECKING, Dict, Optional, Union
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
@@ -143,7 +145,7 @@ class PlotWidget(QWidget):
         plot_context: "PlotContext",
         ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
-        std_dev_images: Dict[str, bytes],
+        std_dev_images: Dict[str, npt.NDArray[np.float32]],
     ) -> None:
         self.resetPlot()
         try:
