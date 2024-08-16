@@ -106,6 +106,7 @@ class ErtConfig:
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
+    obs_config_file: Optional[str] = None
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -119,7 +120,7 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.enkf_obs: EnkfObs = self._create_observations()
+        self.enkf_obs: EnkfObs = self._create_observations(self.obs_config_file)
 
         if len(self.summary_keys) != 0:
             self.ensemble_config.addNode(self._create_summary_config())
@@ -267,6 +268,7 @@ class ErtConfig:
             ),
             model_config=model_config,
             user_config_file=config_file_path,
+            obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
         )
 
     @classmethod
@@ -890,9 +892,8 @@ class ErtConfig:
             refcase=time_map,
         )
 
-    def _create_observations(self) -> EnkfObs:
+    def _create_observations(self, obs_config_file: str) -> EnkfObs:
         obs_vectors: Dict[str, ObsVector] = {}
-        obs_config_file = self.model_config.obs_config_file
         obs_time_list: Sequence[datetime] = []
         if self.ensemble_config.refcase is not None:
             obs_time_list = self.ensemble_config.refcase.all_dates

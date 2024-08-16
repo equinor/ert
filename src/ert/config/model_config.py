@@ -46,7 +46,6 @@ class ModelConfig:
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
     eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
     gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
-    obs_config_file: Optional[str] = None
     time_map: Optional[List[datetime]] = None
 
     @field_validator("runpath_format_string", mode="before")
@@ -127,7 +126,6 @@ class ModelConfig:
             gen_kw_export_name=config_dict.get(
                 ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
             ),
-            obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
             time_map=time_map,
         )
 
@@ -140,7 +138,6 @@ class ModelConfig:
             f"jobname_format_string={self.jobname_format_string}, "
             f"eclbase_format_string={self.eclbase_format_string}, "
             f"gen_kw_export_name={self.gen_kw_export_name}, "
-            f"obs_config_file={self.obs_config_file}, "
             ")"
         )
 
@@ -158,7 +155,6 @@ class ModelConfig:
                 self.jobname_format_string == other.jobname_format_string,
                 self.eclbase_format_string == other.eclbase_format_string,
                 self.gen_kw_export_name == other.gen_kw_export_name,
-                self.obs_config_file == other.obs_config_file,
                 self.time_map == other.time_map,
             ]
         )
