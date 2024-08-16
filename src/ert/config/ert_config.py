@@ -24,6 +24,7 @@ from typing import (
 )
 
 import xarray as xr
+from pydantic import ValidationError as PydanticValidationError
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
@@ -197,6 +198,11 @@ class ErtConfig:
             substitution_list["<ECLBASE>"] = eclbase
         except ConfigValidationError as e:
             errors.append(e)
+        except PydanticValidationError as err:
+            # pydantic catches ValueError (which ConfigValidationError inherits from),
+            # so we need to unpack them again.
+            for e in err.errors():
+                errors.append(e["ctx"]["error"])
 
         try:
             workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(

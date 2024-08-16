@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import logging
 import os.path
-from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, no_type_check
+from typing import List, Optional, no_type_check
+
+from pydantic import field_validator
+from pydantic.dataclasses import dataclass
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, HistorySource
-
-if TYPE_CHECKING:
-    from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -50,44 +49,49 @@ class ModelConfig:
     obs_config_file: Optional[str] = None
     time_map: Optional[List[datetime]] = None
 
-    def __post_init__(self):
-        jobname_format_string = _replace_runpath_format(self.jobname_format_string)
-        self.eclbase_format_string = _replace_runpath_format(self.eclbase_format_string)
-        runpath_format_string = self.runpath_format_string
-        # do not combine styles
+    @field_validator("runpath_format_string", mode="before")
+    @classmethod
+    def validate_runpath(cls, runpath_format_string: str) -> str:
         if "%d" in runpath_format_string and any(
             x in runpath_format_string for x in ["<ITER>", "<IENS>"]
         ):
             raise ConfigValidationError(
                 f"RUNPATH cannot combine deprecated and new style placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
-
         # do not allow multiple occurrences
         for kw in ["<ITER>", "<IENS>"]:
             if runpath_format_string.count(kw) > 1:
                 raise ConfigValidationError(
                     f"RUNPATH cannot contain multiple {kw} placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
                 )
-
         # do not allow too many placeholders
         if runpath_format_string.count("%d") > 2:
             raise ConfigValidationError(
                 f"RUNPATH cannot contain more than two value placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
-
-        if "/" in jobname_format_string:
-            raise ConfigValidationError.with_context(
-                "JOBNAME cannot contain '/'.", self.jobname_format_string
-            )
-
-        self.runpath_format_string = _replace_runpath_format(runpath_format_string)
-        self.jobname_format_string = jobname_format_string
-        if not any(x in self.runpath_format_string for x in ["<ITER>", "<IENS>"]):
+        result = _replace_runpath_format(runpath_format_string)
+        if not any(x in result for x in ["<ITER>", "<IENS>"]):
             logger.warning(
                 "RUNPATH keyword contains no value placeholders: "
                 f"`{runpath_format_string}`. Valid example: "
                 f"`{DEFAULT_RUNPATH}` "
             )
+        return result
+
+    @field_validator("jobname_format_string", mode="before")
+    @classmethod
+    def validate_jobname(cls, jobname_format_string: str) -> str:
+        result = _replace_runpath_format(jobname_format_string)
+        if "/" in jobname_format_string:
+            raise ConfigValidationError.with_context(
+                "JOBNAME cannot contain '/'.", jobname_format_string
+            )
+        return result
+
+    @field_validator("eclbase_format_string", mode="before")
+    @classmethod
+    def transform(cls, eclbase_format_string: str) -> str:
+        return _replace_runpath_format(eclbase_format_string)
 
     @no_type_check
     @classmethod
