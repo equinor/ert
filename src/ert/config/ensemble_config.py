@@ -78,21 +78,15 @@ class EnsembleConfig:
         self,
         grid_file: Optional[str] = None,
         gendata_list: Optional[List[GenDataConfig]] = None,
-        genkw_list: Optional[List[GenKwConfig]] = None,
-        surface_list: Optional[List[SurfaceConfig]] = None,
+        parameter_configs: Optional[Dict[str, ParameterConfig]] = None,
         eclbase: Optional[str] = None,
-        field_list: Optional[List[Field]] = None,
         refcase: Optional[Refcase] = None,
     ) -> None:
-        _genkw_list = [] if genkw_list is None else genkw_list
         _gendata_list = [] if gendata_list is None else gendata_list
-        _surface_list = [] if surface_list is None else surface_list
-        _field_list = [] if field_list is None else field_list
-
-        self._check_for_duplicate_names(_genkw_list, _gendata_list)
-
+        parameter_configs = parameter_configs if parameter_configs is not None else {}
+        self._check_for_duplicate_names(list(parameter_configs.values()), _gendata_list)
+        self.parameter_configs = parameter_configs
         self._grid_file = _get_abs_path(grid_file)
-        self.parameter_configs: Dict[str, ParameterConfig] = {}
         self.response_configs: Dict[str, ResponseConfig] = {}
         self.refcase = refcase
         self.eclbase = eclbase
@@ -100,20 +94,11 @@ class EnsembleConfig:
         for gen_data in _gendata_list:
             self.addNode(gen_data)
 
-        for gen_kw in _genkw_list:
-            self.addNode(gen_kw)
-
-        for surface in _surface_list:
-            self.addNode(surface)
-
-        for field in _field_list:
-            self.addNode(field)
-
     @staticmethod
     def _check_for_duplicate_names(
-        gen_kw_list: List[GenKwConfig], gen_data_list: List[GenDataConfig]
+        parameter_list: List[ParameterConfig], gen_data_list: List[GenDataConfig]
     ) -> None:
-        names_counter = Counter(g.name for g in gen_kw_list + gen_data_list)
+        names_counter = Counter(g.name for g in parameter_list + gen_data_list)
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
         if duplicate_names:
             raise ConfigValidationError.with_context(
@@ -168,14 +153,18 @@ class EnsembleConfig:
                 )
             except Exception as err:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err
-
+        parameter_configs = (
+            [GenKwConfig.from_config_list(g) for g in gen_kw_list]
+            + [SurfaceConfig.from_config_list(s) for s in surface_list]
+            + [make_field(f) for f in field_list]
+        )
         return cls(
             grid_file=grid_file_path,
             gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
-            genkw_list=[GenKwConfig.from_config_list(g) for g in gen_kw_list],
-            surface_list=[SurfaceConfig.from_config_list(s) for s in surface_list],
+            parameter_configs={
+                parameter.name: parameter for parameter in parameter_configs
+            },
             eclbase=eclbase,
-            field_list=[make_field(f) for f in field_list],
             refcase=(
                 Refcase(start_date, refcase_keys, time_map, data)
                 if data is not None
