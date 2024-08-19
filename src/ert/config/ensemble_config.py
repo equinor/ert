@@ -200,11 +200,6 @@ class EnsembleConfig:
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
-    def getNodeGenData(self, key: str) -> GenDataConfig:
-        gen_node = self.response_configs[key]
-        assert isinstance(gen_node, GenDataConfig)
-        return gen_node
-
     def hasNodeGenData(self, key: str) -> bool:
         return key in self.response_configs and isinstance(
             self.response_configs[key], GenDataConfig
