@@ -11,7 +11,6 @@ from typing import (
     List,
     Optional,
     Sequence,
-    Type,
     Union,
     no_type_check,
     overload,
@@ -220,20 +219,12 @@ class EnsembleConfig:
         else:
             self.response_configs[config_node.name] = config_node
 
-    def getKeylistFromImplType(self, node_type: Type[Any]) -> List[str]:
-        mylist = []
-
-        for key in self.keys:
-            if isinstance(self[key], node_type):
-                mylist.append(key)
-
-        return mylist
-
     def get_keylist_gen_kw(self) -> List[str]:
-        return self.getKeylistFromImplType(GenKwConfig)
-
-    def get_keylist_gen_data(self) -> List[str]:
-        return self.getKeylistFromImplType(GenDataConfig)
+        return [
+            val.name
+            for val in self.parameter_configuration
+            if isinstance(val, GenKwConfig)
+        ]
 
     @property
     def grid_file(self) -> Optional[str]:

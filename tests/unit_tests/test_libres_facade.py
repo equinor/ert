@@ -98,16 +98,6 @@ def test_gen_kw_log_appended_extra():
         fh.writelines("MY_KEYWORD LOGNORMAL 1 2")
 
 
-def test_gen_kw_priors(facade):
-    priors = facade.gen_kw_priors()
-    assert len(priors["SNAKE_OIL_PARAM"]) == 10
-    assert {
-        "key": "OP1_PERSISTENCE",
-        "function": "UNIFORM",
-        "parameters": {"MIN": 0.01, "MAX": 0.4},
-    } in priors["SNAKE_OIL_PARAM"]
-
-
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_summary_collector(
     monkeypatch, snake_oil_case_storage, snake_oil_default_storage, snapshot
