@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -54,10 +54,7 @@ class RealizationWidget(QWidget):
             f"QListView {{ background-color: {self.palette().color(QPalette.Window).name()}; }}"
         )
 
-        def _emit_change(current: QModelIndex, previous: Any) -> None:
-            self.currentChanged.emit(current)
-
-        self._real_view.currentChanged = _emit_change  # type: ignore
+        self._real_view.clicked.connect(self._item_clicked)
 
         layout = QVBoxLayout()
         layout.addWidget(self._real_view)
@@ -65,7 +62,10 @@ class RealizationWidget(QWidget):
         self.setLayout(layout)
 
     # Signal when the user selects another real
-    currentChanged = Signal(QModelIndex)
+    itemClicked = Signal(QModelIndex)
+
+    def _item_clicked(self, item: QModelIndex) -> None:
+        self.itemClicked.emit(item)
 
     def setSnapshotModel(self, model: QAbstractItemModel) -> None:
         self._real_list_model = RealListModel(self, self._iter)
