@@ -399,7 +399,7 @@ class EnkfObs:
                 general_observation, obs_key, time_map, has_refcase
             )
 
-        config_node = ensemble_config.getNode(state_kw)
+        config_node = ensemble_config[state_kw]
         if not isinstance(config_node, GenDataConfig):
             ConfigWarning.warn(
                 f"{state_kw} has implementation type:"

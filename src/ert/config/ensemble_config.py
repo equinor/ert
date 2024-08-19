@@ -205,9 +205,6 @@ class EnsembleConfig:
             self.response_configs[key], GenDataConfig
         )
 
-    def getNode(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
-        return self[key]
-
     def check_unique_node(self, key: str) -> None:
         if key in self:
             raise ConfigValidationError(
