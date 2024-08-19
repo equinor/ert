@@ -623,9 +623,9 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
 
 
 def _get_eclrun_env(config: Dict[str, Any]) -> Dict[str, str]:
-    env_path = os.getenv("PATH")
-    ecl_path = config.get("eclrun_env", {}).get("PATH", "")
-    if ecl_path:
+    env_path = os.getenv("PATH", "")
+    ecl_path = config.get("eclrun_env", {}).get("PATH")
+    if ecl_path is not None:
         return {"PATH": env_path + os.pathsep + ecl_path}
     return {"PATH": env_path}
 
@@ -654,6 +654,8 @@ def _get_ecl_config(sim_name: str) -> Dict[str, Any]:
         if sim_name == "eclipse"
         else pm.get_ecl300_config_path()
     )
+    if not config_file:
+        return {}
     with open(config_file, encoding="utf-8") as f:
         try:
             return yaml.safe_load(f)
