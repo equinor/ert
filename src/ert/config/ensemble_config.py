@@ -205,15 +205,13 @@ class EnsembleConfig:
             self.response_configs[key], GenDataConfig
         )
 
-    def check_unique_node(self, key: str) -> None:
-        if key in self:
-            raise ConfigValidationError(
-                f"Config node with key {key!r} already present in ensemble config"
-            )
-
     def addNode(self, config_node: Union[ParameterConfig, ResponseConfig]) -> None:
         assert config_node is not None
-        self.check_unique_node(config_node.name)
+        if config_node.name in self:
+            raise ConfigValidationError(
+                f"Config node with key {config_node.name!r} already present in ensemble config"
+            )
+
         if isinstance(config_node, ParameterConfig):
             logger.info(
                 f"Adding {type(config_node).__name__} config (of size {len(config_node)}) to parameter_configs"
