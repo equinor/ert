@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.storage import Ensemble
 
+logger = logging.getLogger(__name__)
+
 Status = namedtuple("Status", "waiting pending running complete failed")
 
 
@@ -236,7 +238,7 @@ class BatchContext:
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
             if self.get_job_state(iens=sim_id) != JobState.COMPLETED:
-                logging.error(f"Simulation {sim_id} failed.")
+                logger.error(f"Simulation {sim_id} failed.")
                 res.append(None)
                 continue
             d = {}
