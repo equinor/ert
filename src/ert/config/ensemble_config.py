@@ -192,26 +192,6 @@ class EnsembleConfig:
             refcase=refcase,
         )
 
-    def _node_info(self, object_type: Type[Any]) -> str:
-        key_list = self.getKeylistFromImplType(object_type)
-        return (
-            f"{str(object_type).lower() + '_list'}="
-            f"{[self[key] for key in key_list]}, "
-        )
-
-    def __repr__(self) -> str:
-        return (
-            "EnsembleConfig("
-            + self._node_info(GenDataConfig)
-            + self._node_info(GenKwConfig)
-            + self._node_info(SurfaceConfig)
-            + self._node_info(SummaryConfig)
-            + self._node_info(Field)
-            + f"grid_file={self._grid_file},"
-            + f"refcase={self.refcase},"
-            + ")"
-        )
-
     def __getitem__(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
         if key in self.parameter_configs:
             return self.parameter_configs[key]
