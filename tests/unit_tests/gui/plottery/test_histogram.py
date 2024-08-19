@@ -56,7 +56,7 @@ def ensemble_to_data_map(request, plot_context):
     ):
         # categorial and logscale is nonsensical
         pytest.skip()
-    return {ens: request.param for ens in plot_context.ensembles()}
+    return dict.fromkeys(plot_context.ensembles(), request.param)
 
 
 @pytest.mark.mpl_image_compare(tolerance=10)

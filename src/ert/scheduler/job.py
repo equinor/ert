@@ -197,7 +197,7 @@ class Job:
         )
         self.returncode.cancel()
 
-    async def _verify_checksum(self, timeout: int = 120) -> None:
+    async def _verify_checksum(self, timeout: int = 120) -> None:  # noqa: ASYNC109
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:

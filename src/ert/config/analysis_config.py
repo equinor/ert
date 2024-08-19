@@ -150,7 +150,7 @@ class AnalysisConfig:
         except ValidationError as err:
             for error in err.errors():
                 error["loc"] = tuple(
-                    [val.upper() for val in error["loc"] if isinstance(val, str)]
+                    val.upper() for val in error["loc"] if isinstance(val, str)
                 )
                 all_errors.append(ConfigValidationError(str(error)))
 
