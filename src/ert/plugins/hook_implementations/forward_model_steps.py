@@ -622,49 +622,53 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _validate_ecl_version(version: str, sim_name: str) -> None:
-    def _get_eclrun_env(config: Dict[str, Any]) -> Dict[str, str]:
-        env_path = os.getenv("PATH")
-        ecl_path = config.get("eclrun_env", {}).get("PATH", "")
-        if ecl_path:
-            return {"PATH": env_path + os.pathsep + ecl_path}
-        return {"PATH": env_path}
+def _get_eclrun_env(config: Dict[str, Any]) -> Dict[str, str]:
+    env_path = os.getenv("PATH")
+    ecl_path = config.get("eclrun_env", {}).get("PATH", "")
+    if ecl_path:
+        return {"PATH": env_path + os.pathsep + ecl_path}
+    return {"PATH": env_path}
 
-    def _get_available_eclrun_versions(
-        eclrun_env: Dict[str, str], sim_name: str
-    ) -> List[str]:
-        try:
-            return (
-                subprocess.check_output(
-                    ["eclrun", "--report-versions", sim_name],
-                    env=eclrun_env,
-                )
-                .decode("utf-8")
-                .strip()
-                .split(" ")
+
+def _get_available_eclrun_versions(
+    eclrun_env: Dict[str, str], sim_name: str
+) -> List[str]:
+    try:
+        return (
+            subprocess.check_output(
+                ["eclrun", "--report-versions", sim_name],
+                env=eclrun_env,
             )
-        except subprocess.CalledProcessError:
-            return []
-
-    def _get_ecl_config(sim_name: str) -> Dict[str, Any]:
-        pm = ErtPluginManager()
-        config_file = (
-            pm.get_ecl100_config_path()
-            if sim_name == "eclipse"
-            else pm.get_ecl300_config_path()
+            .decode("utf-8")
+            .strip()
+            .split(" ")
         )
-        with open(config_file, encoding="utf-8") as f:
-            try:
-                return yaml.safe_load(f)
-            except yaml.YAMLError as e:
-                raise ValueError(f"Failed parse: {config_file} as yaml") from e
+    except subprocess.CalledProcessError:
+        return []
 
+
+def _get_ecl_config(sim_name: str) -> Dict[str, Any]:
+    pm = ErtPluginManager()
+    config_file = (
+        pm.get_ecl100_config_path()
+        if sim_name == "eclipse"
+        else pm.get_ecl300_config_path()
+    )
+    with open(config_file, encoding="utf-8") as f:
+        try:
+            return yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Failed parse: {config_file} as yaml") from e
+
+
+def _validate_ecl_version(version: str, sim_name: str) -> None:
+    ecl_version = 100 if sim_name == "eclipse" else 300
     if shutil.which("eclrun") is not None:
         ecl_config = _get_ecl_config(sim_name)
         ecl_env = _get_eclrun_env(ecl_config)
         available_versions = _get_available_eclrun_versions(ecl_env, sim_name)
         if version not in available_versions:
             raise ForwardModelStepValidationError(
-                f"Unavailable ECLIPSE version {version} current supported "
+                f"Unavailable ECLIPSE{ecl_version} version {version} current supported "
                 f"versions {available_versions}"
             )
