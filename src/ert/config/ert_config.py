@@ -104,7 +104,6 @@ class ErtConfig:
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
-    obs_config_file: Optional[str] = None
     observation_config: List[
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
@@ -296,7 +295,6 @@ class ErtConfig:
             ),
             model_config=model_config,
             user_config_file=config_file_path,
-            obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
             observation_config=obs_config_content,
         )
 
