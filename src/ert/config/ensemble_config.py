@@ -77,26 +77,25 @@ class EnsembleConfig:
     def __init__(
         self,
         grid_file: Optional[str] = None,
-        gendata_list: Optional[List[GenDataConfig]] = None,
+        response_configs: Optional[Dict[str, ResponseConfig]] = None,
         parameter_configs: Optional[Dict[str, ParameterConfig]] = None,
         eclbase: Optional[str] = None,
         refcase: Optional[Refcase] = None,
     ) -> None:
-        _gendata_list = [] if gendata_list is None else gendata_list
         parameter_configs = parameter_configs if parameter_configs is not None else {}
-        self._check_for_duplicate_names(list(parameter_configs.values()), _gendata_list)
+        response_configs = response_configs if response_configs is not None else {}
+        self._check_for_duplicate_names(
+            list(parameter_configs.values()), list(response_configs.values())
+        )
         self.parameter_configs = parameter_configs
+        self.response_configs = response_configs
         self._grid_file = _get_abs_path(grid_file)
-        self.response_configs: Dict[str, ResponseConfig] = {}
         self.refcase = refcase
         self.eclbase = eclbase
 
-        for gen_data in _gendata_list:
-            self.addNode(gen_data)
-
     @staticmethod
     def _check_for_duplicate_names(
-        parameter_list: List[ParameterConfig], gen_data_list: List[GenDataConfig]
+        parameter_list: List[ParameterConfig], gen_data_list: List[ResponseConfig]
     ) -> None:
         names_counter = Counter(g.name for g in parameter_list + gen_data_list)
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
@@ -158,18 +157,39 @@ class EnsembleConfig:
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
+
+        response_configs: List[ResponseConfig] = [
+            GenDataConfig.from_config_list(g) for g in gen_data_list
+        ]
+        refcase = (
+            Refcase(start_date, refcase_keys, time_map, data)
+            if data is not None
+            else None
+        )
+        summary_keys = config_dict.get(ConfigKeys.SUMMARY, [])
+        if summary_keys:
+            if eclbase is None:
+                raise ConfigValidationError(
+                    "In order to use summary responses, ECLBASE has to be set."
+                )
+            time_map = set(refcase.dates) if refcase is not None else None
+            response_configs.append(
+                SummaryConfig(
+                    name="summary",
+                    input_file=eclbase,
+                    keys=[i for val in summary_keys for i in val],
+                    refcase=time_map,
+                )
+            )
+
         return cls(
             grid_file=grid_file_path,
-            gendata_list=[GenDataConfig.from_config_list(g) for g in gen_data_list],
+            response_configs={response.name: response for response in response_configs},
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs
             },
             eclbase=eclbase,
-            refcase=(
-                Refcase(start_date, refcase_keys, time_map, data)
-                if data is not None
-                else None
-            ),
+            refcase=refcase,
         )
 
     def _node_info(self, object_type: Type[Any]) -> str:

@@ -6,7 +6,6 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from fnmatch import fnmatch
 from os import path
 from pathlib import Path
 from typing import (
@@ -102,11 +101,13 @@ class ErtConfig:
         default_factory=dict
     )
     forward_model_steps: List[ForwardModelStep] = field(default_factory=list)
-    summary_keys: List[str] = field(default_factory=list)
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
     obs_config_file: Optional[str] = None
+    observation_config: List[
+        Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
+    ] = field(default_factory=list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -120,10 +121,8 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.enkf_obs: EnkfObs = self._create_observations(self.obs_config_file)
+        self.enkf_obs: EnkfObs = self._create_observations(self.observation_config)
 
-        if len(self.summary_keys) != 0:
-            self.ensemble_config.addNode(self._create_summary_config())
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
     @staticmethod
@@ -234,7 +233,37 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
+        obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
+        obs_config_content = None
         try:
+            if obs_config_file:
+                if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
+                    raise ObservationConfigError.with_context(
+                        f"Empty observations file: {obs_config_file}",
+                        obs_config_file,
+                    )
+                if not os.access(obs_config_file, os.R_OK):
+                    raise ObservationConfigError.with_context(
+                        "Do not have permission to open observation"
+                        f" config file {obs_config_file!r}",
+                        obs_config_file,
+                    )
+                obs_config_content = parse(obs_config_file)
+        except ObservationConfigError as err:
+            errors.append(err)
+
+        try:
+            if obs_config_content:
+                summary_obs = {
+                    obs[1].key
+                    for obs in obs_config_content
+                    if isinstance(obs[1], (HistoryValues, SummaryValues))
+                }
+                if summary_obs:
+                    summary_keys = ErtConfig._read_summary_keys(config_dict)
+                    config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
+                        [key] for key in summary_obs if key not in summary_keys
+                    ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
             errors.append(err)
@@ -259,7 +288,6 @@ class ErtConfig:
             hooked_workflows=hooked_workflows,
             runpath_file=Path(runpath_file),
             ert_templates=cls._read_templates(config_dict),
-            summary_keys=cls._read_summary_keys(config_dict, ensemble_config),
             installed_forward_model_steps=installed_forward_model_steps,
             forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                 installed_forward_model_steps,
@@ -269,32 +297,16 @@ class ErtConfig:
             model_config=model_config,
             user_config_file=config_file_path,
             obs_config_file=config_dict.get(ConfigKeys.OBS_CONFIG),
+            observation_config=obs_config_content,
         )
 
     @classmethod
-    def _read_summary_keys(
-        cls, config_dict, ensemble_config: EnsembleConfig
-    ) -> List[str]:
-        summary_keys = [
+    def _read_summary_keys(cls, config_dict) -> List[str]:
+        return [
             item
             for sublist in config_dict.get(ConfigKeys.SUMMARY, [])
             for item in sublist
         ]
-        optional_keys = []
-        refcase_keys = (
-            [] if ensemble_config.refcase is None else ensemble_config.refcase.keys
-        )
-        to_add = list(refcase_keys)
-        for key in summary_keys:
-            if "*" in key and refcase_keys:
-                for i, rkey in list(enumerate(to_add))[::-1]:
-                    if fnmatch(rkey, key) and rkey != "TIME":
-                        optional_keys.append(rkey)
-                        del to_add[i]
-            else:
-                optional_keys.append(key)
-
-        return optional_keys
 
     @classmethod
     def _log_config_file(cls, config_file: str) -> None:
@@ -869,96 +881,70 @@ class ErtConfig:
     def preferred_num_cpu(self) -> int:
         return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
-    def _create_summary_config(self) -> SummaryConfig:
-        if self.ensemble_config.eclbase is None:
-            raise ConfigValidationError(
-                "In order to use summary responses, ECLBASE has to be set."
-            )
-        time_map = (
-            set(self.ensemble_config.refcase.dates)
-            if self.ensemble_config.refcase is not None
-            else None
-        )
-        return SummaryConfig(
-            name="summary",
-            input_file=self.ensemble_config.eclbase,
-            keys=self.summary_keys,
-            refcase=time_map,
-        )
-
-    def _create_observations(self, obs_config_file: str) -> EnkfObs:
+    def _create_observations(
+        self,
+        obs_config_content: Optional[
+            Dict[str, Union[HistoryValues, SummaryValues, GenObsValues]]
+        ],
+    ) -> EnkfObs:
+        if not obs_config_content:
+            return EnkfObs({}, [])
         obs_vectors: Dict[str, ObsVector] = {}
         obs_time_list: Sequence[datetime] = []
         if self.ensemble_config.refcase is not None:
             obs_time_list = self.ensemble_config.refcase.all_dates
         elif self.model_config.time_map is not None:
             obs_time_list = self.model_config.time_map
-        if obs_config_file:
-            if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
-                raise ObservationConfigError.with_context(
-                    f"Empty observations file: {obs_config_file}", obs_config_file
-                )
 
-            if not os.access(obs_config_file, os.R_OK):
-                raise ObservationConfigError.with_context(
-                    "Do not have permission to open observation"
-                    f" config file {obs_config_file!r}",
-                    obs_config_file,
-                )
-            obs_config_content = parse(obs_config_file)
-            history = self.model_config.history_source
-            time_len = len(obs_time_list)
-            ensemble_config = self.ensemble_config
-            config_errors: List[ErrorInfo] = []
-            for obs_name, values in obs_config_content:
-                try:
-                    if type(values) == HistoryValues:
-                        self.summary_keys.append(obs_name)
-                        obs_vectors.update(
-                            **EnkfObs._handle_history_observation(
-                                ensemble_config,
-                                values,
-                                obs_name,
-                                history,
-                                time_len,
-                            )
+        history = self.model_config.history_source
+        time_len = len(obs_time_list)
+        ensemble_config = self.ensemble_config
+        config_errors: List[ErrorInfo] = []
+        for obs_name, values in obs_config_content:
+            try:
+                if type(values) == HistoryValues:
+                    obs_vectors.update(
+                        **EnkfObs._handle_history_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            history,
+                            time_len,
                         )
-                    elif type(values) == SummaryValues:
-                        self.summary_keys.append(values.key)
-                        obs_vectors.update(
-                            **EnkfObs._handle_summary_observation(
-                                values,
-                                obs_name,
-                                obs_time_list,
-                                bool(ensemble_config.refcase),
-                            )
-                        )
-                    elif type(values) == GenObsValues:
-                        obs_vectors.update(
-                            **EnkfObs._handle_general_observation(
-                                ensemble_config,
-                                values,
-                                obs_name,
-                                obs_time_list,
-                                bool(ensemble_config.refcase),
-                            )
-                        )
-                    else:
-                        config_errors.append(
-                            ErrorInfo(
-                                message=f"Unknown ObservationType {type(values)} for {obs_name}"
-                            ).set_context(obs_name)
-                        )
-                        continue
-                except ObservationConfigError as err:
-                    config_errors.extend(err.errors)
-                except ValueError as err:
-                    config_errors.append(
-                        ErrorInfo(message=str(err)).set_context(obs_name)
                     )
+                elif type(values) == SummaryValues:
+                    obs_vectors.update(
+                        **EnkfObs._handle_summary_observation(
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
+                elif type(values) == GenObsValues:
+                    obs_vectors.update(
+                        **EnkfObs._handle_general_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
+                else:
+                    config_errors.append(
+                        ErrorInfo(
+                            message=f"Unknown ObservationType {type(values)} for {obs_name}"
+                        ).set_context(obs_name)
+                    )
+                    continue
+            except ObservationConfigError as err:
+                config_errors.extend(err.errors)
+            except ValueError as err:
+                config_errors.append(ErrorInfo(message=str(err)).set_context(obs_name))
 
-            if config_errors:
-                raise ObservationConfigError.from_collected(config_errors)
+        if config_errors:
+            raise ObservationConfigError.from_collected(config_errors)
 
         return EnkfObs(obs_vectors, obs_time_list)
 

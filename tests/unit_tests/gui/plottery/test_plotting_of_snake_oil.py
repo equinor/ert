@@ -135,7 +135,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         key_list = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget
-        item_count = [3, 10, 44]
+        item_count = [3, 10, 45]
 
         assert key_list.model().rowCount() == sum(item_count)
         cbs = plot_window.findChildren(QCheckBox, "FilterCheckBox")
