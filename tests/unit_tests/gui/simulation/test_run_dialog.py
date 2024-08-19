@@ -95,13 +95,6 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
         qtbot.mouseClick(run_dialog.kill_button, Qt.LeftButton)
 
 
-def test_detail_view_toggle(qtbot: QtBot, run_dialog: RunDialog):
-    details_toggled = "Hide" in run_dialog.show_details_button.text()
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-    keyword = "Show" if details_toggled else "Hide"
-    qtbot.waitUntil(lambda: keyword in run_dialog.show_details_button.text())
-
-
 def test_run_dialog_polls_run_model_for_runtime(
     qtbot: QtBot, run_dialog: RunDialog, run_model, notifier, event_queue
 ):
@@ -154,7 +147,6 @@ def test_large_snapshot(
         lambda: run_dialog._total_progress_bar.value() == 100,
         timeout=timeout_per_iter * 3,
     )
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
@@ -362,7 +354,6 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     for event in events:
         event_queue.put(event)
 
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
@@ -403,9 +394,6 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
 
         qtbot.waitUntil(job_overview.isVisible, timeout=20000)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(job_overview.isHidden, timeout=20000)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 
@@ -509,7 +497,6 @@ def test_run_dialog_memory_usage_showing(
     for event in events:
         event_queue.put(event)
 
-    qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
@@ -529,34 +516,6 @@ def test_run_dialog_memory_usage_showing(
     max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
     max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
     assert max_memory_value == "60.00 kB"
-
-
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_gui_runs_a_minimal_example(qtbot: QtBot, storage):
-    """
-    This is a regression test for a crash happening when clicking show details
-    when running a minimal example.
-    """
-    config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
-    args_mock = Mock()
-    args_mock.config = config_file
-
-    ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        qtbot.addWidget(gui)
-        run_experiment = gui.findChild(QToolButton, name="run_experiment")
-
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -589,7 +548,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
@@ -629,9 +587,6 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         job_overview = run_dialog._job_overview
         qtbot.waitUntil(job_overview.isVisible, timeout=20000)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
-        qtbot.waitUntil(job_overview.isHidden, timeout=20000)
-        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 
