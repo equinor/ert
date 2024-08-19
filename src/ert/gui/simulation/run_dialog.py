@@ -217,9 +217,7 @@ class RunDialog(QDialog):
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
-        self._job_label = QLabel(self)
         self._job_overview = JobOverview(self._snapshot_model, self)
-
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
@@ -264,7 +262,6 @@ class RunDialog(QDialog):
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_widget)
-        layout.addWidget(self._job_label)
 
         adjustable_splitter_layout = QSplitter()
         adjustable_splitter_layout.setOrientation(Qt.Orientation.Vertical)
@@ -320,9 +317,6 @@ class RunDialog(QDialog):
         real = index.row()
         iter_ = index.model().get_iter()  # type: ignore
         self._job_overview.set_realization(iter_, real)
-        self._job_label.setText(
-            f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
-        )
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if not self._notifier.is_simulation_running:
