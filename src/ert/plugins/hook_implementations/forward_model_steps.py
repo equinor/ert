@@ -275,6 +275,17 @@ class Eclipse300(ForwardModelStepPlugin):
             ],
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": "", "<VERSION>": "version"},
         )
+    def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        if "<VERSION>" not in self.private_args:
+            raise ForwardModelStepValidationError(
+                "Forward model step ECLIPSE300 must be given a VERSION argument"
+            )
+
+        _validate_ecl_version(
+            version=self.private_args["<VERSION>"],
+            sim_name="e300",
+            ecl_site_config="ECL300_SITE_CONFIG",
+        )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -612,10 +623,10 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _validate_ecl_version(version, sim_name, ecl_site_config):
-    def _get_eclrun_env(config: dict) -> dict:
+def _validate_ecl_version(version: str, sim_name: str, ecl_site_config: str) -> None:
+    def _get_eclrun_env(config):
         if "eclrun_env" in config:
-            env: dict = os.environ.copy()
+            env = os.environ.copy()
             eclrun_env = config["eclrun_env"]
             for key, value in eclrun_env.copy().items():
                 if key == "PATH":
@@ -625,7 +636,7 @@ def _validate_ecl_version(version, sim_name, ecl_site_config):
             return env
         return {}
 
-    def _get_available_eclrun_versions(eclrun_env, sim_name) -> List[str]:
+    def _get_available_eclrun_versions(eclrun_env, sim_name):
         try:
             return (
                 subprocess.check_output(
@@ -639,7 +650,7 @@ def _validate_ecl_version(version, sim_name, ecl_site_config):
         except subprocess.CalledProcessError:
             return []
 
-    def _get_ecl_site_config(ecl_config: str) -> dict:
+    def _get_ecl_site_config(ecl_config):
         site_config = ErtConfig.read_site_config()
         config_file = next(
             v for k, v in site_config.get("SETENV", []) if k == ecl_config
