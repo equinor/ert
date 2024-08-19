@@ -155,7 +155,9 @@ def test_validate(file_contents):
     ) == [
         (
             "FOPR",
-            HistoryValues(error_mode="RELMIN", error=0.1, error_min=0.1, segment=[]),
+            HistoryValues(
+                key="FOPR", error_mode="RELMIN", error=0.1, error_min=0.1, segment=[]
+            ),
         ),
         (
             "WOPR_OP1_9",
@@ -189,6 +191,7 @@ def test_validate(file_contents):
         (
             "FWPR",
             HistoryValues(
+                key="FWPR",
                 error_mode="RELMIN",
                 error=0.1,
                 error_min=0.1,

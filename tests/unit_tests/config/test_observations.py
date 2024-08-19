@@ -19,7 +19,6 @@ from ert.config import (
 )
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.config.parsing.observations_parser import ObservationConfigError
 
 from .config_dict_generator import config_generators
 
@@ -221,7 +220,7 @@ def test_that_empty_observations_file_causes_exception(tmpdir):
             fh.writelines("")
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match="Empty observations file",
         ):
             ErtConfig.from_file("config.ert")
@@ -244,7 +243,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir
             fo.writelines("2023-02-01")
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match="REFCASE is required for HISTORY_OBSERVATION",
         ):
             ErtConfig.from_file("config.ert")
@@ -345,7 +344,7 @@ def test_that_missing_obs_file_raises_exception(tmpdir):
             )
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match="did not resolve to a valid path:\n OBS_FILE",
         ):
             ErtConfig.from_file("config.ert")
@@ -381,7 +380,7 @@ def test_that_missing_time_map_raises_exception(tmpdir):
             )
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match="TIME_MAP",
         ):
             ErtConfig.from_file("config.ert")
@@ -420,7 +419,7 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
             )
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
             " string 'not_an_int' to float64 at row 0, column 1",
         ):
@@ -464,7 +463,7 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
             )
 
         with pytest.raises(
-            expected_exception=ObservationConfigError,
+            expected_exception=ConfigValidationError,
             match="both INDEX_FILE and INDEX_LIST",
         ):
             ErtConfig.from_file("config.ert")
@@ -516,7 +515,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             "DAYS",
             "2.0",
             pytest.raises(
-                ObservationConfigError,
+                ConfigValidationError,
                 match=r"Could not find 2014-09-12 00:00:00 \(DAYS=2.0\)"
                 " in the time map for observations FOPR_1",
             ),
@@ -527,7 +526,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             "HOURS",
             48.0,
             pytest.raises(
-                ObservationConfigError,
+                ConfigValidationError,
                 match=r"Could not find 2014-09-12 00:00:00 \(HOURS=48.0\)"
                 " in the time map for observations FOPR_1",
             ),
@@ -538,7 +537,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
             "DATE",
             "2014-09-12",
             pytest.raises(
-                ObservationConfigError,
+                ConfigValidationError,
                 match=r"Could not find 2014-09-12 00:00:00 \(DATE=2014-09-12\)"
                 " in the time map for observations FOPR_1",
             ),
@@ -767,7 +766,7 @@ def test_that_different_length_values_fail(monkeypatch, copy_snake_oil_case_stor
     with obs_file.open(mode="a") as fin:
         fin.write(observations)
 
-    with pytest.raises(ObservationConfigError, match="must be of equal length"):
+    with pytest.raises(ConfigValidationError, match="must be of equal length"):
         ErtConfig.from_file("snake_oil.ert")
 
 
@@ -955,7 +954,7 @@ def test_that_common_observation_error_validation_is_handled(
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        with pytest.raises(ObservationConfigError, match=match):
+        with pytest.raises(ConfigValidationError, match=match):
             ErtConfig.from_file("config.ert")
 
 
@@ -1192,7 +1191,7 @@ def test_that_summary_observation_validation_is_handled(tmpdir, obs_content, mat
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        with pytest.raises(ObservationConfigError, match=match):
+        with pytest.raises(ConfigValidationError, match=match):
             ErtConfig.from_file("config.ert")
 
 
@@ -1246,7 +1245,7 @@ def test_validation_of_general_observation(tmpdir, obs_content, match):
         with open("time_map.txt", "w", encoding="utf-8") as fo:
             fo.writelines("2023-02-01")
 
-        with pytest.raises(ObservationConfigError, match=match):
+        with pytest.raises(ConfigValidationError, match=match):
             ErtConfig.from_file("config.ert")
 
 
@@ -1276,7 +1275,7 @@ def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
-        with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
+        with pytest.raises(ConfigValidationError, match="Unknown SMERROR"):
             ErtConfig.from_file("config.ert")
 
 
@@ -1314,7 +1313,7 @@ def test_validation_of_duplicate_names(
         )
 
         with pytest.raises(
-            ObservationConfigError, match="Duplicate observation name FOPR"
+            ConfigValidationError, match="Duplicate observation name FOPR"
         ):
             ErtConfig.from_file("config.ert")
 

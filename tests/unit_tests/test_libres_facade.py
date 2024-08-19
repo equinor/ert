@@ -115,6 +115,7 @@ def test_summary_collector(
     monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
 
     data = snake_oil_default_storage.load_all_summary_data()
+    data = data.drop(["TIME"], axis=1)
     snapshot.assert_match(
         data.iloc[:4].round(4).to_csv(),
         "summary_collector_1.csv",

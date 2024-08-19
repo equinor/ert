@@ -59,6 +59,7 @@ SimpleHistoryDeclaration = Tuple[Literal[ObservationType.HISTORY], FileContextTo
 
 @dataclass
 class HistoryValues(ErrorValues):
+    key: str
     segment: List[Tuple[str, Segment]]
 
 
@@ -316,6 +317,7 @@ def _validate_history_values(
             raise _unknown_key_error(key, name_token)
 
     return HistoryValues(
+        key=name_token,
         error_mode=error_mode,
         error=error,
         error_min=error_min,
