@@ -25,7 +25,6 @@ from ert.config import (
     EnkfObservationImplementationType,
     ErtConfig,
     Field,
-    GenKwConfig,
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
@@ -42,7 +41,6 @@ if TYPE_CHECKING:
 
     from ert.config import (
         EnkfObs,
-        PriorDict,
         WorkflowJob,
     )
     from ert.run_arg import RunArg
@@ -243,16 +241,6 @@ class LibresFacade:
         misfit.index = misfit.index.astype(int)
 
         return misfit
-
-    def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
-        gen_kw_keys = self.get_gen_kw()
-        all_gen_kw_priors = {}
-        for key in gen_kw_keys:
-            gen_kw_config = self.config.ensemble_config.parameter_configs[key]
-            if isinstance(gen_kw_config, GenKwConfig):
-                all_gen_kw_priors[key] = gen_kw_config.get_priors()
-
-        return all_gen_kw_priors
 
     def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
         return self.config.workflow_jobs.get(name)

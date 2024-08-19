@@ -8,7 +8,7 @@ import pytest
 import xarray as xr
 
 from ert.analysis import smoother_update
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 from tests.performance_tests.performance_utils import make_poly_example
@@ -72,7 +72,6 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
-        summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
         for _, obs in ert_config.observations.items():
             data_key = obs.attrs["response"]
@@ -88,7 +87,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                     obs_time_list = ens_config.refcase.all_dates
                     source.save_response(
                         data_key,
-                        make_summary_data(summary_obs_keys, obs_time_list),
+                        make_summary_data(["summary"], obs_time_list),
                         real,
                     )
 
