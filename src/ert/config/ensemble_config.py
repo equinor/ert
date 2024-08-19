@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import (
     Any,
@@ -72,25 +72,19 @@ class Refcase:
         return [self.start_date] + list(self.dates)
 
 
+@dataclass
 class EnsembleConfig:
-    def __init__(
-        self,
-        grid_file: Optional[str] = None,
-        response_configs: Optional[Dict[str, ResponseConfig]] = None,
-        parameter_configs: Optional[Dict[str, ParameterConfig]] = None,
-        eclbase: Optional[str] = None,
-        refcase: Optional[Refcase] = None,
-    ) -> None:
-        parameter_configs = parameter_configs if parameter_configs is not None else {}
-        response_configs = response_configs if response_configs is not None else {}
+    grid_file: Optional[str] = None
+    response_configs: Dict[str, ResponseConfig] = field(default_factory=dict)
+    parameter_configs: Dict[str, ParameterConfig] = field(default_factory=dict)
+    refcase: Optional[Refcase] = None
+    eclbase: Optional[str] = None
+
+    def __post_init__(self) -> None:
         self._check_for_duplicate_names(
-            list(parameter_configs.values()), list(response_configs.values())
+            list(self.parameter_configs.values()), list(self.response_configs.values())
         )
-        self.parameter_configs = parameter_configs
-        self.response_configs = response_configs
-        self._grid_file = _get_abs_path(grid_file)
-        self.refcase = refcase
-        self.eclbase = eclbase
+        self.grid_file = _get_abs_path(self.grid_file)
 
     @staticmethod
     def _check_for_duplicate_names(
@@ -227,10 +221,6 @@ class EnsembleConfig:
         ]
 
     @property
-    def grid_file(self) -> Optional[str]:
-        return self._grid_file
-
-    @property
     def parameters(self) -> List[str]:
         return list(self.parameter_configs)
 
@@ -244,18 +234,6 @@ class EnsembleConfig:
 
     def __contains__(self, key: str) -> bool:
         return key in self.keys
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, EnsembleConfig):
-            return False
-
-        return (
-            self.keys == other.keys
-            and self._grid_file == other._grid_file
-            and self.parameter_configs == other.parameter_configs
-            and self.response_configs == other.response_configs
-            and self.refcase == other.refcase
-        )
 
     @property
     def parameter_configuration(self) -> List[ParameterConfig]:

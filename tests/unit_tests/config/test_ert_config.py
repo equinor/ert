@@ -1558,7 +1558,7 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                 continue
             print(line, end="")
 
-    with pytest.raises(ObservationConfigError) as err:
+    with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [

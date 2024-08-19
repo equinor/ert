@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -35,10 +36,12 @@ def history_key(key: str) -> str:
     return ":".join([keyword + "H"] + rest)
 
 
+@dataclass
 class EnkfObs:
-    def __init__(self, obs_vectors: Dict[str, ObsVector], obs_time: List[datetime]):
-        self.obs_vectors = obs_vectors
-        self.obs_time = obs_time
+    obs_vectors: Dict[str, ObsVector]
+    obs_time: List[datetime]
+
+    def __post_init__(self) -> None:
         self.datasets: Dict[str, xr.Dataset] = {
             name: obs.to_dataset([]) for name, obs in sorted(self.obs_vectors.items())
         }
