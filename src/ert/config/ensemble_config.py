@@ -287,13 +287,6 @@ class EnsembleConfig:
             and self.refcase == other.refcase
         )
 
-    def get_summary_keys(self) -> List[str]:
-        if "summary" in self:
-            summary = self["summary"]
-            if isinstance(summary, SummaryConfig):
-                return sorted(set(summary.keys))
-        return []
-
     @property
     def parameter_configuration(self) -> List[ParameterConfig]:
         return list(self.parameter_configs.values())

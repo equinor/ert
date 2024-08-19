@@ -244,9 +244,6 @@ class LibresFacade:
 
         return misfit
 
-    def get_summary_keys(self) -> List[str]:
-        return self.config.ensemble_config.get_summary_keys()
-
     def gen_kw_priors(self) -> Dict[str, List["PriorDict"]]:
         gen_kw_keys = self.get_gen_kw()
         all_gen_kw_priors = {}
