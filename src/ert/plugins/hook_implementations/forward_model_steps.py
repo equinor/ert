@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 import yaml
 
@@ -14,7 +14,7 @@ from ert import (
     ForwardModelStepValidationError,
     plugin,
 )
-from ert.config import ErtConfig
+from ert.plugins import ErtPluginManager
 
 
 class CarefulCopyFile(ForwardModelStepPlugin):
@@ -229,7 +229,6 @@ class Eclipse100(ForwardModelStepPlugin):
         _validate_ecl_version(
             version=self.private_args["<VERSION>"],
             sim_name="eclipse",
-            ecl_site_config="ECL100_SITE_CONFIG",
         )
 
     @staticmethod
@@ -275,6 +274,7 @@ class Eclipse300(ForwardModelStepPlugin):
             ],
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": "", "<VERSION>": "version"},
         )
+
     def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
         if "<VERSION>" not in self.private_args:
             raise ForwardModelStepValidationError(
@@ -284,7 +284,6 @@ class Eclipse300(ForwardModelStepPlugin):
         _validate_ecl_version(
             version=self.private_args["<VERSION>"],
             sim_name="e300",
-            ecl_site_config="ECL300_SITE_CONFIG",
         )
 
     @staticmethod
@@ -623,20 +622,17 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _validate_ecl_version(version: str, sim_name: str, ecl_site_config: str) -> None:
-    def _get_eclrun_env(config):
-        if "eclrun_env" in config:
-            env = os.environ.copy()
-            eclrun_env = config["eclrun_env"]
-            for key, value in eclrun_env.copy().items():
-                if key == "PATH":
-                    env[key] = value + os.pathsep + env[key]
-                elif value is not None and key in env:
-                    env[key] = value
-            return env
-        return {}
+def _validate_ecl_version(version: str, sim_name: str) -> None:
+    def _get_eclrun_env(config: Dict[str, Any]) -> Dict[str, str]:
+        env_path = os.getenv("PATH")
+        ecl_path = config.get("eclrun_env", {}).get("PATH", "")
+        if ecl_path:
+            return {"PATH": env_path + os.pathsep + ecl_path}
+        return {"PATH": env_path}
 
-    def _get_available_eclrun_versions(eclrun_env, sim_name):
+    def _get_available_eclrun_versions(
+        eclrun_env: Dict[str, str], sim_name: str
+    ) -> List[str]:
         try:
             return (
                 subprocess.check_output(
@@ -650,10 +646,12 @@ def _validate_ecl_version(version: str, sim_name: str, ecl_site_config: str) -> 
         except subprocess.CalledProcessError:
             return []
 
-    def _get_ecl_site_config(ecl_config):
-        site_config = ErtConfig.read_site_config()
-        config_file = next(
-            v for k, v in site_config.get("SETENV", []) if k == ecl_config
+    def _get_ecl_config(sim_name: str) -> Dict[str, Any]:
+        pm = ErtPluginManager()
+        config_file = (
+            pm.get_ecl100_config_path()
+            if sim_name == "eclipse"
+            else pm.get_ecl300_config_path()
         )
         with open(config_file, encoding="utf-8") as f:
             try:
@@ -662,7 +660,7 @@ def _validate_ecl_version(version: str, sim_name: str, ecl_site_config: str) -> 
                 raise ValueError(f"Failed parse: {config_file} as yaml") from e
 
     if shutil.which("eclrun") is not None:
-        ecl_config = _get_ecl_site_config(ecl_site_config)
+        ecl_config = _get_ecl_config(sim_name)
         ecl_env = _get_eclrun_env(ecl_config)
         available_versions = _get_available_eclrun_versions(ecl_env, sim_name)
         if version not in available_versions:
