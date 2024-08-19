@@ -18,7 +18,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
 
     async def rename_and_wait():
         Path("real_0/job_test_file").rename("real_0/test")
-        while "Waiting for disk synchronization" not in caplog.messages:
+        while "Waiting for disk synchronization" not in caplog.messages:  # noqa: ASYNC110
             await asyncio.sleep(0.1)
         Path("real_0/test").rename("real_0/job_test_file")
 

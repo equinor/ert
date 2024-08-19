@@ -141,7 +141,7 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
         name="submit2",
     )
     # Wait until both submissions have done their thing:
-    while not Path("submit1").exists() or not Path("submit2").exists():
+    while not Path("submit1").exists() or not Path("submit2").exists():  # noqa: ASYNC110
         await asyncio.sleep(0.1)
     assert Path("submissionrace").read_text(encoding="utf-8") == "submit2\n"
 

@@ -313,9 +313,8 @@ def _read_spec(
     ny = None
     wgnames = None
 
-    arrays: Dict[str, Optional[npt.NDArray[Any]]] = {
-        kw: None
-        for kw in [
+    arrays: Dict[str, Optional[npt.NDArray[Any]]] = dict.fromkeys(
+        [
             "NUMS    ",
             "KEYWORDS",
             "NUMLX   ",
@@ -323,9 +322,9 @@ def _read_spec(
             "NUMLZ   ",
             "LGRS    ",
             "UNITS   ",
-        ]
-    }
-
+        ],
+        None,
+    )
     if spec.lower().endswith("fsmspec"):
         mode = "rt"
         format = resfo.Format.FORMATTED

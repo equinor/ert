@@ -139,7 +139,7 @@ async def test_job_run_sends_expected_events(
         # The execution flow through Job.run() is manipulated through job.returncode
         if attempt < max_submit - 1:
             job.returncode.set_result(1)
-            while job.returncode.done():
+            while job.returncode.done():  # noqa: ASYNC110
                 # wait until job.run() resets
                 # the future after seeing the failure
                 await asyncio.sleep(0)
