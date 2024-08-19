@@ -42,6 +42,8 @@ from ert.validation import (
     ValidationStatus,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
     with StorageService.start_server(
@@ -635,9 +637,9 @@ def log_process_usage() -> None:
             "Swaps": usage.ru_nswap,
             "Peak memory use (kB)": maxrss,
         }
-        logging.info(f"Peak memory use: {maxrss} kB", extra=usage_dict)
+        logger.info(f"Peak memory use: {maxrss} kB", extra=usage_dict)
     except Exception as exc:
-        logging.warning(
+        logger.warning(
             f"Exception while trying to log ERT process resource usage: {exc}"
         )
 

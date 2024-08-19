@@ -15,6 +15,8 @@ from ert.gui.tools.export.export_panel import ExportDialog
 
 from .exporter import Exporter
 
+logger = logging.getLogger(__name__)
+
 
 class ExportTool(Tool):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier):
@@ -55,7 +57,7 @@ class ExportTool(Tool):
                 QMessageBox.Ok,
             )
         except UserWarning as usrwarning:
-            logging.error(str(usrwarning))
+            logger.error(str(usrwarning))
             QMessageBox.warning(
                 cast(QWidget, self.parent()),
                 "Failure",

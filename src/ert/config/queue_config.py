@@ -17,6 +17,8 @@ from .parsing import (
     QueueSystem,
 )
 
+logger = logging.getLogger(__name__)
+
 GENERIC_QUEUE_OPTIONS: List[str] = ["MAX_RUNNING", "SUBMIT_SLEEP"]
 LSF_DRIVER_OPTIONS = [
     "BHIST_CMD",
@@ -194,7 +196,7 @@ class QueueConfig:
                 option_name in queue_options[queue_system]
                 and queue_options[queue_system][option_name] != value
             ):
-                logging.info(
+                logger.info(
                     f"Overwriting QUEUE_OPTION {selected_queue_system} {option_name}:"
                     f" \n Old value: {queue_options[queue_system][option_name]} \n New value: {value}"
                 )

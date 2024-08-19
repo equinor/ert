@@ -7,6 +7,8 @@ import tempfile
 from argparse import ArgumentParser
 from typing import Any, Callable, Dict, List, Optional, Type
 
+logger = logging.getLogger(__name__)
+
 
 class WorkflowConfigs:
     """
