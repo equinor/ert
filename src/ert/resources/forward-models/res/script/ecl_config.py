@@ -224,9 +224,7 @@ class FlowConfig(EclConfig):
         }
         flow_config_yml = Path("flow_config.yml")
         flow_config_yml.write_text(yaml.dump(conf), encoding="utf-8")
-        flow_config_path = str(flow_config_yml.absolute())
-        os.environ["FLOW_SITE_CONFIG"] = flow_config_path
-        return flow_config_path
+        return str(flow_config_yml.absolute())
 
 
 class EclrunConfig:
