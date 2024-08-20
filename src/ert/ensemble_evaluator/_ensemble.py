@@ -170,9 +170,7 @@ class LegacyEnsemble:
         async with Client(url, token, cert, max_retries=retries) as client:
             await client._send(to_json(event, data_marshaller=evaluator_marshaller))
 
-    def generate_event_creator(
-        self, experiment_id: Optional[str] = None
-    ) -> Callable[[str, Optional[int]], CloudEvent]:
+    def generate_event_creator(self) -> Callable[[str, Optional[int]], CloudEvent]:
         def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
             source = f"/ert/ensemble/{self.id_}"
             if real_id is not None:
@@ -219,7 +217,6 @@ class LegacyEnsemble:
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
         cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
-        experiment_id: Optional[str] = None,
         scheduler_queue: Optional[asyncio.Queue[CloudEvent]] = None,
         manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
     ) -> None:
@@ -235,7 +232,7 @@ class LegacyEnsemble:
         is a function (or bound method) that only takes a CloudEvent as a positional
         argument.
         """
-        event_creator = self.generate_event_creator(experiment_id=experiment_id)
+        event_creator = self.generate_event_creator()
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
