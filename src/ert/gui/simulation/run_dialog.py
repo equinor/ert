@@ -270,6 +270,15 @@ class RunDialog(QDialog):
         adjustable_splitter_layout.setOrientation(Qt.Orientation.Vertical)
         adjustable_splitter_layout.addWidget(self._tab_widget)
 
+        adjustable_splitter_layout.setStyleSheet("""
+            QSplitter::handle {
+                image: url(img:drag_handle.svg);
+                height: 13px;
+                background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
+                   stop: 0.1 #10FFFFFF, stop: 0.5 #D3D3D3, stop: 0.9 #10FFFFFF);
+            }
+         """)
+
         self.job_frame = QFrame(self)
         job_frame_layout = QVBoxLayout(self.job_frame)
         job_frame_layout.setContentsMargins(0, 0, 0, 0)
