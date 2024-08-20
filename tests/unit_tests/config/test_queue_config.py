@@ -67,18 +67,17 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-@given(st.integers(min_value=1, max_value=300))
-def test_that_an_invalid_queue_system_provided_raises_validation_error(num_real):
+def test_that_an_invalid_queue_system_provided_raises_validation_error():
     filename = "config.ert"
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"NUM_REALIZATIONS {num_real}\nQUEUE_SYSTEM VOID\n")
+        f.write("NUM_REALIZATIONS 1\nQUEUE_SYSTEM VOID\n")
 
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="'QUEUE_SYSTEM' argument 1 must be one of .* was 'VOID'",
     ):
-        _ = ErtConfig.from_file(filename)
+        ErtConfig.from_file(filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
