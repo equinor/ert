@@ -293,12 +293,8 @@ class RunDialog(QDialog):
         self.on_run_model_event.connect(self._on_event)
 
     def _current_tab_changed(self, index: int) -> None:
-        # Clear the selection in the other tabs
-        for i in range(0, self._tab_widget.count()):
-            if i != index:
-                widget = self._tab_widget.widget(i)
-                if isinstance(widget, RealizationWidget):
-                    widget.clearSelection()
+        widget = self._tab_widget.widget(index)
+        self.job_frame.setHidden(isinstance(widget, UpdateWidget))
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
