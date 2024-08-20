@@ -105,12 +105,13 @@ class GenKwConfig(ParameterConfig):
 
         if len(positional_args) == 2:
             parameter_file = _get_abs_path(positional_args[1])
+            parameter_file_context = positional_args[1]
             template_file = None
             output_file = None
         elif len(positional_args) == 4:
             output_file = positional_args[2]
             parameter_file = _get_abs_path(positional_args[3])
-
+            parameter_file_context = positional_args[3]
             template_file = _get_abs_path(positional_args[1])
             if not os.path.isfile(template_file):
                 errors.append(
@@ -125,7 +126,14 @@ class GenKwConfig(ParameterConfig):
         if not os.path.isfile(parameter_file):
             errors.append(
                 ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", positional_args[3]
+                    f"No such parameter file: {parameter_file}", parameter_file_context
+                )
+            )
+        elif Path(parameter_file).stat().st_size == 0:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"No parameters specified in {parameter_file}",
+                    parameter_file_context,
                 )
             )
 
