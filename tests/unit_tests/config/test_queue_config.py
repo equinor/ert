@@ -67,15 +67,20 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_an_invalid_queue_system_provided_raises_validation_error():
+@pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "GENERIC", "*"])
+def test_that_an_invalid_queue_system_provided_raises_validation_error(
+    invalid_queue_system,
+):
+    """There is actually a "queue-system" called GENERIC, but it is
+    only there for making queue options global, it should not be
+    possible to try to use it"""
     filename = "config.ert"
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\nQUEUE_SYSTEM VOID\n")
-
+        f.write(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {invalid_queue_system}\n")
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="'QUEUE_SYSTEM' argument 1 must be one of .* was 'VOID'",
+        match=f"'QUEUE_SYSTEM' argument 1 must be one of .* was '{invalid_queue_system}'",
     ):
         ErtConfig.from_file(filename)
 

@@ -10,7 +10,7 @@ from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .lark_parser import parse as lark_parse
-from .queue_system import QueueSystem
+from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
 from .workflow_job_keywords import WorkflowJobKeys
@@ -32,6 +32,7 @@ __all__ = [
     "HookRuntime",
     "MaybeWithContext",
     "QueueSystem",
+    "QueueSystemWithGeneric",
     "SchemaItemType",
     "WarningInfo",
     "WorkflowJobKeys",

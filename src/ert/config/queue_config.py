@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import shutil
+from abc import abstractmethod
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Dict, List, Mapping, Optional, no_type_check
 
@@ -16,6 +17,7 @@ from .parsing import (
     ConfigWarning,
     MaybeWithContext,
     QueueSystem,
+    QueueSystemWithGeneric,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,8 +47,6 @@ class QueueOptions:
                 return TorqueQueueOptions(**lower_case_options)
             elif queue_system == QueueSystem.LOCAL:
                 return LocalQueueOptions(**lower_case_options)
-            elif queue_system == QueueSystem.GENERIC:
-                return QueueOptions(**lower_case_options)
         except pydantic.ValidationError as exception:
             for error in exception.errors():
                 _throw_error_or_warning(
@@ -72,9 +72,9 @@ class QueueOptions:
                         )
 
     @property
+    @abstractmethod
     def driver_options(self) -> Dict[str, Any]:
         """Translate the queue options to the key-value API provided by each driver"""
-        return {}
 
 
 @pydantic.dataclasses.dataclass
@@ -202,7 +202,9 @@ valid_options: Dict[str, List[str]] = {
     QueueSystem.TORQUE.name: [
         field.name.upper() for field in fields(TorqueQueueOptions)
     ],
-    QueueSystem.GENERIC.name: [field.name.upper() for field in fields(QueueOptions)],
+    QueueSystemWithGeneric.GENERIC.name: [
+        field.name.upper() for field in fields(QueueOptions)
+    ],
 }
 
 
@@ -234,13 +236,13 @@ def _raise_for_defaulted_invalid_options(queue_config_list: List[List[str]]) -> 
 
 def _group_queue_options_by_queue_system(
     queue_config_list: List[List[str]],
-) -> Dict[QueueSystem, Dict[str, str]]:
-    grouped: Dict[QueueSystem, Dict[str, str]] = {}
-    for system in QueueSystem:
+) -> Dict[QueueSystemWithGeneric, Dict[str, str]]:
+    grouped: Dict[QueueSystemWithGeneric, Dict[str, str]] = {}
+    for system in QueueSystemWithGeneric:
         grouped[system] = {
             option_line[1]: option_line[2]
             for option_line in queue_config_list
-            if option_line[0] in (QueueSystem.GENERIC, system)
+            if option_line[0] in (QueueSystemWithGeneric.GENERIC, system)
             # Empty option values are ignored, yields defaults:
             and len(option_line) > 2
         }

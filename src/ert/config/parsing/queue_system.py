@@ -6,4 +6,11 @@ class QueueSystem(StrEnum):
     LOCAL = "LOCAL"
     TORQUE = "TORQUE"
     SLURM = "SLURM"
+
+
+class QueueSystemWithGeneric(StrEnum):
+    LSF = "LSF"
+    LOCAL = "LOCAL"
+    TORQUE = "TORQUE"
+    SLURM = "SLURM"
     GENERIC = "GENERIC"

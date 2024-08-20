@@ -14,10 +14,14 @@ from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
 
-from ert.config import QueueSystem
 from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
-from ert.config.parsing import ConfigKeys, HistorySource
+from ert.config.parsing import (
+    ConfigKeys,
+    HistorySource,
+    QueueSystem,
+    QueueSystemWithGeneric,
+)
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -110,26 +114,28 @@ def memory_with_unit_lsf(draw):
 
 
 memory_with_unit = {
-    QueueSystem.SLURM: memory_with_unit_slurm,
-    QueueSystem.TORQUE: memory_with_unit_torque,
-    QueueSystem.LSF: memory_with_unit_lsf,
-    QueueSystem.LOCAL: memory_with_unit_lsf,  # Just a dummy value
-    QueueSystem.GENERIC: memory_with_unit_lsf,  # Just a dummy value
+    QueueSystemWithGeneric.SLURM: memory_with_unit_slurm,
+    QueueSystemWithGeneric.TORQUE: memory_with_unit_torque,
+    QueueSystemWithGeneric.LSF: memory_with_unit_lsf,
+    QueueSystemWithGeneric.LOCAL: memory_with_unit_lsf,  # Just a dummy value
+    QueueSystemWithGeneric.GENERIC: memory_with_unit_lsf,  # Just a dummy value
 }
 
 queue_systems_and_options = {
-    QueueSystem.LOCAL: LocalQueueOptions,
-    QueueSystem.LSF: LsfQueueOptions,
-    QueueSystem.TORQUE: TorqueQueueOptions,
-    QueueSystem.SLURM: SlurmQueueOptions,
-    QueueSystem.GENERIC: QueueOptions,
+    QueueSystemWithGeneric.LOCAL: LocalQueueOptions,
+    QueueSystemWithGeneric.LSF: LsfQueueOptions,
+    QueueSystemWithGeneric.TORQUE: TorqueQueueOptions,
+    QueueSystemWithGeneric.SLURM: SlurmQueueOptions,
+    QueueSystemWithGeneric.GENERIC: QueueOptions,
 }
 
 
 def valid_queue_options(queue_system: str):
     return [
         field.name.upper()
-        for field in fields(queue_systems_and_options[QueueSystem(queue_system)])
+        for field in fields(
+            queue_systems_and_options[QueueSystemWithGeneric(queue_system)]
+        )
     ]
 
 
