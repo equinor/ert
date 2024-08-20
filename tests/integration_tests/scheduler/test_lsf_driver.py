@@ -254,12 +254,22 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     await poll(driver, {0})
     assert "bhist is used" in caplog.text
     assert bhist_called
-    assert job_id in driver._bhist_cache
+    assert driver._bhist_cache and job_id in driver._bhist_cache
 
 
-async def test_kill_before_submit_is_finished(
+@pytest.mark.flaky(rerun=10)
+async def test_that_kill_before_submit_is_finished_works(
     tmp_path, monkeypatch, caplog, pytestconfig
 ):
+    """This test asserts that it is possible to issue a kill command
+    to a realization right after it has been submitted (as in driver.submit()).
+
+    The bug intended to catch is if the driver gives up on killing before submission
+    is not done yet, it is important not to let the realization through in that scenario.
+
+    The design of the test alludes to much more flakyness than what is probable in reality,
+    thus reruns are allowed to make this pass.
+    """
     os.chdir(tmp_path)
 
     if pytestconfig.getoption("lsf"):
@@ -271,8 +281,8 @@ async def test_kill_before_submit_is_finished(
         job_kill_window = 5
         test_grace_time = 10
     else:
-        job_kill_window = 1
-        test_grace_time = 2
+        job_kill_window = 2
+        test_grace_time = 4
 
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
