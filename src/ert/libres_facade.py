@@ -138,6 +138,7 @@ class LibresFacade:
             jobname_format=self.config.model_config.jobname_format_string,
             runpath_format=self.config.model_config.runpath_format_string,
             runpath_file=self.config.runpath_file,
+            eclbase=self.config.ensemble_config.eclbase,
         )
 
         nr_loaded = self._load_from_run_path(

@@ -34,11 +34,13 @@ class Runpaths:
         runpath_format: str,
         filename: Union[str, Path] = ".ert_runpath_list",
         substitution_list: Optional[SubstitutionList] = None,
+        eclbase: Optional[str] = None,
     ):
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
         self._substitution_list = substitution_list or SubstitutionList()
+        self._eclbase = eclbase
 
     def set_ert_ensemble(self, ensemble_name: str) -> None:
         self._substitution_list["<ERT-CASE>"] = ensemble_name
@@ -78,8 +80,8 @@ class Runpaths:
             003  /cwd/realization-3/iteration-1  job3  001
             004  /cwd/realization-4/iteration-1  job4  001
 
-        The example assumes that jobname_format is "job<IENS>" and
-        runpath_format is "realization<ITER>/iteration-<IENS>"
+        The example assumes that jobname_format is "job<IENS>", that there is
+        no eclbase and runpath_format is "realization<ITER>/iteration-<IENS>"
 
         :param iteration_numbers: The list of iterations to write entries for
         :param realization_numbers: The list of realizations to write entries for
@@ -88,12 +90,15 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name = self._substitution_list.substitute_real_iter(
-                        self._jobname_format, realization, iteration
+                    job_name_or_eclbase = self._substitution_list.substitute_real_iter(
+                        self._eclbase if self._eclbase else self._jobname_format,
+                        realization,
+                        iteration,
                     )
                     runpath = self._substitution_list.substitute_real_iter(
                         self._runpath_format, realization, iteration
                     )
+
                     filehandle.write(
-                        f"{realization:03d}  {runpath}  {job_name}  {iteration:03d}\n"
+                        f"{realization:03d}  {runpath}  {job_name_or_eclbase}  {iteration:03d}\n"
                     )
