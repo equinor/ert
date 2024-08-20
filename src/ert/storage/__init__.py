@@ -1,3 +1,8 @@
+"""
+Hierarchical Structure:
+The code follows a clear hierarchical structure: Storage -> Experiment -> Ensemble.
+"""
+
 from __future__ import annotations
 
 import os

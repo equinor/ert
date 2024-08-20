@@ -39,7 +39,6 @@ class EnsembleExperiment(BaseRunModel):
         self.experiment_name = experiment_name
         self.experiment: Experiment | None = None
         self.ensemble: Ensemble | None = None
-
         super().__init__(
             config,
             storage,
@@ -63,8 +62,8 @@ class EnsembleExperiment(BaseRunModel):
                 observations=self.ert_config.observations,
                 responses=self.ert_config.ensemble_config.response_configuration,
             )
-            self.ensemble = self._storage.create_ensemble(
-                self.experiment,
+            assert self.experiment
+            self.ensemble = self.experiment.create_ensemble(
                 name=self.ensemble_name,
                 ensemble_size=self.ensemble_size,
             )
@@ -82,6 +81,7 @@ class EnsembleExperiment(BaseRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=self.ensemble,
         )
+
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],

@@ -57,13 +57,16 @@ def test_that_posterior_has_lower_variance_than_prior():
         "--disable-monitor",
         "--realizations",
         "1-50",
+        "--experiment-name",
+        "testing",
         "poly.ert",
     )
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
-        prior_ensemble = storage.get_ensemble_by_name("iter-0")
+        experiment = storage.get_experiment_by_name("testing")
+        prior_ensemble = experiment.get_ensemble_by_name("iter-0")
         df_default = prior_ensemble.load_all_gen_kw_data()
-        posterior_ensemble = storage.get_ensemble_by_name("iter-1")
+        posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
         df_target = posterior_ensemble.load_all_gen_kw_data()
 
         # The std for the ensemble should decrease
@@ -170,8 +173,9 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    prior_ensemble = storage.get_ensemble_by_name("iter-0")
-    posterior_ensemble = storage.get_ensemble_by_name("iter-1")
+    experiment = storage.get_experiment_by_name("ensemble-experiment")
+    prior_ensemble = experiment.get_ensemble_by_name("iter-0")
+    posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
 
     prior_array = _all_parameters(prior_ensemble, list(range(10)))
     posterior_array = _all_parameters(posterior_ensemble, list(range(10)))

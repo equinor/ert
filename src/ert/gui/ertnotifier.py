@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import List, Optional
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.storage import Ensemble, Storage
+from ert.storage import LocalEnsemble, LocalStorage
 
 
 class ErtNotifier(QObject):
@@ -13,8 +13,8 @@ class ErtNotifier(QObject):
     def __init__(self, config_file: str):
         QObject.__init__(self)
         self._config_file = config_file
-        self._storage: Optional[Storage] = None
-        self._current_ensemble: Optional[Ensemble] = None
+        self._storage: Optional[LocalStorage] = None
+        self._current_ensemble: Optional[LocalEnsemble] = None
         self._is_simulation_running = False
 
     @property
@@ -22,7 +22,7 @@ class ErtNotifier(QObject):
         return self._storage is not None
 
     @property
-    def storage(self) -> Storage:
+    def storage(self) -> LocalStorage:
         assert self.is_storage_available
         return self._storage  # type: ignore
 
@@ -31,11 +31,11 @@ class ErtNotifier(QObject):
         return self._config_file
 
     @property
-    def current_ensemble(self) -> Optional[Ensemble]:
-        if self._current_ensemble is None and self._storage is not None:
-            ensembles = list(self._storage.ensembles)
-            if ensembles:
-                self._current_ensemble = ensembles[0]
+    def current_ensemble(self) -> Optional[LocalEnsemble]:
+        if self._current_ensemble is None and self.is_storage_available:
+            all_ensembles = self.get_all_ensembles()
+            if all_ensembles:
+                self._current_ensemble = all_ensembles[0]
         return self._current_ensemble
 
     @property
@@ -53,15 +53,24 @@ class ErtNotifier(QObject):
         self.ertChanged.emit()
 
     @Slot(object)
-    def set_storage(self, storage: Storage) -> None:
+    def set_storage(self, storage: LocalStorage) -> None:
         self._storage = storage
+        self._current_ensemble = None
         self.storage_changed.emit(storage)
 
     @Slot(object)
-    def set_current_ensemble(self, ensemble: Optional[Ensemble] = None) -> None:
+    def set_current_ensemble(self, ensemble: Optional[LocalEnsemble] = None) -> None:
         self._current_ensemble = ensemble
         self.current_ensemble_changed.emit(ensemble)
 
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:
         self._is_simulation_running = is_running
+
+    def get_all_ensembles(self) -> List[LocalEnsemble]:
+        if not self.is_storage_available:
+            return []
+        all_ensembles = []
+        for experiment in self.storage.experiments:
+            all_ensembles.extend(list(experiment.ensembles))
+        return all_ensembles

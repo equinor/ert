@@ -9,7 +9,10 @@ from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble, Storage
+    from ert.storage import (
+        Ensemble,
+        Storage,
+    )
 
 
 class BatchSimulator:
@@ -230,8 +233,7 @@ class BatchSimulator:
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             responses=self.ert_config.ensemble_config.response_configuration,
         )
-        ensemble = storage.create_ensemble(
-            experiment.id,
+        ensemble = experiment.create_ensemble(
             name=case_name,
             ensemble_size=self.ert_config.model_config.num_realizations,
         )

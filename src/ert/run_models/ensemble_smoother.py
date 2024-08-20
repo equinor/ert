@@ -19,7 +19,6 @@ from .base_run_model import StatusEvents, UpdateRunModel
 if TYPE_CHECKING:
     from ert.config import QueueConfig
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +52,6 @@ class EnsembleSmoother(UpdateRunModel):
         )
         self.target_ensemble_format = target_ensemble
         self.experiment_name = experiment_name
-
         self.support_restart = False
 
     def run_experiment(
@@ -67,39 +65,36 @@ class EnsembleSmoother(UpdateRunModel):
             responses=self.ert_config.ensemble_config.response_configuration,
             name=self.experiment_name,
         )
-
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-        prior = self._storage.create_ensemble(
-            experiment,
-            ensemble_size=self.ensemble_size,
+
+        prior = experiment.create_ensemble(
             name=ensemble_format % 0,
+            ensemble_size=self.ensemble_size,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+
         prior_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
-
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
-
         self._evaluate_and_postprocess(
             prior_args,
             prior,
             evaluator_server_config,
         )
-        posterior = self.update(prior, ensemble_format % 1)
 
+        posterior = self.update(prior, ensemble_format % 1)
         posterior_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )
-
         self._evaluate_and_postprocess(
             posterior_args,
             posterior,

@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import numpy as np
 import pandas as pd
@@ -59,26 +59,43 @@ class LocalEnsemble(BaseMode):
         storage: LocalStorage,
         path: Path,
         mode: Mode,
+        *,
+        ensemble_size: Optional[int] = None,
+        experiment_id: Optional[UUID] = None,
+        iteration: int = 0,
+        name: Optional[str] = None,
+        prior_ensemble_id: Optional[UUID] = None,
     ):
-        """
-        Initialize a LocalEnsemble instance.
-
-        Parameters
-        ----------
-        storage : LocalStorage
-            Local storage instance.
-        path : Path
-            File system path to ensemble data.
-        mode : Mode
-            Access mode for the ensemble (read/write).
-        """
-
         super().__init__(mode)
         self._storage = storage
         self._path = path
-        self._index = _Index.model_validate_json(
-            (path / "index.json").read_text(encoding="utf-8")
-        )
+
+        if mode == Mode.WRITE and not (path / "index.json").exists():
+            # Creating a new ensemble
+            if ensemble_size is None or experiment_id is None or name is None:
+                raise ValueError(
+                    "ensemble_size, experiment_id, and name are required when creating a new ensemble"
+                )
+
+            (path / "experiment").mkdir(parents=True, exist_ok=False)
+            index = _Index(
+                id=uuid4(),
+                ensemble_size=ensemble_size,
+                experiment_id=experiment_id,
+                iteration=iteration,
+                name=name,
+                prior_ensemble_id=prior_ensemble_id,
+                started_at=datetime.now(),
+            )
+            with open(path / "index.json", mode="w", encoding="utf-8") as f:
+                print(index.model_dump_json(), file=f)
+        else:
+            # Loading an existing ensemble
+            index = _Index.model_validate_json(
+                (path / "index.json").read_text(encoding="utf-8")
+            )
+
+        self._index = index
         self._error_log_name = "error.json"
 
         @lru_cache(maxsize=None)
@@ -86,64 +103,6 @@ class LocalEnsemble(BaseMode):
             return self._path / f"realization-{realization}"
 
         self._realization_dir = create_realization_dir
-
-    @classmethod
-    def create(
-        cls,
-        storage: LocalStorage,
-        path: Path,
-        uuid: UUID,
-        *,
-        ensemble_size: int,
-        experiment_id: UUID,
-        iteration: int = 0,
-        name: str,
-        prior_ensemble_id: Optional[UUID],
-    ) -> LocalEnsemble:
-        """
-        Create a new ensemble in local storage.
-
-        Parameters
-        ----------
-        storage : LocalStorage
-            Local storage instance.
-        path : Path
-            File system path for ensemble data.
-        uuid : UUID
-            Unique identifier for the new ensemble.
-        ensemble_size : int
-            Number of realizations.
-        experiment_id : UUID
-            Identifier of associated experiment.
-        iteration : int
-            Iteration number of ensemble.
-        name : str
-            Name of ensemble.
-        prior_ensemble_id : UUID, optional
-            Identifier of prior ensemble.
-
-        Returns
-        -------
-        local_ensemble : LocalEnsemble
-            Instance of the newly created ensemble.
-        """
-
-        (path / "experiment").mkdir(parents=True, exist_ok=False)
-
-        index = _Index(
-            id=uuid,
-            ensemble_size=ensemble_size,
-            experiment_id=experiment_id,
-            iteration=iteration,
-            name=name,
-            prior_ensemble_id=prior_ensemble_id,
-            started_at=datetime.now(),
-        )
-
-        with open(path / "index.json", mode="w", encoding="utf-8") as f:
-            print(index.model_dump_json(), file=f)
-
-        return cls(storage, path, Mode.WRITE)
 
     @property
     def mount_point(self) -> Path:

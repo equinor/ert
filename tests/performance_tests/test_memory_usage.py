@@ -44,15 +44,20 @@ def poly_template(monkeypatch):
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
+
     with open_storage(poly_template / "ensembles", mode="w") as storage:
-        prior_ens = storage.get_ensemble_by_name("prior")
-        posterior_ens = storage.create_ensemble(
-            prior_ens.experiment_id,
+        # Assuming the experiment is named "default" as in the fill_storage_with_data function
+        experiment = storage.get_experiment_by_name("default")
+
+        prior_ens = experiment.get_ensemble_by_name("prior")
+
+        posterior_ens = experiment.create_ensemble(
             ensemble_size=prior_ens.ensemble_size,
             iteration=1,
             name="posterior",
             prior_ensemble=prior_ens,
         )
+
         smoother_update(
             prior_ens,
             posterior_ens,
@@ -65,15 +70,18 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
-        experiment_id = storage.create_experiment(
+        experiment = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             responses=ens_config.response_configuration,
             observations=ert_config.observations,
+            name="default",
         )
-        source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
+
+        source = experiment.create_ensemble(name="prior", ensemble_size=100)
 
         summary_obs_keys = ens_config.getKeylistFromImplType(SummaryConfig)
         realizations = list(range(ert_config.model_config.num_realizations))
+
         for _, obs in ert_config.observations.items():
             data_key = obs.attrs["response"]
             for real in realizations:
@@ -94,8 +102,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
 
         sample_prior(source, realizations, ens_config.parameters)
 
-        storage.create_ensemble(
-            source.experiment_id,
+        experiment.create_ensemble(
             ensemble_size=source.ensemble_size,
             iteration=1,
             name="target_ens",

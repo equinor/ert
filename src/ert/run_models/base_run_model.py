@@ -684,11 +684,10 @@ class UpdateRunModel(BaseRunModel):
                 msg="Creating posterior ensemble..",
             )
         )
-        posterior = self._storage.create_ensemble(
-            prior.experiment,
+        posterior = prior.experiment.create_ensemble(
+            name=posterior_name,
             ensemble_size=prior.ensemble_size,
             iteration=prior.iteration + 1,
-            name=posterior_name,
             prior_ensemble=prior,
         )
         if prior.iteration == 0:

@@ -26,6 +26,7 @@ from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig
+from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
@@ -34,7 +35,6 @@ from ert.storage.mode import (
     Mode,
     require_write,
 )
-from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
@@ -54,6 +54,13 @@ class _Migrations(BaseModel):
 class _Index(BaseModel):
     version: int = _LOCAL_STORAGE_VERSION
     migrations: MutableSequence[_Migrations] = Field(default_factory=list)
+    id: Optional[UUID] = None
+    name: Optional[str] = None
+
+    class Config:
+        extra = (
+            "allow"  # This allows additional fields that aren't defined in the model
+        )
 
 
 class LocalStorage(BaseMode):
@@ -66,6 +73,9 @@ class LocalStorage(BaseMode):
     through file locks.
     """
 
+    _parameter_file = Path("parameter.json")
+    _responses_file = Path("responses.json")
+    _metadata_file = Path("metadata.json")
     LOCK_TIMEOUT = 5
 
     def __init__(
@@ -130,6 +140,51 @@ class LocalStorage(BaseMode):
         self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
+    @require_write
+    def create_experiment(
+        self,
+        parameters: Optional[List[ParameterConfig]] = None,
+        responses: Optional[List[ResponseConfig]] = None,
+        observations: Optional[Dict[str, xr.Dataset]] = None,
+        simulation_arguments: Optional[Dict[Any, Any]] = None,
+        name: Optional[str] = None,
+    ) -> LocalExperiment:
+        exp_id = uuid4()
+        path = self._experiment_path(exp_id)
+        path.mkdir(parents=True, exist_ok=False)
+
+        if name is None:
+            name = datetime.now().strftime("%Y-%m-%d")
+
+        (path / "index.json").write_text(_Index(id=exp_id, name=name).model_dump_json())
+
+        parameter_data = {}
+        for parameter in parameters or []:
+            parameter.save_experiment_data(path)
+            parameter_data.update({parameter.name: parameter.to_dict()})
+        with open(path / self._parameter_file, "w", encoding="utf-8") as f:
+            json.dump(parameter_data, f, indent=2)
+
+        response_data = {}
+        for response in responses or []:
+            response_data.update({response.name: response.to_dict()})
+        with open(path / self._responses_file, "w", encoding="utf-8") as f:
+            json.dump(response_data, f, default=str, indent=2)
+
+        if observations:
+            output_path = path / "observations"
+            output_path.mkdir()
+            for obs_name, dataset in observations.items():
+                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
+
+        with open(path / self._metadata_file, "w", encoding="utf-8") as f:
+            simulation_data = simulation_arguments if simulation_arguments else {}
+            json.dump(simulation_data, f, cls=ContextBoolEncoder)
+
+        exp = LocalExperiment(self, path, Mode.WRITE)
+        self._experiments[exp_id] = exp
+        return exp
+
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """
         Retrieves an experiment by UUID.
@@ -146,6 +201,30 @@ class LocalStorage(BaseMode):
         """
 
         return self._experiments[uuid]
+
+    def get_experiment_by_name(self, name: str) -> LocalExperiment:
+        """
+        Retrieves an experiment by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the experiment to retrieve.
+
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given name.
+
+        Raises
+        ------
+        KeyError
+            If no experiment with the given name is found.
+        """
+        for exp in self._experiments.values():
+            if exp.name == name:
+                return exp
+        raise KeyError(f"Experiment with name '{name}' not found")
 
     def get_ensemble(self, uuid: Union[UUID, str]) -> LocalEnsemble:
         """
@@ -164,33 +243,9 @@ class LocalStorage(BaseMode):
             uuid = UUID(uuid)
         return self._ensembles[uuid]
 
-    def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
-        """
-        Retrieves an ensemble by name.
-
-        Parameters
-        ----------
-        name : str
-            The name of the ensemble to retrieve.
-
-        Returns
-        -------
-        local_ensemble : LocalEnsemble
-            The ensemble associated with the given name.
-        """
-
-        for ens in self._ensembles.values():
-            if ens.name == name:
-                return ens
-        raise KeyError(f"Ensemble with name '{name}' not found")
-
     @property
     def experiments(self) -> Generator[LocalExperiment, None, None]:
         yield from self._experiments.values()
-
-    @property
-    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
-        yield from self._ensembles.values()
 
     def _load_index(self) -> _Index:
         try:
@@ -221,14 +276,26 @@ class LocalStorage(BaseMode):
         }
 
     def _load_experiments(self) -> Dict[UUID, LocalExperiment]:
-        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
-        return {
-            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
-            for exp_id in experiment_ids
-        }
+        experiments_path = self.path / "experiments"
+        if not experiments_path.exists():
+            return {}
 
-    def _ensemble_path(self, ensemble_id: UUID) -> Path:
-        return self.path / "ensembles" / str(ensemble_id)
+        experiments: Dict[UUID, LocalExperiment] = {}
+        for experiment_path in experiments_path.iterdir():
+            try:
+                exp_id = UUID(experiment_path.name)
+                experiment = LocalExperiment(self, experiment_path, self.mode)
+                experiments[exp_id] = experiment
+            except ValueError:
+                logger.warning(
+                    f"Invalid experiment directory name: {experiment_path.name}"
+                )
+            except FileNotFoundError:
+                logger.exception(
+                    f"Failed to load an experiment from path: {experiment_path}"
+                )
+                continue
+        return experiments
 
     def _experiment_path(self, experiment_id: UUID) -> Path:
         return self.path / "experiments" / str(experiment_id)
@@ -286,135 +353,6 @@ class LocalStorage(BaseMode):
         if self._lock.is_locked:
             self._lock.release()
             (self.path / "storage.lock").unlink()
-
-    @require_write
-    def create_experiment(
-        self,
-        parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[Dict[Any, Any]] = None,
-        name: Optional[str] = None,
-    ) -> LocalExperiment:
-        """
-        Creates a new experiment in the storage.
-
-        Parameters
-        ----------
-        parameters : list of ParameterConfig, optional
-            The parameters for the experiment.
-        responses : list of ResponseConfig, optional
-            The responses for the experiment.
-        observations : dict of str to Dataset, optional
-            The observations for the experiment.
-        simulation_arguments : SimulationArguments, optional
-            The simulation arguments for the experiment.
-        name : str, optional
-            The name of the experiment.
-
-        Returns
-        -------
-        local_experiment : LocalExperiment
-            The newly created experiment.
-        """
-
-        exp_id = uuid4()
-        path = self._experiment_path(exp_id)
-        path.mkdir(parents=True, exist_ok=False)
-
-        exp = LocalExperiment.create(
-            self,
-            exp_id,
-            path,
-            parameters=parameters,
-            responses=responses,
-            observations=observations,
-            simulation_arguments=simulation_arguments,
-            name=name,
-        )
-
-        self._experiments[exp.id] = exp
-        return exp
-
-    @require_write
-    def create_ensemble(
-        self,
-        experiment: Union[LocalExperiment, UUID],
-        *,
-        ensemble_size: int,
-        iteration: int = 0,
-        name: Optional[str] = None,
-        prior_ensemble: Union[LocalEnsemble, UUID, None] = None,
-    ) -> LocalEnsemble:
-        """
-        Creates a new ensemble in the storage.
-
-        Raises a ValueError if the ensemble size is larger than the prior
-        ensemble.
-
-        Parameters
-        ----------
-        experiment : {LocalExperiment, UUID}
-            The experiment for which the ensemble is created.
-        ensemble_size : int
-            The number of realizations in the ensemble.
-        iteration : int, optional
-            The iteration index for the ensemble.
-        name : str, optional
-            The name of the ensemble.
-        prior_ensemble : {LocalEnsemble, UUID}, optional
-            An optional ensemble to use as a prior.
-
-        Returns
-        -------
-        local_ensemble : LocalEnsemble
-            The newly created ensemble.
-        """
-
-        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
-
-        uuid = uuid4()
-        path = self._ensemble_path(uuid)
-        path.mkdir(parents=True, exist_ok=False)
-
-        prior_ensemble_id: Optional[UUID] = None
-        if isinstance(prior_ensemble, UUID):
-            prior_ensemble_id = prior_ensemble
-        elif isinstance(prior_ensemble, LocalEnsemble):
-            prior_ensemble_id = prior_ensemble.id
-        prior_ensemble = (
-            self.get_ensemble(prior_ensemble_id) if prior_ensemble_id else None
-        )
-        if prior_ensemble and ensemble_size > prior_ensemble.ensemble_size:
-            raise ValueError(
-                f"New ensemble ({ensemble_size}) must be of equal or "
-                f"smaller size than parent ensemble ({prior_ensemble.ensemble_size})"
-            )
-        ens = LocalEnsemble.create(
-            self,
-            path,
-            uuid,
-            ensemble_size=ensemble_size,
-            experiment_id=experiment_id,
-            iteration=iteration,
-            name=str(name),
-            prior_ensemble_id=prior_ensemble_id,
-        )
-        if prior_ensemble:
-            for realization, state in enumerate(prior_ensemble.get_ensemble_state()):
-                if state in [
-                    RealizationStorageState.LOAD_FAILURE,
-                    RealizationStorageState.PARENT_FAILURE,
-                    RealizationStorageState.UNDEFINED,
-                ]:
-                    ens.set_failure(
-                        realization,
-                        RealizationStorageState.PARENT_FAILURE,
-                        f"Failure from prior: {state}",
-                    )
-
-        self._ensembles[ens.id] = ens
-        return ens
 
     @require_write
     def _add_migration_information(

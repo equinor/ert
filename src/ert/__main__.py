@@ -415,6 +415,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "updated parameters will be stored.",
     )
     ensemble_smoother_parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default="ensemble-experiment",
+        help="Name of the experiment",
+    )
+    ensemble_smoother_parser.add_argument(
         "--realizations",
         type=valid_realizations,
         help="These are the realizations that will be used to perform experiments."

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import UUID
 
 import numpy as np
@@ -20,13 +19,12 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
+from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
-    from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
 
 _KNOWN_PARAMETER_TYPES = {
@@ -85,76 +83,28 @@ class LocalExperiment(BaseMode):
         self._index = _Index.model_validate_json(
             (path / "index.json").read_text(encoding="utf-8")
         )
+        self._ensembles: List[LocalEnsemble] = []
+        self._load_ensembles()
 
-    @classmethod
-    def create(
-        cls,
-        storage: LocalStorage,
-        uuid: UUID,
-        path: Path,
-        *,
-        parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, xr.Dataset]] = None,
-        simulation_arguments: Optional[Dict[Any, Any]] = None,
-        name: Optional[str] = None,
-    ) -> LocalExperiment:
-        """
-        Create a new LocalExperiment and store its configuration data.
+    def _load_ensembles(self) -> None:
+        ensembles_path = self.mount_point / "ensembles"
+        if not ensembles_path.exists():
+            self._ensembles = []
+            return
 
-        Parameters
-        ----------
-        storage : LocalStorage
-            Storage instance for experiment creation.
-        uuid : UUID
-            Unique identifier for the new experiment.
-        path : Path
-            File system path for storing experiment data.
-        parameters : list of ParameterConfig, optional
-            List of parameter configurations.
-        responses : list of ResponseConfig, optional
-            List of response configurations.
-        observations : dict of str: xr.Dataset, optional
-            Observations dictionary.
-        simulation_arguments : SimulationArguments, optional
-            Simulation arguments for the experiment.
-        name : str, optional
-            Experiment name. Defaults to current date if None.
+        ensembles: List[LocalEnsemble] = []
+        for ensemble_path in ensembles_path.iterdir():
+            try:
+                ensemble = LocalEnsemble(
+                    storage=self._storage, path=ensemble_path, mode=self.mode
+                )
+                if ensemble.experiment_id == self.id:
+                    ensembles.append(ensemble)
+            except FileNotFoundError:
+                continue
 
-        Returns
-        -------
-        local_experiment : LocalExperiment
-            Instance of the newly created experiment.
-        """
-        if name is None:
-            name = datetime.today().strftime("%Y-%m-%d")
-
-        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
-
-        parameter_data = {}
-        for parameter in parameters or []:
-            parameter.save_experiment_data(path)
-            parameter_data.update({parameter.name: parameter.to_dict()})
-        with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f, indent=2)
-
-        response_data = {}
-        for response in responses or []:
-            response_data.update({response.name: response.to_dict()})
-        with open(path / cls._responses_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str, indent=2)
-
-        if observations:
-            output_path = path / "observations"
-            output_path.mkdir()
-            for obs_name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
-
-        with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
-            simulation_data = simulation_arguments if simulation_arguments else {}
-            json.dump(simulation_data, f, cls=ContextBoolEncoder)
-
-        return cls(storage, path, Mode.WRITE)
+        # Sort ensembles by started_at in reverse order
+        self._ensembles = sorted(ensembles, key=lambda x: x.started_at, reverse=True)
 
     @require_write
     def create_ensemble(
@@ -185,20 +135,57 @@ class LocalExperiment(BaseMode):
         local_ensemble : LocalEnsemble
             The newly created ensemble instance.
         """
-
-        return self._storage.create_ensemble(
-            self,
+        ensemble = LocalEnsemble(
+            storage=self._storage,
+            path=self.mount_point / "ensembles" / name,
+            mode=Mode.WRITE,
             ensemble_size=ensemble_size,
+            experiment_id=self.id,
             iteration=iteration,
             name=name,
-            prior_ensemble=prior_ensemble,
+            prior_ensemble_id=prior_ensemble.id if prior_ensemble else None,
         )
+        self._ensembles.append(ensemble)
+        return ensemble
+
+    def get_ensemble(self, uuid: UUID) -> LocalEnsemble:
+        """
+        Retrieves an ensemble by UUID.
+
+        Parameters
+        ----------
+        uuid : UUID
+            The UUID of the ensemble to retrieve.
+
+        Returns
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given UUID.
+        """
+        return self.ensembles[uuid]
+
+    def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
+        """
+        Retrieves an ensemble by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the ensemble to retrieve.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given name.
+        """
+
+        for ens in self.ensembles:
+            if ens.name == name:
+                return ens
+        raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
-        yield from (
-            ens for ens in self._storage.ensembles if ens.experiment_id == self.id
-        )
+    def ensembles(self) -> List[LocalEnsemble]:
+        return self._ensembles
 
     @property
     def metadata(self) -> Dict[str, Any]:

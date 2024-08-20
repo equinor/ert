@@ -105,11 +105,10 @@ class MultipleDataAssimilation(UpdateRunModel):
                 name=self.experiment_name,
             )
 
-            prior = self._storage.create_ensemble(
-                experiment,
+            prior = experiment.create_ensemble(
+                name=self.target_ensemble_format % 0,
                 ensemble_size=self.ensemble_size,
                 iteration=0,
-                name=self.target_ensemble_format % 0,
             )
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))

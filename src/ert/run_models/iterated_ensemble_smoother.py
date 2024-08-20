@@ -133,10 +133,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
             responses=self.ert_config.ensemble_config.response_configuration,
             name=self.experiment_name,
         )
-        prior = self._storage.create_ensemble(
-            experiment=experiment,
-            ensemble_size=self.ensemble_size,
+        prior = experiment.create_ensemble(
             name=target_ensemble_format % 0,
+            ensemble_size=self.ensemble_size,
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
@@ -172,9 +171,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
             )
 
-            posterior = self._storage.create_ensemble(
-                experiment,
-                name=target_ensemble_format % (prior_iter + 1),  # noqa
+            posterior = experiment.create_ensemble(
+                name=target_ensemble_format % (prior_iter + 1),
                 ensemble_size=prior.ensemble_size,
                 iteration=prior_iter + 1,
                 prior_ensemble=prior,
@@ -194,8 +192,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     initial_mask=initial_mask,
                 )
 
-                # sies iteration starts at 1, we keep iters at 0,
-                # so we subtract sies to be 0-indexed
                 analysis_success = prior_iter < (self.sies_iteration - 1)
                 if analysis_success:
                     update_success = True
