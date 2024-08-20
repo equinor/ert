@@ -82,7 +82,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field = StringBox(
             self._target_ensemble_format_model,  # type: ignore
             self._target_ensemble_format_model.getDefaultValue(),  # type: ignore
-            True,
         )
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
