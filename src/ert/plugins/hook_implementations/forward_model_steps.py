@@ -312,19 +312,20 @@ class Flow(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
-The version, number of cpu and whether or not to ignore errors can
-be configured in the configuration file when adding the job, as such:
-
 .. code-block:: bash
 
-    FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=xxxx, <OPTS>="--ignore-errors")
+    FORWARD_MODEL FLOW(<ECLBASE>, <OPTS>="--ignore-errors")
 
 The :code:`OPTS` argument is optional and can be removed, thus running flow
 without ignoring errors.
+
+ERT will be able to run with flow only if OPM FLOW simulator is installed and available
+in the user $PATH environment varaible.
+
+Currently ERT does not support changing the default options for the flow simulator.
+
 """,
-            description="""
-Forward model for OPM Flow
-""",
+            description="""Forward model for OPM Flow simulator""",
         )
 
 

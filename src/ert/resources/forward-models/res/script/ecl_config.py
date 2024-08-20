@@ -1,7 +1,9 @@
 import os
 import re
+import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -203,7 +205,26 @@ class FlowConfig(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("FLOW_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
+        if not Path(config_file).exists():
+            config_file = self.init_flow_config()
         super().__init__(config_file, simulator_name="flow")
+
+    @staticmethod
+    def init_flow_config() -> str:
+        binary_path = shutil.which("flow")
+        if binary_path is None:
+            raise FileNotFoundError(
+                "Could not find flow executable!\n"
+                " Requires flow to be installed in $PATH"
+            )
+
+        conf = {
+            "default_version": "default",
+            "versions": {"default": {"scalar": {"executable": binary_path}}},
+        }
+        flow_config_yml = Path("flow_config.yml")
+        flow_config_yml.write_text(yaml.dump(conf), encoding="utf-8")
+        return str(flow_config_yml.absolute())
 
 
 class EclrunConfig:
