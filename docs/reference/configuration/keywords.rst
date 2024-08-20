@@ -500,10 +500,19 @@ the filesystem. Since the number of realisations can be quite high this will
 easily overflow the commandline buffer; the solution which is used is therefore
 to let ERT write a regular file which looks like this::
 
-        0   /path/to/realization-0   CASE0   iter
-        1   /path/to/realization-1   CASE1   iter
-        ...
-        N   /path/to/realization-N   CASEN   iter
+            003  /cwd/realization-3/iteration-0  case3  000
+            004  /cwd/realization-4/iteration-0  case4  000
+            003  /cwd/realization-3/iteration-1  case3  001
+            004  /cwd/realization-4/iteration-1  case4  001
+
+The first column is the realization number, the second column is the runpath,
+the third column is `<ECLBASE>` or `<JOBNAME>` if `<ECLBASE>` is not set, and
+the last column is the iteration number.
+
+Note that several tools (such as fmu-ensemble) often expect the third column to
+be the path to the reservoir simulator case, but when there is no reservoir
+simulator involved, the third column is not a path at all but just the job
+name.
 
 The path to this file can then be passed to the scripts using the
 magic string <RUNPATH_FILE>. The RUNPATH_FILE will by default be

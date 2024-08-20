@@ -233,6 +233,7 @@ def ensemble_context(
     jobname_format: str,
     runpath_format: str,
     runpath_file: Union[str, Path],
+    eclbase: Optional[str] = None,
 ) -> RunContext:
     """This loads an existing ensemble from storage
     and creates run information for that ensemble"""
@@ -244,6 +245,7 @@ def ensemble_context(
         runpath_format=runpath_format,
         filename=runpath_file,
         substitution_list=substitution_list,
+        eclbase=eclbase,
     )
     return RunContext(
         ensemble=ensemble,
