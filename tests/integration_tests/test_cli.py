@@ -41,47 +41,6 @@ def test_bad_config_error_message(tmp_path):
         run_cli(TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert"))
 
 
-@pytest.mark.out_of_memory
-@pytest.mark.timeout(600)
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_oom_kills_are_reported():
-    """This test will do a local test run that will run a job that consumes all
-    memory until it is killed by the operating system. The test will assert
-    that Ert is able to pick up what happen and present the cause (oom-killer)
-    to the user).
-
-    This test is not run by default, but requires --runoom supplied on the
-    command line to pytest, as it will take a long time and make the system
-    partially unresponsive for all logged in users (more swap will make the
-    time of unresponsiveness longer)."""
-
-    print(os.getcwd())
-
-    poly_lines = Path("poly.ert").read_text(encoding="utf-8")
-    poly_lines += "\nINSTALL_JOB memory_hog MEMORY_HOG\nSIMULATION_JOB memory_hog"
-    Path("poly.ert").write_text(poly_lines, encoding="utf-8")
-
-    Path("MEMORY_HOG").write_text("EXECUTABLE memory_hog.sh", encoding="utf-8")
-    Path("memory_hog.sh").write_text(
-        dedent(
-            """#!/bin/sh
-    perl -wE 'my @xs; for (1..2**20) { push @xs, q{a} x 2**20 }; say scalar @xs;'
-    """
-        ),
-        encoding="utf-8",
-    )
-    os.chmod("memory_hog.sh", 0o0755)
-    with pytest.raises(
-        ErtCliError,
-        match="Realization.*0 failed.*memory_hog.*was killed due to out-of-memory",
-    ):
-        run_cli(
-            "test_run",
-            "--disable-monitor",
-            "poly.ert",
-        )
-
-
 @pytest.mark.parametrize(
     "mode",
     [

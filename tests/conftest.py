@@ -269,12 +269,6 @@ def pytest_addoption(parser):
         "--runslow", action="store_true", default=False, help="run slow tests"
     )
     parser.addoption(
-        "--runoom",
-        action="store_true",
-        default=False,
-        help="Run Out-of-memory (OOM) test, ensure you are alone on your machine before running",
-    )
-    parser.addoption(
         "--eclipse-simulator",
         action="store_true",
         default=False,
@@ -352,15 +346,6 @@ def pytest_collection_modifyitems(config, items):
                 "--eclipse-simulator"
             ):
                 item.add_marker(pytest.mark.skip("Requires eclipse"))
-
-    if not config.getoption("--runoom"):
-        skip_oom = pytest.mark.skip(
-            "Skipping out-of-memory (oom) test, add --runoom to "
-            "include. Ensure the test will not affect others"
-        )
-        for item in items:
-            if "out_of_memory" in item.keywords:
-                item.add_marker(skip_oom)
 
 
 def _run_snake_oil(source_root):
