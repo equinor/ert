@@ -1618,18 +1618,25 @@ def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
     )
 
 
-def test_that_empty_params_file_gives_reasonable_error(tmpdir):
+@pytest.mark.parametrize(
+    "param_config", ["coeffs_priors", "template.txt output.txt coeffs_priors"]
+)
+def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
     with tmpdir.as_cwd():
         config = """
         NUM_REALIZATIONS 1
-        GEN_KW COEFFS coeffs_priors
-        """
+        GEN_KW COEFFS """
+        config += param_config
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         # Create an empty file named 'coeffs_priors'
         with open("coeffs_priors", mode="w", encoding="utf-8") as fh:
+            pass
+
+        # Create an empty file named 'template.txt'
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
             pass
 
         with pytest.raises(ConfigValidationError, match="No parameters specified in"):

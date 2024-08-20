@@ -112,7 +112,7 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ensemble_config_duplicate_node_names():
     duplicate_name = "Test_name"
-    Path("MULTFLT.TXT").write_text("", encoding="utf-8")
+    Path("MULTFLT.TXT").write_text("a UNIFORM 0 1", encoding="utf-8")
     Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
     config_dict = {
         ConfigKeys.GEN_DATA: [

@@ -408,12 +408,6 @@ class ErtConfig:
     ) -> List[Union[ErrorInfo, ConfigValidationError]]:
         errors = []
 
-        gen_kws = config_dict.get("GEN_KW", [])
-        for gen_kw in gen_kws:
-            file_path = Path(gen_kw[1])
-            if file_path.stat().st_size == 0:
-                raise ConfigValidationError(f"No parameters specified in {file_path}")
-
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
             errors.append(
                 ErrorInfo(
