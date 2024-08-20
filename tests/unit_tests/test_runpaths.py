@@ -85,13 +85,22 @@ def test_runpath_file_writer_substitution(tmp_path):
     )
 
 
-def render_dynamic_values(s, itr, iens, geo_id):
-    dynamic_magic_strings = {
-        "<GEO_ID>": geo_id,
-        "<ITER>": itr,
-        "<IENS>": iens,
-    }
-    for key, val in dynamic_magic_strings.items():
-        s = s.replace(key, str(val))
+def test_runpath_file_writes_eclbase_when_present(tmp_path):
+    runpath_file = tmp_path / "runpath_file"
 
-    return s
+    context = SubstitutionList()
+    context["<casename>"] = "my_case"
+    runpaths = Runpaths(
+        "<casename>_job",
+        "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
+        runpath_file,
+        context,
+        "path/to/eclbase",
+    )
+
+    runpaths.write_runpath_list([1], [1])
+
+    assert (
+        runpath_file.read_text()
+        == "001  /path/my_case/ensemble-1/iteration1  path/to/eclbase  001\n"
+    )

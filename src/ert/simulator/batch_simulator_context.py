@@ -139,6 +139,7 @@ class BatchContext:
             runpath_format=ert_config.model_config.runpath_format_string,
             filename=str(ert_config.runpath_file),
             substitution_list=global_substitutions,
+            eclbase=ert_config.ensemble_config.eclbase,
         )
         self.run_args = create_run_arguments(
             run_paths,
