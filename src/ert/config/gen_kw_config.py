@@ -119,6 +119,18 @@ class GenKwConfig(ParameterConfig):
                         f"No such template file: {template_file}", positional_args[1]
                     )
                 )
+            elif Path(template_file).stat().st_size == 0:
+                token = (
+                    parameter_file_context.token
+                    if hasattr(parameter_file_context, "token")
+                    else parameter_file_context
+                )
+                ConfigWarning.deprecation_warn(
+                    f"The template file for GEN_KW ({gen_kw_key}) is empty. If templating is not needed, you "
+                    f"can use GEN_KW with just the distribution file instead: GEN_KW {gen_kw_key} {token}",
+                    positional_args[1],
+                )
+
         else:
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"

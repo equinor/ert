@@ -600,3 +600,22 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
             [],
             str(tmp_path / "forward_init_%d"),
         ).read_from_runpath(tmp_path, 1)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_suggestion_on_empty_parameter_file(tmp_path):
+    Path("coeffs.txt").write_text("a UNIFORM 0 1", encoding="utf-8")
+    Path("empty_template.txt").write_text("", encoding="utf-8")
+    with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
+        EnsembleConfig.from_dict(
+            config_dict={
+                ConfigKeys.GEN_KW: [
+                    [
+                        "KEY",
+                        "empty_template.txt",
+                        "output.txt",
+                        make_context_string("coeffs.txt", "config.ert"),
+                    ]
+                ],
+            }
+        )
