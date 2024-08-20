@@ -18,26 +18,16 @@ install_test_dependencies () {
 run_ert_with_opm () {
     pushd "${CI_TEST_ROOT}"
 
-    mkdir ert_with_opm
+    cp -r "${CI_SOURCE_ROOT}/test-data/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
 
-    cp "${CI_SOURCE_ROOT}/test-data/eclipse/SPE1.DATA" .
-
-    cat > spe1_opm.ert << EOF
-ECLBASE SPE1
-DATA_FILE SPE1.DATA
-RUNPATH realization-<IENS>/iter-<ITER>
-NUM_REALIZATIONS 1
-FORWARD_MODEL FLOW
-EOF
-
-    ert test_run spe1_opm.ert ||
+    ert test_run flow.ert ||
         (
             # In case ert fails, print log files if they are there:
-            cat realization-0/iter-0/STATUS  || true
-            cat realization-0/iter-0/ERROR || true
-            cat realization-0/iter-0/FLOW.stderr.0 || true
-            cat realization-0/iter-0/FLOW.stdout.0 || true
+            cat spe1_out/realization-0/iter-0/STATUS  || true
+            cat spe1_out/realization-0/iter-0/ERROR || true
+            cat spe1_out/realization-0/iter-0/FLOW.stderr.0 || true
+            cat spe1_out/realization-0/iter-0/FLOW.stdout.0 || true
             cat logs/ert-log* || true
         )
     popd
