@@ -75,7 +75,7 @@ def test_selection_success(large_snapshot, qtbot):
         return isinstance(node, _Node) and str(node.id_) == str(selection_id)
 
     with qtbot.waitSignal(
-        widget.currentChanged, timeout=30000, check_params_cb=check_selection_cb
+        widget.itemClicked, timeout=30000, check_params_cb=check_selection_cb
     ):
         qtbot.mouseClick(
             widget._real_view.viewport(),

@@ -401,7 +401,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
             realization_widget._real_list_model.index(0, 0)
         ).center()
 
-        with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
+        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
             qtbot.mouseClick(
                 realization_widget._real_view.viewport(),
                 Qt.LeftButton,
@@ -594,7 +594,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
             realization_widget._real_list_model.index(0, 0)
         ).center()
 
-        with qtbot.waitSignal(realization_widget.currentChanged, timeout=30000):
+        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
             qtbot.mouseClick(
                 realization_widget._real_view.viewport(),
                 Qt.LeftButton,

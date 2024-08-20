@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -264,13 +265,18 @@ class RunDialog(QDialog):
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)
         layout.addWidget(self._progress_widget)
-        layout.addWidget(self._job_label)
 
         adjustable_splitter_layout = QSplitter()
         adjustable_splitter_layout.setOrientation(Qt.Orientation.Vertical)
         adjustable_splitter_layout.addWidget(self._tab_widget)
-        adjustable_splitter_layout.addWidget(self._job_overview)
 
+        self.job_frame = QFrame(self)
+        job_frame_layout = QVBoxLayout(self.job_frame)
+        job_frame_layout.setContentsMargins(0, 0, 0, 0)
+        job_frame_layout.addWidget(self._job_label)
+        job_frame_layout.addWidget(self._job_overview)
+
+        adjustable_splitter_layout.addWidget(self.job_frame)
         layout.addWidget(adjustable_splitter_layout)
         layout.addWidget(button_widget_container)
 
@@ -307,7 +313,7 @@ class RunDialog(QDialog):
 
             widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
-            widget.currentChanged.connect(self._select_real)
+            widget.itemClicked.connect(self._select_real)
 
             tab_index = self._tab_widget.addTab(
                 widget, f"Realizations for iteration {index.internalPointer().id_}"
