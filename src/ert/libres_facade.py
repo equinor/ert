@@ -143,6 +143,7 @@ class LibresFacade:
                 runpath_format=self.config.model_config.runpath_format_string,
                 filename=str(self.config.runpath_file),
                 substitution_list=self.config.substitution_list,
+                eclbase=self.config.ensemble_config.eclbase,
             ),
             realisations,
             ensemble=ensemble,
