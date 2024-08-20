@@ -735,7 +735,7 @@ class ErtConfig:
                 )
                 name = new_job.name
                 if name in workflow_jobs:
-                    ConfigWarning.ert_context_warn(
+                    ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
                         f"{new_job.executable or new_job.script!r} over "
                         f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
@@ -743,7 +743,7 @@ class ErtConfig:
                     )
                 workflow_jobs[name] = new_job
             except ErtScriptLoadFailure as err:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Loading workflow job {workflow_job[0]!r}"
                     f" failed with '{err}'. It will not be loaded.",
                     workflow_job[0],
@@ -757,7 +757,7 @@ class ErtConfig:
                     new_job = WorkflowJob.from_file(config_file=file_name)
                     name = new_job.name
                     if name in workflow_jobs:
-                        ConfigWarning.ert_context_warn(
+                        ConfigWarning.warn(
                             f"Duplicate workflow jobs with name {name!r}, choosing "
                             f"{new_job.executable or new_job.script!r} over "
                             f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
@@ -765,7 +765,7 @@ class ErtConfig:
                         )
                     workflow_jobs[name] = new_job
                 except ErtScriptLoadFailure as err:
-                    ConfigWarning.ert_context_warn(
+                    ConfigWarning.warn(
                         f"Loading workflow job {file_name!r}"
                         f" failed with '{err}'. It will not be loaded.",
                         file_name,
@@ -795,11 +795,11 @@ class ErtConfig:
                             continue
                 workflows[filename] = workflow
                 if existed:
-                    ConfigWarning.ert_context_warn(
+                    ConfigWarning.warn(
                         f"Workflow {filename!r} was added twice", work[0]
                     )
             except ConfigValidationError as err:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Encountered the following error(s) while "
                     f"reading workflow {filename!r}. It will not be loaded: "
                     + err.cli_message(),
@@ -840,7 +840,7 @@ class ErtConfig:
                 errors.append(e)
                 continue
             if name in fm_steps:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Duplicate forward model step with name {name!r}, choosing "
                     f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
                     name,
@@ -860,7 +860,7 @@ class ErtConfig:
                     continue
                 name = new_fm_step.name
                 if name in fm_steps:
-                    ConfigWarning.ert_context_warn(
+                    ConfigWarning.warn(
                         f"Duplicate forward model step with name {name!r}, "
                         f"choosing {file_name!r} over {fm_steps[name].executable!r}",
                         name,
@@ -985,9 +985,7 @@ def _get_files_in_directory(job_path, errors):
     )
 
     if files == []:
-        ConfigWarning.ert_context_warn(
-            f"No files found in job directory {job_path}", job_path
-        )
+        ConfigWarning.warn(f"No files found in job directory {job_path}", job_path)
     return files
 
 

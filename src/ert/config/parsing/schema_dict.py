@@ -6,7 +6,7 @@ from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema_item import SchemaItem
 from .context_values import ContextList, ContextString
 from .deprecation_info import DeprecationInfo
-from .error_info import ErrorInfo, WarningInfo
+from .error_info import ErrorInfo
 
 # Python 3.8 does not implement UserDict as a MutableMapping, meaning it's not
 # possible to specify the key and value types.
@@ -99,15 +99,7 @@ class SchemaItemDict(_UserDict):
                         push_deprecation(schema_info.deprecation_info, arglist)
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
-                ConfigWarning.ert_formatted_warn(
-                    ConfigWarning(
-                        WarningInfo(
-                            is_deprecation=True,
-                            filename=filename,
-                            message=deprecation.resolve_message(line),
-                        ).set_context_keyword(line)
-                    )
-                )
+                ConfigWarning.deprecation_warn(deprecation.resolve_message(line), line)
 
     @abc.abstractmethod
     def check_required(

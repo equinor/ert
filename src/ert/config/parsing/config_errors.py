@@ -13,11 +13,19 @@ class ConfigWarning(UserWarning):
     info: WarningInfo
 
     @staticmethod
-    def ert_context_warn(message: str, context: MaybeWithContext = "") -> None:
-        ConfigWarning.ert_formatted_warn(ConfigWarning.with_context(message, context))
+    def warn(message: str, context: MaybeWithContext = "") -> None:
+        ConfigWarning._formatted_warn(ConfigWarning.with_context(message, context))
 
     @staticmethod
-    def ert_formatted_warn(config_warning: ConfigWarning) -> None:
+    def deprecation_warn(message: str, context: MaybeWithContext = "") -> None:
+        warning = ConfigWarning.with_context(message, context)
+        if not hasattr(context, "token"):
+            warning.info.set_context_keyword(context)
+        warning.info.is_deprecation = True
+        ConfigWarning._formatted_warn(warning)
+
+    @staticmethod
+    def _formatted_warn(config_warning: ConfigWarning) -> None:
         temp = warnings.formatwarning
 
         def ert_formatted_warning(
