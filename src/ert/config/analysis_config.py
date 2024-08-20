@@ -70,7 +70,7 @@ class AnalysisConfig:
             min_realization = num_realization
 
         if min_realization > num_realization:
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
                 "will set required to successful realizations to 100%. "
                 "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
@@ -136,12 +136,12 @@ class AnalysisConfig:
                 if value in inversion_str_map[module_name]:
                     new_value = inversion_str_map[module_name][value]
                     if var_name == "IES_INVERSION":
-                        ConfigWarning.ert_context_warn(
+                        ConfigWarning.warn(
                             "IES_INVERSION is deprecated, please use INVERSION instead:\n"
                             f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
                         )
                     else:
-                        ConfigWarning.ert_context_warn(
+                        ConfigWarning.warn(
                             f"Using {value} is deprecated, use:\n"
                             f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
                         )

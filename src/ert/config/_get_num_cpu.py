@@ -68,7 +68,7 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
                             num_cpu += rec.get_int(1)
                         return num_cpu
             except Exception as err:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Failed to read NUM_CPU from {data_file}: {err}",
                     data_file,
                 )
@@ -79,7 +79,7 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
         with open(data_file, "r", encoding="utf-8") as file:
             return _get_num_cpu(iter(file), data_file)
     except OSError as err:
-        ConfigWarning.ert_context_warn(
+        ConfigWarning.warn(
             f"Failed to read from DATA_FILE {data_file}: {err}", data_file
         )
     return None
@@ -140,7 +140,7 @@ def _get_num_cpu(
                     else:
                         slaves_num_cpu += int(parameters[4])
     except Exception as err:
-        ConfigWarning.ert_context_warn(
+        ConfigWarning.warn(
             f"Failed to read NUM_CPU from {data_file_name} Line {parser.line_number}: {err}",
             data_file_name if data_file_name else "",
         )

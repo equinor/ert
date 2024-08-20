@@ -158,7 +158,7 @@ def _substitute_token(
 
     for key, val in defines:
         if key in current:
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 f"Gave up replacing in {token}.\n"
                 f"After replacing the value is now: {current}.\n"
                 f"This still contains the replacement value: {key}, "
@@ -189,7 +189,7 @@ def _tree_to_dict(
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw not in schema:
-            ConfigWarning.ert_context_warn(f"Unknown keyword {kw!r}", kw)
+            ConfigWarning.warn(f"Unknown keyword {kw!r}", kw)
             continue
 
         constraints = schema[kw]

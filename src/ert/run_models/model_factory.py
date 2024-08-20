@@ -110,7 +110,7 @@ def _setup_ensemble_experiment(
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
-        ConfigWarning.ert_context_warn(
+        ConfigWarning.warn(
             f"Due to active_realizations {active_realizations_count} is lower than "
             f"MIN_REALIZATIONS {min_realizations_count}, MIN_REALIZATIONS has been "
             f"set to match active_realizations.",
@@ -142,7 +142,7 @@ def _setup_evaluate_ensemble(
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
-        ConfigWarning.ert_context_warn(
+        ConfigWarning.warn(
             "Adjusted MIN_REALIZATIONS to the current number of active realizations "
             f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
             f"({min_realizations_count}) that was specified in the config file."
@@ -183,7 +183,7 @@ def _setup_manual_update(
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
-        ConfigWarning.ert_context_warn(
+        ConfigWarning.warn(
             "Adjusted MIN_REALIZATIONS to the current number of active realizations "
             f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
             f"({min_realizations_count}) that was specified in the config file."

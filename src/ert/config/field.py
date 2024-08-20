@@ -61,7 +61,7 @@ class Field(ParameterConfig):
         max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
         if input_transform:
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 f"Got INPUT_TRANSFORM for FIELD: {name}, "
                 f"this has no effect and can be removed",
                 config_list,

@@ -170,7 +170,7 @@ class GenKwConfig(ParameterConfig):
                     )
 
         if gen_kw_key == "PRED" and update_parameter:
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 "GEN_KW PRED used to hold a special meaning and be "
                 "excluded from being updated.\n If the intention was "
                 "to exclude this from updates, set UPDATE:FALSE.\n",

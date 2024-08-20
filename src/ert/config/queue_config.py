@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import re
 import shutil
-import warnings
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, no_type_check
@@ -324,12 +323,9 @@ def throw_error_or_warning(
             option_value,
         )
     else:
-        warnings.warn(
-            ConfigWarning.with_context(
-                error_msg,
-                option_value,
-            ),
-            stacklevel=1,
+        ConfigWarning.warn(
+            error_msg,
+            option_value,
         )
 
 

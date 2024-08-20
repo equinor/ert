@@ -117,28 +117,28 @@ class EnkfObs:
             start = segment_instance.start
             stop = segment_instance.stop
             if start < 0:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Segment {segment_name} out of bounds."
                     " Truncating start of segment to 0.",
                     segment_name,
                 )
                 start = 0
             if stop >= time_len:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Segment {segment_name} out of bounds. Truncating"
                     f" end of segment to {time_len - 1}.",
                     segment_name,
                 )
                 stop = time_len - 1
             if start > stop:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Segment {segment_name} start after stop. Truncating"
                     f" end of segment to {start}.",
                     segment_name,
                 )
                 stop = start
             if np.size(std_dev[start:stop]) == 0:
-                ConfigWarning.ert_context_warn(
+                ConfigWarning.warn(
                     f"Segment {segment_name} does not"
                     " contain any time steps. The interval "
                     f"[{start}, {stop}) does not intersect with steps in the"
@@ -171,7 +171,7 @@ class EnkfObs:
             except ValueError:
                 try:
                     date = datetime.strptime(date_str, "%d/%m/%Y")
-                    ConfigWarning.ert_context_warn(
+                    ConfigWarning.warn(
                         f"Deprecated time format {date_str}."
                         " Please use ISO date format YYYY-MM-DD",
                         date_str,
@@ -380,7 +380,7 @@ class EnkfObs:
     ) -> Dict[str, ObsVector]:
         state_kw = general_observation.data
         if not ensemble_config.hasNodeGenData(state_kw):
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 f"Ensemble key {state_kw} does not exist"
                 f" - ignoring observation {obs_key}",
                 state_kw,
@@ -401,7 +401,7 @@ class EnkfObs:
 
         config_node = ensemble_config.getNode(state_kw)
         if not isinstance(config_node, GenDataConfig):
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 f"{state_kw} has implementation type:"
                 f"'{type(config_node)}' - "
                 f"expected:'GEN_DATA' in observation:{obs_key}."
@@ -416,7 +416,7 @@ class EnkfObs:
         if (restart is None and response_report_steps) or (
             restart is not None and restart not in response_report_steps
         ):
-            ConfigWarning.ert_context_warn(
+            ConfigWarning.warn(
                 f"The GEN_DATA node:{state_kw} is not configured to load from"
                 f" report step:{restart} for the observation:{obs_key}"
                 " - The observation will be ignored",
