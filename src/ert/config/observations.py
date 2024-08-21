@@ -384,8 +384,7 @@ class EnkfObs:
         state_kw = general_observation.data
         if not ensemble_config.hasNodeGenData(state_kw):
             ConfigWarning.warn(
-                f"Ensemble key {state_kw} does not exist"
-                f" - ignoring observation {obs_key}",
+                f"No GEN_DATA with name: {state_kw} found - ignoring observation {obs_key}",
                 state_kw,
             )
             return {}

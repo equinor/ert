@@ -797,7 +797,7 @@ def test_that_missing_ensemble_key_warns(tmpdir):
 
         with pytest.warns(
             ConfigWarning,
-            match="Ensemble key RES does not exist",
+            match="No GEN_DATA with name: RES found",
         ):
             ErtConfig.from_file("config.ert")
 
