@@ -7,19 +7,19 @@ from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from .monitor import Monitor
 from .snapshot import ForwardModel, RealizationSnapshot, Snapshot, SnapshotDict
 
-__all__ = (
+__all__ = [
     "EndEvent",
     "Ensemble",
     "EnsembleEvaluator",
     "EvaluatorServerConfig",
+    "ForwardModel",
     "ForwardModelStep",
     "FullSnapshotEvent",
     "Monitor",
+    "Realization",
+    "RealizationSnapshot",
     "Snapshot",
+    "SnapshotDict",
     "SnapshotUpdateEvent",
     "wait_for_evaluator",
-    "RealizationSnapshot",
-    "SnapshotDict",
-    "ForwardModel",
-    "Realization",
-)
+]

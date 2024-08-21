@@ -37,7 +37,7 @@ def open_storage(
 __all__ = [
     "Ensemble",
     "Experiment",
-    "Storage",
     "Mode",
+    "Storage",
     "open_storage",
 ]

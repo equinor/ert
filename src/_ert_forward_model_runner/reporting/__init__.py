@@ -9,8 +9,8 @@ from .file import File
 from .interactive import Interactive
 
 __all__ = [
+    "Event",
     "File",
     "Interactive",
     "Reporter",
-    "Event",
 ]

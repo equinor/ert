@@ -6,8 +6,8 @@ from .workflows import legacy_ertscript_workflow
 
 __all__ = [
     "help_links",
-    "installable_workflow_jobs",
-    "site_config_lines",
-    "legacy_ertscript_workflow",
     "installable_forward_model_steps",
+    "installable_workflow_jobs",
+    "legacy_ertscript_workflow",
+    "site_config_lines",
 ]

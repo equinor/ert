@@ -18,4 +18,4 @@ def ert_share_path() -> str:
 
 from .port_handler import get_machine_name
 
-__all__ = ["ert_share_path", "get_machine_name", "__version__"]
+__all__ = ["__version__", "ert_share_path", "get_machine_name"]
