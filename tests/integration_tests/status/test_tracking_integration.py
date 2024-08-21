@@ -1,4 +1,5 @@
 import fileinput
+import json
 import logging
 import os
 import re
@@ -313,9 +314,83 @@ def test_setting_env_context_during_run(
             pass
 
     # Check environment is clean after the model run ends.
-    assert not model._context_env_keys
+    assert not model._context_env
     for key in expected:
         assert key not in os.environ
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.parametrize(
+    ("mode, cmd_line_arguments"),
+    [
+        pytest.param(
+            ENSEMBLE_SMOOTHER_MODE,
+            ["--realizations", "0,1", "poly.ert"],
+            id=ENSEMBLE_SMOOTHER_MODE,
+        ),
+        pytest.param(
+            ENSEMBLE_EXPERIMENT_MODE,
+            ["--realizations", "0,1", "poly.ert"],
+            id=ENSEMBLE_EXPERIMENT_MODE,
+        ),
+    ],
+)
+def test_run_information_present_as_env_var_in_fm_context(
+    mode,
+    cmd_line_arguments,
+    storage,
+):
+    expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
+
+    extra_poly_eval = """    import os\n"""
+    for key in expected:
+        extra_poly_eval += f"""    assert "{key}" in os.environ\n"""
+
+    with fileinput.input("poly_eval.py", inplace=True) as fin:
+        for line in fin:
+            if line.strip().startswith("coeffs"):
+                print(extra_poly_eval)
+            print(line, end="")
+
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(parser, [mode] + cmd_line_arguments)
+
+    ert_config = ErtConfig.from_file(parsed.config)
+    os.chdir(ert_config.config_path)
+
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
+    )
+    queue = Events()
+    model = create_model(ert_config, storage, parsed, queue)
+
+    thread = ErtThread(
+        name="ert_cli_simulation_thread",
+        target=model.start_simulations_thread,
+        args=(evaluator_server_config,),
+    )
+    thread.start()
+    thread.join()
+    for event in queue.events:
+        if isinstance(event, EndEvent):
+            assert not event.failed, event.msg
+
+    # Check environment is clean after the model run ends.
+    for key in expected:
+        assert key not in os.environ
+
+    # Check run information in job environment
+    for path in model.paths:
+        with open(Path(path) / "jobs.json", "r", encoding="utf-8") as f:
+            jobs_data = json.load(f)
+        for key in expected:
+            assert key in jobs_data["global_environment"]
+            if key == "_ERT_SIMULATION_MODE":
+                assert jobs_data["global_environment"][key] == mode
 
 
 def run_sim(start_date):

@@ -299,6 +299,12 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         data = json.load(f)
         global_env = data.get("global_environment")
+        for key in ["_ERT_ENSEMBLE_ID", "_ERT_EXPERIMENT_ID"]:
+            assert key in global_env
+            global_env.pop(key)
+        assert global_env["_ERT_SIMULATION_MODE"] == TEST_RUN_MODE
+        global_env.pop("_ERT_SIMULATION_MODE")
+
         assert global_env == expected_vars
 
     path = os.environ["PATH"]

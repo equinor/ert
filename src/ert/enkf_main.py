@@ -157,7 +157,10 @@ def create_run_path(
     ensemble: Ensemble,
     ert_config: ErtConfig,
     runpaths: Runpaths,
+    context_env: Optional[Dict[str, str]] = None,
 ) -> None:
+    if context_env is None:
+        context_env = {}
     t = time.perf_counter()
     substitution_list = ert_config.substitution_list
     runpaths.set_ert_ensemble(ensemble.name)
@@ -201,13 +204,10 @@ def create_run_path(
 
             path = run_path / "jobs.json"
             _backup_if_existing(path)
+            forward_model_output = ert_config.forward_model_data_to_json(
+                run_arg.run_id, run_arg.iens, ensemble.iteration, context_env
+            )
             with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
-                forward_model_output = ert_config.forward_model_data_to_json(
-                    run_arg.run_id,
-                    run_arg.iens,
-                    ensemble.iteration,
-                )
-
                 json.dump(forward_model_output, fptr)
             # Write MANIFEST file to runpath use to avoid NFS sync issues
             with open(run_path / "manifest.json", mode="w", encoding="utf-8") as fptr:

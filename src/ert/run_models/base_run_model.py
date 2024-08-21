@@ -167,7 +167,7 @@ class BaseRunModel(ABC):
         self.support_restart: bool = True
         self.ert_config = config
         self._storage = storage
-        self._context_env_keys: List[str] = []
+        self._context_env: Dict[str, str] = {}
         self.random_seed: int = _seed_sequence(random_seed)
         self.rng = np.random.default_rng(self.random_seed)
         self.substitution_list = config.substitution_list
@@ -272,7 +272,7 @@ class BaseRunModel(ABC):
         Will set an environment variable that will be available until the
         model run ends.
         """
-        self._context_env_keys.append(key)
+        self._context_env[key] = value
         os.environ[key] = value
 
     def _set_default_env_context(self) -> None:
@@ -287,9 +287,9 @@ class BaseRunModel(ABC):
         """
         Clean all previously environment variables set using set_env_key
         """
-        for key in self._context_env_keys:
+        for key in list(self._context_env.keys()):
+            self._context_env.pop(key)
             os.environ.pop(key, None)
-        self._context_env_keys = []
 
     def start_simulations_thread(
         self,
@@ -611,6 +611,7 @@ class BaseRunModel(ABC):
             ensemble,
             self.ert_config,
             self.run_paths,
+            self._context_env,
         )
 
         self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
