@@ -381,11 +381,11 @@ class EnkfObs:
         time_map: List[datetime],
         has_refcase: bool,
     ) -> Dict[str, ObsVector]:
-        state_kw = general_observation.data
-        if not ensemble_config.hasNodeGenData(state_kw):
+        response_key = general_observation.data
+        if not ensemble_config.hasNodeGenData(response_key):
             ConfigWarning.warn(
-                f"No GEN_DATA with name: {state_kw} found - ignoring observation {obs_key}",
-                state_kw,
+                f"No GEN_DATA with name: {response_key} found - ignoring observation {obs_key}",
+                response_key,
             )
             return {}
 
@@ -401,10 +401,10 @@ class EnkfObs:
                 general_observation, obs_key, time_map, has_refcase
             )
 
-        config_node = ensemble_config[state_kw]
+        config_node = ensemble_config[response_key]
         if not isinstance(config_node, GenDataConfig):
             ConfigWarning.warn(
-                f"{state_kw} has implementation type:"
+                f"{response_key} has implementation type:"
                 f"'{type(config_node)}' - "
                 f"expected:'GEN_DATA' in observation:{obs_key}."
                 "The observation will be ignored",
@@ -419,10 +419,10 @@ class EnkfObs:
             restart is not None and restart not in response_report_steps
         ):
             ConfigWarning.warn(
-                f"The GEN_DATA node:{state_kw} is not configured to load from"
+                f"The GEN_DATA node:{response_key} is not configured to load from"
                 f" report step:{restart} for the observation:{obs_key}"
                 " - The observation will be ignored",
-                state_kw,
+                response_key,
             )
             return {}
 
