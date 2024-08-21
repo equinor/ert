@@ -24,7 +24,9 @@ from ert.scheduler import LocalDriver, LsfDriver, OpenPBSDriver, SlurmDriver
 def test_create_local_copy_is_a_copy_with_local_queue_system():
     queue_config = QueueConfig(queue_system=QueueSystem.LSF)
     assert queue_config.queue_system == QueueSystem.LSF
-    assert queue_config.create_local_copy().queue_system == QueueSystem.LOCAL
+    local_queue_config = queue_config.create_local_copy()
+    assert local_queue_config.queue_system == QueueSystem.LOCAL
+    assert isinstance(local_queue_config.queue_options, LocalQueueOptions)
 
 
 @pytest.mark.parametrize("value", [True, False])
