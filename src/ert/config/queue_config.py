@@ -254,6 +254,7 @@ class QueueConfig:
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: QueueOptions = field(default_factory=QueueOptions)
+    queue_options_test_run: QueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
@@ -297,6 +298,7 @@ class QueueConfig:
         )
 
         queue_options = _all_validated_queue_options[selected_queue_system]
+        queue_options_test_run = _all_validated_queue_options[QueueSystem.LOCAL]
         queue_options.add_global_queue_options(config_dict)
 
         if queue_options.project_code is None:
@@ -351,6 +353,7 @@ class QueueConfig:
             max_submit,
             selected_queue_system,
             queue_options,
+            queue_options_test_run,
             stop_long_running=stop_long_running,
         )
 
@@ -360,7 +363,8 @@ class QueueConfig:
             self.realization_memory,
             self.max_submit,
             QueueSystem.LOCAL,
-            self.queue_options,
+            self.queue_options_test_run,
+            self.queue_options_test_run,
             stop_long_running=self.stop_long_running,
         )
 
