@@ -22,10 +22,10 @@ __all__ = [
     "ecl300_config_path",
     "flow_config_path",
     "help_links",
+    "installable_forward_model_steps",
     "installable_jobs",
     "installable_workflow_jobs",
     "job_documentation",
     "legacy_ertscript_workflow",
     "site_config_lines",
-    "installable_forward_model_steps",
 ]

@@ -15,17 +15,17 @@ from .single_test_run import SingleTestRun
 
 __all__ = [
     "BaseRunModel",
-    "create_model",
-    "StatusEvents",
-    "ErtRunError",
     "EnsembleExperiment",
     "EnsembleSmoother",
+    "ErtRunError",
     "IteratedEnsembleSmoother",
     "MultipleDataAssimilation",
-    "SingleTestRun",
     "RunModelEvent",
-    "RunModelUpdateBeginEvent",
-    "RunModelUpdateEndEvent",
     "RunModelStatusEvent",
     "RunModelTimeEvent",
+    "RunModelUpdateBeginEvent",
+    "RunModelUpdateEndEvent",
+    "SingleTestRun",
+    "StatusEvents",
+    "create_model",
 ]

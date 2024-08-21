@@ -46,4 +46,4 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
     return wrapper
 
 
-__all__ = ["plugin", "ErtPluginManager", "ErtPluginContext", "JobDoc"]
+__all__ = ["ErtPluginContext", "ErtPluginManager", "JobDoc", "plugin"]

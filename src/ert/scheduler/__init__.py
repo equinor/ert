@@ -39,8 +39,8 @@ def create_driver(config: QueueConfig) -> Driver:
 
 
 __all__ = [
-    "Scheduler",
     "Driver",
-    "create_driver",
     "JobState",
+    "Scheduler",
+    "create_driver",
 ]

@@ -6,10 +6,10 @@ from .text_model import TextModel
 from .valuemodel import ValueModel
 
 __all__ = [
-    "TextModel",
     "ActiveRealizationsModel",
-    "ValueModel",
-    "TargetEnsembleModel",
-    "SelectableListModel",
     "PathModel",
+    "SelectableListModel",
+    "TargetEnsembleModel",
+    "TextModel",
+    "ValueModel",
 ]

@@ -10,4 +10,4 @@ if sys.version_info < (3, 11):
 else:
     from enum import EnumType, StrEnum
 
-__all__ = ["StrEnum", "EnumType"]
+__all__ = ["EnumType", "StrEnum"]
