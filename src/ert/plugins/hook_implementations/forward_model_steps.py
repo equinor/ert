@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 import yaml
 
@@ -225,11 +225,16 @@ class Eclipse100(ForwardModelStepPlugin):
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE100 must be given a VERSION argument"
             )
-
-        _validate_ecl_version(
-            version=self.private_args["<VERSION>"],
-            sim_name="eclipse",
-        )
+        if shutil.which("eclrun") is not None:
+            pm = ErtPluginManager()
+            ecl_env = _ecl_env_path(pm.get_ecl100_config_path())
+            version = self.private_args["<VERSION>"]
+            available_versions = _available_eclrun_versions(ecl_env, "eclipse")
+            if version not in available_versions:
+                raise ForwardModelStepValidationError(
+                    f"Unavailable ECLIPSE100 version {version} current supported "
+                    f"versions {available_versions}"
+                )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -280,11 +285,16 @@ class Eclipse300(ForwardModelStepPlugin):
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE300 must be given a VERSION argument"
             )
-
-        _validate_ecl_version(
-            version=self.private_args["<VERSION>"],
-            sim_name="e300",
-        )
+        if shutil.which("eclrun") is not None:
+            pm = ErtPluginManager()
+            ecl_env = _ecl_env_path(pm.get_ecl300_config_path())
+            version = self.private_args["<VERSION>"]
+            available_versions = _available_eclrun_versions(ecl_env, "e300")
+            if version not in available_versions:
+                raise ForwardModelStepValidationError(
+                    f"Unavailable ECLIPSE300 version {version} current supported "
+                    f"versions {available_versions}"
+                )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -622,21 +632,11 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _get_eclrun_env(config: Dict[str, Any]) -> Dict[str, str]:
-    env_path = os.getenv("PATH", "")
-    ecl_path = config.get("eclrun_env", {}).get("PATH")
-    if ecl_path is not None:
-        return {"PATH": env_path + os.pathsep + ecl_path}
-    return {"PATH": env_path}
-
-
-def _get_available_eclrun_versions(
-    eclrun_env: Dict[str, str], sim_name: str
-) -> List[str]:
+def _available_eclrun_versions(eclrun_env: Dict[str, str], simulator: str) -> List[str]:
     try:
         return (
             subprocess.check_output(
-                ["eclrun", "--report-versions", sim_name],
+                ["eclrun", "--report-versions", simulator],
                 env=eclrun_env,
             )
             .decode("utf-8")
@@ -647,30 +647,15 @@ def _get_available_eclrun_versions(
         return []
 
 
-def _get_ecl_config(sim_name: str) -> Dict[str, Any]:
-    pm = ErtPluginManager()
-    config_file = (
-        pm.get_ecl100_config_path()
-        if sim_name == "eclipse"
-        else pm.get_ecl300_config_path()
-    )
-    if not config_file:
-        return {}
-    with open(config_file, encoding="utf-8") as f:
+def _ecl_env_path(ecl_config_file: Optional[str]) -> Dict[str, str]:
+    if not ecl_config_file:
+        return {"PATH": os.getenv("PATH", "")}
+    with open(ecl_config_file, encoding="utf-8") as f:
         try:
-            return yaml.safe_load(f)
+            config = yaml.safe_load(f)
+            ecl_install_path = config.get("eclrun_env", {}).get("PATH")
+            if ecl_install_path:
+                return {"PATH": os.getenv("PATH", "") + os.pathsep + ecl_install_path}
+            return {"PATH": os.getenv("PATH", "")}
         except yaml.YAMLError as e:
-            raise ValueError(f"Failed parse: {config_file} as yaml") from e
-
-
-def _validate_ecl_version(version: str, sim_name: str) -> None:
-    ecl_version = 100 if sim_name == "eclipse" else 300
-    if shutil.which("eclrun") is not None:
-        ecl_config = _get_ecl_config(sim_name)
-        ecl_env = _get_eclrun_env(ecl_config)
-        available_versions = _get_available_eclrun_versions(ecl_env, sim_name)
-        if version not in available_versions:
-            raise ForwardModelStepValidationError(
-                f"Unavailable ECLIPSE{ecl_version} version {version} current supported "
-                f"versions {available_versions}"
-            )
+            raise ValueError(f"Failed parse: {ecl_config_file} as yaml") from e

@@ -629,9 +629,9 @@ def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     with patch(
-        "ert.plugins.hook_implementations.forward_model_steps._get_ecl_config"
+        "ert.plugins.hook_implementations.forward_model_steps._ecl_env_path"
     ) as mock:
-        mock.return_value = {"eclrun_env": {"PATH": os.getcwd()}}
+        mock.return_value = {"PATH": os.getenv("PATH")}
         with pytest.raises(
             ConfigValidationError,
             match=rf".*Unavailable ECLIPSE{eclipse_v} version 1 current supported versions \['4', '2', '8'\].*",
