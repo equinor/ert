@@ -145,6 +145,7 @@ class OpenPBSDriver(Driver):
         qsub_cmd: Optional[str] = None,
         qstat_cmd: Optional[str] = None,
         qdel_cmd: Optional[str] = None,
+        skip_submission_check: Optional[bool] = False,
     ) -> None:
         super().__init__()
 
@@ -159,6 +160,9 @@ class OpenPBSDriver(Driver):
         self._num_pbs_cmd_retries = 10
         self._sleep_time_between_cmd_retries = 2
         self._poll_period = _POLL_PERIOD
+
+        self._skip_submission_check: Optional[bool] = skip_submission_check
+        self._it_is_possible_to_submit: Optional[bool] = None  # None means inconclusive
 
         self._qsub_cmd = Path(qsub_cmd or shutil.which("qsub") or "qsub")
         self._qstat_cmd = Path(qstat_cmd or shutil.which("qstat") or "qstat")
@@ -182,6 +186,38 @@ class OpenPBSDriver(Driver):
                 "this behaviour is deprecated and will be removed. "
                 "Use NUM_CPU in the config instead."
             )
+
+        asyncio.create_task(self.assess_submitpossibility())
+
+    async def assess_submitpossibility(self):
+        if self._queue_name:
+            process_success, process_message = await self._execute_with_retry(
+                [str(self._qstat_cmd), "-q"], retries=1
+            )
+            if not process_success:
+                self._it_is_possible_to_submit = False
+                logger.error(
+                    f"OpenPBS cluster unavailable, '{self._qstat_cmd} -q' failed"
+                )
+            elif self._queue_name not in process_message:
+                self._it_is_possible_to_submit = False
+                logger.error(
+                    f"Requested OpenPBS queue {self._queue_name} does not exist."
+                )
+
+        arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
+        process_success, process_message = await self._execute_with_retry(
+            [str(self._qsub_cmd), "-N_canaryjob_", *arg_queue_name, "/usr/bin/true"],
+            retries=1,
+        )
+        if not process_success:
+            self._it_is_possible_to_submit = False
+            logger.error(
+                f"Not possible to submit to the OpenPBS cluster, message: {process_message}"
+            )
+        else:
+            self._it_is_possible_to_submit = True
+            logger.info("Submission to OpenPBS verified to work.")
 
     def _build_resource_string(
         self, num_cpu: int = 1, realization_memory: int = 0
@@ -232,6 +268,16 @@ class OpenPBSDriver(Driver):
         num_cpu: Optional[int] = 1,
         realization_memory: Optional[int] = 0,
     ) -> None:
+        if not self._skip_submission_check and self._it_is_possible_to_submit is False:
+            logger.error("Submission is not currently possible")
+            fake_jobid = f"{iens}-notworking"
+            self._jobs[fake_jobid] = (iens, QueuedJob("H"))
+            self._iens2jobid[iens] = fake_jobid
+            self._finished_job_ids.add(fake_jobid)
+            self._finished_iens.add(iens)
+            await self._process_job_update(fake_jobid, FinishedJob("F", returncode=-1))
+            return
+
         if runpath is None:
             runpath = Path.cwd()
 
@@ -342,14 +388,18 @@ class OpenPBSDriver(Driver):
                         await self._process_job_update(job_id, job)
 
             if self._finished_job_ids:
-                process = await asyncio.create_subprocess_exec(
-                    str(self._qstat_cmd),
-                    "-Efx",
-                    "-Fjson",
-                    *self._finished_job_ids,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
+                try:
+                    process = await asyncio.create_subprocess_exec(
+                        str(self._qstat_cmd),
+                        "-Efx",
+                        "-Fjson",
+                        *self._finished_job_ids,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                except FileNotFoundError:
+                    await asyncio.sleep(self._poll_period)
+                    continue
                 stdout, stderr = await process.communicate()
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but

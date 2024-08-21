@@ -90,14 +90,16 @@ class Driver(ABC):
         error_message: Optional[str] = None
 
         for _ in range(retries):
-            process = await asyncio.create_subprocess_exec(
-                *cmd_with_args,
-                stdin=asyncio.subprocess.PIPE if stdin else None,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    *cmd_with_args,
+                    stdin=asyncio.subprocess.PIPE if stdin else None,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            except FileNotFoundError as error:
+                return (False, str(error))
             stdout, stderr = await process.communicate(stdin)
-
             assert process.returncode is not None
             outputs = (
                 f"exit code {process.returncode}, "

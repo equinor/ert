@@ -117,6 +117,7 @@ class TorqueQueueOptions(QueueOptions):
     cluster_label: Optional[NonEmptyString] = None
     job_prefix: Optional[NonEmptyString] = None
     keep_qsub_output: bool = False
+    skip_submission_check: bool = False
 
     qstat_options: Optional[str] = pydantic.Field(default=None, deprecated=True)
     queue_query_timeout: Optional[str] = pydantic.Field(default=None, deprecated=True)
