@@ -116,6 +116,7 @@ class ManageExperimentsPanel(QTabWidget):
                 ensemble=ensemble_selector.currentData(),
                 active_realizations=[int(i) for i in members_model.getSelectedItems()],
                 parameters=parameters,
+                random_seed=self.ert_config.random_seed,
             )
 
         def update_button_state() -> None:
