@@ -397,11 +397,13 @@ class RunDialog(QDialog):
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
-        self.update_total_progress(1.0, msg)
         self._notifier.set_is_simulation_running(False)
         if failed:
+            self.update_total_progress(1.0, "Failed")
             self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
             self.fail_msg_box.exec_()
+        else:
+            self.update_total_progress(1.0, "Experiment completed.")
 
     @Slot()
     def _on_ticker(self) -> None:
