@@ -69,7 +69,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._ensemble_format_field = StringBox(
             self._ensemble_format_model,  # type: ignore
             self._ensemble_format_model.getDefaultValue(),  # type: ignore
-            True,
         )
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
