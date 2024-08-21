@@ -19,6 +19,7 @@ from ert.storage.realization_storage_state import RealizationStorageState
 @pytest.mark.usefixtures("copy_poly_case")
 def test_init_prior(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
+    config.random_seed = 1234
     notifier = ErtNotifier(config.config_path)
     notifier.set_storage(storage)
     ensemble = storage.create_experiment(
@@ -46,6 +47,9 @@ def test_init_prior(qtbot, storage):
         ensemble.get_ensemble_state()
         == [RealizationStorageState.INITIALIZED] * config.model_config.num_realizations
     )
+    assert ensemble.load_parameters("COEFFS")[
+        "transformed_values"
+    ].mean() == pytest.approx(1.41487404)
 
 
 @pytest.mark.usefixtures("copy_poly_case")
