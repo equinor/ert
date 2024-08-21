@@ -58,12 +58,15 @@ def test_that_posterior_has_lower_variance_than_prior():
         "--realizations",
         "1-50",
         "poly.ert",
+        "--experiment-name",
+        "es-test",
     )
     facade = LibresFacade.from_config_file("poly.ert")
     with open_storage(facade.enspath) as storage:
-        prior_ensemble = storage.get_ensemble_by_name("iter-0")
+        experiment = storage.get_experiment_by_name("es-test")
+        prior_ensemble = experiment.get_ensemble_by_name("iter-0")
         df_default = prior_ensemble.load_all_gen_kw_data()
-        posterior_ensemble = storage.get_ensemble_by_name("iter-1")
+        posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
         df_target = posterior_ensemble.load_all_gen_kw_data()
 
         # The std for the ensemble should decrease
@@ -132,9 +135,9 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     ert_config = ErtConfig.from_file("snake_oil_surface.ert")
 
     storage = open_storage(ert_config.ens_path)
-
-    ens_prior = storage.get_ensemble_by_name("iter-0")
-    ens_posterior = storage.get_ensemble_by_name("iter-1")
+    experiment = storage.get_experiment_by_name("es")
+    ens_prior = experiment.get_ensemble_by_name("iter-0")
+    ens_posterior = experiment.get_ensemble_by_name("iter-1")
 
     # Check that surfaces defined in INIT_FILES are not changed by ERT
     surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
@@ -170,8 +173,9 @@ def test_update_multiple_param():
     ert_config = ErtConfig.from_file("snake_oil.ert")
 
     storage = open_storage(ert_config.ens_path)
-    prior_ensemble = storage.get_ensemble_by_name("iter-0")
-    posterior_ensemble = storage.get_ensemble_by_name("iter-1")
+    experiment = storage.get_experiment_by_name("es")
+    prior_ensemble = experiment.get_ensemble_by_name("iter-0")
+    posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
 
     prior_array = _all_parameters(prior_ensemble, list(range(10)))
     posterior_array = _all_parameters(posterior_ensemble, list(range(10)))
@@ -441,8 +445,9 @@ def test_that_update_works_with_failed_realizations():
     ert_config = ErtConfig.from_file("poly.ert")
 
     with open_storage(ert_config.ens_path) as storage:
-        prior = storage.get_ensemble_by_name("iter-0")
-        posterior = storage.get_ensemble_by_name("iter-1")
+        experiment = storage.get_experiment_by_name("es")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
 
         assert all(
             posterior.get_ensemble_state()[idx]

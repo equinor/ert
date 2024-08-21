@@ -185,26 +185,6 @@ class LocalStorage(BaseMode):
             uuid = UUID(uuid)
         return self._ensembles[uuid]
 
-    def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
-        """
-        Retrieves an ensemble by name.
-
-        Parameters
-        ----------
-        name : str
-            The name of the ensemble to retrieve.
-
-        Returns
-        -------
-        local_ensemble : LocalEnsemble
-            The ensemble associated with the given name.
-        """
-
-        for ens in self._ensembles.values():
-            if ens.name == name:
-                return ens
-        raise KeyError(f"Ensemble with name '{name}' not found")
-
     @property
     def experiments(self) -> Generator[LocalExperiment, None, None]:
         yield from self._experiments.values()

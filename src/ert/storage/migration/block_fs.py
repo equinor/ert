@@ -314,6 +314,7 @@ def migrate_case(storage: Storage, path: Path, stack: ExitStack) -> None:
         parameters=parameter_configs,
         responses=response_configs,
         observations=ert_config.observations,
+        name="migrate-case",
     )
     ensemble = experiment.create_ensemble(
         name=path.name,

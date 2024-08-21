@@ -146,7 +146,8 @@ def test_migrate_case(data, storage, tmp_path, enspath, ens_config, name, iter):
     with ExitStack() as stack:
         bf.migrate_case(storage, tmp_path / name, stack)
 
-    ensemble = storage.get_ensemble_by_name(name)
+    experiment = storage.get_experiment_by_name("migrate-case")
+    ensemble = experiment.get_ensemble_by_name(name)
     assert ensemble.iteration == iter
     for real_key, var in data.groups.items():
         index = int(re.match(r"REAL_(\d+)", real_key)[1])

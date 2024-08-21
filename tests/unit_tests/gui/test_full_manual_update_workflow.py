@@ -82,7 +82,8 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     simulation_settings._ensemble_selector.setCurrentIndex(idx)
 
     storage = gui.notifier.storage
-    ensemble_prior = storage.get_ensemble_by_name("iter-0")
+    experiment = storage.get_experiment_by_name("ensemble_experiment")
+    ensemble_prior = experiment.get_ensemble_by_name("iter-0")
     active_reals = list(ensemble_prior.get_realization_mask_with_responses())
     # Assert that some realizations failed
     assert not all(active_reals)
@@ -92,11 +93,11 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     )
 
     df_prior = ensemble_prior.load_all_gen_kw_data()
-    ensemble_posterior = storage.get_ensemble_by_name("iter-0_1")
+    ensemble_posterior = experiment.get_ensemble_by_name("iter-0_1")
     df_posterior = ensemble_posterior.load_all_gen_kw_data()
 
     # Making sure measured data works with failed realizations
-    MeasuredData(storage.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
+    MeasuredData(experiment.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.

@@ -584,8 +584,9 @@ def test_es_mda(snapshot):
 
     with open_storage("storage", "r") as storage:
         data = []
+        experiment = storage.get_experiment_by_name("es-mda")
         for iter_nr in range(4):
-            ensemble = storage.get_ensemble_by_name(f"iter-{iter_nr}")
+            ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
             data.append(ensemble.load_all_gen_kw_data())
     result = pd.concat(
         data,
@@ -670,7 +671,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
     give different results when running SIES.
     """
 
-    def _run(target):
+    def _run(target, experiment_name):
         run_cli(
             ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
             "--disable-monitor",
@@ -681,12 +682,15 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
             "poly.ert",
             "--num-iterations",
             "1",
+            "--experiment-name",
+            experiment_name,
         )
         facade = LibresFacade.from_config_file("poly.ert")
         with open_storage(facade.enspath) as storage:
-            iter_0_fs = storage.get_ensemble_by_name(f"{target}-0")
+            experiment = storage.get_experiment_by_name(experiment_name)
+            iter_0_fs = experiment.get_ensemble_by_name(f"{target}-0")
             df_iter_0 = iter_0_fs.load_all_gen_kw_data()
-            iter_1_fs = storage.get_ensemble_by_name(f"{target}-1")
+            iter_1_fs = experiment.get_ensemble_by_name(f"{target}-1")
             df_iter_1 = iter_1_fs.load_all_gen_kw_data()
 
             result = pd.concat(
@@ -708,7 +712,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
             )
         )
 
-    result_1 = _run("target_result_1")
+    result_1 = _run("target_result_1", experiment_name="ies-1")
 
     # Run SIES with different step-lengths defined
     with open("poly.ert", mode="a", encoding="utf-8") as fh:
@@ -722,7 +726,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
             )
         )
 
-    result_2 = _run("target_result_2")
+    result_2 = _run("target_result_2", experiment_name="ies-2")
 
     # Prior should be the same
     assert result_1.loc["iter-0"].equals(result_2.loc["iter-0"])
@@ -826,8 +830,9 @@ def test_exclude_parameter_from_update():
         "poly.ert",
     )
     with open_storage("storage", "r") as storage:
-        prior = storage.get_ensemble_by_name("iter-0")
-        posterior = storage.get_ensemble_by_name("iter-1")
+        experiment = storage.get_experiment_by_name("es")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
         assert prior.load_parameters(
             "ANOTHER_KW", tuple(range(5))
         ) == posterior.load_parameters("ANOTHER_KW", tuple(range(5)))

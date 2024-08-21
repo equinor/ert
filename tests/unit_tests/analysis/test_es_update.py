@@ -84,7 +84,8 @@ def test_update_report(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -116,7 +117,8 @@ def test_update_report_with_exception_in_analysis_ES(
     snake_oil_storage,
 ):
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -160,7 +162,8 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     snake_oil_storage,
 ):
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
 
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -262,7 +265,8 @@ def test_update_snapshot(
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
     # Note: seed must be the same!
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -615,7 +619,8 @@ def test_update_only_using_subset_observations(
     """
     ert_config = snake_oil_case_storage
 
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -743,7 +748,8 @@ def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storag
     perturbations, so we make sure we maintain the order throughout.
     """
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     assert list(ert_config.observations.keys()) == list(
         prior_ens.experiment.observations.keys()
     )

@@ -64,7 +64,8 @@ def verify_exported_content(file_name, gui, ensemble_select):
     if ensemble_select == "*":
         ensemble_names = [e.name for e in gui.notifier.storage.ensembles]
     for name in ensemble_names:
-        ensemble = gui.notifier.storage.get_ensemble_by_name(name)
+        experiment = gui.notifier.storage.get_experiment_by_name("es_mda")
+        ensemble = experiment.get_ensemble_by_name(name)
         gen_kw_data = ensemble.load_all_gen_kw_data()
 
         facade = LibresFacade.from_config_file("poly.ert")

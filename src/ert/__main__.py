@@ -422,6 +422,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
         "while realizations 10,11, 12,...,49 will be excluded",
     )
+    ensemble_smoother_parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default="es",
+        help="Name of the experiment",
+    )
 
     # iterative_ensemble_smoother_parser
     iterative_ensemble_smoother_description = (
@@ -482,6 +488,12 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         type=valid_num_iterations,
         required=False,
         help="The number of iterations to run.",
+    )
+    iterative_ensemble_smoother_parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default="ies",
+        help="Name of the experiment",
     )
 
     # es_mda_parser
