@@ -145,12 +145,18 @@ class EnsembleEvaluator:
                     continue
             await self._batch_processing_queue.put(batch)
 
+    async def update_snapshot_async(self, events: List[CloudEvent]) -> Snapshot:
+        assert self._loop is not None
+        return await self._loop.run_in_executor(
+            None, self.ensemble.update_snapshot, events
+        )
+
     async def _fm_handler(self, events: List[CloudEvent]) -> None:
-        await self._append_message(self.ensemble.update_snapshot(events))
+        await self._append_message(await self.update_snapshot_async(events))
 
     async def _started_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            await self._append_message(self.ensemble.update_snapshot(events))
+            await self._append_message(await self.update_snapshot_async(events))
 
     async def _stopped_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status == ENSEMBLE_STATE_FAILED:
@@ -164,11 +170,11 @@ class EnsembleEvaluator:
         logger.info(
             f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
         )
-        await self._append_message(self.ensemble.update_snapshot(events))
+        await self._append_message(await self.update_snapshot_async(events))
 
     async def _cancelled_handler(self, events: List[CloudEvent]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:
-            await self._append_message(self.ensemble.update_snapshot(events))
+            await self._append_message(await self.update_snapshot_async(events))
             self.stop()
 
     async def _failed_handler(self, events: List[CloudEvent]) -> None:
@@ -183,7 +189,7 @@ class EnsembleEvaluator:
         # api for setting state in the ensemble
         if len(events) == 0:
             events = [self._create_cloud_event(EVTYPE_ENSEMBLE_FAILED)]
-        await self._append_message(self.ensemble.update_snapshot(events))
+        await self._append_message(await self.update_snapshot_async(events))
         self._signal_cancel()  # let ensemble know it should stop
 
     @property
@@ -381,9 +387,9 @@ class EnsembleEvaluator:
                 extra_attrs=terminated_attrs,
                 data_marshaller=cloudpickle.dumps,
             )
-            await self._messages_to_send.put(message)
             await self._events.join()
             await self._batch_processing_queue.join()
+            await self._messages_to_send.put(message)
             await self._messages_to_send.join()
         logger.debug("Async server exiting.")
 
