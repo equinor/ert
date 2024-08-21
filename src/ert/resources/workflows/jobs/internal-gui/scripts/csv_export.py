@@ -1,4 +1,6 @@
+import json
 import os
+from uuid import UUID
 
 import pandas
 
@@ -22,9 +24,9 @@ class CSVExportJob(ErtScript):
 
     Optional arguments:
 
-    ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
-               if no list is provided the current ensemble is exported
-               a single * can be used to export all ensembles
+    ensemble_dict: a string representation of a dictionary mapping ensemble IDs to names
+               if no dictionary is provided, the current ensemble is exported
+               a single "*" can be used to export all ensembles
 
     design_matrix: a path to a file containing the design matrix
 
@@ -53,37 +55,34 @@ class CSVExportJob(ErtScript):
         workflow_args,
     ):
         output_file = workflow_args[0]
-        ensemble_list = None if len(workflow_args) < 2 else workflow_args[1]
+        ensemble_dict_str = None if len(workflow_args) < 2 else workflow_args[1]
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
         _ = True if len(workflow_args) < 4 else workflow_args[3]
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
-        ensembles = []
         facade = LibresFacade(ert_config)
 
-        ensembles = ensemble_list.split(",")
-
-        if ensemble_list is None or len(ensembles) == 0:
-            ensembles = "default"
+        ensemble_dict = json.loads(ensemble_dict_str)
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
-                raise UserWarning("The design matrix file does not exists!")
-
+                raise UserWarning("The design matrix file does not exist!")
             if not os.path.isfile(design_matrix_path):
                 raise UserWarning("The design matrix is not a file!")
 
         data = pandas.DataFrame()
 
-        for ensemble in ensembles:
-            ensemble = ensemble.strip()
-
+        for ensemble_id, ensemble_info in ensemble_dict.items():
             try:
-                ensemble = self.storage.get_ensemble_by_name(ensemble)
+                ensemble = storage.get_ensemble(UUID(ensemble_id))
             except KeyError as exc:
-                raise UserWarning(f"The ensemble '{ensemble}' does not exist!") from exc
+                raise UserWarning(
+                    f"The ensemble with ID '{ensemble_id}' does not exist!"
+                ) from exc
 
             if not ensemble.has_data():
-                raise UserWarning(f"The ensemble '{ensemble}' does not have any data!")
+                raise UserWarning(
+                    f"The ensemble '{ensemble.name}' does not have any data!"
+                )
 
             ensemble_data = ensemble.load_all_gen_kw_data()
 
@@ -105,13 +104,16 @@ class CSVExportJob(ErtScript):
 
             ensemble_data["Iteration"] = ensemble.iteration
             ensemble_data["Ensemble"] = ensemble.name
+            ensemble_data["Experiment"] = ensemble_info["experiment_name"]
             ensemble_data.set_index(
-                ["Ensemble", "Iteration"], append=True, inplace=True
+                ["Ensemble", "Experiment", "Iteration"], append=True, inplace=True
             )
 
             data = pandas.concat([data, ensemble_data])
 
-        data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
+        data = data.reorder_levels(
+            ["Realization", "Iteration", "Date", "Experiment", "Ensemble"]
+        )
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
 
