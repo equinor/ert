@@ -23,14 +23,14 @@ from ert.gui.tools.plot.plot_window import (
 from ert.services import StorageService
 from ert.storage import open_storage
 
-from .conftest import (
-    get_child,
-    wait_for_child,
-)
+from .conftest import get_child, wait_for_child
 
 
 # Use a fixture for the figure in order for the lifetime
-# of the c++ gui element to not go out before mpl_image_compare
+# of the c++ gui element to not go out before mpl_image_compare.
+# Note that the data is copied from test-data and all the existing storages
+# there will be copied too! They need to be removed!
+# Once the storage is created it its cached in .pytest_cache.
 @pytest.fixture(
     params=[
         ("FOPR", STATISTICS, "snake_oil"),
@@ -97,6 +97,12 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
                                 selected_key.dimensionality
                                 == tab._plotter.dimensionality
                             )
+                            if plot_name == STD_DEV:
+                                # we need a better resolution for box plots
+                                tab._figure.set_size_inches(
+                                    2000 / tab._figure.get_dpi(),
+                                    1000 / tab._figure.get_dpi(),
+                                )
                             yield tab._figure.figure
                         else:
                             assert (
