@@ -845,11 +845,9 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: (
-                RealizationStorageState.INITIALIZED
-                if (path / f"{e}.nc").exists()
-                else RealizationStorageState.UNDEFINED
-            )
+            e: RealizationStorageState.INITIALIZED
+            if (path / f"{e}.nc").exists()
+            else RealizationStorageState.UNDEFINED
             for e in self.experiment.parameter_configuration
         }
 
@@ -858,10 +856,8 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: (
-                RealizationStorageState.HAS_DATA
-                if (path / f"{e}.nc").exists()
-                else RealizationStorageState.UNDEFINED
-            )
+            e: RealizationStorageState.HAS_DATA
+            if (path / f"{e}.nc").exists()
+            else RealizationStorageState.UNDEFINED
             for e in self.experiment.response_configuration
         }

@@ -215,7 +215,7 @@ def test_reading_summary_through_standardized_spec(tmp_path):
     assert ds["name"].data.tolist() == summary_keys
 
     for _, _ds in ds.groupby("name"):
-        assert len(_ds["values"]) == num_timesteps
+        assert _ds["values"].size == num_timesteps
 
 
 def test_standard_response_json_writing(tmp_path):
