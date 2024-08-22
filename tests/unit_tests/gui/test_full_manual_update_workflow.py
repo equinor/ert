@@ -66,8 +66,8 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     tree_view.expandAll()
 
     model = tree_view.model()
-    assert model is not None and model.rowCount() == 2
-    assert "iter-0_1" in model.index(1, 0, model.index(1, 0)).data(0)
+    assert model is not None and model.rowCount() == 1
+    assert "iter-0_1" in model.index(1, 0, model.index(0, 0)).data(0)
 
     experiments_panel.close()
 

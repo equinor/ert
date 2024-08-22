@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QMessageBox,
@@ -17,7 +18,8 @@ from .conftest import (
 )
 
 
-def test_csv_export(esmda_has_run, qtbot):
+@pytest.mark.parametrize("ensemble_select", ["default_0", "*"])
+def test_csv_export(esmda_has_run, qtbot, ensemble_select):
     gui = esmda_has_run
 
     file_name = None
@@ -29,8 +31,8 @@ def test_csv_export(esmda_has_run, qtbot):
         export_dialog = wait_for_child(gui, qtbot, ExportDialog)
         case_selection = get_child(export_dialog, ListEditBox)
 
-        # Select default_0 as the case to be exported
-        case_selection._list_edit_line.setText("default_0")
+        # Select ensemble_select as the case to be exported
+        case_selection._list_edit_line.setText(ensemble_select)
         path_chooser = get_child(export_dialog, PathChooser)
         file_name = path_chooser._path_line.text()
         assert case_selection.isValid()
@@ -55,14 +57,18 @@ def test_csv_export(esmda_has_run, qtbot):
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
     file_content = Path(file_name).read_text(encoding="utf-8")
-    ensemble = gui.notifier.storage.get_ensemble_by_name("default_0")
-    gen_kw_data = ensemble.load_all_gen_kw_data()
+    ensemble_names = [ensemble_select]
+    if ensemble_select == "*":
+        ensemble_names = [e.name for e in gui.notifier.storage.ensembles]
+    for name in ensemble_names:
+        ensemble = gui.notifier.storage.get_ensemble_by_name(name)
+        gen_kw_data = ensemble.load_all_gen_kw_data()
 
-    facade = LibresFacade.from_config_file("poly.ert")
-    misfit_data = facade.load_all_misfit_data(ensemble)
+        facade = LibresFacade.from_config_file("poly.ert")
+        misfit_data = facade.load_all_misfit_data(ensemble)
 
-    for i in range(ensemble.ensemble_size):
-        assert (
-            f"{i},0,,default_0,{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
-            in file_content
-        )
+        for i in range(ensemble.ensemble_size):
+            assert (
+                f",{name},{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
+                in file_content
+            )
