@@ -14,23 +14,23 @@ from ert.config import ConfigValidationError, GenDataConfig
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_config(name: str, report_steps: List[int]):
-    gdc = GenDataConfig(name=name, report_steps=report_steps)
+    gdc = GenDataConfig(name=name, report_steps_list=report_steps)
     assert gdc.name == name
     assert gdc.report_steps == sorted(report_steps)
 
 
 def test_gen_data_default_report_step():
     gen_data_default_step = GenDataConfig(name="name")
-    assert not gen_data_default_step.report_steps
+    assert not gen_data_default_step.report_steps_list
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_eq_config():
-    alt1 = GenDataConfig(name="ALT1", report_steps=[2, 1, 3])
-    alt2 = GenDataConfig(name="ALT1", report_steps=[2, 3, 1])
-    alt3 = GenDataConfig(name="ALT1", report_steps=[3])
-    alt4 = GenDataConfig(name="ALT4", report_steps=[3])
-    alt5 = GenDataConfig(name="ALT4", report_steps=[4])
+    alt1 = GenDataConfig(name="ALT1", report_steps_list=[2, 1, 3])
+    alt2 = GenDataConfig(name="ALT1", report_steps_list=[2, 3, 1])
+    alt3 = GenDataConfig(name="ALT1", report_steps_list=[3])
+    alt4 = GenDataConfig(name="ALT4", report_steps_list=[3])
+    alt5 = GenDataConfig(name="ALT4", report_steps_list=[4])
 
     assert alt1 == alt2  # name and ordered steps ok
     assert alt1 != alt3  # amount steps differ

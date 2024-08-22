@@ -152,7 +152,7 @@ class EnsembleConfig:
         )
 
         response_configs: List[ResponseConfig] = [
-            GenDataConfig.from_config_list(g) for g in gen_data_list
+            GenDataConfig.from_config_list(gen_data_list)
         ]
         refcase = (
             Refcase(start_date, refcase_keys, time_map, data)
@@ -194,9 +194,9 @@ class EnsembleConfig:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
     def hasNodeGenData(self, key: str) -> bool:
-        return key in self.response_configs and isinstance(
-            self.response_configs[key], GenDataConfig
-        )
+        config = self.response_configs["gen_data"]
+        assert isinstance(config, GenDataConfig)
+        return key in config.names
 
     def addNode(self, config_node: Union[ParameterConfig, ResponseConfig]) -> None:
         assert config_node is not None

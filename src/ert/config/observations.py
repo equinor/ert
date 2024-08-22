@@ -401,7 +401,7 @@ class EnkfObs:
                 general_observation, obs_key, time_map, has_refcase
             )
 
-        config_node = ensemble_config[response_key]
+        config_node = ensemble_config["gen_data"]
         if not isinstance(config_node, GenDataConfig):
             ConfigWarning.warn(
                 f"{response_key} has implementation type:"
