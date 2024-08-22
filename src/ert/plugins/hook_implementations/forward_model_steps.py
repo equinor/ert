@@ -220,7 +220,7 @@ class Eclipse100(ForwardModelStepPlugin):
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": ""},
         )
 
-    def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+    def validate_pre_experiment(self, _: ForwardModelStepJSON) -> None:
         if "<VERSION>" not in self.private_args:
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE100 must be given a VERSION argument"
@@ -278,7 +278,7 @@ class Eclipse300(ForwardModelStepPlugin):
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": "", "<VERSION>": "version"},
         )
 
-    def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+    def validate_pre_experiment(self, _: ForwardModelStepJSON) -> None:
         if "<VERSION>" not in self.private_args:
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE300 must be given a VERSION argument"
