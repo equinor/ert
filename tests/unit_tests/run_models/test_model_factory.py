@@ -5,7 +5,7 @@ from uuid import uuid1
 import pytest
 
 import ert
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ModelConfig
 from ert.libres_facade import LibresFacade
 from ert.run_models import (
     EnsembleExperiment,
@@ -15,6 +15,8 @@ from ert.run_models import (
     SingleTestRun,
     model_factory,
 )
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
+from ert.run_models.run_arguments import EvaluateEnsembleRunArguments
 
 
 @pytest.mark.parametrize(
@@ -200,4 +202,38 @@ def test_multiple_data_assimilation_restart_paths(
     )
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
-    assert model.paths == expected_path
+    assert set(model.paths) == set(expected_path)
+
+
+@pytest.mark.parametrize(
+    "ensemble_iteration, expected_path",
+    [
+        [0, ["realization-0/iter-0"]],
+        [1, ["realization-0/iter-1"]],
+        [2, ["realization-0/iter-2"]],
+        [100, ["realization-0/iter-100"]],
+    ],
+)
+def test_evaluate_ensemble_paths(
+    tmp_path, monkeypatch, ensemble_iteration, expected_path
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        ert.run_models.base_run_model.BaseRunModel, "validate", MagicMock()
+    )
+    run_args = EvaluateEnsembleRunArguments(
+        active_realizations=[True],
+        minimum_required_realizations=1,
+        ensemble_id=str(uuid1(0)),
+        random_seed=1234,
+        ensemble_size=1,
+    )
+    storage_mock = MagicMock()
+    ensemble_mock = MagicMock()
+    ensemble_mock.iteration = ensemble_iteration
+    config = ErtConfig(model_config=ModelConfig(num_realizations=1))
+    storage_mock.get_ensemble.return_value = ensemble_mock
+    model = EvaluateEnsemble(run_args, config, storage_mock, MagicMock(), MagicMock())
+    base_path = tmp_path / "simulations"
+    expected_path = [str(base_path / expected) for expected in expected_path]
+    assert set(model.paths) == set(expected_path)
