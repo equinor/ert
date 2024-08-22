@@ -61,12 +61,11 @@ def opened_main_window(
     _new_poly_example(source_root, tmp_path)
     with _open_main_window(tmp_path / "poly.ert") as (
         gui,
-        storage,
+        _,
         config,
     ), StorageService.init_service(
         project=os.path.abspath(config.ens_path),
     ):
-        _add_default_ensemble(storage, gui, config)
         yield gui
 
 
@@ -85,18 +84,6 @@ def _new_poly_example(source_root, destination):
                 print("NUM_REALIZATIONS 20", end="\n")
             else:
                 print(line, end="")
-
-
-def _add_default_ensemble(storage: Storage, gui: ErtMainWindow, config: ErtConfig):
-    gui.notifier.set_current_ensemble(
-        storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            observations=config.observations,
-        ).create_ensemble(
-            name="default",
-            ensemble_size=config.model_config.num_realizations,
-        )
-    )
 
 
 @contextmanager
@@ -147,11 +134,10 @@ def _esmda_run(run_experiment, source_root, tmp_path_factory):
     _new_poly_example(source_root, path)
     with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
         gui,
-        storage,
+        _,
         config,
     ):
         mp.chdir(path)
-        _add_default_ensemble(storage, gui, config)
         run_experiment(MultipleDataAssimilation, gui)
         # Check that we produce update log
         log_paths = list(Path(config.analysis_config.log_path).iterdir())
@@ -169,8 +155,8 @@ def _ensemble_experiment_run(
     _new_poly_example(source_root, path)
     with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
         gui,
-        storage,
-        config,
+        _,
+        _,
     ):
         mp.chdir(path)
         if failing_reals:
@@ -207,7 +193,6 @@ def _ensemble_experiment_run(
                 | stat.S_IXGRP
                 | stat.S_IXOTH,
             )
-        _add_default_ensemble(storage, gui, config)
         run_experiment(EnsembleExperiment, gui)
 
     return path

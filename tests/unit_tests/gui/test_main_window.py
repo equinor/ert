@@ -2,7 +2,6 @@ import contextlib
 import os
 import shutil
 import stat
-from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
@@ -337,7 +336,6 @@ def test_that_the_plot_window_contains_the_expected_elements(
 ):
     gui = esmda_has_run
     expected_ensembles = [
-        f"{datetime.today().strftime('%Y-%m-%d')} : default",
         "es_mda : default_0",
         "es_mda : default_1",
         "es_mda : default_2",
@@ -431,11 +429,8 @@ def test_that_the_manage_experiments_tool_can_be_used(
     tree_view = get_child(storage_widget, QTreeView)
     tree_view.expandAll()
 
-    # The storage view should contain the expected experiments and ensembles
-    # Two experiments. The first experiment with one ensemble the second with four
-    assert tree_view.model().rowCount() == 2
-    assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 1
-    assert tree_view.model().rowCount(tree_view.model().index(1, 0)) == 4
+    assert tree_view.model().rowCount() == 1
+    assert tree_view.model().rowCount(tree_view.model().index(0, 0)) == 4
 
     def handle_add_dialog():
         dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
