@@ -15,14 +15,14 @@ class ResponseConfigArgs:
     keys: List[str]
     kwargs: Dict[str, Any]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.keys.sort()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, with_serialized_kwargs: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "name": self.name,
             "input_file": self.input_file,
-            "kwargs": self.kwargs,
+            "kwargs": with_serialized_kwargs,
             "keys": self.keys,
         }
 
@@ -80,17 +80,33 @@ class StandardResponseConfig:
         return standard_format_configs
 
     def to_dict(self) -> Dict[str, Any]:
+        config_cls = responses_index[self.ert_kind]
         return {
             "_ert_kind": self.ert_kind,
-            "args_per_instance": [x.to_dict() for x in self.args_per_instance],
+            "args_per_instance": [
+                {
+                    **args.to_dict(
+                        with_serialized_kwargs=config_cls.serialize_kwargs(args.kwargs)
+                    )
+                }
+                for args in self.args_per_instance
+            ],
         }
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "StandardResponseConfig":
+        config_cls = responses_index[d["_ert_kind"]]
+
         return cls(
             ert_kind=d["_ert_kind"],
             args_per_instance=[
-                ResponseConfigArgs(**args) for args in d["args_per_instance"]
+                ResponseConfigArgs(
+                    **{
+                        **args,
+                        "kwargs": config_cls.deserialize_kwargs(args.get("kwargs", {})),
+                    }
+                )
+                for args in d["args_per_instance"]
             ],
         )
 

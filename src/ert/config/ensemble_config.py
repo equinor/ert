@@ -167,12 +167,15 @@ class EnsembleConfig:
                     "In order to use summary responses, ECLBASE has to be set."
                 )
             time_map = set(refcase.dates) if refcase is not None else None
+            smry_kwargs = {}
+            if time_map is not None:
+                smry_kwargs["refcase"] = sorted(time_map)
             response_configs.append(
                 SummaryConfig(
                     name="summary",
                     input_file=eclbase,
                     keys=[i for val in summary_keys for i in val],
-                    kwargs={"refcase": time_map},
+                    kwargs=smry_kwargs,
                 )
             )
 
@@ -203,12 +206,14 @@ class EnsembleConfig:
         assert config_node is not None
         if config_node.name in self:
             raise ConfigValidationError(
-                f"Config node with key {config_node.name!r} already present in ensemble config"
+                f"Config node with key {config_node.name!r} already present in "
+                f"ensemble config"
             )
 
         if isinstance(config_node, ParameterConfig):
             logger.info(
-                f"Adding {type(config_node).__name__} config (of size {len(config_node)}) to parameter_configs"
+                f"Adding {type(config_node).__name__} config (of size "
+                f"{len(config_node)}) to parameter_configs"
             )
             self.parameter_configs[config_node.name] = config_node
         else:

@@ -27,6 +27,14 @@ class ResponseConfig(ABC):
         data["_ert_kind"] = self.__class__.__name__
         return data
 
+    @staticmethod
+    def serialize_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        return {**kwargs}
+
+    @staticmethod
+    def deserialize_kwargs(kwargs_serialized: Dict[str, Any]) -> Dict[str, Any]:
+        return {**kwargs_serialized}
+
     @property
     @abstractmethod
     def cardinality(self) -> Literal["one_per_key", "one_per_realization"]:

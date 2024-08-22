@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class SummaryConfig(ResponseConfig):
     @property
     def refcase(self) -> Union[Set[datetime], List[str], None]:
-        return self.kwargs.get("refcase", None)
+        return self.kwargs.get("refcase")
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -28,19 +28,21 @@ class SummaryConfig(ResponseConfig):
         .to3() migration should ideally be made independent of
         this.
         """
+
+        serialized_kwargs = self.serialize_kwargs(self.kwargs)
         return {
             "name": self.name,
             "input_file": self.input_file,
             "keys": self.keys,
-            "refcase": [ts.strftime("%Y-%m-%d %H") for ts in self.refcase],
+            "refcase": serialized_kwargs.get("refcase"),
             "_ert_kind": self.__class__.__name__,
         }
 
     def __post_init__(self) -> None:
-        if isinstance(self.refcase, list):
-            self.kwargs["refcase"] = {
-                datetime.fromisoformat(val) for val in self.refcase
-            }
+        # if isinstance(self.refcase, list):
+        #    self.kwargs["refcase"] = {
+        #        datetime.fromisoformat(val) for val in self.refcase
+        #    }
         self.keys = sorted(set(self.keys))
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
@@ -68,3 +70,23 @@ class SummaryConfig(ResponseConfig):
     @property
     def response_type(self) -> str:
         return "summary"
+
+    @staticmethod
+    def serialize_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        if "refcase" in kwargs:
+            refcase = kwargs.get("refcase")
+            if isinstance(refcase, list) and len(refcase) > 0:
+                return {**kwargs, "refcase": [x.isoformat() for x in refcase]}
+
+        return {**kwargs}
+
+    @staticmethod
+    def deserialize_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        if "refcase" in kwargs:
+            refcase = kwargs.get("refcase")
+            assert isinstance(refcase, list)
+            parsed_unix_refcase = [datetime.fromisoformat(x) for x in refcase]
+
+            return {**kwargs, "refcase": sorted(parsed_unix_refcase)}
+
+        return {**kwargs}
