@@ -68,12 +68,12 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
 
-        is_enabled = option.state & QStyle.State_Enabled
+        is_enabled = option.state & QStyle.State_Enabled  # type: ignore
 
         if is_enabled and (
             option.state & QStyle.State_Selected  # type: ignore
-            or option.state & QStyle.State_MouseOver
-        ):  # type: ignore
+            or option.state & QStyle.State_MouseOver  # type: ignore
+        ):
             color = COLOR_HIGHLIGHT_LIGHT
             if option.palette.text().color().value() > 150:
                 color = COLOR_HIGHLIGHT_DARK
