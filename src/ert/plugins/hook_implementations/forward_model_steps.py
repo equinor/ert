@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional, Type
+from typing import List, Literal, Optional, Type
 
 import yaml
 
@@ -627,7 +627,7 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _available_eclrun_versions(simulator: str) -> List[str]:
+def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
     if shutil.which("eclrun") is None:
         return []
     pm = ErtPluginManager()
