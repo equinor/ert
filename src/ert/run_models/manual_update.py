@@ -79,3 +79,7 @@ class ManualUpdate(UpdateRunModel):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
+
+    def check_if_runpath_exists(self) -> bool:
+        # Will not run a forward model, so does not create files on runpath
+        return False
