@@ -54,10 +54,12 @@ class MultipleDataAssimilation(UpdateRunModel):
         self.restart_run = restart_run
         self.prior_ensemble_id = prior_ensemble_id
         start_iteration = 0
+        total_iterations = len(self.weights) + 1
         if self.restart_run:
             if not self.prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
             start_iteration = storage.get_ensemble(prior_ensemble_id).iteration + 1
+            total_iterations -= start_iteration
         elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
         super().__init__(
@@ -68,7 +70,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             queue_config,
             status_queue,
             active_realizations=active_realizations,
-            total_iterations=len(self.weights) + 1,
+            total_iterations=total_iterations,
             start_iteration=start_iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
