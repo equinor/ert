@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Type
+from typing import List, Optional, Type
 
 import yaml
 
@@ -225,16 +225,14 @@ class Eclipse100(ForwardModelStepPlugin):
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE100 must be given a VERSION argument"
             )
-        if shutil.which("eclrun") is not None:
-            pm = ErtPluginManager()
-            ecl_env = _ecl_env_path(pm.get_ecl100_config_path())
-            version = self.private_args["<VERSION>"]
-            available_versions = _available_eclrun_versions(ecl_env, "eclipse")
-            if version not in available_versions:
-                raise ForwardModelStepValidationError(
-                    f"Unavailable ECLIPSE100 version {version} current supported "
-                    f"versions {available_versions}"
-                )
+        version = self.private_args["<VERSION>"]
+        available_versions = _available_eclrun_versions(simulator="eclipse")
+
+        if available_versions and version not in available_versions:
+            raise ForwardModelStepValidationError(
+                f"Unavailable ECLIPSE100 version {version} current supported "
+                f"versions {available_versions}"
+            )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -285,16 +283,13 @@ class Eclipse300(ForwardModelStepPlugin):
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE300 must be given a VERSION argument"
             )
-        if shutil.which("eclrun") is not None:
-            pm = ErtPluginManager()
-            ecl_env = _ecl_env_path(pm.get_ecl300_config_path())
-            version = self.private_args["<VERSION>"]
-            available_versions = _available_eclrun_versions(ecl_env, "e300")
-            if version not in available_versions:
-                raise ForwardModelStepValidationError(
-                    f"Unavailable ECLIPSE300 version {version} current supported "
-                    f"versions {available_versions}"
-                )
+        version = self.private_args["<VERSION>"]
+        available_versions = _available_eclrun_versions(simulator="e300")
+        if available_versions and version not in available_versions:
+            raise ForwardModelStepValidationError(
+                f"Unavailable ECLIPSE300 version {version} current supported "
+                f"versions {available_versions}"
+            )
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
@@ -632,7 +627,28 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _available_eclrun_versions(eclrun_env: Dict[str, str], simulator: str) -> List[str]:
+def _available_eclrun_versions(simulator: str) -> List[str]:
+    if shutil.which("eclrun") is None:
+        return []
+    pm = ErtPluginManager()
+    ecl_config_path = (
+        pm.get_ecl100_config_path()
+        if simulator == "eclipse"
+        else pm.get_ecl300_config_path()
+    )
+
+    if not ecl_config_path:
+        return []
+    eclrun_env = {"PATH": os.getenv("PATH", "")}
+
+    with open(ecl_config_path, encoding="utf-8") as f:
+        try:
+            config = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Failed parse: {ecl_config_path} as yaml") from e
+    ecl_install_path = config.get("eclrun_env", {}).get("PATH", "")
+    eclrun_env["PATH"] = eclrun_env["PATH"] + os.pathsep + ecl_install_path
+
     try:
         return (
             subprocess.check_output(
@@ -645,17 +661,3 @@ def _available_eclrun_versions(eclrun_env: Dict[str, str], simulator: str) -> Li
         )
     except subprocess.CalledProcessError:
         return []
-
-
-def _ecl_env_path(ecl_config_file: Optional[str]) -> Dict[str, str]:
-    if not ecl_config_file:
-        return {"PATH": os.getenv("PATH", "")}
-    with open(ecl_config_file, encoding="utf-8") as f:
-        try:
-            config = yaml.safe_load(f)
-            ecl_install_path = config.get("eclrun_env", {}).get("PATH")
-            if ecl_install_path:
-                return {"PATH": os.getenv("PATH", "") + os.pathsep + ecl_install_path}
-            return {"PATH": os.getenv("PATH", "")}
-        except yaml.YAMLError as e:
-            raise ValueError(f"Failed parse: {ecl_config_file} as yaml") from e
