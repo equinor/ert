@@ -60,11 +60,7 @@ class CSVExportJob(ErtScript):
         ensembles = []
         facade = LibresFacade(ert_config)
 
-        if ensemble_list is not None:
-            if ensemble_list.strip() == "*":
-                ensembles = self.getAllEnsembleList(storage)
-            else:
-                ensembles = ensemble_list.split(",")
+        ensembles = ensemble_list.split(",")
 
         if ensemble_list is None or len(ensembles) == 0:
             ensembles = "default"
@@ -126,10 +122,3 @@ class CSVExportJob(ErtScript):
             f"columns to {output_file}."
         )
         return export_info
-
-    @staticmethod
-    def getAllEnsembleList(storage):
-        all_ensemble_list = [
-            ensemble.name for ensemble in storage.ensembles if ensemble.has_data()
-        ]
-        return all_ensemble_list
