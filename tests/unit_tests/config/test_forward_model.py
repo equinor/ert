@@ -4,6 +4,7 @@ import os.path
 import stat
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given, settings
@@ -19,6 +20,17 @@ from ert.config.parsing import SchemaItemType
 from ert.substitution_list import SubstitutionList
 
 from .config_dict_generator import config_generators
+
+
+@pytest.fixture()
+def mock_eclrun():
+    with open("eclrun", "w", encoding="utf-8") as f:
+        f.write("""#!/usr/bin/env python\n\nprint("4 2 8")""")
+    os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
+    old_path = os.environ["PATH"]
+    os.environ["PATH"] = os.environ["PATH"] + os.pathsep + os.getcwd()
+    yield
+    os.environ["PATH"] = old_path
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -583,14 +595,15 @@ def test_that_forward_model_with_different_token_kinds_are_added():
     ] == [("job", 0), ("job", 1)]
 
 
+@pytest.mark.parametrize("eclipse_v", ["100", "300"])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_eclipse100_require_version_field():
+def test_that_eclipse_jobs_require_version_field(eclipse_v):
     test_config_file_name = "test.ert"
 
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
-        FORWARD_MODEL ECLIPSE100
+        FORWARD_MODEL ECLIPSE{eclipse_v}
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -598,9 +611,73 @@ def test_that_eclipse100_require_version_field():
 
     with pytest.raises(
         ConfigValidationError,
-        match=".*Forward model step ECLIPSE100 must be given a VERSION argument.*",
+        match=f".*Forward model step ECLIPSE{eclipse_v} must be given a VERSION argument.*",
     ):
         _ = ErtConfig.with_plugins().from_file(test_config_file_name)
+
+
+@pytest.mark.parametrize("eclipse_v", ["100", "300"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
+    ecl100_config_file_name = "ecl100_config.yml"
+    ecl300_config_file_name = "ecl300_config.yml"
+
+    ecl100_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
+    ecl300_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
+    ert_config_contents = (
+        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
+    )
+
+    # Write config file
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
+    # Write ecl100_config file
+    Path(ecl100_config_file_name).write_text(ecl100_config_content, encoding="utf-8")
+    # Write ecl300_config file
+    Path(ecl300_config_file_name).write_text(ecl300_config_content, encoding="utf-8")
+    with patch(
+        "ert.plugins.hook_implementations.forward_model_steps.ErtPluginManager"
+    ) as mock:
+        instance = mock.return_value
+        instance.get_ecl100_config_path.return_value = ecl100_config_file_name
+        instance.get_ecl300_config_path.return_value = ecl300_config_file_name
+        with pytest.raises(
+            ConfigValidationError,
+            match=rf".*Unavailable ECLIPSE{eclipse_v} version 1 current supported versions \['4', '2', '8'\].*",
+        ):
+            _ = ErtConfig.with_plugins().from_file(config_file_name)
+
+
+@pytest.mark.parametrize("eclipse_v", ["100", "300"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
+    eclipse_v,
+):
+    ert_config_contents = (
+        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
+    )
+
+    # Write config file
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
+
+    _ = ErtConfig.with_plugins().from_file(config_file_name)
+
+
+@pytest.mark.parametrize("eclipse_v", ["100", "300"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_no_error_thrown_when_checking_eclipse_version_and_no_ecl_config_defined(
+    eclipse_v, mock_eclrun
+):
+    ert_config_contents = (
+        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
+    )
+
+    # Write config file
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
+
+    _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):
