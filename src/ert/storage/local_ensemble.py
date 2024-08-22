@@ -181,6 +181,10 @@ class LocalEnsemble(BaseMode):
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
+    @property
+    def relative_weights(self) -> str:
+        return self._storage.get_experiment(self.experiment_id).relative_weights
+
     def get_realization_mask_without_failure(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations without any failure.

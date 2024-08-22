@@ -47,6 +47,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        self._relative_weights = weights
         self.weights = self.parse_weights(weights)
 
         self.target_ensemble_format = target_ensemble
@@ -98,10 +99,12 @@ class MultipleDataAssimilation(UpdateRunModel):
                     f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
+            sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
                 observations=self.ert_config.observations,
                 responses=self.ert_config.ensemble_config.response_configuration,
+                simulation_arguments=sim_args,
                 name=self.experiment_name,
             )
 
