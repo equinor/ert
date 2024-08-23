@@ -1,27 +1,25 @@
+import contextlib
 import os
+import shutil
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import (
-    QMessageBox,
-)
+from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.gui.simulation.experiment_panel import EnsembleExperimentPanel, ExperimentPanel
+from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.export.export_panel import ExportDialog
 from ert.libres_facade import LibresFacade
+from ert.run_models import EnsembleExperiment
 
-from .conftest import (
-    get_child,
-    wait_for_child,
-)
+from .conftest import get_child, wait_for_child
 
 
-@pytest.mark.parametrize("ensemble_select", ["default_0", "*"])
-def test_csv_export(esmda_has_run, qtbot, ensemble_select):
-    gui = esmda_has_run
-
+def export_data(gui, qtbot, ensemble_select, export_path="output.csv"):
     file_name = None
 
     def handle_export_dialog():
@@ -53,9 +51,13 @@ def test_csv_export(esmda_has_run, qtbot, ensemble_select):
     QTimer.singleShot(3000, handle_finished_box)
 
     gui.tools["Export data"].trigger()
-    assert file_name == "output.csv"
+    assert file_name == export_path
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
+    return file_name
+
+
+def verify_exported_content(file_name, gui, ensemble_select):
     file_content = Path(file_name).read_text(encoding="utf-8")
     ensemble_names = [ensemble_select]
     if ensemble_select == "*":
@@ -72,3 +74,45 @@ def test_csv_export(esmda_has_run, qtbot, ensemble_select):
                 f",{name},{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
                 in file_content
             )
+
+
+@pytest.mark.parametrize("ensemble_select", ["default_0", "*"])
+def test_csv_export(esmda_has_run, qtbot, ensemble_select):
+    gui = esmda_has_run
+
+    file_name = export_data(gui, qtbot, ensemble_select)
+    verify_exported_content(file_name, gui, ensemble_select)
+
+
+def run_experiment_and_export(gui, qtbot):
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    ensemble_experiment_panel = get_child(experiment_panel, EnsembleExperimentPanel)
+    ensemble_experiment_panel._ensemble_name_field.setText("iter-0")
+
+    # Avoids run path dialog
+    with contextlib.suppress(FileNotFoundError):
+        shutil.rmtree("poly_out")
+
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
+    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
+    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+
+
+def test_that_export_tool_does_not_produce_duplicate_data(
+    ensemble_experiment_has_run_no_failure, qtbot
+):
+    gui = ensemble_experiment_has_run_no_failure
+
+    run_experiment_and_export(gui, qtbot)
+
+    file_name = export_data(gui, qtbot, "*")
+
+    df = pd.read_csv(file_name)
+    # Make sure data is not duplicated.
+    assert df.iloc[0]["COEFFS:a"] != df.iloc[20]["COEFFS:a"]

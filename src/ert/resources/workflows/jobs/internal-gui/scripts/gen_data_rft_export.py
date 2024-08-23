@@ -1,4 +1,5 @@
 import contextlib
+import json
 import os
 
 import numpy
@@ -77,16 +78,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         storage,
         workflow_args,
     ):
-        """The run method will export the RFT's for all wells and all ensembles.
+        """The run method will export the RFT's for all wells and all ensembles."""
 
-        The successful operation of this method hinges on two naming
-        conventions:
-
-          1. All the GEN_DATA RFT observations have key RFT_$WELL
-          2. The trajectory files are in $trajectory_path/$WELL.txt
-             or $trajectory_path/$WELL_R.txt
-
-        """
         output_file = workflow_args[0]
         trajectory_path = workflow_args[1]
         ensemble_list = None if len(workflow_args) < 3 else workflow_args[2]
@@ -94,20 +87,18 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         wells = set()
 
-        ensemble_names = []
-        if ensemble_list is not None:
-            ensemble_names = ensemble_list.split(",")
+        # Parse the ensemble_list from JSON string to dictionary
+        ensemble_dict = json.loads(ensemble_list) if ensemble_list else {}
 
-        if len(ensemble_names) == 0:
+        if not ensemble_dict:
             raise UserWarning("No ensembles given to load from")
 
         data = []
-        for ensemble_name in ensemble_names:
-            ensemble_name = ensemble_name.strip()
-            ensemble_data = []
+        for ensemble_id, ensemble_info in ensemble_dict.items():
+            ensemble_name = ensemble_info["ensemble_name"]
 
             try:
-                ensemble = storage.get_ensemble_by_name(ensemble_name)
+                ensemble = storage.get_ensemble(ensemble_id)
             except KeyError as exc:
                 raise UserWarning(
                     f"The ensemble '{ensemble_name}' does not exist!"
@@ -130,6 +121,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     " GENERAL_OBSERVATIONS starting with RFT_*"
                 )
 
+            ensemble_data = []
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
@@ -154,8 +146,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     index=index,
                     columns=realizations,
                 )
-
-                realizations = ensemble.get_realization_list_with_responses()
 
                 # Trajectory
                 trajectory_file = os.path.join(trajectory_path, f"{well}.txt")
@@ -223,8 +213,12 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         trajectory_chooser = PathChooser(trajectory_model)
         trajectory_chooser.setObjectName("trajectory_chooser")
 
-        all_ensemble_list = [ensemble.name for ensemble in storage.ensembles]
-        list_edit = ListEditBox(all_ensemble_list)
+        ensemble_with_data_dict = {
+            ensemble.id: ensemble.name
+            for ensemble in storage.ensembles
+            if ensemble.has_data()
+        }
+        list_edit = ListEditBox(ensemble_with_data_dict)
         list_edit.setObjectName("list_of_ensembles")
 
         drop_const_columns_check = QCheckBox()
@@ -244,12 +238,21 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
-            ensemble_list = ",".join(list_edit.getItems())
+            ensemble_list = {
+                str(ensemble.id): {
+                    "ensemble_name": ensemble.name,
+                    "experiment_name": ensemble.experiment.name,
+                }
+                for ensemble in storage.ensembles
+                if ensemble.name in list_edit.getItems().values()
+            }
             with contextlib.suppress(ValueError):
                 return [
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
-                    ensemble_list,
+                    json.dumps(
+                        ensemble_list
+                    ),  # Return the ensemble list as a JSON string
                     drop_const_columns_check.isChecked(),
                 ]
 
