@@ -31,17 +31,12 @@ class StdDevPlot:
             heatmaps = []
             boxplot_axes = []
 
-            # Adjusted gridspec to allocate less space to boxplots
-            gridspec = figure.add_gridspec(2, ensemble_count, height_ratios=[3, 1])
+            # Adjust height_ratios to reduce space between plots
+            gridspec = figure.add_gridspec(2, ensemble_count, height_ratios=[4, 1])
 
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
-                # Create two subplots: one for heatmap, one for boxplot
-                ax_heat = figure.add_subplot(
-                    gridspec[0, i - 1]
-                )  # Heatmap in the upper row
-                ax_box = figure.add_subplot(
-                    gridspec[1, i - 1]
-                )  # Boxplot in the lower row
+                ax_heat = figure.add_subplot(gridspec[0, i - 1])
+                ax_box = figure.add_subplot(gridspec[1, i - 1])
 
                 data = std_dev_data[ensemble.name]
                 if data.size == 0:
@@ -58,69 +53,63 @@ class StdDevPlot:
                     vmin = min(vmin, float(np.min(data)))
                     vmax = max(vmax, float(np.max(data)))
 
-                    # Create heatmap with aspect='equal' to make it quadratic
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
                     heatmaps.append(im)
 
-                    # Create boxplot
-                    ax_box.boxplot(data.flatten(), vert=False, widths=0.5)
+                    ax_box.boxplot(data.flatten(), vert=True, widths=0.5)
                     boxplot_axes.append(ax_box)
 
-                    # Calculate min, mean, and max
                     min_value = np.min(data)
                     mean_value = np.mean(data)
                     max_value = np.max(data)
 
-                    # Create a combined annotation in the top-right corner
                     annotation_text = f"Min: {min_value:.2f}\nMean: {mean_value:.2f}\nMax: {max_value:.2f}"
                     ax_box.annotate(
                         annotation_text,
-                        xy=(1, 1),  # Top-right corner
+                        xy=(1, 1),  # Changed from (0, 1) to (1, 1)
                         xycoords="axes fraction",
-                        ha="right",
+                        ha="right",  # Changed from 'left' to 'right'
                         va="top",
-                        fontsize=10,
+                        fontsize=8,
                         fontweight="bold",
                         bbox={
                             "facecolor": "white",
                             "edgecolor": "black",
-                            "boxstyle": "round,pad=0.3",
+                            "boxstyle": "round,pad=0.2",
                         },
                     )
 
-                    # Remove the frame around the boxplot, except for the bottom spine
                     ax_box.spines["top"].set_visible(False)
                     ax_box.spines["right"].set_visible(False)
-                    ax_box.spines["left"].set_visible(False)
-                    ax_box.spines["bottom"].set_visible(True)
+                    ax_box.spines["bottom"].set_visible(False)
+                    ax_box.spines["left"].set_visible(True)
 
-                    # Remove y-axis ticks and labels
-                    ax_box.set_yticks([])
-                    ax_box.set_yticklabels([])
+                    ax_box.set_xticks([])
+                    ax_box.set_xticklabels([])
 
-                    # Only show xlabel for the bottom subplot
-                    ax_heat.set_xlabel("")
-                    ax_box.set_xlabel("Standard Deviation")
+                    ax_heat.set_ylabel("")
+                    ax_box.set_ylabel(
+                        "Standard Deviation", fontsize=8
+                    )  # Reduced font size
 
-                    # Add colorbar using _colorbar method
                     self._colorbar(im)
 
                 ax_heat.set_title(
                     f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
                     wrap=True,
+                    fontsize=10,  # Reduced font size
                 )
 
-            # Apply normalization to all heatmaps after determining global vmin and vmax
             norm = plt.Normalize(vmin, vmax)
             for im in heatmaps:
                 im.set_norm(norm)
 
-            # Set x-limits for all boxplots with padding
-            padding = 0.05 * (vmax - vmin)  # 5% padding on each side
+            padding = 0.05 * (vmax - vmin)
             for ax_box in boxplot_axes:
-                ax_box.set_xlim(vmin - padding, vmax + padding)
+                ax_box.set_ylim(vmin - padding, vmax + padding)
 
-            figure.tight_layout()
+            # Adjust the subplot parameters to reduce white space
+            figure.subplots_adjust(top=0.95, bottom=0.05, hspace=0.1)
 
     @staticmethod
     def _colorbar(mappable: Any) -> Any:
