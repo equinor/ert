@@ -1,6 +1,7 @@
 import logging
 import os
 import os.path
+import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
@@ -28,7 +29,13 @@ def mock_eclrun():
         f.write("""#!/usr/bin/env python\n\nprint("4 2 8")""")
     os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
     old_path = os.environ["PATH"]
-    os.environ["PATH"] = os.environ["PATH"] + os.pathsep + os.getcwd()
+    eclrun_path = shutil.which("eclrun")
+    if eclrun_path is None:
+        os.environ["PATH"] = old_path + os.pathsep + os.getcwd()
+    else:
+        os.environ["PATH"] = old_path.replace(
+            str(Path(eclrun_path).parent), os.getcwd()
+        )
     yield
     os.environ["PATH"] = old_path
 
@@ -350,7 +357,7 @@ def test_that_substitutions_can_be_done_in_job_names():
         """
         NUM_REALIZATIONS  1
         DEFINE <ECL100OR300> E100
-        FORWARD_MODEL ECLIPS<ECL100OR300>(<VERSION>=1, <NUM_CPU>=42, <OPTS>="-m")
+        FORWARD_MODEL ECLIPS<ECL100OR300>(<VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -557,7 +564,7 @@ def test_that_spaces_in_forward_model_args_are_dropped():
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        FORWARD_MODEL ECLIPSE100(<VERSION>=smersion                    , <NUM_CPU>=42)
+        FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -566,7 +573,7 @@ def test_that_spaces_in_forward_model_args_are_dropped():
     ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
-    assert job.private_args.get("<VERSION>") == "smersion"
+    assert job.private_args.get("<VERSION>") == "2024.1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -648,6 +655,7 @@ def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
             _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
+@pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
 @pytest.mark.parametrize("eclipse_v", ["100", "300"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
@@ -664,6 +672,7 @@ def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_pr
     _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
+@pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
 @pytest.mark.parametrize("eclipse_v", ["100", "300"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_no_error_thrown_when_checking_eclipse_version_and_no_ecl_config_defined(
