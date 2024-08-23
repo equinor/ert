@@ -106,6 +106,10 @@ class Scheduler:
         self._completed_jobs_num: int = 0
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
 
+        # this lock is to assure that no more than 1 task
+        # does internalization at a time
+        self._forward_model_ok_lock: asyncio.Lock = asyncio.Lock()
+
         self._cancelled = False
         if max_submit < 0:
             raise ValueError(

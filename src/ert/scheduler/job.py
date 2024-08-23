@@ -147,7 +147,8 @@ class Job:
             if self.returncode.result() == 0:
                 if self._scheduler._manifest_queue is not None:
                     await self._verify_checksum()
-                await self._handle_finished_forward_model()
+                async with self._scheduler._forward_model_ok_lock:
+                    await self._handle_finished_forward_model()
                 break
 
             if attempt < max_submit - 1:
