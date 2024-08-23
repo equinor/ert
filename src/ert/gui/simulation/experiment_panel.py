@@ -5,7 +5,7 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING, Any, List, Type
 
 from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QStandardItemModel
 from qtpy.QtWidgets import (
     QAction,
     QApplication,
@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
-from ..ertwidgets.combobox_with_description import QComboBoxWithDescription
+from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -148,16 +148,23 @@ class ExperimentPanel(QWidget):
         self._experiment_stack.addWidget(panel)
         experiment_type = panel.get_experiment_type()
         self._experiment_widgets[experiment_type] = panel
-        self._experiment_type_combo.addItem(
+        self._experiment_type_combo.addDescriptionItem(
             experiment_type.name(), experiment_type.description()
         )
 
         if not mode_enabled:
             item_count = self._experiment_type_combo.count() - 1
-            sim_item = self._experiment_type_combo.model().item(item_count)  # type: ignore
+            model = self._experiment_type_combo.model()
+            assert isinstance(model, QStandardItemModel)
+            sim_item = model.item(item_count)
+            assert sim_item is not None
             sim_item.setEnabled(False)
             sim_item.setToolTip("Both observations and parameters must be defined")
-            sim_item.setIcon(self.style().standardIcon(QStyle.SP_MessageBoxWarning))  # type: ignore
+            style = self.style()
+            assert style is not None
+            sim_item.setIcon(
+                style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning)
+            )
 
         panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)

@@ -636,6 +636,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
+        qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
         assert combo_box.count() == 7
         combo_box.setCurrentIndex(5)
 
