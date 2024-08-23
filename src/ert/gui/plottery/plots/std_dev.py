@@ -47,10 +47,16 @@ class StdDevPlot:
                     images.append(data)
                     vmin = min(vmin, float(np.min(data)))
                     vmax = max(vmax, float(np.max(data)))
-                ax.set_title(
-                    f"{ensemble.experiment_name} : {ensemble.name} layer={layer}",
-                    wrap=True,
-                )
+
+                    # Calculate average standard deviation
+                    avg_std_dev = np.mean(data)
+
+                    # Add average standard deviation to the title
+                    ax.set_title(
+                        f"{ensemble.experiment_name}:{ensemble.name}\n"
+                        f"layer={layer}\n avg={avg_std_dev:.2f}",
+                        wrap=True,
+                    )
 
             norm = plt.Normalize(vmin, vmax)
             for ax, data in zip(axes, images):
