@@ -1,6 +1,5 @@
 import contextlib
 import os
-import re
 
 import numpy
 import pandas as pd
@@ -63,26 +62,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
      ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
                 if no list is provided the current ensemble is exported
 
-     infer_iteration: If True the script will try to infer the iteration number
-                by looking at the suffix of the ensemble name (i.e. default_2 = iteration 2)
-                If False the script will use the ordering of the ensemble list: the first
-                item will be iteration 0, the second item will be iteration 1...
     """
-
-    INFER_HELP = (
-        "<html>"
-        "If this is checked the iteration number will be inferred from the name i.e.:"
-        "<ul>"
-        "<li>ensemble_name -> iteration: 0</li>"
-        "<li>ensemble_name_0 -> iteration: 0</li>"
-        "<li>ensemble_name_2 -> iteration: 2</li>"
-        "<li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 2, 5</li>"
-        "</ul>"
-        "Leave this unchecked to set iteration number to the order of the listed ensembles:"
-        "<ul><li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 1, 2</li></ul>"
-        "<br/>"
-        "</html>"
-    )
 
     @staticmethod
     def getName():
@@ -91,15 +71,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
     @staticmethod
     def getDescription():
         return "Export gen_data RFT results into a single CSV file."
-
-    @staticmethod
-    def inferIterationNumber(ensemble_name):
-        pattern = re.compile("_([0-9]+$)")
-        match = pattern.search(ensemble_name)
-
-        if match is not None:
-            return int(match.group(1))
-        return 0
 
     def run(
         self,
@@ -119,8 +90,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         output_file = workflow_args[0]
         trajectory_path = workflow_args[1]
         ensemble_list = None if len(workflow_args) < 3 else workflow_args[2]
-        _ = True if len(workflow_args) < 4 else workflow_args[3]
-        drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
+        drop_const_cols = False if len(workflow_args) < 4 else bool(workflow_args[3])
 
         wells = set()
 
@@ -257,12 +227,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         list_edit = ListEditBox(all_ensemble_list)
         list_edit.setObjectName("list_of_ensembles")
 
-        infer_iteration_check = QCheckBox()
-        infer_iteration_check.setChecked(True)
-        infer_iteration_check.setToolTip(GenDataRFTCSVExportJob.INFER_HELP)
-
         drop_const_columns_check = QCheckBox()
         drop_const_columns_check.setChecked(False)
+        drop_const_columns_check.setObjectName("drop_const_columns_check")
         drop_const_columns_check.setToolTip(
             "If checked, exclude columns whose value is the same for every entry"
         )
@@ -270,7 +237,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Trajectory file", trajectory_chooser)
         dialog.addLabeledOption("List of ensembles to export", list_edit)
-        dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
         dialog.addButtons()
@@ -284,7 +250,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
                     ensemble_list,
-                    infer_iteration_check.isChecked(),
                     drop_const_columns_check.isChecked(),
                 ]
 

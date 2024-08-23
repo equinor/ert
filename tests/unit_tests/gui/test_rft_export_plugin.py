@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QCheckBox, QMessageBox
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
@@ -102,6 +102,10 @@ def test_rft_csv_export_plugin_exports_rft_data(
             trajectory_field._model.setValue(".")
             list_field = get_child(dialog, ListEditBox, name="list_of_ensembles")
             list_field._list_edit_line.setText("default")
+            drop_constant = get_child(
+                dialog, QCheckBox, name="drop_const_columns_check"
+            )
+            drop_constant.setChecked(True)
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
         plugin_tool = gui.tools["Plugins"]
