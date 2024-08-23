@@ -1,4 +1,5 @@
 import os
+import warnings
 from subprocess import PIPE, Popen, TimeoutExpired
 
 import pytest
@@ -26,7 +27,7 @@ ecl_run = import_from_location(
 )
 
 
-def _find_system_pipe_max_size():
+def _find_system_pipe_max_size() -> int:
     """This method finds the limit of the system pipe-buffer which
     might be taken into account when using subprocesses with pipes."""
     p = Popen(["dd", "if=/dev/zero", "bs=1"], stdin=PIPE, stdout=PIPE)
@@ -34,12 +35,15 @@ def _find_system_pipe_max_size():
         p.wait(timeout=1)
     except TimeoutExpired:
         p.kill()
+        assert p.stdout is not None
         return len(p.stdout.read())
 
-    return None
+    return 2**16
 
 
+warnings.simplefilter("ignore", ResourceWarning)
 _maxBytes = _find_system_pipe_max_size() - 1
+warnings.resetwarnings()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
