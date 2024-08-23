@@ -363,7 +363,7 @@ def _run_snake_oil(source_root):
         [
             ENSEMBLE_EXPERIMENT_MODE,
             "--disable-monitor",
-            "--current-case",
+            "--current-ensemble",
             "default_0",
             "snake_oil.ert",
         ],
