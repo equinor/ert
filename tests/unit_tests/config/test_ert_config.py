@@ -444,7 +444,7 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
             ConfigValidationError,
             match="Unsupported non UTF-8 character "
             f"'ÿ' found in file: {data_file_path!r}",
-        ):
+        ), pytest.warns(match="Failed to read NUM_CPU"):
             ErtConfig.from_file("config.ert")
 
 

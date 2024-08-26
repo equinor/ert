@@ -1,4 +1,3 @@
-import warnings
 from textwrap import dedent
 
 import hypothesis.strategies as st
@@ -265,13 +264,12 @@ ANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"""
     ],
 )
 def test_incorrect_variable_deprecation_warning(config, expected):
-    with warnings.catch_warnings(record=True) as all_warnings:
-        _ = AnalysisConfig.from_dict(
+    with pytest.warns(match=expected):
+        AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [config],
             }
         )
-    assert expected in [str(warning.message) for warning in all_warnings]
 
 
 @pytest.mark.parametrize(
