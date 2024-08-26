@@ -531,8 +531,9 @@ class ErtConfig:
                 manifest[f"{name}_UNSMRY"] = f"{input_file}.UNSMRY"
                 manifest[f"{name}_SMSPEC"] = f"{input_file}.SMSPEC"
             if isinstance(respons_config, GenDataConfig):
-                if respons_config.report_steps and iens in respons_config.report_steps:
-                    manifest[name] = input_file.replace("%d", str(iens))
+                if respons_config.report_steps:
+                    for step in respons_config.report_steps:
+                        manifest[f"{name}_{step}"] = input_file.replace("%d", str(step))
                 elif "%d" not in input_file:
                     manifest[name] = input_file
         return manifest
