@@ -40,15 +40,15 @@ start_tests () {
 
     pushd ${CI_TEST_ROOT}/tests
 
-    pytest tests --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
+    pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
-    pytest tests --eclipse-simulator -v --mpl \
+    pytest --eclipse-simulator -v --mpl \
         -m "not limit_memory and requires_window_manager" --benchmark-disable
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
     export OMP_NUM_THREADS=1
 
-    python -m pytest -n 2 --durations=0 -m "limit_memory" --memray
+    pytest -n 2 --durations=0 -m "limit_memory" --memray
 
     unset OMP_NUM_THREADS
 
