@@ -5,10 +5,10 @@ Forward Model Jobs
 ******************
 
 Some of the forward models are connected and often the output of one is the
-input to another. However they maintain the same format, and thus a subset
-of the jobs can be run independently (e.g. if well_constraints is not
-necessary, it can be omitted. If well_order is not a concern, the input to
-the well_constraints can be setup and copied (in the everest configuration),
+input to another. However, they maintain the same format, and thus a subset
+of the jobs can be run independently. For example, if well_constraints is not
+necessary, it can be omitted, and if well_order is not a concern, the input to
+the well_constraints can be setup and copied (in the everest configuration,
 rather than using the drill_planner every time).
 Some of them are however mandatory, e.g. the add_templates is a prerequisite
 for the schmerge job.
@@ -605,9 +605,9 @@ In the above example of the forward model section of the config file:
 
 * The file ``wc_wells.json`` is a direct output of the ``well_constraint`` job.
 * The ``add_templates`` job uses the same file ``wc_wells.json`` as an input for the job.
-* The ``wc_wells.json file`` is not modified by the user. Any modification to this file should be done using a custom job see the section :ref:`cha_creating_custom_jobs` for more information on how to do that.
+* The ``wc_wells.json`` file is not modified by the user. Any modification to this file should be done using a custom job (see the section :ref:`cha_creating_custom_jobs` for more information on how to do that).
 
-If the file is to be modified by a custom job the everest config should contain:
+If the file is to be modified by a custom job, the everest config should contain:
 
 .. code-block:: yaml
 
@@ -681,7 +681,7 @@ If the file is to be modified by a custom job the everest config should contain:
     ]
 
 The add_templates job will search in the file ``wc_wells.json`` for the keys defined by the user in the config file ``at_config.yml``
-and where the keys are present the job will add the corresponding template file.  The resulting output ``at_wells.json`` has the following form
+and where the keys are present the job will add the corresponding template file.  The resulting output ``at_wells.json`` has the following form:
 
 ``at_wells.json``
 
@@ -763,9 +763,7 @@ For the following entry in the ``at_wells.json``:
         ]
       }
 
-and the template ``wconprod.j2.html``
-
-``wconprod.j2.html``
+and the template ``wconprod.j2.html``:
 
 .. code-block:: jinja
 
@@ -829,7 +827,7 @@ Below a few default examples can be found:
       '{{ name }}' 'OPEN' /
     /
 
-More information regarding template design and usage can be found `here <https://jinja.palletsprojects.com/templates/>`_
+More information regarding template design and usage can be found `here <https://jinja.palletsprojects.com/templates/>`_.
 
 .. _schmerge:
 
