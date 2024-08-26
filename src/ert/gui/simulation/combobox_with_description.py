@@ -21,15 +21,22 @@ COLOR_HIGHLIGHT_DARK = QColor(60, 60, 60, 255)
 
 class _ComboBoxItemWidget(QWidget):
     def __init__(
-        self, label: str, description: str, parent: Optional[QWidget] = None
+        self,
+        label: str,
+        description: str,
+        enabled: bool = True,
+        parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         layout = QVBoxLayout()
         layout.setSpacing(2)
         self.setStyleSheet("background: rgba(0,0,0,1);")
         self.label = QLabel(label)
+        color = "color: rgba(192,192,192,80);" if not enabled else ";"
+
         self.label.setStyleSheet(
-            """
+            f"""
+            {color}
             padding-top:5px;
             padding-left: 5px;
             background: rgba(0,0,0,0);
@@ -39,7 +46,8 @@ class _ComboBoxItemWidget(QWidget):
         )
         self.description = QLabel(description)
         self.description.setStyleSheet(
-            """
+            f"""
+            {color}
             padding-bottom: 10px;
             padding-left: 10px;
             background: rgba(0,0,0,0);
@@ -60,16 +68,18 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
 
-        if (
-            option.state & QStyle.StateFlag.State_Selected
-            or option.state & QStyle.StateFlag.State_MouseOver
+        is_enabled = option.state & QStyle.State_Enabled  # type: ignore
+
+        if is_enabled and (
+            option.state & QStyle.State_Selected  # type: ignore
+            or option.state & QStyle.State_MouseOver  # type: ignore
         ):
             color = COLOR_HIGHLIGHT_LIGHT
             if option.palette.text().color().value() > 150:
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(label, description)
+        widget = _ComboBoxItemWidget(label, description, is_enabled)
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 
