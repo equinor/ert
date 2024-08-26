@@ -246,7 +246,7 @@ class Snapshot:
         return [
             int(real_idx)
             for real_idx, real_data in self._realization_states.items()
-            if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
+            if real_data.get(ids.STATUS, "") == state.REALIZATION_STATE_FINISHED
         ]
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
