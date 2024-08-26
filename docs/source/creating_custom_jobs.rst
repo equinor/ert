@@ -29,7 +29,7 @@ Examples
 --------
 
 This section outlines a few examples of jobs you might want to implement.
-These examples are focussed on manipulating the optimizers output values concerning well priority
+These examples are focussed on manipulating the optimizers output values concerning well priority.
 
 All examples assume you have the following python dictionary in memory:
 
@@ -53,7 +53,7 @@ A group of wells first
 ----------------------
 
 In this example, we have a group of wells that we would like to be drilled first, in order of their priority.
-Then all the other wells will be added afterwards, again in the other of their priority.
+Then all the other wells will be added afterwards, again in the order of their priority.
 
 Given an extra list of wells that should be the highest priority,
 an implementation of this behaviour could be:
@@ -127,16 +127,16 @@ and make the python file execute the code when called as follows:
   PROD6: 2
   PROD7: 1
 
-Where you can see the group has been correctly shifted to the front.
+where you can see the group has been correctly shifted to the front.
 
 This can be expanded by loading both ``well_priorities`` and ``first_wells`` from files or from input arguments of the job.
 
-Highest priority in group Nth
+Highest priority in Nth spot
 -----------------------------
 
 In this example, we want to always put the highest priority well from a group of wells on spot ``N`` in the order.
 So the highest priority well could be pushed down to spot ``N``.
-Note that ``N`` will be zero-indexed in this example, so if we want to give a well the top spot ``N = 0``
+Note that ``N`` will be zero-indexed in this example, so if we want to give a well the top spot, ``N = 0``.
 
 Given a priority_number and a list of candidates:
 
@@ -155,7 +155,7 @@ Given a priority_number and a list of candidates:
       return new_priorities
 
 Where we first determine the ``best_candidate`` by picking the highest priority one.
-Then we remove that one from the original order, and insert it in spot number ``prio_num``.
+Then we remove that one from the original order and insert it in spot number ``prio_num``.
 Then we assign ``new_priorities`` by using previous priority values based on the new order of wells.
 
 We can then store these new priorities in an ``output_filename``
@@ -243,8 +243,8 @@ In this piece of code, we make use of ``itertools``' ``cycle`` and ``islice`` fu
 Where ``cycle`` is used to endlessly repeat a list (in this case the "cycle" list inside ``config``)
 and ``islice`` is used to limit the length of this ``cycle`` to the number of wells.
 
-Then well names in the various groups are sorted based on priority (highest priority last)
-and the last element of a group is popped off based on the index of ``well_cycle``
+Then, well names in the various groups are sorted based on priority (highest priority last)
+and the last element of a group is popped off based on the index of ``well_cycle``.
 
 The ``leftovers`` from when the cycle can no longer be adhered to
 (group has no more wells) are sorted based on priority (highest first) and added at the end of ``new_order``.
@@ -290,4 +290,4 @@ and make the python file execute the code when called as follows:
   INJ3: 2
   PROD7: 1
 
-Where you can see the "two producer, one injector" cycle has been successfully applied.
+where you can see the "two producer, one injector" cycle has been successfully applied.

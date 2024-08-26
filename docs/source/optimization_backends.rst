@@ -5,14 +5,14 @@ Optimization backends
 *********************
 
 Everest offers the possibility to specify the backend used for optimization with
-the `backend` keyword. Everest will check if the requested backend is installed,
+the `backend` keyword. Everest will check if the requested backend is installed
 and if the algorithm specified by the `algorithm` keyword is supported. The
 general optimization options, like `convergence_tolerance` are handled
 appropiately by the backend, and backend specific options can be passed using
 the `options` or `backend_options` keywords.
 
 Out of the box, Everest supports Dakota and SciPy backends, provided their
-corresponding prerequisites are installed, i.e. provided Dakota and/or Scipy are
+corresponding prerequisites are installed, i.e., provided Dakota and/or Scipy are
 installed. Additional backends may be installed in your local installation,
 consult your systems manager for options.
 

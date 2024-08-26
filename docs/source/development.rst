@@ -18,10 +18,10 @@ client component.
     :width: 700px
     :alt: Everest architecture
 
-Every time an optimization instance is ran by a user the client component of the
-application spawns an instance of the server component is started either on a
-cluster node using LSF when the `queue_system` is defined to be *lsf* or on the
-client's machine when the `queue_system` is defined to be *local*.
+Every time an optimization instance is ran by a user, the client component of the
+application spawns an instance of the server component, which is started either on a
+cluster node using LSF (when the `queue_system` is defined to be *lsf*) or on the
+client's machine (when the `queue_system` is defined to be *local*).
 
 Communication between the two components is done via an HTTP API.
 

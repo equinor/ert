@@ -29,7 +29,7 @@ The value of a variable can be set in three different ways:
        definitions:
            tol: 0.0001
 
-2. Everest pre-defines the following of variables:
+2. Everest pre-defines the following variables:
 
    .. code-block:: yaml
 
