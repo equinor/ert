@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 UserRole = Qt.ItemDataRole.UserRole
 NodeRole = UserRole + 1
 RealJobColorHint = UserRole + 2
-RealStatusColorHint = UserRole + 3
 RealLabelHint = UserRole + 4
 ProgressRole = UserRole + 5
 FileRole = UserRole + 6
@@ -269,10 +268,10 @@ class SnapshotModel(QAbstractItemModel):
                 real_node.add_child(job_node)
 
         if iter_ in self.root.children:
-            self.modelAboutToBeReset.emit()
-            self.root.children[iter_] = snapshot_tree
+            self.beginResetModel()
             snapshot_tree.parent = self.root
-            self.modelReset.emit()
+            self.root.children[iter_] = snapshot_tree
+            self.endResetModel()
             return
 
         parent = QModelIndex()
@@ -382,8 +381,6 @@ class SnapshotModel(QAbstractItemModel):
             return node.id_
         if role == IterNum:
             return node.parent.id_ if node.parent else None
-        if role == RealStatusColorHint:
-            return node.data.real_status_color
         if role == StatusRole:
             return node.data.status
         if role == MemoryUsageRole:
@@ -491,7 +488,7 @@ class SnapshotModel(QAbstractItemModel):
 
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
         try:
-            child_item = parent_item.children_list[row]
+            child_item = list(parent_item.children.values())[row]
         except KeyError:
             return QModelIndex()
         else:
