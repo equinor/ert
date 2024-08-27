@@ -685,8 +685,13 @@ def test_that_no_error_thrown_when_checking_eclipse_version_and_no_ecl_config_de
     # Write config file
     config_file_name = "test.ert"
     Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
-
-    _ = ErtConfig.with_plugins().from_file(config_file_name)
+    with patch(
+        "ert.plugins.hook_implementations.forward_model_steps.ErtPluginManager"
+    ) as mock:
+        instance = mock.return_value
+        instance.get_ecl100_config_path.return_value = None
+        instance.get_ecl300_config_path.return_value = None
+        _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):
