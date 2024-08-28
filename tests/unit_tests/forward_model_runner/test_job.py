@@ -59,7 +59,7 @@ def test_memory_usage_counts_grandchildren():
                 parent = os.fork()
                 if not parent:
                     os.execv(sys.argv[-2], [sys.argv[-2], str(counter - 1)])
-            time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
+            time.sleep(1)"""  # Too low sleep will make the test faster but flaky
             )
         )
     executable = os.path.realpath(scriptname)
@@ -80,9 +80,15 @@ def test_memory_usage_counts_grandchildren():
                 max_seen = max(max_seen, status.memory_status.max_rss)
         return max_seen
 
+    # size of the list that gets forked. we will use this when
+    # comparing the memory used with different amounts of forks done.
+    # subtract a little bit (* 0.9) due to natural variance in memory used
+    # when running the program.
+    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e6 * 0.9
+
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
-    assert max_seens[0] < max_seens[1]
-    assert max_seens[1] < max_seens[2]
+    assert max_seens[0] + memory_per_numbers_list < max_seens[1]
+    assert max_seens[1] + memory_per_numbers_list < max_seens[2]
 
 
 @pytest.mark.flaky(reruns=3)
