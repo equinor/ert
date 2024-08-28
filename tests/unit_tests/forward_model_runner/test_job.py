@@ -6,12 +6,12 @@ import textwrap
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-from unittest.mock import PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 import pytest
 
-from _ert_forward_model_runner.job import Job, _get_oom_score_for_processtree
+from _ert_forward_model_runner.job import Job, _get_rss_and_oom_score_for_processtree
 from _ert_forward_model_runner.reporting.message import Exited, Running, Start
 
 
@@ -53,12 +53,12 @@ def test_memory_usage_counts_grandchildren():
             import sys
             import time
 
-            counter = int(sys.argv[1])
+            counter = int(sys.argv[-1])
             numbers = list(range(int(1e6)))
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[0], [sys.argv[0], str(counter - 1)])
+                    os.execv(sys.argv[-2], [sys.argv[-2], str(counter - 1)])
             time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
             )
         )
@@ -158,6 +158,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
         """A very lightweight mocked psutil.Process object"""
 
         pid: int
+        memory_info = MagicMock()
 
         def children(self, recursive: bool = True):
             if self.pid == 123:
@@ -171,7 +172,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
-        oom_score = _get_oom_score_for_processtree(MockedProcess(123))
+        (_, oom_score) = _get_rss_and_oom_score_for_processtree(MockedProcess(123))
 
     assert oom_score == 456
 
