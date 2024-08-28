@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -20,6 +19,7 @@ from typing import (
     Sequence,
 )
 
+import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.async_utils import get_running_loop
@@ -330,8 +330,8 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "r", encoding="utf-8") as fp:
-            data = json.load(fp)
-        with open(jobs_path, "w", encoding="utf-8") as fp:
+        with open(jobs_path, "rb") as fp:
+            data = orjson.loads(fp.read())
+        with open(jobs_path, "wb") as fp:
             data.update(asdict(jobs))
-            json.dump(data, fp, indent=4)
+            fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))

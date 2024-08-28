@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
+import orjson
 import pytest
 
 from ert.config import ConfigValidationError, ErtConfig
@@ -547,7 +548,8 @@ def test_num_cpu_subst(
     _create_runpath(config, storage)
 
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
-        assert f'"argList": ["{numcpu}"]' in f.read()
+        jobs = orjson.loads(f.read())
+        assert [str(numcpu)] == jobs["jobList"][0]["argList"]
 
 
 @pytest.mark.parametrize(
