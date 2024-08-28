@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
 
+import orjson
 from numpy.random import SeedSequence
 
 from .config import ParameterConfig
@@ -207,12 +208,14 @@ def create_run_path(
             forward_model_output = ert_config.forward_model_data_to_json(
                 run_arg.run_id, run_arg.iens, ensemble.iteration, context_env
             )
-            with open(run_path / "jobs.json", mode="w", encoding="utf-8") as fptr:
-                json.dump(forward_model_output, fptr)
+            with open(run_path / "jobs.json", mode="wb") as fptr:
+                fptr.write(
+                    orjson.dumps(forward_model_output, option=orjson.OPT_NON_STR_KEYS)
+                )
             # Write MANIFEST file to runpath use to avoid NFS sync issues
-            with open(run_path / "manifest.json", mode="w", encoding="utf-8") as fptr:
+            with open(run_path / "manifest.json", mode="wb") as fptr:
                 data = ert_config.manifest_to_json(run_arg.iens, run_arg.itr)
-                json.dump(data, fptr)
+                fptr.write(orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS))
 
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
