@@ -1,5 +1,6 @@
 import json
 from enum import IntEnum
+from functools import reduce
 from typing import Optional
 
 import numpy as np
@@ -196,6 +197,53 @@ class _EnsembleWidget(QWidget):
             tuple(self._ensemble.get_realization_list_with_responses()),
         )
 
+        scaling_ds = self._ensemble.load_observation_scaling_factors()
+
+        def _try_render_scaled_obs() -> None:
+            if scaling_ds is None:
+                return None
+
+            _obs_df = observation_ds.to_dataframe().reset_index()
+            # Should store scaling by response type
+            # and use primary key for the response to
+            # create the index key.
+            index_cols = list(
+                set(observation_ds.to_dataframe().reset_index().columns)
+                - {
+                    "observations",
+                    "std",
+                }
+            )
+
+            # Just to ensure report step comes first as in _es_update
+            if "report_step" in index_cols:
+                index_cols = ["report_step", "index"]
+
+            # for summary there is only "time"
+            index_key = ", ".join([str(_obs_df[x].values[0]) for x in index_cols])
+            scaling_factors = (
+                scaling_ds.sel(obs_key=observation_name, drop=True)
+                .sel(index=index_key, drop=True)["scaling_factor"]
+                .dropna(dim="input_group")
+                .values
+            )
+
+            cumulative_scaling: float = (
+                reduce(lambda x, y: x * y, scaling_factors) or 1.0
+            )
+
+            original_std = observation_ds.get("std")
+            assert original_std
+            ax.errorbar(
+                x="Scaled observation",
+                y=observation_ds.get("observations"),  # type: ignore
+                yerr=original_std * cumulative_scaling,
+                fmt=".",
+                linewidth=1,
+                capsize=4,
+                color="black",
+            )
+
         # check if the response is empty
         if bool(response_ds.dims):
             if response_name == "summary":
@@ -219,6 +267,7 @@ class _EnsembleWidget(QWidget):
                 capsize=4,
                 color="black",
             )
+            _try_render_scaled_obs()
 
             response_ds = response_ds.rename_vars({"values": "Responses"})
             sns.boxplot(response_ds.to_dataframe(), ax=ax)

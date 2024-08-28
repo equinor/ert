@@ -766,6 +766,7 @@ def _mock_load_observations_and_responses(
     global_std_scaling,
     auto_scale_observations,
     progress_callback,
+    ensemble,
 ):
     """
     Runs through _load_observations_and_responses with mocked values for
@@ -777,7 +778,7 @@ def _mock_load_observations_and_responses(
         mock_obs_n_responses.return_value = (S, observations, errors, obs_keys, indexes)
 
         return _load_observations_and_responses(
-            ensemble=None,
+            ensemble=ensemble,
             alpha=alpha,
             std_cutoff=std_cutoff,
             global_std_scaling=global_std_scaling,
@@ -788,7 +789,7 @@ def _mock_load_observations_and_responses(
         )
 
 
-def test_that_autoscaling_applies_to_scaled_errors():
+def test_that_autoscaling_applies_to_scaled_errors(storage):
     with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
         misfit_main.return_value = (
             np.array([2, 3]),
@@ -806,6 +807,8 @@ def test_that_autoscaling_applies_to_scaled_errors():
         global_std_scaling = 1
         progress_callback = lambda _: None
 
+        experiment = storage.create_experiment(name="dummyexp")
+        ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
         _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
             S=S,
             observations=observations,
@@ -817,6 +820,7 @@ def test_that_autoscaling_applies_to_scaled_errors():
             global_std_scaling=global_std_scaling,
             auto_scale_observations=[["obs1*"]],
             progress_callback=progress_callback,
+            ensemble=ensemble,
         )
 
         _, (_, scaled_errors_without_autoscale, _) = (
@@ -831,6 +835,7 @@ def test_that_autoscaling_applies_to_scaled_errors():
                 global_std_scaling=global_std_scaling,
                 auto_scale_observations=[],
                 progress_callback=progress_callback,
+                ensemble=ensemble,
             )
         )
 

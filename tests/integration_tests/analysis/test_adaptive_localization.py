@@ -1,3 +1,4 @@
+import shutil
 from textwrap import dedent
 
 import numpy as np
@@ -93,6 +94,95 @@ def test_that_adaptive_localization_works_with_a_single_observation():
 
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
+
+    _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_adaptive_localization_works_with_a_multiple_observations():
+    """ """
+
+    with open("observations", "w", encoding="utf-8") as file:
+        file.write(
+            """GENERAL_OBSERVATION POLY_OBS {
+        DATA       = POLY_RES;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data.txt;
+    };
+    GENERAL_OBSERVATION POLY_OBS1_1 {
+        DATA       = POLY_RES1;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data1.txt;
+    };
+    GENERAL_OBSERVATION POLY_OBS1_2 {
+        DATA       = POLY_RES2;
+        INDEX_LIST = 0,1,2,3,4;
+        OBS_FILE   = poly_obs_data2.txt;
+    };
+    """
+        )
+
+    with open("poly_eval.py", "w", encoding="utf-8") as file:
+        file.write(
+            """#!/usr/bin/env python3
+import json
+
+
+def _load_coeffs(filename):
+    with open(filename, encoding="utf-8") as f:
+        return json.load(f)["COEFFS"]
+
+
+def _evaluate(coeffs, x):
+    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+
+
+if __name__ == "__main__":
+    coeffs = _load_coeffs("parameters.json")
+    output = [_evaluate(coeffs, x) for x in range(10)]
+    with open("poly.out", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, output)))
+
+    with open("poly.out1", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, [x*2 for x in output])))
+
+    with open("poly.out2", "w", encoding="utf-8") as f:
+        f.write("\\n".join(map(str, [x*3 for x in output])))
+"""
+        )
+
+    shutil.copy("poly_obs_data.txt", "poly_obs_data1.txt")
+    shutil.copy("poly_obs_data.txt", "poly_obs_data2.txt")
+
+    with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
+        f.write(
+            """
+        QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 50
+
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+
+OBS_CONFIG observations
+REALIZATION_MEMORY 50mb
+
+NUM_REALIZATIONS 100
+MIN_REALIZATIONS 1
+
+GEN_KW COEFFS coeff_priors
+GEN_DATA POLY_RES RESULT_FILE:poly.out
+GEN_DATA POLY_RES1 RESULT_FILE:poly.out1
+GEN_DATA POLY_RES2 RESULT_FILE:poly.out2
+
+INSTALL_JOB poly_eval POLY_EVAL
+SIMULATION_JOB poly_eval
+
+ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
+ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
+
+ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
+ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
+"""
+        )
 
     _, _ = run_cli_ES_with_case("poly_localization_0.ert")
 
