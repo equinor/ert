@@ -307,6 +307,9 @@ def _load_observations_and_responses(
                 )
             )
 
+        # Recompute with updated scales
+        scaled_errors = errors * scaling
+
     update_snapshot = []
     for (
         obs_name,
