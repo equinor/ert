@@ -32,7 +32,7 @@ class StdDevPlot:
             boxplot_axes = []
 
             # Adjust height_ratios to reduce space between plots
-            gridspec = figure.add_gridspec(2, ensemble_count, height_ratios=[4, 1])
+            gridspec = figure.add_gridspec(2, ensemble_count)
 
             for i, ensemble in enumerate(plot_context.ensembles(), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
