@@ -1,4 +1,3 @@
-import os
 import time
 from collections import defaultdict
 from itertools import count
@@ -24,10 +23,6 @@ class Simulator(BatchSimulator):
     """Everest simulator: BatchSimulator"""
 
     def __init__(self, ever_config: EverestConfig, callback=None):
-        # TODO: remove when ert stops creating multiple log files
-        pwd = os.getcwd()
-        assert ever_config.output_dir is not None
-        os.chdir(ever_config.output_dir)
         self._ert_config = ErtConfig.with_plugins().from_dict(
             config_dict=everest2res(
                 ever_config, site_config=ErtConfig.read_site_config()
@@ -35,8 +30,6 @@ class Simulator(BatchSimulator):
         )
         controls_def = self._get_controls_def(ever_config)
         results_def = self._get_results_def(ever_config)
-        # TODO: remove when ert stops creating multiple log files
-        os.chdir(pwd)
 
         super(Simulator, self).__init__(
             self._ert_config, controls_def, results_def, callback=callback
