@@ -200,6 +200,26 @@ class LocalExperiment(BaseMode):
             ens for ens in self._storage.ensembles if ens.experiment_id == self.id
         )
 
+    def get_ensemble_by_name(self, name: str) -> LocalEnsemble:
+        """
+        Retrieves an ensemble by name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the ensemble to retrieve.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The ensemble associated with the given name.
+        """
+
+        for ens in self.ensembles:
+            if ens.name == name:
+                return ens
+        raise KeyError(f"Ensemble with name '{name}' not found")
+
     @property
     def metadata(self) -> Dict[str, Any]:
         path = self.mount_point / self._metadata_file
