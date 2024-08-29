@@ -103,9 +103,7 @@ class BatchSimulator:
             )
 
         for key in results:
-            ens_config.addNode(
-                GenDataConfig(name=key, input_file=f"{key}_%d", report_steps=[0])
-            )
+            ens_config.addNode(GenDataConfig(name=key, input_file=f"{key}"))
 
     def _setup_sim(
         self,
