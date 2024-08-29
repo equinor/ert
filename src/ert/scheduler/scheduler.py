@@ -106,10 +106,6 @@ class Scheduler:
         self._completed_jobs_num: int = 0
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
 
-        # this lock is to assure that no more than 1 task
-        # does internalization at a time
-        self._forward_model_ok_lock: asyncio.Lock = asyncio.Lock()
-
         self._cancelled = False
         if max_submit < 0:
             raise ValueError(
@@ -279,9 +275,13 @@ class Scheduler:
             scheduling_tasks.append(asyncio.create_task(self._update_avg_job_runtime()))
 
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
+        # this lock is to assure that no more than 1 task
+        # does internalization at a time
+        forward_model_ok_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
             self._job_tasks[iens] = asyncio.create_task(
-                job.run(sem, self._max_submit), name=f"job-{iens}_task"
+                job.run(sem, forward_model_ok_lock, self._max_submit),
+                name=f"job-{iens}_task",
             )
 
         try:

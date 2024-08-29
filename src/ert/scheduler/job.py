@@ -136,7 +136,12 @@ class Job:
                 timeout_task.cancel()
             sem.release()
 
-    async def run(self, sem: asyncio.BoundedSemaphore, max_submit: int = 1) -> None:
+    async def run(
+        self,
+        sem: asyncio.BoundedSemaphore,
+        forward_model_ok_lock: asyncio.Lock,
+        max_submit: int = 1,
+    ) -> None:
         self._requested_max_submit = max_submit
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
@@ -147,7 +152,7 @@ class Job:
             if self.returncode.result() == 0:
                 if self._scheduler._manifest_queue is not None:
                     await self._verify_checksum()
-                async with self._scheduler._forward_model_ok_lock:
+                async with forward_model_ok_lock:
                     await self._handle_finished_forward_model()
                 break
 
