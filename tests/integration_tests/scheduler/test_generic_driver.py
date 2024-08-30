@@ -120,7 +120,7 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     assert aborted_called
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=10)
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
     """Submits are allowed to be repeated for the same iens, and are to be
     handled according to FIFO, but this order cannot be guaranteed as it depends
