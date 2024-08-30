@@ -17,7 +17,7 @@ from qtpy.QtCore import QDir, QLocale, Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErrorInfo, ErtConfig
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
@@ -36,7 +36,7 @@ from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import Storage, open_storage
+from ert.storage import ErtStorageException, Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
@@ -93,6 +93,7 @@ def _start_initial_gui_window(
     logger = logging.getLogger(__name__)
     error_messages = []
     config_warnings = []
+    deprecations = []
     ert_config = None
 
     with warnings.catch_warnings(record=True) as all_warnings:
@@ -121,7 +122,17 @@ def _start_initial_gui_window(
                 and cast(ConfigWarning, w.message).info.is_deprecation
             ]
             error_messages += error.errors
-            logger.info("Error in config file shown in gui: '%s'", str(error))
+        if ert_config is not None:
+            try:
+                storage = open_storage(ert_config.ens_path, mode="w")
+            except ErtStorageException as err:
+                error_messages.append(
+                    ErrorInfo(f"Error opening storage in ENSPATH: {err}").set_context(
+                        ert_config.ens_path
+                    )
+                )
+        if error_messages:
+            logger.info(f"Error in config file shown in gui: {error_messages}")
             return (
                 Suggestor(
                     error_messages,
@@ -138,6 +149,7 @@ def _start_initial_gui_window(
                 None,
                 None,
             )
+    assert ert_config is not None
     config_warnings = [
         cast(ConfigWarning, w.message).info
         for w in all_warnings
@@ -160,7 +172,6 @@ def _start_initial_gui_window(
         logger.info("Suggestion shown in gui '%s'", msg)
     for msg in config_warnings:
         logger.info("Warning shown in gui '%s'", msg)
-    storage = open_storage(ert_config.ens_path, mode="w")
     _main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
     )

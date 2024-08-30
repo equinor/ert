@@ -519,7 +519,7 @@ def _storage_version(path: Path) -> int:
             return int(json.load(f)["version"])
     except KeyError as exc:
         raise NotImplementedError("Incompatible ERT Local Storage") from exc
-    except FileNotFoundError:
+    except FileNotFoundError as err:
         if _is_block_storage(path):
             return 0
         else:

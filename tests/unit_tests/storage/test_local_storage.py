@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import tempfile
 from dataclasses import dataclass, field
@@ -32,7 +33,7 @@ from ert.config.enkf_observation_implementation_type import (
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.storage import open_storage
+from ert.storage import ErtStorageException, open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -247,6 +248,14 @@ def test_open_storage_nested_dirs(tmp_path, caplog):
         assert storage.path.exists()
 
 
+def test_open_storage_with_corrupted_storage(tmp_path):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        storage.create_experiment().create_ensemble(name="prior", ensemble_size=1)
+    os.remove(tmp_path / "storage" / "index.json")
+    with pytest.raises(ErtStorageException, match="No index.json"):
+        open_storage(tmp_path / "storage", mode="w")
+
+
 def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
     tmp_path, caplog
 ):
@@ -255,7 +264,7 @@ def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
         storage._save_index()
 
     with pytest.raises(
-        RuntimeError,
+        ErtStorageException,
         match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
     ):
         open_storage(tmp_path, mode="r")
@@ -269,7 +278,7 @@ def test_that_open_storage_in_read_mode_with_older_version_throws_exception(
         storage._save_index()
 
     with pytest.raises(
-        RuntimeError,
+        ErtStorageException,
         match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
     ):
         open_storage(tmp_path, mode="r")
@@ -283,7 +292,7 @@ def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(
         storage._save_index()
 
     with pytest.raises(
-        RuntimeError,
+        ErtStorageException,
         match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
     ):
         open_storage(tmp_path, mode="w")
@@ -519,7 +528,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         # already opened with mode="w" somewhere else
         with patch(
             "ert.storage.local_storage.LocalStorage.LOCK_TIMEOUT", 0.0
-        ), pytest.raises(TimeoutError):
+        ), pytest.raises(ErtStorageException):
             open_storage(self.tmpdir + "/storage/", mode="w")
 
     @rule()
