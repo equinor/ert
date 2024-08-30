@@ -147,6 +147,27 @@ class LocalStorage(BaseMode):
 
         return self._experiments[uuid]
 
+    def get_experiment_by_name(self, name: str) -> LocalExperiment:
+        """
+        Retrieves an experiment by name.
+        Parameters
+        ----------
+        name : str
+            The name of the experiment to retrieve.
+        Returns
+        -------
+        local_experiment : LocalExperiment
+            The experiment associated with the given name.
+        Raises
+        ------
+        KeyError
+            If no experiment with the given name is found.
+        """
+        for exp in self._experiments.values():
+            if exp.name == name:
+                return exp
+        raise KeyError(f"Experiment with name '{name}' not found")
+
     def get_ensemble(self, uuid: Union[UUID, str]) -> LocalEnsemble:
         """
         Retrieves an ensemble by UUID.

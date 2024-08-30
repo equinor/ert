@@ -60,6 +60,21 @@ def test_create_experiment(tmp_path):
             assert index["name"] == "test-experiment"
 
 
+def test_that_loading_non_existing_experiment_throws(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage, pytest.raises(
+        KeyError, match="Experiment with name 'non-existing-experiment' not found"
+    ):
+        storage.get_experiment_by_name("non-existing-experiment")
+
+
+def test_that_loading_non_existing_ensemble_throws(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage, pytest.raises(
+        KeyError, match="Ensemble with name 'non-existing-ensemble' not found"
+    ):
+        experiment = storage.create_experiment(name="test-experiment")
+        experiment.get_ensemble_by_name("non-existing-ensemble")
+
+
 def test_that_saving_empty_responses_fails_nicely(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
