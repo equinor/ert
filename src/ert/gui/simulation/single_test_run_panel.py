@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 from qtpy import QtCore
 from qtpy.QtWidgets import QFormLayout, QLabel
@@ -37,5 +36,4 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         self.setLayout(layout)
 
     def get_experiment_arguments(self) -> Arguments:
-        ensemble_name = f"{datetime.now().strftime('%Y-%m-%dT%H%M')}"
-        return Arguments(TEST_RUN_MODE, ensemble_name, "single_test_run")
+        return Arguments(TEST_RUN_MODE, "ensemble", "single_test_run")
