@@ -3,6 +3,7 @@ import re
 from contextlib import ExitStack as does_not_raise
 from functools import partial
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,6 +21,7 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
+    _load_observations_and_responses,
     _load_param_ensemble_array,
     _save_param_ensemble_array_to_disk,
 )
@@ -745,3 +747,86 @@ def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storag
     assert list(ert_config.observations.keys()) == list(
         prior_ens.experiment.observations.keys()
     )
+
+
+def _mock_load_observations_and_responses(
+    S,
+    observations,
+    errors,
+    obs_keys,
+    indexes,
+    alpha,
+    std_cutoff,
+    global_std_scaling,
+    auto_scale_observations,
+    progress_callback,
+):
+    """
+    Runs through _load_observations_and_responses with mocked values for
+     _get_observations_and_responses
+    """
+    with patch(
+        "ert.analysis._es_update._get_observations_and_responses"
+    ) as mock_obs_n_responses:
+        mock_obs_n_responses.return_value = (S, observations, errors, obs_keys, indexes)
+
+        return _load_observations_and_responses(
+            ensemble=None,
+            alpha=alpha,
+            std_cutoff=std_cutoff,
+            global_std_scaling=global_std_scaling,
+            iens_active_index=np.array([True] * len(observations)),
+            selected_observations=obs_keys,
+            auto_scale_observations=auto_scale_observations,
+            progress_callback=progress_callback,
+        )
+
+
+def test_that_autoscaling_applies_to_scaled_errors():
+    with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
+        misfit_main.return_value = (
+            np.array([2, 3]),
+            np.array([1, 1]),  # corresponds to num obs keys in autoscaling group
+            np.array([1, 1]),
+        )
+
+        S = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+        observations = np.array([2, 4, 3, 3])
+        errors = np.array([1, 2, 1, 1])
+        obs_keys = np.array(["obs1_1", "obs1_2", "obs2", "obs2"])
+        indexes = np.array(["rs00", "rs0", "rs0", "rs1"])
+        alpha = 1
+        std_cutoff = 0.05
+        global_std_scaling = 1
+        progress_callback = lambda _: None
+
+        _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
+            S=S,
+            observations=observations,
+            errors=errors,
+            obs_keys=obs_keys,
+            indexes=indexes,
+            alpha=alpha,
+            std_cutoff=std_cutoff,
+            global_std_scaling=global_std_scaling,
+            auto_scale_observations=[["obs1*"]],
+            progress_callback=progress_callback,
+        )
+
+        _, (_, scaled_errors_without_autoscale, _) = (
+            _mock_load_observations_and_responses(
+                S=S,
+                observations=observations,
+                errors=errors,
+                obs_keys=obs_keys,
+                indexes=indexes,
+                alpha=alpha,
+                std_cutoff=std_cutoff,
+                global_std_scaling=global_std_scaling,
+                auto_scale_observations=[],
+                progress_callback=progress_callback,
+            )
+        )
+
+        assert scaled_errors_with_autoscale.tolist() == [2, 6]
+        assert scaled_errors_without_autoscale.tolist() == [1, 2]
