@@ -1,6 +1,5 @@
 import contextlib
 import shutil
-from datetime import datetime
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -38,4 +37,7 @@ def test_single_test_run_after_ensemble_experiment(
 
     storage = gui.notifier.storage
     assert "single_test_run" in [exp.name for exp in storage.experiments]
-    assert any(str(datetime.now().year) in ens.name for ens in storage.ensembles)
+    ensemble_names = [ens.name for ens in storage.ensembles]
+    assert "iter-0" in ensemble_names
+    # Default ensemble name when running single test run
+    assert "ensemble" in ensemble_names
