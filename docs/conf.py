@@ -68,7 +68,7 @@ nitpick_ignore = [
     ("py:class", "pydantic.types.PositiveInt"),
     ("py:class", "LibresFacade"),
     ("py:class", "pandas.core.frame.DataFrame"),
-    ("py:class", "websockets.legacy.server.WebSocketServerProtocol"),
+    ("py:class", "websockets.server.WebSocketServerProtocol"),
     ("py:class", "EnsembleReader"),
 ]
 nitpick_ignore_regex = [
