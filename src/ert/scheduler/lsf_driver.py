@@ -409,15 +409,20 @@ class LsfDriver(Driver):
                 await asyncio.sleep(self._poll_period)
                 continue
             current_jobids = list(self._jobs.keys())
-            process = await asyncio.create_subprocess_exec(
-                str(self._bjobs_cmd),
-                "-noheader",
-                "-o",
-                "jobid stat delimiter='^'",
-                *current_jobids,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    str(self._bjobs_cmd),
+                    "-noheader",
+                    "-o",
+                    "jobid stat delimiter='^'",
+                    *current_jobids,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            except FileNotFoundError as e:
+                logger.error(str(e))
+                return
 
             stdout, stderr = await process.communicate()
             if process.returncode:
