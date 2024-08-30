@@ -268,7 +268,7 @@ class OpenPBSDriver(Driver):
                 QSUB_CONNECTION_REFUSED,
             ),
             stdin=script.encode(encoding="utf-8"),
-            retries=self._num_pbs_cmd_retries,
+            total_attempts=self._num_pbs_cmd_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
@@ -298,7 +298,7 @@ class OpenPBSDriver(Driver):
             [str(self._qdel_cmd), str(job_id)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
-            retries=self._num_pbs_cmd_retries,
+            total_attempts=self._num_pbs_cmd_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )

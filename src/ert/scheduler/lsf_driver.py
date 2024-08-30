@@ -332,7 +332,7 @@ class LsfDriver(Driver):
                 bsub_with_args,
                 retry_on_empty_stdout=True,
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
-                retries=self._bsub_retries,
+                total_attempts=self._bsub_retries,
                 retry_interval=self._sleep_time_between_cmd_retries,
             )
             if not process_success:
@@ -384,7 +384,7 @@ class LsfDriver(Driver):
             _, process_message = await self._execute_with_retry(
                 bkill_with_args,
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
-                retries=3,
+                total_attempts=3,
                 retry_interval=self._sleep_time_between_cmd_retries,
                 exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
             )
@@ -496,7 +496,7 @@ class LsfDriver(Driver):
         success, output = await self._execute_with_retry(
             [f"{self._bjobs_cmd}", "-o exit_code", "-noheader", f"{job_id}"],
             retry_codes=(FLAKY_SSH_RETURNCODE,),
-            retries=3,
+            total_attempts=3,
             retry_interval=self._sleep_time_between_cmd_retries,
         )
 
@@ -514,7 +514,7 @@ class LsfDriver(Driver):
         success, output = await self._execute_with_retry(
             [f"{self._bhist_cmd}", "-l", "-n2", f"{job_id}"],
             retry_codes=(FLAKY_SSH_RETURNCODE,),
-            retries=3,
+            total_attempts=3,
             retry_interval=self._sleep_time_between_cmd_retries,
         )
 
@@ -534,7 +534,7 @@ class LsfDriver(Driver):
         _, process_message = await self._execute_with_retry(
             bhist_with_args,
             retry_codes=(FLAKY_SSH_RETURNCODE,),
-            retries=3,
+            total_attempts=3,
             retry_interval=self._sleep_time_between_cmd_retries,
             log_to_debug=False,
         )
