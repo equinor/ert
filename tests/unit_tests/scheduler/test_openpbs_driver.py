@@ -393,7 +393,7 @@ async def test_that_qsub_will_retry_and_fail(
     driver._num_pbs_cmd_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
-        f'failed after 2 retries with exit code {exit_code}.*error: "{error_msg}"'
+        f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg}"'
         if exit_code != 199
         else 'failed with exit code 199.*error: "Not recognized"'
     )

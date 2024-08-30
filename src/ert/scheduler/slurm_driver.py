@@ -209,7 +209,7 @@ class SlurmDriver(Driver):
                 sbatch_with_args,
                 retry_on_empty_stdout=True,
                 retry_codes=(),
-                retries=self._sbatch_retries,
+                total_attempts=self._sbatch_retries,
                 retry_interval=self._sleep_time_between_cmd_retries,
             )
             if not process_success:

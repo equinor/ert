@@ -80,7 +80,7 @@ class Driver(ABC):
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),
         stdin: Optional[bytes] = None,
-        retries: int = 1,
+        total_attempts: int = 1,
         retry_interval: float = 1.0,
         driverlogger: Optional[logging.Logger] = None,
         exit_on_msgs: Iterable[str] = (),
@@ -89,7 +89,7 @@ class Driver(ABC):
         _logger = driverlogger or logging.getLogger(__name__)
         error_message: Optional[str] = None
 
-        for _ in range(retries):
+        for _ in range(total_attempts):
             process = await asyncio.create_subprocess_exec(
                 *cmd_with_args,
                 stdin=asyncio.subprocess.PIPE if stdin else None,
@@ -139,7 +139,7 @@ class Driver(ABC):
 
             await asyncio.sleep(retry_interval)
         error_message = (
-            f'Command "{shlex.join(cmd_with_args)}" failed after {retries} retries '
+            f'Command "{shlex.join(cmd_with_args)}" failed after {total_attempts} attempts '
             f"with {outputs}"
         )
         _logger.error(error_message)
