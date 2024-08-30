@@ -25,7 +25,7 @@ from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent, from_json
 from websockets.datastructures import Headers, HeadersLike
 from websockets.exceptions import ConnectionClosedError
-from websockets.legacy.server import WebSocketServerProtocol
+from websockets.server import WebSocketServerProtocol
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
