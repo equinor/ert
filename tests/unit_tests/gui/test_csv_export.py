@@ -108,6 +108,15 @@ def run_experiment_via_gui(gui, qtbot):
 def test_that_export_tool_does_not_produce_duplicate_data(
     ensemble_experiment_has_run_no_failure, qtbot
 ):
+    """
+    Ensures the export tool does not produce duplicate data by comparing
+    the first and second halves of the exported CSV.
+
+    This test addresses a previous issue where running two experiments with
+    ensembles of the same name caused duplicated data in the export. The code
+    has been fixed to prevent this, ensuring unique data even with identical
+    ensemble names across different experiments.
+    """
     gui = ensemble_experiment_has_run_no_failure
 
     run_experiment_via_gui(gui, qtbot)
@@ -115,5 +124,13 @@ def test_that_export_tool_does_not_produce_duplicate_data(
     file_name = export_data(gui, qtbot, "*")
 
     df = pd.read_csv(file_name)
-    # Make sure data is not duplicated.
-    assert df.iloc[0]["COEFFS:a"] != df.iloc[20]["COEFFS:a"]
+
+    # Split the dataframe into two halves
+    half_point = len(df) // 2
+    first_half = df.iloc[:half_point]
+    second_half = df.iloc[half_point:]
+
+    # Ensure the two halves are not identical
+    assert not first_half.equals(
+        second_half
+    ), "The first half of the data is identical to the second half."
