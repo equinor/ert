@@ -170,10 +170,17 @@ the measurement and a minimum error of 0.10, which is equivalent to:
     ERROR_MIN   = 0.10;
  };
 
-The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
-The default error mode is RELMIN.
+.. _error_modes:
 
-ERT will crash if the total error associated with an observation is zero.
+Error modes for summary observations
+------------------------------------
+
+The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
+The default error mode for the :ref:`HISTORY_OBSERVATION <history_observation>`
+keyword is RELMIN, while the default for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
+keyword is ABS.
+
+ERT will not load an observation if the total error associated with an observation is zero.
 A zero error is incompatible with the logic used in the history matching
 process. Therefore, setting a minimum error is particularly important for
 observations that could happen to be zero. For example, if an observation is the
@@ -188,7 +195,9 @@ the updating process. Therefore, it is important to have consistency
 between setting up the errors and the degree of uncertainty in an
 observation.
 
-The default error mode and values can be changed as follows:
+The default error mode and values can be changed as follows, the examples
+show only HISTORY_OBSERVATION, but the configurtion is identical for
+SUMMARY_OBSERVATION:
 
 .. code-block:: none
 
