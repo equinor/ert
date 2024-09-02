@@ -105,6 +105,9 @@ def run_experiment_via_gui(gui, qtbot):
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
+from ert.storage import open_storage
+
+
 def test_that_export_tool_does_not_produce_duplicate_data(
     ensemble_experiment_has_run_no_failure, qtbot
 ):
@@ -124,6 +127,14 @@ def test_that_export_tool_does_not_produce_duplicate_data(
     file_name = export_data(gui, qtbot, "*")
 
     df = pd.read_csv(file_name)
+
+    # Make sure there are two identically named ensembles in two
+    # different experiments.
+    with open_storage("storage") as storage:
+        experiments = [exp.name for exp in storage.experiments]
+        ensembles = [ens.name for ens in storage.ensembles]
+        assert experiments == ["ensemble_experiment_0", "ensemble_experiment"]
+        assert ensembles == ["iter-0", "iter-0"]
 
     # Split the dataframe into two halves
     half_point = len(df) // 2
