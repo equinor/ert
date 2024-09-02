@@ -60,14 +60,14 @@ def _scale_translations(
     is_scale: bool,
     _min: float,
     _max: float,
-    scale_upper_range: float,
-    scale_lower_range: float,
+    lower_bound: float,
+    upper_bound: float,
     perturbation_type: PerturbationType,
 ) -> Tuple[float, float, int]:
     if not is_scale:
         return 1.0, 0.0, perturbation_type.value
-    scale = (_max - _min) / (scale_lower_range - scale_upper_range)
-    return scale, _min - scale_upper_range * scale, PerturbationType.SCALED.value
+    scale = (_max - _min) / (upper_bound - lower_bound)
+    return scale, _min - lower_bound * scale, PerturbationType.SCALED.value
 
 
 @dataclass
@@ -93,21 +93,21 @@ def _resolve_everest_control(
 ) -> Control:
     scaled_range = variable.scaled_range or group.scaled_range or (0, 1.0)
     auto_scale = variable.auto_scale or group.auto_scale
-    lower_bounds = group.min if variable.min is None else variable.min
-    upper_bounds = group.max if variable.max is None else variable.max
+    lower_bound = group.min if variable.min is None else variable.min
+    upper_bound = group.max if variable.max is None else variable.max
 
     scale, offset, perturbation_type = _scale_translations(
         auto_scale,
-        lower_bounds,  # type: ignore
-        upper_bounds,  # type: ignore
+        lower_bound,  # type: ignore
+        upper_bound,  # type: ignore
         *scaled_range,
         group.ropt_perturbation_type,
     )
     return Control(
         name=(group.name, variable.name),
         enabled=group.enabled if variable.enabled is None else variable.enabled,  # type: ignore
-        lower_bounds=lower_bounds,  # type: ignore
-        upper_bounds=upper_bounds,  # type: ignore
+        lower_bounds=lower_bound,  # type: ignore
+        upper_bounds=upper_bound,  # type: ignore
         perturbation_magnitudes=group.perturbation_magnitude
         if variable.perturbation_magnitude is None
         else variable.perturbation_magnitude,
