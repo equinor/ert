@@ -229,6 +229,10 @@ class LocalExperiment(BaseMode):
             return json.load(f)
 
     @property
+    def relative_weights(self) -> str:
+        return self.metadata.get("weights", "")
+
+    @property
     def name(self) -> str:
         return self._index.name
 
