@@ -180,6 +180,8 @@ The default error mode for the :ref:`HISTORY_OBSERVATION <history_observation>`
 keyword is RELMIN, while the default for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
 keyword is ABS.
 
+The default value for `ERROR_MIN` is 0.1.
+
 ERT will not load an observation if the total error associated with an observation is zero.
 A zero error is incompatible with the logic used in the history matching
 process. Therefore, setting a minimum error is particularly important for
