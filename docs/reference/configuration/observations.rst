@@ -118,156 +118,6 @@ Here are two examples:
     KEY      = GOPR:NESS;
  };
 
-.. _general_observation:
-
-GENERAL_OBSERVATION keyword
----------------------------
-
-The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
-type. This pair of observation and data types are typically
-used when you want to update something special which does not fit into
-any of the predefined types. Ert treats GENERAL_OBSERVATION (and also GEN_DATA)
-as a list of numbers with no particular structure.
-This is very flexible, but of course also a bit more complex to use:
-
-.. code-block:: none
-
- GENERAL_OBSERVATION GEN_OBS1 {
-    DATA     = SOME_FIELD;
-    RESTART  = 20;
-    OBS_FILE = some_file.txt;
- };
-
-This example shows a minimum GENERAL_OBSERVATION. The keyword DATA
-points to the GEN_DATA instance this observation is 'observing',
-RESTART gives the report step when this observation is active.
-OBS_FILE should be the name of a file with observation values,
-and the corresponding uncertainties. The file with observations should
-just be a plain text file with numbers in it, observations and
-corresponding uncertainties interleaved.
-
-An example of an ``OBS_FILE`` that defines three observations::
-
- 1.46 0.26
- 25.0 5.0
- 5.00 1.00
-
-In the example above it is assumed that the DATA
-instance we are observing (i.e. comparing with) has the same number of
-elements as the observation, i.e. three in this case. By using the
-keyword INDEX_LIST you can select the elements of the
-GEN_DATA instance you are interested in. Each index in INDEX_LIST
-points to a line number in the GEN_DATA result file (which has one number per line).
-Consider for example:
-
-.. code-block:: none
-
-   GENERAL_OBSERVATION GEN_OBS1 {
-      DATA       = SOME_FIELD;
-      INDEX_LIST = 0,3,9;
-      RESTART    = 20;
-      OBS_FILE   = some_file.txt;
-   };
-
-Here we use INDEX_LIST to indicate that we are interested in element
-0, 3 and 9 of the GEN_DATA instance::
-
-   GEN_DATA                     GEN_OBS1
-   ========                     ===========
-   1.56 <---------------------> 1.46  0.26
-   23.0        /--------------> 25.0   5.00
-   56.0        |    /---------> 5.00  1.00
-   27.0 <------/    |           ===========
-   0.2             |
-   1.56             |
-   1.78             |
-   6.78             |
-   9.00             |
-   4.50 <-----------/
-   ========
-
-
-If ``INDEX_LIST`` not defined, Ert assumes that the observations point
-to the first ``n`` ``GEN_DATA`` points:
-
-.. code-block:: none
-
-   GENERAL_OBSERVATION GEN_OBS1 {
-      DATA       = SOME_FIELD;
-      OBS_FILE   = some_file.txt;
-   };
-
-::
-
-   GEN_DATA                     GEN_OBS1
-   ========                     ===========
-   1.56 <---------------------> 1.46  0.26
-   23.0 <---------------------> 25.0   5.00
-   56.0 <---------------------> 5.00  1.00
-   27.0                         ===========
-   0.2
-   1.56
-   1.78
-   6.78
-   9.00
-   4.50
-   ========
-
-
-In addition to INDEX_LIST, it is possible to use INDEX_FILE which
-points to a plain text file with indices, one value per line.
-Finally, if your observation only has one value, you can
-embed it in the config object with VALUE and ERROR.
-
-Matching GEN_OBS and GEN_DATA
------------------------------
-
-It is important to match up the GEN_OBS observations with the
-corresponding GEN_DATA simulation data correctly. If no ``REPORT_STEP``
-and ``RESTART`` are provided to ``GEN_DATA`` and ``GENERAL_OBSERVATION``,
-respectively, they will be given a default ``REPORT_STEP``
-and ``RESTART`` of 0.
-
-As a concrete example, the ert configuration file could include this line:
-
-.. code-block:: none
-
-   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
-
-While the observation configuration file could include this:
-
-.. code-block:: none
-
-   GENERAL_OBSERVATION GEN_OBS1 {
-      DATA       = RFT_BH67;
-      OBS_FILE   = some_file.txt;
-   };
-
-Before ERT starts we expect there to be a file called ``some_file.txt``  with the
-observed values and the uncertainty. After the forward model has completed, ERT
-will load the responses from a file called ``rft_BH67``.
-
-If ``REPORT_STEP`` and ``RESTART`` are provided,
-the ``GEN_DATA`` result files must have an embedded ``%d`` to indicate the
-report step in them. To ensure that GEN_OBS and corresponding
-GEN_DATA values match up correctly only the RESTART method is allowed
-for GEN_OBS when specifying the time.
-So consider a setup like this::
-
-   -- Config file:
-   GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
-   ...                                                       /|\                /|\
-   ...                                                        |                  |
-   -- Observation file:                                       |                  |
-   GENERAL_OBSERVATION GEN_OBS1 {                             +------------------/
-      DATA       = RFT_BH67;                                  |
-      RESTART    = 20;   <------------------------------------/
-      OBS_FILE   = some_file.txt;
-   };
-
-Here we see that the observation is active at report step 20, and we
-expect the forward model to create a file rft_BH67_20 in each
-realization directory.
 
 .. _history_observation:
 
@@ -432,3 +282,155 @@ The items START and STOP set the start and stop of the segment in
 terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
 ERROR_MIN behave like before. If the segments overlap, they are
 computed in alphabetical order.
+
+
+.. _general_observation:
+
+GENERAL_OBSERVATION keyword
+---------------------------
+
+The GENERAL_OBSERVATION keyword is used together with the GEN_DATA
+type. This pair of observation and data types are typically
+used when you want to update something special which does not fit into
+any of the predefined types. Ert treats GENERAL_OBSERVATION (and also GEN_DATA)
+as a list of numbers with no particular structure.
+This is very flexible, but of course also a bit more complex to use:
+
+.. code-block:: none
+
+ GENERAL_OBSERVATION GEN_OBS1 {
+    DATA     = SOME_FIELD;
+    RESTART  = 20;
+    OBS_FILE = some_file.txt;
+ };
+
+This example shows a minimum GENERAL_OBSERVATION. The keyword DATA
+points to the GEN_DATA instance this observation is 'observing',
+RESTART gives the report step when this observation is active.
+OBS_FILE should be the name of a file with observation values,
+and the corresponding uncertainties. The file with observations should
+just be a plain text file with numbers in it, observations and
+corresponding uncertainties interleaved.
+
+An example of an ``OBS_FILE`` that defines three observations::
+
+ 1.46 0.26
+ 25.0 5.0
+ 5.00 1.00
+
+In the example above it is assumed that the DATA
+instance we are observing (i.e. comparing with) has the same number of
+elements as the observation, i.e. three in this case. By using the
+keyword INDEX_LIST you can select the elements of the
+GEN_DATA instance you are interested in. Each index in INDEX_LIST
+points to a line number in the GEN_DATA result file (which has one number per line).
+Consider for example:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      INDEX_LIST = 0,3,9;
+      RESTART    = 20;
+      OBS_FILE   = some_file.txt;
+   };
+
+Here we use INDEX_LIST to indicate that we are interested in element
+0, 3 and 9 of the GEN_DATA instance::
+
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0        /--------------> 25.0   5.00
+   56.0        |    /---------> 5.00  1.00
+   27.0 <------/    |           ===========
+   0.2             |
+   1.56             |
+   1.78             |
+   6.78             |
+   9.00             |
+   4.50 <-----------/
+   ========
+
+
+If ``INDEX_LIST`` not defined, Ert assumes that the observations point
+to the first ``n`` ``GEN_DATA`` points:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = SOME_FIELD;
+      OBS_FILE   = some_file.txt;
+   };
+
+::
+
+   GEN_DATA                     GEN_OBS1
+   ========                     ===========
+   1.56 <---------------------> 1.46  0.26
+   23.0 <---------------------> 25.0   5.00
+   56.0 <---------------------> 5.00  1.00
+   27.0                         ===========
+   0.2
+   1.56
+   1.78
+   6.78
+   9.00
+   4.50
+   ========
+
+
+In addition to INDEX_LIST, it is possible to use INDEX_FILE which
+points to a plain text file with indices, one value per line.
+Finally, if your observation only has one value, you can
+embed it in the config object with VALUE and ERROR.
+
+Matching GEN_OBS and GEN_DATA
+-----------------------------
+
+It is important to match up the GEN_OBS observations with the
+corresponding GEN_DATA simulation data correctly. If no ``REPORT_STEP``
+and ``RESTART`` are provided to ``GEN_DATA`` and ``GENERAL_OBSERVATION``,
+respectively, they will be given a default ``REPORT_STEP``
+and ``RESTART`` of 0.
+
+As a concrete example, the ert configuration file could include this line:
+
+.. code-block:: none
+
+   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67
+
+While the observation configuration file could include this:
+
+.. code-block:: none
+
+   GENERAL_OBSERVATION GEN_OBS1 {
+      DATA       = RFT_BH67;
+      OBS_FILE   = some_file.txt;
+   };
+
+Before ERT starts we expect there to be a file called ``some_file.txt``  with the
+observed values and the uncertainty. After the forward model has completed, ERT
+will load the responses from a file called ``rft_BH67``.
+
+If ``REPORT_STEP`` and ``RESTART`` are provided,
+the ``GEN_DATA`` result files must have an embedded ``%d`` to indicate the
+report step in them. To ensure that GEN_OBS and corresponding
+GEN_DATA values match up correctly only the RESTART method is allowed
+for GEN_OBS when specifying the time.
+So consider a setup like this::
+
+   -- Config file:
+   GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
+   ...                                                       /|\                /|\
+   ...                                                        |                  |
+   -- Observation file:                                       |                  |
+   GENERAL_OBSERVATION GEN_OBS1 {                             +------------------/
+      DATA       = RFT_BH67;                                  |
+      RESTART    = 20;   <------------------------------------/
+      OBS_FILE   = some_file.txt;
+   };
+
+Here we see that the observation is active at report step 20, and we
+expect the forward model to create a file rft_BH67_20 in each
+realization directory.
