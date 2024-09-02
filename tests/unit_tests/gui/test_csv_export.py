@@ -85,7 +85,7 @@ def test_csv_export(esmda_has_run, qtbot, ensemble_select):
     verify_exported_content(file_name, gui, ensemble_select)
 
 
-def run_experiment_and_export(gui, qtbot):
+def run_experiment_via_gui(gui, qtbot):
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
@@ -110,7 +110,7 @@ def test_that_export_tool_does_not_produce_duplicate_data(
 ):
     gui = ensemble_experiment_has_run_no_failure
 
-    run_experiment_and_export(gui, qtbot)
+    run_experiment_via_gui(gui, qtbot)
 
     file_name = export_data(gui, qtbot, "*")
 
