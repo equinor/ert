@@ -19,8 +19,9 @@ from ert.run_models import EnsembleExperiment
 from .conftest import get_child, wait_for_child
 
 
-def export_data(gui, qtbot, ensemble_select, export_path="output.csv"):
+def export_data(gui, qtbot, ensemble_select):
     file_name = None
+    export_path = "output.csv"
 
     def handle_export_dialog():
         nonlocal file_name
