@@ -184,6 +184,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             relative_iteration_weights_model,  # type: ignore
             continuous_update=True,
         )
+        self._relative_iteration_weights_box.setObjectName("weights_input_esmda")
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
         layout.addRow("Relative weights:", self._relative_iteration_weights_box)
 
