@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ENSEMBLE_SMOOTHER_GROUP = "Parameter update methods"
+
 
 class EnsembleSmoother(UpdateRunModel):
     def __init__(
@@ -113,3 +115,7 @@ class EnsembleSmoother(UpdateRunModel):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        return ENSEMBLE_SMOOTHER_GROUP

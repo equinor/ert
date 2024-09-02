@@ -27,6 +27,9 @@ def test_single_test_run_after_ensemble_experiment(
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")
 
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    simulation_mode_combo.setCurrentText("Single realization test-run")
+
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
     # The Run dialog opens, wait until done appears, then click done

@@ -197,6 +197,14 @@ class BaseRunModel(ABC):
     @abstractmethod
     def description(cls) -> str: ...
 
+    @classmethod
+    def group(cls) -> Optional[str]:
+        """Default value to prevent errors in children classes
+        since only SingleTestRun and EnsembleSmoother should
+        override it
+        """
+        return None
+
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
 

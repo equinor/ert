@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
     from .base_run_model import StatusEvents
 
+SINGLE_REALIZATION_GROUP = "Forward model evaluation"
+
 
 class SingleTestRun(EnsembleExperiment):
     """
@@ -50,3 +52,7 @@ class SingleTestRun(EnsembleExperiment):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate (one realization)"
+
+    @classmethod
+    def group(cls) -> str:
+        return SINGLE_REALIZATION_GROUP

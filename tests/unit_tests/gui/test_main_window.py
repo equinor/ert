@@ -175,6 +175,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         simulation_mode = get_child(gui, QComboBox, name="experiment_type")
+        simulation_mode.setCurrentIndex(0)
         run_experiment = get_child(gui, QToolButton, name="run_experiment")
 
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
@@ -682,3 +683,36 @@ def test_help_menu(qtbot):
         qtbot.mouseClick(
             get_child(about_dialog, QPushButton, name="close_button"), Qt.LeftButton
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_that_run_experiment_button_text_changes_when_manual_update(qtbot, storage):
+    """
+    This test validates that when the experiment type is manual update
+    the text of the run_experiment button is set to 'Execute Selected'
+    """
+    config_file = Path("config.ert")
+    config_file.write_text(
+        f"NUM_REALIZATIONS 1\nENSPATH {storage.path}\n", encoding="utf-8"
+    )
+
+    args_mock = Mock()
+    args_mock.config = str(config_file)
+
+    ert_config = ErtConfig.from_file(str(config_file))
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        qtbot.addWidget(gui)
+        simulation_mode = get_child(gui, QComboBox, name="experiment_type")
+        run_experiment = get_child(gui, QToolButton, name="run_experiment")
+
+        assert run_experiment.text() == "Run Experiment"
+        manual_update_idx = [
+            idx
+            for idx in range(simulation_mode.count())
+            if simulation_mode.itemText(idx) == "Manual update"
+        ]
+        simulation_mode.setCurrentIndex(manual_update_idx[0])
+        assert run_experiment.text() == "Execute Selected"

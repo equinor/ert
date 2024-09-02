@@ -14,6 +14,7 @@ from qtpy.QtWidgets import (
 
 LABEL_ROLE = -3994
 DESCRIPTION_ROLE = -4893
+GROUP_TITLE_ROLE = -4894
 
 COLOR_HIGHLIGHT_LIGHT = QColor(230, 230, 230, 255)
 COLOR_HIGHLIGHT_DARK = QColor(60, 60, 60, 255)
@@ -26,19 +27,34 @@ class _ComboBoxItemWidget(QWidget):
         description: str,
         enabled: bool = True,
         parent: Optional[QWidget] = None,
+        group: Optional[str] = None,
     ) -> None:
         super().__init__(parent)
         layout = QVBoxLayout()
-        layout.setSpacing(2)
+        layout.setSpacing(5)
         self.setStyleSheet("background: rgba(0,0,0,1);")
         self.label = QLabel(label)
         color = "color: rgba(192,192,192,80);" if not enabled else ";"
+        pd_top = "0px" if group else "5px"
+        if group:
+            self.group = QLabel(group)
+            self.group.setStyleSheet(
+                f"""
+                {color}
+                padding-top: 5px;
+                padding-left: 2px;
+                background: rgba(0,0,0,0);
+                font-style: italic;
+                font-size: 14px;
+            """
+            )
+            layout.addWidget(self.group)
 
         self.label.setStyleSheet(
             f"""
             {color}
-            padding-top:5px;
-            padding-left: 5px;
+            padding-top:{pd_top};
+            padding-left: 10px;
             background: rgba(0,0,0,0);
             font-weight: bold;
             font-size: 13px;
@@ -49,7 +65,7 @@ class _ComboBoxItemWidget(QWidget):
             f"""
             {color}
             padding-bottom: 10px;
-            padding-left: 10px;
+            padding-left: 15px;
             background: rgba(0,0,0,0);
             font-style: italic;
             font-size: 12px;
@@ -67,6 +83,7 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
 
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
+        group = index.data(GROUP_TITLE_ROLE)
 
         is_enabled = option.state & QStyle.State_Enabled  # type: ignore
 
@@ -79,7 +96,7 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(label, description, is_enabled)
+        widget = _ComboBoxItemWidget(label, description, is_enabled, group=group)
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 
@@ -90,9 +107,11 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
+        group = index.data(GROUP_TITLE_ROLE)
+        adjustment = QSize(0, 20) if group else QSize(0, 0)
 
-        widget = _ComboBoxItemWidget(label, description)
-        return widget.sizeHint()
+        widget = _ComboBoxItemWidget(label, description, group)
+        return widget.sizeHint() + adjustment
 
 
 class QComboBoxWithDescription(QComboBox):
@@ -100,10 +119,13 @@ class QComboBoxWithDescription(QComboBox):
         super().__init__(parent)
         self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
-    def addDescriptionItem(self, label: Optional[str], description: Any) -> None:
+    def addDescriptionItem(
+        self, label: Optional[str], description: Any, group: Optional[str] = None
+    ) -> None:
         super().addItem(label)
         model = self.model()
         assert model is not None
         index = model.index(self.count() - 1, 0)
         model.setData(index, label, LABEL_ROLE)
         model.setData(index, description, DESCRIPTION_ROLE)
+        model.setData(index, group, GROUP_TITLE_ROLE)
