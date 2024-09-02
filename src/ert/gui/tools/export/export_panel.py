@@ -64,7 +64,7 @@ class ExportDialog(CustomDialog):
         return self.output_path_model.getPath()
 
     @property
-    def ensemble_list(self) -> str:
+    def ensemble_data_as_json(self) -> str:
         ensembles = {
             str(ensemble.id): {
                 "ensemble_name": ensemble.name,

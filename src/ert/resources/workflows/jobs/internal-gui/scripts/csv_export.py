@@ -54,17 +54,19 @@ class CSVExportJob(ErtScript):
         workflow_args,
     ):
         output_file = workflow_args[0]
-        ensemble_list = None if len(workflow_args) < 2 else workflow_args[1]
+        ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
         _ = True if len(workflow_args) < 4 else workflow_args[3]
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
         facade = LibresFacade(ert_config)
 
-        ensemble_dict = json.loads(ensemble_list) if ensemble_list else {}
+        ensemble_data_as_dict = (
+            json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
+        )
 
         # Use the keys (UUIDs as strings) to get ensembles
         ensembles = []
-        for ensemble_id in ensemble_dict:
+        for ensemble_id in ensemble_data_as_dict:
             ensemble = self.storage.get_ensemble(ensemble_id)
             ensembles.append(ensemble)
 

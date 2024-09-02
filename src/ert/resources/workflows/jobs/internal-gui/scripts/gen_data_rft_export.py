@@ -60,7 +60,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-     ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
+     ensemble_data_as_json: a comma separated list of ensembles to export (no spaces allowed)
                 if no list is provided the current ensemble is exported
 
     """
@@ -82,19 +82,20 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         output_file = workflow_args[0]
         trajectory_path = workflow_args[1]
-        ensemble_list = None if len(workflow_args) < 3 else workflow_args[2]
+        ensemble_data_as_json = None if len(workflow_args) < 3 else workflow_args[2]
         drop_const_cols = False if len(workflow_args) < 4 else bool(workflow_args[3])
 
         wells = set()
 
-        # Parse the ensemble_list from JSON string to dictionary
-        ensemble_dict = json.loads(ensemble_list) if ensemble_list else {}
+        ensemble_data_as_dict = (
+            json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
+        )
 
-        if not ensemble_dict:
+        if not ensemble_data_as_dict:
             raise UserWarning("No ensembles given to load from")
 
         data = []
-        for ensemble_id, ensemble_info in ensemble_dict.items():
+        for ensemble_id, ensemble_info in ensemble_data_as_dict.items():
             ensemble_name = ensemble_info["ensemble_name"]
 
             try:
@@ -238,7 +239,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
-            ensemble_list = {
+            ensemble_data_as_dict = {
                 str(ensemble.id): {
                     "ensemble_name": ensemble.name,
                     "experiment_name": ensemble.experiment.name,
@@ -251,7 +252,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
                     json.dumps(
-                        ensemble_list
+                        ensemble_data_as_dict
                     ),  # Return the ensemble list as a JSON string
                     drop_const_columns_check.isChecked(),
                 ]

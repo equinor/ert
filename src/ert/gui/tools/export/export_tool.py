@@ -40,7 +40,7 @@ class ExportTool(Tool):
             self._run_export(
                 [
                     dialog.output_path,
-                    dialog.ensemble_list,
+                    dialog.ensemble_data_as_json,
                     dialog.design_matrix_path,
                     True,
                     dialog.drop_const_columns,
