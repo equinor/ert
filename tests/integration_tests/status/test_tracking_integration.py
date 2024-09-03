@@ -68,7 +68,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,progress,assert_present_in_snapshot"
+        "num_successful,num_iters,assert_present_in_snapshot"
     ),
     [
         pytest.param(
@@ -82,7 +82,6 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             0,
             1,
-            1.0,
             [
                 (".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FAILURE),
                 (
@@ -104,7 +103,6 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             1,
-            1.0,
             [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
             id="ee_poly_experiment",
         ),
@@ -119,7 +117,6 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             2,
-            1.0,
             [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
             id="ee_poly_smoother",
         ),
@@ -135,7 +132,6 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             1,
             # Fails halfway, due to unable to run update
-            0.5,
             [
                 (
                     "0",
@@ -159,7 +155,6 @@ def test_tracking(
     cmd_line_arguments,
     num_successful,
     num_iters,
-    progress,
     assert_present_in_snapshot,
     storage,
 ):
