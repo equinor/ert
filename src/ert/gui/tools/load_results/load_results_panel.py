@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QFormLayout, QMessageBox, QTextEdit, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -18,6 +18,8 @@ from ert.validation import IntegerArgument, RangeStringArgument
 
 
 class LoadResultsPanel(QWidget):
+    panelConfigurationChanged = Signal()
+
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self._facade = facade
         QWidget.__init__(self)
@@ -50,7 +52,10 @@ class LoadResultsPanel(QWidget):
             self._active_realizations_model,  # type: ignore
             "load_results_manually/Realizations",
         )
-        self._active_realizations_field.setValidator(RangeStringArgument())
+        self._active_realizations_field.setValidator(
+            RangeStringArgument(self._facade.get_ensemble_size()),
+        )
+        self._active_realizations_field.setObjectName("active_realizations_lrm")
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
         self._iterations_model = ValueModel(0)  # type: ignore
@@ -59,7 +64,15 @@ class LoadResultsPanel(QWidget):
             "load_results_manually/iterations",
         )
         self._iterations_field.setValidator(IntegerArgument(from_value=0))
+        self._iterations_field.setObjectName("iterations_field_lrm")
         layout.addRow("Iteration to load:", self._iterations_field)
+
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+            self.panelConfigurationChanged
+        )
+        self._iterations_field.getValidationSupport().validationChanged.connect(  # noqa
+            self.panelConfigurationChanged
+        )
 
         self.setLayout(layout)
 
@@ -69,6 +82,12 @@ class LoadResultsPanel(QWidget):
         run_path = run_path.replace("<ERTCASE>", current_ensemble)
         run_path = run_path.replace("<ERT-CASE>", current_ensemble)
         return run_path
+
+    def isConfigurationValid(self) -> bool:
+        return (
+            self._active_realizations_field.isValid()
+            and self._iterations_field.isValid()
+        )
 
     def load(self) -> int:
         selected_ensemble = self._notifier.current_ensemble

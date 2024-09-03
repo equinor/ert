@@ -33,6 +33,9 @@ class LoadResultsTool(Tool):
         if not self._import_widget._ensemble_selector.isEnabled():
             loadButton.setEnabled(False)
             loadButton.setToolTip("Must load into a ensemble")
+        self._import_widget.panelConfigurationChanged.connect(
+            self.validationStatusChanged
+        )
         self._dialog.exec_()
 
     def load(self, _: Any) -> None:
@@ -42,3 +45,10 @@ class LoadResultsTool(Tool):
         self._dialog.toggleButton(caption="Load", enabled=False)
         self._import_widget.load()
         self._dialog.accept()
+
+    def validationStatusChanged(self) -> None:
+        assert self._dialog is not None
+        assert self._import_widget is not None
+        self._dialog.toggleButton(
+            caption="Load", enabled=self._import_widget.isConfigurationValid()
+        )
