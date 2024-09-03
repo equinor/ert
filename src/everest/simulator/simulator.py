@@ -16,7 +16,7 @@ from everest.config.control_variable_config import (
     ControlVariableConfig,
     ControlVariableGuessListConfig,
 )
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 
 
 class Simulator(BatchSimulator):
@@ -24,7 +24,7 @@ class Simulator(BatchSimulator):
 
     def __init__(self, ever_config: EverestConfig, callback=None):
         self._ert_config = ErtConfig.with_plugins().from_dict(
-            config_dict=everest2res(
+            config_dict=everest_to_ert_config(
                 ever_config, site_config=ErtConfig.read_site_config()
             )
         )

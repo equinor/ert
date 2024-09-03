@@ -28,7 +28,7 @@ from everest.detached import (
     wait_for_server,
     wait_for_server_to_stop,
 )
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     DETACHED_NODE_DIR,
@@ -247,7 +247,7 @@ def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
         simulator_config.update({"name": name})
     everest_config.simulator = SimulatorConfig(**simulator_config)
     server_ert_config = generate_everserver_ert_config(everest_config)
-    ert_config = everest2res(everest_config)
+    ert_config = everest_to_ert_config(everest_config)
 
     server_queue_option = server_ert_config["QUEUE_OPTION"]
     run_queue_option = ert_config["QUEUE_OPTION"]

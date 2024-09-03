@@ -2,7 +2,7 @@ import pytest
 from ert.config import ErtConfig
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.suite import _EverestWorkflow
 from ropt.config.enopt import EnOptConfig
 
@@ -74,7 +74,7 @@ def test_config_multi_objectives():
 @tmpdir(CONFIG_DIR)
 def test_multi_objectives2res():
     config = EverestConfig.load_file(CONFIG_FILE)
-    res = everest2res(config, site_config=ErtConfig.read_site_config())
+    res = everest_to_ert_config(config, site_config=ErtConfig.read_site_config())
     ErtConfig.with_plugins().from_dict(config_dict=res)
 
 

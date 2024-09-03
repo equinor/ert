@@ -11,7 +11,7 @@ from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.well_config import WellConfig
 from everest.config.workflow_config import WorkflowConfig
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.util.forward_models import collect_forward_models
 
 from tests.utils import (
@@ -105,7 +105,7 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
 
     # For the test comparison to succeed the elements in the QUEUE_OPTION list must
     # come in the same order as the options in the _extract_slurm_options() function
-    # in everest2res.
+    # in everest_to_ert_config.
     def slurm_queue_system():
         return {
             "QUEUE_SYSTEM": "SLURM",
@@ -216,7 +216,7 @@ def build_tutorial_dict(config_dir, output_dir):
 
 
 @tmpdir(relpath("test_data"))
-def test_snake_everest2res():
+def test_snake_everest_to_ert():
     # Load config file
     ever_config_dict = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
@@ -224,19 +224,19 @@ def test_snake_everest2res():
     snake_dict = build_snake_dict(output_dir, ConfigKeys.LOCAL)
 
     # Transform to res dict and verify equality
-    ert_config_dict = everest2res(ever_config_dict)
+    ert_config_dict = everest_to_ert_config(ever_config_dict)
     assert snake_dict == ert_config_dict
 
     # Instantiate res
     ErtConfig.with_plugins().from_dict(
-        config_dict=everest2res(
+        config_dict=everest_to_ert_config(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
     )
 
 
 @tmpdir(relpath("test_data"))
-def test_snake_everest2res_slurm():
+def test_snake_everest_to_ert_slurm():
     snake_slurm_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_slurm.yml")
     # Load config file
     ever_config_dict = EverestConfig.load_file(snake_slurm_config_path)
@@ -245,12 +245,12 @@ def test_snake_everest2res_slurm():
     snake_dict = build_snake_dict(output_dir, ConfigKeys.SLURM)
 
     # Transform to res dict and verify equality
-    ert_config_dict = everest2res(ever_config_dict)
+    ert_config_dict = everest_to_ert_config(ever_config_dict)
     assert snake_dict == ert_config_dict
 
     # Instantiate res
     ErtConfig.with_plugins().from_dict(
-        config_dict=everest2res(
+        config_dict=everest_to_ert_config(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
     )
@@ -258,7 +258,7 @@ def test_snake_everest2res_slurm():
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
 @tmpdir(relpath("test_data"))
-def test_tutorial_everest2res():
+def test_tutorial_everest_to_ert():
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     # Load config file
     ever_config_dict = EverestConfig.load_file(tutorial_config_path)
@@ -269,12 +269,12 @@ def test_tutorial_everest2res():
     )
 
     # Transform to res dict and verify equality
-    ert_config_dict = everest2res(ever_config_dict)
+    ert_config_dict = everest_to_ert_config(ever_config_dict)
     assert tutorial_dict == ert_config_dict
 
     # Instantiate res
     ErtConfig.with_plugins().from_dict(
-        config_dict=everest2res(
+        config_dict=everest_to_ert_config(
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
     )
@@ -282,7 +282,7 @@ def test_tutorial_everest2res():
 
 @skipif_no_opm
 @tmpdir(relpath("test_data"))
-def test_combined_wells_everest2res():
+def test_combined_wells_everest_to_ert():
     config_mocked_multi_batch = os.path.join(
         TUTORIAL_CONFIG_DIR, "mocked_multi_batch.yml"
     )
@@ -292,7 +292,7 @@ def test_combined_wells_everest2res():
     # Add a dummy well name to the everest config
     assert ever_config_dict.wells is not None
     ever_config_dict.wells.append(WellConfig(name="fakename"))
-    ert_config_dict = everest2res(ever_config_dict)
+    ert_config_dict = everest_to_ert_config(ever_config_dict)
 
     # Check whether dummy name is in the summary keys
     fakename_in_strings = [
@@ -312,7 +312,7 @@ def test_lsf_queue_system():
 
     assert ever_config.simulator.queue_system == ConfigKeys.LSF
 
-    ert_config = everest2res(ever_config)
+    ert_config = everest_to_ert_config(ever_config)
 
     queue_system = ert_config["QUEUE_SYSTEM"]
     assert queue_system == "LSF"
@@ -325,7 +325,7 @@ def test_queue_configuration():
 
     assert ever_config.simulator.cores == 3
 
-    ert_config = everest2res(ever_config)
+    ert_config = everest_to_ert_config(ever_config)
 
     assert ert_config["MAX_SUBMIT"] == 17 + 1
 
@@ -384,7 +384,7 @@ def test_install_data_no_init():
             errors = EverestConfig.lint_config_dict(ever_config.to_dict())
             assert len(errors) == 0
 
-            ert_config_dict = everest2res(ever_config)
+            ert_config_dict = everest_to_ert_config(ever_config)
 
             output_dir = ever_config.output_dir
             tutorial_dict = build_tutorial_dict(
@@ -428,7 +428,7 @@ def test_summary_default():
     for keys, names in key_name_lists:
         sum_keys += [f"{key}:{name}" for key, name in itertools.product(keys, names)]
 
-    res_conf = everest2res(everconf)
+    res_conf = everest_to_ert_config(everconf)
     assert set(sum_keys) == set(res_conf["SUMMARY"][0])
 
 
@@ -456,7 +456,7 @@ def test_summary_default_no_opm():
         ]
     )
     sum_keys = [list(set(sum_keys))]
-    res_conf = everest2res(everconf)
+    res_conf = everest_to_ert_config(everconf)
 
     assert set(sum_keys[0]) == set(res_conf["SUMMARY"][0])
 
@@ -492,7 +492,7 @@ def test_install_data():
             errors = EverestConfig.lint_config_dict(ever_config.to_dict())
             assert len(errors) == 0
 
-            ert_config_dict = everest2res(ever_config)
+            ert_config_dict = everest_to_ert_config(ever_config)
 
             output_dir = ever_config.output_dir
             tutorial_dict = build_tutorial_dict(
@@ -507,7 +507,7 @@ def test_install_data():
 
             # Instantiate res
             ErtConfig.with_plugins().from_dict(
-                config_dict=everest2res(
+                config_dict=everest_to_ert_config(
                     ever_config, site_config=ErtConfig.read_site_config()
                 )
             )
@@ -528,7 +528,7 @@ def test_strip_date_job_insertion():
     snake_dict = build_snake_dict(output_dir, ConfigKeys.LOCAL, report_steps=True)
 
     # Transform to res dict and verify equality
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
     assert snake_dict == ert_config_dict
 
 
@@ -538,7 +538,7 @@ def test_forward_model_job_insertion():
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
     # Transform to res dict
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
 
     jobs = ert_config_dict["INSTALL_JOB"]
     for job in collect_forward_models():
@@ -551,7 +551,7 @@ def test_workflow_job():
     workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
     jobs = ert_config_dict.get("LOAD_WORKFLOW_JOB")
     assert jobs is not None
     assert jobs[0] == (
@@ -568,7 +568,7 @@ def test_workflows():
     ever_config.workflows = WorkflowConfig.model_validate(
         {"pre_simulation": ["test -i in -o out"]}
     )
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
     workflows = ert_config_dict.get("LOAD_WORKFLOW")
     assert workflows is not None
     name = os.path.join(ever_config.config_directory, ".pre_simulation.workflow")
@@ -589,7 +589,7 @@ def test_user_config_jobs_precedence():
     ever_config.install_jobs.append(existing_standard_job)
     config_dir = ever_config.config_directory
     # Transform to res dict
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
 
     job = [job for job in ert_config_dict["INSTALL_JOB"] if job[0] == first_job]
     assert len(job) == 1
@@ -602,11 +602,11 @@ def test_user_config_num_cpu():
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
     # Transform to res dict
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
     assert "NUM_CPU" not in ert_config_dict
 
     ever_config.simulator.cores_per_node = 2
     # Transform to res dict
-    ert_config_dict = everest2res(ever_config)
+    ert_config_dict = everest_to_ert_config(ever_config)
     assert "NUM_CPU" in ert_config_dict
     assert ert_config_dict["NUM_CPU"] == 2

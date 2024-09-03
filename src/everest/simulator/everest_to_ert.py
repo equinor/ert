@@ -455,18 +455,10 @@ def _extract_seed(ever_config: EverestConfig, ert_config):
         ert_config["RANDOM_SEED"] = random_seed
 
 
-def everest2res(ever_config: EverestConfig, site_config=None):
+def everest_to_ert_config(ever_config: EverestConfig, site_config=None):
     """
-    Takes as input an Everest configuration and converts it to a corresponding
-    ert configuration.
-
-    NOTE: The implementation of this procedure is likely to change quite a bit
-    as we are finalizing both the Everest config file and how ert should be
-    configured.
-
-    It should also be noted that this conversion supports neither the full
-    functionality of Everest nor ert. However, it should be more than
-    sufficient for now.
+    Takes as input an Everest configuration, the site-config and converts them
+    to a corresponding ert configuration.
     """
     ert_config = site_config if site_config is not None else {}
 

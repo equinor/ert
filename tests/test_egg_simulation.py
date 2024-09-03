@@ -9,7 +9,7 @@ from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames
 from everest.plugins.site_config_env import PluginSiteConfigEnv
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 
 from tests.utils import (
     everest_default_jobs,
@@ -567,7 +567,7 @@ def _generate_exp_ert_config(config_path, output_dir):
 @tmpdir(relpath(ROOT))
 def test_egg_model_convert():
     config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
 
     # configpath isn't specified in config_file so it should be inferred
     # to be at the directory of the config file.
@@ -585,7 +585,7 @@ def test_egg_model_convert():
 @pytest.mark.everest_models_test
 def test_egg_model_convert_no_opm():
     config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
 
     # configpath isn't specified in config_file so it should be inferred
     # to be at the directory of the config file.
@@ -609,7 +609,7 @@ def test_opm_fail_default_summary_keys():
     config.model.data_file = os.path.realpath(CONFIG_FILE)
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
 
     # configpath isn't specified in config_file so it should be inferred
     # to be at the directory of the config file.
@@ -649,7 +649,7 @@ def test_opm_fail_explicit_summary_keys():
     config.export.keywords = extra_sum_keys
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
 
     # configpath isn't specified in config_file so it should be inferred
     # to be at the directory of the config file.
@@ -676,7 +676,7 @@ def test_opm_fail_explicit_summary_keys():
 @tmpdir(relpath(ROOT))
 def test_init_egg_model():
     config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = everest2res(config, site_config=ErtConfig.read_site_config())
+    ert_config = everest_to_ert_config(config, site_config=ErtConfig.read_site_config())
     ErtConfig.with_plugins().from_dict(config_dict=ert_config)
 
 
@@ -793,7 +793,7 @@ def test_run_egg_model():
 @tmpdir(relpath(ROOT))
 def test_egg_model_wells_json_output_no_none():
     config = EverestConfig.load_file(CONFIG_FILE)
-    _ = everest2res(config)
+    _ = everest_to_ert_config(config)
 
     with open(
         os.path.join(config.output_dir, ".internal_data", "wells.json"),
