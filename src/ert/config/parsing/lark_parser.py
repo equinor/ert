@@ -175,9 +175,8 @@ def _tree_to_dict(
     pre_defines: Defines,
     tree: Tree[Instruction],
     schema: SchemaItemDict,
-    site_config: Optional[ConfigDict] = None,
 ) -> ConfigDict:
-    config_dict = site_config if site_config else {}
+    config_dict = {}
     defines = pre_defines.copy()
     config_dict["DEFINE"] = defines  # type: ignore
 
@@ -483,7 +482,6 @@ def _parse_file(file: str) -> Tree[Instruction]:
 def parse(
     file: str,
     schema: SchemaItemDict,
-    site_config: Optional[ConfigDict] = None,
     pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
@@ -509,7 +507,6 @@ def parse(
         config_file=file,
         pre_defines=pre_defines,
         tree=tree,
-        site_config=site_config,
         schema=schema,
     )
 

@@ -25,6 +25,7 @@ from ert.config.parsing.context_values import (
     ContextString,
 )
 from ert.config.parsing.observations_parser import ObservationConfigError
+from ert.config.parsing.queue_system import QueueSystem
 
 from .config_dict_generator import config_generators
 
@@ -1644,3 +1645,74 @@ def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
 
         with pytest.raises(ConfigValidationError, match="No parameters specified in"):
             ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "max_running_queue_config_entry",
+    [
+        pytest.param(
+            """
+        MAX_RUNNING 6
+        QUEUE_OPTION LSF MAX_RUNNING 2
+        QUEUE_OPTION SLURM MAX_RUNNING 2
+        """,
+            id="general_keyword_max_running",
+        ),
+        pytest.param(
+            """
+        QUEUE_OPTION TORQUE MAX_RUNNING 6
+        MAX_RUNNING 2
+        """,
+            id="queue_option_max_running",
+        ),
+    ],
+)
+def test_queue_config_max_running_queue_option_has_priority_over_general_option(
+    max_running_queue_config_entry,
+):
+    test_config_file = Path("test.ert")
+    test_config_file.write_text(
+        dedent(
+            f"""
+        NUM_REALIZATIONS  100
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM TORQUE
+        {max_running_queue_config_entry}
+        """
+        )
+    )
+
+    config = ErtConfig.from_file(test_config_file)
+    assert config.queue_config.max_running == 6
+
+
+def test_general_option_in_local_config_has_priority_over_site_config(
+    tmp_path, monkeypatch
+):
+    test_site_config = tmp_path / "test_site_config.ert"
+    test_site_config.write_text(
+        "QUEUE_OPTION TORQUE MAX_RUNNING 6\nQUEUE_SYSTEM LOCAL\nQUEUE_OPTION TORQUE SUBMIT_SLEEP 7"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+
+    test_config_file = tmp_path / "test.ert"
+    test_config_file.write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  100
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM TORQUE
+        MAX_RUNNING 13
+        SUBMIT_SLEEP 14
+        """
+        )
+    )
+    config = ErtConfig.from_file(test_config_file)
+    assert config.queue_config.max_running == 13
+    assert config.queue_config.submit_sleep == 14
+    assert config.queue_config.queue_system == QueueSystem.TORQUE
