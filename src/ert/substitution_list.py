@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import logging
 import re
+
 from typing import TYPE_CHECKING, Optional
+from copy import copy
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Dict, Optional
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")

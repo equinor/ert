@@ -234,7 +234,7 @@ class ErtConfig:
             errors.append(err)
 
         obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_config_content = None
+        obs_config_content = []
         try:
             if obs_config_file:
                 if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
