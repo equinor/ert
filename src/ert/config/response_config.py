@@ -25,6 +25,11 @@ class ResponseConfig(ABC):
 
     @property
     @abstractmethod
+    def expected_input_files(self) -> List[str]:
+        """Returns a list of filenames expected to be produced by the forward model"""
+
+    @property
+    @abstractmethod
     def response_type(self) -> str:
         """Label to identify what kind of response it is.
         Must not overlap with that of other response configs."""

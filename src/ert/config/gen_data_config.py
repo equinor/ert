@@ -31,6 +31,18 @@ class GenDataConfig(ResponseConfig):
                 if report_steps is not None:
                     report_steps.sort()
 
+    @property
+    def expected_input_files(self) -> List[str]:
+        expected_files = []
+        for input_file, report_steps in zip(self.input_files, self.report_steps_list):
+            if report_steps is None:
+                expected_files.append(input_file)
+            else:
+                for report_step in report_steps:
+                    expected_files.append(input_file.replace("%d", str(report_step)))
+
+        return expected_files
+
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Optional[Self]:
         gen_data_list = config_dict.get("GEN_DATA", [])  # type: ignore

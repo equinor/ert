@@ -32,6 +32,11 @@ class SummaryConfig(ResponseConfig):
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
 
+    @property
+    def expected_input_files(self) -> List[str]:
+        base = self.input_files[0]
+        return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
+
     def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
         filename = self.input_files[0].replace("<IENS>", str(iens))
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
