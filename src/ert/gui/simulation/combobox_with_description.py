@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 from qtpy.QtCore import QModelIndex, QPoint, QSize
 from qtpy.QtGui import QColor, QRegion
@@ -19,17 +19,24 @@ COLOR_HIGHLIGHT_LIGHT = QColor(230, 230, 230, 255)
 COLOR_HIGHLIGHT_DARK = QColor(60, 60, 60, 255)
 
 
-class ComboBoxItemWidget(QWidget):
+class _ComboBoxItemWidget(QWidget):
     def __init__(
-        self, label: str, description: str, parent: Optional[QWidget] = None
+        self,
+        label: str,
+        description: str,
+        enabled: bool = True,
+        parent: Optional[QWidget] = None,
     ) -> None:
-        super(ComboBoxItemWidget, self).__init__(parent)
+        super().__init__(parent)
         layout = QVBoxLayout()
         layout.setSpacing(2)
         self.setStyleSheet("background: rgba(0,0,0,1);")
         self.label = QLabel(label)
+        color = "color: rgba(192,192,192,80);" if not enabled else ";"
+
         self.label.setStyleSheet(
-            """
+            f"""
+            {color}
             padding-top:5px;
             padding-left: 5px;
             background: rgba(0,0,0,0);
@@ -39,7 +46,8 @@ class ComboBoxItemWidget(QWidget):
         )
         self.description = QLabel(description)
         self.description.setStyleSheet(
-            """
+            f"""
+            {color}
             padding-bottom: 10px;
             padding-left: 10px;
             background: rgba(0,0,0,0);
@@ -53,14 +61,16 @@ class ComboBoxItemWidget(QWidget):
         self.setLayout(layout)
 
 
-class ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
+class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
     def paint(self, painter: Any, option: Any, index: Any) -> None:
         painter.save()
 
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
 
-        if (
+        is_enabled = option.state & QStyle.State_Enabled  # type: ignore
+
+        if is_enabled and (
             option.state & QStyle.State_Selected  # type: ignore
             or option.state & QStyle.State_MouseOver  # type: ignore
         ):
@@ -69,7 +79,7 @@ class ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = ComboBoxItemWidget(label, description)
+        widget = _ComboBoxItemWidget(label, description, is_enabled)
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 
@@ -81,23 +91,19 @@ class ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
 
-        widget = ComboBoxItemWidget(label, description)
+        widget = _ComboBoxItemWidget(label, description)
         return widget.sizeHint()
 
 
 class QComboBoxWithDescription(QComboBox):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super(QComboBoxWithDescription, self).__init__(parent)
-        self.setItemDelegate(ComboBoxWithDescriptionDelegate(self))
+        super().__init__(parent)
+        self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
-    def addItem(self, label: Optional[str], description: Any):  # type: ignore
-        super(QComboBoxWithDescription, self).addItem(label)
+    def addDescriptionItem(self, label: Optional[str], description: Any) -> None:
+        super().addItem(label)
         model = self.model()
         assert model is not None
         index = model.index(self.count() - 1, 0)
         model.setData(index, label, LABEL_ROLE)
         model.setData(index, description, DESCRIPTION_ROLE)
-
-    def addItems(self, items: List[Tuple[str, Any]]):  # type: ignore
-        for label, description in items:
-            self.addItem(label, description)

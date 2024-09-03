@@ -7,7 +7,7 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Storage
+from ert.storage import Storage
 
 from ..run_arg import create_run_arguments
 from . import BaseRunModel
@@ -44,27 +44,27 @@ class EvaluateEnsemble(BaseRunModel):
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        try:
+            self.ensemble = storage.get_ensemble(UUID(ensemble_id))
+        except KeyError as err:
+            raise ValueError(f"No ensemble: {ensemble_id}") from err
         super().__init__(
             config,
             storage,
             queue_config,
             status_queue,
-            start_iteration=0,
+            start_iteration=self.ensemble.iteration,
             total_iterations=1,
             active_realizations=active_realizations,
             minimum_required_realizations=minimum_required_realizations,
             random_seed=random_seed,
         )
-        self.ensemble_id = ensemble_id
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         logger.info(f"Running {self.name}")
-        ensemble_id = self.ensemble_id
-        ensemble_uuid = UUID(ensemble_id)
-        ensemble = self._storage.get_ensemble(ensemble_uuid)
-        assert isinstance(ensemble, Ensemble)
+        ensemble = self.ensemble
 
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

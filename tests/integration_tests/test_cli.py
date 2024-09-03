@@ -299,6 +299,12 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         data = json.load(f)
         global_env = data.get("global_environment")
+        for key in ["_ERT_ENSEMBLE_ID", "_ERT_EXPERIMENT_ID"]:
+            assert key in global_env
+            global_env.pop(key)
+        assert global_env["_ERT_SIMULATION_MODE"] == TEST_RUN_MODE
+        global_env.pop("_ERT_SIMULATION_MODE")
+
         assert global_env == expected_vars
 
     path = os.environ["PATH"]
@@ -747,15 +753,16 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     num_realizations = ert_config.model_config.num_realizations
     with open_storage(ert_config.ens_path, mode="w") as storage:
         experiment_id = storage.create_experiment(
-            ert_config.ensemble_config.parameter_configuration
+            ert_config.ensemble_config.parameter_configuration, name="test-experiment"
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="iter-0", ensemble_size=num_realizations
         )
         sample_prior(ensemble, prior_mask)
-        prior_values = storage.get_ensemble(ensemble.id).load_parameters("COEFFS")[
-            "values"
-        ]
+        experiment = storage.get_experiment_by_name("test-experiment")
+        prior_values = experiment.get_ensemble_by_name(ensemble.name).load_parameters(
+            "COEFFS"
+        )["values"]
     with caplog.at_level(logging.INFO):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,

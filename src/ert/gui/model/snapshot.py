@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
@@ -10,7 +11,10 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import Snapshot, state
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.snapshot import SnapshotMetadata
+from ert.ensemble_evaluator.snapshot import (
+    SnapshotMetadata,
+    convert_iso8601_to_datetime,
+)
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -21,12 +25,16 @@ from ert.gui.model.node import (
 )
 from ert.shared.status.utils import byte_with_unit, file_has_content
 
+if sys.version_info < (3, 11):
+    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
+
+    MonkeyPatch.patch_fromisoformat()
+
 logger = logging.getLogger(__name__)
 
 UserRole = Qt.ItemDataRole.UserRole
 NodeRole = UserRole + 1
 RealJobColorHint = UserRole + 2
-RealStatusColorHint = UserRole + 3
 RealLabelHint = UserRole + 4
 ProgressRole = UserRole + 5
 FileRole = UserRole + 6
@@ -182,7 +190,6 @@ class SnapshotModel(QAbstractItemModel):
                         real.callback_status_message
                     )
             jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
-
             for (
                 real_id,
                 forward_model_id,
@@ -191,26 +198,23 @@ class SnapshotModel(QAbstractItemModel):
                 job_node = real_node.children[forward_model_id]
 
                 jobs_changed_by_real[real_id].append(job_node.row())
-
+                if start_time := job.get("start_time", None):
+                    job["start_time"] = convert_iso8601_to_datetime(start_time)
+                if end_time := job.get("end_time", None):
+                    job["end_time"] = convert_iso8601_to_datetime(end_time)
+                # Errors may be unset as the queue restarts the job
+                job[ids.ERROR] = job.get(ids.ERROR, "")
                 job_node.data.update(job)
-                if (
-                    "current_memory_usage" in job
-                    and job["current_memory_usage"] is not None
-                ):
-                    cur_mem_usage = int(float(job["current_memory_usage"]))
-                    real_node.data.current_memory_usage = cur_mem_usage
-                if "max_memory_usage" in job and job["max_memory_usage"] is not None:
-                    max_mem_usage = int(float(job["max_memory_usage"]))
-
+                if cur_mem_usage := job.get("current_memory_usage", None):
+                    real_node.data.current_memory_usage = int(float(cur_mem_usage))
+                if maximum_mem_usage := job.get("max_memory_usage", None):
+                    max_mem_usage = int(float(maximum_mem_usage))
                     real_node.data.max_memory_usage = max(
                         real_node.data.max_memory_usage or 0, max_mem_usage
                     )
                     self.root.max_memory_usage = max(
                         self.root.max_memory_usage or 0, max_mem_usage
                     )
-
-                # Errors may be unset as the queue restarts the job
-                job_node.data[ids.ERROR] = job.get(ids.ERROR, "")
 
             for real_idx, changed_jobs in jobs_changed_by_real.items():
                 real_node = iter_node.children[real_idx]
@@ -263,16 +267,20 @@ class SnapshotModel(QAbstractItemModel):
                 "sorted_forward_model_ids", defaultdict(None)
             )[real_id]:
                 job = snapshot.get_job(real_id, forward_model_id)
+                if start_time := job.get("start_time", None):
+                    job["start_time"] = convert_iso8601_to_datetime(start_time)
+                if end_time := job.get("end_time", None):
+                    job["end_time"] = convert_iso8601_to_datetime(end_time)
                 job_node = ForwardModelStepNode(
                     id_=forward_model_id, data=job, parent=real_node
                 )
                 real_node.add_child(job_node)
 
         if iter_ in self.root.children:
-            self.modelAboutToBeReset.emit()
-            self.root.children[iter_] = snapshot_tree
+            self.beginResetModel()
             snapshot_tree.parent = self.root
-            self.modelReset.emit()
+            self.root.children[iter_] = snapshot_tree
+            self.endResetModel()
             return
 
         parent = QModelIndex()
@@ -382,8 +390,6 @@ class SnapshotModel(QAbstractItemModel):
             return node.id_
         if role == IterNum:
             return node.parent.id_ if node.parent else None
-        if role == RealStatusColorHint:
-            return node.data.real_status_color
         if role == StatusRole:
             return node.data.status
         if role == MemoryUsageRole:
@@ -491,7 +497,7 @@ class SnapshotModel(QAbstractItemModel):
 
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
         try:
-            child_item = parent_item.children_list[row]
+            child_item = list(parent_item.children.values())[row]
         except KeyError:
             return QModelIndex()
         else:

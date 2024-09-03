@@ -4,24 +4,17 @@ import asyncio
 import hashlib
 import logging
 import time
-import uuid
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from cloudevents.http import CloudEvent
 from lxml import etree
+from pydantic_core._pydantic_core import ValidationError
 
+from _ert.events import Id, RealizationTimeout, event_from_dict
 from ert.callbacks import forward_model_ok
 from ert.constant_filenames import ERROR_file
-from ert.event_type_constants import (
-    EVTYPE_REALIZATION_FAILURE,
-    EVTYPE_REALIZATION_PENDING,
-    EVTYPE_REALIZATION_RUNNING,
-    EVTYPE_REALIZATION_SUCCESS,
-    EVTYPE_REALIZATION_WAITING,
-)
 from ert.load_status import LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -33,9 +26,6 @@ if TYPE_CHECKING:
     from .scheduler import Scheduler
 
 logger = logging.getLogger(__name__)
-
-# Duplicated to avoid circular imports
-EVTYPE_REALIZATION_TIMEOUT = "com.equinor.ert.realization.timeout"
 
 
 class JobState(str, Enum):
@@ -50,14 +40,14 @@ class JobState(str, Enum):
 
 
 _queue_jobstate_event_type = {
-    JobState.WAITING: EVTYPE_REALIZATION_WAITING,
-    JobState.SUBMITTING: EVTYPE_REALIZATION_WAITING,
-    JobState.PENDING: EVTYPE_REALIZATION_PENDING,
-    JobState.RUNNING: EVTYPE_REALIZATION_RUNNING,
-    JobState.ABORTING: EVTYPE_REALIZATION_FAILURE,
-    JobState.COMPLETED: EVTYPE_REALIZATION_SUCCESS,
-    JobState.FAILED: EVTYPE_REALIZATION_FAILURE,
-    JobState.ABORTED: EVTYPE_REALIZATION_FAILURE,
+    JobState.WAITING: Id.REALIZATION_WAITING,
+    JobState.SUBMITTING: Id.REALIZATION_WAITING,
+    JobState.PENDING: Id.REALIZATION_PENDING,
+    JobState.RUNNING: Id.REALIZATION_RUNNING,
+    JobState.ABORTING: Id.REALIZATION_FAILURE,
+    JobState.COMPLETED: Id.REALIZATION_SUCCESS,
+    JobState.FAILED: Id.REALIZATION_FAILURE,
+    JobState.ABORTED: Id.REALIZATION_FAILURE,
 }
 
 
@@ -136,7 +126,12 @@ class Job:
                 timeout_task.cancel()
             sem.release()
 
-    async def run(self, sem: asyncio.BoundedSemaphore, max_submit: int = 1) -> None:
+    async def run(
+        self,
+        sem: asyncio.BoundedSemaphore,
+        forward_model_ok_lock: asyncio.Lock,
+        max_submit: int = 1,
+    ) -> None:
         self._requested_max_submit = max_submit
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
@@ -145,9 +140,10 @@ class Job:
                 break
 
             if self.returncode.result() == 0:
-                if self._scheduler._manifest_queue is not None:
-                    await self._verify_checksum()
-                await self._handle_finished_forward_model()
+                async with forward_model_ok_lock:
+                    if self._scheduler._manifest_queue is not None:
+                        await self._verify_checksum()
+                    await self._handle_finished_forward_model()
                 break
 
             if attempt < max_submit - 1:
@@ -164,12 +160,8 @@ class Job:
     async def _max_runtime_task(self) -> None:
         assert self.real.max_runtime is not None
         await asyncio.sleep(self.real.max_runtime)
-        timeout_event = CloudEvent(
-            {
-                "type": EVTYPE_REALIZATION_TIMEOUT,
-                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
-                "id": str(uuid.uuid1()),
-            }
+        timeout_event = RealizationTimeout(
+            real=str(self.iens), ensemble=self._scheduler._ens_id
         )
         assert self._scheduler._events is not None
         await self._scheduler._events.put(timeout_event)
@@ -266,13 +258,16 @@ class Job:
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: JobState) -> None:
-        self.state = state
-        event_data: Dict[str, JobState | str] = {
+        event_dict: Dict[str, Any] = {
+            "ensemble": self._scheduler._ens_id,
+            "event_type": _queue_jobstate_event_type[state],
             "queue_event_type": state,
+            "real": str(self.iens),
         }
+        self.state = state
         if state == JobState.FAILED:
+            event_dict["callback_status_message"] = self._callback_status_msg
             await self._handle_failure()
-            event_data["callback_status_message"] = self._callback_status_msg
 
         elif state == JobState.ABORTED:
             await self._handle_aborted()
@@ -281,15 +276,11 @@ class Job:
             self._end_time = time.time()
             await self._scheduler.completed_jobs.put(self.iens)
 
-        event = CloudEvent(
-            {
-                "type": _queue_jobstate_event_type[state],
-                "source": f"/ert/ensemble/{self._scheduler._ens_id}/real/{self.iens}",
-                "datacontenttype": "application/json",
-            },
-            event_data,
-        )
-        await self._scheduler._events.put(event)
+        try:
+            msg = event_from_dict(event_dict)
+        except ValidationError:
+            raise
+        await self._scheduler._events.put(msg)
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:

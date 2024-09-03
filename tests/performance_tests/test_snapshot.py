@@ -1,10 +1,15 @@
-import uuid
 from typing import Dict
 
 import pytest
-from cloudevents.http.event import CloudEvent
 
-from ert.ensemble_evaluator import identifiers as ids
+from _ert.events import (
+    EnsembleStarted,
+    ForwardModelStepRunning,
+    ForwardModelStepStart,
+    ForwardModelStepSuccess,
+    RealizationSuccess,
+    RealizationWaiting,
+)
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     ForwardModel,
@@ -86,75 +91,39 @@ def simulate_forward_model_event_handling(
     snapshot = Snapshot.from_nested_dict(top.model_dump())
 
     ens_id = "A"
-    snapshot.update_from_cloudevent(
-        CloudEvent(
-            {
-                "source": f"/ert/ensemble/{ens_id}",
-                "type": ids.EVTYPE_ENSEMBLE_STARTED,
-                "id": str(uuid.uuid1()),
-            }
-        )
-    )
+    snapshot.update_from_event(EnsembleStarted(ensemble=ens_id))
 
     for real in range(ensemble_size):
-        snapshot.update_from_cloudevent(
-            CloudEvent(
-                {
-                    "source": f"/ert/ensemble/{ens_id}/real/{real}",
-                    "type": ids.EVTYPE_REALIZATION_WAITING,
-                    "id": str(uuid.uuid1()),
-                }
-            )
-        )
+        snapshot.update_from_event(RealizationWaiting(ensemble=ens_id, real=str(real)))
 
     for fm_idx in range(forward_models):
         for real in range(ensemble_size):
-            snapshot.update_from_cloudevent(
-                CloudEvent(
-                    attributes={
-                        "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/forward_model/{fm_idx}",
-                        "type": ids.EVTYPE_FORWARD_MODEL_START,
-                        "id": str(uuid.uuid1()),
-                    },
-                    data={"stderr": "foo", "stdout": "bar"},
+            snapshot.update_from_event(
+                ForwardModelStepStart(
+                    ensemble=ens_id,
+                    real=str(real),
+                    fm_step=str(fm_idx),
+                    stderr="foo",
+                    stdout="bar",
                 )
             )
         for current_memory_usage in range(memory_reports):
             for real in range(ensemble_size):
-                snapshot.update_from_cloudevent(
-                    CloudEvent(
-                        attributes={
-                            "source": f"/ert/ensemble/{ens_id}/"
-                            f"real/{real}/forward_model/{fm_idx}",
-                            "type": ids.EVTYPE_FORWARD_MODEL_RUNNING,
-                            "id": str(uuid.uuid1()),
-                        },
-                        data={
-                            "max_memory_usage": current_memory_usage,
-                            "current_memory_usage": current_memory_usage,
-                        },
+                snapshot.update_from_event(
+                    ForwardModelStepRunning(
+                        ensemble=ens_id,
+                        real=str(real),
+                        fm_step=str(fm_idx),
+                        max_memory_usage=current_memory_usage,
+                        current_memory_usage=current_memory_usage,
                     )
                 )
         for real in range(ensemble_size):
-            snapshot.update_from_cloudevent(
-                CloudEvent(
-                    attributes={
-                        "source": f"/ert/ensemble/{ens_id}/"
-                        f"real/{real}/forward_model/{fm_idx}",
-                        "type": ids.EVTYPE_FORWARD_MODEL_SUCCESS,
-                        "id": str(uuid.uuid1()),
-                    },
-                )
+            snapshot.update_from_event(
+                ForwardModelStepSuccess(
+                    ensemble=ens_id, real=str(real), fm_step=str(fm_idx)
+                ),
             )
 
     for real in range(ensemble_size):
-        snapshot.update_from_cloudevent(
-            CloudEvent(
-                {
-                    "source": f"/ert/ensemble/{ens_id}/real/{real}",
-                    "type": ids.EVTYPE_REALIZATION_SUCCESS,
-                    "id": str(uuid.uuid1()),
-                }
-            )
-        )
+        snapshot.update_from_event(RealizationSuccess(ensemble=ens_id, real=str(real)))

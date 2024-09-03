@@ -36,7 +36,7 @@ class StringBox(QLineEdit):
         self._validation = ValidationSupport(self)
         self._validator: Optional[ArgumentDefinition] = None
         self._model = model
-        self._disable_validation = False
+        self._enable_validation = True
 
         if placeholder_text:
             self.setPlaceholderText(placeholder_text)
@@ -55,25 +55,26 @@ class StringBox(QLineEdit):
         self.modelChanged()
 
     def validateString(self) -> None:
-        if self._disable_validation:
-            return
-        string_to_validate = str(self.text())
-        if not string_to_validate and self.placeholderText():
-            string_to_validate = self.placeholderText()
-        if self._validator is not None:
-            status = self._validator.validate(string_to_validate)
+        if self._enable_validation:
+            string_to_validate = str(self.text())
+            if not string_to_validate and self.placeholderText():
+                string_to_validate = self.placeholderText()
+            if self._validator is not None:
+                status = self._validator.validate(string_to_validate)
 
-            palette = QPalette()
-            if not status:
-                palette.setColor(self.backgroundRole(), ValidationSupport.ERROR_COLOR)
-                self.setPalette(palette)
-                self._validation.setValidationMessage(
-                    str(status), ValidationSupport.EXCLAMATION
-                )
-            else:
-                palette.setColor(self.backgroundRole(), self._valid_color)
-                self.setPalette(palette)
-                self._validation.setValidationMessage("")
+                palette = QPalette()
+                if not status:
+                    palette.setColor(
+                        self.backgroundRole(), ValidationSupport.ERROR_COLOR
+                    )
+                    self.setPalette(palette)
+                    self._validation.setValidationMessage(
+                        str(status), ValidationSupport.EXCLAMATION
+                    )
+                else:
+                    palette.setColor(self.backgroundRole(), self._valid_color)
+                    self.setPalette(palette)
+                    self._validation.setValidationMessage("")
 
     def emitChange(self, q_string: Any) -> None:
         self.textChanged.emit(str(q_string))
@@ -113,8 +114,5 @@ class StringBox(QLineEdit):
     def get_text(self) -> str:
         return self.text() if self.text() else self.placeholderText()
 
-    def enable_validation(self) -> None:
-        self._disable_validation = False
-
-    def disable_validation(self) -> None:
-        self._disable_validation = True
+    def enable_validation(self, enabled: bool) -> None:
+        self._enable_validation = enabled

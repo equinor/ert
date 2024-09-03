@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import signal
 import sys
@@ -120,7 +121,7 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     assert aborted_called
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=10)
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
     """Submits are allowed to be repeated for the same iens, and are to be
     handled according to FIFO, but this order cannot be guaranteed as it depends
@@ -212,3 +213,37 @@ async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
     elif isinstance(driver, OpenPBSDriver):
         assert "OMP_NUM_THREADS=2" in env_lines
         assert "NCPUS=2" in env_lines
+
+
+@pytest.mark.integration_test
+async def test_execute_with_retry_exits_on_filenotfounderror(driver: Driver, caplog):
+    caplog.set_level(logging.DEBUG)
+    invalid_cmd = ["/usr/bin/foo", "bar"]
+    (succeeded, message) = await driver._execute_with_retry(
+        invalid_cmd, total_attempts=3
+    )
+
+    # We log a retry message every time we retry
+    assert "retry" not in str(caplog.text)
+    assert not succeeded
+    assert "No such file or directory" in message
+    assert "/usr/bin/foo" in message
+
+
+@pytest.mark.integration_test
+async def test_poll_exits_on_filenotfounderror(driver: Driver, caplog):
+    if isinstance(driver, LocalDriver):
+        pytest.skip("LocalDriver does not poll")
+    caplog.set_level(logging.DEBUG)
+    invalid_cmd = ["/usr/bin/foo", "bar"]
+    driver._bjobs_cmd = invalid_cmd
+    driver._qstat_cmd = invalid_cmd
+    driver._squeue = invalid_cmd
+    driver._jobs = {"foo": "bar"}
+    driver._non_finished_job_ids = ["foo"]
+    await driver.poll()
+
+    # We log a retry message every time we retry
+    assert "retry" not in str(caplog.text)
+    assert "No such file or directory" in str(caplog.text)
+    assert "/usr/bin/foo" in str(caplog.text)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtWidgets import QCheckBox, QWidget
@@ -23,6 +24,7 @@ class ExportDialog(CustomDialog):
         storage: LocalStorage,
         parent: Optional[QWidget] = None,
     ) -> None:
+        self.storage = storage
         description = "The CSV export requires some information before it starts:"
         super().__init__("export", description, parent)
 
@@ -37,9 +39,12 @@ class ExportDialog(CustomDialog):
         )
         design_matrix_path_chooser = PathChooser(self.design_matrix_path_model)
 
-        self.list_edit = ListEditBox(
-            [ensemble.name for ensemble in storage.ensembles if ensemble.has_data()]
-        )
+        ensemble_with_data_dict = {
+            ensemble.id: ensemble.name
+            for ensemble in storage.ensembles
+            if ensemble.has_data()
+        }
+        self.list_edit = ListEditBox(ensemble_with_data_dict)
 
         self.drop_const_columns_check = QCheckBox()
         self.drop_const_columns_check.setChecked(False)
@@ -59,8 +64,17 @@ class ExportDialog(CustomDialog):
         return self.output_path_model.getPath()
 
     @property
-    def ensemble_list(self) -> str:
-        return ",".join(self.list_edit.getItems())
+    def ensemble_data_as_json(self) -> str:
+        ensembles = {
+            str(ensemble.id): {
+                "ensemble_name": ensemble.name,
+                "experiment_name": ensemble.experiment.name,
+            }
+            for ensemble in self.storage.ensembles
+            if ensemble.name in self.list_edit.getItems().values()
+        }
+
+        return json.dumps(ensembles)
 
     @property
     def design_matrix_path(self) -> Optional[str]:

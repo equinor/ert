@@ -1,6 +1,6 @@
 import contextlib
+import json
 import os
-import re
 
 import numpy
 import pandas as pd
@@ -60,29 +60,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-     ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
+     ensemble_data_as_json: a comma separated list of ensembles to export (no spaces allowed)
                 if no list is provided the current ensemble is exported
 
-     infer_iteration: If True the script will try to infer the iteration number
-                by looking at the suffix of the ensemble name (i.e. default_2 = iteration 2)
-                If False the script will use the ordering of the ensemble list: the first
-                item will be iteration 0, the second item will be iteration 1...
     """
-
-    INFER_HELP = (
-        "<html>"
-        "If this is checked the iteration number will be inferred from the name i.e.:"
-        "<ul>"
-        "<li>ensemble_name -> iteration: 0</li>"
-        "<li>ensemble_name_0 -> iteration: 0</li>"
-        "<li>ensemble_name_2 -> iteration: 2</li>"
-        "<li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 2, 5</li>"
-        "</ul>"
-        "Leave this unchecked to set iteration number to the order of the listed ensembles:"
-        "<ul><li>ensemble_0, ensemble_2, ensemble_5 -> iterations: 0, 1, 2</li></ul>"
-        "<br/>"
-        "</html>"
-    )
 
     @staticmethod
     def getName():
@@ -92,52 +73,33 @@ class GenDataRFTCSVExportJob(ErtPlugin):
     def getDescription():
         return "Export gen_data RFT results into a single CSV file."
 
-    @staticmethod
-    def inferIterationNumber(ensemble_name):
-        pattern = re.compile("_([0-9]+$)")
-        match = pattern.search(ensemble_name)
-
-        if match is not None:
-            return int(match.group(1))
-        return 0
-
     def run(
         self,
         storage,
         workflow_args,
     ):
-        """The run method will export the RFT's for all wells and all ensembles.
+        """The run method will export the RFT's for all wells and all ensembles."""
 
-        The successful operation of this method hinges on two naming
-        conventions:
-
-          1. All the GEN_DATA RFT observations have key RFT_$WELL
-          2. The trajectory files are in $trajectory_path/$WELL.txt
-             or $trajectory_path/$WELL_R.txt
-
-        """
         output_file = workflow_args[0]
         trajectory_path = workflow_args[1]
-        ensemble_list = None if len(workflow_args) < 3 else workflow_args[2]
-        _ = True if len(workflow_args) < 4 else workflow_args[3]
-        drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
+        ensemble_data_as_json = None if len(workflow_args) < 3 else workflow_args[2]
+        drop_const_cols = False if len(workflow_args) < 4 else bool(workflow_args[3])
 
         wells = set()
 
-        ensemble_names = []
-        if ensemble_list is not None:
-            ensemble_names = ensemble_list.split(",")
+        ensemble_data_as_dict = (
+            json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
+        )
 
-        if len(ensemble_names) == 0:
+        if not ensemble_data_as_dict:
             raise UserWarning("No ensembles given to load from")
 
         data = []
-        for ensemble_name in ensemble_names:
-            ensemble_name = ensemble_name.strip()
-            ensemble_data = []
+        for ensemble_id, ensemble_info in ensemble_data_as_dict.items():
+            ensemble_name = ensemble_info["ensemble_name"]
 
             try:
-                ensemble = storage.get_ensemble_by_name(ensemble_name)
+                ensemble = storage.get_ensemble(ensemble_id)
             except KeyError as exc:
                 raise UserWarning(
                     f"The ensemble '{ensemble_name}' does not exist!"
@@ -160,6 +122,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     " GENERAL_OBSERVATIONS starting with RFT_*"
                 )
 
+            ensemble_data = []
             for obs_key in obs_keys:
                 well = obs_key.replace("RFT_", "")
                 wells.add(well)
@@ -184,8 +147,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     index=index,
                     columns=realizations,
                 )
-
-                realizations = ensemble.get_realization_list_with_responses()
 
                 # Trajectory
                 trajectory_file = os.path.join(trajectory_path, f"{well}.txt")
@@ -253,16 +214,17 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         trajectory_chooser = PathChooser(trajectory_model)
         trajectory_chooser.setObjectName("trajectory_chooser")
 
-        all_ensemble_list = [ensemble.name for ensemble in storage.ensembles]
-        list_edit = ListEditBox(all_ensemble_list)
+        ensemble_with_data_dict = {
+            ensemble.id: ensemble.name
+            for ensemble in storage.ensembles
+            if ensemble.has_data()
+        }
+        list_edit = ListEditBox(ensemble_with_data_dict)
         list_edit.setObjectName("list_of_ensembles")
-
-        infer_iteration_check = QCheckBox()
-        infer_iteration_check.setChecked(True)
-        infer_iteration_check.setToolTip(GenDataRFTCSVExportJob.INFER_HELP)
 
         drop_const_columns_check = QCheckBox()
         drop_const_columns_check.setChecked(False)
+        drop_const_columns_check.setObjectName("drop_const_columns_check")
         drop_const_columns_check.setToolTip(
             "If checked, exclude columns whose value is the same for every entry"
         )
@@ -270,7 +232,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         dialog.addLabeledOption("Output file path", output_path_chooser)
         dialog.addLabeledOption("Trajectory file", trajectory_chooser)
         dialog.addLabeledOption("List of ensembles to export", list_edit)
-        dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)
 
         dialog.addButtons()
@@ -278,13 +239,21 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
-            ensemble_list = ",".join(list_edit.getItems())
+            ensemble_data_as_dict = {
+                str(ensemble.id): {
+                    "ensemble_name": ensemble.name,
+                    "experiment_name": ensemble.experiment.name,
+                }
+                for ensemble in storage.ensembles
+                if ensemble.name in list_edit.getItems().values()
+            }
             with contextlib.suppress(ValueError):
                 return [
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
-                    ensemble_list,
-                    infer_iteration_check.isChecked(),
+                    json.dumps(
+                        ensemble_data_as_dict
+                    ),  # Return the ensemble list as a JSON string
                     drop_const_columns_check.isChecked(),
                 ]
 

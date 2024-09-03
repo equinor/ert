@@ -5,6 +5,11 @@ from pathlib import Path
 
 import pytest
 
+from _ert.events import (
+    EESnapshot,
+    EESnapshotUpdate,
+    ForwardModelStepChecksum,
+)
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
@@ -24,18 +29,18 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
 
     async def _run_monitor():
         async with Monitor(config) as monitor:
-            async for e in monitor.track():
-                if e["type"] == identifiers.EVTYPE_FORWARD_MODEL_CHECKSUM:
+            async for event in monitor.track():
+                if type(event) is ForwardModelStepChecksum:
                     # Monitor got the checksum message renaming the file
                     # before the scheduler gets the same message
                     try:
                         await asyncio.wait_for(rename_and_wait(), timeout=5)
                     except TimeoutError:
                         await monitor.signal_done()
-                if e["type"] in (
-                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    identifiers.EVTYPE_EE_SNAPSHOT,
-                ) and e.data.get(identifiers.STATUS) in [
+                if type(event) in (
+                    EESnapshot,
+                    EESnapshotUpdate,
+                ) and event.snapshot.get(identifiers.STATUS) in [
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
                 ]:

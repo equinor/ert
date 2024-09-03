@@ -209,7 +209,7 @@ class SlurmDriver(Driver):
                 sbatch_with_args,
                 retry_on_empty_stdout=True,
                 retry_codes=(),
-                retries=self._sbatch_retries,
+                total_attempts=self._sbatch_retries,
                 retry_interval=self._sleep_time_between_cmd_retries,
             )
             if not process_success:
@@ -256,14 +256,16 @@ class SlurmDriver(Driver):
             arguments = ["-h", "--format=%i %T"]
             if self._user:
                 arguments.append(f"--user={self._user}")
-
-            process = await asyncio.create_subprocess_exec(
-                str(self._squeue),
-                *arguments,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    str(self._squeue),
+                    *arguments,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            except FileNotFoundError as e:
+                logger.error(str(e))
+                return
             stdout, stderr = await process.communicate()
             if process.returncode:
                 logger.warning(

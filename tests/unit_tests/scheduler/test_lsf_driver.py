@@ -207,8 +207,8 @@ async def test_submit_sets_stdout():
 async def test_submit_sets_stderr():
     driver = LsfDriver()
     await driver.submit(0, "sleep", name="myjobname")
-    expected_stdout_file = Path(os.getcwd()) / "myjobname.LSF-stderr"
-    assert f"-e {expected_stdout_file}" in Path("captured_bsub_args").read_text(
+    expected_stderr_file = Path(os.getcwd()) / "myjobname.LSF-stderr"
+    assert f"-e {expected_stderr_file}" in Path("captured_bsub_args").read_text(
         encoding="utf-8"
     )
 
@@ -560,7 +560,7 @@ async def test_that_bsub_will_retry_and_fail(
     driver._bsub_retries = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
-        f'failed after 2 retries with exit code {exit_code}.*error: "{error_msg if error_msg else "<empty>"}"'
+        f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg if error_msg else "<empty>"}"'
         if exit_code != 199
         else 'failed with exit code 199.*error: "Not recognized"'
     )

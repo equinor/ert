@@ -6,12 +6,12 @@ import textwrap
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-from unittest.mock import PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 import pytest
 
-from _ert_forward_model_runner.job import Job, _get_oom_score_for_processtree
+from _ert_forward_model_runner.job import Job, _get_rss_and_oom_score_for_processtree
 from _ert_forward_model_runner.reporting.message import Exited, Running, Start
 
 
@@ -53,13 +53,13 @@ def test_memory_usage_counts_grandchildren():
             import sys
             import time
 
-            counter = int(sys.argv[1])
+            counter = int(sys.argv[-1])
             numbers = list(range(int(1e6)))
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[0], [sys.argv[0], str(counter - 1)])
-            time.sleep(0.3)"""  # Too low sleep will make the test faster but flaky
+                    os.execv(sys.argv[-2], [sys.argv[-2], str(counter - 1)])
+            time.sleep(1)"""  # Too low sleep will make the test faster but flaky
             )
         )
     executable = os.path.realpath(scriptname)
@@ -80,9 +80,15 @@ def test_memory_usage_counts_grandchildren():
                 max_seen = max(max_seen, status.memory_status.max_rss)
         return max_seen
 
+    # size of the list that gets forked. we will use this when
+    # comparing the memory used with different amounts of forks done.
+    # subtract a little bit (* 0.9) due to natural variance in memory used
+    # when running the program.
+    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e6 * 0.9
+
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
-    assert max_seens[0] < max_seens[1]
-    assert max_seens[1] < max_seens[2]
+    assert max_seens[0] + memory_per_numbers_list < max_seens[1]
+    assert max_seens[1] + memory_per_numbers_list < max_seens[2]
 
 
 @pytest.mark.flaky(reruns=3)
@@ -158,6 +164,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
         """A very lightweight mocked psutil.Process object"""
 
         pid: int
+        memory_info = MagicMock()
 
         def children(self, recursive: bool = True):
             if self.pid == 123:
@@ -171,7 +178,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
-        oom_score = _get_oom_score_for_processtree(MockedProcess(123))
+        (_, oom_score) = _get_rss_and_oom_score_for_processtree(MockedProcess(123))
 
     assert oom_score == 456
 

@@ -69,7 +69,7 @@ def opened_main_window(
         yield gui
 
 
-def _new_poly_example(source_root, destination):
+def _new_poly_example(source_root, destination, num_realizations: int = 20):
     shutil.copytree(
         os.path.join(source_root, "test-data", "poly_example"),
         destination,
@@ -81,7 +81,7 @@ def _new_poly_example(source_root, destination):
             if "NUM_REALIZATIONS" in line:
                 # Decrease the number of realizations to speed up the test,
                 # if there is flakyness, this can be increased.
-                print("NUM_REALIZATIONS 20", end="\n")
+                print(f"NUM_REALIZATIONS {num_realizations}", end="\n")
             else:
                 print(line, end="")
 
@@ -106,6 +106,20 @@ def _open_main_window(
 def opened_main_window_clean(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
+    with _open_main_window(tmp_path / "poly.ert") as (
+        gui,
+        _,
+        config,
+    ), StorageService.init_service(
+        project=os.path.abspath(config.ens_path),
+    ):
+        yield gui
+
+
+@pytest.fixture
+def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _new_poly_example(source_root, tmp_path, 2)
     with _open_main_window(tmp_path / "poly.ert") as (
         gui,
         _,

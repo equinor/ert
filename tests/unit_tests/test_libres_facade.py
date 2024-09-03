@@ -31,16 +31,6 @@ def empty_case(facade, storage):
     )
 
 
-@pytest.fixture
-def get_ensemble(storage):
-    def getter(name):
-        storage.refresh()
-        ensemble_id = storage.get_ensemble_by_name(name)
-        return storage.get_ensemble(ensemble_id)
-
-    return getter
-
-
 def test_keyword_type_checks(snake_oil_default_storage):
     assert "BPR:1,3,8" in snake_oil_default_storage.get_summary_keyset()
 

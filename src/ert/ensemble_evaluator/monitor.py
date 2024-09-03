@@ -1,20 +1,22 @@
 import asyncio
 import logging
-import pickle
 import ssl
 import uuid
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Final, Optional, Union
 
 from aiohttp import ClientError
-from cloudevents.conversion import to_json
-from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import CloudEvent, from_json
 from websockets import ConnectionClosed, Headers, WebSocketClientProtocol
 from websockets.client import connect
 
-from ert.ensemble_evaluator import identifiers
+from _ert.events import (
+    EETerminated,
+    EEUserCancel,
+    EEUserDone,
+    Event,
+    event_from_json,
+    event_to_json,
+)
 from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
-from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
@@ -23,17 +25,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CloseTrackerEvent:
+class EventSentinel:
     pass
 
 
 class Monitor:
+    _sentinel: Final = EventSentinel()
+
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
-        self._event_queue: asyncio.Queue[Union[CloudEvent, CloseTrackerEvent]] = (
-            asyncio.Queue()
-        )
+        self._event_queue: asyncio.Queue[Union[Event, EventSentinel]] = asyncio.Queue()
         self._connection: Optional[WebSocketClientProtocol] = None
         self._receiver_task: Optional[asyncio.Task[None]] = None
         self._connected: asyncio.Event = asyncio.Event()
@@ -69,42 +71,26 @@ class Monitor:
     async def signal_cancel(self) -> None:
         if not self._connection:
             return
-        await self._event_queue.put(CloseTrackerEvent())
+        await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_CANCEL,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._connection.send(
-            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
-        )
+        cancel_event = EEUserCancel(monitor=self._id)
+        await self._connection.send(event_to_json(cancel_event))
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
     async def signal_done(self) -> None:
         if not self._connection:
             return
-        await self._event_queue.put(CloseTrackerEvent())
+        await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
-        out_cloudevent = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_EE_USER_DONE,
-                "source": f"/ert/monitor/{self._id}",
-                "id": str(uuid.uuid1()),
-            }
-        )
-        await self._connection.send(
-            to_json(out_cloudevent, data_marshaller=evaluator_marshaller)
-        )
+        done_event = EEUserDone(monitor=self._id)
+        await self._connection.send(event_to_json(done_event))
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
         self, heartbeat_interval: Optional[float] = None
-    ) -> AsyncGenerator[Optional[CloudEvent], None]:
+    ) -> AsyncGenerator[Optional[Event], None]:
         """Yield events from the internal event queue with optional heartbeats.
 
         Heartbeats are represented by None being yielded.
@@ -122,15 +108,12 @@ class Monitor:
                     logger.error("Evaluator did not send the TERMINATED event!")
                     break
                 event = None
-            if isinstance(event, CloseTrackerEvent):
+            if isinstance(event, EventSentinel):
                 closetracker_received = True
                 _heartbeat_interval = self._receiver_timeout
             else:
                 yield event
-                if (
-                    event is not None
-                    and event["type"] == identifiers.EVTYPE_EE_TERMINATED
-                ):
+                if type(event) is EETerminated:
                     logger.debug(f"monitor-{self._id} client received terminated")
                     break
             if event is not None:
@@ -165,13 +148,8 @@ class Monitor:
             try:
                 self._connection = conn
                 self._connected.set()
-                async for message in self._connection:
-                    try:
-                        event = from_json(
-                            str(message), data_unmarshaller=evaluator_unmarshaller
-                        )
-                    except DataUnmarshallerError:
-                        event = from_json(str(message), data_unmarshaller=pickle.loads)
+                async for raw_msg in self._connection:
+                    event = event_from_json(raw_msg)
                     await self._event_queue.put(event)
             except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
                 self._connection = None

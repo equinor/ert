@@ -18,13 +18,13 @@ from ert.scheduler import Scheduler
 from ert.scheduler.job import (
     Job,
     JobState,
-    _queue_jobstate_event_type,
     log_info_from_exit_file,
 )
 
 
 def create_scheduler():
     sch = AsyncMock()
+    sch._ens_id = "0"
     sch._events = asyncio.Queue()
     sch.driver = AsyncMock()
     sch._manifest_queue = None
@@ -62,8 +62,8 @@ async def assert_scheduler_events(
         assert (
             scheduler._events.qsize()
         ), f"Expected to find {expected_job_event=} in the event queue"
-        queue_event = scheduler._events.get_nowait()
-        assert queue_event["type"] == _queue_jobstate_event_type[expected_job_event]
+        event = scheduler._events.get_nowait()
+        assert event.queue_event_type == expected_job_event
 
     # should be no more events
     assert scheduler._events.empty()
@@ -135,7 +135,7 @@ async def test_job_run_sends_expected_events(
     job.started.set()
 
     job_run_task = asyncio.create_task(
-        job.run(asyncio.Semaphore(), max_submit=max_submit)
+        job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=max_submit)
     )
 
     for attempt in range(max_submit):
@@ -176,7 +176,9 @@ async def test_num_cpu_is_propagated_to_driver(realization: Realization):
     realization.num_cpu = 8
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+    job_run_task = asyncio.create_task(
+        job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+    )
     job.started.set()
     job.returncode.set_result(0)
     await job_run_task
@@ -197,7 +199,9 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
     realization.realization_memory = 8 * 1024**2
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+    job_run_task = asyncio.create_task(
+        job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+    )
     job.started.set()
     job.returncode.set_result(0)
     await job_run_task
@@ -233,7 +237,9 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     job.started.set()
 
     with captured_logs(log_msgs, logging.ERROR):
-        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job_run_task = asyncio.create_task(
+            job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+        )
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -262,7 +268,9 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
     job.started.set()
 
     with captured_logs(log_msgs, logging.ERROR):
-        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job_run_task = asyncio.create_task(
+            job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+        )
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -294,7 +302,9 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
     job.started.set()
 
     with captured_logs(log_msgs, logging.WARNING):
-        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job_run_task = asyncio.create_task(
+            job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+        )
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task
@@ -320,7 +330,9 @@ async def test_when_no_checksum_info_is_received_a_warning_is_logged(
     mocker.patch("asyncio.sleep", return_value=None)
 
     with captured_logs(log_msgs, logging.WARNING):
-        job_run_task = asyncio.create_task(job.run(asyncio.Semaphore(), max_submit=1))
+        job_run_task = asyncio.create_task(
+            job.run(asyncio.Semaphore(), asyncio.Lock(), max_submit=1)
+        )
         job.started.set()
         job.returncode.set_result(0)
         await job_run_task

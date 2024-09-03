@@ -549,8 +549,9 @@ class ErtConfig:
                 manifest[f"{name}_UNSMRY"] = f"{input_file}.UNSMRY"
                 manifest[f"{name}_SMSPEC"] = f"{input_file}.SMSPEC"
             if isinstance(respons_config, GenDataConfig):
-                if respons_config.report_steps and iens in respons_config.report_steps:
-                    manifest[name] = input_file.replace("%d", str(iens))
+                if respons_config.report_steps:
+                    for step in respons_config.report_steps:
+                        manifest[f"{name}_{step}"] = input_file.replace("%d", str(step))
                 elif "%d" not in input_file:
                     manifest[name] = input_file
         return manifest
@@ -560,7 +561,10 @@ class ErtConfig:
         run_id: Optional[str] = None,
         iens: int = 0,
         itr: int = 0,
+        context_env: Optional[Dict[str, str]] = None,
     ):
+        if context_env is not None:
+            self.env_vars.update(context_env)
         return self._create_forward_model_json(
             context=self.substitution_list,
             forward_model_steps=self.forward_model_steps,

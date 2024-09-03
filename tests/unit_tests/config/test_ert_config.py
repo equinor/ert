@@ -444,7 +444,7 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
             ConfigValidationError,
             match="Unsupported non UTF-8 character "
             f"'ÿ' found in file: {data_file_path!r}",
-        ):
+        ), pytest.warns(match="Failed to read NUM_CPU"):
             ErtConfig.from_file("config.ert")
 
 
@@ -505,6 +505,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     )
 
 
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())
@@ -518,6 +519,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
         ) == ErtConfig.from_file(filename)
 
 
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())
@@ -611,6 +613,7 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("use_tmpdir")
 @given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
 def test_num_cpu_vs_torque_queue_cpu_configuration(
@@ -1617,6 +1620,7 @@ def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
     )
 
 
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize(
     "param_config", ["coeffs_priors", "template.txt output.txt coeffs_priors"]
 )

@@ -268,7 +268,7 @@ class OpenPBSDriver(Driver):
                 QSUB_CONNECTION_REFUSED,
             ),
             stdin=script.encode(encoding="utf-8"),
-            retries=self._num_pbs_cmd_retries,
+            total_attempts=self._num_pbs_cmd_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
@@ -298,7 +298,7 @@ class OpenPBSDriver(Driver):
             [str(self._qdel_cmd), str(job_id)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
-            retries=self._num_pbs_cmd_retries,
+            total_attempts=self._num_pbs_cmd_retries,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
@@ -312,14 +312,18 @@ class OpenPBSDriver(Driver):
                 continue
 
             if self._non_finished_job_ids:
-                process = await asyncio.create_subprocess_exec(
-                    str(self._qstat_cmd),
-                    "-Ex",
-                    "-w",  # wide format
-                    *self._non_finished_job_ids,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
+                try:
+                    process = await asyncio.create_subprocess_exec(
+                        str(self._qstat_cmd),
+                        "-Ex",
+                        "-w",  # wide format
+                        *self._non_finished_job_ids,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                except FileNotFoundError as e:
+                    logger.error(str(e))
+                    return
                 stdout, stderr = await process.communicate()
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but

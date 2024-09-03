@@ -1,9 +1,10 @@
 import functools
-import json
 import logging
 import os
 import socket
 import time
+
+import orjson
 
 from _ert_forward_model_runner.io import cond_unlink
 from _ert_forward_model_runner.reporting.base import Reporter
@@ -209,5 +210,5 @@ class File(Reporter):
             )
 
     def _dump_status_json(self):
-        with open(STATUS_json, "w", encoding="utf-8") as fp:
-            json.dump(self.status_dict, fp, indent=4)
+        with open(STATUS_json, "wb") as fp:
+            fp.write(orjson.dumps(self.status_dict, option=orjson.OPT_INDENT_2))

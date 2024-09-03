@@ -146,11 +146,17 @@ class BatchContext:
             self.mask,
             ensemble=self.ensemble,
         )
+        context_env = {
+            "_ERT_EXPERIMENT_ID": str(self.ensemble.experiment_id),
+            "_ERT_ENSEMBLE_ID": str(self.ensemble.id),
+            "_ERT_SIMULATION_MODE": "batch_simulation",
+        }
         create_run_path(
             self.run_args,
             self.ensemble,
             ert_config,
             run_paths,
+            context_env,
         )
         for workflow in ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]:
             WorkflowRunner(workflow, None, self.ensemble).run_blocking()

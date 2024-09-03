@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas
@@ -22,9 +23,9 @@ class CSVExportJob(ErtScript):
 
     Optional arguments:
 
-    ensemble_list: a comma separated list of ensembles to export (no spaces allowed)
-               if no list is provided the current ensemble is exported
-               a single * can be used to export all ensembles
+    ensemble_list: a JSON string representation of a dictionary where keys are
+                   UUID strings and values are ensemble names.
+                   A single * can be used to export all ensembles
 
     design_matrix: a path to a file containing the design matrix
 
@@ -53,21 +54,25 @@ class CSVExportJob(ErtScript):
         workflow_args,
     ):
         output_file = workflow_args[0]
-        ensemble_list = None if len(workflow_args) < 2 else workflow_args[1]
+        ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
         _ = True if len(workflow_args) < 4 else workflow_args[3]
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
-        ensembles = []
         facade = LibresFacade(ert_config)
 
-        ensembles = ensemble_list.split(",")
+        ensemble_data_as_dict = (
+            json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
+        )
 
-        if ensemble_list is None or len(ensembles) == 0:
-            ensembles = "default"
+        # Use the keys (UUIDs as strings) to get ensembles
+        ensembles = []
+        for ensemble_id in ensemble_data_as_dict:
+            ensemble = self.storage.get_ensemble(ensemble_id)
+            ensembles.append(ensemble)
 
         if design_matrix_path is not None:
             if not os.path.exists(design_matrix_path):
-                raise UserWarning("The design matrix file does not exists!")
+                raise UserWarning("The design matrix file does not exist!")
 
             if not os.path.isfile(design_matrix_path):
                 raise UserWarning("The design matrix is not a file!")
@@ -75,15 +80,10 @@ class CSVExportJob(ErtScript):
         data = pandas.DataFrame()
 
         for ensemble in ensembles:
-            ensemble = ensemble.strip()
-
-            try:
-                ensemble = self.storage.get_ensemble_by_name(ensemble)
-            except KeyError as exc:
-                raise UserWarning(f"The ensemble '{ensemble}' does not exist!") from exc
-
             if not ensemble.has_data():
-                raise UserWarning(f"The ensemble '{ensemble}' does not have any data!")
+                raise UserWarning(
+                    f"The ensemble '{ensemble.name}' does not have any data!"
+                )
 
             ensemble_data = ensemble.load_all_gen_kw_data()
 

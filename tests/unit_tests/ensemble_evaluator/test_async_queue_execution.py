@@ -25,11 +25,9 @@ async def test_happy_path(
     event_states = ["WAITING", "SUBMITTING", "PENDING", "RUNNING", "COMPLETED"]
     id_state = 0
     while not queue._events.empty():
-        received_event = await queue._events.get()
-        assert received_event["source"] == "/ert/ensemble/ee_0/real/0"
-        assert (
-            received_event["type"]
-            == f"com.equinor.ert.realization.{type_states[id_state]}"
-        )
-        assert received_event.data == {"queue_event_type": event_states[id_state]}
+        event = await queue._events.get()
+        assert event.ensemble == "ee_0"
+        assert event.real == "0"
+        assert event.event_type == f"realization.{type_states[id_state]}"
+        assert event.queue_event_type == event_states[id_state]
         id_state += 1

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import time
@@ -18,25 +17,21 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
+    Union,
 )
 
+import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.async_utils import get_running_loop
+from _ert.events import Event, ForwardModelStepChecksum, Id
 from ert.constant_filenames import CERT_FILE
-from ert.event_type_constants import (
-    EVTYPE_ENSEMBLE_CANCELLED,
-    EVTYPE_ENSEMBLE_SUCCEEDED,
-    EVTYPE_FORWARD_MODEL_CHECKSUM,
-)
 
 from .driver import Driver
 from .event import FinishedEvent
 from .job import Job, JobState
 
 if TYPE_CHECKING:
-    from cloudevents.http import CloudEvent
-
     from ert.ensemble_evaluator import Realization
 
 logger = logging.getLogger(__name__)
@@ -74,8 +69,8 @@ class Scheduler:
         self,
         driver: Driver,
         realizations: Optional[Sequence[Realization]] = None,
-        manifest_queue: Optional[asyncio.Queue[CloudEvent]] = None,
-        ensemble_evaluator_queue: Optional[asyncio.Queue[CloudEvent]] = None,
+        manifest_queue: Optional[asyncio.Queue[Event]] = None,
+        ensemble_evaluator_queue: Optional[asyncio.Queue[Event]] = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,
@@ -101,6 +96,7 @@ class Scheduler:
 
         self._loop = get_running_loop()
         self._events: asyncio.Queue[Any] = asyncio.Queue()
+        self._running: asyncio.Event = asyncio.Event()
 
         self._average_job_runtime: float = 0
         self._completed_jobs_num: int = 0
@@ -128,6 +124,7 @@ class Scheduler:
             asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
 
     async def cancel_all_jobs(self) -> None:
+        await self._running.wait()
         self._cancelled = True
         logger.info("Cancelling all jobs")
         await self._cancel_job_tasks()
@@ -192,8 +189,8 @@ class Scheduler:
             return
         while True:
             event = await self._manifest_queue.get()
-            if event["type"] == EVTYPE_FORWARD_MODEL_CHECKSUM:
-                self.checksum.update(event.data)
+            if type(event) is ForwardModelStepChecksum:
+                self.checksum.update(event.checksums)
             self._manifest_queue.task_done()
 
     async def _publisher(self) -> None:
@@ -254,7 +251,7 @@ class Scheduler:
     async def execute(
         self,
         min_required_realizations: int = 0,
-    ) -> str:
+    ) -> Union[Id.ENSEMBLE_SUCCEEDED_TYPE, Id.ENSEMBLE_CANCELLED_TYPE]:
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(
@@ -275,11 +272,16 @@ class Scheduler:
             scheduling_tasks.append(asyncio.create_task(self._update_avg_job_runtime()))
 
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
+        # this lock is to assure that no more than 1 task
+        # does internalization at a time
+        forward_model_ok_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
             self._job_tasks[iens] = asyncio.create_task(
-                job.run(sem, self._max_submit), name=f"job-{iens}_task"
+                job.run(sem, forward_model_ok_lock, self._max_submit),
+                name=f"job-{iens}_task",
             )
-
+        logger.info("All tasks started")
+        self._running.set()
         try:
             await self._monitor_and_handle_tasks(scheduling_tasks)
             await self.driver.finish()
@@ -294,9 +296,9 @@ class Scheduler:
 
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
-            return EVTYPE_ENSEMBLE_CANCELLED
+            return Id.ENSEMBLE_CANCELLED
 
-        return EVTYPE_ENSEMBLE_SUCCEEDED
+        return Id.ENSEMBLE_SUCCEEDED
 
     async def _process_event_queue(self) -> None:
         while True:
@@ -326,8 +328,8 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "r", encoding="utf-8") as fp:
-            data = json.load(fp)
-        with open(jobs_path, "w", encoding="utf-8") as fp:
+        with open(jobs_path, "rb") as fp:
+            data = orjson.loads(fp.read())
+        with open(jobs_path, "wb") as fp:
             data.update(asdict(jobs))
-            json.dump(data, fp, indent=4)
+            fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))

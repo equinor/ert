@@ -18,7 +18,7 @@ from uvicorn.supervisors import ChangeReload
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import ErtPluginContext
 from ert.shared import __file__ as ert_shared_path
-from ert.shared import port_handler
+from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
 
 
@@ -95,8 +95,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    _, _, sock = port_handler.find_available_port(custom_host=args.host)
-
+    sock = find_available_socket(custom_host=args.host)
     connection_info = _create_connection_info(sock, authtoken)
 
     # Appropriated from uvicorn.main:run
