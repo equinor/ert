@@ -133,7 +133,9 @@ def test_that_export_tool_does_not_produce_duplicate_data(
     with open_storage("storage") as storage:
         experiments = [exp.name for exp in storage.experiments]
         ensembles = [ens.name for ens in storage.ensembles]
-        assert experiments == ["ensemble_experiment_0", "ensemble_experiment"]
+        assert sorted(experiments) == sorted(
+            ["ensemble_experiment_0", "ensemble_experiment"]
+        )
         assert ensembles == ["iter-0", "iter-0"]
 
     # Split the dataframe into two halves
