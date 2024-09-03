@@ -129,11 +129,10 @@ class Job:
             stdout = None
 
         target_file = self.job_data.get("target_file")
-        if target_file:
-            target_file_mtime: int = 0
-            if os.path.exists(target_file):
-                stat = os.stat(target_file)
-                target_file_mtime = stat.st_mtime_ns
+        target_file_mtime: int = 0
+        if target_file and os.path.exists(target_file):
+            stat = os.stat(target_file)
+            target_file_mtime = stat.st_mtime_ns
 
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
@@ -166,7 +165,8 @@ class Job:
                     f"Most likely you are missing and should add "
                     f"'#!/usr/bin/env python' to the top of the file: "
                 )
-            stderr.write(msg)
+            if stderr:
+                stderr.write(msg)
             ensure_file_handles_closed()
             yield Exited(self, e.errno).with_error(msg)
             return
@@ -368,8 +368,8 @@ def _get_rss_and_oom_score_for_processtree(
     """
 
     oom_score = None
-    memory_rss = 0
     # A value of None means that we have no information.
+    memory_rss = 0
     with contextlib.suppress(ValueError, FileNotFoundError):
         oom_score = int(
             Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
