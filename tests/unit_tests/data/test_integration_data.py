@@ -8,18 +8,11 @@ from ert.config import ErtConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError
 from ert.libres_facade import LibresFacade
-from ert.storage import open_storage
 
 
 @pytest.fixture()
 def facade_snake_oil(snake_oil_case_storage):
     yield LibresFacade(snake_oil_case_storage)
-
-
-@pytest.fixture
-def default_ensemble(snake_oil_case_storage):
-    with open_storage(snake_oil_case_storage.ens_path) as storage:
-        yield storage.get_ensemble_by_name("default_0")
 
 
 @pytest.fixture
