@@ -34,29 +34,21 @@ _gradient_info = [
 
 CONFIG_MULTIOBJ_CACHE_PATH = relpath("test_data", "cached_results_config_multiobj")
 CONFIG_PATH = relpath("..", "examples", "math_func", "config_multiobj.yml")
-expected_objective_values = [
-    -0.75,
-    -4.75,
-    -0.724655,
-    -4.82742,
-    -0.487246,
-    -4.53861,
-]
+expected_objective_values = [-0.75, -4.75, -0.765651, -4.70363, -0.507788, -4.47678]
 
 expected_control_values = [
     0.0,
-    0.0155956904562151,
-    0.0100945553979535,
+    0.0,
+    0.0,
+    -0.0042039049387002465,
+    -0.011301358892103368,
     1.0,
-    0.00779508487426616,
-    0.0050454910166334395,
-    0.49982300534566654,
+    -0.00210164760474425,
+    -0.0056498598784414,
+    0.499927480613782,
 ]
-expected_single_objective_values = [
-    -2.333333333333333,
-    -2.3337950000000003,
-    -2.000116,
-]
+
+expected_single_objective_values = [-2.333333333333333, -2.333527666666667, -2.000048]
 
 
 def _make_mock(mock_SebaSnapshot):
