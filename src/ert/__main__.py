@@ -635,9 +635,9 @@ def log_process_usage() -> None:
             "Socket messages Received": usage.ru_msgrcv,
             "Signals received": usage.ru_nsignals,
             "Swaps": usage.ru_nswap,
-            "Peak memory use (kB)": maxrss,
+            "Peak memory use (KB)": maxrss,
         }
-        logger.info(f"Peak memory use: {maxrss} kB", extra=usage_dict)
+        logger.info(f"Peak memory use: {maxrss} KB", extra=usage_dict)
     except Exception as exc:
         logger.warning(
             f"Exception while trying to log ERT process resource usage: {exc}"

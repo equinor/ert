@@ -515,7 +515,7 @@ def test_run_dialog_memory_usage_showing(
 
     max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
     max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
-    assert max_memory_value == "60.00 kB"
+    assert max_memory_value == "60.00 KB"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

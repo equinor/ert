@@ -3,7 +3,7 @@ import os
 
 
 def byte_with_unit(byte_count: float) -> str:
-    suffixes = ["B", "kB", "MB", "GB", "TB", "PB"]
+    suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
     power = float(10**3)
 
     i = 0
