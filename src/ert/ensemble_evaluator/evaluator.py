@@ -86,6 +86,24 @@ class EnsembleEvaluator:
         self._max_batch_size: int = 500
         self._batching_interval: int = 2
 
+        self._event_handler = self._setup_event_handler()
+
+    def _setup_event_handler(self):
+        event_handler: Dict[Type[Event], EVENT_HANDLER] = {}
+
+        def set_event_handler(event_types: Set[Type[Event]], func: Any) -> None:
+            for event_type in event_types:
+                event_handler[event_type] = func
+
+        set_event_handler(
+            set(get_args(Union[FMEvent, RealizationEvent])), self._fm_handler
+        )
+        set_event_handler({EnsembleStarted}, self._started_handler)
+        set_event_handler({EnsembleSucceeded}, self._stopped_handler)
+        set_event_handler({EnsembleCancelled}, self._cancelled_handler)
+        set_event_handler({EnsembleFailed}, self._failed_handler)
+        return event_handler
+
     async def _publisher(self) -> None:
         while True:
             event = await self._events_to_send.get()
@@ -116,20 +134,6 @@ class EnsembleEvaluator:
             self._batch_processing_queue.task_done()
 
     async def _batch_events_into_buffer(self) -> None:
-        event_handler: Dict[Type[Event], EVENT_HANDLER] = {}
-
-        def set_event_handler(event_types: Set[Type[Event]], func: Any) -> None:
-            for event_type in event_types:
-                event_handler[event_type] = func
-
-        set_event_handler(
-            set(get_args(Union[FMEvent, RealizationEvent])), self._fm_handler
-        )
-        set_event_handler({EnsembleStarted}, self._started_handler)
-        set_event_handler({EnsembleSucceeded}, self._stopped_handler)
-        set_event_handler({EnsembleCancelled}, self._cancelled_handler)
-        set_event_handler({EnsembleFailed}, self._failed_handler)
-
         while True:
             batch: List[Tuple[EVENT_HANDLER, Event]] = []
             start_time = asyncio.get_running_loop().time()
@@ -140,7 +144,7 @@ class EnsembleEvaluator:
             ):
                 try:
                     event = await asyncio.wait_for(self._events.get(), timeout=0.1)
-                    function = event_handler[type(event)]
+                    function = self._event_handler[type(event)]
                     batch.append((function, event))
                     self._events.task_done()
                 except asyncio.TimeoutError:
