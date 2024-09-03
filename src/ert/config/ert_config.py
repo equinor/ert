@@ -349,7 +349,7 @@ class ErtConfig:
         tmp_dict.pop("HOOK_WORKFLOW", None)
         tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
 
-        logger.info("Content of the config_dict: %s", tmp_dict)
+        logger.info(f"Content of the config_dict: {tmp_dict}")
 
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
@@ -633,10 +633,8 @@ class ErtConfig:
                         result[new_key] = new_value
                     else:
                         logger.warning(
-                            "Environment variable %s skipped due to"
-                            " unmatched define %s",
-                            new_key,
-                            new_value,
+                            f"Environment variable {new_key} skipped due to"
+                            f" unmatched define {new_value}",
                         )
                 # Its expected that empty dicts be replaced with "null"
                 # in jobs.json

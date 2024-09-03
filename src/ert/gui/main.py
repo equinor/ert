@@ -116,7 +116,7 @@ def _start_initial_gui_window(
                 and cast(ConfigWarning, w.message).info.is_deprecation
             ]
             error_messages += error.errors
-            logger.info("Error in config file shown in gui: '%s'", str(error))
+            logger.info(f"Error in config file shown in gui: '{error}'")
             return (
                 Suggestor(
                     error_messages,
@@ -147,18 +147,16 @@ def _start_initial_gui_window(
 
     for fm_step_name, count in counter_fm_steps.items():
         logger.info(
-            "Config contains forward model step %s %d time(s)",
-            fm_step_name,
-            count,
+            f"Config contains forward model step {fm_step_name} {count} time(s)",
         )
 
     for wm in all_warnings:
         if wm.category != ConfigWarning:
             logger.warning(str(wm.message))
     for msg in deprecations:
-        logger.info("Suggestion shown in gui '%s'", msg)
+        logger.info(f"Suggestion shown in gui '{msg}'")
     for msg in config_warnings:
-        logger.info("Warning shown in gui '%s'", msg)
+        logger.info(f"Warning shown in gui '{msg}'")
     storage = open_storage(ert_config.ens_path, mode="w")
     _main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
