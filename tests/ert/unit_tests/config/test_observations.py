@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 
-import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -181,10 +180,10 @@ def test_summary_obs_invalid_observation_std(std):
 def test_gen_obs_invalid_observation_std(std):
     with pytest.raises(ValueError, match="must be strictly > 0"):
         GenObservation(
-            np.array(range(len(std))),
-            np.array(std),
-            np.array(range(len(std))),
-            np.array(range(len(std))),
+            list(range(len(std))),
+            list(std),
+            list(range(len(std))),
+            list(range(len(std))),
         )
 
 
@@ -303,7 +302,7 @@ def test_that_index_list_is_read(tmpdir):
             )
 
         observations = ErtConfig.from_file("config.ert").enkf_obs
-        assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
+        assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
 def test_that_index_file_is_read(tmpdir):
@@ -337,7 +336,7 @@ def test_that_index_file_is_read(tmpdir):
             )
 
         observations = ErtConfig.from_file("config.ert").enkf_obs
-        assert observations["OBS"].observations[0].indices.tolist() == [0, 2, 4, 6, 8]
+        assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
 def test_that_missing_obs_file_raises_exception(tmpdir):

@@ -4,13 +4,14 @@ import importlib
 import logging
 import os
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
 from typing import (
     Any,
     ClassVar,
+    DefaultDict,
     Dict,
     List,
     Optional,
@@ -24,6 +25,8 @@ from typing import (
 
 import polars
 from pydantic import ValidationError as PydanticValidationError
+from pydantic import field_validator
+from pydantic.dataclasses import dataclass
 from typing_extensions import Self
 
 from ert.plugins import ErtPluginManager
@@ -49,6 +52,7 @@ from .parsing import (
     ConfigWarning,
     ErrorInfo,
     ForwardModelStepKeys,
+    HistorySource,
     HookRuntime,
     init_forward_model_schema,
     init_site_config_schema,
@@ -256,7 +260,9 @@ class ErtConfig:
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)
     workflows: Dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
+    hooked_workflows: DefaultDict[HookRuntime, List[Workflow]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[Tuple[str, str]] = field(default_factory=list)
     installed_forward_model_steps: Dict[str, ForwardModelStep] = field(
@@ -269,6 +275,14 @@ class ErtConfig:
     observation_config: List[
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
+    enkf_obs: EnkfObs = field(default_factory=EnkfObs)
+
+    @field_validator("substitutions", mode="before")
+    @classmethod
+    def convert_to_substitutions(cls, v: Dict[str, str]) -> Substitutions:
+        if isinstance(v, Substitutions):
+            return v
+        return Substitutions(v)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -298,8 +312,6 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.enkf_obs: EnkfObs = self._create_observations(self.observation_config)
-
         self.observations: Dict[str, polars.DataFrame] = self.enkf_obs.datasets
 
     @staticmethod
@@ -456,7 +468,7 @@ class ErtConfig:
             errors.append(err)
 
         obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_config_content = None
+        obs_config_content = []
         try:
             if obs_config_file:
                 if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
@@ -487,6 +499,19 @@ class ErtConfig:
                         [key] for key in summary_obs if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+            if model_config:
+                observations = cls._create_observations(
+                    obs_config_content,
+                    ensemble_config,
+                    model_config.time_map,
+                    model_config.history_source,
+                )
+            else:
+                errors.append(
+                    ConfigValidationError(
+                        "Not possible to validate observations without valid model config"
+                    )
+                )
         except ConfigValidationError as err:
             errors.append(err)
 
@@ -519,6 +544,7 @@ class ErtConfig:
             model_config=model_config,
             user_config_file=config_file_path,
             observation_config=obs_config_content,
+            enkf_obs=observations,
         )
 
     @classmethod
@@ -970,24 +996,25 @@ class ErtConfig:
     def preferred_num_cpu(self) -> int:
         return int(self.substitutions.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
+    @staticmethod
     def _create_observations(
-        self,
         obs_config_content: Optional[
             Dict[str, Union[HistoryValues, SummaryValues, GenObsValues]]
         ],
+        ensemble_config: EnsembleConfig,
+        time_map: Optional[List[datetime]],
+        history: HistorySource,
     ) -> EnkfObs:
         if not obs_config_content:
             return EnkfObs({}, [])
         obs_vectors: Dict[str, ObsVector] = {}
         obs_time_list: Sequence[datetime] = []
-        if self.ensemble_config.refcase is not None:
-            obs_time_list = self.ensemble_config.refcase.all_dates
-        elif self.model_config.time_map is not None:
-            obs_time_list = self.model_config.time_map
+        if ensemble_config.refcase is not None:
+            obs_time_list = ensemble_config.refcase.all_dates
+        elif time_map is not None:
+            obs_time_list = time_map
 
-        history = self.model_config.history_source
         time_len = len(obs_time_list)
-        ensemble_config = self.ensemble_config
         config_errors: List[ErrorInfo] = []
         for obs_name, values in obs_config_content:
             try:
@@ -1059,7 +1086,7 @@ def _get_files_in_directory(job_path, errors):
 
 
 def _substitutions_from_dict(config_dict) -> Substitutions:
-    subst_list = Substitutions()
+    subst_list = {}
 
     for key, val in config_dict.get("DEFINE", []):
         subst_list[key] = val
@@ -1077,7 +1104,7 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
     for key, val in config_dict.get("DATA_KW", []):
         subst_list[key] = val
 
-    return subst_list
+    return Substitutions(subst_list)
 
 
 @no_type_check

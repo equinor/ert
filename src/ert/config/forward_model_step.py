@@ -5,12 +5,14 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import (
     ClassVar,
+    Dict,
     Literal,
     Optional,
     TypedDict,
     Union,
 )
 
+from pydantic import field_validator
 from typing_extensions import NotRequired, Unpack
 
 from ert.config.parsing.config_errors import ConfigWarning
@@ -171,6 +173,13 @@ class ForwardModelStep:
         "_ERT_REALIZATION_NUMBER": "<IENS>",
         "_ERT_RUNPATH": "<RUNPATH>",
     }
+
+    @field_validator("private_args", mode="before")
+    @classmethod
+    def convert_to_substitutions(cls, v: Dict[str, str]) -> Substitutions:
+        if isinstance(v, Substitutions):
+            return v
+        return Substitutions(v)
 
     def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
         """
