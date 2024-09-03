@@ -1,14 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import (
-    Any,
     List,
     Optional,
     Sequence,
 )
 
 import numpy as np
-import numpy.typing as npt
 
 from ._read_summary import read_summary
 from .parsing.config_dict import ConfigDict
@@ -21,7 +19,7 @@ class Refcase:
     start_date: datetime
     keys: List[str]
     dates: Sequence[datetime]
-    values: npt.NDArray[Any]
+    values: List[List[float]]
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Refcase):
@@ -50,5 +48,7 @@ class Refcase:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err
 
         return (
-            cls(start_date, refcase_keys, time_map, data) if data is not None else None
+            cls(start_date, refcase_keys, time_map, data.tolist())
+            if data is not None
+            else None
         )

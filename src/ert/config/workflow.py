@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
@@ -11,14 +12,10 @@ if TYPE_CHECKING:
     from .workflow_job import WorkflowJob
 
 
+@dataclass
 class Workflow:
-    def __init__(
-        self,
-        src_file: str,
-        cmd_list: List[Tuple[WorkflowJob, Any]],
-    ):
-        self.src_file = src_file
-        self.cmd_list = cmd_list
+    src_file: str
+    cmd_list: List[Tuple[WorkflowJob, Any]]
 
     def __len__(self) -> int:
         return len(self.cmd_list)

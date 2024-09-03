@@ -29,10 +29,12 @@ class DesignMatrix:
     xls_filename: Path
     design_sheet: str
     default_sheet: str
-    num_realizations: Optional[int] = None
-    active_realizations: Optional[List[bool]] = None
-    design_matrix_df: Optional[pd.DataFrame] = None
-    parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
+
+    def __post_init__(self) -> None:
+        self.num_realizations: Optional[int] = None
+        self.active_realizations: Optional[List[bool]] = None
+        self.design_matrix_df: Optional[pd.DataFrame] = None
+        self.parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
 
     @classmethod
     def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
