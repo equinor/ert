@@ -35,7 +35,7 @@ jobs:
         pip install uv
 
     - name: Install HDF5 source files
-      if: runner.os == 'macOS'
+      if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
       run: brew install hdf5
 
     - name: Install ert
