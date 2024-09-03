@@ -79,7 +79,7 @@ def parse_field_line(tmp_path, grid_shape, egrid_file):
             "NUM_REALIZATIONS 1\nGRID " + egrid_file + "\n" + field_line + "\n",
             encoding="utf-8",
         )
-        parsed = lark_parse(str(config_file), init_user_config_schema(), None, None)
+        parsed = lark_parse(str(config_file), init_user_config_schema(), None)
 
         return Field.from_config_list(parsed["GRID"], grid_shape, parsed["FIELD"][0])
 
