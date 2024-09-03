@@ -57,7 +57,7 @@ class ManualUpdate(UpdateRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info("Running manual update")
+        logger.info(f"Running {self.name}")
         ensemble_format = self.target_ensemble_format
         try:
             ensemble_id = UUID(self.prior_ensemble_id)
