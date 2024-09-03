@@ -3,7 +3,7 @@ import os
 import everest
 import pytest
 from everest.config import EverestConfig
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 
 from tests.utils import relpath, tmpdir
 
@@ -23,7 +23,7 @@ def test_seed():
     assert random_seed == ever_workflow.config.environment.random_seed
 
     # Res
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
     assert random_seed == ert_config["RANDOM_SEED"]
 
 

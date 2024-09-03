@@ -5,7 +5,7 @@ import everest
 import pytest
 from everest import ConfigKeys
 from everest.config import EverestConfig
-from everest.simulator.everest2res import everest2res
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from ruamel.yaml import YAML
 
 from tests.utils import MockParser, relpath, skipif_no_everest_models, tmpdir
@@ -26,7 +26,7 @@ def test_default_seed():
     random_seed = config.environment.random_seed
     assert isinstance(random_seed, int)
     # Res
-    ert_config = everest2res(config)
+    ert_config = everest_to_ert_config(config)
     assert random_seed == ert_config["RANDOM_SEED"]
 
 
