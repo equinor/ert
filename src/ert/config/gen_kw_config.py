@@ -70,9 +70,7 @@ class TransformFunctionDefinition:
 class GenKwConfig(ParameterConfig):
     template_file: Optional[str]
     output_file: Optional[str]
-    transform_function_definitions: (
-        List[TransformFunctionDefinition] | List[Dict[Any, Any]]
-    )
+    transform_function_definitions: List[TransformFunctionDefinition]
     forward_init_file: Optional[str] = None
 
     def __post_init__(self) -> None:

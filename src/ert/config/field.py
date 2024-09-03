@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 import os
 import time
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Union, overload
 
 import numpy as np
 import xarray as xr
+from pydantic.dataclasses import dataclass
 from typing_extensions import Self
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field

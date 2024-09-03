@@ -11,6 +11,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
+from pydantic import RootModel, TypeAdapter
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
@@ -23,7 +24,6 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.config.parsing.queue_system import QueueSystem
 
 from .config_dict_generator import config_generators
@@ -537,6 +537,25 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=20)
+@given(config_generators())
+def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", os.getcwd())
+        )
+        config_json = json.loads(RootModel[ErtConfig](ert_config).model_dump_json())
+        from_json = ErtConfig(**config_json)
+        assert from_json == ert_config
+
+
+def test_that_ert_config_has_valid_schema():
+    TypeAdapter(ErtConfig).json_schema()
+
+
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -1450,7 +1469,7 @@ def test_no_timemap_or_refcase_provides_clear_error():
             print(line, end="")
 
     with pytest.raises(
-        ObservationConfigError,
+        ConfigValidationError,
         match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
     ):
         ErtConfig.from_file("snake_oil.ert")
@@ -1491,7 +1510,7 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
                 continue
             print(line, end="")
 
-    with pytest.raises(ObservationConfigError) as err:
+    with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [

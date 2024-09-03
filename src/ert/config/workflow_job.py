@@ -82,7 +82,7 @@ class WorkflowJob:
         arg_types_list = cls._make_arg_types_list(content_dict)
         return cls(
             name=name,
-            internal=content_dict.get("INTERNAL"),  # type: ignore
+            internal=bool(content_dict.get("INTERNAL", False)),  # type: ignore
             min_args=content_dict.get("MIN_ARG"),  # type: ignore
             max_args=content_dict.get("MAX_ARG"),  # type: ignore
             arg_types=arg_types_list,

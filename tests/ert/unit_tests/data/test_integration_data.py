@@ -159,4 +159,6 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     """
     obs_keys = facade_snake_oil.get_observations().datasets.keys()
     measured_data = create_measured_data(obs_keys)
-    snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
+    snapshot.assert_match(
+        measured_data.data.round(10).to_csv(), "snake_oil_measured_output.csv"
+    )

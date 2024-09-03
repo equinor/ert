@@ -4,11 +4,11 @@ import logging
 import re
 import shutil
 from abc import abstractmethod
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import asdict, field, fields
 from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
 
 import pydantic
-from pydantic import Field
+from pydantic.dataclasses import dataclass
 from typing_extensions import Annotated
 
 from .parsing import (
@@ -81,7 +81,7 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LOCAL.lower()] = QueueSystem.LOCAL.lower()
+    name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
 
     @property
     def driver_options(self) -> Dict[str, Any]:
@@ -90,7 +90,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LSF.lower()] = QueueSystem.LSF.lower()
+    name: Literal[QueueSystem.LSF] = QueueSystem.LSF
     bhist_cmd: Optional[NonEmptyString] = None
     bjobs_cmd: Optional[NonEmptyString] = None
     bkill_cmd: Optional[NonEmptyString] = None
@@ -113,7 +113,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.TORQUE.lower()] = QueueSystem.TORQUE.lower()
+    name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
     qsub_cmd: Optional[NonEmptyString] = None
     qstat_cmd: Optional[NonEmptyString] = None
     qdel_cmd: Optional[NonEmptyString] = None
@@ -149,7 +149,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.SLURM.lower()]
+    name: Literal[QueueSystem.SLURM] = QueueSystem.SLURM
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
@@ -269,7 +269,7 @@ class QueueConfig:
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Union[
         LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
-    ] = Field(default_factory=LocalQueueOptions, discriminator="name")
+    ] = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
@@ -363,7 +363,7 @@ class QueueConfig:
             selected_queue_system,
             queue_options,
             queue_options_test_run,
-            stop_long_running=stop_long_running,
+            stop_long_running=bool(stop_long_running),
         )
 
     def create_local_copy(self) -> QueueConfig:

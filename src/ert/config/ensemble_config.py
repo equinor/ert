@@ -15,7 +15,8 @@ from typing import (
 
 from ert.field_utils import get_shape
 
-from .field import Field
+from .ext_param_config import ExtParamConfig
+from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
@@ -49,8 +50,12 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 @dataclass
 class EnsembleConfig:
     grid_file: Optional[str] = None
-    response_configs: Dict[str, ResponseConfig] = field(default_factory=dict)
-    parameter_configs: Dict[str, ParameterConfig] = field(default_factory=dict)
+    response_configs: Dict[str, Union[SummaryConfig, GenDataConfig]] = field(
+        default_factory=dict
+    )
+    parameter_configs: Dict[
+        str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
+    ] = field(default_factory=dict)
     refcase: Optional[Refcase] = None
     eclbase: Optional[str] = None
 
@@ -93,7 +98,7 @@ class EnsembleConfig:
                     grid_file_path,
                 ) from err
 
-        def make_field(field_list: List[str]) -> Field:
+        def make_field(field_list: List[str]) -> FieldConfig:
             if grid_file_path is None:
                 raise ConfigValidationError.with_context(
                     "In order to use the FIELD keyword, a GRID must be supplied.",
@@ -104,7 +109,7 @@ class EnsembleConfig:
                     f"Grid file {grid_file_path} did not contain dimensions",
                     grid_file_path,
                 )
-            return Field.from_config_list(grid_file_path, dims, field_list)
+            return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
             [GenKwConfig.from_config_list(g) for g in gen_kw_list]
