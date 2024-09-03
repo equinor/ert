@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
+from pydantic import RootModel
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
@@ -517,6 +518,20 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
         assert ErtConfig.from_dict(
             config_values.to_config_dict("config.ert", os.getcwd())
         ) == ErtConfig.from_file(filename)
+
+
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=10)
+@given(config_generators())
+def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", os.getcwd())
+        )
+        config_json = json.loads(RootModel[ErtConfig](ert_config).model_dump_json())
+        assert ErtConfig(config_json) == ert_config
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")

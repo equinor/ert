@@ -4,7 +4,7 @@ import importlib
 import logging
 import os
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
@@ -24,6 +24,7 @@ from typing import (
 
 import xarray as xr
 from pydantic import ValidationError as PydanticValidationError
+from pydantic.dataclasses import dataclass
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
