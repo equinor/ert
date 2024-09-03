@@ -80,44 +80,36 @@ class CSVExportJob(ErtScript):
         data = pandas.DataFrame()
 
         for ensemble in ensembles:
-            try:
-                if not ensemble.has_data():
-                    raise UserWarning(
-                        f"The ensemble '{ensemble.name}' does not have any data!"
-                    )
-
-                ensemble_data = ensemble.load_all_gen_kw_data()
-
-                if design_matrix_path is not None:
-                    design_matrix_data = loadDesignMatrix(design_matrix_path)
-                    if not design_matrix_data.empty:
-                        ensemble_data = ensemble_data.join(
-                            design_matrix_data, how="outer"
-                        )
-
-                misfit_data = facade.load_all_misfit_data(ensemble)
-                if not misfit_data.empty:
-                    ensemble_data = ensemble_data.join(misfit_data, how="outer")
-
-                summary_data = ensemble.load_all_summary_data()
-                if not summary_data.empty:
-                    ensemble_data = ensemble_data.join(summary_data, how="outer")
-                else:
-                    ensemble_data["Date"] = None
-                    ensemble_data.set_index(["Date"], append=True, inplace=True)
-
-                ensemble_data["Iteration"] = ensemble.iteration
-                ensemble_data["Ensemble"] = ensemble.name
-                ensemble_data.set_index(
-                    ["Ensemble", "Iteration"], append=True, inplace=True
+            if not ensemble.has_data():
+                raise UserWarning(
+                    f"The ensemble '{ensemble.name}' does not have any data!"
                 )
 
-                data = pandas.concat([data, ensemble_data])
+            ensemble_data = ensemble.load_all_gen_kw_data()
 
-            except KeyError as exc:
-                raise UserWarning(
-                    f"The ensemble '{ensemble.name}' does not exist!"
-                ) from exc
+            if design_matrix_path is not None:
+                design_matrix_data = loadDesignMatrix(design_matrix_path)
+                if not design_matrix_data.empty:
+                    ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
+
+            misfit_data = facade.load_all_misfit_data(ensemble)
+            if not misfit_data.empty:
+                ensemble_data = ensemble_data.join(misfit_data, how="outer")
+
+            summary_data = ensemble.load_all_summary_data()
+            if not summary_data.empty:
+                ensemble_data = ensemble_data.join(summary_data, how="outer")
+            else:
+                ensemble_data["Date"] = None
+                ensemble_data.set_index(["Date"], append=True, inplace=True)
+
+            ensemble_data["Iteration"] = ensemble.iteration
+            ensemble_data["Ensemble"] = ensemble.name
+            ensemble_data.set_index(
+                ["Ensemble", "Iteration"], append=True, inplace=True
+            )
+
+            data = pandas.concat([data, ensemble_data])
 
         data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
         if drop_const_cols:
