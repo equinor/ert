@@ -55,9 +55,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     logger = logging.getLogger(__name__)
     for fm_step_name, count in counter_fm_steps.items():
         logger.info(
-            "Config contains forward model step %s %d time(s)",
-            fm_step_name,
-            count,
+            f"Config contains forward model step {fm_step_name} {count} time(s)",
         )
 
     if not ert_config.observations and args.mode not in [
