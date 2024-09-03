@@ -14,10 +14,8 @@ from numpy.random import SeedSequence
 from .config import (
     ExtParamConfig,
     Field,
-    GenDataConfig,
     GenKwConfig,
     ParameterConfig,
-    SummaryConfig,
     SurfaceConfig,
 )
 from .run_arg import RunArg
@@ -128,18 +126,10 @@ def _manifest_to_json(ensemble: Ensemble, iens: int = 0) -> Dict[str, Any]:
         elif param_config.output_file is not None and not param_config.forward_init:
             manifest[param_config.name] = str(param_config.output_file)
     # Add expected response files to manifest
-    for name, respons_config in ensemble.experiment.response_configuration.items():
-        if isinstance(respons_config, SummaryConfig):
-            input_file = respons_config.input_file.replace("<IENS>", str(iens))
-            manifest[f"{name}_UNSMRY"] = f"{input_file}.UNSMRY"
-            manifest[f"{name}_SMSPEC"] = f"{input_file}.SMSPEC"
-        if isinstance(respons_config, GenDataConfig):
-            input_file = respons_config.input_file
-            if respons_config.report_steps:
-                for step in respons_config.report_steps:
-                    manifest[f"{name}_{step}"] = input_file.replace("%d", str(step))
-            elif "%d" not in input_file:
-                manifest[name] = input_file
+    for respons_config in ensemble.experiment.response_configuration.values():
+        for input_file in respons_config.expected_input_files:
+            manifest[f"{respons_config.response_type}_{input_file}"] = input_file
+
     return manifest
 
 
