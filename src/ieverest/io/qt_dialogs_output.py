@@ -1,4 +1,4 @@
-from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
+from logging import CRITICAL, DEBUG, INFO, WARNING
 
 from qtpy.QtWidgets import QMessageBox
 
@@ -14,10 +14,6 @@ class QtDialogsOut(object):
     def critical(self, message, force=False):
         if self.log_level <= CRITICAL or force:
             QMessageBox.critical(self._main_window, "Critical", message)
-
-    def _error(self, message, force=False):
-        if self.log_level <= ERROR or force:
-            QMessageBox.critical(self._main_window, "Error", message)
 
     def warning(self, message, force=False):
         if self.log_level <= WARNING or force:
