@@ -1,7 +1,6 @@
 from os import path
 
 from qtpy import uic
-from qtpy.QtWidgets import QMainWindow, qApp
 
 import ieverest.io.output_dispatcher
 
@@ -14,12 +13,6 @@ def ui_real_path(ui_file):
 
 def load_ui(ui_file, baseinstance=None):
     return uic.loadUi(ui_real_path(ui_file), baseinstance)
-
-
-def app_main_window():
-    for tlw in qApp.topLevelWidgets():
-        if isinstance(tlw, QMainWindow):
-            return tlw
 
 
 def remove_layout_item(layout, index):
