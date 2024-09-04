@@ -365,18 +365,40 @@ class BaseRunModel(ABC):
             return round(time.time() - self.start_time)
         return self.stop_time - self.start_time
 
-    def _current_status(self) -> tuple[dict[str, int], float, int]:
+    def get_current_status(self) -> dict[str, int]:
+        status: dict[str, int] = defaultdict(int)
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            all_realizations = self._iter_snapshot[current_iter].reals
+
+            if all_realizations:
+                for real in all_realizations.values():
+                    status[str(real["status"])] += 1
+
+        return status
+
+    def get_memory_consumption(self) -> int:
+        max_memory_consumption: int = 0
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            for fm in (
+                self._iter_snapshot[current_iter].get_all_forward_models().values()
+            ):
+                max_usage = fm.get("max_memory_usage", "0")
+                if max_usage:
+                    max_memory_consumption = max(int(max_usage), max_memory_consumption)
+
+        return max_memory_consumption
+
+    def _current_progress(self) -> tuple[float, int]:
         current_iter = max(list(self._iter_snapshot.keys()))
         done_realizations = 0
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
-        status: dict[str, int] = defaultdict(int)
         realization_count = len(all_realizations)
 
         if all_realizations:
             for real in all_realizations.values():
-                status[str(real["status"])] += 1
-
                 if real["status"] in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
@@ -390,13 +412,14 @@ class BaseRunModel(ABC):
                 else realization_progress
             )
 
-        return status, current_progress, realization_count
+        return current_progress, realization_count
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         if type(event) is EESnapshot:
             snapshot = Snapshot.from_nested_dict(event.snapshot)
             self._iter_snapshot[iteration] = snapshot
-            status, current_progress, realization_count = self._current_status()
+            current_progress, realization_count = self._current_progress()
+            status = self.get_current_status()
             self.send_event(
                 FullSnapshotEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
@@ -420,7 +443,8 @@ class BaseRunModel(ABC):
                 event, source_snapshot=self._iter_snapshot[iteration]
             )
             self._iter_snapshot[iteration].merge_snapshot(snapshot)
-            status, current_progress, realization_count = self._current_status()
+            current_progress, realization_count = self._current_progress()
+            status = self.get_current_status()
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",

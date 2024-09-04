@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import os
+import platform
 from collections import OrderedDict
+from dataclasses import fields
+from datetime import datetime
+from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, List, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Type
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QStandardItemModel
@@ -21,8 +26,14 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+import ert.shared
 from ert.gui.ertnotifier import ErtNotifier
-from ert.run_models import BaseRunModel, StatusEvents, create_model
+from ert.run_models import BaseRunModel, SingleTestRun, StatusEvents, create_model
+from ert.shared.status.utils import (
+    byte_with_unit,
+    format_running_time,
+    get_ert_memory_usage,
+)
 
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -40,6 +51,14 @@ if TYPE_CHECKING:
 
 EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
 EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
+
+
+def create_md_table(kv: Dict[str, str], output: str) -> str:
+    for k, v in kv.items():
+        v = v.replace("_", r"\_")
+        output += f"| {k} | {v} |\n"
+    output += "\n"
+    return output
 
 
 class ExperimentPanel(QWidget):
@@ -206,6 +225,8 @@ class ExperimentPanel(QWidget):
             )
             return
 
+        self._model = model
+
         QApplication.restoreOverrideCursor()
         if model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
@@ -270,6 +291,8 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
+        dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
+
         self.run_button.setEnabled(False)
         self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
         dialog.run_experiment()
@@ -297,3 +320,59 @@ class ExperimentPanel(QWidget):
             self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
             and widget.isConfigurationValid()
         )
+
+    def populate_clipboard_debug_info(self) -> None:
+        kv = {"**Platform**": "", ":-----": ":-----"}
+        kv["Date"] = datetime.now().isoformat(" ", "seconds")
+        kv["OS"] = (
+            platform.system() + " " + platform.release() + " " + platform.machine()
+        )
+        kv["Hostname"] = ert.shared.get_machine_name()
+        kv["Komodo release"] = os.environ.get("KOMODO_RELEASE", "")
+        kv["Python version"] = platform.python_version()
+
+        kv["**Ensemble**"] = ""
+        queue_system = self.config.queue_config.queue_system
+        kv["Queue"] = queue_system.name.capitalize()
+        kv["Simulation mode"] = self.get_current_experiment_type().name()
+        kv["Config file"] = str(Path(self._config_file).absolute())
+        kv["Storage path"] = self.config.ens_path
+        kv["Run path"] = str(self.config.model_config.runpath_format_string)
+        kv["Ensemble size"] = str(self.config.model_config.num_realizations)
+
+        if self.config.queue_config.realization_memory > 0:
+            kv["Realization memory"] = byte_with_unit(
+                self.config.queue_config.realization_memory
+            )
+
+        if self.config.queue_config.max_submit > 1:
+            kv["Max submit"] = str(self.config.queue_config.max_submit)
+        if self.config.queue_config.stop_long_running:
+            kv["Stop long running"] = str(self.config.queue_config.stop_long_running)
+
+        queue_opts = self.config.queue_config.queue_options
+
+        if isinstance(self.get_current_experiment_type(), SingleTestRun):
+            queue_opts = self.config.queue_config.queue_options_test_run
+
+        for field in fields(queue_opts):
+            field_value = getattr(queue_opts, field.name)
+            if field_value is not None:
+                kv[field.name.replace("_", " ").capitalize()] = str(field_value)
+
+        kv["**Status**"] = ""
+        kv["Running time"] = (
+            format_running_time(self._model.get_runtime()).split(":")[1].strip()
+        )
+        kv["Ert max memory"] = byte_with_unit(get_ert_memory_usage())
+        kv["Forward model max memory"] = byte_with_unit(
+            self._model.get_memory_consumption()
+        )
+
+        for status, count in self._model.get_current_status().items():
+            kv[status] = str(count)
+
+        output = create_md_table(kv, "")
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(output)

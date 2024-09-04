@@ -1,5 +1,7 @@
 import math
 import os
+import resource
+import sys
 
 
 def byte_with_unit(byte_count: float) -> str:
@@ -69,3 +71,14 @@ def file_has_content(file_path: str) -> bool:
     if file_path_exists:
         return os.path.getsize(file_path) > 0
     return False
+
+
+def get_ert_memory_usage() -> int:
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    rss_scale = 1
+    if sys.platform == "darwin":
+        # macOS apparently outputs the maxrss value as bytes rather than kilobytes as on Linux.
+        # https://stackoverflow.com/questions/59913657/strange-values-of-get-rusage-maxrss-on-macos-and-linux
+        rss_scale = 1000
+
+    return usage.ru_maxrss // rss_scale
