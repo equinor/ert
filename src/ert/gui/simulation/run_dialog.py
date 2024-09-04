@@ -169,6 +169,7 @@ class JobOverview(QTableView):
 
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
+    produce_clipboard_debug_info = Signal()
     on_run_model_event = Signal(object)
     _RUN_TIME_POLL_RATE = 1000
 
@@ -234,6 +235,10 @@ class RunDialog(QDialog):
         self.done_button.setHidden(True)
         self.restart_button = QPushButton("Restart")
         self.restart_button.setHidden(True)
+        self.copy_debug_info_button = QPushButton("Debug Info")
+        self.copy_debug_info_button.setToolTip("Copies useful information to clipboard")
+        self.copy_debug_info_button.clicked.connect(self.produce_clipboard_debug_info)
+        self.copy_debug_info_button.setObjectName("copy_debug_info_button")
 
         size = 20
         spin_movie = QMovie("img:loading.gif")
@@ -252,6 +257,7 @@ class RunDialog(QDialog):
         button_layout.addStretch()
         button_layout.addWidget(self.memory_usage)
         button_layout.addStretch()
+        button_layout.addWidget(self.copy_debug_info_button)
         button_layout.addWidget(self.plot_button)
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
@@ -517,6 +523,9 @@ class RunDialog(QDialog):
             self.done_button.setVisible(False)
             self.run_experiment(restart=True)
 
+    def get_runtime(self) -> int:
+        return self._run_model.get_runtime()
+
     def _on_finished(self) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
@@ -526,6 +535,8 @@ class RunDialog(QDialog):
         # so call self.close() instead
         if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.close()
+        elif a0 is not None and a0.key() == Qt.Key.Key_F1:
+            self.produce_clipboard_debug_info.emit()
         else:
             QDialog.keyPressEvent(self, a0)
 
