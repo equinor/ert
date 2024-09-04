@@ -10,7 +10,7 @@ from typing import List, Literal, Mapping, Optional, Tuple
 
 import pkg_resources
 import requests
-from ert import BatchContext, BatchSimulator, JobStatus
+from ert import BatchContext, BatchSimulator
 from ert.config import ErtConfig, QueueSystem
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
@@ -172,7 +172,7 @@ def wait_for_server(
                     "Failed to start Everest with error:\n{}".format(status["message"])
                 )
             # Job queueing may fail:
-            if context is not None and context.job_status(0) == JobStatus.FAILED:
+            if context is not None and context.has_job_failed(0):
                 path = context.job_progress(0).steps[0].std_err_file
                 for err in extract_errors_from_file(path):
                     update_everserver_status(config, ServerStatus.failed, message=err)
