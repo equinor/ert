@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
-from pydantic import RootModel
+from pydantic import RootModel, ValidationError
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
@@ -25,7 +25,6 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.config.parsing.observations_parser import ObservationConfigError
 
 from .config_dict_generator import config_generators
 
@@ -1563,7 +1562,7 @@ def test_no_timemap_or_refcase_provides_clear_error():
             print(line, end="")
 
     with pytest.raises(
-        ObservationConfigError,
+        ValidationError,
         match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
     ):
         ErtConfig.from_file("snake_oil.ert")
@@ -1604,7 +1603,7 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
                 continue
             print(line, end="")
 
-    with pytest.raises(ObservationConfigError) as err:
+    with pytest.raises(ValidationError) as err:
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [
