@@ -15,6 +15,7 @@ from everest.detached import (
 )
 from everest.jobs import shell_commands
 from everest.simulator import JOB_SUCCESS
+from ieverest.bin.ieverest_script import ieverest_entry
 
 from tests.utils import capture_logger, capture_streams, relpath, tmpdir
 
@@ -494,3 +495,20 @@ def test_complete_status_for_normal_run_monitor(
 
     assert expected_status == status["status"]
     assert expected_error == status["message"]
+
+
+@pytest.mark.ui_test
+# Application initializes correctly with default arguments
+@patch("ieverest.bin.ieverest_script.QApplication")
+@patch("ieverest.bin.ieverest_script.IEverest")
+@patch("ieverest.bin.ieverest_script.sys.exit")
+def test_ieverest_entry(exit_mock, ieverest_mock, q_app_mock):
+    ieverest_entry(["config.yml"])
+
+    q_app_mock.assert_called_once_with(["config.yml"])
+    app_mock = q_app_mock.return_value
+    app_mock.setOrganizationName.assert_called_once_with("Equinor/TNO")
+    app_mock.setApplicationName.assert_called_once_with("IEverest")
+    app_mock.exec_.assert_called_once()
+    ieverest_mock.assert_called_once_with(config_file="config.yml")
+    exit_mock.assert_called_once()
