@@ -21,7 +21,7 @@ class GenDataConfig(ResponseConfig):
 
     def __post_init__(self) -> None:
         if isinstance(self.report_steps, list):
-            self.report_steps = list(set(self.report_steps))
+            self.report_steps = sorted(set(self.report_steps))
 
     @classmethod
     def from_config_list(cls, gen_data: List[str]) -> Self:
