@@ -5,7 +5,7 @@ import re
 import shutil
 from abc import abstractmethod
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Dict, List, Mapping, Optional, no_type_check
+from typing import Any, Dict, List, Mapping, Optional, Union, no_type_check
 
 import pydantic
 from typing_extensions import Annotated
@@ -255,8 +255,10 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: QueueOptions = field(default_factory=QueueOptions)
-    queue_options_test_run: QueueOptions = field(default_factory=LocalQueueOptions)
+    queue_options: Union[
+        LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
+    ] = field(default_factory=QueueOptions)
+    queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
