@@ -16,18 +16,17 @@ def plotHistory(plot_context: "PlotContext", axes: "Axes") -> None:
     ):
         return
 
-    data = plot_context.history_data
-
     style = plot_config.historyStyle()
 
-    lines = axes.plot_date(
-        x=data.index.values,
-        y=data,
+    lines = axes.plot(
+        plot_context.history_data.index.values,
+        plot_context.history_data,
         color=style.color,
         alpha=style.alpha,
         linewidth=style.width,
         markersize=style.size,
-        fmt=f"{style.marker}{style.line_style}",
+        marker=style.marker,
+        linestyle=style.line_style,
     )
 
     if len(lines) > 0 and style.isVisible():
