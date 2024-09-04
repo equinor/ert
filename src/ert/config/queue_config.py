@@ -156,7 +156,7 @@ class SlurmQueueOptions(QueueOptions):
     squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
-    memory: str = ""
+    memory: Optional[NonEmptyString] = None
     memory_per_cpu: Optional[NonEmptyString] = None
     partition: Optional[NonEmptyString] = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
