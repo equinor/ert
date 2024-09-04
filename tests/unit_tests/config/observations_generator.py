@@ -137,7 +137,7 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
     }
     val_type = draw(st.sampled_from(["value", "obs_file"]))
     if val_type == "value":
-        kws["value"] = draw(st.floats(allow_nan=False))
+        kws["value"] = draw(st.floats(allow_nan=False, allow_infinity=False))
     if val_type == "obs_file":
         kws["obs_file"] = draw(names)
         kws["error"] = None
