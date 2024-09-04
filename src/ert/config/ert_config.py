@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import (
     Any,
     ClassVar,
+    DefaultDict,
     Dict,
     List,
     Optional,
@@ -96,7 +97,9 @@ class ErtConfig:
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)
     workflows: Dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: Dict[HookRuntime, List[Workflow]] = field(default_factory=dict)
+    hooked_workflows: DefaultDict[HookRuntime, List[Workflow]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
     ert_templates: List[Tuple[str, str]] = field(default_factory=list)
     installed_forward_model_steps: Dict[str, ForwardModelStep] = field(
