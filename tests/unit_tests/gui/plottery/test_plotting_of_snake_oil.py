@@ -32,27 +32,31 @@ from tests.unit_tests.gui.conftest import (
 # of the c++ gui element to not go out before mpl_image_compare
 @pytest.fixture(
     params=[
-        ("FOPR", STATISTICS),
-        ("FOPR", ENSEMBLE),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS),
-        ("PERMX", STD_DEV),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", DISTRIBUTION),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", GAUSSIAN_KDE),
-        ("SNAKE_OIL_PARAM_OP1:OP1_OCTAVES", HISTOGRAM),
+        ("FOPR", STATISTICS, "snake_oil"),
+        ("FOPR", ENSEMBLE, "snake_oil"),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", CROSS_ENSEMBLE_STATISTICS, "snake_oil"),
+        ("COND", STD_DEV, "heat_equation"),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", DISTRIBUTION, "snake_oil"),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", GAUSSIAN_KDE, "snake_oil"),
+        ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
     ],
 )
-def plot_figure(qtbot, snake_oil_field_storage, request):
-    key, plot_name = request.param
+def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
+    key, plot_name, storage_type = request.param
     args_mock = Mock()
-    args_mock.config = "snake_oil.ert"
+
+    if storage_type == "snake_oil":
+        storage_config = snake_oil_case_storage
+        args_mock.config = "snake_oil.ert"
+    else:
+        storage_config = heat_equation_storage
+        args_mock.config = "config.ert"
 
     log_handler = GUILogHandler()
     with StorageService.init_service(
-        project=snake_oil_field_storage.ens_path,
-    ), open_storage(snake_oil_field_storage.ens_path) as storage:
-        gui = _setup_main_window(
-            snake_oil_field_storage, args_mock, log_handler, storage
-        )
+        project=storage_config.ens_path,
+    ), open_storage(storage_config.ens_path) as storage:
+        gui = _setup_main_window(storage_config, args_mock, log_handler, storage)
         qtbot.addWidget(gui)
 
         plot_tool = gui.tools["Create plot"]
@@ -61,26 +65,28 @@ def plot_figure(qtbot, snake_oil_field_storage, request):
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         central_tab = plot_window._central_tab
 
-        case_selection = get_child(
-            plot_window, EnsembleSelectListWidget, "ensemble_selector"
-        )
-        # select at least two ensembles
-        for index in range(2):
-            assert (item := case_selection.item(index))
-            if not item.data(Qt.ItemDataRole.CheckStateRole):
-                case_selection.slot_toggle_plot(item)
-
         data_types = plot_window.findChild(DataTypeKeysWidget)
         key_list = data_types.data_type_keys_widget
         key_model = key_list.model()
         assert key_model is not None
 
+        case_selection = get_child(
+            plot_window, EnsembleSelectListWidget, "ensemble_selector"
+        )
+        # select all ensembles
+        for index in range(case_selection.count()):
+            assert (item := case_selection.item(index))
+            if not item.data(Qt.ItemDataRole.CheckStateRole):
+                case_selection.slot_toggle_plot(item)
+
         found_selected_key = False
         for i in range(key_model.rowCount()):
-            key_list.setCurrentIndex(key_model.index(i, 0))
-            selected_key = data_types.getSelectedItem()
-            assert selected_key is not None
-            if selected_key.key == key:
+            to_select = data_types.model.itemAt(data_types.model.index(i, 0))
+            assert to_select is not None
+            if to_select.key == key:
+                index = key_model.index(i, 0)
+                key_list.setCurrentIndex(index)
+                selected_key = to_select
                 for i, tab in enumerate(plot_window._plot_widgets):
                     if tab.name == plot_name:
                         found_selected_key = True

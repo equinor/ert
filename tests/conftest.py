@@ -151,8 +151,8 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 
 
 @pytest.fixture()
-def snake_oil_field_storage(copy_snake_oil_field_storage):
-    return ErtConfig.from_file("snake_oil_field.ert")
+def heat_equation_storage(copy_heat_equation_storage):
+    return ErtConfig.from_file("config.ert")
 
 
 @pytest.fixture()
@@ -210,15 +210,11 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
     monkeypatch.chdir("test_data")
 
 
-@pytest.fixture(
-    name="copy_snake_oil_field_storage",
-)
-def fixture_copy_snake_oil_field_storage(
-    _shared_snake_oil_field, tmp_path, monkeypatch
-):
+@pytest.fixture
+def copy_heat_equation_storage(_shared_heat_equation, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_shared_snake_oil_field, "test_data")
-    monkeypatch.chdir("test_data")
+    shutil.copytree(_shared_heat_equation, "heat_equation")
+    monkeypatch.chdir("heat_equation")
 
 
 @pytest.fixture()
@@ -372,17 +368,11 @@ def _run_snake_oil(source_root):
     run_cli(parsed)
 
 
-def _run_snake_oil_field(source_root):
+def _run_heat_equation(source_root):
     shutil.copytree(
-        os.path.join(source_root, "test-data", "snake_oil_field"), "test_data"
+        os.path.join(source_root, "test-data", "heat_equation"), "test_data"
     )
     os.chdir("test_data")
-    with fileinput.input("snake_oil_field.ert", inplace=True) as fin:
-        for line in fin:
-            if "NUM_REALIZATIONS 25" in line:
-                print("NUM_REALIZATIONS 5", end="")
-            else:
-                print(line, end="")
 
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
@@ -390,7 +380,7 @@ def _run_snake_oil_field(source_root):
         [
             ES_MDA_MODE,
             "--disable-monitor",
-            "snake_oil_field.ert",
+            "config.ert",
         ],
     )
 
@@ -416,17 +406,17 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def _shared_snake_oil_field(request, monkeypatch, source_root):
-    """This fixture will run the snake_oil case to populate storage,
+def _shared_heat_equation(request, monkeypatch, source_root):
+    """This fixture will run the heat_equation case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
     snake_path = request.config.cache.mkdir(
-        "snake_oil_field_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
+        "heat_equation_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
-        _run_snake_oil_field(source_root)
+        _run_heat_equation(source_root)
     else:
         monkeypatch.chdir("test_data")
 
