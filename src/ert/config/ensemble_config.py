@@ -58,7 +58,8 @@ class Refcase:
     values: List[Any]
 
     def __post_init__(self):
-        self.values = self.values.tolist()
+        if hasattr(self.values, "tolist"):
+            self.values = self.values.tolist()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Refcase):
@@ -78,7 +79,9 @@ class Refcase:
 @dataclass
 class EnsembleConfig:
     grid_file: Optional[str] = None
-    response_configs: Dict[str, ResponseConfig] = field(default_factory=dict)
+    response_configs: Dict[str, Union[SummaryConfig, GenDataConfig]] = field(
+        default_factory=dict
+    )
     parameter_configs: Dict[str, ParameterConfig] = field(default_factory=dict)
     refcase: Optional[Refcase] = None
     eclbase: Optional[str] = None

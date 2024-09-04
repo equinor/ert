@@ -87,9 +87,7 @@ class ErtConfig:
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
-    substitution_list: Union[SubstitutionList, Dict[str, str]] = field(
-        default_factory=dict
-    )
+    substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: Dict[str, str] = field(default_factory=dict)
@@ -112,7 +110,7 @@ class ErtConfig:
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
 
-    @field_validator("substitution_list")
+    @field_validator("substitution_list", mode="before")
     @classmethod
     def convert_to_substitution_list(cls, v: Dict[str, str]) -> SubstitutionList:
         if isinstance(v, SubstitutionList):
