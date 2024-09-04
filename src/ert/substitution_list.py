@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import TYPE_CHECKING, Any, Optional
 
-from typing import TYPE_CHECKING, Optional
-from copy import copy
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, Optional
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+from pydantic_core.core_schema import CoreSchema
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
@@ -79,6 +79,12 @@ class SubstitutionList(_UserDict):
 
     def __str__(self) -> str:
         return f"SubstitutionList({self._concise_representation()})"
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        return core_schema.no_info_after_validator_function(cls, handler(str))
 
 
 def _replace_strings(subst_list: SubstitutionList, string: str) -> Optional[str]:

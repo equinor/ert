@@ -24,6 +24,7 @@ from typing import (
 
 import xarray as xr
 from pydantic import ValidationError as PydanticValidationError
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from typing_extensions import Self
 
@@ -86,7 +87,9 @@ class ErtConfig:
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
-    substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
+    substitution_list: Union[SubstitutionList, Dict[str, str]] = field(
+        default_factory=dict
+    )
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: Dict[str, str] = field(default_factory=dict)
@@ -108,6 +111,13 @@ class ErtConfig:
     observation_config: List[
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
+
+    @field_validator("substitution_list")
+    @classmethod
+    def convert_to_substitution_list(cls, v: Dict[str, str]) -> SubstitutionList:
+        if isinstance(v, SubstitutionList):
+            return v
+        return SubstitutionList(v)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -971,7 +981,7 @@ def _get_files_in_directory(job_path, errors):
 
 
 def _substitution_list_from_dict(config_dict) -> SubstitutionList:
-    subst_list = SubstitutionList()
+    subst_list = {}
 
     for key, val in config_dict.get("DEFINE", []):
         subst_list[key] = val
@@ -989,7 +999,7 @@ def _substitution_list_from_dict(config_dict) -> SubstitutionList:
     for key, val in config_dict.get("DATA_KW", []):
         subst_list[key] = val
 
-    return subst_list
+    return SubstitutionList(subst_list)
 
 
 @no_type_check
