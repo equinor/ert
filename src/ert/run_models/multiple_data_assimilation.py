@@ -80,7 +80,7 @@ class MultipleDataAssimilation(UpdateRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info(f"Running ES-MDA with normalized weights {self.weights}")
+        logger.info(f"Running {self.name} with normalized weights {self.weights}")
 
         if self.restart_run:
             id = self.prior_ensemble_id

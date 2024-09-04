@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
 
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
 
     from .base_run_model import StatusEvents
+
+logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-arguments
@@ -60,6 +63,7 @@ class EvaluateEnsemble(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
+        logger.info(f"Running {self.name}")
         ensemble = self.ensemble
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

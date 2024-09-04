@@ -65,7 +65,7 @@ class ManualUpdate(UpdateRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info("Running manual update")
+        logger.info(f"Running {self.name}")
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self.prior.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self.prior.id))
 
