@@ -141,7 +141,7 @@ class TorqueQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory_per_job")
     @classmethod
-    def check_memory_per_job(cls, value: str) -> str:
+    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
         if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -179,7 +179,7 @@ class SlurmQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory", "memory_per_cpu")
     @classmethod
-    def check_memory_per_job(cls, value: str) -> str:
+    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
         if not queue_memory_usage_formats[QueueSystem.SLURM].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -189,7 +189,9 @@ class SlurmQueueOptions(QueueOptions):
 class QueueMemoryStringFormat:
     suffixes: List[str]
 
-    def validate(self, mem_str_format: str) -> bool:
+    def validate(self, mem_str_format: Optional[str]) -> bool:
+        if mem_str_format is None:
+            return True
         return (
             re.match(
                 r"\d+(" + "|".join(self.suffixes) + ")$",
