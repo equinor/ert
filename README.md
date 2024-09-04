@@ -23,7 +23,7 @@ $ pip install ert
 $ ert --help
 ```
 
-or, for the latest development version (requires Python development headers):
+or, for the latest development version:
 
 ``` sh
 $ pip install git+https://github.com/equinor/ert.git@main
