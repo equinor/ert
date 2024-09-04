@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import pytest
 import requests
-from ert import JobStatus
 from ert.config import ErtConfig, QueueSystem
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -45,8 +44,8 @@ class MockContext:
         pass
 
     @staticmethod
-    def job_status(*args):
-        return JobStatus.FAILED
+    def has_job_failed(*args):
+        return True
 
     @staticmethod
     def job_progress(*args):

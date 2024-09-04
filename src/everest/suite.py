@@ -14,7 +14,6 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TypedDict
 
-from ert import JobStatus
 from ropt.enums import EventType
 from ropt.plan import OptimizationPlanRunner
 from ropt.report import ResultsTable
@@ -169,20 +168,11 @@ class _MonitorThread(threading.Thread):
         self._shutdown_flag = False  # used to gracefully shut down this thread
         self._error_callback = error_callback
 
-    WAITING_STATUSES = [
-        JobStatus.NOT_ACTIVE,
-        JobStatus.WAITING,
-        JobStatus.SUBMITTED,
-        JobStatus.PENDING,
-    ]
-
     def _cleanup(self) -> None:
         # cleanup
         if self._delete_run_path and self._context is not None:
             for context_index in range(len(self._context)):
-                job_status = self._context.job_status(context_index)
-
-                if job_status == JobStatus.SUCCESS:
+                if self._context.is_job_completed(context_index):
                     path_to_delete = self._context.run_path(context_index)
                     if os.path.isdir(path_to_delete):
 
@@ -217,16 +207,13 @@ class _MonitorThread(threading.Thread):
             found = next(re.finditer(regex, path_str), None)
             return found.group(1) if found is not None else "unknown"
 
-        # if job_status is in any of the WAITING_STATUSES, the status returned
+        # if job is waiting, the status returned
         # by the job_progress() method is unreliable
         jobs_progress: List[List[JobProgress]] = []
         batch_number = self._batch_number
         for i in range(len(self._context)):
             progress_queue = self._context.job_progress(i)
-            if (
-                self._context.job_status(i) in self.WAITING_STATUSES
-                or progress_queue is None
-            ):
+            if self._context.is_job_waiting(i) or progress_queue is None:
                 jobs_progress.append([])
             else:
                 jobs: List[JobProgress] = []
