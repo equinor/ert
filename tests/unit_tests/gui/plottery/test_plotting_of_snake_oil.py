@@ -28,7 +28,7 @@ from tests.unit_tests.gui.conftest import (
 )
 
 
-# Use a fixture for the fligure in order for the lifetime
+# Use a fixture for the figure in order for the lifetime
 # of the c++ gui element to not go out before mpl_image_compare
 @pytest.fixture(
     params=[
