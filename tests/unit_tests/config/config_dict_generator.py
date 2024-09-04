@@ -136,6 +136,7 @@ def valid_queue_options(queue_system: str):
         for field in fields(
             queue_systems_and_options[QueueSystemWithGeneric(queue_system)]
         )
+        if field.name != "name"
     ]
 
 
