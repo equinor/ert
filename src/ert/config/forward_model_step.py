@@ -10,6 +10,7 @@ from typing import (
     Union,
 )
 
+from pydantic import field_validator
 from typing_extensions import NotRequired, Unpack
 
 from ert.substitution_list import SubstitutionList
@@ -161,6 +162,13 @@ class ForwardModelStep:
     default_mapping: Dict[str, Union[int, str]] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
+
+    @field_validator("private_args", mode="before")
+    @classmethod
+    def convert_to_substitution_list(cls, v: Dict[str, str]) -> SubstitutionList:
+        if isinstance(v, SubstitutionList):
+            return v
+        return SubstitutionList(v)
 
     default_env = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
