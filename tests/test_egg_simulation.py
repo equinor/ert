@@ -804,3 +804,36 @@ def test_egg_model_wells_json_output_no_none():
         assert data
         assert data[0]["name"] == "PROD1"
         assert all(v for i in data for v in i.values())
+
+
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
+@skipif_no_simulator
+@pytest.mark.simulation_test
+@tmpdir(relpath(ROOT))
+def test_egg_snapshot(snapshot):
+    config = EverestConfig.load_file(CONFIG_FILE)
+
+    class CBTracker(object):
+        def __init__(self):
+            self.called = False
+
+        def sweetcallbackofmine(self, *args, **kwargs):
+            self.called = True
+
+    cbtracker = CBTracker()
+    workflow = everest.suite._EverestWorkflow(
+        config=config, simulation_callback=cbtracker.sweetcallbackofmine
+    )
+    assert workflow is not None
+    with PluginSiteConfigEnv():
+        workflow.start_optimization()
+
+    assert cbtracker.called
+
+    snapshot.assert_match(
+        everest.export(config)
+        .drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
+        .to_csv(),
+        "egg.csv",
+    )
