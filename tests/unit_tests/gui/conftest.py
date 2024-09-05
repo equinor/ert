@@ -529,7 +529,7 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
 
 
 def add_experiment_manually(
-    qtbot, gui, experiment_name="My experiment", ensemble_name="default"
+    qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
 ):
     manage_tool = gui.tools["Manage experiments"]
     manage_tool.trigger()
