@@ -25,6 +25,7 @@ from xtgeo import RegularSurface
 import ert.gui
 from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
+from ert.gui.ertwidgets import StringBox
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
@@ -42,7 +43,13 @@ from ert.gui.tools.plot.plot_ensemble_selection_widget import (
 )
 from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
 from ert.plugins import ErtPluginManager
-from ert.run_models import SingleTestRun
+from ert.run_models import (
+    EnsembleExperiment,
+    EnsembleSmoother,
+    IteratedEnsembleSmoother,
+    MultipleDataAssimilation,
+    SingleTestRun,
+)
 from ert.services import StorageService
 
 from .conftest import (
@@ -434,8 +441,19 @@ def test_that_the_manage_experiments_tool_can_be_used(
 
     def handle_add_dialog():
         dialog = wait_for_child(current_tab, qtbot, CreateExperimentDialog)
+
+        dialog._experiment_edit.setText("es_mda")
+        assert not dialog._ok_button.isEnabled()
+        dialog._experiment_edit.setText(" @not_v alid")
+        assert not dialog._ok_button.isEnabled()
         dialog._experiment_edit.setText("my-experiment")
+        assert dialog._ok_button.isEnabled()
+
+        dialog._ensemble_edit.setText(" @not_v alid")
+        assert not dialog._ok_button.isEnabled()
         dialog._ensemble_edit.setText("_new_ensemble_")
+        assert dialog._ok_button.isEnabled()
+
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
@@ -682,3 +700,36 @@ def test_help_menu(qtbot):
         qtbot.mouseClick(
             get_child(about_dialog, QPushButton, name="close_button"), Qt.LeftButton
         )
+
+
+def test_validation_of_experiment_names_in_run_models(
+    ensemble_experiment_has_run_no_failure, qtbot
+):
+    gui = ensemble_experiment_has_run_no_failure
+    experiment_panel = get_child(gui, ExperimentPanel)
+    experiment_types = get_child(experiment_panel, QComboBox, name="experiment_type")
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
+
+    experiment_types_to_test = (
+        (EnsembleExperiment.name(), "Ensemble_experiment_panel"),
+        (EnsembleSmoother.name(), "ensemble_smoother_panel"),
+        (MultipleDataAssimilation.name(), "ES_MDA_panel"),
+        (IteratedEnsembleSmoother.name(), "iterated_ensemble_smoother_panel"),
+    )
+    for exp_type, panel_name in experiment_types_to_test:
+        print(f"{exp_type}")
+        experiment_types.setCurrentText(exp_type)
+
+        experiment_config_panel = get_child(gui, QWidget, name=panel_name)
+        experiment_field = get_child(
+            experiment_config_panel, StringBox, name="experiment_field"
+        )
+        print(f"{experiment_field.get_text=}")
+        experiment_field.setText(" @not val id")
+        assert not run_experiment.isEnabled()
+
+        experiment_field.setText("valid_")
+        assert run_experiment.isEnabled()
+
+        experiment_field.setText("ensemble_experiment")
+        assert not run_experiment.isEnabled()

@@ -47,6 +47,7 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
         ExperimentConfigPanel.__init__(self, IteratedEnsembleSmoother)
         self.analysis_config = analysis_config
         layout = QFormLayout()
+        self.setObjectName("iterated_ensemble_smoother_panel")
 
         self._experiment_name_field = StringBox(
             TextModel(""),
@@ -55,10 +56,11 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
             ),
         )
         self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
         self._experiment_name_field.setValidator(
             ExperimentValidation(self.notifier.storage)
         )
+        self._experiment_name_field.setObjectName("experiment_field")
+        layout.addRow("Experiment name:", self._experiment_name_field)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -103,10 +105,13 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._iterated_target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._iterated_target_ensemble_format_field.getValidationSupport().validationChanged.connect(
+            self.simulationConfigurationChanged
+        )
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
         self.setLayout(layout)
@@ -127,7 +132,8 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
 
     def isConfigurationValid(self) -> bool:
         return (
-            self._iterated_target_ensemble_format_field.isValid()
+            self._experiment_name_field.isValid()
+            and self._iterated_target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 
