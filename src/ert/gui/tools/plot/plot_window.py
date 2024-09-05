@@ -188,7 +188,7 @@ class PlotWindow(QMainWindow):
             for ensemble in selected_ensembles:
                 try:
                     ensemble_to_data_map[ensemble] = self._api.data_for_key(
-                        ensemble.name, key
+                        ensemble.id, key
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
@@ -198,7 +198,7 @@ class PlotWindow(QMainWindow):
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
-                        [ensembles.name for ensembles in selected_ensembles], key
+                        [ensembles.id for ensembles in selected_ensembles], key
                     )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(e)
@@ -218,7 +218,7 @@ class PlotWindow(QMainWindow):
                 for ensemble in selected_ensembles:
                     try:
                         std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
-                            key, ensemble.name, layer
+                            key, ensemble.id, layer
                         )
                     except (RequestError, TimeoutError) as e:
                         logger.exception(e)
@@ -237,7 +237,7 @@ class PlotWindow(QMainWindow):
                 try:
                     plot_context.history_data = self._api.history_data(
                         key,
-                        [e.name for e in plot_context.ensembles()],
+                        [e.id for e in plot_context.ensembles()],
                     )
 
                 except (RequestError, TimeoutError) as e:
