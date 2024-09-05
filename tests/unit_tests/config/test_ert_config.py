@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
-from pydantic import RootModel, ValidationError
+from pydantic import RootModel, TypeAdapter, ValidationError
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import site_config_location
@@ -533,6 +533,9 @@ def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
         from_json = ErtConfig(**config_json)
         assert from_json == ert_config
 
+
+def test_that_ert_config_has_valid_schema():
+    TypeAdapter.json_schema(ErtConfig)
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
