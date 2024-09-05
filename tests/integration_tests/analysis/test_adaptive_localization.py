@@ -99,9 +99,7 @@ def test_that_adaptive_localization_works_with_a_single_observation():
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_adaptive_localization_works_with_a_multiple_observations():
-    """ """
-
+def test_that_adaptive_localization_works_with_multiple_observations(snapshot):
     with open("observations", "w", encoding="utf-8") as file:
         file.write(
             """GENERAL_OBSERVATION POLY_OBS {
@@ -184,7 +182,10 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
-    _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    sf = prior_ens.load_observation_scaling_factors()
+    csv = sf.to_dataframe().dropna().reset_index().to_csv()
+    snapshot.assert_match(csv, "poly_multiobs_scaling_factors.csv")
 
 
 @pytest.mark.integration_test
