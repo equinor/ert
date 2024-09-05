@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from .snapshot import Snapshot
 
@@ -17,11 +17,13 @@ class _UpdateEvent:
 
 @dataclass
 class FullSnapshotEvent(_UpdateEvent):
+    event_type: Literal['FullSnapshotEvent']
     snapshot: Optional[Snapshot] = None
 
 
 @dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
+    event_type: Literal['SnapshotUpdateEvent']
     snapshot: Optional[Snapshot] = None
 
 

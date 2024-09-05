@@ -200,16 +200,12 @@ class ExperimentPanel(QWidget):
         import json
         from ert.config import ErtConfig
         data = {"args": dataclasses.asdict(args), "ert_config": json.loads(RootModel[ErtConfig](self.config).model_dump_json())}
-        res = requests.post("http://127.0.0.1:8000/experiments/", json=jsonable_encoder(data))
-        print(res.text)
-        return
-        event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
             model = create_model(
                 self.config,
                 self._notifier.storage,
                 args,
-                event_queue,
+                SimpleQueue(),
             )
 
         except ValueError as e:
@@ -274,22 +270,24 @@ class ExperimentPanel(QWidget):
                         return
                 QApplication.restoreOverrideCursor()
 
+
+        res = requests.post("http://127.0.0.1:8000/experiments/", json=jsonable_encoder(data))
+        # TODO: Insert experiment ID
+        experiment_id = res.json["experiment_id"]
         dialog = RunDialog(
-            self._config_file,
-            model,
-            event_queue,
+            experiment_id,
             self._notifier,
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
-        self.run_button.setEnabled(False)
-        self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
+        # self.run_button.setEnabled(False)
+        # self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
         dialog.run_experiment()
         dialog.show()
 
         def exit_handler() -> None:
-            self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
-            self.run_button.setEnabled(True)
+            # self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
+            # self.run_button.setEnabled(True)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 

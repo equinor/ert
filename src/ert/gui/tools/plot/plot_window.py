@@ -91,14 +91,14 @@ def open_error_dialog(title: str, content: str) -> None:
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, config_file: str, parent: Optional[QWidget]):
+    def __init__(self, parent: Optional[QWidget]):
         QMainWindow.__init__(self, parent)
         t = time.perf_counter()
 
         logger.info("PlotWindow __init__")
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
-        self.setWindowTitle(f"Plotting - {config_file}")
+        self.setWindowTitle(f"Plotting")
         self.activateWindow()
         self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)

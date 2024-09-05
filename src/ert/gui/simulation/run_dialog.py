@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from queue import SimpleQueue
 from typing import Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
@@ -55,7 +54,6 @@ from ert.gui.model.snapshot import (
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
 from ert.run_models import (
-    BaseRunModel,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -70,7 +68,7 @@ from ert.shared.status.utils import (
 )
 
 from ..find_ert_info import find_ert_info
-from .queue_emitter import QueueEmitter
+from .event_fetcher import EventFetcher
 from .view import ProgressWidget, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
@@ -174,23 +172,23 @@ class RunDialog(QDialog):
 
     def __init__(
         self,
-        config_file: str,
-        run_model: BaseRunModel,
-        event_queue: SimpleQueue[StatusEvents],
+        experiment_id: str,
+        # config_file: str,
+        # run_model: BaseRunModel,
+        # event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
         parent: Optional[QWidget] = None,
         output_path: Optional[Path] = None,
     ):
         QDialog.__init__(self, parent)
+        self._experiment_id = experiment_id
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
-        self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
+        self.setWindowTitle(f"Experiment - {self._experiment_id} {find_ert_info()}")
 
         self._snapshot_model = SnapshotModel(self)
-        self._run_model = run_model
-        self._event_queue = event_queue
         self._notifier = notifier
 
         self._minimum_width = 1200
@@ -224,7 +222,7 @@ class RunDialog(QDialog):
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
-        self.plot_tool = PlotTool(config_file, self.parent())  # type: ignore
+        self.plot_tool = PlotTool(self.parent())  # type: ignore
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(True)
@@ -345,25 +343,10 @@ class RunDialog(QDialog):
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
-        port_range = None
-        if self._run_model.queue_system == QueueSystem.LOCAL:
-            port_range = range(49152, 51819)
-        evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
-
-        def run() -> None:
-            self._run_model.start_simulations_thread(
-                evaluator_server_config=evaluator_server_config,
-                restart=restart,
-            )
-
-        simulation_thread = ErtThread(
-            name="ert_gui_simulation_thread", target=run, daemon=True
-        )
-
         self._worker_thread = QThread(parent=self)
         self.destroyed.connect(lambda: _stop_worker(self))
 
-        self._worker = QueueEmitter(self._event_queue)
+        self._worker = EventFetcher(experiment_id=self._experiment_id)
         self._worker.done.connect(self._worker_thread.quit)
         self._worker.new_event.connect(self._on_event)
         self._worker.moveToThread(self._worker_thread)
@@ -374,7 +357,6 @@ class RunDialog(QDialog):
         self._ticker.start(self._RUN_TIME_POLL_RATE)
 
         self._worker_thread.start()
-        simulation_thread.start()
         self._notifier.set_is_simulation_running(True)
 
     def killJobs(self) -> QMessageBox.StandardButton:
@@ -386,7 +368,8 @@ class RunDialog(QDialog):
         if kill_job == QMessageBox.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
-            self._run_model.cancel()
+            # self._run_model.cancel()
+            ## TODO: Fix cancellation
             self._on_finished()
             self.finished.emit(-1)
         return kill_job
@@ -395,8 +378,12 @@ class RunDialog(QDialog):
     def _on_simulation_done(self, failed: bool, msg: str) -> None:
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
-        self.restart_button.setVisible(self._run_model.has_failed_realizations())
-        self.restart_button.setEnabled(self._run_model.support_restart)
+        self.restart_button.setVisible(False)
+        self.restart_button.setEnabled(False)
+        # self.restart_button.setVisible(self._run_model.has_failed_realizations())
+        # self.restart_button.setEnabled(self._run_model.support_restart)
+        # TODO: Restart
+
         self._notifier.set_is_simulation_running(False)
         if failed:
             self.update_total_progress(1.0, "Failed")
@@ -407,7 +394,9 @@ class RunDialog(QDialog):
 
     @Slot()
     def _on_ticker(self) -> None:
-        runtime = self._run_model.get_runtime()
+        runtime = 0
+        # runtime = self._run_model.get_runtime()
+        # TODO: This should be based event timestamps
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
