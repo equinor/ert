@@ -108,7 +108,8 @@ def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     simulation_settings._ensemble_selector.setCurrentIndex(idx)
 
     storage = gui.notifier.storage
-    ensemble_prior = storage.get_ensemble_by_name("iter-0")
+    experiment = storage.get_experiment_by_name("ensemble_experiment")
+    ensemble_prior = experiment.get_ensemble_by_name("iter-0")
     success = ensemble_prior.get_realization_mask_without_failure()
     # Assert that some realizations failed
     assert not all(success)

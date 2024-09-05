@@ -20,11 +20,14 @@ def run_cli_ES_with_case(poly_config):
         poly_config,
         "--port-range",
         "1024-65535",
+        "--experiment-name",
+        "test-experiment",
     )
     storage_path = ErtConfig.from_file(poly_config).ens_path
     with open_storage(storage_path) as storage:
-        prior_ensemble = storage.get_ensemble_by_name("iter-0")
-        posterior_ensemble = storage.get_ensemble_by_name("iter-1")
+        experiment = storage.get_experiment_by_name("test-experiment")
+        prior_ensemble = experiment.get_ensemble_by_name("iter-0")
+        posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
     return prior_ensemble, posterior_ensemble
 
 

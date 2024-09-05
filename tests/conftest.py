@@ -446,7 +446,8 @@ def snake_oil_storage(snake_oil_case_storage):
 @pytest.fixture
 def snake_oil_default_storage(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path) as storage:
-        yield storage.get_ensemble_by_name("default_0")
+        experiment = storage.get_experiment_by_name("ensemble-experiment")
+        yield experiment.get_ensemble_by_name("default_0")
 
 
 @pytest.fixture(scope="session")

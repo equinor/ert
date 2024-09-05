@@ -110,8 +110,9 @@ if __name__ == "__main__":
         )
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path, mode="w") as storage:
-            prior = storage.get_ensemble_by_name("iter-0")
-            posterior = storage.get_ensemble_by_name("iter-1")
+            experiment = storage.get_experiment_by_name("es")
+            prior = experiment.get_ensemble_by_name("iter-0")
+            posterior = experiment.get_ensemble_by_name("iter-1")
 
             prior_result = prior.load_parameters("MY_PARAM", list(range(5)))["values"]
             assert len(prior_result.x) == NCOL
@@ -238,8 +239,9 @@ if __name__ == "__main__":
         )
         config = ErtConfig.from_file("config.ert")
         with open_storage(config.ens_path) as storage:
-            prior = storage.get_ensemble_by_name("iter-0")
-            posterior = storage.get_ensemble_by_name("iter-1")
+            experiment = storage.get_experiment_by_name("es")
+            prior = experiment.get_ensemble_by_name("iter-0")
+            posterior = experiment.get_ensemble_by_name("iter-1")
 
             prior_result = prior.load_parameters("MY_PARAM", list(range(realizations)))[
                 "values"

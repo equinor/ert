@@ -45,7 +45,8 @@ def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
     with open_storage(poly_template / "ensembles", mode="w") as storage:
-        prior_ens = storage.get_ensemble_by_name("prior")
+        experiment = storage.get_experiment_by_name("test-experiment")
+        prior_ens = experiment.get_ensemble_by_name("prior")
         posterior_ens = storage.create_ensemble(
             prior_ens.experiment_id,
             ensemble_size=prior_ens.ensemble_size,
@@ -69,6 +70,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             parameters=ens_config.parameter_configuration,
             responses=ens_config.response_configuration,
             observations=ert_config.observations,
+            name="test-experiment",
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 

@@ -73,7 +73,8 @@ def test_load_forward_model(snake_oil_default_storage):
 
     with open_storage(facade.enspath, mode="w") as storage:
         # 'load_from_forward_model' requires the ensemble to be writeable...
-        default = storage.get_ensemble_by_name("default_0")
+        experiment = storage.get_experiment_by_name("ensemble-experiment")
+        default = experiment.get_ensemble_by_name("default_0")
 
         loaded = facade.load_from_forward_model(default, realizations, 0)
         assert loaded == 1
@@ -269,7 +270,8 @@ def test_that_the_states_are_set_correctly():
     """
     facade = LibresFacade.from_config_file("snake_oil.ert")
     storage = open_storage(facade.enspath, mode="w")
-    ensemble = storage.get_ensemble_by_name("default_0")
+    experiment = storage.get_experiment_by_name("ensemble-experiment")
+    ensemble = experiment.get_ensemble_by_name("default_0")
     ensemble_size = facade.get_ensemble_size()
     realizations = np.array([True] * ensemble_size)
 

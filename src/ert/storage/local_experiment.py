@@ -208,7 +208,6 @@ class LocalExperiment(BaseMode):
         ----------
         name : str
             The name of the ensemble to retrieve.
-
         Returns
         -------
         local_ensemble : LocalEnsemble
