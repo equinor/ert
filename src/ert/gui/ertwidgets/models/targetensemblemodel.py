@@ -20,7 +20,7 @@ class TargetEnsembleModel(ValueModel):
 
     def setValue(self, value: Optional[str]) -> None:
         """Set a new target ensemble"""
-        if not value or not value.strip() or value == self.getDefaultValue():
+        if value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
