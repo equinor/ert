@@ -535,7 +535,8 @@ def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
 
 
 def test_that_ert_config_has_valid_schema():
-    TypeAdapter.json_schema(ErtConfig)
+    TypeAdapter(ErtConfig).json_schema()
+
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
