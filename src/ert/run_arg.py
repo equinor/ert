@@ -32,7 +32,7 @@ def create_run_arguments(
 ) -> List[RunArg]:
     iteration = ensemble.iteration
     run_args = []
-    runpaths.set_ert_ensemble(ensemble.name)
+    runpaths.set_ert_ensemble(ensemble.id, ensemble.name)
     paths = runpaths.get_paths(range(len(active_realizations)), iteration)
     job_names = runpaths.get_jobnames(range(len(active_realizations)), iteration)
 

@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
+from uuid import UUID
 
 from ert.substitution_list import SubstitutionList
 
@@ -42,9 +43,11 @@ class Runpaths:
         self._substitution_list = substitution_list or SubstitutionList()
         self._eclbase = eclbase
 
-    def set_ert_ensemble(self, ensemble_name: str) -> None:
+    def set_ert_ensemble(self, ensemble_id: UUID, ensemble_name: str) -> None:
         self._substitution_list["<ERT-CASE>"] = ensemble_name
         self._substitution_list["<ERTCASE>"] = ensemble_name
+        self._substitution_list["<ENSEMBLE_NAME>"] = ensemble_name
+        self._substitution_list["<ENSEMBLE_ID>"] = str(ensemble_id)
 
     def get_paths(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [

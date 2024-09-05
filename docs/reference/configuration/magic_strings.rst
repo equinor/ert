@@ -252,7 +252,7 @@ Experiment dependent variables
 .. _ms_ertcase:
 .. topic:: ERTCASE
 
-   Will be replaced with the current case name defined when starting the experiment.
+   Will be replaced with the current ensemble name defined when starting the experiment.
 
 
    *Example:*
@@ -261,9 +261,48 @@ Experiment dependent variables
 
       RUNPATH output/<ERTCASE>/realization-<IENS>/iter-<ITER>
 
-   In this example when running the experiment and given that the user does not change the `default` case name
+   In this example when running the experiment and given that the user does not change the `default` ensemble name
    the output folder created for realization 10 iteration 4 will be the following:
 
    ::
 
       output/default/realization-10/iter-4
+
+
+.. _ms_ensname:
+.. topic:: ENSEMBLE_NAME
+
+   Will be replaced with the current ensemble name defined when starting the experiment.
+
+
+   *Example:*
+
+   ::
+
+      RUNPATH output/<ENSEMBLE_NAME>/realization-<IENS>/iter-<ITER>
+
+   In this example when running the experiment and given that the user does not change the `default` ensemble name
+   the output folder created for realization 10 iteration 4 will be the following:
+
+   ::
+
+      output/default/realization-10/iter-4
+
+
+.. _ms_ensid:
+.. topic:: ENSEMBLE_ID
+
+   Will be replaced with the current ensemble UUID assigned by the experiment.
+
+
+   *Example:*
+
+   ::
+
+      RUNPATH output/<ENSEMBLE_ID>/realization-<IENS>/iter-<ITER>
+
+   If running an ensemble with UUID `somevaliduuid`
+
+   ::
+
+      output/somevaliduuid/realization-10/iter-4

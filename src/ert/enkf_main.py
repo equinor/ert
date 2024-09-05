@@ -164,7 +164,7 @@ def create_run_path(
         context_env = {}
     t = time.perf_counter()
     substitution_list = ert_config.substitution_list
-    runpaths.set_ert_ensemble(ensemble.name)
+    runpaths.set_ert_ensemble(ensemble.id, ensemble.name)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
