@@ -149,7 +149,7 @@ class PlotApi:
 
         return list(all_keys.values())
 
-    def data_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
+    def data_for_key(self, ensemble_id: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
         ensemble. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
@@ -157,7 +157,7 @@ class PlotApi:
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        ensemble = self._get_ensemble_by_id(ensemble_name)
+        ensemble = self._get_ensemble_by_id(ensemble_id)
         if not ensemble:
             return pd.DataFrame()
 
