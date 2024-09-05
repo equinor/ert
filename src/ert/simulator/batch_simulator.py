@@ -229,6 +229,7 @@ class BatchSimulator:
         experiment = storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             responses=self.ert_config.ensemble_config.response_configuration,
+            name=f"experiment_{case_name}",
         )
         ensemble = storage.create_ensemble(
             experiment.id,
