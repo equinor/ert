@@ -154,6 +154,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble.relative_weights
                 or MultipleDataAssimilation.default_weights
             )
+            self._evaluate_weights_box_enabled()
 
     @Slot(bool)
     def update_experiment_edit(self, checked: bool) -> None:
@@ -166,7 +167,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._experiment_name_field.enable_validation(not checked)
         self._experiment_name_field.setEnabled(not checked)
-        self._relative_iteration_weights_box.setEnabled(not checked)
+        self._evaluate_weights_box_enabled()
+
+    def _evaluate_weights_box_enabled(self) -> None:
+        self._relative_iteration_weights_box.setEnabled(
+            not self._restart_box.isChecked()
+            or not self._ensemble_selector.selected_ensemble.relative_weights
+        )
 
     def restart_run_toggled(self) -> None:
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
