@@ -57,6 +57,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_format_field = StringBox(
             self._ensemble_format_model,  # type: ignore
             self._ensemble_format_model.getDefaultValue(),  # type: ignore
+            continuous_update=True,
         )
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)

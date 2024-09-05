@@ -80,7 +80,8 @@ class IteratedEnsembleSmootherPanel(ExperimentConfigPanel):
         )
         self._iterated_target_ensemble_format_field = StringBox(
             self._iterated_target_ensemble_format_model,  # type: ignore
-            "config/simulation/iterated_target_ensemble_format",
+            self._iterated_target_ensemble_format_model.getDefaultValue(),  # type: ignore
+            continuous_update=True,
         )
         self._iterated_target_ensemble_format_field.setValidator(
             ProperNameFormatArgument()
