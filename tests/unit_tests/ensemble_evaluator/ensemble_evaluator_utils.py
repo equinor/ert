@@ -8,7 +8,6 @@ from _ert.events import (
     EnsembleSucceeded,
     ForwardModelStepRunning,
     ForwardModelStepSuccess,
-    RealizationFailed,
     RealizationSuccess,
     RealizationUnknown,
     event_to_json,
@@ -82,9 +81,8 @@ class TestEnsemble(Ensemble):
             event_id += 1
             for real in range(0, self.test_reals):
                 real = str(real)
-                job_failed = False
 
-                event = (RealizationUnknown(ensemble=self.id_, real=real),)
+                event = RealizationUnknown(ensemble=self.id_, real=real)
                 await dispatch._send(event_to_json(event))
 
                 event_id += 1
@@ -108,21 +106,11 @@ class TestEnsemble(Ensemble):
                     )
                     await dispatch._send(event_to_json(event))
                     event_id += 1
-                if job_failed:
-                    event = RealizationFailed(
-                        ensemble=self.id_,
-                        real=real,
-                        fm_step=job,
-                        callback_status_message="",
-                    )
-                    await dispatch._send(event_to_json(event))
                     event_id += 1
-                else:
-                    event = RealizationSuccess(
-                        ensemble=self.id_, real=real, fm_step=job
-                    )
-                    await dispatch._send(event_to_json(event))
-                    event_id += 1
+
+                event = RealizationSuccess(ensemble=self.id_, real=real)
+                await dispatch._send(event_to_json(event))
+                event_id += 1
 
             event = EnsembleSucceeded(ensemble=self.id_)
             await dispatch._send(event_to_json(event))
