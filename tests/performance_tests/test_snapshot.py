@@ -103,8 +103,8 @@ def simulate_forward_model_event_handling(
                     ensemble=ens_id,
                     real=str(real),
                     fm_step=str(fm_idx),
-                    stderr="foo",
-                    stdout="bar",
+                    std_err="foo",
+                    std_out="bar",
                 )
             )
         for current_memory_usage in range(memory_reports):
