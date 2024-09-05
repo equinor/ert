@@ -158,9 +158,10 @@ class EverestDataAPI:
         data_frames = []
         storage = open_storage(self._config.storage_dir, "r")
         for batch_id in batches:
-            summary = storage.get_ensemble_by_name(
-                f"batch_{batch_id}"
-            ).load_all_summary_data()
+            case_name = f"batch_{batch_id}"
+            experiment = storage.get_experiment_by_name(f"experiment_{case_name}")
+            ensemble = experiment.get_ensemble_by_name(case_name)
+            summary = ensemble.load_all_summary_data()
             if not summary.empty:
                 columns = set(summary.columns)
                 if keys is not None:

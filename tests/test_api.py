@@ -196,7 +196,8 @@ def mock_storage(batches):
     data.load_all_summary_data.side_effect = [
         _mock_summary_collector(i) for i in batches
     ]
-    storage.get_ensemble_by_name.return_value = data
+    experiment = storage.get_experiment_by_name.return_value
+    experiment.get_ensemble_by_name.return_value = data
     return storage
 
 

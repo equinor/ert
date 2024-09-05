@@ -161,7 +161,9 @@ def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] =
     internal_keys: Set = set()
     with open_storage(config.storage_dir, "r") as storage:
         for batch_id in batch_ids:
-            ensemble = storage.get_ensemble_by_name("batch_{}".format(batch_id))
+            case_name = f"batch_{batch_id}"
+            experiment = storage.get_experiment_by_name(f"experiment_{case_name}")
+            ensemble = experiment.get_ensemble_by_name(case_name)
             if not internal_keys:
                 internal_keys = set(ensemble.get_summary_keyset())
             else:
@@ -310,9 +312,10 @@ def _load_simulation_data(
     with open_storage(ens_path, "r") as storage:
         # pylint: disable=unnecessary-lambda-assignment
         def load_batch_by_id():
-            return storage.get_ensemble_by_name(
-                f"batch_{batch}"
-            ).load_all_summary_data()
+            case_name = f"batch_{batch}"
+            experiment = storage.get_experiment_by_name(f"experiment_{case_name}")
+            ensemble = experiment.get_ensemble_by_name(case_name)
+            return ensemble.load_all_summary_data()
 
         batches = {elem[MetaDataColumnNames.BATCH] for elem in metadata}
         batch_data = []
