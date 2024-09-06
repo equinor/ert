@@ -76,7 +76,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData(
-        "iter-0_1", Qt.MatchStartsWith
+        "ensemble_experiment : iter-0_1", Qt.MatchStartsWith
     )
     assert idx != -1
     simulation_settings._ensemble_selector.setCurrentIndex(idx)

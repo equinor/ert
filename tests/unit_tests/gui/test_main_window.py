@@ -529,7 +529,7 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     assert current_tab.objectName() == "initialize_from_scratch_panel"
     combo_box = get_child(current_tab, EnsembleSelector)
 
-    assert combo_box.currentText().startswith("_new_ensemble_")
+    assert combo_box.currentText() == "my-experiment : _new_ensemble_"
 
     # click on "initialize"
     initialize_button = get_child(
