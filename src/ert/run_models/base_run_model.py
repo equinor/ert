@@ -447,7 +447,13 @@ class BaseRunModel(ABC):
                         EESnapshotUpdate,
                     ):
                         event = cast(Union[EESnapshot, EESnapshotUpdate], event)
-                        self.send_snapshot_event(event, iteration)
+                        await asyncio.get_running_loop().run_in_executor(
+                            None,
+                            self.send_snapshot_event,
+                            event,
+                            iteration,
+                        )
+
                         if event.snapshot.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
