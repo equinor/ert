@@ -67,7 +67,9 @@ class EnsembleSelector(QComboBox):
             self.setEnabled(True)
 
         for ensemble in self._ensemble_list():
-            self.addItem(ensemble.name, userData=ensemble)
+            self.addItem(
+                f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
+            )
 
         current_index = self.findData(
             self.notifier.current_ensemble, Qt.ItemDataRole.UserRole

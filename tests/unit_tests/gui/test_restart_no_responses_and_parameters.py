@@ -103,7 +103,9 @@ def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
-    idx = simulation_settings._ensemble_selector.findData("iter-0", Qt.MatchStartsWith)
+    idx = simulation_settings._ensemble_selector.findData(
+        "ensemble_experiment : iter-0", Qt.MatchStartsWith
+    )
     assert idx != -1
     simulation_settings._ensemble_selector.setCurrentIndex(idx)
 
