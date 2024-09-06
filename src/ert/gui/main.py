@@ -100,8 +100,8 @@ def _start_initial_gui_window(
             args.config = os.path.basename(args.config)
 
             ert_config = ErtConfig.with_plugins().from_file(args.config)
-            import dataclasses
-            print(dataclasses.asdict(ert_config))
+            # import dataclasses
+            # print(dataclasses.asdict(ert_config))
 
             local_storage_set_ert_config(ert_config)
         except ConfigValidationError as error:
@@ -159,7 +159,7 @@ def _start_initial_gui_window(
         logger.info(f"Suggestion shown in gui '{msg}'")
     for msg in config_warnings:
         logger.info(f"Warning shown in gui '{msg}'")
-    storage = open_storage(ert_config.ens_path, mode="w")
+    storage = open_storage(ert_config.ens_path, mode="r")
     _main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
     )

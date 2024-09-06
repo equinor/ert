@@ -21,7 +21,7 @@ import numpy as np
 from ert.field_utils import get_shape
 
 from ._read_summary import read_summary
-from .field import Field
+from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
@@ -82,8 +82,8 @@ class EnsembleConfig:
     response_configs: Dict[str, Union[SummaryConfig, GenDataConfig]] = field(
         default_factory=dict
     )
-    parameter_configs: Dict[str, Union[GenKwConfig, Field, SurfaceConfig]] = field(
-        default_factory=dict
+    parameter_configs: Dict[str, Union[GenKwConfig, FieldConfig, SurfaceConfig]] = field(
+       default_factory=dict
     )
     refcase: Optional[Refcase] = None
     eclbase: Optional[str] = None

@@ -130,10 +130,10 @@ class Snapshot:
         # TODO not sure about possible values at this point, as GUI hijacks this one as
         # well
         self._metadata = SnapshotMetadata(
-            aggr_job_status_colors=defaultdict(dict),
+            aggr_job_status_colors={},
             real_status_colors={},
             sorted_real_ids=[],
-            sorted_forward_model_ids=defaultdict(list),
+            sorted_forward_model_ids={},
         )
 
     @classmethod
@@ -190,7 +190,7 @@ class Snapshot:
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
         if self._realization_states:
-            _dict["reals"] = self._realization_states
+            _dict["reals"] = dict(self._realization_states)
 
         for (real_id, fm_id), fm_values_dict in self._forward_model_states.items():
             if "reals" not in _dict:

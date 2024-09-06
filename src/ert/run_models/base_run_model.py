@@ -404,7 +404,7 @@ class BaseRunModel(ABC):
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
-                    status_count=status,
+                    status_count=dict(status),
                     iteration=iteration,
                     snapshot=copy.deepcopy(snapshot),
                 )
@@ -428,7 +428,7 @@ class BaseRunModel(ABC):
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
-                    status_count=status,
+                    status_count=dict(status),
                     iteration=iteration,
                     snapshot=copy.deepcopy(snapshot),
                 )

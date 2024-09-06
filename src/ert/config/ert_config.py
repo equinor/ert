@@ -27,7 +27,6 @@ import xarray as xr
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
-from pydantic.config import ConfigDict as PydanticConfigDict
 from typing_extensions import Self
 
 from ert.config.gen_data_config import GenDataConfig
@@ -83,7 +82,7 @@ def site_config_location() -> str:
     )
 
 
-@dataclass(config=PydanticConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
@@ -149,8 +148,6 @@ class ErtConfig:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
 
-        from pydantic.dataclasses import dataclass
-        @dataclass
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 Dict[str, ForwardModelStepPlugin]

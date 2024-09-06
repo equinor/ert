@@ -1,7 +1,9 @@
 import queue
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel, Field
+import json
+import dataclasses
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.model_factory import create_model
@@ -30,7 +32,7 @@ async def root():
 experiments : Dict[str, BaseRunModel]= {}
 
 def run_experiment(experiment_id:str, evaluator_server_config: EvaluatorServerConfig):
-    experiments[experiment_id].start_simulations_thread(evaluator_server_config=evaluator_server_config)
+    experiments[experiment_id][0].start_simulations_thread(evaluator_server_config=evaluator_server_config)
 
 @app.post("/experiments/")
 async def submit_experiment(experiment: Experiment, background_tasks: BackgroundTasks):
@@ -46,13 +48,32 @@ async def submit_experiment(experiment: Experiment, background_tasks: Background
     except ValueError as e:
         return HTTPException(status_code=404, detail=f"{experiment.args.mode} was not valid, failed with: {e}")
 
-    if experiment.args.port_range is None and model.queue_system == QueueSystem.LOCAL:
-        experiment.args.port_range = range(49152, 51819)
-
-    evaluator_server_config = EvaluatorServerConfig(custom_port_range=experiment.args.port_range)
+    port_range = None
+    if model.queue_system == QueueSystem.LOCAL:
+        port_range = range(49152, 51819)
+    evaluator_server_config = EvaluatorServerConfig(custom_port_range=port_range)
 
     experiment_id = str(uuid.uuid4())
-    experiments[experiment_id] = model
+    experiments[experiment_id] = (model, status_queue)
 
     background_tasks.add_task(run_experiment, experiment_id, evaluator_server_config=evaluator_server_config)
     return {"message": "Experiment Started", "experiment_id": experiment_id}
+
+@app.websocket("/experiments/{experiment_id}/events")
+async def websocket_endpoint(websocket: WebSocket, experiment_id: str):
+    await websocket.accept()
+    print(experiment_id)
+    print(experiments)
+    q: queue.SimpleQueue = experiments[experiment_id][1]
+    while True:
+        item: StatusEvents = q.get()
+        from ert.ensemble_evaluator.event import _UpdateEvent, EndEvent
+        if isinstance(item, _UpdateEvent):
+            item.snapshot = item.snapshot.to_dict()
+        print(item)
+        print()
+        print()
+        if isinstance(item, EndEvent):
+            break
+        await websocket.send_text(json.dumps(dataclasses.asdict(item)))
+        

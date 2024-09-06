@@ -195,10 +195,14 @@ class ExperimentPanel(QWidget):
         args = self.get_experiment_arguments()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         import dataclasses
+        from pydantic import RootModel
         from fastapi.encoders import jsonable_encoder
-        data = {"args": dataclasses.asdict(args), "ert_config": dataclasses.asdict(self.config)}
+        import json
+        from ert.config import ErtConfig
+        data = {"args": dataclasses.asdict(args), "ert_config": json.loads(RootModel[ErtConfig](self.config).model_dump_json())}
         res = requests.post("http://127.0.0.1:8000/experiments/", json=jsonable_encoder(data))
         print(res.text)
+        return
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
             model = create_model(

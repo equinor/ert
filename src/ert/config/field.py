@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Union, overload

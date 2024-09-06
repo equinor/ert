@@ -44,6 +44,7 @@ class WorkflowJob:
 
     def __post_init__(self) -> None:
         self.ert_script: Optional[type] = None
+        self.internal = bool(self.internal)
         if self.script is not None and self.internal:
             try:
                 self.ert_script = ErtScript.loadScriptFromFile(
