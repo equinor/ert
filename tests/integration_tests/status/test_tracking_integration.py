@@ -206,6 +206,9 @@ def test_tracking(
     snapshots: Dict[str, Snapshot] = {}
 
     thread.join()
+
+    assert isinstance(queue.events[-1], EndEvent)
+
     for event in queue:
         if isinstance(event, FullSnapshotEvent):
             snapshots[event.iteration] = event.snapshot
