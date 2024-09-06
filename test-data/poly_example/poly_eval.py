@@ -16,6 +16,6 @@ if __name__ == "__main__":
     output = [_evaluate(coeffs, x) for x in range(10)]
     import time
     import random
-    time.sleep(random.randint(5,65))
+    # time.sleep(random.randint(5,65))
     with open("poly.out", "w", encoding="utf-8") as f:
         f.write("\n".join(map(str, output)))
