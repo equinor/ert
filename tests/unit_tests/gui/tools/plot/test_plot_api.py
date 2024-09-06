@@ -74,14 +74,13 @@ def test_can_load_data_and_observations(api):
             "observations": True,
         },
     }
-
-    ensemble_name = "default_0"
+    ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
     for key, value in keys.items():
         observations = value["observations"]
         if observations:
-            obs_data = api.observations_for_key([ensemble_name], key)
+            obs_data = api.observations_for_key([ensemble.id], key)
             assert not obs_data.empty
-        data = api.data_for_key(ensemble_name, key)
+        data = api.data_for_key(ensemble.id, key)
         assert not data.empty
 
 
@@ -99,21 +98,32 @@ def test_all_data_type_keys(api):
 
 
 def test_load_history_data(api):
-    df = api.history_data(ensembles=["default_0"], key="FOPR")
+    ens_id = next(ens.id for ens in api.get_all_ensembles() if ens.name == "default_0")
+    df = api.history_data(ensemble_ids=[ens_id], key="FOPR")
     assert_frame_equal(
         df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
     )
 
 
 def test_load_history_data_searches_until_history_found(api):
-    df = api.history_data(ensembles=["no-history", "default_0"], key="FOPR")
+    ensemble_ids = [
+        ens.id
+        for ens in api.get_all_ensembles()
+        if ens.name in ["no-history", "default_0"]
+    ]
+    df = api.history_data(ensemble_ids=ensemble_ids, key="FOPR")
     assert_frame_equal(
         df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
     )
 
 
 def test_load_history_data_returns_empty_frame_if_no_history(api):
-    df = api.history_data(ensembles=["no-history", "still-no-history"], key="FOPR")
+    ensemble_ids = [
+        ens.id
+        for ens in api.get_all_ensembles()
+        if ens.name in ["no-history", "still-no-history"]
+    ]
+    df = api.history_data(ensemble_ids=ensemble_ids, key="FOPR")
     assert_frame_equal(df, pd.DataFrame())
 
 
@@ -129,9 +139,10 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
 
 
 def test_plot_api_request_errors(api):
-    ensemble_name = "default_0"
-    with pytest.raises(httpx.RequestError):
-        api.observations_for_key([ensemble_name], "should_not_be_there")
+    ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
 
     with pytest.raises(httpx.RequestError):
-        api.data_for_key(ensemble_name, "should_not_be_there")
+        api.observations_for_key([ensemble.id], "should_not_be_there")
+
+    with pytest.raises(httpx.RequestError):
+        api.data_for_key(ensemble.id, "should_not_be_there")
