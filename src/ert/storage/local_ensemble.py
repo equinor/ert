@@ -581,7 +581,9 @@ class LocalEnsemble(BaseMode):
             self.mount_point / "observation_scaling_factors.nc", engine="scipy"
         )
 
-    def load_observation_scaling_factors(self) -> Optional[xr.Dataset]:
+    def load_observation_scaling_factors(
+        self,
+    ) -> Optional[xr.Dataset]:
         ds_path = self.mount_point / "observation_scaling_factors.nc"
         if ds_path.exists():
             return xr.load_dataset(

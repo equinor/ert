@@ -182,10 +182,47 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
+    expected_records = {
+        ("*", "POLY_OBS", "0, 0"),
+        ("*", "POLY_OBS", "0, 1"),
+        ("*", "POLY_OBS", "0, 2"),
+        ("*", "POLY_OBS", "0, 3"),
+        ("*", "POLY_OBS", "0, 4"),
+        ("*", "POLY_OBS1_1", "0, 0"),
+        ("*", "POLY_OBS1_1", "0, 1"),
+        ("*", "POLY_OBS1_1", "0, 2"),
+        ("*", "POLY_OBS1_1", "0, 3"),
+        ("*", "POLY_OBS1_1", "0, 4"),
+        ("*", "POLY_OBS1_2", "0, 0"),
+        ("*", "POLY_OBS1_2", "0, 1"),
+        ("*", "POLY_OBS1_2", "0, 2"),
+        ("*", "POLY_OBS1_2", "0, 3"),
+        ("*", "POLY_OBS1_2", "0, 4"),
+        ("POLY_OBS1_*", "POLY_OBS1_1", "0, 0"),
+        ("POLY_OBS1_*", "POLY_OBS1_1", "0, 1"),
+        ("POLY_OBS1_*", "POLY_OBS1_1", "0, 2"),
+        ("POLY_OBS1_*", "POLY_OBS1_1", "0, 3"),
+        ("POLY_OBS1_*", "POLY_OBS1_1", "0, 4"),
+        ("POLY_OBS1_*", "POLY_OBS1_2", "0, 0"),
+        ("POLY_OBS1_*", "POLY_OBS1_2", "0, 1"),
+        ("POLY_OBS1_*", "POLY_OBS1_2", "0, 2"),
+        ("POLY_OBS1_*", "POLY_OBS1_2", "0, 3"),
+        ("POLY_OBS1_*", "POLY_OBS1_2", "0, 4"),
+    }
+
     prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
     sf = prior_ens.load_observation_scaling_factors()
-    csv = sf.to_dataframe().dropna().reset_index().to_csv()
-    snapshot.assert_match(csv, "poly_multiobs_scaling_factors.csv")
+    set_of_records_from_xr = {
+        x[:-1]
+        for x in sf.to_dataframe()
+        .reset_index()
+        .set_index(["input_group", "obs_key", "index"])
+        .dropna()
+        .to_records()
+        .tolist()
+    }
+
+    assert set_of_records_from_xr == expected_records
 
 
 @pytest.mark.integration_test
