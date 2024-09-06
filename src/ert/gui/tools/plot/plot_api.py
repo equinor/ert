@@ -42,9 +42,9 @@ class PlotApi:
         self._all_ensembles: Optional[List[EnsembleObject]] = None
         self._timeout = 120
 
-    def _get_ensemble(self, name: str) -> Optional[EnsembleObject]:
+    def _get_ensemble_by_id(self, id: str) -> Optional[EnsembleObject]:
         for ensemble in self.get_all_ensembles():
-            if ensemble.name == name:
+            if ensemble.id == id:
                 return ensemble
         return None
 
@@ -149,7 +149,7 @@ class PlotApi:
 
         return list(all_keys.values())
 
-    def data_for_key(self, ensemble_name: str, key: str) -> pd.DataFrame:
+    def data_for_key(self, ensemble_id: str, key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given key for a given
         ensemble. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
@@ -157,7 +157,7 @@ class PlotApi:
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        ensemble = self._get_ensemble(ensemble_name)
+        ensemble = self._get_ensemble_by_id(ensemble_id)
         if not ensemble:
             return pd.DataFrame()
 
@@ -182,15 +182,15 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, ensemble_names: List[str], key: str) -> pd.DataFrame:
+    def observations_for_key(self, ensemble_ids: List[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given ensembles. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
         used to relate the observation to the data point it relates to, and obs_index
         is the index for the observation itself"""
         all_observations = pd.DataFrame()
-        for ensemble_name in ensemble_names:
-            ensemble = self._get_ensemble(ensemble_name)
+        for ensemble_id in ensemble_ids:
+            ensemble = self._get_ensemble_by_id(ensemble_id)
             if not ensemble:
                 continue
 
@@ -206,7 +206,7 @@ class PlotApi:
                     obs = response.json()[0]
                 except (KeyError, IndexError, JSONDecodeError) as e:
                     raise httpx.RequestError(
-                        f"Observation schema might have changed key={key},  ensemble_name={ensemble_name}, e={e}"
+                        f"Observation schema might have changed key={key},  ensemble_name={ensemble.name}, e={e}"
                     ) from e
                 try:
                     int(obs["x_axis"][0])
@@ -226,19 +226,19 @@ class PlotApi:
 
         return all_observations.T
 
-    def history_data(self, key: str, ensembles: Optional[List[str]]) -> pd.DataFrame:
+    def history_data(self, key: str, ensemble_ids: Optional[List[str]]) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
-        if ensembles:
-            for ensemble in ensembles:
+        if ensemble_ids:
+            for ensemble_id in ensemble_ids:
                 if ":" in key:
                     head, tail = key.split(":", 2)
                     history_key = f"{head}H:{tail}"
                 else:
                     history_key = f"{key}H"
 
-                df = self.data_for_key(ensemble, history_key)
+                df = self.data_for_key(ensemble_id, history_key)
 
                 if not df.empty:
                     df = df.T
@@ -253,9 +253,9 @@ class PlotApi:
         return pd.DataFrame()
 
     def std_dev_for_parameter(
-        self, key: str, ensemble_name: str, z: int
+        self, key: str, ensemble_id: str, z: int
     ) -> npt.NDArray[np.float32]:
-        ensemble = self._get_ensemble(ensemble_name)
+        ensemble = self._get_ensemble_by_id(ensemble_id)
         if not ensemble:
             return np.array([])
 
