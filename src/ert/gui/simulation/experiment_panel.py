@@ -273,7 +273,7 @@ class ExperimentPanel(QWidget):
 
         res = requests.post("http://127.0.0.1:8000/experiments/", json=jsonable_encoder(data))
         # TODO: Insert experiment ID
-        experiment_id = res.json["experiment_id"]
+        experiment_id = res.json()["experiment_id"]
         dialog = RunDialog(
             experiment_id,
             self._notifier,

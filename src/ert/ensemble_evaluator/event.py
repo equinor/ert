@@ -17,17 +17,18 @@ class _UpdateEvent:
 
 @dataclass
 class FullSnapshotEvent(_UpdateEvent):
-    event_type: Literal['FullSnapshotEvent']
     snapshot: Optional[Snapshot] = None
+    event_type: Literal['FullSnapshotEvent'] = 'FullSnapshotEvent'
 
 
 @dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
-    event_type: Literal['SnapshotUpdateEvent']
     snapshot: Optional[Snapshot] = None
+    event_type: Literal['SnapshotUpdateEvent'] = 'SnapshotUpdateEvent'
 
 
 @dataclass
 class EndEvent:
     failed: bool
     msg: Optional[str] = None
+    event_type: Literal['EndEvent'] = 'EndEvent'

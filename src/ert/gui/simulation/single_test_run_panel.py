@@ -10,10 +10,11 @@ from ert.run_models import SingleTestRun
 
 from .experiment_config_panel import ExperimentConfigPanel
 
+from typing import Literal
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["test_run"]
     current_ensemble: str
     experiment_name: str
 

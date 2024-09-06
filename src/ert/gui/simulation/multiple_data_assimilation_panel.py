@@ -29,6 +29,8 @@ from ert.validation.range_string_argument import NotInStorage
 
 from .experiment_config_panel import ExperimentConfigPanel
 
+from typing import Literal
+
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
     from ert.gui.ertwidgets import ValueModel
@@ -36,10 +38,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["es_mda"]
     target_ensemble: str
     realizations: str
-    weights: List[float]
+    weights: str
     restart_run: bool
     prior_ensemble_id: str  # UUID not serializable in json
     experiment_name: str

@@ -22,13 +22,15 @@ from ert.validation.range_string_argument import NotInStorage
 
 from .experiment_config_panel import ExperimentConfigPanel
 
+from typing import Literal
+
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
 
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["iterative_ensemble_smoother"]
     target_ensemble: str
     realizations: str
     num_iterations: int

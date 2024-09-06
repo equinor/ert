@@ -4,7 +4,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Literal
 
 import pandas as pd
 
@@ -17,17 +17,20 @@ class AnalysisEvent:
 @dataclass
 class AnalysisStatusEvent(AnalysisEvent):
     msg: str
+    event_type: Literal['AnalysisStatusEvent'] = 'AnalysisStatusEvent'
 
 
 @dataclass
 class AnalysisTimeEvent(AnalysisEvent):
     remaining_time: float
     elapsed_time: float
+    event_type: Literal['AnalysisTimeEvent'] = 'AnalysisTimeEvent'
 
 
 @dataclass
 class AnalysisReportEvent(AnalysisEvent):
     report: str
+    event_type: Literal['AnalysisReportEvent'] = 'AnalysisReportEvent'
 
 
 @dataclass

@@ -4,7 +4,7 @@ import logging
 from contextlib import suppress
 from queue import Empty
 from time import sleep
-from typing import Optional
+from typing import Optional, Annotated
 
 from qtpy.QtCore import QObject, Signal, Slot
 
@@ -23,11 +23,11 @@ import json
 
 logger = logging.getLogger(__name__)
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 class EventWrapper(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    event: StatusEvents
+    event: Annotated[StatusEvents, Field(discriminator='event_type')]
 
 class EventFetcher(QObject):
     """A worker that emits items put on a queue to qt subscribers."""
@@ -48,7 +48,8 @@ class EventFetcher(QObject):
     @Slot()
     def consume_and_emit(self) -> None:
         logger.debug("tracking...")
-        with connect(f"ws://localhost:8000/experiments/{self._experiment_id}/events") as websocket:
+        with connect(f"ws://127.0.0.1:8000/experiments/{self._experiment_id}/events") as websocket:
+            print("Connected")
             while True:
                 try:
                     message = websocket.recv(timeout=1.0)
@@ -59,12 +60,28 @@ class EventFetcher(QObject):
                     break
                 if message is None:
                     sleep(0.1)
+                    print("Sleep")
                     continue
-
+ 
+                print(message)
+                print()
+                print()
                 event_dict = json.loads(message)
+                print(event_dict)
+                print()
+                print()
                 if "snapshot" in event_dict:
                     event_dict["snapshot"] =  Snapshot.from_nested_dict(event_dict["snapshot"])
-                event_wrapper = EventWrapper(**event_dict)
+                print(event_dict)
+                print()
+                print()
+                try:
+                    event_wrapper = EventWrapper(event=event_dict)
+                except ValidationError as e:
+                    print(e)
+                print(event_wrapper)
+                print()
+                print()
                 event = event_wrapper.event
                 # pre-rendering in this thread to avoid work in main rendering thread
                 if (

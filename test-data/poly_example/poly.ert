@@ -1,7 +1,7 @@
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 50
 
-RUNPATH poly_out/realization-<IENS>/iter-<ITER>
+RUNPATH poly_out/<ERTCASE>/realization-<IENS>/iter-<ITER>
 
 OBS_CONFIG observations
 REALIZATION_MEMORY 50mb

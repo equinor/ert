@@ -19,10 +19,11 @@ from ert.mode_definitions import MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
 
+from typing import Literal
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["manual_update"]
     realizations: str
     ensemble_id: str
     target_ensemble: str

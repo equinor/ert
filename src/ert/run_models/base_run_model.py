@@ -36,6 +36,7 @@ from ert.analysis import (
     AnalysisEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
+    AnalysisReportEvent,
     ErtAnalysisError,
     smoother_update,
 )
@@ -92,9 +93,9 @@ StatusEvents = Union[
     FullSnapshotEvent,
     SnapshotUpdateEvent,
     EndEvent,
-    AnalysisEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
+    AnalysisReportEvent,
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,

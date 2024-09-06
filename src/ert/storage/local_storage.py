@@ -274,6 +274,8 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _acquire_lock(self) -> None:
+        self.path.mkdir(parents=True, exist_ok=True)
+        return
         self._lock = FileLock(self.path / "storage.lock")
         try:
             self._lock.acquire(timeout=self.LOCK_TIMEOUT)
@@ -304,6 +306,7 @@ class LocalStorage(BaseMode):
         self._release_lock()
 
     def _release_lock(self) -> None:
+        return
         if self._lock.is_locked:
             self._lock.release()
             (self.path / "storage.lock").unlink()

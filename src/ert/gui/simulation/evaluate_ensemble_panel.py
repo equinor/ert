@@ -16,10 +16,11 @@ from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.validation import RangeStringArgument
 
+from typing import Literal
 
 @dataclass
 class Arguments:
-    mode: str
+    mode: Literal["evaluate_ensemble"]
     realizations: str
     ensemble_id: str
 
