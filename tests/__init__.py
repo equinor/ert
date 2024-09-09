@@ -5,15 +5,15 @@ from typing import Any, Dict, Optional, Sequence
 from pydantic import BaseModel
 
 from ert.ensemble_evaluator.snapshot import (
-    ForwardModel,
+    EnsembleSnapshot,
+    FMStepSnapshot,
     RealizationSnapshot,
-    Snapshot,
     _filter_nones,
 )
 
 
 class SnapshotBuilder(BaseModel):
-    forward_models: Dict[str, ForwardModel] = {}
+    fm_steps: Dict[str, FMStepSnapshot] = {}
     metadata: Dict[str, Any] = {}
 
     def build(
@@ -22,8 +22,8 @@ class SnapshotBuilder(BaseModel):
         status: Optional[str],
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-    ) -> Snapshot:
-        snapshot = Snapshot()
+    ) -> EnsembleSnapshot:
+        snapshot = EnsembleSnapshot()
         snapshot._ensemble_state = status
         snapshot._metadata = self.metadata
 
@@ -32,7 +32,7 @@ class SnapshotBuilder(BaseModel):
                 r_id,
                 RealizationSnapshot(
                     active=True,
-                    forward_models=deepcopy(self.forward_models),
+                    fm_steps=deepcopy(self.fm_steps),
                     start_time=start_time,
                     end_time=end_time,
                     status=status,
@@ -40,9 +40,9 @@ class SnapshotBuilder(BaseModel):
             )
         return snapshot
 
-    def add_forward_model(
+    def add_fm_step(
         self,
-        forward_model_id: str,
+        fm_step_id: str,
         index: str,
         name: Optional[str],
         status: Optional[str],
@@ -53,8 +53,8 @@ class SnapshotBuilder(BaseModel):
         stdout: Optional[str] = None,
         stderr: Optional[str] = None,
     ) -> "SnapshotBuilder":
-        self.forward_models[forward_model_id] = _filter_nones(
-            ForwardModel(
+        self.fm_steps[fm_step_id] = _filter_nones(
+            FMStepSnapshot(
                 status=status,
                 index=index,
                 start_time=start_time,

@@ -49,7 +49,7 @@ from ert.ensemble_evaluator import identifiers as ids
 
 from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
-from .snapshot import Snapshot
+from .snapshot import EnsembleSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -95,7 +95,7 @@ class EnsembleEvaluator:
             )
             self._events_to_send.task_done()
 
-    async def _append_message(self, snapshot_update_event: Snapshot) -> None:
+    async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
             snapshot=snapshot_update_event.to_dict(), ensemble=self._ensemble.id_
         )
@@ -161,8 +161,8 @@ class EnsembleEvaluator:
             return
 
         max_memory_usage = -1
-        for job in self.ensemble.snapshot.get_all_forward_models().values():
-            memory_usage = job.get(ids.MAX_MEMORY_USAGE) or "-1"
+        for fm_step in self.ensemble.snapshot.get_all_fm_steps().values():
+            memory_usage = fm_step.get(ids.MAX_MEMORY_USAGE) or "-1"
             max_memory_usage = max(int(memory_usage), max_memory_usage)
         logger.info(
             f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"

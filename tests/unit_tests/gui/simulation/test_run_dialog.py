@@ -163,10 +163,10 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -201,10 +201,10 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             max_memory_usage="1000",
                             current_memory_usage="500",
                             status=state.FORWARD_MODEL_STATE_START,
@@ -234,23 +234,23 @@ def test_large_snapshot(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="jobless_partial",
+            id="fm_stepless_partial",
         ),
         pytest.param(
             [
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
-                        .add_forward_model(
-                            forward_model_id="1",
+                        .add_fm_step(
+                            fm_step_id="1",
                             index="1",
-                            name="job_1",
+                            name="fm_step_1",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
@@ -265,11 +265,11 @@ def test_large_snapshot(
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
-                    .add_forward_model(
-                        forward_model_id="0",
+                    .add_fm_step(
+                        fm_step_id="0",
                         index="0",
                         status=state.FORWARD_MODEL_STATE_FINISHED,
-                        name="job_0",
+                        name="fm_step_0",
                     )
                     .build(["1"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
@@ -282,11 +282,11 @@ def test_large_snapshot(
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
-                    .add_forward_model(
-                        forward_model_id="1",
+                    .add_fm_step(
+                        fm_step_id="1",
                         index="1",
                         status=state.FORWARD_MODEL_STATE_FAILURE,
-                        name="job_1",
+                        name="fm_step_1",
                     )
                     .build(["0"], status=state.REALIZATION_STATE_FAILED),
                     iteration_label="Foo",
@@ -300,17 +300,17 @@ def test_large_snapshot(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="two_job_updates_over_two_partials",
+            id="two_fm_step_updates_over_two_partials",
         ),
         pytest.param(
             [
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -326,10 +326,10 @@ def test_large_snapshot(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -390,9 +390,9 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        job_overview = run_dialog._job_overview
+        fm_step_overview = run_dialog._fm_step_overview
 
-        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
@@ -408,8 +408,10 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                 pos=click_pos,
             )
 
-        click_pos = job_overview.visualRect(job_overview.model().index(0, 4)).center()
-        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+        click_pos = fm_step_overview.visualRect(
+            fm_step_overview.model().index(0, 4)
+        ).center()
+        qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
 
         qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
 
@@ -429,10 +431,10 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                 FullSnapshotEvent(
                     snapshot=(
                         SnapshotBuilder()
-                        .add_forward_model(
-                            forward_model_id="0",
+                        .add_fm_step(
+                            fm_step_id="0",
                             index="0",
-                            name="job_0",
+                            name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
@@ -447,13 +449,13 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
-                    .add_forward_model(
-                        forward_model_id="0",
+                    .add_fm_step(
+                        fm_step_id="0",
                         index="0",
                         status=state.FORWARD_MODEL_STATE_RUNNING,
                         current_memory_usage="45000",
                         max_memory_usage="55000",
-                        name="job_0",
+                        name="fm_step_0",
                     )
                     .build(["0"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
@@ -466,11 +468,11 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
-                    .add_forward_model(
-                        forward_model_id="0",
+                    .add_fm_step(
+                        fm_step_id="0",
                         index="0",
                         status=state.FORWARD_MODEL_STATE_FINISHED,
-                        name="job_0",
+                        name="fm_step_0",
                         current_memory_usage="50000",
                         max_memory_usage="60000",
                     )
@@ -486,7 +488,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                 EndEvent(failed=False, msg=""),
             ],
             1,
-            id="running_job_with_memory_usage",
+            id="running_fm_step_with_memory_usage",
         ),
     ],
 )
@@ -507,14 +509,16 @@ def test_run_dialog_memory_usage_showing(
     assert type(realization_box) == RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.LeftButton)
-    job_model = run_dialog._job_overview.model()
-    assert job_model._real == 0
+    fm_step_model = run_dialog._fm_step_overview.model()
+    assert fm_step_model._real == 0
 
-    job_number = 0
+    fm_step_number = 0
     max_memory_column_index = 6
 
-    max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
-    max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
+    max_memory_column_proxy_index = fm_step_model.index(
+        fm_step_number, max_memory_column_index
+    )
+    max_memory_value = fm_step_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
     assert max_memory_value == "60.00 KB"
 
 
@@ -621,8 +625,8 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        job_overview = run_dialog._job_overview
-        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+        fm_step_overview = run_dialog._fm_step_overview
+        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
 
         realization_widget = run_dialog.findChild(RealizationWidget)
 
@@ -637,20 +641,22 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
                 pos=click_pos,
             )
 
-        job_stdout = job_overview.model().index(0, 4)
-        job_stderr = job_overview.model().index(0, 5)
+        fm_step_stdout = fm_step_overview.model().index(0, 4)
+        fm_step_stderr = fm_step_overview.model().index(0, 5)
 
-        assert job_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
-        assert job_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
-        assert job_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
-        assert job_stderr.data(Qt.ItemDataRole.ForegroundRole) == None
+        assert fm_step_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
+        assert fm_step_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
+        assert (
+            fm_step_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
+        )
+        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) == None
 
-        assert job_stdout.data(Qt.ItemDataRole.FontRole).underline() == True
-        assert job_stderr.data(Qt.ItemDataRole.FontRole) == None
+        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline() == True
+        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) == None
 
-        click_pos = job_overview.visualRect(job_stdout).center()
+        click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
 
-        qtbot.mouseClick(job_overview.viewport(), Qt.LeftButton, pos=click_pos)
+        qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
 
         qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
 

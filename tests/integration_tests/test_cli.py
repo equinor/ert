@@ -866,15 +866,15 @@ def test_that_driver__init__exceptions_are_propagated(monkeypatch, capsys):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_log_is_cleaned_up_from_repeated_forward_models(caplog):
+def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     """Verify that the run model now gereneates a cleanup log when
     there are repeated forward models
     """
     with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly_repeated_forward_models.ert", "w", encoding="utf-8"
+        "poly_repeated_forward_model_steps.ert", "w", encoding="utf-8"
     ) as fout:
-        forward_models = ["FORWARD_MODEL poly_eval\n"] * 5
-        lines = fin.readlines() + forward_models
+        forward_model_steps = ["FORWARD_MODEL poly_eval\n"] * 5
+        lines = fin.readlines() + forward_model_steps
         fout.writelines(lines)
 
     expected_msg = "Config contains forward model step poly_eval 6 time(s)"
@@ -883,7 +883,7 @@ def test_that_log_is_cleaned_up_from_repeated_forward_models(caplog):
         run_cli(
             "ensemble_experiment",
             "--disable-monitor",
-            "poly_repeated_forward_models.ert",
+            "poly_repeated_forward_model_steps.ert",
             "--realizations",
             "0-4",
         )

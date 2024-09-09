@@ -13,16 +13,16 @@ from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.model.snapshot import (
-    JOB_COLUMN_SIZE,
-    JOB_COLUMNS,
+    FM_STEP_COLUMN_SIZE,
+    FM_STEP_COLUMNS,
     IsEnsembleRole,
-    IsJobRole,
+    IsFMStepRole,
     IsRealizationRole,
     NodeRole,
 )
 
 
-class JobListProxyModel(QAbstractProxyModel):
+class FMStepListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
     forward model data for a specific realization in a specific iteration."""
 
@@ -85,7 +85,7 @@ class JobListProxyModel(QAbstractProxyModel):
     ) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
-                header = JOB_COLUMNS[section]
+                header = FM_STEP_COLUMNS[section]
                 if header in [ids.STDOUT, ids.STDERR]:
                     return header.upper()
                 elif header in [ids.MAX_MEMORY_USAGE]:
@@ -97,7 +97,7 @@ class JobListProxyModel(QAbstractProxyModel):
 
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
-        return JOB_COLUMN_SIZE
+        return FM_STEP_COLUMN_SIZE
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         parent = parent if parent else QModelIndex()
@@ -155,7 +155,7 @@ class JobListProxyModel(QAbstractProxyModel):
                 self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
     def _accept_index(self, index: QModelIndex) -> bool:
-        if not index.internalPointer() or not index.data(IsJobRole):
+        if not index.internalPointer() or not index.data(IsFMStepRole):
             return False
 
         # traverse upwards and check real and iter against parents of this index

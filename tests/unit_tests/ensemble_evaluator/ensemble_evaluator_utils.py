@@ -45,16 +45,16 @@ def _mock_ws(host, port, messages, delay_startup=0):
 class TestEnsemble(Ensemble):
     __test__ = False
 
-    def __init__(self, _iter, reals, jobs, id_):
+    def __init__(self, _iter, reals, fm_steps, id_):
         self.iter = _iter
         self.test_reals = reals
-        self.jobs = jobs
+        self.fm_steps = fm_steps
 
         the_reals = [
             Realization(
                 real_no,
-                forward_models=[
-                    ForwardModelStep(str(fm_idx), "") for fm_idx in range(0, jobs)
+                fm_steps=[
+                    ForwardModelStep(str(fm_idx), "") for fm_idx in range(0, fm_steps)
                 ],
                 active=True,
                 max_runtime=0,
@@ -86,13 +86,13 @@ class TestEnsemble(Ensemble):
                 await dispatch._send(event_to_json(event))
 
                 event_id += 1
-                for job in range(0, self.jobs):
-                    job = str(job)
+                for fm_step in range(0, self.fm_steps):
+                    fm_step = str(fm_step)
 
                     event = ForwardModelStepRunning(
                         ensemble=self.id_,
                         real=real,
-                        fm_step=job,
+                        fm_step=fm_step,
                         current_memory_usage=1000,
                     )
                     await dispatch._send(event_to_json(event))
@@ -101,7 +101,7 @@ class TestEnsemble(Ensemble):
                     event = ForwardModelStepSuccess(
                         ensemble=self.id_,
                         real=real,
-                        fm_step=job,
+                        fm_step=fm_step,
                         current_memory_usage=1000,
                     )
                     await dispatch._send(event_to_json(event))

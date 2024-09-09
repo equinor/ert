@@ -20,9 +20,9 @@ from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QW
 
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.snapshot import (
-    ForwardModel,
+    EnsembleSnapshot,
+    FMStepSnapshot,
     RealizationSnapshot,
-    Snapshot,
 )
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
@@ -321,12 +321,12 @@ def run_experiment_fixture(request):
 
 
 @pytest.fixture()
-def full_snapshot() -> Snapshot:
+def full_snapshot() -> EnsembleSnapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_RUNNING,
         active=True,
-        forward_models={
-            "0": ForwardModel(
+        fm_steps={
+            "0": FMStepSnapshot(
                 start_time=dt.now(),
                 end_time=dt.now(),
                 name="poly_eval",
@@ -335,10 +335,10 @@ def full_snapshot() -> Snapshot:
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
+                current_memory_usage=123,
+                max_memory_usage=312,
             ),
-            "1": ForwardModel(
+            "1": FMStepSnapshot(
                 start_time=dt.now(),
                 end_time=dt.now(),
                 name="poly_postval",
@@ -347,10 +347,10 @@ def full_snapshot() -> Snapshot:
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
+                current_memory_usage=123,
+                max_memory_usage=312,
             ),
-            "2": ForwardModel(
+            "2": FMStepSnapshot(
                 start_time=dt.now(),
                 end_time=None,
                 name="poly_post_mortem",
@@ -359,10 +359,10 @@ def full_snapshot() -> Snapshot:
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
+                current_memory_usage=123,
+                max_memory_usage=312,
             ),
-            "3": ForwardModel(
+            "3": FMStepSnapshot(
                 start_time=dt.now(),
                 end_time=None,
                 name="poly_not_started",
@@ -371,12 +371,12 @@ def full_snapshot() -> Snapshot:
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
+                current_memory_usage=123,
+                max_memory_usage=312,
             ),
         },
     )
-    snapshot = Snapshot()
+    snapshot = EnsembleSnapshot()
     for i in range(0, 100):
         snapshot.add_realization(str(i), copy.deepcopy(real))
 
@@ -384,12 +384,12 @@ def full_snapshot() -> Snapshot:
 
 
 @pytest.fixture()
-def fail_snapshot() -> Snapshot:
+def fail_snapshot() -> EnsembleSnapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_FAILED,
         active=True,
-        forward_models={
-            "0": ForwardModel(
+        fm_steps={
+            "0": FMStepSnapshot(
                 start_time=dt.now(),
                 end_time=dt.now(),
                 name="poly_eval",
@@ -398,12 +398,12 @@ def fail_snapshot() -> Snapshot:
                 error="error",
                 stdout="std_out_file",
                 stderr="std_err_file",
-                current_memory_usage="123",
-                max_memory_usage="312",
+                current_memory_usage=123,
+                max_memory_usage=312,
             )
         },
     )
-    snapshot = Snapshot()
+    snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ENSEMBLE_STATE_STARTED
 
     for i in range(0, 1):
@@ -413,11 +413,11 @@ def fail_snapshot() -> Snapshot:
 
 
 @pytest.fixture()
-def large_snapshot() -> Snapshot:
+def large_snapshot() -> EnsembleSnapshot:
     builder = SnapshotBuilder()
     for i in range(0, 150):
-        builder.add_forward_model(
-            forward_model_id=str(i),
+        builder.add_fm_step(
+            fm_step_id=str(i),
             index=str(i),
             name=f"job_{i}",
             current_memory_usage="500",
@@ -433,11 +433,11 @@ def large_snapshot() -> Snapshot:
 
 
 @pytest.fixture()
-def small_snapshot() -> Snapshot:
+def small_snapshot() -> EnsembleSnapshot:
     builder = SnapshotBuilder()
     for i in range(0, 2):
-        builder.add_forward_model(
-            forward_model_id=str(i),
+        builder.add_fm_step(
+            fm_step_id=str(i),
             index=str(i),
             name=f"job_{i}",
             current_memory_usage="500",

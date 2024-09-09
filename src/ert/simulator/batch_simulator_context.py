@@ -92,7 +92,7 @@ async def _submit_and_run_jobqueue(
             continue
         realization = Realization(
             iens=run_arg.iens,
-            forward_models=[],
+            fm_steps=[],
             active=True,
             max_runtime=max_runtime,
             run_arg=run_arg,
