@@ -3,7 +3,7 @@ from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.state import COLOR_FAILED
-from ert.gui.model.snapshot import RealJobColorHint, SnapshotModel
+from ert.gui.model.snapshot import FMStepColorHint, SnapshotModel
 
 from .gui_models_utils import finish_snapshot
 
@@ -44,7 +44,7 @@ def test_realization_state_is_queue_finalized_state(fail_snapshot):
     model._add_snapshot(SnapshotModel.prerender(fail_snapshot), "0")
     first_real = model.index(0, 0, model.index(0, 0))
 
-    color, done_count, full_count = model.data(first_real, RealJobColorHint)
+    color, done_count, full_count = model.data(first_real, FMStepColorHint)
     assert color == QColor(*COLOR_FAILED)
     assert done_count == 1
     assert full_count == 1

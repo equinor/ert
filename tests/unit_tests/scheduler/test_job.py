@@ -44,7 +44,7 @@ def realization():
     )
     realization = Realization(
         iens=run_arg.iens,
-        forward_models=[],
+        fm_steps=[],
         active=True,
         max_runtime=None,
         run_arg=run_arg,

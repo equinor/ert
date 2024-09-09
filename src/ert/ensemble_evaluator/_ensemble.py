@@ -26,9 +26,9 @@ from ert.scheduler import Scheduler, create_driver
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
 from .snapshot import (
-    ForwardModel,
+    EnsembleSnapshot,
+    FMStepSnapshot,
     RealizationSnapshot,
-    Snapshot,
 )
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -112,7 +112,7 @@ class LegacyEnsemble:
     def __post_init__(self) -> None:
         self._scheduler: Optional[_KillAllJobs] = None
         self._config: Optional[EvaluatorServerConfig] = None
-        self.snapshot: Snapshot = self._create_snapshot()
+        self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
         if self.snapshot.status:
             self._status_tracker = _EnsembleStateTracker(self.snapshot.status)
@@ -123,18 +123,18 @@ class LegacyEnsemble:
     def active_reals(self) -> Sequence[Realization]:
         return list(filter(lambda real: real.active, self.reals))
 
-    def _create_snapshot(self) -> Snapshot:
-        snapshot = Snapshot()
+    def _create_snapshot(self) -> EnsembleSnapshot:
+        snapshot = EnsembleSnapshot()
         snapshot._ensemble_state = ENSEMBLE_STATE_UNKNOWN
         for real in self.active_reals:
             realization = RealizationSnapshot(
-                active=True, status=REALIZATION_STATE_WAITING, forward_models={}
+                active=True, status=REALIZATION_STATE_WAITING, fm_steps={}
             )
-            for index, forward_model in enumerate(real.forward_models):
-                realization["forward_models"][str(index)] = ForwardModel(
+            for index, fm_step in enumerate(real.fm_steps):
+                realization["fm_steps"][str(index)] = FMStepSnapshot(
                     status=FORWARD_MODEL_STATE_START,
                     index=str(index),
-                    name=forward_model.name,
+                    name=fm_step.name,
                 )
             snapshot.add_realization(str(real.iens), realization)
         return snapshot
@@ -142,8 +142,8 @@ class LegacyEnsemble:
     def get_successful_realizations(self) -> List[int]:
         return self.snapshot.get_successful_realizations()
 
-    def update_snapshot(self, events: Sequence[Event]) -> Snapshot:
-        snapshot_mutate_event = Snapshot()
+    def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
+        snapshot_mutate_event = EnsembleSnapshot()
         for event in events:
             snapshot_mutate_event = snapshot_mutate_event.update_from_event(
                 event, source_snapshot=self.snapshot
@@ -292,7 +292,7 @@ class _KillAllJobs(Protocol):
 @dataclass
 class Realization:
     iens: int
-    forward_models: Sequence[ForwardModelStep]
+    fm_steps: Sequence[ForwardModelStep]
     active: bool
     max_runtime: Optional[int]
     run_arg: "RunArg"

@@ -22,26 +22,26 @@ from tests import SnapshotBuilder
 def snapshot():
     return (
         SnapshotBuilder()
-        .add_forward_model(
-            forward_model_id="0",
+        .add_fm_step(
+            fm_step_id="0",
             index="0",
             name="forward_model0",
             status="Unknown",
         )
-        .add_forward_model(
-            forward_model_id="1",
+        .add_fm_step(
+            fm_step_id="1",
             index="1",
             name="forward_model1",
             status="Unknown",
         )
-        .add_forward_model(
-            forward_model_id="2",
+        .add_fm_step(
+            fm_step_id="2",
             index="2",
             name="forward_model2",
             status="Unknown",
         )
-        .add_forward_model(
-            forward_model_id="3",
+        .add_fm_step(
+            fm_step_id="3",
             index="3",
             name="forward_model3",
             status="Unknown",
@@ -117,7 +117,7 @@ def make_ensemble(queue_config):
                     ert.ensemble_evaluator.Realization(
                         active=True,
                         iens=iens,
-                        forward_models=forward_model_list,
+                        fm_steps=forward_model_list,
                         job_script="job_dispatch.py",
                         max_runtime=10,
                         num_cpu=1,

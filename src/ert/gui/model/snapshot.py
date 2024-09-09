@@ -9,10 +9,11 @@ from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVa
 from qtpy.QtGui import QColor, QFont
 from typing_extensions import override
 
-from ert.ensemble_evaluator import Snapshot, state
+from ert.ensemble_evaluator import EnsembleSnapshot, state
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.snapshot import (
-    SnapshotMetadata,
+    EnsembleSnapshotMetadata,
+    RealId,
     convert_iso8601_to_datetime,
 )
 from ert.gui.model.node import (
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 UserRole = Qt.ItemDataRole.UserRole
 NodeRole = UserRole + 1
-RealJobColorHint = UserRole + 2
+FMStepColorHint = UserRole + 2
 RealLabelHint = UserRole + 4
 ProgressRole = UserRole + 5
 FileRole = UserRole + 6
@@ -46,12 +47,12 @@ CallbackStatusMessageRole = UserRole + 14
 # Indicates what type the underlying data is
 IsEnsembleRole = UserRole + 8
 IsRealizationRole = UserRole + 9
-IsJobRole = UserRole + 10
+IsFMStepRole = UserRole + 10
 StatusRole = UserRole + 11
 
 DURATION = "Duration"
 
-JOB_COLUMNS: Sequence[str] = [
+FM_STEP_COLUMNS: Sequence[str] = [
     ids.NAME,
     ids.ERROR,
     ids.STATUS,
@@ -60,7 +61,7 @@ JOB_COLUMNS: Sequence[str] = [
     ids.STDERR,
     ids.MAX_MEMORY_USAGE,
 ]
-JOB_COLUMN_SIZE: Final[int] = len(JOB_COLUMNS)
+FM_STEP_COLUMN_SIZE: Final[int] = len(FM_STEP_COLUMNS)
 
 COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
 
@@ -89,22 +90,22 @@ class SnapshotModel(QAbstractItemModel):
         self.root: RootNode = RootNode("0")
 
     @staticmethod
-    def prerender(snapshot: Snapshot) -> Optional[Snapshot]:
+    def prerender(ensemble: EnsembleSnapshot) -> Optional[EnsembleSnapshot]:
         """Pre-render some data that is required by this model. Ideally, this
         is called outside the GUI thread. This is a requirement of the model,
         so it has to be called."""
 
-        reals = snapshot.reals
-        forward_model_states = snapshot.get_forward_model_status_for_all_reals()
+        reals = ensemble.reals
+        fm_step_snapshots = ensemble.get_fm_steps_for_all_reals()
 
-        if not reals and not forward_model_states:
+        if not reals and not fm_step_snapshots:
             return None
 
-        metadata = SnapshotMetadata(
-            # A mapping from real to job to that job's QColor status representation
-            aggr_job_status_colors=defaultdict(dict),
-            # A mapping from real to that real's QColor status representation
+        metadata = EnsembleSnapshotMetadata(
+            aggr_fm_step_status_colors=defaultdict(dict),
             real_status_colors={},
+            sorted_real_ids=[],
+            sorted_fm_step_ids=defaultdict(),
         )
 
         for real_id, real in reals.items():
@@ -113,40 +114,32 @@ class SnapshotModel(QAbstractItemModel):
                     state.REAL_STATE_TO_COLOR[status]
                 ]
 
-        metadata["sorted_real_ids"] = sorted(snapshot.reals.keys(), key=int)
-        metadata["sorted_forward_model_ids"] = defaultdict(list)
+        metadata["sorted_real_ids"] = sorted(ensemble.reals.keys(), key=int)
+        metadata["sorted_fm_step_ids"] = defaultdict(list)
 
-        running_forward_model_id: Dict[str, int] = {}
-        for (
-            real_id,
-            forward_model_id,
-        ), forward_model_status in forward_model_states.items():
-            if forward_model_status == state.FORWARD_MODEL_STATE_RUNNING:
-                running_forward_model_id[real_id] = int(forward_model_id)
+        running_fm_step_id: Dict[RealId, int] = {}
+        for (real_id, fm_step_id), fm_step_snapshot in fm_step_snapshots.items():
+            if fm_step_snapshot == state.FORWARD_MODEL_STATE_RUNNING:
+                running_fm_step_id[real_id] = int(fm_step_id)
 
-        for (
-            real_id,
-            forward_model_id,
-        ), forward_model_status in forward_model_states.items():
-            metadata["sorted_forward_model_ids"][real_id].append(forward_model_id)
+        for (real_id, fm_step_id), fm_step_snapshot in fm_step_snapshots.items():
+            metadata["sorted_fm_step_ids"][real_id].append(fm_step_id)
             if (
-                real_id in running_forward_model_id
-                and int(forward_model_id) > running_forward_model_id[real_id]
+                real_id in running_fm_step_id
+                and int(fm_step_id) > running_fm_step_id[real_id]
             ):
                 # Triggered on resubmitted realizations
                 color = _QCOLORS[
                     state.FORWARD_MODEL_STATE_TO_COLOR[state.FORWARD_MODEL_STATE_START]
                 ]
             else:
-                color = _QCOLORS[
-                    state.FORWARD_MODEL_STATE_TO_COLOR[forward_model_status]
-                ]
-            metadata["aggr_job_status_colors"][real_id][forward_model_id] = color
+                color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[fm_step_snapshot]]
+            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = color
 
-        snapshot.merge_metadata(metadata)
-        return snapshot
+        ensemble.merge_metadata(metadata)
+        return ensemble
 
-    def _update_snapshot(self, snapshot: Snapshot, iter_: str) -> None:
+    def _update_snapshot(self, snapshot: EnsembleSnapshot, iter_: str) -> None:
         metadata = snapshot.metadata
         if not metadata:
             logger.debug("no metadata in update snapshot, ignoring snapshot")
@@ -156,9 +149,9 @@ class SnapshotModel(QAbstractItemModel):
             logger.debug("no full snapshot to update yet, ignoring snapshot")
             return
 
-        job_infos = snapshot.get_all_forward_models()
+        fm_steps = snapshot.get_all_fm_steps()
         reals = snapshot.reals
-        if not reals and not job_infos:
+        if not reals and not fm_steps:
             logger.debug(f"no realizations in snapshot for iter {iter_}")
             return
 
@@ -172,42 +165,35 @@ class SnapshotModel(QAbstractItemModel):
 
             for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
+                data = real_node.data
                 if real_status := real.get("status"):
-                    real_node.data.status = real_status
-                for real_forward_model_id, color in (
-                    metadata["aggr_job_status_colors"].get(real_id, {}).items()
+                    data.status = real_status
+                for real_fm_step_id, color in (
+                    metadata["aggr_fm_step_status_colors"].get(real_id, {}).items()
                 ):
-                    real_node.data.forward_model_step_status_color_by_id[
-                        real_forward_model_id
-                    ] = color
+                    data.fm_step_status_color_by_id[real_fm_step_id] = color
                 if real_id in metadata["real_status_colors"]:
-                    real_node.data.real_status_color = metadata["real_status_colors"][
-                        real_id
-                    ]
+                    data.real_status_color = metadata["real_status_colors"][real_id]
                 reals_changed.append(real_node.row())
                 if real.get("callback_status_message"):
-                    real_node.data.callback_status_message = real[
-                        "callback_status_message"
-                    ]
-            jobs_changed_by_real: Dict[str, List[int]] = defaultdict(list)
-            for (
-                real_id,
-                forward_model_id,
-            ), job in job_infos.items():
-                real_node = iter_node.children[real_id]
-                job_node = real_node.children[forward_model_id]
+                    data.callback_status_message = real["callback_status_message"]
 
-                jobs_changed_by_real[real_id].append(job_node.row())
-                if start_time := job.get("start_time", None):
-                    job["start_time"] = convert_iso8601_to_datetime(start_time)
-                if end_time := job.get("end_time", None):
-                    job["end_time"] = convert_iso8601_to_datetime(end_time)
+            fm_steps_changed_by_real: Dict[str, List[int]] = defaultdict(list)
+            for (real_id, fm_step_id), fm_step in fm_steps.items():
+                real_node = iter_node.children[real_id]
+                fm_step_node = real_node.children[fm_step_id]
+
+                fm_steps_changed_by_real[real_id].append(fm_step_node.row())
+                if start_time := fm_step.get("start_time", None):
+                    fm_step["start_time"] = convert_iso8601_to_datetime(start_time)
+                if end_time := fm_step.get("end_time", None):
+                    fm_step["end_time"] = convert_iso8601_to_datetime(end_time)
                 # Errors may be unset as the queue restarts the job
-                job[ids.ERROR] = job.get(ids.ERROR, "")
-                job_node.data.update(job)
-                if cur_mem_usage := job.get("current_memory_usage", None):
+                fm_step[ids.ERROR] = fm_step.get(ids.ERROR, "")
+                fm_step_node.data.update(fm_step)
+                if cur_mem_usage := fm_step.get("current_memory_usage", None):
                     real_node.data.current_memory_usage = int(float(cur_mem_usage))
-                if maximum_mem_usage := job.get("max_memory_usage", None):
+                if maximum_mem_usage := fm_step.get("max_memory_usage", None):
                     max_mem_usage = int(float(maximum_mem_usage))
                     real_node.data.max_memory_usage = max(
                         real_node.data.max_memory_usage or 0, max_mem_usage
@@ -216,17 +202,19 @@ class SnapshotModel(QAbstractItemModel):
                         self.root.max_memory_usage or 0, max_mem_usage
                     )
 
-            for real_idx, changed_jobs in jobs_changed_by_real.items():
+            for real_idx, changed_fm_steps in fm_steps_changed_by_real.items():
                 real_node = iter_node.children[real_idx]
                 real_index = self.index(real_node.row(), 0, iter_index)
 
-                job_top_left = self.index(min(changed_jobs), 0, real_index)
-                job_bottom_right = self.index(
-                    max(changed_jobs),
+                fm_step_top_left = self.index(min(changed_fm_steps), 0, real_index)
+                fm_step_bottom_right = self.index(
+                    max(changed_fm_steps),
                     self.columnCount(real_index) - 1,
                     real_index,
                 )
-                stack.callback(self.dataChanged.emit, job_top_left, job_bottom_right)
+                stack.callback(
+                    self.dataChanged.emit, fm_step_top_left, fm_step_bottom_right
+                )
 
             if reals_changed:
                 real_top_left = self.index(min(reals_changed), 0, iter_index)
@@ -237,7 +225,7 @@ class SnapshotModel(QAbstractItemModel):
 
             return
 
-    def _add_snapshot(self, snapshot: Snapshot, iter_: str) -> None:
+    def _add_snapshot(self, snapshot: EnsembleSnapshot, iter_: str) -> None:
         metadata = snapshot.metadata
         snapshot_tree = IterNode(
             id_=iter_,
@@ -252,8 +240,8 @@ class SnapshotModel(QAbstractItemModel):
                 data=RealNodeData(
                     status=real.get("status"),
                     active=real.get("active"),
-                    forward_model_step_status_color_by_id=metadata.get(
-                        "aggr_job_status_colors", defaultdict(None)
+                    fm_step_status_color_by_id=metadata.get(
+                        "aggr_fm_step_status_colors", defaultdict(None)
                     )[real_id],
                     real_status_color=metadata.get(
                         "real_status_colors", defaultdict(None)
@@ -263,18 +251,18 @@ class SnapshotModel(QAbstractItemModel):
             )
             snapshot_tree.add_child(real_node)
 
-            for forward_model_id in metadata.get(
-                "sorted_forward_model_ids", defaultdict(None)
-            )[real_id]:
-                job = snapshot.get_job(real_id, forward_model_id)
-                if start_time := job.get("start_time", None):
-                    job["start_time"] = convert_iso8601_to_datetime(start_time)
-                if end_time := job.get("end_time", None):
-                    job["end_time"] = convert_iso8601_to_datetime(end_time)
-                job_node = ForwardModelStepNode(
-                    id_=forward_model_id, data=job, parent=real_node
+            for fm_step_id in metadata.get("sorted_fm_step_ids", defaultdict(None))[
+                real_id
+            ]:
+                fm_step = snapshot.get_fm_step(real_id, fm_step_id)
+                if start_time := fm_step.get("start_time", None):
+                    fm_step["start_time"] = convert_iso8601_to_datetime(start_time)
+                if end_time := fm_step.get("end_time", None):
+                    fm_step["end_time"] = convert_iso8601_to_datetime(end_time)
+                fm_step_node = ForwardModelStepNode(
+                    id_=fm_step_id, data=fm_step, parent=real_node
                 )
-                real_node.add_child(job_node)
+                real_node.add_child(fm_step_node)
 
         if iter_ in self.root.children:
             self.beginResetModel()
@@ -292,7 +280,7 @@ class SnapshotModel(QAbstractItemModel):
     @override
     def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         if parent and isinstance(parent.internalPointer(), RealNode):
-            return JOB_COLUMN_SIZE
+            return FM_STEP_COLUMN_SIZE
         return 1
 
     def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
@@ -336,11 +324,11 @@ class SnapshotModel(QAbstractItemModel):
             return isinstance(node, IterNode)
         if role == IsRealizationRole:
             return isinstance(node, RealNode)
-        if role == IsJobRole:
+        if role == IsFMStepRole:
             return isinstance(node, ForwardModelStepNode)
 
         if isinstance(node, ForwardModelStepNode):
-            return self._job_data(index, node, role)
+            return self._fm_step_data(index, node, role)
         if isinstance(node, RealNode):
             return self._real_data(index, node, role)
 
@@ -374,11 +362,11 @@ class SnapshotModel(QAbstractItemModel):
 
     @staticmethod
     def _real_data(_: QModelIndex, node: RealNode, role: int) -> Any:
-        if role == RealJobColorHint:
-            total_count = len(node.data.forward_model_step_status_color_by_id)
+        if role == FMStepColorHint:
+            total_count = len(node.data.fm_step_status_color_by_id)
             finished_count = sum(
                 1
-                for color in node.data.forward_model_step_status_color_by_id.values()
+                for color in node.data.fm_step_status_color_by_id.values()
                 if color == COLOR_FINISHED
             )
 
@@ -400,7 +388,7 @@ class SnapshotModel(QAbstractItemModel):
         return QVariant()
 
     @staticmethod
-    def _job_data(
+    def _fm_step_data(
         index: QModelIndex,
         node: ForwardModelStepNode,
         role: int,  # Qt.ItemDataRole
@@ -408,7 +396,7 @@ class SnapshotModel(QAbstractItemModel):
         node_id = str(node.id_)
 
         if role == Qt.ItemDataRole.FontRole:
-            data_name = JOB_COLUMNS[index.column()]
+            data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
                 index.data(FileRole)
             ):
@@ -417,7 +405,7 @@ class SnapshotModel(QAbstractItemModel):
                 return font
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            data_name = JOB_COLUMNS[index.column()]
+            data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
                 index.data(FileRole)
             ):
@@ -425,13 +413,13 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.BackgroundRole:
             return (
-                node.parent.data.forward_model_step_status_color_by_id[node_id]
+                node.parent.data.fm_step_status_color_by_id[node_id]
                 if node.parent
                 else None
             )
 
         if role == Qt.ItemDataRole.DisplayRole:
-            data_name = JOB_COLUMNS[index.column()]
+            data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.MAX_MEMORY_USAGE]:
                 data = node.data
                 _bytes: Optional[str] = data.get(data_name)  # type: ignore
@@ -457,7 +445,7 @@ class SnapshotModel(QAbstractItemModel):
             return node.data.get(data_name)
 
         if role == FileRole:
-            data_name = JOB_COLUMNS[index.column()]
+            data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return node.data.get(data_name, QVariant())
 
@@ -470,7 +458,7 @@ class SnapshotModel(QAbstractItemModel):
             )
 
         if role == Qt.ItemDataRole.ToolTipRole:
-            data_name = JOB_COLUMNS[index.column()]
+            data_name = FM_STEP_COLUMNS[index.column()]
             tt_text = None
             if data_name == ids.ERROR:
                 tt_text = node.data.get(ids.ERROR)

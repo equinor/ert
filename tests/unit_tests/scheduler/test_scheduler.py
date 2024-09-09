@@ -26,11 +26,11 @@ def create_jobs_json(realization: Realization) -> None:
         "config_file": "/dev/null",
         "jobList": [
             {
-                "name": forward_model.name,
-                "executable": forward_model.executable,
-                "argList": forward_model.arglist,
+                "name": fm_step.name,
+                "executable": fm_step.executable,
+                "argList": fm_step.arglist,
             }
-            for forward_model in realization.forward_models
+            for fm_step in realization.fm_steps
         ],
         "run_id": "0",
         "ert_pid": "0",
@@ -60,7 +60,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
 
     realization = Realization(
         iens=iens,
-        forward_models=[],
+        fm_steps=[],
         active=True,
         max_runtime=None,
         run_arg=run_arg,

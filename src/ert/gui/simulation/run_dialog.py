@@ -44,9 +44,9 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.model.job_list import JobListProxyModel
+from ert.gui.model.fm_step_list import FMStepListProxyModel
 from ert.gui.model.snapshot import (
-    JOB_COLUMNS,
+    FM_STEP_COLUMNS,
     FileRole,
     IterNum,
     RealIens,
@@ -76,19 +76,19 @@ from .view import ProgressWidget, RealizationWidget, UpdateWidget
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 
 
-class JobOverview(QTableView):
+class FMStepOverview(QTableView):
     def __init__(self, snapshot_model: SnapshotModel, parent: QWidget | None) -> None:
         super().__init__(parent)
 
-        self._job_model = JobListProxyModel(self, 0, 0)
-        self._job_model.setSourceModel(snapshot_model)
+        self._fm_step_model = FMStepListProxyModel(self, 0, 0)
+        self._fm_step_model.setSourceModel(snapshot_model)
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
 
-        self.clicked.connect(self._job_clicked)
-        self.setModel(self._job_model)
+        self.clicked.connect(self._fm_step_clicked)
+        self.setModel(self._fm_step_model)
 
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
@@ -114,10 +114,10 @@ class JobOverview(QTableView):
 
     @Slot(int, int)
     def set_realization(self, iter_: int, real: int) -> None:
-        self._job_model.set_real(iter_, real)
+        self._fm_step_model.set_real(iter_, real)
 
     @Slot(QModelIndex)
-    def _job_clicked(self, index: QModelIndex) -> None:
+    def _fm_step_clicked(self, index: QModelIndex) -> None:
         if not index.isValid():
             return
         selected_file = index.data(FileRole)
@@ -125,16 +125,16 @@ class JobOverview(QTableView):
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
         elif selected_file and file_has_content(selected_file):
-            job_name = index.siblingAtColumn(0).data()
+            fm_step_name = index.siblingAtColumn(0).data()
             FileDialog(
                 selected_file,
-                job_name,
+                fm_step_name,
                 index.row(),
                 index.data(RealIens),
                 index.data(IterNum),
                 self,
             )
-        elif JOB_COLUMNS[index.column()] == ids.ERROR and index.data():
+        elif FM_STEP_COLUMNS[index.column()] == ids.ERROR and index.data():
             error_dialog = QDialog(self)
             error_dialog.setWindowTitle("Error information")
             layout = QVBoxLayout(error_dialog)
@@ -156,7 +156,7 @@ class JobOverview(QTableView):
         if event:
             index = self.indexAt(event.pos())
             if index.isValid():
-                data_name = JOB_COLUMNS[index.column()]
+                data_name = FM_STEP_COLUMNS[index.column()]
                 if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
                     index.data(FileRole)
                 ):
@@ -219,8 +219,8 @@ class RunDialog(QDialog):
         self._tab_widget.currentChanged.connect(self._current_tab_changed)
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
-        self._job_label = QLabel(self)
-        self._job_overview = JobOverview(self._snapshot_model, self)
+        self._fm_step_label = QLabel(self)
+        self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
@@ -285,13 +285,13 @@ class RunDialog(QDialog):
             }
          """)
 
-        self.job_frame = QFrame(self)
-        job_frame_layout = QVBoxLayout(self.job_frame)
-        job_frame_layout.setContentsMargins(0, 0, 0, 0)
-        job_frame_layout.addWidget(self._job_label)
-        job_frame_layout.addWidget(self._job_overview)
+        self.fm_step_frame = QFrame(self)
+        fm_step_frame_layout = QVBoxLayout(self.fm_step_frame)
+        fm_step_frame_layout.setContentsMargins(0, 0, 0, 0)
+        fm_step_frame_layout.addWidget(self._fm_step_label)
+        fm_step_frame_layout.addWidget(self._fm_step_overview)
 
-        adjustable_splitter_layout.addWidget(self.job_frame)
+        adjustable_splitter_layout.addWidget(self.fm_step_frame)
         layout.addWidget(adjustable_splitter_layout)
         layout.addWidget(button_widget_container)
 
@@ -309,7 +309,7 @@ class RunDialog(QDialog):
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
-        self.job_frame.setHidden(isinstance(widget, UpdateWidget))
+        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -336,8 +336,8 @@ class RunDialog(QDialog):
     def _select_real(self, index: QModelIndex) -> None:
         real = index.row()
         iter_ = index.model().get_iter()  # type: ignore
-        self._job_overview.set_realization(iter_, real)
-        self._job_label.setText(
+        self._fm_step_overview.set_realization(iter_, real)
+        self._fm_step_label.setText(
             f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
 

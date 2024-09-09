@@ -22,7 +22,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.snapshot import Snapshot
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
@@ -83,10 +83,10 @@ def check_expression(original, path_expression, expected, msg_start):
             0,
             1,
             [
-                (".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FAILURE),
+                (".*", "reals.*.fm_steps.*.status", FORWARD_MODEL_STATE_FAILURE),
                 (
                     ".*",
-                    "reals.*.forward_models.*.error",
+                    "reals.*.fm_steps.*.error",
                     "The run is cancelled due to reaching MAX_RUNTIME",
                 ),
             ],
@@ -103,7 +103,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             1,
-            [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
+            [(".*", "reals.*.fm_steps.*.status", FORWARD_MODEL_STATE_FINISHED)],
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -117,7 +117,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             2,
-            [(".*", "reals.*.forward_models.*.status", FORWARD_MODEL_STATE_FINISHED)],
+            [(".*", "reals.*.fm_steps.*.status", FORWARD_MODEL_STATE_FINISHED)],
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -135,13 +135,13 @@ def check_expression(original, path_expression, expected, msg_start):
             [
                 (
                     "0",
-                    "reals.'0'.forward_models.'0'.status",
+                    "reals.'0'.fm_steps.'0'.status",
                     FORWARD_MODEL_STATE_FAILURE,
                 ),
-                ("0", "reals.'0'.forward_models.'1'.status", FORWARD_MODEL_STATE_START),
+                ("0", "reals.'0'.fm_steps.'1'.status", FORWARD_MODEL_STATE_START),
                 (
                     ".*",
-                    "reals.'1'.forward_models.*.status",
+                    "reals.'1'.fm_steps.*.status",
                     FORWARD_MODEL_STATE_FINISHED,
                 ),
             ],
@@ -203,7 +203,7 @@ def test_tracking(
     )
     thread.start()
 
-    snapshots: Dict[str, Snapshot] = {}
+    snapshots: Dict[str, EnsembleSnapshot] = {}
 
     thread.join()
 

@@ -59,7 +59,7 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.identifiers import STATUS
-from ert.ensemble_evaluator.snapshot import Snapshot
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -180,7 +180,7 @@ class BaseRunModel(ABC):
             substitution_list=self.substitution_list,
             eclbase=config.ensemble_config.eclbase,
         )
-        self._iter_snapshot: Dict[int, Snapshot] = {}
+        self._iter_snapshot: Dict[int, EnsembleSnapshot] = {}
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
         # This holds state about the run model
@@ -381,9 +381,7 @@ class BaseRunModel(ABC):
         max_memory_consumption: int = 0
         if self._iter_snapshot.keys():
             current_iter = max(list(self._iter_snapshot.keys()))
-            for fm in (
-                self._iter_snapshot[current_iter].get_all_forward_models().values()
-            ):
+            for fm in self._iter_snapshot[current_iter].get_all_fm_steps().values():
                 max_usage = fm.get("max_memory_usage", "0")
                 if max_usage:
                     max_memory_consumption = max(int(max_usage), max_memory_consumption)
@@ -416,7 +414,7 @@ class BaseRunModel(ABC):
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         if type(event) is EESnapshot:
-            snapshot = Snapshot.from_nested_dict(event.snapshot)
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             self._iter_snapshot[iteration] = snapshot
             current_progress, realization_count = self._current_progress()
             status = self.get_current_status()
@@ -438,7 +436,7 @@ class BaseRunModel(ABC):
                     f"got snapshot update message without having stored "
                     f"snapshot for iter {iteration}"
                 )
-            snapshot = Snapshot()
+            snapshot = EnsembleSnapshot()
             snapshot.update_from_event(
                 event, source_snapshot=self._iter_snapshot[iteration]
             )
@@ -567,7 +565,7 @@ class BaseRunModel(ABC):
                 Realization(
                     active=run_arg.active,
                     iens=run_arg.iens,
-                    forward_models=self.ert_config.forward_model_steps,
+                    fm_steps=self.ert_config.forward_model_steps,
                     max_runtime=self.ert_config.analysis_config.max_runtime,
                     run_arg=run_arg,
                     num_cpu=self.ert_config.preferred_num_cpu,

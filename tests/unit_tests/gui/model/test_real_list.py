@@ -55,7 +55,7 @@ def test_change_iter(full_snapshot):
     model.setIter(1)
 
     snapshot = finish_snapshot(snapshot=full_snapshot)
-    snapshot._realization_states["0"].update({"status": REALIZATION_STATE_FINISHED})
+    snapshot._realization_snapshots["0"].update({"status": REALIZATION_STATE_FINISHED})
     source_model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
 
     assert (
