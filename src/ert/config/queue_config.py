@@ -328,26 +328,19 @@ class QueueConfig:
                     "MEMORY_PER_JOB",
                     selected_queue_system == QueueSystem.TORQUE,
                 )
-            if (
-                isinstance(_queue_vals, SlurmQueueOptions)
-                and _queue_vals.memory
-                and realization_memory
-            ):
-                _throw_error_or_warning(
-                    "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY",
-                    "MEMORY",
-                    selected_queue_system == QueueSystem.SLURM,
-                )
-            if (
-                isinstance(_queue_vals, SlurmQueueOptions)
-                and _queue_vals.memory_per_cpu
-                and realization_memory
-            ):
-                _throw_error_or_warning(
-                    "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY_PER_CPU",
-                    "MEMORY_PER_CPU",
-                    selected_queue_system == QueueSystem.SLURM,
-                )
+            if isinstance(_queue_vals, SlurmQueueOptions) and realization_memory:
+                if _queue_vals.memory:
+                    _throw_error_or_warning(
+                        "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY",
+                        "MEMORY",
+                        selected_queue_system == QueueSystem.SLURM,
+                    )
+                if _queue_vals.memory_per_cpu:
+                    _throw_error_or_warning(
+                        "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY_PER_CPU",
+                        "MEMORY_PER_CPU",
+                        selected_queue_system == QueueSystem.SLURM,
+                    )
 
         return QueueConfig(
             job_script,
