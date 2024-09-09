@@ -87,7 +87,7 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str):
     q = experiments[experiment_id][1]
     while True:
         try:
-            item: StatusEvents = q.get()
+            item: StatusEvents = q.get(block=False)
         except queue.Empty:
             asyncio.sleep(0.01)
             continue
