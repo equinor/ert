@@ -1609,3 +1609,65 @@ def test_general_option_in_local_config_has_priority_over_site_config():
     assert config.queue_config.max_running == 13
     assert config.queue_config.submit_sleep == 14
     assert config.queue_config.queue_system == QueueSystem.TORQUE
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, recwarn):
+    caplog.set_level(logging.WARNING)
+
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("SUMMARY *\n")
+        fout.write("ECLBASE RESULT_SUMMARY\n")
+
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(
+            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
+        )
+
+    ErtConfig.from_file("config_file.ert")
+
+    # Check no warning is logged when config contains
+    # forward model step with <ECLBASE> and <RUNPATH> as arguments
+    assert not caplog.text
+    assert len(recwarn) == 1
+    assert issubclass(recwarn[0].category, ConfigWarning)
+    assert (
+        recwarn[0].message.info.message
+        == "Config contians a SUMMARY key but no simulation job known to generate a summary file detected in the forward model"
+    )
+
+
+@pytest.mark.parametrize(
+    "job_name", ["eclipse", "eclipse100", "flow", "FLOW", "ECLIPSE100"]
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_no_warning_when_summary_key_and_simulation_job_present(
+    caplog, recwarn, job_name
+):
+    caplog.set_level(logging.WARNING)
+
+    with open("job_file", "w", encoding="utf-8") as fout:
+        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
+
+    with open("config_file.ert", "w", encoding="utf-8") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("SUMMARY *\n")
+        fout.write("ECLBASE RESULT_SUMMARY\n")
+
+        fout.write(f"INSTALL_JOB {job_name} job_file\n")
+        fout.write(
+            f"FORWARD_MODEL {job_name}(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
+        )
+
+    ErtConfig.from_file("config_file.ert")
+
+    # Check no warning is logged when config contains
+    # forward model step with <ECLBASE> and <RUNPATH> as arguments
+    assert not caplog.text
+    assert len(recwarn) == 0

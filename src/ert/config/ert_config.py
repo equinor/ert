@@ -69,6 +69,7 @@ from .parsing.observations_parser import (
     parse as parse_observations,
 )
 from .queue_config import QueueConfig
+from .summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -316,6 +317,31 @@ class ErtConfig:
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = val
+
+        forward_model_steps = cls._create_list_of_forward_model_steps_to_run(
+            installed_forward_model_steps,
+            substitution_list,
+            config_dict,
+        )
+
+        simulation_step_exists = False
+        for step in forward_model_steps:
+            for name in ["eclipse", "flow"]:
+                if name in step.name.lower():
+                    simulation_step_exists = True
+                    break
+            if simulation_step_exists:
+                break
+
+        has_summary_config = any(
+            isinstance(config, SummaryConfig)
+            for config in ensemble_config.response_configuration
+        )
+
+        if has_summary_config and not simulation_step_exists:
+            ConfigWarning.warn(
+                "Config contians a SUMMARY key but no simulation job known to generate a summary file detected in the forward model"
+            )
 
         return cls(
             substitution_list=substitution_list,
