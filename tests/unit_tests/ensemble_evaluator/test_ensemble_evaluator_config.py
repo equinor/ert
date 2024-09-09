@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
@@ -13,8 +15,9 @@ def test_load_config(unused_tcp_port):
     expected_client_uri = f"{expected_url}/client"
     expected_dispatch_uri = f"{expected_url}/dispatch"
 
-    assert serv_config.host == expected_host
-    assert serv_config.port == expected_port
+    url = urlparse(serv_config.url)
+    assert url.hostname == expected_host
+    assert url.port == expected_port
     assert serv_config.url == expected_url
     assert serv_config.client_uri == expected_client_uri
     assert serv_config.dispatch_uri == expected_dispatch_uri

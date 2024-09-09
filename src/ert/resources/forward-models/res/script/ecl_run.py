@@ -16,6 +16,10 @@ from ecl_config import EclrunConfig
 from packaging import version
 
 
+class EclError(RuntimeError):
+    pass
+
+
 def await_process_tee(process, *out_files) -> int:
     """Wait for process to finish, "tee"-ing the subprocess' stdout into all the
     given file objects.
@@ -273,7 +277,7 @@ class EclRun:
             elif len(LSB_machine_list) == self.num_cpu:
                 machine_list = LSB_machine_list
             else:
-                raise RuntimeError(
+                raise EclError(
                     "LSF / MPI problems. "
                     f"Asked for:{self.num_cpu} cpu. "
                     f'LSB_MCPU_HOSTS: "{LSB_MCPU_HOSTS}"  LSB_HOSTS: "{LSB_HOSTS}"'
@@ -283,7 +287,7 @@ class EclRun:
                 os.getenv("SLURM_JOB_NODELIST"), os.getenv("SLURM_TASKS_PER_NODE")
             )
             if len(machine_list) != self.num_cpu:
-                raise RuntimeError(
+                raise EclError(
                     f"SLURM / MPI problems - asked for {self.num_cpu} - "
                     f"got {len(machine_list)} nodes"
                 )
@@ -456,13 +460,13 @@ class EclRun:
             error_list = self.parseErrors()
             sep = "\n\n...\n\n"
             error_msg = sep.join(error_list)
-            raise RuntimeError(
+            raise EclError(
                 "Eclipse simulation failed with:"
                 f"{result.errors:d} errors:\n\n{error_msg}"
             )
 
         if result.bugs > 0:
-            raise RuntimeError(f"Eclipse simulation failed with:{result.bugs:d} bugs")
+            raise EclError(f"Eclipse simulation failed with:{result.bugs:d} bugs")
 
     def readECLEND(self):
         error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
@@ -525,27 +529,31 @@ def run(config, argv):
 
     options = parser.parse_args(argv)
 
-    eclrun_config = EclrunConfig(config, options.version)
-    if eclrun_config.can_use_eclrun():
-        run = EclRun(
-            options.ecl_case,
-            None,
-            num_cpu=options.num_cpu,
-            check_status=not options.ignore_errors,
-            summary_conversion=options.summary_conversion,
-        )
-        run.runEclipse(eclrun_config=eclrun_config)
-    else:
-        if options.num_cpu > 1:
-            sim = config.mpi_sim(version=options.version)
+    try:
+        eclrun_config = EclrunConfig(config, options.version)
+        if eclrun_config.can_use_eclrun():
+            run = EclRun(
+                options.ecl_case,
+                None,
+                num_cpu=options.num_cpu,
+                check_status=not options.ignore_errors,
+                summary_conversion=options.summary_conversion,
+            )
+            run.runEclipse(eclrun_config=eclrun_config)
         else:
-            sim = config.sim(version=options.version)
+            if options.num_cpu > 1:
+                sim = config.mpi_sim(version=options.version)
+            else:
+                sim = config.sim(version=options.version)
 
-        run = EclRun(
-            options.ecl_case,
-            sim,
-            num_cpu=options.num_cpu,
-            check_status=not options.ignore_errors,
-            summary_conversion=options.summary_conversion,
-        )
-        run.runEclipse()
+            run = EclRun(
+                options.ecl_case,
+                sim,
+                num_cpu=options.num_cpu,
+                check_status=not options.ignore_errors,
+                summary_conversion=options.summary_conversion,
+            )
+            run.runEclipse()
+    except EclError as msg:
+        print(msg, file=sys.stderr)
+        sys.exit(-1)

@@ -82,6 +82,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field = StringBox(
             self._target_ensemble_format_model,  # type: ignore
             self._target_ensemble_format_model.getDefaultValue(),  # type: ignore
+            continuous_update=True,
         )
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
@@ -149,22 +150,41 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
 
+            self._relative_iteration_weights_box.setText(
+                self._ensemble_selector.selected_ensemble.relative_weights
+                or MultipleDataAssimilation.default_weights
+            )
+            self._evaluate_weights_box_enabled()
+
     @Slot(bool)
     def update_experiment_edit(self, checked: bool) -> None:
         if checked:
-            self._experiment_name_field.disable_validation()
             self._experiment_name_field.setText(
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
-            self._experiment_name_field.setEnabled(False)
         else:
-            self._experiment_name_field.enable_validation()
             self._experiment_name_field.clear()
-            self._experiment_name_field.setEnabled(True)
+
+        self._experiment_name_field.enable_validation(not checked)
+        self._experiment_name_field.setEnabled(not checked)
+        self._evaluate_weights_box_enabled()
+
+    def _evaluate_weights_box_enabled(self) -> None:
+        self._relative_iteration_weights_box.setEnabled(
+            not self._restart_box.isChecked()
+            or not self._ensemble_selector.selected_ensemble.relative_weights
+        )
 
     def restart_run_toggled(self) -> None:
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
         self._ensemble_selector.setEnabled(self._restart_box.isChecked())
+
+        self._relative_iteration_weights_box.setText(
+            self._ensemble_selector.selected_ensemble.relative_weights
+            or MultipleDataAssimilation.default_weights
+            if self._restart_box.isChecked()
+            else MultipleDataAssimilation.default_weights
+        )
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
@@ -172,6 +192,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             relative_iteration_weights_model,  # type: ignore
             continuous_update=True,
         )
+        self._relative_iteration_weights_box.setObjectName("weights_input_esmda")
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
         layout.addRow("Relative weights:", self._relative_iteration_weights_box)
 

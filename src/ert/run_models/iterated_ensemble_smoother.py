@@ -121,7 +121,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         log_msg = (
-            f"Running SIES for {self._total_iterations} "
+            f"Running {self.name} for {self._total_iterations} "
             f'iteration{"s" if (self._total_iterations != 1) else ""}.'
         )
         logger.info(log_msg)

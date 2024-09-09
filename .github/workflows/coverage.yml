@@ -8,6 +8,9 @@ on:
    tags: "*"
  pull_request:
 
+env:
+  UV_SYSTEM_PYTHON: 1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -32,13 +35,13 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-        cache: "pip"
-        cache-dependency-path: |
-          pyproject.toml
+
+    - name: Install uv
+      run: pip install uv
 
     - name: Install with dependencies
       run: |
-        pip install ".[dev]"
+        uv pip install ".[dev]"
 
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'

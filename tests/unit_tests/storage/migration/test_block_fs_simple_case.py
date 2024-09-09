@@ -94,7 +94,8 @@ def test_migrate_case(data, storage, enspath):
     with ExitStack() as stack:
         bf.migrate_case(storage, enspath / "default", stack)
 
-    ensemble = storage.get_ensemble_by_name("default")
+    experiment = storage.get_experiment_by_name("migrate-case")
+    ensemble = experiment.get_ensemble_by_name("default")
     for real_key, real_group in data.groups.items():
         real_index = int(re.match(r"REAL_(\d+)", real_key)[1])
 

@@ -383,9 +383,9 @@ class BaseRunModel(ABC):
 
         if all_realizations:
             for real in all_realizations.values():
-                status[str(real.status)] += 1
+                status[str(real["status"])] += 1
 
-                if real.status in [
+                if real["status"] in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
                 ]:
@@ -455,7 +455,13 @@ class BaseRunModel(ABC):
                         EESnapshotUpdate,
                     ):
                         event = cast(Union[EESnapshot, EESnapshotUpdate], event)
-                        self.send_snapshot_event(event, iteration)
+                        await asyncio.get_running_loop().run_in_executor(
+                            None,
+                            self.send_snapshot_event,
+                            event,
+                            iteration,
+                        )
+
                         if event.snapshot.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
@@ -565,7 +571,9 @@ class BaseRunModel(ABC):
     def paths(self) -> List[str]:
         run_paths = []
         active_realizations = np.where(self.active_realizations)[0]
-        for iteration in range(self.start_iteration, self._total_iterations):
+        for iteration in range(
+            self.start_iteration, self._total_iterations + self.start_iteration
+        ):
             run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 

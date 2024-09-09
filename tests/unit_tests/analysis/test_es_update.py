@@ -3,6 +3,7 @@ import re
 from contextlib import ExitStack as does_not_raise
 from functools import partial
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,6 +21,7 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
+    _load_observations_and_responses,
     _load_param_ensemble_array,
     _save_param_ensemble_array_to_disk,
 )
@@ -82,7 +84,8 @@ def test_update_report(
     snapshots are correct, they are just documenting the current behavior.
     """
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -114,7 +117,8 @@ def test_update_report_with_exception_in_analysis_ES(
     snake_oil_storage,
 ):
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -158,7 +162,8 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     snake_oil_storage,
 ):
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
 
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
@@ -260,7 +265,8 @@ def test_update_snapshot(
     # Making sure that row scaling with a row scaling factor of 1.0
     # results in the same update as with ES.
     # Note: seed must be the same!
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -613,7 +619,8 @@ def test_update_only_using_subset_observations(
     """
     ert_config = snake_oil_case_storage
 
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
         ensemble_size=ert_config.model_config.num_realizations,
@@ -741,7 +748,96 @@ def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storag
     perturbations, so we make sure we maintain the order throughout.
     """
     ert_config = snake_oil_case_storage
-    prior_ens = snake_oil_storage.get_ensemble_by_name("default_0")
+    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
+    prior_ens = experiment.get_ensemble_by_name("default_0")
     assert list(ert_config.observations.keys()) == list(
         prior_ens.experiment.observations.keys()
     )
+
+
+def _mock_load_observations_and_responses(
+    S,
+    observations,
+    errors,
+    obs_keys,
+    indexes,
+    alpha,
+    std_cutoff,
+    global_std_scaling,
+    auto_scale_observations,
+    progress_callback,
+    ensemble,
+):
+    """
+    Runs through _load_observations_and_responses with mocked values for
+     _get_observations_and_responses
+    """
+    with patch(
+        "ert.analysis._es_update._get_observations_and_responses"
+    ) as mock_obs_n_responses:
+        mock_obs_n_responses.return_value = (S, observations, errors, obs_keys, indexes)
+
+        return _load_observations_and_responses(
+            ensemble=ensemble,
+            alpha=alpha,
+            std_cutoff=std_cutoff,
+            global_std_scaling=global_std_scaling,
+            iens_active_index=np.array([True] * len(observations)),
+            selected_observations=obs_keys,
+            auto_scale_observations=auto_scale_observations,
+            progress_callback=progress_callback,
+        )
+
+
+def test_that_autoscaling_applies_to_scaled_errors(storage):
+    with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
+        misfit_main.return_value = (
+            np.array([2, 3]),
+            np.array([1, 1]),  # corresponds to num obs keys in autoscaling group
+            np.array([1, 1]),
+        )
+
+        S = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+        observations = np.array([2, 4, 3, 3])
+        errors = np.array([1, 2, 1, 1])
+        obs_keys = np.array(["obs1_1", "obs1_2", "obs2", "obs2"])
+        indexes = np.array(["rs00", "rs0", "rs0", "rs1"])
+        alpha = 1
+        std_cutoff = 0.05
+        global_std_scaling = 1
+        progress_callback = lambda _: None
+
+        experiment = storage.create_experiment(name="dummyexp")
+        ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
+        _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
+            S=S,
+            observations=observations,
+            errors=errors,
+            obs_keys=obs_keys,
+            indexes=indexes,
+            alpha=alpha,
+            std_cutoff=std_cutoff,
+            global_std_scaling=global_std_scaling,
+            auto_scale_observations=[["obs1*"]],
+            progress_callback=progress_callback,
+            ensemble=ensemble,
+        )
+
+        _, (_, scaled_errors_without_autoscale, _) = (
+            _mock_load_observations_and_responses(
+                S=S,
+                observations=observations,
+                errors=errors,
+                obs_keys=obs_keys,
+                indexes=indexes,
+                alpha=alpha,
+                std_cutoff=std_cutoff,
+                global_std_scaling=global_std_scaling,
+                auto_scale_observations=[],
+                progress_callback=progress_callback,
+                ensemble=ensemble,
+            )
+        )
+
+        assert scaled_errors_with_autoscale.tolist() == [2, 6]
+        assert scaled_errors_without_autoscale.tolist() == [1, 2]

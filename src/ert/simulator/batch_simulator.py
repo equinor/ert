@@ -103,9 +103,7 @@ class BatchSimulator:
             )
 
         for key in results:
-            ens_config.addNode(
-                GenDataConfig(name=key, input_file=f"{key}_%d", report_steps=[0])
-            )
+            ens_config.addNode(GenDataConfig(name=key, input_file=f"{key}"))
 
     def _setup_sim(
         self,
@@ -229,6 +227,7 @@ class BatchSimulator:
         experiment = storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
             responses=self.ert_config.ensemble_config.response_configuration,
+            name=f"experiment_{case_name}",
         )
         ensemble = storage.create_ensemble(
             experiment.id,

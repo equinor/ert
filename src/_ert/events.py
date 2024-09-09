@@ -7,7 +7,7 @@ if sys.version_info < (3, 9):
 else:
     from typing import Annotated
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 
 class Id:
@@ -65,6 +65,7 @@ class Id:
 
 
 class BaseEvent(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
     time: datetime = Field(default_factory=datetime.now)
 
 
@@ -159,12 +160,12 @@ class EnsembleCancelled(EnsembleBaseEvent):
     event_type: Id.ENSEMBLE_CANCELLED_TYPE = Id.ENSEMBLE_CANCELLED
 
 
-class EESnapshot(BaseEvent):
+class EESnapshot(EnsembleBaseEvent):
     event_type: Id.EE_SNAPSHOT_TYPE = Id.EE_SNAPSHOT
     snapshot: Any
 
 
-class EESnapshotUpdate(BaseEvent):
+class EESnapshotUpdate(EnsembleBaseEvent):
     event_type: Id.EE_SNAPSHOT_UPDATE_TYPE = Id.EE_SNAPSHOT_UPDATE
     snapshot: Any
 
@@ -230,15 +231,15 @@ EventAdapter: TypeAdapter[Event] = TypeAdapter(_ALL_EVENTS_ANNOTATION)
 
 
 def dispatch_event_from_json(raw_msg: Union[str, bytes]) -> DispatchEvent:
-    return DispatchEventAdapter.validate_json(raw_msg, strict=True)
+    return DispatchEventAdapter.validate_json(raw_msg)
 
 
 def event_from_json(raw_msg: Union[str, bytes]) -> Event:
-    return EventAdapter.validate_json(raw_msg, strict=True)
+    return EventAdapter.validate_json(raw_msg)
 
 
 def event_from_dict(dict_msg: Dict[str, Any]) -> Event:
-    return EventAdapter.validate_python(dict_msg, strict=True)
+    return EventAdapter.validate_python(dict_msg)
 
 
 def event_to_json(event: Event) -> str:

@@ -26,7 +26,6 @@ import xarray as xr
 from pydantic import ValidationError as PydanticValidationError
 from typing_extensions import Self
 
-from ert.config.gen_data_config import GenDataConfig
 from ert.plugins import ErtPluginManager
 from ert.substitution_list import SubstitutionList
 
@@ -64,7 +63,6 @@ from .parsing.observations_parser import (
     parse,
 )
 from .queue_config import QueueConfig
-from .summary_config import SummaryConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -349,7 +347,7 @@ class ErtConfig:
         tmp_dict.pop("HOOK_WORKFLOW", None)
         tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
 
-        logger.info("Content of the config_dict: %s", tmp_dict)
+        logger.info(f"Content of the config_dict: {tmp_dict}")
 
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
@@ -528,34 +526,6 @@ class ErtConfig:
     def forward_model_step_name_list(self) -> List[str]:
         return [j.name for j in self.forward_model_steps]
 
-    def manifest_to_json(self, iens: int = 0, iter: int = 0) -> Dict[str, Any]:
-        manifest = {}
-        # Add expected parameter files to manifest
-        if iter == 0:
-            for (
-                name,
-                parameter_config,
-            ) in self.ensemble_config.parameter_configs.items():
-                if parameter_config.forward_init and parameter_config.forward_init_file:
-                    file_path = parameter_config.forward_init_file.replace(
-                        "%d", str(iens)
-                    )
-                    manifest[name] = file_path
-        # Add expected response files to manifest
-        for name, respons_config in self.ensemble_config.response_configs.items():
-            input_file = str(respons_config.input_file)
-            if isinstance(respons_config, SummaryConfig):
-                input_file = input_file.replace("<IENS>", str(iens))
-                manifest[f"{name}_UNSMRY"] = f"{input_file}.UNSMRY"
-                manifest[f"{name}_SMSPEC"] = f"{input_file}.SMSPEC"
-            if isinstance(respons_config, GenDataConfig):
-                if respons_config.report_steps:
-                    for step in respons_config.report_steps:
-                        manifest[f"{name}_{step}"] = input_file.replace("%d", str(step))
-                elif "%d" not in input_file:
-                    manifest[name] = input_file
-        return manifest
-
     def forward_model_data_to_json(
         self,
         run_id: Optional[str] = None,
@@ -633,10 +603,8 @@ class ErtConfig:
                         result[new_key] = new_value
                     else:
                         logger.warning(
-                            "Environment variable %s skipped due to"
-                            " unmatched define %s",
-                            new_key,
-                            new_value,
+                            f"Environment variable {new_key} skipped due to"
+                            f" unmatched define {new_value}",
                         )
                 # Its expected that empty dicts be replaced with "null"
                 # in jobs.json

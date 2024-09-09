@@ -8,6 +8,11 @@ on:
       test-type:
         type: string
 
+env:
+  ERT_SHOW_BACKTRACE: 1
+  ECL_SKIP_SIGNAL: 1
+  UV_SYSTEM_PYTHON: 1
+
 jobs:
   tests-ert:
     name: Run ert tests
@@ -24,17 +29,18 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
-        cache: "pip"
-        cache-dependency-path: |
-          pyproject.toml
+
+    - name: Install uv
+      run: |
+        pip install uv
 
     - name: Install HDF5 source files
-      if: runner.os == 'macOS'
+      if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
       run: brew install hdf5
 
     - name: Install ert
       run: |
-        pip install ".[dev]"
+        uv pip install ".[dev]"
 
     - name: Test GUI
       if: inputs.test-type == 'gui-test'

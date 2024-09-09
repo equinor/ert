@@ -16,7 +16,6 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
@@ -28,6 +27,7 @@ from ert.run_models import BaseRunModel
 from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.services import StorageService
 from ert.storage import open_storage
+from tests import SnapshotBuilder
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 
 from ..conftest import wait_for_child
@@ -515,7 +515,7 @@ def test_run_dialog_memory_usage_showing(
 
     max_memory_column_proxy_index = job_model.index(job_number, max_memory_column_index)
     max_memory_value = job_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
-    assert max_memory_value == "60.00 kB"
+    assert max_memory_value == "60.00 KB"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -50,7 +50,6 @@ class EnsemblePlot:
                     config,
                     data,
                     f"{ensemble.experiment_name} : {ensemble.name}",
-                    plot_context.isDateSupportActive(),
                 )
                 config.nextColor()
 
@@ -72,34 +71,22 @@ class EnsemblePlot:
         plot_config: PlotConfig,
         data: pd.DataFrame,
         ensemble_label: str,
-        is_date_supported: bool,
     ) -> None:
         style = plot_config.defaultStyle()
 
         if len(data) == 1 and not style.marker:
             style.marker = "."
 
-        if is_date_supported:
-            lines = axes.plot_date(
-                x=data.index.to_numpy(),
-                y=data.to_numpy(),
-                color=style.color,
-                alpha=style.alpha,
-                linewidth=style.width,
-                markersize=style.size,
-                fmt=f"{style.marker}{style.line_style}",
-            )
-        else:
-            lines = axes.plot(
-                data.index.to_numpy(),
-                data.to_numpy(),
-                color=style.color,
-                alpha=style.alpha,
-                marker=style.marker,
-                linestyle=style.line_style,
-                linewidth=style.width,
-                markersize=style.size,
-            )
+        lines = axes.plot(
+            data.index.to_numpy(),
+            data.to_numpy(),
+            color=style.color,
+            alpha=style.alpha,
+            marker=style.marker,
+            linewidth=style.width,
+            linestyle=style.line_style,
+            markersize=style.size,
+        )
 
         if len(lines) > 0:
             plot_config.addLegendItem(ensemble_label, lines[0])

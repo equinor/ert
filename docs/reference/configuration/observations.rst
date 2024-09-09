@@ -118,6 +118,183 @@ Here are two examples:
     KEY      = GOPR:NESS;
  };
 
+
+.. _history_observation:
+
+HISTORY_OBSERVATION keyword
+---------------------------
+
+The keyword HISTORY_OBSERVATION is used to condition on observations
+fetched from the WCONHIST and WCONINJH keywords in schedule file provided to
+the ERT project (or alternatively an ECLIPSE summary file if you have
+changed the HISTORY_SOURCE keyword in the ERT project). The keyword
+is typically used to condition on production and injection rates for
+groups and wells, as well as bottom hole and tubing head pressures. An
+observation entered with the HISTORY_OBSERVATION keyword will be
+active at all report steps where data for the observation can be
+found.
+
+In its simplest form, a history observation is created as follows::
+
+   HISTORY_OBSERVATION WOPR:P1;
+
+This will condition on WOPR in well P1 using a default observation
+error.
+
+In general, to condition on variable VAR in well or group WGNAME, use::
+
+   HISTORY_OBSERVATION VAR:WGNAME;
+
+Note that there must be a colon ":" between VAR and WGNAME and that
+the statement shall end with a semi-colon ";". Thus, to condition on
+WOPR, WWCT and WGOR in well C-17, and for the GOPR for the whole
+field, one would add the following to the observation configuration:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION WOPR:C-17;
+ HISTORY_OBSERVATION WWCT:C-17;
+ HISTORY_OBSERVATION WGOR:C-17;
+
+ HISTORY_OBSERVATION GOPR:FIELD;
+
+The default observation error is the sum between a relative error of 10% to
+the measurement and a minimum error of 0.10, which is equivalent to:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GWIR:FIELD
+ {
+    ERROR       = 0.10;
+    ERROR_MODE  = RELMIN;
+    ERROR_MIN   = 0.10;
+ };
+
+.. _error_modes:
+
+Error modes for summary observations
+------------------------------------
+
+The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
+The default error mode for the :ref:`HISTORY_OBSERVATION <history_observation>`
+keyword is RELMIN, while the default for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
+keyword is ABS.
+
+The default value for `ERROR_MIN` is 0.1.
+
+ERT will not load an observation if the total error associated with an observation is zero.
+A zero error is incompatible with the logic used in the history matching
+process. Therefore, setting a minimum error is particularly important for
+observations that could happen to be zero. For example, if an observation is the
+water production rate and, at a given time, its value is zero, the relative
+error will be zero, and the only error computed is the minimum error.
+
+The error explicitizes the degree of uncertainty associated to the given
+observation. It has an inverse effect on the weight that an observation
+will have during the history matching process: the higher the error
+specified for an observation, the smaller will be its weight during
+the updating process. Therefore, it is important to have consistency
+between setting up the errors and the degree of uncertainty in an
+observation.
+
+The default error mode and values can be changed as follows, the examples
+show only HISTORY_OBSERVATION, but the configurtion is identical for
+SUMMARY_OBSERVATION:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GOPR:FIELD
+ {
+    ERROR       = 1000;
+    ERROR_MODE  = ABS;
+ };
+
+This will set the observation error to an absolute value of 1000
+for all observations of GOPR:FIELD.
+
+Note that both the items ERROR and ERROR_MODE as well as
+the whole definition shall end with a semi-colon.
+
+If ERROR_MODE is set to REL, all observation errors will be set to the
+observed values multiplied by ERROR. Thus, the following will
+condition on water injection rate for the whole field with 20%
+observation uncertainity:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GWIR:FIELD
+ {
+    ERROR       = 0.20;
+    ERROR_MODE  = REL;
+ };
+
+If you do not want the observation error to drop below a given
+threshold, say 100, you can set ERROR_MODE to RELMIN and the
+keyword ERROR_MIN:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GWIR:FIELD
+ {
+    ERROR       = 0.20;
+    ERROR_MODE  = RELMIN;
+    ERROR_MIN   = 100;
+ };
+
+This error mode is also relevant for observations that may be zero,
+for example water production rates.
+
+Note that the configuration parser does not treat carriage return
+different from space. Thus, the following statement is equivalent to
+the previous:
+
+.. code-block:: none
+
+ HISTORY_OBSERVATION GWIR:FIELD { ERROR = 0.20; ERROR_MODE = RELMIN; ERROR_MIN = 100; };
+
+By default, an observation entered with the HISTORY_OBSERVATION
+keyword will get the observed values, i.e. the 'true' values, from the
+WCONHIST and WCONINJH keywords in the schedule file provided to the
+ERT project. However it is also possible to get the observed values from
+a reference case. In that case you must set HISTORY_SOURCE
+variable in the ERT configuration file, see Creating a configuration
+file for ERT.
+
+To change the observation error for a HISTORY_OBSERVATION for one or
+more segments of the historic period, you can use the SEGMENT
+keyword. For example:
+
+.. code-block:: none
+
+  HISTORY_OBSERVATION GWIR:FIELD
+  {
+     ERROR       = 0.20;
+     ERROR_MODE  = RELMIN;
+     ERROR_MIN   = 100;
+
+     SEGMENT FIRST_YEAR
+     {
+        START = 0;
+        STOP  = 10;
+        ERROR = 0.50;
+        ERROR_MODE = REL;
+     };
+
+     SEGMENT SECOND_YEAR
+     {
+        START      = 11;
+        STOP       = 20;
+        ERROR      = 1000;
+        ERROR_MODE = ABS;
+     };
+  };
+
+The items START and STOP set the start and stop of the segment in
+terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
+ERROR_MIN behave like before. If the segments overlap, they are
+computed in alphabetical order.
+
+
 .. _general_observation:
 
 GENERAL_OBSERVATION keyword
@@ -268,167 +445,3 @@ So consider a setup like this::
 Here we see that the observation is active at report step 20, and we
 expect the forward model to create a file rft_BH67_20 in each
 realization directory.
-
-.. _history_observation:
-
-HISTORY_OBSERVATION keyword
----------------------------
-
-The keyword HISTORY_OBSERVATION is used to condition on observations
-fetched from the WCONHIST and WCONINJH keywords in schedule file provided to
-the ERT project (or alternatively an ECLIPSE summary file if you have
-changed the HISTORY_SOURCE keyword in the ERT project). The keyword
-is typically used to condition on production and injection rates for
-groups and wells, as well as bottom hole and tubing head pressures. An
-observation entered with the HISTORY_OBSERVATION keyword will be
-active at all report steps where data for the observation can be
-found.
-
-In its simplest form, a history observation is created as follows::
-
-   HISTORY_OBSERVATION WOPR:P1;
-
-This will condition on WOPR in well P1 using a default observation
-error.
-
-In general, to condition on variable VAR in well or group WGNAME, use::
-
-   HISTORY_OBSERVATION VAR:WGNAME;
-
-Note that there must be a colon ":" between VAR and WGNAME and that
-the statement shall end with a semi-colon ";". Thus, to condition on
-WOPR, WWCT and WGOR in well C-17, and for the GOPR for the whole
-field, one would add the following to the observation configuration:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION WOPR:C-17;
- HISTORY_OBSERVATION WWCT:C-17;
- HISTORY_OBSERVATION WGOR:C-17;
-
- HISTORY_OBSERVATION GOPR:FIELD;
-
-The default observation error is the sum between a relative error of 10% to
-the measurement and a minimum error of 0.10, which is equivalent to:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD
- {
-    ERROR       = 0.10;
-    ERROR_MODE  = RELMIN;
-    ERROR_MIN   = 0.10;
- };
-
-The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
-The default error mode is RELMIN.
-
-ERT will crash if the total error associated with an observation is zero.
-A zero error is incompatible with the logic used in the history matching
-process. Therefore, setting a minimum error is particularly important for
-observations that could happen to be zero. For example, if an observation is the
-water production rate and, at a given time, its value is zero, the relative
-error will be zero, and the only error computed is the minimum error.
-
-The error explicitizes the degree of uncertainty associated to the given
-observation. It has an inverse effect on the weight that an observation
-will have during the history matching process: the higher the error
-specified for an observation, the smaller will be its weight during
-the updating process. Therefore, it is important to have consistency
-between setting up the errors and the degree of uncertainty in an
-observation.
-
-The default error mode and values can be changed as follows:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GOPR:FIELD
- {
-    ERROR       = 1000;
-    ERROR_MODE  = ABS;
- };
-
-This will set the observation error to an absolute value of 1000
-for all observations of GOPR:FIELD.
-
-Note that both the items ERROR and ERROR_MODE as well as
-the whole definition shall end with a semi-colon.
-
-If ERROR_MODE is set to REL, all observation errors will be set to the
-observed values multiplied by ERROR. Thus, the following will
-condition on water injection rate for the whole field with 20%
-observation uncertainity:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD
- {
-    ERROR       = 0.20;
-    ERROR_MODE  = REL;
- };
-
-If you do not want the observation error to drop below a given
-threshold, say 100, you can set ERROR_MODE to RELMIN and the
-keyword ERROR_MIN:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD
- {
-    ERROR       = 0.20;
-    ERROR_MODE  = RELMIN;
-    ERROR_MIN   = 100;
- };
-
-This error mode is also relevant for observations that may be zero,
-for example water production rates.
-
-Note that the configuration parser does not treat carriage return
-different from space. Thus, the following statement is equivalent to
-the previous:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD { ERROR = 0.20; ERROR_MODE = RELMIN; ERROR_MIN = 100; };
-
-By default, an observation entered with the HISTORY_OBSERVATION
-keyword will get the observed values, i.e. the 'true' values, from the
-WCONHIST and WCONINJH keywords in the schedule file provided to the
-ERT project. However it is also possible to get the observed values from
-a reference case. In that case you must set HISTORY_SOURCE
-variable in the ERT configuration file, see Creating a configuration
-file for ERT.
-
-To change the observation error for a HISTORY_OBSERVATION for one or
-more segments of the historic period, you can use the SEGMENT
-keyword. For example:
-
-.. code-block:: none
-
-  HISTORY_OBSERVATION GWIR:FIELD
-  {
-     ERROR       = 0.20;
-     ERROR_MODE  = RELMIN;
-     ERROR_MIN   = 100;
-
-     SEGMENT FIRST_YEAR
-     {
-        START = 0;
-        STOP  = 10;
-        ERROR = 0.50;
-        ERROR_MODE = REL;
-     };
-
-     SEGMENT SECOND_YEAR
-     {
-        START      = 11;
-        STOP       = 20;
-        ERROR      = 1000;
-        ERROR_MODE = ABS;
-     };
-  };
-
-The items START and STOP set the start and stop of the segment in
-terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
-ERROR_MIN behave like before. If the segments overlap, they are
-computed in alphabetical order.

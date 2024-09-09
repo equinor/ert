@@ -25,7 +25,8 @@ def test_load_from_fs(benchmark, template_config):
 
     with path.as_cwd(), open_storage(path / "storage", mode="w") as storage:
         facade = LibresFacade.from_config_file("poly.ert")
-        load_from = storage.get_ensemble_by_name("default")
+        experiment = storage.get_experiment_by_name("ensemble-experiment")
+        load_from = experiment.get_ensemble_by_name("default")
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
         loaded_reals = benchmark(

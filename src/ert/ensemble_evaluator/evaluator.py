@@ -270,9 +270,8 @@ class EnsembleEvaluator:
         await self._events_to_send.put(event)
         await self._manifest_queue.put(event)
 
-    async def connection_handler(
-        self, websocket: WebSocketServerProtocol, path: str
-    ) -> None:
+    async def connection_handler(self, websocket: WebSocketServerProtocol) -> None:
+        path = websocket.path
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket)

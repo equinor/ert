@@ -1,4 +1,5 @@
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, Optional
+from uuid import UUID
 
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon, QKeyEvent
@@ -86,13 +87,14 @@ class ListEditBox(QWidget):
     NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item or * (for all)."
     DEFAULT_MSG = "A list of comma separated ensemble names or * for all."
 
-    def __init__(self, possible_items: List[str]) -> None:
+    def __init__(self, possible_items: Dict[UUID, str]) -> None:
         QWidget.__init__(self)
 
         self._editing = True
-        self._possible_items = possible_items
+        self._possible_items_dict = possible_items
+        self._possible_items = list(possible_items.values())
 
-        self._list_edit_line = AutoCompleteLineEdit(possible_items, self)
+        self._list_edit_line = AutoCompleteLineEdit(self._possible_items, self)
         self._list_edit_line.setMinimumWidth(350)
 
         layout = QHBoxLayout()
@@ -127,21 +129,27 @@ class ListEditBox(QWidget):
         text = "".join(text.split())
         return text
 
-    def getItems(self) -> List[str]:
+    def getItems(self) -> Dict[UUID, str]:
         text = self.getListText()
         items = text.split(",")
 
         if len(items) == 1 and items[0] == "*":
-            items = self._possible_items
+            return self._possible_items_dict
 
-        return [item for item in items if len(item) > 0]
+        result = {}
+        for item in items:
+            item = item.strip()
+            for uuid, name in self._possible_items_dict.items():
+                if name == item:
+                    result[uuid] = name
+                    break
+
+        return result
 
     def validateList(self) -> None:
         """Called whenever the list is modified"""
         palette = self._list_edit_line.palette()
-
         items = self.getItems()
-
         valid = True
         message = ""
 
@@ -149,19 +157,17 @@ class ListEditBox(QWidget):
             valid = False
             message = ListEditBox.NO_ITEMS_SPECIFIED_MSG
         else:
-            for item in items:
-                if item not in self._possible_items:
+            for _, name in items.items():
+                if name not in self._possible_items_dict.values():
                     valid = False
-                    message = ListEditBox.ITEM_DOES_NOT_EXIST_MSG % item
+                    message = ListEditBox.ITEM_DOES_NOT_EXIST_MSG % name
+                    break
 
         validity_type = ValidationSupport.WARNING
-
         color = ValidationSupport.ERROR_COLOR if not valid else self._valid_color
-
         self._validation_support.setValidationMessage(message, validity_type)
         self._list_edit_line.setToolTip(message)
         palette.setColor(self._list_edit_line.backgroundRole(), color)
-
         self._list_edit_line.setPalette(palette)
 
         if valid:

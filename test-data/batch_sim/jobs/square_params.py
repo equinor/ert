@@ -21,7 +21,7 @@ def square_file(input_file, output_file):
 
 
 if __name__ == "__main__":
-    square_file("WELL_ORDER.json", "ORDER_0")
+    square_file("WELL_ORDER.json", "ORDER")
     time.sleep(random.randint(0, 2))
-    square_file("WELL_ON_OFF.json", "ON_OFF_0")
+    square_file("WELL_ON_OFF.json", "ON_OFF")
     time.sleep(random.randint(0, 2))

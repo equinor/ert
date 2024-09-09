@@ -25,7 +25,11 @@ from ert.scheduler import Scheduler, create_driver
 
 from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
-from .snapshot import ForwardModel, RealizationSnapshot, Snapshot, SnapshotDict
+from .snapshot import (
+    ForwardModel,
+    RealizationSnapshot,
+    Snapshot,
+)
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -120,25 +124,20 @@ class LegacyEnsemble:
         return list(filter(lambda real: real.active, self.reals))
 
     def _create_snapshot(self) -> Snapshot:
-        reals: Dict[str, RealizationSnapshot] = {}
+        snapshot = Snapshot()
+        snapshot._ensemble_state = ENSEMBLE_STATE_UNKNOWN
         for real in self.active_reals:
-            reals[str(real.iens)] = RealizationSnapshot(
-                active=True,
-                status=REALIZATION_STATE_WAITING,
+            realization = RealizationSnapshot(
+                active=True, status=REALIZATION_STATE_WAITING, forward_models={}
             )
             for index, forward_model in enumerate(real.forward_models):
-                reals[str(real.iens)].forward_models[str(index)] = ForwardModel(
+                realization["forward_models"][str(index)] = ForwardModel(
                     status=FORWARD_MODEL_STATE_START,
                     index=str(index),
                     name=forward_model.name,
                 )
-        top = SnapshotDict(
-            reals=reals,
-            status=ENSEMBLE_STATE_UNKNOWN,
-            metadata=self.metadata,
-        )
-
-        return Snapshot.from_nested_dict(top.model_dump())
+            snapshot.add_realization(str(real.iens), realization)
+        return snapshot
 
     def get_successful_realizations(self) -> List[int]:
         return self.snapshot.get_successful_realizations()

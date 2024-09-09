@@ -18,6 +18,7 @@ from typing import (
 
 import iterative_ensemble_smoother as ies
 import numpy as np
+import pandas as pd
 import psutil
 from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
@@ -272,6 +273,8 @@ def _load_observations_and_responses(
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
 
     if auto_scale_observations:
+        scaling_factors_dfs = []
+
         for input_group in auto_scale_observations:
             group = _expand_wildcards(obs_keys, input_group)
             logger.info(f"Scaling observation group: {group}")
@@ -283,6 +286,18 @@ def _load_observations_and_responses(
                 S[obs_group_mask], scaled_errors[obs_group_mask]
             )
             scaling[obs_group_mask] *= scaling_factors
+
+            scaling_factors_dfs.append(
+                pd.DataFrame(
+                    data={
+                        "input_group": [", ".join(input_group)] * len(scaling_factors),
+                        "index": indexes[obs_group_mask],
+                        "obs_key": obs_keys[obs_group_mask],
+                        "scaling_factor": scaling_factors,
+                    }
+                )
+            )
+
             progress_callback(
                 AnalysisDataEvent(
                     name="Auto scale: " + ", ".join(input_group),
@@ -306,6 +321,14 @@ def _load_observations_and_responses(
                     ),
                 )
             )
+
+        scaling_factors_df = pd.concat(scaling_factors_dfs).set_index(
+            ["input_group", "obs_key", "index"], verify_integrity=True
+        )
+        ensemble.save_observation_scaling_factors(scaling_factors_df.to_xarray())
+
+        # Recompute with updated scales
+        scaled_errors = errors * scaling
 
     update_snapshot = []
     for (

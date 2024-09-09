@@ -450,6 +450,7 @@ class RunDialog(QDialog):
             widget.begin(event)
 
         elif isinstance(event, RunModelUpdateEndEvent):
+            self._progress_widget.stop_waiting_progress_bar()
             if (widget := self._get_update_widget(event.iteration)) is not None:
                 widget.end(event)
 

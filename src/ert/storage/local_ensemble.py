@@ -181,6 +181,10 @@ class LocalEnsemble(BaseMode):
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self.experiment_id)
 
+    @property
+    def relative_weights(self) -> str:
+        return self._storage.get_experiment(self.experiment_id).relative_weights
+
     def get_realization_mask_without_failure(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations without any failure.
@@ -570,6 +574,23 @@ class LocalEnsemble(BaseMode):
             )
         logger.info("Loading cross correlations")
         return xr.open_dataset(input_path, engine="scipy")
+
+    @require_write
+    def save_observation_scaling_factors(self, dataset: xr.Dataset) -> None:
+        dataset.to_netcdf(
+            self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+        )
+
+    def load_observation_scaling_factors(
+        self,
+    ) -> Optional[xr.Dataset]:
+        ds_path = self.mount_point / "observation_scaling_factors.nc"
+        if ds_path.exists():
+            return xr.load_dataset(
+                self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+            )
+
+        return None
 
     @require_write
     def save_cross_correlations(

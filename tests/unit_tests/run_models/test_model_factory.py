@@ -15,6 +15,7 @@ from ert.run_models import (
     SingleTestRun,
     model_factory,
 )
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 
 
 @pytest.mark.parametrize(
@@ -244,3 +245,32 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
         match="Number of active realizations must be at least 2 for an update step",
     ):
         analysis_mode(config, MagicMock(), args, MagicMock(), MagicMock())
+
+
+@pytest.mark.parametrize(
+    "ensemble_iteration, expected_path",
+    [
+        [0, ["realization-0/iter-0"]],
+        [1, ["realization-0/iter-1"]],
+        [2, ["realization-0/iter-2"]],
+        [100, ["realization-0/iter-100"]],
+    ],
+)
+def test_evaluate_ensemble_paths(
+    tmp_path, monkeypatch, ensemble_iteration, expected_path
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        ert.run_models.base_run_model.BaseRunModel, "validate", MagicMock()
+    )
+    storage_mock = MagicMock()
+    ensemble_mock = MagicMock()
+    ensemble_mock.iteration = ensemble_iteration
+    config = ErtConfig(model_config=ModelConfig(num_realizations=2))
+    storage_mock.get_ensemble.return_value = ensemble_mock
+    model = EvaluateEnsemble(
+        [True], 1, str(uuid1(0)), 1234, config, storage_mock, MagicMock(), MagicMock()
+    )
+    base_path = tmp_path / "simulations"
+    expected_path = [str(base_path / expected) for expected in expected_path]
+    assert set(model.paths) == set(expected_path)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, List, Optional
 
@@ -14,6 +15,9 @@ from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -56,6 +60,7 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
+        logger.info(f"Running {self.name}")
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,

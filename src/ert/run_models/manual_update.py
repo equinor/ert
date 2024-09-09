@@ -37,6 +37,14 @@ class ManualUpdate(UpdateRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        try:
+            prior_id = UUID(ensemble_id)
+            prior = storage.get_ensemble(prior_id)
+        except (KeyError, ValueError) as err:
+            raise ErtRunError(
+                f"Prior ensemble with ID: {prior_id} does not exists"
+            ) from err
+
         super().__init__(
             es_settings,
             update_settings,
@@ -46,30 +54,23 @@ class ManualUpdate(UpdateRunModel):
             status_queue,
             active_realizations=active_realizations,
             total_iterations=1,
-            start_iteration=0,
+            start_iteration=prior.iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
         )
-        self.prior_ensemble_id = ensemble_id
+        self.prior = prior
         self.target_ensemble_format = target_ensemble
         self.support_restart = False
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info("Running manual update")
+        logger.info(f"Running {self.name}")
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(self.prior.experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(self.prior.id))
+
         ensemble_format = self.target_ensemble_format
-        try:
-            ensemble_id = UUID(self.prior_ensemble_id)
-            prior = self._storage.get_ensemble(ensemble_id)
-            experiment = prior.experiment
-            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-        except (KeyError, ValueError) as err:
-            raise ErtRunError(
-                f"Prior ensemble with ID: {ensemble_id} does not exists"
-            ) from err
-        self.update(prior, ensemble_format % (prior.iteration + 1))
+        self.update(self.prior, ensemble_format % (self.prior.iteration + 1))
 
     @classmethod
     def name(cls) -> str:
@@ -78,3 +79,7 @@ class ManualUpdate(UpdateRunModel):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
+
+    def check_if_runpath_exists(self) -> bool:
+        # Will not run a forward model, so does not create files on runpath
+        return False

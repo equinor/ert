@@ -208,7 +208,6 @@ class LocalExperiment(BaseMode):
         ----------
         name : str
             The name of the ensemble to retrieve.
-
         Returns
         -------
         local_ensemble : LocalEnsemble
@@ -227,6 +226,10 @@ class LocalExperiment(BaseMode):
             raise ValueError(f"{str(self._metadata_file)} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
+
+    @property
+    def relative_weights(self) -> str:
+        return self.metadata.get("weights", "")
 
     @property
     def name(self) -> str:

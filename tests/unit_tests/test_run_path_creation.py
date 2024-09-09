@@ -636,3 +636,63 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, prior_ensemble, storage
     assert Path(runpath_file).exists()
     jobs_json = Path(runpath_file) / "jobs.json"
     assert jobs_json.exists()
+
+
+@pytest.mark.parametrize("itr", [0, 1, 2, 17])
+def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
+    ert_config = snake_oil_case
+    experiment_id = storage.create_experiment(
+        parameters=ert_config.ensemble_config.parameter_configuration,
+        responses=ert_config.ensemble_config.response_configuration,
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=25, iteration=itr
+    )
+
+    num_realizations = 25
+    runpath_fmt = (
+        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
+        "magic-real-<IENS>/magic-iter-<ITER>"
+    )
+    global_substitutions = ert_config.substitution_list
+    for i in range(num_realizations):
+        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
+
+    run_paths = Runpaths(
+        jobname_format="SNAKE_OIL_%d",
+        runpath_format=runpath_fmt,
+        filename="a_file_name",
+        substitution_list=global_substitutions,
+    )
+
+    sample_prior(prior_ensemble, range(num_realizations))
+    run_args = create_run_arguments(
+        run_paths,
+        [True, True],
+        prior_ensemble,
+    )
+
+    create_run_path(run_args, prior_ensemble, ert_config, run_paths)
+
+    exp_runpaths = [
+        runpath_fmt.replace("<ITER>", str(itr))
+        .replace("<IENS>", str(run_arg.iens))
+        .replace("<GEO_ID>", str(10 * run_arg.iens))
+        for run_arg in run_args
+        if run_arg.active
+    ]
+    exp_runpaths = list(map(os.path.realpath, exp_runpaths))
+    expected_manifest_values = [
+        "snake_oil_params.txt",
+        "snake_oil_opr_diff_199.txt",
+        "snake_oil_wpr_diff_199.txt",
+        "snake_oil_gpr_diff_199.txt",
+        "SNAKE_OIL_FIELD.UNSMRY",
+        "SNAKE_OIL_FIELD.SMSPEC",
+    ]
+    for run_path in exp_runpaths:
+        manifest_path = Path(run_path) / "manifest.json"
+        assert manifest_path.exists()
+        with open(manifest_path, encoding="utf-8") as f:
+            manifest = orjson.loads(f.read())
+            assert list(manifest.values()) == expected_manifest_values
