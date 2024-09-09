@@ -340,7 +340,10 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
     keys = ("W1", "W2", "W3")
     for result, (_, controls) in zip(results, case_data):
         expected = [controls["WELL_ON_OFF"][key] ** 2 for key in keys]
-        assert list(result["ON_OFF"]) == expected
+
+        # [:3] slicing can be removed when responses are not stored in netcdf leading
+        # to redundant nans from combining->selecting
+        assert list(result["ON_OFF"][:3]) == expected
 
         expected = [
             v**2 for key in keys for _, v in controls["WELL_ORDER"][key].items()

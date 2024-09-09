@@ -331,6 +331,7 @@ class BaseRunModel(ABC):
         finally:
             self._clean_env_context()
             self.stop_time = int(time.time())
+
             self.send_event(
                 EndEvent(
                     failed=failed,
@@ -664,10 +665,12 @@ class BaseRunModel(ABC):
         logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
         logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
         logger.info(
-            f"Experiment run ended with number of realizations succeeding: {num_successful_realizations}"
+            f"Experiment run ended with number of realizations succeeding: "
+            f"{num_successful_realizations}"
         )
         logger.info(
-            f"Experiment run ended with number of realizations failing: {self.ensemble_size - num_successful_realizations}"
+            f"Experiment run ended with number of realizations failing: "
+            f"{self.ensemble_size - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)

@@ -22,7 +22,7 @@ def uniform_parameter():
 
 @pytest.fixture
 def response():
-    return GenDataConfig(name="response")
+    return GenDataConfig(keys=["response"])
 
 
 @pytest.fixture

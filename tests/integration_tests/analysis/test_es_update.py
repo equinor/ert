@@ -188,7 +188,7 @@ def test_update_multiple_param():
 
 @pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
-    resp = GenDataConfig(name="RESPONSE")
+    resp = GenDataConfig(keys=["RESPONSE"])
     obs = xr.Dataset(
         {
             "observations": (["report_step", "index"], [[1.0]]),
@@ -224,10 +224,14 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         )
         data = rng.uniform(0.8, 1, 3)
         prior.save_response(
-            "RESPONSE",
+            "gen_data",
             xr.Dataset(
-                {"values": (["report_step", "index"], [data])},
-                coords={"index": range(len(data)), "report_step": [0]},
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
             ),
             iens,
         )
@@ -255,7 +259,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.integration_test
 def test_gen_data_missing(storage, uniform_parameter, obs):
-    resp = GenDataConfig(name="RESPONSE")
+    resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
@@ -283,10 +287,14 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         )
         data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
         prior.save_response(
-            "RESPONSE",
+            "gen_data",
             xr.Dataset(
-                {"values": (["report_step", "index"], [data])},
-                coords={"index": range(len(data)), "report_step": [0]},
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
             ),
             iens,
         )
@@ -333,7 +341,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         output_file=None,
         update=False,
     )
-    resp = GenDataConfig(name="RESPONSE")
+    resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
         parameters=[uniform_parameter, no_update_param],
         responses=[resp],
@@ -373,10 +381,14 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
 
         data = rng.uniform(0.8, 1, 10)
         prior.save_response(
-            "RESPONSE",
+            "gen_data",
             xr.Dataset(
-                {"values": (["report_step", "index"], [data])},
-                coords={"index": range(len(data)), "report_step": [0]},
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
             ),
             iens,
         )
