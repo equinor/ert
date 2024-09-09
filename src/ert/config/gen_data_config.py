@@ -13,6 +13,7 @@ from ert.validation import rangestring_to_list
 from ._option_dict import option_dict
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
 from .response_config import ResponseConfig
+from .responses_index import responses_index
 
 
 @dataclass
@@ -159,3 +160,6 @@ class GenDataConfig(ResponseConfig):
     @property
     def response_type(self) -> str:
         return "gen_data"
+
+
+responses_index.add_response_type(GenDataConfig)

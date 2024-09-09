@@ -15,9 +15,7 @@ from pydantic import BaseModel
 from ert.config import (
     ExtParamConfig,
     Field,
-    GenDataConfig,
     GenKwConfig,
-    SummaryConfig,
     SurfaceConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
@@ -36,10 +34,7 @@ _KNOWN_PARAMETER_TYPES = {
     ExtParamConfig.__name__: ExtParamConfig,
 }
 
-_KNOWN_RESPONSE_TYPES = {
-    SummaryConfig.response_type: SummaryConfig,
-    GenDataConfig.response_type: GenDataConfig,
-}
+from ert.config.responses_index import responses_index
 
 
 class _Index(BaseModel):
@@ -296,8 +291,8 @@ class LocalExperiment(BaseMode):
         responses = {}
         for data in self.response_info.values():
             ert_kind = data.pop("_ert_kind")
-            assert ert_kind in _KNOWN_RESPONSE_TYPES
-            response_cls = _KNOWN_RESPONSE_TYPES[ert_kind]
+            assert ert_kind in responses_index
+            response_cls = responses_index[ert_kind]
             response_instance = response_cls(**data)
             responses[response_instance.response_type] = response_instance
 
