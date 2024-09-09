@@ -34,22 +34,6 @@ For examples and help with configuration, see the [ert Documentation](https://er
 
 ## Developing
 
-ert was originally written in C/C++ but is now only Python.
-
-You might first want to make sure that some system level packages are installed
-before attempting setup:
-
-```
-- pip
-- python include headers
-- (python) venv
-- (python) setuptools
-- (python) wheel
-```
-
-It is left as an exercise to the reader to figure out how to install these on
-their respective system.
-
 To start developing the Python code, we suggest installing ert in editable mode
 into a [virtual environment](https://docs.python.org/3/library/venv.html) to
 isolate the install (substitute the appropriate way of sourcing venv for your shell):
@@ -65,7 +49,7 @@ pip install --upgrade pip wheel setuptools
 # Download and install ert
 git clone https://github.com/equinor/ert
 cd ert
-pip install --editable .
+pip install --editable ".[dev]"
 ```
 
 ### Test setup
@@ -73,7 +57,7 @@ pip install --editable .
 Additional development packages must be installed to run the test suite:
 
 ```sh
-pip install ".[dev]"
+pip install -e ".[dev]"
 pytest tests/
 ```
 
