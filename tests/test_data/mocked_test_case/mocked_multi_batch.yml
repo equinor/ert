@@ -31,7 +31,7 @@ objective_functions:
   -
     name: npv_function
   -
-    name: group_0_sum
+    name: group_sum
     normalization: 1000
 
 
