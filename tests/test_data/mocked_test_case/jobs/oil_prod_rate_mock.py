@@ -22,7 +22,7 @@ def main(argv):
 
     for i in range(0, len(times)):
         val = sum.get("FOPR")[i]
-        save_return_value(val, "oil_prod_rate_%03d_0" % i)
+        save_return_value(val, "oil_prod_rate_%03d" % i)
 
     with open("OIL_PROD_RATE_OK", "w", encoding="utf-8") as f:
         f.write("Everything went fine here!")

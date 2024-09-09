@@ -8,7 +8,7 @@ def main(argv):
     failures = argv[1:]
 
     # Generate the objective function file
-    with open("mock_objective_0", "w", encoding="utf-8") as f:
+    with open("mock_objective", "w", encoding="utf-8") as f:
         f.write("0")
 
     if simulation_id in failures:
