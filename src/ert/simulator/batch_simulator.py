@@ -102,8 +102,24 @@ class BatchSimulator:
                 )
             )
 
-        for key in results:
-            ens_config.addNode(GenDataConfig(name=key, input_file=f"{key}"))
+        if "gen_data" not in ens_config:
+            ens_config.addNode(
+                GenDataConfig(
+                    keys=results,
+                    input_files=[f"{k}" for k in results],
+                    report_steps_list=[None for _ in results],
+                )
+            )
+        else:
+            existing_gendata = ens_config.response_configs["gen_data"]
+            existing_keys = existing_gendata.keys
+            assert isinstance(existing_gendata, GenDataConfig)
+
+            for key in results:
+                if key not in existing_keys:
+                    existing_gendata.keys.append(key)
+                    existing_gendata.input_files.append(f"{key}")
+                    existing_gendata.report_steps_list.append(None)
 
     def _setup_sim(
         self,

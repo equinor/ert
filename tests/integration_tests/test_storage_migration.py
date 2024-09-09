@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -112,8 +113,20 @@ def test_that_storage_matches(
         assert len(ensembles) == 1
         ensemble = ensembles[0]
 
+        response_config = experiment.response_configuration
+        response_config["summary"].refcase = {}
+
+        with open(
+            experiment._path / experiment._responses_file, "w", encoding="utf-8"
+        ) as f:
+            json.dump(
+                {k: v.to_dict() for k, v in response_config.items()},
+                f,
+                default=str,
+                indent=2,
+            )
+
         # We need to normalize some irrelevant details:
-        experiment.response_configuration["summary"].refcase = {}
         experiment.parameter_configuration["PORO"].mask_file = ""
         if version.parse(ert_version).major == 5:
             # In this version we were not saving the full parameter
@@ -132,7 +145,14 @@ def test_that_storage_matches(
             "parameters",
         )
         snapshot.assert_match(
-            str(experiment.response_configuration) + "\n", "responses"
+            str(
+                {
+                    k: experiment.response_configuration[k]
+                    for k in sorted(experiment.response_configuration.keys())
+                }
+            )
+            + "\n",
+            "responses",
         )
 
         summary_data = ensemble.load_responses(

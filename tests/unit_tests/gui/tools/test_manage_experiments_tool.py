@@ -378,7 +378,7 @@ def test_realization_view(
     assert realization_widget._state_label.text() == "Realization state: HAS_DATA"
     assert (
         realization_widget._response_text_edit.toPlainText()
-        == "\nSNAKE_OIL_OPR_DIFF - HAS_DATA\nSNAKE_OIL_WPR_DIFF - HAS_DATA\nSNAKE_OIL_GPR_DIFF - HAS_DATA\nsummary - HAS_DATA\n"
+        == "\ngen_data - HAS_DATA\nsummary - HAS_DATA\n"
     )
     assert (
         realization_widget._parameter_text_edit.toPlainText()

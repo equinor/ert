@@ -1,1 +1,1 @@
-{'GEN': GenDataConfig(name='GEN', input_file='gen%d.txt', report_steps=[1]), 'summary': SummaryConfig(name='summary', input_file='CASE', keys=['FOPR', 'RWPR'], refcase={})}
+{'gen_data': GenDataConfig(name='gen_data', input_files=['gen%d.txt'], keys=['GEN'], report_steps_list=[[1]]), 'summary': SummaryConfig(name='summary', input_files=['CASE'], keys=['FOPR', 'RWPR'], refcase={})}

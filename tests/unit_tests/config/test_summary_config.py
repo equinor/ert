@@ -24,7 +24,7 @@ def test_rading_empty_summaries_raises(wopr_summary):
     smspec.to_file("CASE.SMSPEC")
     unsmry.to_file("CASE.UNSMRY")
     with pytest.raises(ValueError, match="Did not find any summary values"):
-        SummaryConfig("summary", "CASE", ["WWCT:OP1"], None).read_from_file(".", 0)
+        SummaryConfig("summary", ["CASE"], ["WWCT:OP1"]).read_from_file(".", 0)
 
 
 def test_summary_config_normalizes_list_of_keys():

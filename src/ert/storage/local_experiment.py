@@ -36,10 +36,9 @@ _KNOWN_PARAMETER_TYPES = {
     ExtParamConfig.__name__: ExtParamConfig,
 }
 
-
 _KNOWN_RESPONSE_TYPES = {
-    SummaryConfig.__name__: SummaryConfig,
-    GenDataConfig.__name__: GenDataConfig,
+    SummaryConfig.response_type: SummaryConfig,
+    GenDataConfig.response_type: GenDataConfig,
 }
 
 
@@ -140,7 +139,7 @@ class LocalExperiment(BaseMode):
 
         response_data = {}
         for response in responses or []:
-            response_data.update({response.name: response.to_dict()})
+            response_data.update({response.response_type: response.to_dict()})
         with open(path / cls._responses_file, "w", encoding="utf-8") as f:
             json.dump(response_data, f, default=str, indent=2)
 
@@ -292,13 +291,17 @@ class LocalExperiment(BaseMode):
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
-    @cached_property
+    @property
     def response_configuration(self) -> Dict[str, ResponseConfig]:
-        params = {}
+        responses = {}
         for data in self.response_info.values():
-            param_type = data.pop("_ert_kind")
-            params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
-        return params
+            ert_kind = data.pop("_ert_kind")
+            assert ert_kind in _KNOWN_RESPONSE_TYPES
+            response_cls = _KNOWN_RESPONSE_TYPES[ert_kind]
+            response_instance = response_cls(**data)
+            responses[response_instance.response_type] = response_instance
+
+        return responses
 
     @cached_property
     def update_parameters(self) -> List[str]:
@@ -311,3 +314,12 @@ class LocalExperiment(BaseMode):
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
         }
+
+    @cached_property
+    def response_key_to_response_type(self) -> Dict[str, str]:
+        mapping = {}
+        for config in self.response_configuration.values():
+            for key in config.keys:
+                mapping[key] = config.response_type
+
+        return mapping
