@@ -1,6 +1,6 @@
 controls:
   -
-    name: point_0
+    name: point
     type: generic_control
     perturbation_magnitude : 0.01
     min: -1.0
@@ -39,9 +39,9 @@ model:
   realizations: [0, 1]
 
 forward_model:
-  - distance3 --point-file point_0.json --realization r{{realization}}
+  - distance3 --point-file point.json --realization r{{realization}}
               --target 0.5 0.5 0.5
-              --out distance_0
+              --out distance
 
 environment:
   output_folder: distance_output

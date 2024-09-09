@@ -39,4 +39,4 @@ install_templates:
     output_file: well_drill_info
   -
     template: <CONFIG_PATH>/templates/the_optimal_template.tmpl
-    output_file: objectf_by_tmpl_0
+    output_file: objectf_by_tmpl

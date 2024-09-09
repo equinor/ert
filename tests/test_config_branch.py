@@ -21,7 +21,7 @@ def test_get_controls_for_batch():
 
     opt_controls = opt_controls_by_batch(CACHED_SEBA_FOLDER, 1)
     control_names = set(opt_controls.keys())
-    expected_control_names = {"point_0_x-0", "point_0_x-1", "point_0_x-2"}
+    expected_control_names = {"point_x-0", "point_x-1", "point_x-2"}
 
     assert control_names == expected_control_names
 

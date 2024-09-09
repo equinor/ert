@@ -20,7 +20,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 0.1
@@ -157,5 +157,5 @@ model:
 
 forward_model:
   - well_order well_order.json SCHEDULE.INC ordered_wells.json
-  - npv_function MOCKED_TEST_CASE npv_function_0
+  - npv_function MOCKED_TEST_CASE npv_function
   - oil_prod_rate MOCKED_TEST_CASE 35 70 105 140 175 210 245 280 315 350 385 420 455 490 525 645

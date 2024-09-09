@@ -57,9 +57,9 @@ def test_ui_optimization(qapp, qtbot, mocker):
     snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot()
 
     best_settings = snapshot.optimization_data[-1]
-    assert abs(best_settings.controls["point_0_x"] - 0.5) <= 0.05
-    assert abs(best_settings.controls["point_0_y"] - 0.5) <= 0.05
-    assert abs(best_settings.controls["point_0_z"] - 0.5) <= 0.05
+    assert abs(best_settings.controls["point_x"] - 0.5) <= 0.05
+    assert abs(best_settings.controls["point_y"] - 0.5) <= 0.05
+    assert abs(best_settings.controls["point_z"] - 0.5) <= 0.05
 
     assert abs(best_settings.objective_value) <= 0.0005
 

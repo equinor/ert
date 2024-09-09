@@ -18,7 +18,7 @@ def test_restart_optimizer():
 
     point_names = ["x-0", "x-1", "x-2"]
     # Check resulting points
-    x0, x1, x2 = (workflow.result.controls["point_0_" + p] for p in point_names)
+    x0, x1, x2 = (workflow.result.controls["point_" + p] for p in point_names)
     assert x0 == pytest.approx(0.1, abs=0.025)
     assert x1 == pytest.approx(0.0, abs=0.025)
     assert x2 == pytest.approx(0.4, abs=0.025)

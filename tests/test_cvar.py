@@ -17,7 +17,7 @@ def test_mathfunc_cvar():
     workflow.start_optimization()
 
     # Check resulting points
-    x0, x1, x2 = (workflow.result.controls["point_0_" + p] for p in ["x", "y", "z"])
+    x0, x1, x2 = (workflow.result.controls["point_" + p] for p in ["x", "y", "z"])
 
     assert x0 == pytest.approx(0.5, 0.05)
     assert x1 == pytest.approx(0.5, 0.05)

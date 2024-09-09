@@ -19,7 +19,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 0.1
@@ -72,7 +72,7 @@ model:
 forward_model:
   - well_order well_order.json SCHEDULE.INC ordered_wells.json
   - res_mock MOCKED_TEST_CASE
-  - npv_function MOCKED_TEST_CASE npv_function_0
+  - npv_function MOCKED_TEST_CASE npv_function
 
 environment:
   output_folder: everest_output
@@ -84,12 +84,12 @@ input_constraints:
     upper_bound: 1
     lower_bound: 0
     weights:
-      group_0.w00: 0.1
-      group_0.w01: 0.2
-      group_0.w02: 0.3
+      group.w00: 0.1
+      group.w01: 0.2
+      group.w02: 0.3
   -
     target: 1
     weights:
-      group_0.w10: 1.0
-      group_0.w11: 1.0
-      group_0.w12: 1.0
+      group.w10: 1.0
+      group.w11: 1.0
+      group.w12: 1.0

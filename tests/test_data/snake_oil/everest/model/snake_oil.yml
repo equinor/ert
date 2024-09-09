@@ -9,7 +9,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 1

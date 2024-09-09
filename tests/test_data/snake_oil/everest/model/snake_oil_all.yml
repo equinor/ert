@@ -11,7 +11,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 1
@@ -46,10 +46,10 @@ input_constraints:
   -
     target: 1.0
     weights:
-        group_0.W1: 1
-        group_0.W2: 1
-        group_0.W3: 1
-        group_0.W4: 1
+        group.W1: 1
+        group.W2: 1
+        group.W3: 1
+        group.W4: 1
 
 install_jobs:
   -

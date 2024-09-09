@@ -23,7 +23,7 @@ mocked_config = relpath(cfg_dir, "mocked_test_case.yml")
 
 
 def test_controls_initialization():
-    exp_grp_name = "group_0"
+    exp_grp_name = "group"
 
     config = EverestConfig.load_file(mocked_config)
     assert config.controls is not None
@@ -149,7 +149,7 @@ def test_variable_name_index_validation():
     config.controls[0].variables[1].name = "w01"
     input_constraints = [
         InputConstraintConfig.model_validate(
-            {"upper_bound": 1, "lower_bound": 0, "weights": {"group_0.w00": 0.1}}
+            {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00": 0.1}}
         )
     ]
 
@@ -165,7 +165,7 @@ def test_variable_name_index_validation():
     # index
     input_constraints = [
         InputConstraintConfig(
-            **{"upper_bound": 1, "lower_bound": 0, "weights": {"group_0.w00-0": 0.1}}
+            **{"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
         )
     ]
 

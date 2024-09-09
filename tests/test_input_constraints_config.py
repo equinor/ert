@@ -28,7 +28,7 @@ def test_input_constraint_initialization():
         input_constraint.lower_bound,
     ] == exp_rhs
     # Check the variables
-    exp_vars = ["group_0.w00", "group_0.w01", "group_0.w02"]
+    exp_vars = ["group.w00", "group.w01", "group.w02"]
     assert set(exp_vars) == set(input_constraint.weights.keys())
     # Check the weights
     exp_weights = [0.1, 0.2, 0.3]

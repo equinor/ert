@@ -449,13 +449,13 @@ def test_control_ref_validation():
     assert len(errors) == 0
 
     weights = config[ConfigKeys.INPUT_CONSTRAINTS][0][ConfigKeys.WEIGHTS]
-    weights.pop("group_0.W1")
+    weights.pop("group.W1")
 
     errors = EverestConfig.lint_config_dict(config)
     assert len(errors) == 0
 
     weights["no_group.W1"] = 1.0
-    weights["group_0.no_ctrl"] = 1.0
+    weights["group.no_ctrl"] = 1.0
     weights["g.n.c.s.w"] = 1.0
     weights["asdasdasd"] = 1.0
 

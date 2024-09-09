@@ -15,5 +15,5 @@ def test_discrete_optimizer():
     assert workflow is not None
     workflow.start_optimization()
 
-    assert workflow.result.controls["point_0_x"] == 3
-    assert workflow.result.controls["point_0_y"] == 7
+    assert workflow.result.controls["point_x"] == 3
+    assert workflow.result.controls["point_y"] == 7

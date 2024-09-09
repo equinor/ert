@@ -14,7 +14,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 0.1
@@ -68,8 +68,8 @@ model:
 forward_model:
   - well_order well_order.json SCHEDULE.INC ordered_wells.json
   - res_mock r{{ eclbase }}
-  - npv_function r{{ eclbase }} npv_function_0
-  - controls_sum group_0
+  - npv_function r{{ eclbase }} npv_function
+  - controls_sum group
 
 environment:
   simulation_folder: sim_folder
