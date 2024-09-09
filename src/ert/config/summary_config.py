@@ -12,6 +12,7 @@ from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError
 from .response_config import ResponseConfig
+from .responses_index import responses_index
 
 if TYPE_CHECKING:
     from typing import List
@@ -74,3 +75,6 @@ class SummaryConfig(ResponseConfig):
             )
 
         return None
+
+
+responses_index.add_response_type(SummaryConfig)
