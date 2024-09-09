@@ -576,6 +576,23 @@ class LocalEnsemble(BaseMode):
         return xr.open_dataset(input_path, engine="scipy")
 
     @require_write
+    def save_observation_scaling_factors(self, dataset: xr.Dataset) -> None:
+        dataset.to_netcdf(
+            self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+        )
+
+    def load_observation_scaling_factors(
+        self,
+    ) -> Optional[xr.Dataset]:
+        ds_path = self.mount_point / "observation_scaling_factors.nc"
+        if ds_path.exists():
+            return xr.load_dataset(
+                self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+            )
+
+        return None
+
+    @require_write
     def save_cross_correlations(
         self,
         cross_correlations: npt.NDArray[np.float64],
