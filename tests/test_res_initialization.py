@@ -203,7 +203,7 @@ def build_tutorial_dict(config_dir, output_dir):
                 "ordered_wells.json",
             ),
             ("res_mock", "MOCKED_TEST_CASE"),
-            ("npv_function", "MOCKED_TEST_CASE", "npv_function_0"),
+            ("npv_function", "MOCKED_TEST_CASE", "npv_function"),
         ],
         # Defaulted
         "QUEUE_SYSTEM": "LOCAL",

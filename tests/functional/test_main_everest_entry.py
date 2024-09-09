@@ -94,9 +94,9 @@ def test_everest_entry_run():
     snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot()
 
     best_settings = snapshot.optimization_data[-1]
-    assert best_settings.controls["point_0_x"] == pytest.approx(0.5, abs=0.05)
-    assert best_settings.controls["point_0_y"] == pytest.approx(0.5, abs=0.05)
-    assert best_settings.controls["point_0_z"] == pytest.approx(0.5, abs=0.05)
+    assert best_settings.controls["point_x"] == pytest.approx(0.5, abs=0.05)
+    assert best_settings.controls["point_y"] == pytest.approx(0.5, abs=0.05)
+    assert best_settings.controls["point_z"] == pytest.approx(0.5, abs=0.05)
 
     assert best_settings.objective_value == pytest.approx(0.0, abs=0.0005)
 

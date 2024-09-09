@@ -1,6 +1,6 @@
 controls:
   -
-    name: point_0
+    name: point
     type: generic_control
     min: -1.0
     max: 1.0
@@ -31,9 +31,9 @@ model:
   realizations: [0]
 
 forward_model:
-  - distance3 --point-file point_0.json
+  - distance3 --point-file point.json
               --target 0.5 0.5 0.5
-              --out distance_0
+              --out distance
 
 environment:
   simulation_folder: sim_output

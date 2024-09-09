@@ -7,7 +7,7 @@ def main(control_group_name):
     with open(control_group_name + ".json", encoding="utf-8") as f:
         control_group = json.load(f)
 
-    with open(control_group_name + "_sum_0", "w", encoding="utf-8") as f_out:
+    with open(control_group_name + "_sum", "w", encoding="utf-8") as f_out:
         f_out.write("%f" % sum(control_group.values()))
 
 

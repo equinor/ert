@@ -18,7 +18,7 @@ wells:
 
 controls:
   -
-    name: group_0
+    name: group
     type: well_control
     min: 0
     max: 0.1
@@ -78,8 +78,8 @@ model:
 forward_model:
   - well_order well_order.json SCHEDULE.INC ordered_wells.json
   - res_mock MOCKED_TEST_CASE
-  - npv_function MOCKED_TEST_CASE npv_function_0
-  - fpr_diff MOCKED_TEST_CASE out_fpr_diff_0
+  - npv_function MOCKED_TEST_CASE npv_function
+  - fpr_diff MOCKED_TEST_CASE out_fpr_diff
 
 environment:
   output_folder: everest_output

@@ -34,7 +34,7 @@ def test_math_func_minimal():
     workflow.start_optimization()
 
     # Check resulting points
-    x, y, z = (workflow.result.controls["point_0_" + p] for p in ("x", "y", "z"))
+    x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.5, abs=0.05)
     assert y == pytest.approx(0.5, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
@@ -49,13 +49,13 @@ def test_math_func_minimal():
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
     first = ok_evals.iloc[0]
     best = ok_evals.iloc[-1]
-    assert first["point_0_x"] == 0.1
-    assert first["point_0_y"] == 0.1
-    assert first["point_0_z"] == 0.1
+    assert first["point_x"] == 0.1
+    assert first["point_y"] == 0.1
+    assert first["point_z"] == 0.1
     assert first["distance"] == pytest.approx(-(0.4 * 0.4 * 3))
-    assert best["point_0_x"] == pytest.approx(x)
-    assert best["point_0_y"] == pytest.approx(y)
-    assert best["point_0_z"] == pytest.approx(z)
+    assert best["point_x"] == pytest.approx(x)
+    assert best["point_y"] == pytest.approx(y)
+    assert best["point_z"] == pytest.approx(z)
     assert best["distance"] == pytest.approx(workflow.result.total_objective)
     assert first["realization_weight"] == 1.0
     assert best["realization_weight"] == 1.0
@@ -71,7 +71,7 @@ def test_math_func_in_constr():
     workflow.start_optimization()
 
     # Check resulting points
-    x, y, z = (workflow.result.controls["point_0_" + p] for p in ("x", "y", "z"))
+    x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.25, abs=0.1)
     assert y == pytest.approx(0.25, abs=0.1)
     assert z == pytest.approx(0.50, abs=0.1)
@@ -86,9 +86,9 @@ def test_math_func_in_constr():
     df = export(config)
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
     best = ok_evals.iloc[-1]
-    assert best["point_0_x"] == pytest.approx(x)
-    assert best["point_0_y"] == pytest.approx(y)
-    assert best["point_0_z"] == pytest.approx(z)
+    assert best["point_x"] == pytest.approx(x)
+    assert best["point_y"] == pytest.approx(y)
+    assert best["point_z"] == pytest.approx(z)
     assert best["distance"] == pytest.approx(workflow.result.total_objective)
     assert best["realization_weight"] == 1.0
 
@@ -103,7 +103,7 @@ def test_math_func_out_constr():
     workflow.start_optimization()
 
     # Check resulting points
-    x, y, z = (workflow.result.controls["point_0_" + p] for p in ("x", "y", "z"))
+    x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.5, abs=0.1)
     assert y == pytest.approx(0.5, abs=0.1)
     assert z == pytest.approx(0.3, abs=0.1)
@@ -122,9 +122,9 @@ def test_math_func_out_constr():
     assert len(ok_evals) == len(ok_evals[ok_evals["increased_merit"] == 1])
 
     best = ok_evals.iloc[-1]
-    assert best["point_0_x"] == pytest.approx(x)
-    assert best["point_0_y"] == pytest.approx(y)
-    assert best["point_0_z"] == pytest.approx(z)
+    assert best["point_x"] == pytest.approx(x)
+    assert best["point_y"] == pytest.approx(y)
+    assert best["point_z"] == pytest.approx(z)
     assert best["distance"] == pytest.approx(workflow.result.total_objective)
     assert best["realization_weight"] == 1.0
 
@@ -139,7 +139,7 @@ def test_math_func_multiobj():
     workflow.start_optimization()
 
     # Check resulting points
-    x, y, z = (workflow.result.controls["point_0_" + p] for p in ("x", "y", "z"))
+    x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.0, abs=0.05)
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
@@ -167,18 +167,18 @@ def test_math_func_multiobj():
 
     first = ok_evals.iloc[0]
     best = ok_evals.iloc[-1]
-    assert first["point_0_x"] == 0
-    assert first["point_0_y"] == 0
-    assert first["point_0_z"] == 0
+    assert first["point_x"] == 0
+    assert first["point_y"] == 0
+    assert first["point_z"] == 0
     assert first["distance_p"] == -(0.5 * 0.5 * 3)
     assert first["distance_q"] == -(1.5 * 1.5 * 2 + 0.5 * 0.5)
     assert first["sim_avg_obj"] == (-0.75 * (2.0 / 3.0) * 1.5) + (
         -4.75 * (1.0 / 3.0) * 1.0
     )
 
-    assert best["point_0_x"] == pytest.approx(x)
-    assert best["point_0_y"] == pytest.approx(y)
-    assert best["point_0_z"] == pytest.approx(z)
+    assert best["point_x"] == pytest.approx(x)
+    assert best["point_y"] == pytest.approx(y)
+    assert best["point_z"] == pytest.approx(z)
     assert best["distance_p"] == pytest.approx(optim_p)
     assert best["distance_q"] == pytest.approx(optim_q)
     assert best["sim_avg_obj"] == pytest.approx(workflow.result.total_objective)
@@ -226,7 +226,7 @@ def test_math_func_advanced():
 
     point_names = ["x-0", "x-1", "x-2"]
     # Check resulting points
-    x0, x1, x2 = (workflow.result.controls["point_0_" + p] for p in point_names)
+    x0, x1, x2 = (workflow.result.controls["point_" + p] for p in point_names)
     assert x0 == pytest.approx(0.1, abs=0.05)
     assert x1 == pytest.approx(0.0, abs=0.05)
     assert x2 == pytest.approx(0.4, abs=0.05)
@@ -250,9 +250,9 @@ def test_math_func_advanced():
 
     ok_evals_0 = ok_evals[ok_evals["realization"] == 0]
     best_0 = ok_evals_0.iloc[-1]
-    assert best_0["point_0_{}".format(point_names[0])] == pytest.approx(x0)
-    assert best_0["point_0_{}".format(point_names[1])] == pytest.approx(x1)
-    assert best_0["point_0_{}".format(point_names[2])] == pytest.approx(x2)
+    assert best_0["point_{}".format(point_names[0])] == pytest.approx(x0)
+    assert best_0["point_{}".format(point_names[1])] == pytest.approx(x1)
+    assert best_0["point_{}".format(point_names[2])] == pytest.approx(x2)
     assert best_0["distance"] == pytest.approx(-dist_0, abs=0.001)
     assert best_0["real_avg_obj"] == pytest.approx(
         workflow.result.total_objective, abs=0.001
@@ -261,9 +261,9 @@ def test_math_func_advanced():
 
     ok_evals_1 = ok_evals[ok_evals["realization"] == 2]
     best_1 = ok_evals_1.iloc[-1]
-    assert best_1["point_0_{}".format(point_names[0])] == pytest.approx(x0)
-    assert best_1["point_0_{}".format(point_names[1])] == pytest.approx(x1)
-    assert best_1["point_0_{}".format(point_names[2])] == pytest.approx(x2)
+    assert best_1["point_{}".format(point_names[0])] == pytest.approx(x0)
+    assert best_1["point_{}".format(point_names[1])] == pytest.approx(x1)
+    assert best_1["point_{}".format(point_names[2])] == pytest.approx(x2)
     assert best_1["distance"] == pytest.approx(-dist_1, abs=0.001)
     assert best_1["real_avg_obj"] == pytest.approx(
         workflow.result.total_objective, abs=0.001
@@ -350,7 +350,7 @@ def test_math_func_auto_scaled_controls():
     workflow.start_optimization()
 
     # Check resulting points
-    x, y, z = (workflow.result.controls["point_0_" + p] for p in ("x", "y", "z"))
+    x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
 
     assert x == pytest.approx(ex, abs=0.05)
     assert y == pytest.approx(ey, abs=0.05)

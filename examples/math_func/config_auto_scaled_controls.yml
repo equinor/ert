@@ -1,6 +1,6 @@
 controls:
   -
-    name: point_0
+    name: point
     type: generic_control
     min: -1
     max: 1
@@ -33,9 +33,9 @@ model:
   realizations: [0]
 
 forward_model:
-  - distance3 --point-file point_0.json
+  - distance3 --point-file point.json
               --target 0.5 0.5 0.5
-              --out distance_0
+              --out distance
               --scaling -1 1 0.3 0.7
 
 environment:
@@ -45,5 +45,5 @@ environment:
 
 input_constraints:
   -
-    weights: {point_0.x: 1.0, point_0.y: 1.0}
+    weights: {point.x: 1.0, point.y: 1.0}
     upper_bound: 0.5

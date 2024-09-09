@@ -32,7 +32,7 @@ def test_cache_optimizer(monkeypatch):
         workflow.start_optimization()
 
         x1 = np.fromiter(
-            (workflow.result.controls["point_0_" + p] for p in ["x-0", "x-1", "x-2"]),
+            (workflow.result.controls["point_" + p] for p in ["x-0", "x-1", "x-2"]),
             dtype=np.float64,
         )
 
@@ -48,7 +48,7 @@ def test_cache_optimizer(monkeypatch):
         workflow.start_optimization()
 
         x2 = np.fromiter(
-            (workflow.result.controls["point_0_" + p] for p in ["x-0", "x-1", "x-2"]),
+            (workflow.result.controls["point_" + p] for p in ["x-0", "x-1", "x-2"]),
             dtype=np.float64,
         )
 

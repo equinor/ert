@@ -4,7 +4,7 @@ controls:
 - initial_guess: 0.25
   max: 1.0
   min: -1.0
-  name: point_0
+  name: point
   perturbation_magnitude: 0.005
   type: generic_control
   variables:
@@ -22,9 +22,9 @@ objective_functions:
 input_constraints:
   -
     weights:
-      point_0.x-0: 0
-      point_0.x-1: 0
-      point_0.x-2: 1
+      point.x-0: 0
+      point.x-1: 0
+      point.x-2: 1
     upper_bound: 0.4
 
 output_constraints:
@@ -47,12 +47,12 @@ install_jobs:
 
 forward_model:
  # Compute distance (squared and negated) between 2 points
-  - adv_distance3     --point-file point_0.json
+  - adv_distance3     --point-file point.json
                       --target-file data/r{{ realization}}/target.json
-                      --out distance_0
+                      --out distance
  # Write the value of each control to a separate file
-  - adv_dump_controls --controls-file point_0.json
-                      --out-suffix _coord_0
+  - adv_dump_controls --controls-file point.json
+                      --out-suffix _coord
 # Left this  here for testing/debugging purposes
 #  - sleep --min 0.1 --max 5 --fail-chance 0.5
 

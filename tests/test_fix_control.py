@@ -17,4 +17,4 @@ def test_fix_control():
     workflow.start_optimization()
 
     # Check that the first variable remains fixed:
-    assert workflow.result.controls["point_0_x-0"] == config.controls[0].initial_guess
+    assert workflow.result.controls["point_x-0"] == config.controls[0].initial_guess

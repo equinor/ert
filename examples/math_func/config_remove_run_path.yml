@@ -2,7 +2,7 @@ wells: []
 
 controls:
   -
-    name: point_0
+    name: point
     type: generic_control
     min: -1.0
     max: 1.0
@@ -26,9 +26,9 @@ install_jobs:
     source: jobs/FAIL_SIMULATION
 
 forward_model:
-  - distance3 --point-file point_0.json
+  - distance3 --point-file point.json
               --target 0.5 0.5 0.5
-              --out distance_0
+              --out distance
 
   - toggle_failure
 
