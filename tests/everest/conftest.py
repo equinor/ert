@@ -1,16 +1,22 @@
 import fileinput
+import json
 import logging
 import os
 import resource
 import shutil
+import stat
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
+from textwrap import dedent
+from typing import List, Optional
 from unittest.mock import MagicMock
 
 from qtpy.QtWidgets import QApplication
 
 from _ert.threading import set_signal_handler
+from ert.run_arg import RunArg, create_run_arguments
+from ert.runpaths import Runpaths
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -22,23 +28,17 @@ from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
-import _ert.forward_model_runner.cli
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
 from ert.services import StorageService
-from ert.storage import open_storage
+from ert.storage import Ensemble, open_storage
 
 from .utils import SOURCE_DIR
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
-
-
-@pytest.fixture(autouse=True)
-def no_jobs_file_retry(monkeypatch):
-    monkeypatch.setattr(_ert.forward_model_runner.cli, "JOBS_JSON_RETRY_TIME", 0)
 
 
 @pytest.fixture(autouse=True)
@@ -398,7 +398,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
         "snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(snake_path)
-    if not os.path.exists(snake_path / "test_data"):
+    if not os.listdir(snake_path):
         _run_snake_oil(source_root)
     else:
         monkeypatch.chdir("test_data")
@@ -477,3 +477,92 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
+
+
+QSTAT_HEADER = (
+    "Job id                         Name            User             Time Use S Queue\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+)
+QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
+
+
+@pytest.fixture
+def create_mock_flaky_qstat(monkeypatch, tmp_path):
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.chdir(bin_path)
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    yield _mock_flaky_qstat
+
+
+def _mock_flaky_qstat(error_message_to_output: str):
+    qsub_path = Path("qsub")
+    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
+    qstat_path = Path("qstat")
+    qstat_path.write_text(
+        "#!/bin/sh"
+        + dedent(
+            f"""
+            count=0
+            if [ -f counter_file ]; then
+                count=$(cat counter_file)
+            fi
+            echo "$((count+1))" > counter_file
+            if [ $count -ge 3 ]; then
+                json_flag_set=false;
+                while [ "$#" -gt 0 ]; do
+                    case "$1" in
+                        -Fjson)
+                            json_flag_set=true
+                            ;;
+                    esac
+                    shift
+                done
+                if [ "$json_flag_set" = true ]; then
+                    echo '{json.dumps({"Jobs": {"1": {"Job_Name": "1", "job_state": "E", "Exit_status": "0"}}})}'
+                else
+                    echo "{QSTAT_HEADER}"; printf "{QSTAT_HEADER_FORMAT}" 1 foo someuser 0 E normal
+                fi
+            else
+                echo "{error_message_to_output}" >&2
+                exit 2
+            fi
+        """
+        )
+    )
+    qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
+
+
+@pytest.fixture
+def run_paths():
+    def func(ert_config: ErtConfig):
+        return Runpaths(
+            jobname_format=ert_config.model_config.jobname_format_string,
+            runpath_format=ert_config.model_config.runpath_format_string,
+            filename=str(ert_config.runpath_file),
+            substitution_list=ert_config.substitution_list,
+        )
+
+    yield func
+
+
+@pytest.fixture
+def run_args(run_paths):
+    def func(
+        ert_config: ErtConfig,
+        ensemble: Ensemble,
+        active_realizations: Optional[int] = None,
+    ) -> List[RunArg]:
+        active_realizations = (
+            ert_config.model_config.num_realizations
+            if active_realizations is None
+            else active_realizations
+        )
+        return create_run_arguments(
+            run_paths(ert_config),
+            [True] * active_realizations,
+            ensemble,
+        )
+
+    yield func
