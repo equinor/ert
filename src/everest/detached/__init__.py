@@ -93,8 +93,14 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
             "Failed to save optimization config: {}".format(e)
         )
 
+    experiment = storage.create_experiment(
+        name=f"DetachedEverest@{datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+        parameters=[],
+        responses=[],
+    )
+
     _server = BatchSimulator(ert_config, {}, [])
-    _context = _server.start("dispatch_server", [(0, {})], storage)
+    _context = _server.start("dispatch_server", [(0, {})], experiment)
 
     return _context
 

@@ -142,8 +142,14 @@ def batch_simulator(batch_sim_example):
 def test_that_starting_with_invalid_key_raises_key_error(
     batch_simulator, _input, match, storage
 ):
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=batch_simulator.ert_config.ensemble_config.parameter_configuration,
+        responses=batch_simulator.ert_config.ensemble_config.response_configuration,
+    )
+
     with pytest.raises(KeyError, match=match):
-        batch_simulator.start("case", _input, storage)
+        batch_simulator.start("case", _input, experiment)
 
 
 @pytest.mark.integration_test
@@ -166,7 +172,13 @@ def test_batch_simulation(batch_simulator, storage):
         ),
     ]
 
-    ctx = batch_simulator.start("case", case_data, storage=storage)
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=batch_simulator.ert_config.ensemble_config.parameter_configuration,
+        responses=batch_simulator.ert_config.ensemble_config.response_configuration,
+    )
+
+    ctx = batch_simulator.start("case", case_data, experiment)
     assert len(case_data) == len(ctx.mask)
 
     # Asking for results before it is complete.
@@ -280,8 +292,15 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         },
         ["ORDER"],
     )
+
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=batch_sim_example.ensemble_config.parameter_configuration,
+        responses=batch_sim_example.ensemble_config.response_configuration,
+    )
+
     with pytest.raises(KeyError, match=match):
-        rsim.start("case", inp, storage)
+        rsim.start("case", inp, experiment)
 
 
 @pytest.mark.integration_test
@@ -328,7 +347,13 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
         ),
     ]
 
-    ctx = rsim.start("case", case_data, storage=storage)
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=ert_config.ensemble_config.parameter_configuration,
+        responses=ert_config.ensemble_config.response_configuration,
+    )
+
+    ctx = rsim.start("case", case_data, experiment)
     assert len(case_data) == len(ctx)
     _wait_for_completion(ctx)
 
@@ -395,8 +420,14 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         ),
     ]
 
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=ert_config.ensemble_config.parameter_configuration,
+        responses=ert_config.ensemble_config.response_configuration,
+    )
+
     # Starting a simulation which should actually run through.
-    ctx = rsim.start(case_name, case_data, storage=storage)
+    ctx = rsim.start(case_name, case_data, experiment)
 
     ctx.stop()
     status = ctx.status
@@ -459,7 +490,13 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
         for idx in range(10)
     ]
 
-    batch_ctx = rsim.start("case_name", ensembles, storage=storage)
+    experiment = storage.create_experiment(
+        name="EnOptCase",
+        parameters=ert_config.ensemble_config.parameter_configuration,
+        responses=ert_config.ensemble_config.response_configuration,
+    )
+
+    batch_ctx = rsim.start("case_name", ensembles, experiment)
     while batch_ctx.running():
         assertContextStatusOddFailures(batch_ctx)
         time.sleep(1)

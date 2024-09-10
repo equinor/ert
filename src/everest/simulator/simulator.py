@@ -1,5 +1,6 @@
 import time
 from collections import defaultdict
+from datetime import datetime
 from itertools import count
 from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple, Union
 
@@ -35,6 +36,7 @@ class Simulator(BatchSimulator):
             self._ert_config, controls_def, results_def, callback=callback
         )
 
+        self._experiment_id = None
         self._batch = 0
         self._cache: Optional[_SimulatorCache] = None
         if ever_config.simulator is not None and ever_config.simulator.enable_cache:
@@ -132,7 +134,19 @@ class Simulator(BatchSimulator):
                 case_data.append((real_id, controls))
 
         with open_storage(self._ert_config.ens_path, "w") as storage:
-            sim_context = self.start(f"batch_{self._batch}", case_data, storage)
+            if self._experiment_id is None:
+                experiment = storage.create_experiment(
+                    name=f"EnOpt@{datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+                    parameters=self.ert_config.ensemble_config.parameter_configuration,
+                    responses=self.ert_config.ensemble_config.response_configuration,
+                )
+
+                self._experiment_id = experiment.id
+            else:
+                experiment = storage.get_experiment(self._experiment_id)
+
+            sim_context = self.start(f"batch_{self._batch}", case_data, experiment)
+
             while sim_context.running():
                 time.sleep(0.2)
             results = sim_context.results()
