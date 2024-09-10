@@ -173,7 +173,7 @@ def satisfy_type(the_type):
 
 def satisfy_callable():
     """Specialization of satisfy for checking that object is callable"""
-    return satisfy(lambda obj: callable(obj))
+    return satisfy(callable)
 
 
 class MockParser(object):
