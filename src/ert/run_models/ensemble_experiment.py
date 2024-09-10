@@ -110,5 +110,5 @@ class EnsembleExperiment(BaseRunModel):
         return "Sample parameters → evaluate (N realizations)"
 
     @classmethod
-    def group(cls) -> str:
+    def group(cls) -> Optional[str]:
         return ENSEMBLE_EXPERIMENT_GROUP

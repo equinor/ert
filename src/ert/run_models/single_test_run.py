@@ -50,3 +50,7 @@ class SingleTestRun(EnsembleExperiment):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate (one realization)"
+
+    @classmethod
+    def group(cls) -> None:
+        return None
