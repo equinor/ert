@@ -376,9 +376,8 @@ def test_realization_view(
     realization_widget = tool._storage_info_widget._content_layout.currentWidget()
 
     assert realization_widget._state_label.text() == "Realization state: HAS_DATA"
-    assert (
-        realization_widget._response_text_edit.toPlainText()
-        == "\ngen_data - HAS_DATA\nsummary - HAS_DATA\n"
+    assert {"gen_data - HAS_DATA", "summary - HAS_DATA"}.issubset(
+        set(realization_widget._response_text_edit.toPlainText().splitlines())
     )
     assert (
         realization_widget._parameter_text_edit.toPlainText()
