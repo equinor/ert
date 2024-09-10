@@ -265,7 +265,6 @@ class PlotApi:
                 params={"z": z},
                 timeout=self._timeout,
             )
-            self._check_response(response)
 
             if response.status_code == 200:
                 # Deserialize the numpy array
