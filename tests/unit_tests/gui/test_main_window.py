@@ -175,7 +175,6 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         simulation_mode = get_child(gui, QComboBox, name="experiment_type")
-
         run_experiment = get_child(gui, QToolButton, name="run_experiment")
 
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
@@ -686,10 +685,10 @@ def test_help_menu(qtbot):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_run_experiment_button_text_changes_when_manual_update(qtbot, storage):
+def test_that_run_experiment_button_has_proper_tooltip(qtbot, storage):
     """
-    This test validates that when the experiment type is manual update
-    the text of the run_experiment button is set to 'Execute Selected'
+    Test changes to 'Run Experiment' button that now is textless
+    and must have a tooltip with the value 'Execute Selected'
     """
     config_file = Path("config.ert")
     config_file.write_text(

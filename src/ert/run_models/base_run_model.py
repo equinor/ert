@@ -200,7 +200,7 @@ class BaseRunModel(ABC):
     @classmethod
     def group(cls) -> Optional[str]:
         """Default value to prevent errors in children classes
-        since only SingleTestRun and EnsembleSmoother should
+        since only EnsembleExperiment and EnsembleSmoother should
         override it
         """
         return None

@@ -37,8 +37,6 @@ from .single_test_run_panel import SingleTestRunPanel
 if TYPE_CHECKING:
     from ert.config import ErtConfig
 
-EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
-EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
 EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
 
 
@@ -79,7 +77,7 @@ class ExperimentPanel(QWidget):
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
-        self.run_button.setToolTip("Execute Selected")
+        self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
         self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
