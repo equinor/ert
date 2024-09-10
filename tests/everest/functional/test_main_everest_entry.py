@@ -45,7 +45,7 @@ def test_everest_entry_docs():
     assert "controls (required)" in lines
     assert "objective_functions (required)" in lines
     assert "definitions (optional)" in lines
-    assert err.getvalue() == ""
+    assert not err.getvalue()
 
 
 def test_everest_entry_manual():
@@ -60,7 +60,7 @@ def test_everest_entry_manual():
 
     doc_lines = [line for line in lines if line.startswith("| Documentation:")]
     assert doc_lines != []
-    assert err.getvalue() == ""
+    assert not err.getvalue()
 
 
 def test_everest_entry_version():

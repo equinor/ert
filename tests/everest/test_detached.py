@@ -163,7 +163,7 @@ def test_wait_for_server(server_is_running_mock):
     with capture_logger() as logstream, pytest.raises(Exception):
         wait_for_server(config, timeout=1, context=None)
 
-    assert logstream.getvalue() == ""
+    assert not logstream.getvalue()
     context = MockContext()
     with capture_logger() as logstream, pytest.raises(SystemExit):
         wait_for_server(config, timeout=120, context=context)

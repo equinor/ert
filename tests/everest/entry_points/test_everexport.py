@@ -104,7 +104,7 @@ def test_everexport_entry_empty(mocked_func):
     assert os.path.isfile(export_file_path)
     with open(export_file_path, "r", encoding="utf-8") as f:
         content = f.read()
-    assert content.strip() == ""
+    assert not content.strip()
 
 
 @patch(
