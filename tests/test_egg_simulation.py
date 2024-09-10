@@ -551,7 +551,7 @@ def _generate_exp_ert_config(config_path, output_dir):
                 "2016-02-19",
                 "2016-05-19",
             ),
-            ("rf", "-s", "eclipse/model/EGG", "-o", "rf_0"),
+            ("rf", "-s", "eclipse/model/EGG", "-o", "rf"),
         ],
         "ENSPATH": os.path.join(
             os.path.realpath("everest/model"),

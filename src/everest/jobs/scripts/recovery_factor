@@ -20,8 +20,8 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output_file",
         required=False,
-        default="rf_0",
-        help="the output file, defaults to rf_0",
+        default="rf",
+        help="the output file, defaults to rf",
     )
     return parser
 
