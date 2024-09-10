@@ -118,4 +118,4 @@ forward_model:
   - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
   - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
   - myflow              r{{ eclbase }} --enable-tuning
-  - rf                -s r{{ eclbase }} -o rf_0
+  - rf                -s r{{ eclbase }} -o rf
