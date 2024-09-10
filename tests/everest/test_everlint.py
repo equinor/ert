@@ -411,7 +411,7 @@ def test_ert_job_file():
         ("EXECUTABLE %s\n" % SNAKE_OIL_CONFIG, "(.*)_oil_all.yml is not executable"),
     ]
     for cnt, err in content:
-        tmp = tempfile.NamedTemporaryFile(mode="w")
+        tmp = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8")
         with open(tmp.name, "w", encoding="utf-8") as f:
             f.write(cnt)
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
