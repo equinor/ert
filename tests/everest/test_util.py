@@ -158,7 +158,7 @@ def test_report_on_previous_run(_):
     with open("config_file", "w", encoding="utf-8") as f:
         f.write(" ")
     config = EverestConfig.with_defaults(**{ConfigKeys.CONFIGPATH: "config_file"})
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         report_on_previous_run(config)
     lines = [line.strip() for line in out.getvalue().split("\n")]
     assert lines[0] == "Optimization run failed, with error: mock error"
