@@ -175,7 +175,7 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
         simulation_mode = get_child(gui, QComboBox, name="experiment_type")
-        simulation_mode.setCurrentIndex(0)
+
         run_experiment = get_child(gui, QToolButton, name="run_experiment")
 
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
@@ -283,7 +283,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        combo_box.setCurrentIndex(5)
+        combo_box.setCurrentIndex(4)
 
         assert (
             combo_box.currentText()
@@ -639,7 +639,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
         assert combo_box.count() == 7
-        combo_box.setCurrentIndex(5)
+        combo_box.setCurrentIndex(4)
 
         assert (
             combo_box.currentText()
@@ -705,14 +705,7 @@ def test_that_run_experiment_button_text_changes_when_manual_update(qtbot, stora
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        simulation_mode = get_child(gui, QComboBox, name="experiment_type")
         run_experiment = get_child(gui, QToolButton, name="run_experiment")
 
-        assert run_experiment.text() == "Run Experiment"
-        manual_update_idx = [
-            idx
-            for idx in range(simulation_mode.count())
-            if simulation_mode.itemText(idx) == "Manual update"
-        ]
-        simulation_mode.setCurrentIndex(manual_update_idx[0])
-        assert run_experiment.text() == "Execute Selected"
+        assert not run_experiment.text()
+        assert run_experiment.toolTip() == "Execute Selected"

@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ENSEMBLE_EXPERIMENT_GROUP = "Forward model evaluation"
+
 
 class EnsembleExperiment(BaseRunModel):
     """
@@ -106,3 +108,7 @@ class EnsembleExperiment(BaseRunModel):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate (N realizations)"
+
+    @classmethod
+    def group(cls) -> str:
+        return ENSEMBLE_EXPERIMENT_GROUP

@@ -78,11 +78,11 @@ class ExperimentPanel(QWidget):
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
+        self.run_button.setToolTip("Execute Selected")
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
@@ -99,15 +99,15 @@ class ExperimentPanel(QWidget):
 
         self._experiment_widgets: dict[Type[BaseRunModel], QWidget] = OrderedDict()
         self.addExperimentConfigPanel(
-            SingleTestRunPanel(run_path, notifier),
-            True,
-        )
-        self.addExperimentConfigPanel(
             EnsembleExperimentPanel(ensemble_size, run_path, notifier),
             True,
         )
         self.addExperimentConfigPanel(
             EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
+            True,
+        )
+        self.addExperimentConfigPanel(
+            SingleTestRunPanel(run_path, notifier),
             True,
         )
 
@@ -117,10 +117,6 @@ class ExperimentPanel(QWidget):
         analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
-            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
@@ -135,7 +131,10 @@ class ExperimentPanel(QWidget):
             ),
             experiment_type_valid,
         )
-        self._experiment_type_combo.setCurrentIndex(1)
+        self.addExperimentConfigPanel(
+            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
+            experiment_type_valid,
+        )
         self.setLayout(layout)
 
     def addExperimentConfigPanel(
@@ -270,12 +269,10 @@ class ExperimentPanel(QWidget):
             output_path=self.config.analysis_config.log_path,
         )
         self.run_button.setEnabled(False)
-        self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
         dialog.run_experiment()
         dialog.show()
 
         def exit_handler() -> None:
-            self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
             self.run_button.setEnabled(True)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
@@ -288,20 +285,16 @@ class ExperimentPanel(QWidget):
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
-            if self.run_button.text() != EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE:
-                if current_model.name() == "Manual update":
-                    self.run_button.setText(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
-                else:
-                    self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
             self.experiment_type_changed.emit(widget)
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
+        widgets = QApplication.topLevelWidgets()
+        is_run_dialog_open = False
+        for w in widgets:
+            if isinstance(w, RunDialog) and w.isVisible():
+                is_run_dialog_open = True
+                break
         self.run_button.setEnabled(
-            self.run_button.text()
-            in [
-                EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE,
-                EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE,
-            ]
-            and widget.isConfigurationValid()
+            not is_run_dialog_open and widget.isConfigurationValid()
         )
