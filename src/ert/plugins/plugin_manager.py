@@ -391,4 +391,4 @@ class ErtPluginContext:
         self._reset_environment()
         logger.debug("Deleting temporary directory for site-config")
         if self.tmp_dir is not None:
-            shutil.rmtree(self.tmp_dir)
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
