@@ -810,8 +810,8 @@ def test_egg_model_wells_json_output_no_none():
 @pytest.mark.everest_models_test
 @skipif_no_simulator
 @pytest.mark.simulation_test
-@tmpdir(relpath(ROOT))
-def test_egg_snapshot(snapshot):
+def test_egg_snapshot(tmp_path, snapshot):
+    os.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
     class CBTracker(object):
