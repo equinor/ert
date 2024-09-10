@@ -32,7 +32,9 @@ def load_yaml(file_name: str) -> Optional[Dict[str, Any]]:
     with open(file_name, "r", encoding="utf-8") as input_file:
         input_data: List[str] = input_file.readlines()
         try:
-            return YAML(typ="safe", pure=True).load("".join(input_data))
+            yaml = YAML()
+            yaml.preserve_quotes = True
+            return yaml.load("".join(input_data))
         except YAMLError as exc:
             if hasattr(exc, "problem_mark"):
                 mark = exc.problem_mark

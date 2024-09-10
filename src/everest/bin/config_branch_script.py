@@ -104,9 +104,9 @@ def config_branch_entry(args=None):
         conf_controls=yml_config[CK.CONTROLS], opt_controls=opt_controls
     )
 
-    yaml = YAML(typ="safe", pure=True)
-    yaml.indent = 2
-    yaml.default_flow_style = False
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)  # pylint: disable=not-callable
+    yaml.preserve_quotes = True
     with open(options.output_config, "w", encoding="utf-8") as f:
         yaml.dump(yml_config, f)
     print("New config file {} created.".format(options.output_config))
