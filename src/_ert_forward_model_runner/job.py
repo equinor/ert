@@ -400,6 +400,6 @@ def _get_rss_and_oom_score_for_processtree(
                     else oom_score_child
                 )
             with contextlib.suppress(NoSuchProcess, AccessDenied, ZombieProcess):
-                memory_rss += process.memory_info().rss
+                memory_rss += child.memory_info().rss
 
     return (memory_rss, oom_score)
