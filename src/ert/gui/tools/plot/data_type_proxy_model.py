@@ -11,12 +11,6 @@ if TYPE_CHECKING:
 class DataTypeProxyModel(QSortFilterProxyModel):
     def __init__(self, parent: Optional[QObject], model: DataTypeKeysListModel) -> None:
         QSortFilterProxyModel.__init__(self, parent)
-
-        self.__show_summary_keys = True
-        self.__show_block_keys = True
-        self.__show_gen_kw_keys = True
-        self.__show_gen_data_keys = True
-        self.__show_custom_pca_keys = True
         self._metadata_filters: dict[str, dict[str, bool]] = {}
         self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setSourceModel(model)
