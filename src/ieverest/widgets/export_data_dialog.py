@@ -35,11 +35,9 @@ class ExportDataDialog(QDialog):
 
         if filename:
             keywords = [
-                k.strip() for k in str(self.keywords_txt.text()).split(",") if k != ""
+                k.strip() for k in str(self.keywords_txt.text()).split(",") if not k
             ]
-            batches = [
-                int(b) for b in str(self.batches_txt.text()).split(",") if b != ""
-            ]
+            batches = [int(b) for b in str(self.batches_txt.text()).split(",") if not b]
 
             if len(batches) == 0:
                 batches = None
