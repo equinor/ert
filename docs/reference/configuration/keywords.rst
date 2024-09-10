@@ -1929,21 +1929,20 @@ all get the name of the file as the name of the job. The
 :code:`WORKFLOW_JOB_DIRECTORY` keyword will *not* load configuration
 files recursively.
 
-Manipulating the Unix environment
----------------------------------
+Manipulating the environment variables
+--------------------------------------
 
 SETENV
 ------
 .. _setenv:
 
-You can use the SETENV keyword to alter the unix environment where ERT runs
+You can use the SETENV keyword to alter the environment variables where ERT runs
 forward models.
 
 *Example:*
 
 ::
 
-        -- Setting up LSF
         SETENV  MY_VAR          World
         SETENV  MY_OTHER_VAR    Hello$MY_VAR
 
