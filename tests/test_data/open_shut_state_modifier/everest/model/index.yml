@@ -102,5 +102,5 @@ forward_model:
 #   - eclipse100 --version 2021.3 r{{eclbase}}.DATA
 #
 #   # Calculate the objective function
-#   - npv -s r{{eclbase}}.UNSMRY -o npv_0 -c files/prices.yml -i swap_dates.json -sd 2022-06-01 -ed 2042-01-01
-#   - rf -s r{{eclbase}}.UNSMRY -o rf_0 -pk FOPT -tvk FOIP -sd 2022-06-01 -ed 2042-01-01
+#   - npv -s r{{eclbase}}.UNSMRY -o npv -c files/prices.yml -i swap_dates.json -sd 2022-06-01 -ed 2042-01-01
+#   - rf -s r{{eclbase}}.UNSMRY -o rf -pk FOPT -tvk FOIP -sd 2022-06-01 -ed 2042-01-01
