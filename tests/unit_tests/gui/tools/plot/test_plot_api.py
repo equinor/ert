@@ -17,6 +17,7 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "Summary"},
         "observations": True,
         "log_scale": False,
+        "history_vector": False,
     }
     assert fopr == PlotApiKeyDefinition(**fopr_expected)
 
@@ -28,6 +29,7 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "Summary"},
         "observations": False,
         "log_scale": False,
+        "history_vector": False,
     }
     assert bpr == PlotApiKeyDefinition(**bpr_expected)
 
@@ -41,8 +43,33 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "GEN_KW"},
         "observations": False,
         "log_scale": False,
+        "history_vector": False,
     }
     assert bpr_parameter == PlotApiKeyDefinition(**bpr_parameter_expected)
+
+    foprh = next(x for x in key_defs if x.key == "FOPRH")
+    foprh_expected = {
+        "dimensionality": 2,
+        "index_type": "VALUE",
+        "key": "FOPRH",
+        "metadata": {"data_origin": "Summary"},
+        "observations": True,
+        "log_scale": False,
+        "history_vector": True,
+    }
+    assert foprh == PlotApiKeyDefinition(**foprh_expected)
+
+    foprh = next(x for x in key_defs if x.key == "FOPRH:1,3,8")
+    foprh_expected = {
+        "dimensionality": 2,
+        "index_type": "VALUE",
+        "key": "FOPRH:1,3,8",
+        "metadata": {"data_origin": "Summary"},
+        "observations": True,
+        "log_scale": False,
+        "history_vector": True,
+    }
+    assert foprh == PlotApiKeyDefinition(**foprh_expected)
 
 
 def test_case_structure(api):
@@ -90,6 +117,8 @@ def test_all_data_type_keys(api):
         "BPR:1,3,8",
         "FOPR",
         "SNAKE_OIL_WPR_DIFF@199",
+        "FOPRH",
+        "FOPRH:1,3,8",
         "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
         "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
         "WOPPER",

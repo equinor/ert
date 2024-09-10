@@ -183,6 +183,18 @@ def mocked_requests_get(*args, **kwargs):
                 "userdata": {"data_origin": "GEN_DATA"},
                 "has_observations": False,
             },
+            "FOPRH": {
+                "name": "FOPRH",
+                "id": "id_997",
+                "userdata": {"data_origin": "Summary"},
+                "has_observations": True,
+            },
+            "FOPRH:1,3,8": {
+                "name": "FOPRH:1,3,8",
+                "id": "id_998",
+                "userdata": {"data_origin": "Summary"},
+                "has_observations": True,
+            },
         },
         "/ensembles/ens_id_3/responses": {
             "BPR:1,3,8": {

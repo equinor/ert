@@ -142,14 +142,21 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
 
         key_list = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget
         item_count = [3, 10, 45]
-
         assert key_list.model().rowCount() == sum(item_count)
+
         cbs = plot_window.findChildren(QCheckBox, "FilterCheckBox")
+        history_filter = cbs[3]
+        cbs = cbs[0:3]
 
         for i in range(len(item_count)):
             for u, cb in enumerate(cbs):
                 cb.setChecked(i == u)
 
             assert key_list.model().rowCount() in item_count
+
+        # test history vector filtering
+        assert key_list.model().rowCount() == 45
+        history_filter.setChecked(False)
+        assert key_list.model().rowCount() == 24
 
         plot_window.close()

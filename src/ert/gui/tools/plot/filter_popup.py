@@ -43,8 +43,11 @@ class FilterPopup(QDialog):
         self.__layout.addWidget(QLabel("Filter by datatype:"))
 
         filters = {k.metadata["data_origin"] for k in key_defs}
-        for f in filters:
+        for f in sorted(filters):
             self.addFilterItem(f, f)
+
+        if any(k.history_vector for k in key_defs):
+            self.addFilterItem("History Vector", "History Vector")
 
         frame.setLayout(self.__layout)
 

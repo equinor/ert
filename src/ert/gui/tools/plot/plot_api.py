@@ -33,8 +33,14 @@ PlotApiKeyDefinition = NamedTuple(
         ("dimensionality", int),
         ("metadata", Dict[Any, Any]),
         ("log_scale", bool),
+        ("history_vector", bool),
     ],
 )
+
+
+def _is_history_vector(name: str) -> bool:
+    key = name.split(":")[0]
+    return key.endswith("H") and len(key) == 5
 
 
 class PlotApi:
@@ -130,6 +136,7 @@ class PlotApi:
                             dimensionality=2,
                             metadata=value["userdata"],
                             log_scale=key.startswith("LOG10_"),
+                            history_vector=_is_history_vector(key),
                         )
 
                     response = client.get(
@@ -145,6 +152,7 @@ class PlotApi:
                             dimensionality=e["dimensionality"],
                             metadata=e["userdata"],
                             log_scale=key.startswith("LOG10_"),
+                            history_vector=_is_history_vector(key),
                         )
 
         return list(all_keys.values())

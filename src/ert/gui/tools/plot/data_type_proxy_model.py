@@ -26,12 +26,11 @@ class DataTypeProxyModel(QSortFilterProxyModel):
 
             for meta_key, values in self._metadata_filters.items():
                 for value, visible in values.items():
-                    if (
-                        not visible
-                        and meta_key in key.metadata
-                        and key.metadata[meta_key] == value
+                    if not visible and (
+                        (meta_key in key.metadata and key.metadata[meta_key] == value)
+                        or (value == "History Vector" and key.history_vector)
                     ):
-                        show = False
+                        return False
 
         return show
 
