@@ -1,27 +1,25 @@
 wells: []
 
 controls:
-- initial_guess: 0.25
-  max: 1.0
-  min: -1.0
-  name: point
-  perturbation_magnitude: 0.005
-  type: generic_control
-  variables:
-  - name: x
-    index: 0
-  - name: x
-    index: 1
-  - name: x
-    index: 2
+  - name: point
+    max: 1.0
+    min: -1.0
+    initial_guess: 0.25
+    perturbation_magnitude: 0.005
+    type: generic_control
+    variables:
+      - name: x
+        index: 0
+      - name: x
+        index: 1
+      - name: x
+        index: 2
 
 objective_functions:
-  -
-    name: distance
+  - name: distance
 
 input_constraints:
-  -
-    weights:
+  - weights:
       point.x-0: 0
       point.x-1: 0
       point.x-2: 1
@@ -37,22 +35,18 @@ output_constraints:
 
 
 install_jobs:
-  -
-    name: adv_distance3
+  - name: adv_distance3
     source: jobs/ADV_DISTANCE3
-  -
-    name: adv_dump_controls
+  - name: adv_dump_controls
     source: jobs/ADV_DUMP_CONTROLS
 
 
 forward_model:
  # Compute distance (squared and negated) between 2 points
-  - adv_distance3     --point-file point.json
-                      --target-file data/r{{ realization}}/target.json
-                      --out distance
+  - adv_distance3     --point-file point.json --target-file data/r{{ realization}}/target.json
+    --out distance
  # Write the value of each control to a separate file
-  - adv_dump_controls --controls-file point.json
-                      --out-suffix _coord
+  - adv_dump_controls --controls-file point.json --out-suffix _coord
 # Left this  here for testing/debugging purposes
 #  - sleep --min 0.1 --max 5 --fail-chance 0.5
 
@@ -60,12 +54,11 @@ forward_model:
 
 model:
   realizations: [0, 2]
-  realizations_weights: [ 0.25, 0.75]
+  realizations_weights: [0.25, 0.75]
 
 
 install_data:
-  -
-    link: false
+  - link: false
     source: r{{ configpath }}/adv_target_r{{ realization }}.json
     target: data/r{{ realization}}/target.json
 
@@ -76,7 +69,7 @@ optimization:
   algorithm: optpp_q_newton
   convergence_tolerance: 0.005
   perturbation_num: 7
-  speculative: True
+  speculative: true
 
 environment:
   log_level: debug
