@@ -87,7 +87,7 @@ def tmp(path=None, teardown=True):
 
     """
     cwd = os.getcwd()
-    fname = tempfile.NamedTemporaryFile().name
+    fname = tempfile.NamedTemporaryFile().name  # noqa: SIM115
 
     if path:
         if not os.path.isdir(path):
