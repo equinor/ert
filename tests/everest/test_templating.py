@@ -96,7 +96,7 @@ def test_render_multiple_input():
     with open(wells_out, encoding="utf-8") as fin:
         output = fin.readlines()
 
-    assert ["0.2 vs 0.8"] == output
+    assert output == ["0.2 vs 0.8"]
 
 
 @tmpdir(relpath(TMPL_TEST_PATH))

@@ -60,11 +60,10 @@ def everload_entry(args=None):
     backup_path = None
     if not os.path.isdir(storage_path):
         storage_path = None
-    else:  # storage_path exists, we may want to back it up
-        if not options.overwrite:
-            backup_path = storage_path + datetime.datetime.utcnow().strftime(
-                "__%Y-%m-%d_%H.%M.%S.%f"
-            )
+    elif not options.overwrite:
+        backup_path = storage_path + datetime.datetime.utcnow().strftime(
+            "__%Y-%m-%d_%H.%M.%S.%f"
+        )
 
     if not options.silent and not user_confirms(sim_dir, storage_path, backup_path):
         return

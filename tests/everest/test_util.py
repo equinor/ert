@@ -31,7 +31,7 @@ CONFIG_PATH = relpath("..", "..", "examples", "math_func")
 @skipif_no_opm
 def test_loadwells():
     wells = util.read_wellnames(SPE1_DATA)
-    assert ["PROD", "INJ"] == wells
+    assert wells == ["PROD", "INJ"]
 
 
 @skipif_no_opm
