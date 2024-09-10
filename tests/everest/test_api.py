@@ -368,7 +368,7 @@ def test_ropt_integration(mock_get_optimization_output_dir):
     weight_sum = sum(expected_weight)
     if weight_sum != 1:
         for obj in expected_objectives:
-            obj["weight"] = obj["weight"] / weight_sum
+            obj["weight"] /= weight_sum
 
     for obj in api.objective_values:
         res = {
@@ -391,7 +391,7 @@ def test_ropt_integration(mock_get_optimization_output_dir):
 
     expected_control_names = []
     for control in config.controls:
-        expected_control_names = expected_control_names + [
+        expected_control_names += [
             f"{control.name}_{var.name}" for var in control.variables
         ]
     assert expected_control_names == api.control_names
