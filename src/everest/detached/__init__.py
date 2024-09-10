@@ -77,8 +77,8 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         log_level=logging.INFO,
     )
 
-    global _server
-    global _context
+    global _server  # noqa: PLW0603
+    global _context  # noqa: PLW0603
     if _context and _context.running():
         raise RuntimeError(
             "Starting two instances of everest server "
@@ -106,7 +106,7 @@ def _save_running_config(config: EverestConfig):
 
 
 def context_stop_and_wait():
-    global _context  # pylint: disable=global-variable-not-assigned
+    global _context  # noqa: PLW0602
     if _context:
         _context.stop()
         while _context.running():
@@ -114,7 +114,7 @@ def context_stop_and_wait():
 
 
 def wait_for_context():
-    global _context  # pylint: disable=global-variable-not-assigned
+    global _context  # noqa: PLW0602
     if _context and _context.running():
         while _context.running():
             time.sleep(1)
