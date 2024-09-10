@@ -68,9 +68,9 @@ def parse_field_info(field_infos: Dict[str, FieldInfo]):
                 subfields = model_field.annotation.model_fields
                 parsed_subfields = parse_field_info(subfields)
             elif "everest.config" in str(model_field.annotation):
-                for cls_name in CONFIGS:
+                for cls_name, value in CONFIGS.items():
                     if cls_name in annotation:
-                        subfields = CONFIGS[cls_name].model_fields
+                        subfields = value.model_fields
                         annotation = re.sub(
                             r"List\[(.*)\.(\w+)\]", r"List[\2]", annotation
                         )
