@@ -479,7 +479,7 @@ The following illustrates an example of a forward model section of an Everest co
       - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
       - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
       - eclipse100        r{{ eclbase }} --version 2020.2
-      - rf                -s r{{ eclbase }} -o rf_0
+      - rf                -s r{{ eclbase }} -o rf
 
 The ``add_templates`` job does **NOT** need to be *installed* it is already part of the default everest jobs.
 In the example above all files present in the ``files`` folder need to be provided by the user. The ``files``
@@ -622,7 +622,7 @@ If the file is to be modified by a custom job, the everest config should contain
       - add_templates     -i wc_wells_custom.json -c files/at_config.yml -o at_wells.json
       - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
       - eclipse100        r{{ eclbase }} --version 2020.2
-      - rf                -s r{{ eclbase }} -o rf_0
+      - rf                -s r{{ eclbase }} -o rf
 
 
 ``wc_wells.json``
