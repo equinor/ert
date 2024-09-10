@@ -9,7 +9,7 @@ from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble, Storage
+    from ert.storage import Ensemble, Experiment
 
 
 class BatchSimulator:
@@ -181,7 +181,7 @@ class BatchSimulator:
         self,
         case_name: str,
         case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
-        storage: Storage,
+        experiment: Experiment,
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
@@ -240,13 +240,7 @@ class BatchSimulator:
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        experiment = storage.create_experiment(
-            parameters=self.ert_config.ensemble_config.parameter_configuration,
-            responses=self.ert_config.ensemble_config.response_configuration,
-            name=f"experiment_{case_name}",
-        )
-        ensemble = storage.create_ensemble(
-            experiment.id,
+        ensemble = experiment.create_ensemble(
             name=case_name,
             ensemble_size=self.ert_config.model_config.num_realizations,
         )
