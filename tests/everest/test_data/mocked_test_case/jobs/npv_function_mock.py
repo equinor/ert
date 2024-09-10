@@ -49,7 +49,7 @@ def compute_npv(sum):
                 fwit[i] - fwit[i - 1],
                 elapsedtime[i],
             )
-            NPV = NPV + DCF
+            NPV += DCF
             f.write(
                 "%f\t%f\t%f\t%f\t%f\t%f\n"
                 % (elapsedtime[i], fopt[i], fwpt[i], fgpt[i], fwit[i], DCF)

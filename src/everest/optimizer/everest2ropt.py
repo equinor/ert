@@ -410,7 +410,7 @@ def _parse_optimization(ever_config: EverestConfig, ropt_config):
         output_constraints = ever_config.output_constraints or None
         alg_const_tol = ever_opt.constraint_tolerance or None
         if output_constraints is not None and alg_const_tol is not None:
-            options = options + [f"constraint_tolerance = {alg_const_tol}"]
+            options += [f"constraint_tolerance = {alg_const_tol}"]
     if options:
         ropt_optimizer["options"] = options
     if backend_options:

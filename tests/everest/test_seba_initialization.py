@@ -127,7 +127,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     scaled_rhs_values = rhs_values - numpy.matmul(
         coefficients, min_values - 0.3 * (max_values - min_values) / 0.4
     )
-    coefficients = coefficients / 0.4
+    coefficients /= 0.4
     scaled_coefficients = coefficients * (max_values - min_values)
     scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0
 
