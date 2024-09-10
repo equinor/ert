@@ -53,12 +53,12 @@ def test_memory_usage_counts_grandchildren():
             import sys
             import time
 
-            counter = int(sys.argv[-1])
-            numbers = list(range(int(1e6)))
+            counter = int(sys.argv[-2])
+            numbers = list(range(int(sys.argv[-1])))
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[-2], [sys.argv[-2], str(counter - 1)])
+                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(int(1e7))])
             time.sleep(1)"""  # Too low sleep will make the test faster but flaky
             )
         )
@@ -69,7 +69,7 @@ def test_memory_usage_counts_grandchildren():
         job = Job(
             {
                 "executable": executable,
-                "argList": [str(layers)],
+                "argList": [str(layers), str(int(1e6))],
             },
             0,
         )
@@ -84,7 +84,7 @@ def test_memory_usage_counts_grandchildren():
     # comparing the memory used with different amounts of forks done.
     # subtract a little bit (* 0.9) due to natural variance in memory used
     # when running the program.
-    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e6 * 0.9
+    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e7 * 0.90
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
     assert max_seens[0] + memory_per_numbers_list < max_seens[1]
