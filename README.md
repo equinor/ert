@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="src/ert/gui/resources/gui/img/ert_icon.svg" width="200">
+<img src="https://raw.githubusercontent.com/equinor/ert/main/src/ert/gui/resources/gui/img/ert_icon.svg" width="200">
 </h1>
 
 [![Build Status](https://github.com/equinor/ert/actions/workflows/build.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/build.yml)
