@@ -27,6 +27,6 @@ def test_visualization_entry(
     opt_dir_mock,
     server_status_mock,
 ):
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         visualization_entry([CONFIG_PATH])
     assert "No visualization plugin installed!" in out.getvalue()

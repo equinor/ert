@@ -74,7 +74,7 @@ def test_everest_entry_version():
 
 def test_everest_main_entry_bad_command():
     # Setup command line arguments for the test
-    with capture_streams() as (out, err), pytest.raises(SystemExit):
+    with capture_streams() as (_, err), pytest.raises(SystemExit):
         start_everest(["everest", "bad_command"])
     lines = [line.strip() for line in err.getvalue().split("\n")]
     # Check everest run fails and correct err msg is displayed
@@ -88,7 +88,7 @@ def test_everest_main_entry_bad_command():
 def test_everest_entry_run():
     wait_for_context()
     # Setup command line arguments
-    with capture_streams() as (out, err):
+    with capture_streams():
         start_everest(["everest", "run", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
@@ -107,7 +107,7 @@ def test_everest_entry_run():
 
     context_stop_and_wait()
 
-    with capture_streams() as (out, err):
+    with capture_streams():
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
@@ -120,7 +120,7 @@ def test_everest_entry_run():
 
 @tmpdir(CONFIG_PATH)
 def test_everest_entry_monitor_no_run():
-    with capture_streams() as (out, err):
+    with capture_streams():
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
@@ -134,7 +134,7 @@ def test_everest_entry_monitor_no_run():
 @tmpdir(CONFIG_PATH)
 def test_everest_main_export_entry():
     # Setup command line arguments
-    with capture_streams() as (out, err):
+    with capture_streams():
         start_everest(["everest", "export", CONFIG_FILE_MINIMAL])
     assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
 
@@ -177,7 +177,7 @@ controls -> 0 -> initial_guess
 @pytest.mark.everest_models_test
 def test_everest_main_configdump_entry():
     # Setup command line arguments
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         start_everest(["everest", "render", WELL_ORDER])
     yaml = YAML(typ="safe", pure=True)
     render_dict = yaml.load(out.getvalue())

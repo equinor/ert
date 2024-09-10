@@ -238,7 +238,7 @@ def test_detached_mode_config_base():
 )
 @tmpdir(relpath("..", "..", "examples", "math_func"))
 def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
-    everest_config, reference = _get_reference_config()
+    everest_config, _ = _get_reference_config()
 
     simulator_config = {CK.QUEUE_SYSTEM: queue_system, CK.CORES: cores}
 

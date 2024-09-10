@@ -141,7 +141,7 @@ def test_everest_entry_detached_already_run(
 ):
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL])
     assert "--new-run" in out.getvalue()
     start_server_mock.assert_not_called()
@@ -176,7 +176,7 @@ def test_everest_entry_detached_already_run_monitor(
 ):
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL])
     assert "--new-run" in out.getvalue()
     start_monitor_mock.assert_not_called()
@@ -209,7 +209,7 @@ def test_everest_entry_detached_running(
 ):
     """Test everest detached, optimization is running"""
     # can't start a new run if one is already running
-    with capture_streams() as (out, error):
+    with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL, "--new-run"])
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
@@ -253,7 +253,7 @@ def test_everest_entry_detached_running_monitor(
 ):
     """Test everest detached, optimization is running, monitoring"""
     # Attach to a running optimization.
-    with capture_streams() as (out, error):
+    with capture_streams():
         monitor_entry([CONFIG_FILE_MINIMAL])
     start_monitor_mock.assert_called_once()
     server_is_running_mock.assert_called_once()
@@ -274,7 +274,7 @@ def test_everest_entry_monitor_no_run(
 ):
     """Test everest detached, optimization is running, monitoring"""
     # Attach to a running optimization.
-    with capture_streams() as (out, error):
+    with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL])
     assert "everest run" in out.getvalue()
     start_monitor_mock.assert_not_called()
@@ -311,7 +311,7 @@ def test_everest_entry_show_all_jobs(
 
     # Test when --show-all-jobs flag is given shell command are in the list
     # of forward model jobs
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
     for cmd in shell_commands:
         assert cmd in out.getvalue()
@@ -346,7 +346,7 @@ def test_everest_entry_no_show_all_jobs(
 
     # Test when --show-all-jobs flag is not given the shell command are not
     # in the list of forward model jobs
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL])
     for cmd in shell_commands:
         assert cmd not in out.getvalue()
@@ -382,7 +382,7 @@ def test_monitor_entry_show_all_jobs(
     # Test when --show-all-jobs flag is given shell command are in the list
     # of forward model jobs
 
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
     for cmd in shell_commands:
         assert cmd in out.getvalue()
@@ -413,7 +413,7 @@ def test_monitor_entry_no_show_all_jobs(
 
     # Test when --show-all-jobs flag is not given the shell command are not
     # in the list of forward model jobs
-    with capture_streams() as (out, err):
+    with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL])
     for cmd in shell_commands:
         assert cmd not in out.getvalue()
