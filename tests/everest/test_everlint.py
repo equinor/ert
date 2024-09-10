@@ -411,14 +411,13 @@ def test_ert_job_file():
         ("EXECUTABLE %s\n" % SNAKE_OIL_CONFIG, "(.*)_oil_all.yml is not executable"),
     ]
     for cnt, err in content:
-        tmp = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8")
-        with open(tmp.name, "w", encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as f:
             f.write(cnt)
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.INSTALL_JOBS][0][ConfigKeys.SOURCE] = tmp.name
+            config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
+            config[ConfigKeys.INSTALL_JOBS][0][ConfigKeys.SOURCE] = f.name
 
-        errors = EverestConfig.lint_config_dict(config)
-        has_error(errors, match=err)
+            errors = EverestConfig.lint_config_dict(config)
+            has_error(errors, match=err)
 
 
 def test_well_ref_validation():
