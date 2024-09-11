@@ -1,6 +1,6 @@
 import json
 import os
-
+import shutil
 import everest
 import pytest
 from ert.config import ErtConfig, QueueSystem
@@ -811,6 +811,7 @@ def test_egg_model_wells_json_output_no_none():
 @skipif_no_simulator
 @pytest.mark.simulation_test
 def test_egg_snapshot(tmp_path, snapshot, monkeypatch):
+    shutil.copytree(relpath(ROOT), tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
