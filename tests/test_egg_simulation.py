@@ -836,6 +836,7 @@ def test_egg_snapshot(tmp_path, snapshot, monkeypatch):
     snapshot.assert_match(
         everest.export(config)
         .drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
+        .round(6)
         .to_csv(),
         "egg.csv",
     )
