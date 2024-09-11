@@ -1,10 +1,14 @@
+import asyncio
+
 import pytest
 
+from _ert.async_utils import get_running_loop
 from ert import JobState, JobStatus
 from ert.simulator import BatchContext
 from tests.utils import wait_until
 
 
+@pytest.mark.timeout(15)
 @pytest.mark.parametrize(
     "success_state, failure_state, status_check_method_name",
     [
@@ -36,17 +40,32 @@ def test_simulation_context(
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]
-    even_ctx = BatchContext([], ert_config, even_half, even_mask, 0, case_data)
-    odd_ctx = BatchContext([], ert_config, odd_half, odd_mask, 0, case_data)
+    event_loop = get_running_loop()  # asyncio.get_running_loop()
+    even_ctx = BatchContext(
+        [], ert_config, even_half, even_mask, 0, case_data, _loop=event_loop
+    )
+    odd_ctx = BatchContext(
+        [], ert_config, odd_half, odd_mask, 0, case_data, _loop=event_loop
+    )
 
     for iens in range(size):
         if iens % 2 == 0:
-            assert getattr(even_ctx, status_check_method_name)(iens) != success_state
+            assert (
+                getattr(even_ctx, status_check_method_name)(iens).name
+                != success_state.name
+            )
         else:
-            assert getattr(odd_ctx, status_check_method_name)(iens) != success_state
+            assert (
+                getattr(odd_ctx, status_check_method_name)(iens).name
+                != success_state.name
+            )
 
+    async def wait_for_stopped():
+        while even_ctx.running() or odd_ctx.running():  # noqa: ASYNC110
+            await asyncio.sleep(0.5)
+
+    # event_loop.run_until_complete(wait_for_stopped())
     wait_until(lambda: not even_ctx.running() and not odd_ctx.running(), timeout=90)
-
     for iens in range(size):
         if iens % 2 == 0:
             assert even_ctx.run_args[iens].runpath.endswith(
