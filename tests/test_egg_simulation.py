@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+
 import everest
 import pytest
 from ert.config import ErtConfig, QueueSystem
