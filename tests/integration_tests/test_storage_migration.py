@@ -29,6 +29,8 @@ def copy_shared(tmp_path, block_storage_path):
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "10.3.1",
+        "10.2.8",
         "10.1.3",
         "10.0.3",
         "9.0.17",
@@ -178,6 +180,8 @@ def test_that_storage_matches(
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "10.3.1",
+        "10.2.8",
         "10.1.3",
         "10.0.3",
         "9.0.17",
