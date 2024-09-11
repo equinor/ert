@@ -811,7 +811,7 @@ def test_egg_model_wells_json_output_no_none():
 @skipif_no_simulator
 @pytest.mark.simulation_test
 def test_egg_snapshot(tmp_path, snapshot):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
     class CBTracker(object):
