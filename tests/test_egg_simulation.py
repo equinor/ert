@@ -810,7 +810,7 @@ def test_egg_model_wells_json_output_no_none():
 @pytest.mark.everest_models_test
 @skipif_no_simulator
 @pytest.mark.simulation_test
-def test_egg_snapshot(tmp_path, snapshot):
+def test_egg_snapshot(tmp_path, snapshot, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
