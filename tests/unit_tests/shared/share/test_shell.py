@@ -400,6 +400,17 @@ def test_copy_directory_error(shell):
 
     assert b"existing directory" in shell.copy_directory("hei", "target").stderr
 
+    empty_dir = "emptytestdir"
+    if not os.path.exists(empty_dir):
+        os.makedirs(empty_dir)
+
+    file_path = os.path.join(empty_dir, "file")
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("some_text")
+
+    assert b"are the same" in shell.copy_directory(empty_dir, ".").stderr
+
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_copy_file(shell):

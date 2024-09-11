@@ -32,4 +32,6 @@ if __name__ == "__main__":
     try:
         copy_directory(src_path, target_path)
     except IOError as e:
-        sys.exit(f"COPY_DIRECTORY failed with the following error: {e}")
+        sys.exit(
+            f"COPY_DIRECTORY failed with the following error: {''.join(e.args[0])}"
+        )
