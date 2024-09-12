@@ -1,5 +1,7 @@
 import asyncio
 import multiprocessing as mp
+import os
+from concurrent.futures import ProcessPoolExecutor
 import uuid
 from multiprocessing.queues import Queue
 import queue
@@ -29,8 +31,8 @@ class Experiment(BaseModel):
     args: Union[EnsembleExperimentArguments, EnsembleSmootherArguments, EvaluateEnsembleArguments, IteratedEnsembleSmootherArguments, ManualUpdateArguments, MultipleDataAssimilationArguments, SingleTestRunArguments] = Field(..., discriminator='mode')
     ert_config: ErtConfig
 
-
 mp_ctx = mp.get_context('fork')
+process_pool = ProcessPoolExecutor(max_workers=max((os.cpu_count() or 1) - 2, 1), mp_context=mp_ctx)
 app = FastAPI()
 
 
@@ -40,11 +42,10 @@ async def root():
 
 experiments : Dict[str, Tuple[BaseRunModel, "Queue[StatusEvents]"]]= {}
 
-def run_experiment(experiment_id:str, evaluator_server_config: EvaluatorServerConfig):
-    p = mp_ctx.Process(target=experiments[experiment_id][0].start_simulations_thread, args=(evaluator_server_config,))
+async def run_experiment(experiment_id:str, evaluator_server_config: EvaluatorServerConfig):
+    loop = asyncio.get_running_loop()
     print(f"Starting experiment {experiment_id}")
-    p.start()
-    p.join()
+    await loop.run_in_executor(None, lambda: experiments[experiment_id][0].start_simulations_thread(evaluator_server_config))
     print(f"Experiment {experiment_id} done")
 
 @app.post("/experiments/")
