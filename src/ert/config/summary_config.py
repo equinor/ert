@@ -3,9 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Set, Union, no_type_check
-
-import xarray as xr
+from typing import TYPE_CHECKING, Any, Optional, Set, Union, no_type_check
 
 from ._read_summary import read_summary
 from .ensemble_config import Refcase
@@ -18,6 +16,7 @@ if TYPE_CHECKING:
     from typing import List
 
 logger = logging.getLogger(__name__)
+import polars
 
 
 @dataclass
@@ -37,7 +36,7 @@ class SummaryConfig(ResponseConfig):
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
-    def read_from_file(self, run_path: str, iens: int) -> xr.Dataset:
+    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:
         filename = self.input_files[0].replace("<IENS>", str(iens))
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
         if len(data) == 0 or len(keys) == 0:
@@ -47,15 +46,27 @@ class SummaryConfig(ResponseConfig):
             raise ValueError(
                 f"Did not find any summary values matching {self.keys} in {filename}"
             )
-        ds = xr.Dataset(
-            {"values": (["name", "time"], data)},
-            coords={"time": time_map, "name": keys},
+
+        # Important: Pick lowest unit resolution to allow for using
+        # datetimes many years into the future
+        time_map_series = polars.Series(time_map).dt.cast_time_unit("ms")
+        df = polars.DataFrame(
+            {
+                "response_key": keys,
+                "time": [time_map_series for _ in data],
+                "values": [polars.Series(row, dtype=polars.Float32) for row in data],
+            }
         )
-        return ds.drop_duplicates("time")
+        df = df.explode("values", "time")
+        return df
 
     @property
     def response_type(self) -> str:
         return "summary"
+
+    @property
+    def primary_key(self) -> List[str]:
+        return ["time"]
 
     @no_type_check
     @classmethod
@@ -86,6 +97,13 @@ class SummaryConfig(ResponseConfig):
             )
 
         return None
+
+    @classmethod
+    def display_column(cls, value: Any, column_name: str) -> str:
+        if column_name == "time":
+            return value.strftime("%Y-%m-%d")
+
+        return str(value)
 
 
 responses_index.add_response_type(SummaryConfig)

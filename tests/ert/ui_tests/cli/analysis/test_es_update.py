@@ -4,19 +4,50 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import polars
 import pytest
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
 from ert.analysis._es_update import _all_parameters
-from ert.config import ErtConfig
+from ert.config import ErtConfig, GenKwConfig
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
+@pytest.fixture
+def uniform_parameter():
+    return GenKwConfig(
+        name="PARAMETER",
+        forward_init=False,
+        template_file="",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+        ],
+        output_file="kw.txt",
+        update=True,
+    )
+
+
+@pytest.fixture
+def obs() -> polars.DataFrame:
+    return polars.DataFrame(
+        {
+            "response_key": "RESPONSE",
+            "observation_key": "OBSERVATION",
+            "report_step": polars.Series(np.full(3, 0), dtype=polars.UInt16),
+            "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
+            "observations": polars.Series([1.0, 1.0, 1.0], dtype=polars.Float32),
+            "std": polars.Series([0.1, 1.0, 10.0], dtype=polars.Float32),
+        }
+    )
+
+
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
@@ -52,6 +83,7 @@ def test_that_posterior_has_lower_variance_than_prior():
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     """This is a regression test to make sure ert does not use the wrong order
@@ -127,6 +159,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_update_multiple_param():
     run_cli(

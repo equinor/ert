@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 import pandas as pd
+import polars
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -22,9 +23,13 @@ class ResponseError(Exception):
 
 
 class MeasuredData:
-    def __init__(self, ensemble: Ensemble, keys: Optional[List[str]] = None):
+    def __init__(
+        self,
+        ensemble: Ensemble,
+        keys: Optional[List[str]] = None,
+    ):
         if keys is None:
-            keys = sorted(ensemble.experiment.observations.keys())
+            keys = sorted(ensemble.experiment.observation_keys)
         if not keys:
             raise ObservationError("No observation keys provided")
 
@@ -86,75 +91,94 @@ class MeasuredData:
         observed standard deviation will be named STD.
         """
 
-        measured_data = []
-        observations = ensemble.experiment.observations
+        observations_by_type = ensemble.experiment.observations
+
+        dfs = []
+
         for key in observation_keys:
-            obs = observations.get(key)
-            if not obs:
+            if key not in ensemble.experiment.observation_keys:
                 raise ObservationError(
                     f"No observation: {key} in ensemble: {ensemble.name}"
                 )
-            group = obs.attrs["response"]
-            try:
-                response = ensemble.load_responses(
-                    group,
-                    tuple(ensemble.get_realization_list_with_responses()),
+
+        for (
+            response_type,
+            response_cls,
+        ) in ensemble.experiment.response_configuration.items():
+            observations_for_type = observations_by_type[response_type].filter(
+                polars.col("observation_key").is_in(observation_keys)
+            )
+            responses_for_type = ensemble.load_responses(
+                response_type,
+                realizations=tuple(
+                    ensemble.get_realization_list_with_responses(response_type)
+                ),
+            )
+
+            # Note that if there are duplicate entries for one
+            # response at one index, they are aggregated together
+            # with "mean" by default
+            pivoted = responses_for_type.pivot(
+                on="realization",
+                index=["response_key", *response_cls.primary_key],
+                aggregate_function="mean",
+            )
+
+            if "time" in pivoted:
+                joined = observations_for_type.join_asof(
+                    pivoted,
+                    by=["response_key", *response_cls.primary_key],
+                    on="time",
+                    tolerance="1s",
                 )
-                _msg = f"No response loaded for observation key: {key}"
-                if not response:
-                    raise ResponseError(_msg)
-            except KeyError as e:
-                raise ResponseError(_msg) from e
-            ds = obs.merge(
-                response,
-                join="left",
-            )
-            data = np.vstack(
-                [
-                    ds.observations.values.ravel(),
-                    ds["std"].values.ravel(),
-                    ds["values"].values.reshape(len(ds.realization), -1),
-                ]
-            )
-
-            if "time" in ds.coords:
-                ds = ds.rename(time="key_index")
-                ds = ds.assign_coords({"name": [key]})
-
-                data_index = []
-                for observation_date in obs.time.values:
-                    if observation_date in response.indexes["time"]:
-                        data_index.append(
-                            response.indexes["time"].get_loc(observation_date)
-                        )
-                    else:
-                        data_index.append(np.nan)
-
-                index_vals = ds.observations.coords.to_index(
-                    ["name", "key_index"]
-                ).values
-
             else:
-                ds = ds.expand_dims({"name": [key]})
-                ds = ds.rename(index="key_index")
-                data_index = ds.key_index.values
-                index_vals = ds.observations.coords.to_index().droplevel("report_step")
+                joined = observations_for_type.join(
+                    pivoted,
+                    how="left",
+                    on=["response_key", *response_cls.primary_key],
+                )
 
-            index_vals = [
-                (name, data_i, i) for i, (name, data_i) in zip(data_index, index_vals)
-            ]
-            measured_data.append(
-                pd.DataFrame(
-                    data,
-                    index=("OBS", "STD", *ds.realization.values),
-                    columns=pd.MultiIndex.from_tuples(
-                        index_vals,
-                        names=[None, "key_index", "data_index"],
-                    ),
+            joined = joined.sort(by="observation_key").with_columns(
+                polars.concat_str(response_cls.primary_key, separator=", ").alias(
+                    "key_index"
                 )
             )
 
-        return pd.concat(measured_data, axis=1)
+            # Put key_index column 1st
+            joined = joined[["key_index", *joined.columns[:-1]]]
+            joined = joined.drop(*response_cls.primary_key)
+
+            if not joined.is_empty():
+                dfs.append(joined)
+
+        df = polars.concat(dfs)
+        df = df.rename(
+            {
+                "observations": "OBS",
+                "std": "STD",
+            }
+        )
+
+        pddf = df.to_pandas()[
+            [
+                "observation_key",
+                "key_index",
+                "OBS",
+                "STD",
+                *df.columns[5:],
+            ]
+        ]
+
+        # Pandas differentiates vs int and str keys.
+        # Legacy-wise we use int keys for realizations
+        pddf.rename(
+            columns={str(k): int(k) for k in range(ensemble.ensemble_size)},
+            inplace=True,
+        )
+
+        pddf = pddf.set_index(["observation_key", "key_index"]).transpose()
+
+        return pddf
 
 
 class ObservationError(Exception):

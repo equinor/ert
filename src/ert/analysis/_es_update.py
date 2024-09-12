@@ -18,7 +18,7 @@ from typing import (
 
 import iterative_ensemble_smoother as ies
 import numpy as np
-import pandas as pd
+import polars
 import psutil
 from iterative_ensemble_smoother.experimental import (
     AdaptiveESMDA,
@@ -153,56 +153,75 @@ def _get_observations_and_responses(
     observation_values = []
     observation_errors = []
     indexes = []
-    observations = ensemble.experiment.observations
-    for obs in selected_observations:
-        observation = observations[obs]
-        group = observation.attrs["response"]
-        all_responses = ensemble.load_responses(group, tuple(iens_active_index))
-        if "time" in observation.coords:
-            all_responses = all_responses.reindex(
-                time=observation.time,
-                method="nearest",
+    observations_by_type = ensemble.experiment.observations
+    for (
+        response_type,
+        response_cls,
+    ) in ensemble.experiment.response_configuration.items():
+        if response_type not in observations_by_type:
+            continue
+
+        observations_for_type = observations_by_type[response_type].filter(
+            polars.col("observation_key").is_in(list(selected_observations))
+        )
+        responses_for_type = ensemble.load_responses(
+            response_type, realizations=tuple(iens_active_index)
+        )
+
+        # Note that if there are duplicate entries for one
+        # response at one index, they are aggregated together
+        # with "mean" by default
+        pivoted = responses_for_type.pivot(
+            on="realization",
+            index=["response_key", *response_cls.primary_key],
+            aggregate_function="mean",
+        )
+
+        # Note2reviewer:
+        # We need to either assume that if there is a time column
+        # we will approx-join that, or we could specify in response configs
+        # that there is a column that requires an approx "asof" join.
+        # Suggest we simplify and assume that there is always only
+        # one "time" column, which we will reindex towards the response dataset
+        # with a given resolution
+        if "time" in pivoted:
+            joined = observations_for_type.join_asof(
+                pivoted,
+                by=["response_key", *response_cls.primary_key],
+                on="time",
                 tolerance="1s",
             )
-        try:
-            observations_and_responses = observation.merge(all_responses, join="left")
-        except KeyError as e:
-            raise ErtAnalysisError(
-                f"Mismatched index for: "
-                f"Observation: {obs} attached to response: {group}"
-            ) from e
-
-        observation_keys.append([obs] * observations_and_responses["observations"].size)
-
-        if group == "summary":
-            indexes.append(
-                [
-                    np.datetime_as_string(e, unit="s")
-                    for e in observations_and_responses["time"].data
-                ]
-            )
         else:
-            indexes.append(
-                [
-                    f"{e[0]}, {e[1]}"
-                    for e in zip(
-                        list(observations_and_responses["report_step"].data)
-                        * len(observations_and_responses["index"].data),
-                        observations_and_responses["index"].data,
-                    )
-                ]
+            joined = observations_for_type.join(
+                pivoted,
+                how="left",
+                on=["response_key", *response_cls.primary_key],
             )
 
-        observation_values.append(
-            observations_and_responses["observations"].data.ravel()
-        )
-        observation_errors.append(observations_and_responses["std"].data.ravel())
+        joined = joined.sort(by="observation_key")
 
-        filtered_responses.append(
-            observations_and_responses["values"]
-            .transpose(..., "realization")
-            .values.reshape((-1, len(observations_and_responses.realization)))
-        )
+        index_1d = joined.with_columns(
+            polars.concat_str(response_cls.primary_key, separator=", ").alias("index")
+        )["index"].to_numpy()
+
+        obs_keys_1d = joined["observation_key"].to_numpy()
+        obs_values_1d = joined["observations"].to_numpy()
+        obs_errors_1d = joined["std"].to_numpy()
+
+        # 4 columns are always there:
+        # [ response_key, observation_key, observations, std ]
+        # + one column per "primary key" column
+        num_non_response_value_columns = 4 + len(response_cls.primary_key)
+        responses = joined.select(
+            joined.columns[num_non_response_value_columns:]
+        ).to_numpy()
+
+        filtered_responses.append(responses)
+        observation_keys.append(obs_keys_1d)
+        observation_values.append(obs_values_1d)
+        observation_errors.append(obs_errors_1d)
+        indexes.append(index_1d)
+
     ensemble.load_responses.cache_clear()
     return (
         np.concatenate(filtered_responses),
@@ -288,12 +307,14 @@ def _load_observations_and_responses(
             scaling[obs_group_mask] *= scaling_factors
 
             scaling_factors_dfs.append(
-                pd.DataFrame(
-                    data={
+                polars.DataFrame(
+                    {
                         "input_group": [", ".join(input_group)] * len(scaling_factors),
                         "index": indexes[obs_group_mask],
                         "obs_key": obs_keys[obs_group_mask],
-                        "scaling_factor": scaling_factors,
+                        "scaling_factor": polars.Series(
+                            scaling_factors, dtype=polars.Float32
+                        ),
                     }
                 )
             )
@@ -322,10 +343,8 @@ def _load_observations_and_responses(
                 )
             )
 
-        scaling_factors_df = pd.concat(scaling_factors_dfs).set_index(
-            ["input_group", "obs_key", "index"], verify_integrity=True
-        )
-        ensemble.save_observation_scaling_factors(scaling_factors_df.to_xarray())
+        scaling_factors_df = polars.concat(scaling_factors_dfs)
+        ensemble.save_observation_scaling_factors(scaling_factors_df)
 
         # Recompute with updated scales
         scaled_errors = errors * scaling

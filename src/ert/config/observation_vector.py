@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Iterable, List, Union
 
-import xarray as xr
+import numpy as np
 
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .general_observation import GenObservation
@@ -11,6 +11,8 @@ from .summary_observation import SummaryObservation
 
 if TYPE_CHECKING:
     from datetime import datetime
+
+import polars
 
 
 @dataclass
@@ -27,28 +29,38 @@ class ObsVector:
     def __len__(self) -> int:
         return len(self.observations)
 
-    def to_dataset(self, active_list: List[int]) -> xr.Dataset:
+    def to_dataset(self, active_list: List[int]) -> polars.DataFrame:
         if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
-            datasets = []
+            dataframes = []
             for time_step, node in self.observations.items():
                 if active_list and time_step not in active_list:
                     continue
 
                 assert isinstance(node, GenObservation)
-                datasets.append(
-                    xr.Dataset(
+                dataframes.append(
+                    polars.DataFrame(
                         {
-                            "observations": (["report_step", "index"], [node.values]),
-                            "std": (["report_step", "index"], [node.stds]),
-                        },
-                        coords={"index": node.indices, "report_step": [time_step]},
+                            "response_key": self.data_key,
+                            "observation_key": self.observation_key,
+                            "report_step": polars.Series(
+                                np.full(len(node.indices), time_step),
+                                dtype=polars.UInt16,
+                            ),
+                            "index": polars.Series(node.indices, dtype=polars.UInt16),
+                            "observations": polars.Series(
+                                node.values, dtype=polars.Float32
+                            ),
+                            "std": polars.Series(node.stds, dtype=polars.Float32),
+                        }
                     )
                 )
-            combined = xr.combine_by_coords(datasets)
-            combined.attrs["response"] = self.data_key
-            return combined  # type: ignore
+
+            combined = polars.concat(dataframes)
+            return combined
         elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
             observations = []
+            actual_response_key = self.observation_key
+            actual_observation_keys = []
             errors = []
             dates = list(self.observations.keys())
             if active_list:
@@ -57,15 +69,20 @@ class ObsVector:
             for time_step in dates:
                 n = self.observations[time_step]
                 assert isinstance(n, SummaryObservation)
+                actual_observation_keys.append(n.observation_key)
                 observations.append(n.value)
                 errors.append(n.std)
-            return xr.Dataset(
+
+            dates_series = polars.Series(dates).dt.cast_time_unit("ms")
+
+            return polars.DataFrame(
                 {
-                    "observations": (["name", "time"], [observations]),
-                    "std": (["name", "time"], [errors]),
-                },
-                coords={"time": dates, "name": [self.observation_key]},
-                attrs={"response": "summary"},
+                    "response_key": actual_response_key,
+                    "observation_key": actual_observation_keys,
+                    "time": dates_series,
+                    "observations": polars.Series(observations, dtype=polars.Float32),
+                    "std": polars.Series(errors, dtype=polars.Float32),
+                }
             )
         else:
             raise ValueError(f"Unknown observation type {self.observation_type}")

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 from uuid import UUID
 
 import numpy as np
-import xarray as xr
+import polars
 import xtgeo
 from pydantic import BaseModel
 
@@ -89,7 +89,7 @@ class LocalExperiment(BaseMode):
         *,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, xr.Dataset]] = None,
+        observations: Optional[Dict[str, polars.DataFrame]] = None,
         simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
@@ -108,7 +108,7 @@ class LocalExperiment(BaseMode):
             List of parameter configurations.
         responses : list of ResponseConfig, optional
             List of response configurations.
-        observations : dict of str: xr.Dataset, optional
+        observations : dict of str: polars.DataFrame, optional
             Observations dictionary.
         simulation_arguments : SimulationArguments, optional
             Simulation arguments for the experiment.
@@ -145,8 +145,10 @@ class LocalExperiment(BaseMode):
         if observations:
             output_path = path / "observations"
             output_path.mkdir()
-            for obs_name, dataset in observations.items():
-                storage._to_netcdf_transaction(output_path / f"{obs_name}", dataset)
+            for response_type, dataset in observations.items():
+                storage._to_parquet_transaction(
+                    output_path / f"{response_type}", dataset
+                )
 
         simulation_data = simulation_arguments if simulation_arguments else {}
         storage._write_transaction(
@@ -309,12 +311,24 @@ class LocalExperiment(BaseMode):
         return [p.name for p in self.parameter_configuration.values() if p.update]
 
     @cached_property
-    def observations(self) -> Dict[str, xr.Dataset]:
+    def observations(self) -> Dict[str, polars.DataFrame]:
         observations = sorted(self.mount_point.glob("observations/*"))
         return {
-            observation.name: xr.open_dataset(observation, engine="scipy")
+            observation.name: polars.read_parquet(f"{observation}")
             for observation in observations
         }
+
+    @cached_property
+    def observation_keys(self) -> List[str]:
+        """
+        Gets all \"name\" values for all observations. I.e.,
+        the summary keyword, the gen_data observation name etc.
+        """
+        keys: List[str] = []
+        for df in self.observations.values():
+            keys.extend(df["observation_key"].unique())
+
+        return sorted(keys)
 
     @cached_property
     def response_key_to_response_type(self) -> Dict[str, str]:

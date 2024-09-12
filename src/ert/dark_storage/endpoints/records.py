@@ -14,6 +14,7 @@ from ert.dark_storage.common import (
     gen_data_keys,
     get_observation_keys_for_response,
     get_observations_for_obs_keys,
+    response_key_to_displayed_key,
 )
 from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
@@ -37,6 +38,7 @@ async def get_record_observations(
     obs_keys = get_observation_keys_for_response(ensemble, response_name)
     obss = get_observations_for_obs_keys(ensemble, obs_keys)
 
+    obss.sort(key=lambda x: x["name"])
     if not obss:
         return []
 
@@ -110,15 +112,23 @@ def get_ensemble_responses(
     ensemble = storage.get_ensemble(ensemble_id)
 
     response_names_with_observations = set()
-    for dataset in ensemble.experiment.observations.values():
-        if dataset.attrs["response"] == "summary" and "name" in dataset.coords:
-            response_name = dataset.name.values.flatten()[0]
-            response_names_with_observations.add(response_name)
-        else:
-            response_name = dataset.attrs["response"]
-            if "report_step" in dataset.coords:
-                report_step = dataset.report_step.values.flatten()[0]
-            response_names_with_observations.add(response_name + "@" + str(report_step))
+    observations = ensemble.experiment.observations
+
+    for (
+        response_type,
+        response_config,
+    ) in ensemble.experiment.response_configuration.items():
+        if response_type in observations:
+            obs_ds = observations[response_type]
+            display_key_fn = response_key_to_displayed_key[response_type]
+            obs_with_responses = (
+                obs_ds.select(["response_key", *response_config.primary_key])
+                .map_rows(display_key_fn)
+                .unique()
+                .to_series()
+                .to_list()
+            )
+            response_names_with_observations.update(set(obs_with_responses))
 
     for name in ensemble.get_summary_keyset():
         response_map[str(name)] = js.RecordOut(

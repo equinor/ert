@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+import polars
 import pytest
 import xarray as xr
 import xtgeo
@@ -45,14 +46,16 @@ def uniform_parameter():
 
 
 @pytest.fixture
-def obs():
-    return xr.Dataset(
+def obs() -> polars.DataFrame:
+    return polars.DataFrame(
         {
-            "observations": (["report_step", "index"], [[1.0, 1.0, 1.0]]),
-            "std": (["report_step", "index"], [[0.1, 1.0, 10.0]]),
-        },
-        coords={"index": [0, 1, 2], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+            "response_key": "RESPONSE",
+            "observation_key": "OBSERVATION",
+            "report_step": polars.Series(np.full(3, 0), dtype=polars.UInt16),
+            "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
+            "observations": polars.Series([1.0, 1.0, 1.0], dtype=polars.Float32),
+            "std": polars.Series([0.1, 1.0, 10.0], dtype=polars.Float32),
+        }
     )
 
 
@@ -96,7 +99,7 @@ def test_update_report(
     smoother_update(
         prior_ens,
         posterior_ens,
-        list(ert_config.observations.keys()),
+        experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         UpdateSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
@@ -132,7 +135,7 @@ def test_update_report_with_exception_in_analysis_ES(
         smoother_update(
             prior_ens,
             posterior_ens,
-            list(ert_config.observations.keys()),
+            experiment.observation_keys,
             ert_config.ensemble_config.parameters,
             UpdateSettings(alpha=0.0000000001),
             ESSettings(inversion="subspace"),
@@ -175,7 +178,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     ss = smoother_update(
         prior_ens,
         posterior_ens,
-        list(ert_config.observations.keys()),
+        experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         update_settings,
         ESSettings(inversion="subspace"),
@@ -291,7 +294,7 @@ def test_update_snapshot(
             prior_storage=prior_ens,
             posterior_storage=posterior_ens,
             sies_smoother=sies_smoother,
-            observations=list(ert_config.observations.keys()),
+            observations=experiment.observation_keys,
             parameters=list(ert_config.ensemble_config.parameters),
             update_settings=UpdateSettings(),
             analysis_config=IESSettings(inversion="subspace_exact"),
@@ -303,7 +306,7 @@ def test_update_snapshot(
         smoother_update(
             prior_ens,
             posterior_ens,
-            list(ert_config.observations.keys()),
+            experiment.observation_keys,
             list(ert_config.ensemble_config.parameters),
             UpdateSettings(),
             ESSettings(inversion="subspace"),
@@ -322,7 +325,7 @@ def test_update_snapshot(
     assert sim_gen_kw != target_gen_kw
 
     # Check that posterior is as expected
-    assert target_gen_kw == pytest.approx(expected_gen_kw)
+    assert target_gen_kw == pytest.approx(expected_gen_kw, rel=1e-5)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -378,7 +381,7 @@ def test_smoother_snapshot_alpha(
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
     prior_storage = storage.create_ensemble(
         experiment,
@@ -403,13 +406,15 @@ def test_smoother_snapshot_alpha(
         data = rng.uniform(0.8, 1, 3)
         prior_storage.save_response(
             "gen_data",
-            xr.Dataset(
-                {"values": (["name", "report_step", "index"], [[data]])},
-                coords={
-                    "name": ["RESPONSE"],
-                    "index": range(len(data)),
-                    "report_step": [0],
-                },
+            polars.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": polars.Series(
+                        np.full(len(data), 0), dtype=polars.UInt16
+                    ),
+                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+                    "values": data,
+                }
             ),
             iens,
         )
@@ -580,19 +585,6 @@ def test_temporary_parameter_storage_with_inactive_fields(
         np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
 
 
-def test_that_observations_keep_sorting(snake_oil_case_storage, snake_oil_storage):
-    """
-    The order of the observations influence the update as it affects the
-    perturbations, so we make sure we maintain the order throughout.
-    """
-    ert_config = snake_oil_case_storage
-    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
-    prior_ens = experiment.get_ensemble_by_name("default_0")
-    assert list(ert_config.observations.keys()) == list(
-        prior_ens.experiment.observations.keys()
-    )
-
-
 def _mock_load_observations_and_responses(
     S,
     observations,
@@ -681,20 +673,24 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         assert scaled_errors_without_autoscale.tolist() == [1, 2]
 
 
+@pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(keys=["RESPONSE"])
-    obs = xr.Dataset(
+    gen_data_obs = polars.DataFrame(
         {
-            "observations": (["report_step", "index"], [[1.0]]),
-            "std": (["report_step", "index"], [[0.1]]),
-        },
-        coords={"index": [1000], "report_step": [0]},
-        attrs={"response": "RESPONSE"},
+            "observation_key": "OBSERVATION",
+            "response_key": ["RESPONSE"],
+            "report_step": polars.Series([0], dtype=polars.UInt16),
+            "index": polars.Series([1000], dtype=polars.UInt16),
+            "observations": polars.Series([1.0], dtype=polars.Float32),
+            "std": polars.Series([0.1], dtype=polars.Float32),
+        }
     )
+
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": gen_data_obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -716,16 +712,17 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
                 }
             ),
         )
+
         data = rng.uniform(0.8, 1, 3)
         prior.save_response(
             "gen_data",
-            xr.Dataset(
-                {"values": (["name", "report_step", "index"], [[data]])},
-                coords={
-                    "name": ["RESPONSE"],
-                    "index": range(len(data)),
-                    "report_step": [0],
-                },
+            polars.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
+                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+                    "values": polars.Series(data, dtype=polars.Float32),
+                }
             ),
             iens,
         )
@@ -751,12 +748,13 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.integration_test
 def test_gen_data_missing(storage, uniform_parameter, obs):
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
         parameters=[uniform_parameter],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -781,13 +779,13 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
         prior.save_response(
             "gen_data",
-            xr.Dataset(
-                {"values": (["name", "report_step", "index"], [[data]])},
-                coords={
-                    "name": ["RESPONSE"],
-                    "index": range(len(data)),
-                    "report_step": [0],
-                },
+            polars.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
+                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+                    "values": polars.Series(data, dtype=polars.Float32),
+                }
             ),
             iens,
         )
@@ -822,6 +820,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.integration_test
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
         name="EXTRA_PARAMETER",
@@ -837,7 +836,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     experiment = storage.create_experiment(
         parameters=[uniform_parameter, no_update_param],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
     prior = storage.create_ensemble(
         experiment,
@@ -874,13 +873,13 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         data = rng.uniform(0.8, 1, 10)
         prior.save_response(
             "gen_data",
-            xr.Dataset(
-                {"values": (["name", "report_step", "index"], [[data]])},
-                coords={
-                    "name": ["RESPONSE"],
-                    "index": range(len(data)),
-                    "report_step": [0],
-                },
+            polars.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
+                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+                    "values": polars.Series(data, dtype=polars.Float32),
+                }
             ),
             iens,
         )

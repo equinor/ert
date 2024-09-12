@@ -28,6 +28,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+import polars
+
 
 class _Index(BaseModel):
     id: UUID
@@ -301,9 +303,9 @@ class LocalEnsemble(BaseMode):
         def _has_response(_key: str) -> bool:
             if _key in self.experiment.response_key_to_response_type:
                 _response_type = self.experiment.response_key_to_response_type[_key]
-                return (path / f"{_response_type}.nc").exists()
+                return (path / f"{_response_type}.parquet").exists()
 
-            return (path / f"{_key}.nc").exists()
+            return (path / f"{_key}.parquet").exists()
 
         if key:
             return _has_response(key)
@@ -351,7 +353,7 @@ class LocalEnsemble(BaseMode):
             i
             for i in range(self.ensemble_size)
             if all(
-                (self._realization_dir(i) / f"{response}.nc").exists()
+                (self._realization_dir(i) / f"{response}.parquet").exists()
                 for response in self.experiment.response_configuration
             )
         ]
@@ -515,7 +517,8 @@ class LocalEnsemble(BaseMode):
                 "summary",
                 tuple(self.get_realization_list_with_responses("summary")),
             )
-            return sorted(summary_data["name"].values)
+
+            return sorted(summary_data["response_key"].unique().to_list())
         except (ValueError, KeyError):
             return []
 
@@ -590,19 +593,17 @@ class LocalEnsemble(BaseMode):
         return xr.open_dataset(input_path, engine="scipy")
 
     @require_write
-    def save_observation_scaling_factors(self, dataset: xr.Dataset) -> None:
-        self._storage._to_netcdf_transaction(
-            self.mount_point / "observation_scaling_factors.nc", dataset
+    def save_observation_scaling_factors(self, dataset: polars.DataFrame) -> None:
+        self._storage._to_parquet_transaction(
+            self.mount_point / "observation_scaling_factors.parquet", dataset
         )
 
     def load_observation_scaling_factors(
         self,
-    ) -> Optional[xr.Dataset]:
-        ds_path = self.mount_point / "observation_scaling_factors.nc"
+    ) -> Optional[polars.DataFrame]:
+        ds_path = self.mount_point / "observation_scaling_factors.parquet"
         if ds_path.exists():
-            return xr.load_dataset(
-                self.mount_point / "observation_scaling_factors.nc", engine="scipy"
-            )
+            return polars.read_parquet(ds_path)
 
         return None
 
@@ -625,7 +626,7 @@ class LocalEnsemble(BaseMode):
         self._storage._to_netcdf_transaction(file_path, dataset)
 
     @lru_cache  # noqa: B019
-    def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
+    def load_responses(self, key: str, realizations: Tuple[int]) -> polars.DataFrame:
         """Load responses for key and realizations into xarray Dataset.
 
         For each given realization, response data is loaded from the NetCDF
@@ -640,8 +641,8 @@ class LocalEnsemble(BaseMode):
 
         Returns
         -------
-        responses : Dataset
-            Loaded xarray Dataset with responses.
+        responses : DataFrame
+            Loaded polars DataFrame with responses.
         """
 
         select_key = False
@@ -655,16 +656,17 @@ class LocalEnsemble(BaseMode):
 
         loaded = []
         for realization in realizations:
-            input_path = self._realization_dir(realization) / f"{response_type}.nc"
+            input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
                 raise KeyError(f"No response for key {key}, realization: {realization}")
-            ds = xr.open_dataset(input_path, engine="scipy")
+            df = polars.read_parquet(input_path)
 
             if select_key:
-                ds = ds.sel(name=key, drop=True)
+                df = df.filter(polars.col("response_key") == key)
 
-            loaded.append(ds)
-        return xr.combine_nested(loaded, concat_dim="realization")
+            loaded.append(df)
+
+        return polars.concat(loaded) if loaded else polars.DataFrame()
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
@@ -696,23 +698,28 @@ class LocalEnsemble(BaseMode):
         summary_keys = self.get_summary_keyset()
 
         try:
-            df = self.load_responses("summary", tuple(realizations)).to_dataframe(
-                dim_order=["time", "name", "realization"]
-            )
+            df_pl = self.load_responses("summary", tuple(realizations))
+
         except (ValueError, KeyError):
             return pd.DataFrame()
+        df_pl = df_pl.pivot(
+            on="response_key", index=["realization", "time"], sort_columns=True
+        )
+        df_pl = df_pl.rename({"time": "Date", "realization": "Realization"})
 
-        df = df.unstack(level="name")
-        df.columns = [col[1] for col in df.columns.values]
-        df.index = df.index.rename(
-            {"time": "Date", "realization": "Realization"}
-        ).reorder_levels(["Realization", "Date"])
+        df_pandas = (
+            df_pl.to_pandas()
+            .set_index(["Realization", "Date"])
+            .sort_values(by=["Date", "Realization"])
+        )
+
         if keys:
             summary_keys = sorted(
                 [key for key in keys if key in summary_keys]
             )  # ignore keys that doesn't exist
-            return df[summary_keys]
-        return df
+            return df_pandas[summary_keys]
+
+        return df_pandas
 
     def load_all_gen_kw_data(
         self,
@@ -828,7 +835,7 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_response(
-        self, response_type: str, data: xr.Dataset, realization: int
+        self, response_type: str, data: polars.DataFrame, realization: int
     ) -> None:
         """
         Save dataset as response under group and realization index.
@@ -839,27 +846,35 @@ class LocalEnsemble(BaseMode):
             A name for the type of response stored, e.g., "summary, or "gen_data".
         realization : int
             Realization index for saving group.
-        data : Dataset
-            Dataset to save.
+        data : polars DataFrame
+            polars DataFrame to save.
         """
 
-        if "values" not in data.variables:
+        if "values" not in data.columns:
             raise ValueError(
                 f"Dataset for response group '{response_type}' "
                 f"must contain a 'values' variable"
             )
 
-        if data["values"].size == 0:
+        if len(data) == 0:
             raise ValueError(
                 f"Responses {response_type} are empty. Cannot proceed with saving to storage."
             )
 
-        if "realization" not in data.dims:
-            data = data.expand_dims({"realization": [realization]})
+        if "realization" not in data.columns:
+            data.insert_column(
+                0,
+                polars.Series(
+                    "realization", np.full(len(data), realization), dtype=polars.UInt16
+                ),
+            )
+
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
-        self._storage._to_netcdf_transaction(output_path / f"{response_type}.nc", data)
+        self._storage._to_parquet_transaction(
+            output_path / f"{response_type}.parquet", data
+        )
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
@@ -885,7 +900,7 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization)
         return {
             e: RealizationStorageState.HAS_DATA
-            if (path / f"{e}.nc").exists()
+            if (path / f"{e}.parquet").exists()
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.response_configuration
         }

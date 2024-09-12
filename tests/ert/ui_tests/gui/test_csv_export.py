@@ -73,7 +73,7 @@ def verify_exported_content(file_name, gui, ensemble_select):
 
         for i in range(ensemble.ensemble_size):
             assert (
-                f",{name},{gen_kw_data.iloc[i]['COEFFS:a']},{gen_kw_data.iloc[i]['COEFFS:b']},{gen_kw_data.iloc[i]['COEFFS:c']},{misfit_data.iloc[i]['MISFIT:POLY_OBS']},{misfit_data.iloc[i]['MISFIT:TOTAL']}"
+                f",{name},{gen_kw_data.iloc[i]['COEFFS:a']:.6f},{gen_kw_data.iloc[i]['COEFFS:b']:.6f},{gen_kw_data.iloc[i]['COEFFS:c']:.6f},{misfit_data.iloc[i]['MISFIT:POLY_OBS']:.6f},{misfit_data.iloc[i]['MISFIT:TOTAL']:.6f}"
                 in file_content
             )
 

@@ -2,7 +2,7 @@ import dataclasses
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-import xarray as xr
+import polars
 from typing_extensions import Self
 
 from ert.config.parameter_config import CustomDict
@@ -16,7 +16,7 @@ class ResponseConfig(ABC):
     keys: List[str] = dataclasses.field(default_factory=list)
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int) -> xr.Dataset: ...
+    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame: ...
 
     def to_dict(self) -> Dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)
@@ -35,9 +35,20 @@ class ResponseConfig(ABC):
         Must not overlap with that of other response configs."""
         ...
 
+    @property
+    @abstractmethod
+    def primary_key(self) -> List[str]:
+        """Primary key of this response data.
+        For example 'time' for summary and ['index','report_step'] for gen data"""
+
     @classmethod
     @abstractmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Optional[Self]:
         """Creates a config, given an ert config dict.
         A response config may depend on several config kws, such as REFCASE
         for summary."""
+
+    @classmethod
+    def display_column(cls, value: Any, column_name: str) -> str:
+        """Formats a value to a user-friendly displayable format."""
+        return str(value)

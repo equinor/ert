@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import numpy as np
-import xarray as xr
+import polars
 from typing_extensions import Self
 
 from ert.validation import rangestring_to_list
@@ -107,8 +107,8 @@ class GenDataConfig(ResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
-        def _read_file(filename: Path, report_step: int) -> xr.Dataset:
+    def read_from_file(self, run_path: str, _: int) -> polars.DataFrame:
+        def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
             if not filename.exists():
                 raise ValueError(f"Missing output file: {filename}")
             data = np.loadtxt(_run_path / filename, ndmin=1)
@@ -116,12 +116,14 @@ class GenDataConfig(ResponseConfig):
             if active_information_file.exists():
                 active_list = np.loadtxt(active_information_file)
                 data[active_list == 0] = np.nan
-            return xr.Dataset(
-                {"values": (["report_step", "index"], [data])},
-                coords={
-                    "index": np.arange(len(data)),
-                    "report_step": [report_step],
-                },
+            return polars.DataFrame(
+                {
+                    "report_step": polars.Series(
+                        np.full(len(data), report_step), dtype=polars.UInt16
+                    ),
+                    "index": polars.Series(np.arange(len(data)), dtype=polars.UInt16),
+                    "values": polars.Series(data, dtype=polars.Float32),
+                }
             )
 
         errors = []
@@ -150,16 +152,16 @@ class GenDataConfig(ResponseConfig):
                     except ValueError as err:
                         errors.append(str(err))
 
-            ds_all_report_steps = xr.concat(
-                datasets_per_report_step, dim="report_step"
-            ).expand_dims(name=[name])
+            ds_all_report_steps = polars.concat(datasets_per_report_step)
+            ds_all_report_steps.insert_column(
+                0, polars.Series("response_key", [name] * len(ds_all_report_steps))
+            )
             datasets_per_name.append(ds_all_report_steps)
 
         if errors:
             raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
 
-        combined = xr.concat(datasets_per_name, dim="name")
-        combined.attrs["response"] = "gen_data"
+        combined = polars.concat(datasets_per_name)
         return combined
 
     def get_args_for_key(self, key: str) -> Tuple[Optional[str], Optional[List[int]]]:
@@ -172,6 +174,10 @@ class GenDataConfig(ResponseConfig):
     @property
     def response_type(self) -> str:
         return "gen_data"
+
+    @property
+    def primary_key(self) -> List[str]:
+        return ["report_step", "index"]
 
 
 responses_index.add_response_type(GenDataConfig)

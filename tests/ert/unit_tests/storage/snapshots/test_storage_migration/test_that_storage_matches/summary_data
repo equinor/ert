@@ -1,4 +1,4 @@
-time,name,realization,values
+time,response_key,realization,values
 1996-01-02,FOPR,0,1.1
 1996-01-02,FOPR,1,1.1
 1996-01-02,FOPR,2,1.1

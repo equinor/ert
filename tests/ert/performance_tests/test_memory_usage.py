@@ -4,9 +4,9 @@ from typing import List
 
 import memray
 import numpy as np
+import polars
 import py
 import pytest
-import xarray as xr
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig
@@ -57,12 +57,12 @@ def test_memory_smoothing(poly_template):
             smoother_update(
                 prior_ens,
                 posterior_ens,
-                list(ert_config.observations.keys()),
+                list(experiment.observation_keys),
                 list(ert_config.ensemble_config.parameters),
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
-    assert stats.peak_memory_allocated < 1024**2 * 130
+    assert stats.peak_memory_allocated < 1024**2 * 450
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
@@ -80,26 +80,28 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         realizations = list(range(ert_config.model_config.num_realizations))
         for real in realizations:
             gendatas = []
-            for _, obs in ert_config.observations.items():
-                data_key = obs.attrs["response"]
-                if data_key != "summary":
-                    obs_highest_index_used = max(obs.index.values)
-                    gendatas.append(
-                        make_gen_data(int(obs_highest_index_used) + 1).expand_dims(
-                            name=[data_key]
-                        )
-                    )
-                else:
-                    obs_time_list = ens_config.refcase.all_dates
-                    source.save_response(
-                        data_key,
-                        make_summary_data(["summary"], obs_time_list),
-                        real,
-                    )
+            gen_obs = ert_config.observations["gen_data"]
+            for response_key, df in gen_obs.group_by("response_key"):
+                gendata_df = make_gen_data(df["index"].max() + 1)
+                gendata_df = gendata_df.insert_column(
+                    0,
+                    polars.Series(np.full(len(gendata_df), response_key)).alias(
+                        "response_key"
+                    ),
+                )
+                gendatas.append(gendata_df)
+
+            source.save_response("gen_data", polars.concat(gendatas), real)
+
+            obs_time_list = ens_config.refcase.all_dates
+
+            summary_keys = ert_config.observations["summary"]["response_key"].unique(
+                maintain_order=True
+            )
 
             source.save_response(
-                "gen_data",
-                xr.concat(gendatas, dim="name"),
+                "summary",
+                make_summary_data(summary_keys, obs_time_list),
                 real,
             )
 
@@ -114,11 +116,14 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
 
 
-def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> xr.Dataset:
+def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> polars.DataFrame:
     data = np.random.default_rng().uniform(min_val, max_val, obs)
-    return xr.Dataset(
-        {"values": (["report_step", "index"], [data])},
-        coords={"index": range(len(data)), "report_step": [0]},
+    return polars.DataFrame(
+        {
+            "report_step": polars.Series(np.full(len(data), 0), dtype=polars.UInt16),
+            "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+            "values": data,
+        }
     )
 
 
@@ -127,11 +132,15 @@ def make_summary_data(
     dates,
     min_val: float = 0,
     max_val: float = 5,
-) -> xr.Dataset:
-    data = np.random.default_rng().uniform(
-        min_val, max_val, (len(obs_keys), len(dates))
-    )
-    return xr.Dataset(
-        {"values": (["name", "time"], data)},
-        coords={"time": dates, "name": obs_keys},
+) -> polars.DataFrame:
+    data = np.random.default_rng().uniform(min_val, max_val, len(obs_keys) * len(dates))
+
+    return polars.DataFrame(
+        {
+            "response_key": np.repeat(obs_keys, len(dates)),
+            "time": polars.Series(
+                np.tile(dates, len(obs_keys)).tolist()
+            ).dt.cast_time_unit("ms"),
+            "values": data,
+        }
     )

@@ -183,6 +183,9 @@ def summary_observations(
         "error_mode": draw(st.sampled_from(ErrorMode)),
         "value": draw(positive_floats),
     }
+
+    assume(kws["error_mode"] == ErrorMode.ABS or kws["error"] < 2)
+
     time_type = draw(time_types)
     if time_type == "date":
         date = draw(dates)

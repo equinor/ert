@@ -22,7 +22,7 @@ from typing import (
     overload,
 )
 
-import xarray as xr
+import polars
 from pydantic import ValidationError as PydanticValidationError
 from typing_extensions import Self
 
@@ -112,6 +112,28 @@ class ErtConfig:
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ErtConfig):
+            return False
+
+        for attr in vars(self):
+            if attr == "observations":
+                if self.observations.keys() != other.observations.keys():
+                    return False
+
+                if not all(
+                    self.observations[k].equals(other.observations[k])
+                    for k in self.observations
+                ):
+                    return False
+
+                continue
+
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        return True
+
     def __post_init__(self) -> None:
         self.config_path = (
             path.dirname(path.abspath(self.user_config_file))
@@ -120,7 +142,7 @@ class ErtConfig:
         )
         self.enkf_obs: EnkfObs = self._create_observations(self.observation_config)
 
-        self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
+        self.observations: Dict[str, polars.DataFrame] = self.enkf_obs.datasets
 
     @staticmethod
     def with_plugins(

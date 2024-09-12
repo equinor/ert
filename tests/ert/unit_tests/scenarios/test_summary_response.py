@@ -101,7 +101,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        list(ert_config.observations.keys()),
+        prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -128,7 +128,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
         smoother_update(
             prior_ensemble,
             target_ensemble,
-            list(ert_config.observations.keys()),
+            prior_ensemble.experiment.observation_keys,
             ert_config.ensemble_config.parameters,
         )
 
@@ -159,7 +159,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        list(ert_config.observations.keys()),
+        prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -205,7 +205,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     smoother_update(
         prior_ensemble,
         target_ensemble,
-        list(ert_config.observations.keys()),
+        prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
     )
 
@@ -224,15 +224,48 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
 
     fopr_1 = measured_data.data["FOPR_1"]
     assert isinstance(fopr_1, pd.DataFrame)
-    assert fopr_1.loc["OBS"].iloc[0] == 0.9
-    assert fopr_1.loc["STD"].iloc[0] == 0.05
-    assert fopr_1.loc[0].iloc[0] == -1.6038367748260498
-    assert fopr_1.loc[1].iloc[0] == 0.06409991532564163
+    assert np.isclose(fopr_1.loc["OBS"].iloc[0], 0.9)
+    assert np.isclose(fopr_1.loc["STD"].iloc[0], 0.05)
+    assert np.isclose(fopr_1.loc[0].iloc[0], -1.6038367748260498)
+    assert np.isclose(fopr_1.loc[1].iloc[0], 0.06409991532564163)
     assert pd.isna(fopr_1.loc[2].iloc[0])
 
     fopr_2 = measured_data.data["FOPR_2"]
-    assert fopr_2.loc["OBS"].iloc[0] == 1.1
-    assert fopr_2.loc["STD"].iloc[0] == 0.05
+    assert np.isclose(fopr_2.loc["OBS"].iloc[0], 1.1)
+    assert np.isclose(fopr_2.loc["STD"].iloc[0], 0.05)
     assert pd.isna(fopr_2.loc[0].iloc[0])
     assert pd.isna(fopr_2.loc[1].iloc[0])
     assert pd.isna(fopr_1.loc[2].iloc[0])
+
+
+def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
+    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
+
+    create_responses(
+        ert_config.user_config_file,
+        prior_ensemble,
+        ert_config.model_config.num_realizations * [[datetime(2500, 9, 9)]],
+    )
+
+    responses = prior_ensemble.load_responses("summary", (0, 1, 2))
+    assert np.isclose(
+        [-1.6038368, 0.06409992, 0.7408913], responses["values"].to_numpy()
+    ).all()
+
+    assert responses[["realization", "response_key", "time"]].to_dicts() == [
+        {
+            "realization": 0,
+            "response_key": "FOPR",
+            "time": datetime(2500, 9, 10, 0, 0),
+        },
+        {
+            "realization": 1,
+            "response_key": "FOPR",
+            "time": datetime(2500, 9, 10, 0, 0),
+        },
+        {
+            "realization": 2,
+            "response_key": "FOPR",
+            "time": datetime(2500, 9, 10, 0, 0),
+        },
+    ]

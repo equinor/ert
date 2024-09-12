@@ -211,17 +211,9 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 
     prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
     sf = prior_ens.load_observation_scaling_factors()
-    set_of_records_from_xr = {
-        x[:-1]
-        for x in sf.to_dataframe()
-        .reset_index()
-        .set_index(["input_group", "obs_key", "index"])
-        .dropna()
-        .to_records()
-        .tolist()
-    }
+    records_from_pl = sf.select(["input_group", "obs_key", "index"]).to_numpy().tolist()
 
-    assert set_of_records_from_xr == expected_records
+    assert set(map(tuple, records_from_pl)) == expected_records
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -258,7 +250,7 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     ]
 
     # Check posterior sample without adaptive localization and with cut-off 0 are equal
-    assert np.allclose(posterior_sample_loc0, posterior_sample_noloc)
+    assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

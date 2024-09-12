@@ -31,19 +31,17 @@ def test_history_obs(create_measured_data):
     fopr = create_measured_data(["FOPR"])
     fopr.remove_inactive_observations()
 
-    assert all(
-        fopr.data.columns.get_level_values("data_index").values == list(range(200))
-    )
+    assert fopr.data.shape == (7, 200)
 
 
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
-    assert all(summary_obs.data.columns.get_level_values("data_index").values == [71])
     # Only one observation, we check the key_index is what we expect:
-    assert summary_obs.data.columns.get_level_values("key_index").values[
-        0
-    ] == np.datetime64("2011-12-21")
+    assert (
+        summary_obs.data.columns.get_level_values("key_index").values[0]
+        == "2011-12-21 00:00:00.000"
+    )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -71,10 +69,8 @@ def test_gen_obs(create_measured_data):
     df.remove_inactive_observations()
 
     assert all(
-        df.data.columns.get_level_values("data_index").values == [400, 800, 1200, 1800]
-    )
-    assert all(
-        df.data.columns.get_level_values("key_index").values == [400, 800, 1200, 1800]
+        df.data.columns.get_level_values("key_index").values
+        == ["199, 400", "199, 800", "199, 1200", "199, 1800"]
     )
 
 
@@ -82,20 +78,15 @@ def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
 
-    assert df.data.columns.get_level_values(0).to_list() == [
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WPR_DIFF_1",
-        "WOPR_OP1_9",
-    ]
-    assert df.data.columns.get_level_values("data_index").to_list() == [
-        400,
-        800,
-        1200,
-        1800,
-        8,
-    ]
+    assert df.data.columns.get_level_values(0).to_list() == sorted(
+        [
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WPR_DIFF_1",
+            "WOPR_OP1_9",
+        ]
+    )
 
 
 @pytest.mark.parametrize(
@@ -152,11 +143,12 @@ def create_general_observation():
     return observations
 
 
-def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data):
+def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data):
     """
     While there is no guarantee that this snapshot is 100% correct, it does represent
     the current state of loading from storage for the snake_oil case.
     """
-    obs_keys = facade_snake_oil.get_observations().datasets.keys()
+    experiment = next(snake_oil_storage.experiments)
+    obs_keys = experiment.observation_keys
     measured_data = create_measured_data(obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
