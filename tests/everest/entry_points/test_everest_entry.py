@@ -1,3 +1,4 @@
+import logging
 import os
 from functools import partial
 from unittest.mock import PropertyMock, patch
@@ -17,7 +18,7 @@ from everest.jobs import shell_commands
 from everest.simulator import JOB_SUCCESS
 from ieverest.bin.ieverest_script import ieverest_entry
 
-from tests.everest.utils import capture_logger, capture_streams, relpath, tmpdir
+from tests.everest.utils import capture_streams, relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
@@ -84,21 +85,22 @@ def test_everest_entry_debug(
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
+    caplog,
 ):
     """Test running everest with --debug"""
-    with capture_logger() as logstream:
+    with caplog.at_level(logging.DEBUG):
         everest_entry([CONFIG_FILE_MINIMAL, "--debug"])
-
+    logstream = "\n".join(caplog.messages)
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
 
     # the config file itself is dumped at DEBUG level
-    assert '"controls"' in logstream.getvalue()
-    assert '"objective_functions"' in logstream.getvalue()
-    assert '"name": "distance"' in logstream.getvalue()
-    assert f'"config_path": "{os.getcwd()}/config_minimal.yml"' in logstream.getvalue()
+    assert '"controls"' in logstream
+    assert '"objective_functions"' in logstream
+    assert '"name": "distance"' in logstream
+    assert f'"config_path": "{os.getcwd()}/config_minimal.yml"' in logstream
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
