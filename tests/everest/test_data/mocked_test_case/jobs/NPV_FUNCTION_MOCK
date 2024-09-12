@@ -1,0 +1,7 @@
+EXECUTABLE  npv_function_mock.py
+STDOUT OBJECT_FUNCTION.stdout
+STDERR OBJECT_FUNCTION.stderr
+
+TARGET_FILE npv_function
+MIN_ARG 2
+MAX_ARG 2

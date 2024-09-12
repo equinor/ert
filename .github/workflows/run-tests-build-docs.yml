@@ -1,0 +1,71 @@
+name: run-tests-build-docs
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags: "*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  NO_PROJECT_RES: 1
+
+jobs:
+  tests:
+    name: "py_${{ matrix.python-version }}_${{ matrix.test_type }}"
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.11', '3.12']
+        os: [ubuntu-22.04]
+        test_type: ['doc', 'ui-test', 'test', 'integration-test', 'everest-models-test']
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+
+    - name: Install Everest and dependencies
+      run: |
+        pip install ".[dev,everest]"
+
+    - name: Run Tests
+      if: matrix.test_type == 'test'
+      run: |
+        pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
+
+    - name: Run Integration Tests
+      if: matrix.test_type == 'integration-test'
+      run: |
+        pytest tests -n 4 -m "integration_test" --dist loadgroup
+
+    - name: Run UI Tests
+      if: matrix.test_type == 'ui-test'
+      env:
+        QT_QPA_PLATFORM: 'minimal'
+      run: |
+        python -m pytest tests/everest -m "ui_test"
+
+    - name: Build Documentation
+      if: matrix.test_type == 'doc'
+      run: |
+        pip install git+https://github.com/equinor/everest-models.git
+        mkdir tmp
+        sphinx-build -n -v -E -W ./docs/everest/source ./tmp/everest_docs
+
+    - name: Run tests requiring everest-models
+      if: matrix.test_type == 'everest-models-test'
+      run: |
+        pip install git+https://github.com/equinor/everest-models.git
+        python -m pytest tests -n 4 -m everest_models_test --dist loadgroup

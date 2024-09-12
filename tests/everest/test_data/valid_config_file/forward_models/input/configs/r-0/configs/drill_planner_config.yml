@@ -1,0 +1,27 @@
+start_date: 2022-09-03
+end_date: 2030-01-01
+rigs:
+  -
+    name: 'A'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+    slots: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+
+slots:
+  -
+    name: 'S1'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+  -
+    name: 'S2'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+  -
+    name: 'S3'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+  -
+    name: 'S4'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+  -
+    name: 'S5'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']
+  -
+    name: 'S6'
+    wells: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6']

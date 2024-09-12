@@ -1,0 +1,93 @@
+# A version of snake_oil.yml where all level one keys are added
+definitions:
+  scratch: /tmp/everest/super/scratch
+  eclbase: model/SNAKE_OIL
+
+wells:
+  - {name: W1}
+  - {name: W2}
+  - {name: W3}
+  - {name: W4}
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 1
+    variables:
+      -
+        name: W1
+        initial_guess: 0
+      -
+        name: W2
+        initial_guess: 0
+      -
+        name: W3
+        initial_guess: 1
+      -
+        name: W4
+        initial_guess: 1
+  -
+    name: super_scalars
+    type: generic_control
+    variables:
+      -
+        name: gravity
+        initial_guess: 9.81
+        min: 0
+        max: 1000
+
+objective_functions:
+  -
+    name: snake_oil_nvp
+
+input_constraints:
+  -
+    target: 1.0
+    weights:
+        group.W1: 1
+        group.W2: 1
+        group.W3: 1
+        group.W4: 1
+
+install_jobs:
+  -
+    name: snake_oil_diff
+    source: ../../jobs/SNAKE_OIL_DIFF
+  -
+    name: snake_oil_simulator
+    source: ../../jobs/SNAKE_OIL_SIMULATOR
+  -
+    name: snake_oil_npv
+    source: ../../jobs/SNAKE_OIL_NPV
+
+install_data:
+  -
+    source: ../../eclipse/include/grid/CASE.EGRID
+    target: MY_GRID.EGRID
+  -
+    source: ../../eclipse/model/SNAKE_OIL.DATA
+    target: SNAKE_OIL.DATA
+
+optimization:
+  algorithm: optpp_q_newton
+
+environment:
+  simulation_folder: r{{ scratch }}/simulations
+
+simulator:
+  queue_system: lsf
+  cores: 3
+  name: mr
+  resubmit_limit: 17
+  options: span = 1 && select[x86 and GNU/Linux]
+  server: lx-fastserver01
+
+model:
+  realizations: [0, 1, 2]
+
+forward_model:
+  - snake_oil_simulator
+  - snake_oil_npv
+  - snake_oil_diff

@@ -397,7 +397,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
         "snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(snake_path)
-    if not os.listdir(snake_path):
+    if not os.path.exists(snake_path / "test_data"):
         _run_snake_oil(source_root)
     else:
         monkeypatch.chdir("test_data")

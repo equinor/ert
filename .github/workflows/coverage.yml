@@ -41,7 +41,7 @@ jobs:
 
     - name: Install with dependencies
       run: |
-        uv pip install ".[dev]"
+        uv pip install ".[dev, everest]"
 
     - name: Test GUI
       if: matrix.test-type == 'gui-tests'

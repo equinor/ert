@@ -1,0 +1,7 @@
+EXECUTABLE fpr_diff_mock.py
+STDOUT FPR_DIFF.stdout
+STDERR FPR_DIFF.stderr
+
+TARGET_FILE out_fpr_diff
+MIN_ARG 2
+MAX_ARG 2

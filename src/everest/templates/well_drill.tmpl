@@ -1,0 +1,1 @@
+{{ well_drill.items() | selectattr("1", "greaterthan", 0.5) | map("first") | list | tojson }}

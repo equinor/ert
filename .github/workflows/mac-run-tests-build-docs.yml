@@ -1,0 +1,79 @@
+name: macos-run-tests-build-docs
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags: "*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  NO_PROJECT_RES: 1
+
+jobs:
+  tests:
+    if: github.ref_type == 'tag' # only build for mac when tags
+    name: "py-${{ matrix.python-version }}_${{ matrix.test_type }}_${{ matrix.os }}"
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.12']
+        os: ['macos-13', 'macos-14', 'macos-14-large']
+        # https://github.com/actions/runner-images/tree/main?tab=readme-ov-file#available-images
+        exclude:
+          - os: 'macos-14'
+            python-version: '3.8'
+          - os: 'macos-14-large'
+            python-version: '3.8'
+          - os: 'macos-13'
+            python-version: '3.12'
+
+        test_type: ['doc', 'test', 'integration-test', 'everest-models-test']
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          pyproject.toml
+
+    - name: Install HDF5 source files
+      run: brew install hdf5
+
+    - name: Install Everest and dependencies
+      run: |
+        pip install .[dev, everest]
+
+    - name: Run Tests
+      if: matrix.test_type == 'test'
+      run: |
+        python -m pytest tests/everest -n 4 -m "not ui_test and not integration_test and not fails_on_macos_github_workflow" --dist loadgroup
+
+    - name: Run Integration Tests
+      if: matrix.test_type == 'integration-test'
+      run: |
+        python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
+
+    - name: Build Documentation
+      if: matrix.test_type == 'doc'
+      run: |
+        pip install git+https://github.com/equinor/everest-models.git
+        mkdir tmp
+        sphinx-build -n -v -E -W ./docs/everest/source ./tmp/everest_docs
+
+    - name: Run tests requiring everest-models
+      if: matrix.test_type == 'everest-models-test'
+      run: |
+        pip install git+https://github.com/equinor/everest-models.git
+        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup

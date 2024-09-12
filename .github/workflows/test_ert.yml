@@ -45,17 +45,17 @@ jobs:
     - name: Test GUI
       if: inputs.test-type == 'gui-test'
       run: |
-        pytest tests --junit-xml=junit.xml -v --mpl -m "requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml -v --mpl -m "requires_window_manager" --benchmark-disable --ignore=tests/everest
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup --ignore=tests/everest
 
     - name: Integration Test
       if: inputs.test-type == 'integration-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "integration_test and not requires_window_manager" --benchmark-disable --ignore=tests/everest
 
     - name: Test for a clean repository
       run: |

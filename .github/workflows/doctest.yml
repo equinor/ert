@@ -36,13 +36,13 @@ jobs:
       run: pip install uv
 
     - run: |
-        uv pip install -e ".[dev]"
+        uv pip install -e ".[dev, everest]"
 
     - name: Test doctest
       run: |
         # dark storage assumes it is a started service so cannot be excluded
         # by pytest blindly
-        pytest --doctest-modules --cov=ert --cov-report=xml:cov.xml src/ --ignore src/ert/dark_storage
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
 
     - name: Upload coverage to Codecov
       id: codecov1

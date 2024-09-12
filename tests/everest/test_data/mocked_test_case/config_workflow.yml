@@ -1,0 +1,55 @@
+wells:
+  - { name: w00}
+
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 0.1
+    perturbation_magnitude : 0.005
+    perturbation_type : absolute
+    variables:
+      - { name: w00, initial_guess: 0.0626 }
+
+
+objective_functions:
+  -
+    name: mock_objective
+
+optimization:
+  algorithm: optpp_q_newton
+  min_realizations_success: 1
+  min_pert_success: 1
+  max_batch_num: 1
+  perturbation_num: 1
+
+install_jobs:
+  -
+    name: failure_filter
+    source: jobs/FAILURE_FILTER
+
+install_workflow_jobs:
+  -
+    name: test_wf
+    source: jobs/TEST_WF
+
+model:
+  realizations: [0, 1]
+
+forward_model:
+  - failure_filter <IENS> 1
+
+workflows:
+  pre_simulation:
+    - test_wf -o r{{ configpath }}/pre_simulation.txt -m r{{ runpath_file }}
+  post_simulation:
+    - test_wf -o r{{ configpath }}/post_simulation.txt -m r{{ runpath_file }}
+
+
+environment:
+  output_folder: everest_output
+  simulation_folder: simulations
+  log_level: debug
+  random_seed: 999
