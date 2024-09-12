@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import namedtuple
 from unittest.mock import patch
@@ -36,7 +37,7 @@ from everest.strings import (
 )
 from everest.util import makedirs_if_needed
 
-from tests.everest.utils import capture_logger, relpath, tmpdir
+from tests.everest.utils import relpath, tmpdir
 
 
 class MockContext:
@@ -157,15 +158,15 @@ def test_server_status():
 
 @patch("everest.detached.server_is_running", return_value=False)
 @tmpdir(relpath("test_data", "detached"))
-def test_wait_for_server(server_is_running_mock):
+def test_wait_for_server(server_is_running_mock, caplog):
     config = EverestConfig.load_file("valid_yaml_config.yml")
 
-    with capture_logger() as logstream, pytest.raises(Exception):
+    with caplog.at_level(logging.DEBUG), pytest.raises(Exception):
         wait_for_server(config, timeout=1, context=None)
 
-    assert not logstream.getvalue()
+    assert not caplog.messages
     context = MockContext()
-    with capture_logger() as logstream, pytest.raises(SystemExit):
+    with caplog.at_level(logging.DEBUG), pytest.raises(SystemExit):
         wait_for_server(config, timeout=120, context=context)
 
     expected_error_msg = (
@@ -176,7 +177,7 @@ def test_wait_for_server(server_is_running_mock):
         "Error message: Program received signal:6"
     )
 
-    assert expected_error_msg in logstream.getvalue()
+    assert expected_error_msg in "\n".join(caplog.messages)
 
     server_status = everserver_status(config)
     assert server_status["status"] == ServerStatus.failed

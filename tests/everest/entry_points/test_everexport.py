@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from unittest.mock import patch
@@ -11,7 +12,6 @@ from everest.bin.utils import ProgressBar
 from everest.config import EverestConfig
 
 from tests.everest.utils import (
-    capture_logger,
     create_cached_mocked_test_case,
     relpath,
     satisfy,
@@ -248,7 +248,7 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cache_dir):
 @patch("everest.bin.utils.export")
 @tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir):
+def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir, caplog):
     """Test running everexport  when config file contains non internalized
     ecl keys in the user defined keywords list"""
 
@@ -269,12 +269,12 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir):
             )
         )
 
-    with capture_logger() as logstream:
+    with caplog.at_level(logging.DEBUG):
         everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
 
     assert (
         f"Non-internalized ecl keys selected for export '{non_internalized_key}'"
-        in logstream.getvalue()
+        in "\n".join(caplog.messages)
     )
 
     def condition(config: EverestConfig):
@@ -296,7 +296,7 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir):
 @patch("everest.bin.utils.export")
 @tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_not_available_batches(mocked_func, cache_dir):
+def test_everexport_entry_not_available_batches(mocked_func, cache_dir, caplog):
     """Test running everexport  when config file contains non existing
     batch numbers in the list of user defined batches"""
 
@@ -318,12 +318,12 @@ def test_everexport_entry_not_available_batches(mocked_func, cache_dir):
             )
         )
 
-    with capture_logger() as logstream:
+    with caplog.at_level(logging.DEBUG):
         everexport_entry([mocked_test_config_file])
 
     assert (
         f"Batch {na_batch} not found in optimization results."
-        f" Skipping for current export" in logstream.getvalue()
+        f" Skipping for current export" in "\n".join(caplog.messages)
     )
 
     def condition(config: EverestConfig):

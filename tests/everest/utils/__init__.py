@@ -130,26 +130,6 @@ def capture_streams():
         sys.stdout, sys.stderr = old_out, old_err
 
 
-@contextlib.contextmanager
-def capture_logger(name=None):
-    """Context that allows capturing text sent to a logger
-
-    Use as follow:
-    with capture_logger('everest') as logstream:
-        foo()
-    assert( 'log of foo' in logstream)
-    """
-    logstream = StringIO()
-    loghandler = logging.StreamHandler(logstream)
-    loghandler.setLevel(logging.DEBUG)  # lowest, so only logger level matters
-    logger = logging.getLogger(name) if name is not None else logging.getLogger()
-    try:
-        logger.addHandler(loghandler)
-        yield logstream
-    finally:
-        logger.removeHandler(loghandler)
-
-
 def satisfy(predicate):
     """Return a class that equals to an obj if predicate(obj) is True
 
