@@ -62,7 +62,7 @@ class EventFetcher(QObject):
                     sleep(0.1)
                     print("Sleep")
                     continue
- 
+
                 print(message)
                 print()
                 print()

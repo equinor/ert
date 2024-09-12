@@ -42,8 +42,10 @@ experiments : Dict[str, Tuple[BaseRunModel, "Queue[StatusEvents]"]]= {}
 
 def run_experiment(experiment_id:str, evaluator_server_config: EvaluatorServerConfig):
     p = mp_ctx.Process(target=experiments[experiment_id][0].start_simulations_thread, args=(evaluator_server_config,))
+    print(f"Starting experiment {experiment_id}")
     p.start()
     p.join()
+    print(f"Experiment {experiment_id} done")
 
 @app.post("/experiments/")
 async def submit_experiment(experiment: Experiment, background_tasks: BackgroundTasks):
