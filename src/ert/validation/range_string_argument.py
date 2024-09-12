@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from .active_range import ActiveRange
 from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
-
-if TYPE_CHECKING:
-    from ..storage import Storage
 
 
 class RangeStringArgument(ArgumentDefinition):
@@ -42,26 +39,6 @@ class RangeStringArgument(ArgumentDefinition):
                 validation_status.addToMessage(
                     RangeStringArgument.VALUE_NOT_IN_RANGE % (self.__max_value - 1)
                 )
-
-        validation_status.setValue(token)
-
-        return validation_status
-
-
-class NotInStorage(ArgumentDefinition):
-    def __init__(self, storage: Storage, prop: str) -> None:
-        self.storage = storage
-        self.prop = prop
-
-    def validate(self, token: str) -> ValidationStatus:
-        validation_status = ValidationStatus()
-
-        existing = [exp.name for exp in getattr(self.storage, self.prop)]
-        if token in existing:
-            validation_status.setFailed()
-            validation_status.addToMessage(
-                f"{self.prop.capitalize()} name must be unique, not one of: {existing}"
-            )
 
         validation_status.setValue(token)
 

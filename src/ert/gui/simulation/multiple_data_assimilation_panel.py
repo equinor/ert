@@ -25,7 +25,7 @@ from ert.validation import (
     ProperNameFormatArgument,
     RangeStringArgument,
 )
-from ert.validation.range_string_argument import NotInStorage
+from ert.validation.proper_name_argument import ExperimentValidation
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -68,7 +68,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._experiment_name_field.setMinimumWidth(250)
         layout.addRow("Experiment name:", self._experiment_name_field)
         self._experiment_name_field.setValidator(
-            NotInStorage(self.notifier.storage, "experiments")
+            ExperimentValidation(self.notifier.storage)
         )
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
