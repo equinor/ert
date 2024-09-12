@@ -2,12 +2,17 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
+import json
 import logging
 import os
 import queue
 import sys
 from collections import Counter
 from typing import Optional, TextIO
+
+from fastapi.encoders import jsonable_encoder
+from pydantic import RootModel
 
 from _ert.threading import ErtThread
 from ert.cli.monitor import Monitor
@@ -95,6 +100,16 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
         )
     except ValueError as e:
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
+
+    args = vars(args)
+    args["experiment_name"] = "dummy_experiment"
+    if args["mode"] == "es_mda":
+        args["restart_run"] = False
+        args["prior_ensemble_id"] = ""
+
+    data = {"args": args, "ert_config": json.loads(RootModel[ErtConfig](ert_config).model_dump_json())}
+    print(json.dumps(jsonable_encoder(data)))
+    return
 
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
         args.port_range = range(49152, 51819)
