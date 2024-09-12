@@ -15,7 +15,6 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.config.gen_data_config import GenDataConfig
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
@@ -510,11 +509,6 @@ class LocalEnsemble(BaseMode):
             return sorted(summary_data["name"].values)
         except (ValueError, KeyError):
             return []
-
-    def _get_gen_data_config(self, key: str) -> GenDataConfig:
-        config = self.experiment.response_configuration[key]
-        assert isinstance(config, GenDataConfig)
-        return config
 
     def _load_single_dataset(
         self,
