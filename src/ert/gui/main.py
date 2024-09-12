@@ -79,6 +79,29 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     return -1
 
 
+def run_run_dialog(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
+    # Replace Python's exception handler for SIGINT with the system default.
+    #
+    # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
+    # okay normally (if a bit ugly), but when control is given to Qt this
+    # exception handler will either get deadlocked because Python never gets
+    # control back, or gets eaten by Qt because it ignores exceptions that
+    # happen in Qt slots.
+    signal(SIGINT, SIG_DFL)
+
+    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
+
+    app = QApplication(["ert"])  # Early so that QT is initialized before other imports
+    app.setWindowIcon(QIcon("img:ert_icon.svg"))
+
+    from ert.gui.simulation.run_dialog import RunDialog
+    from ert.gui.ertnotifier import ErtNotifier
+    window = RunDialog(experiment_id=args.experiment_id, notifier=ErtNotifier(config_file="dummy"))
+    window.run_experiment()
+    window.show()
+
+    sys.exit(app.exec_())
+
 def _start_initial_gui_window(
     args: Namespace,
     log_handler: GUILogHandler,

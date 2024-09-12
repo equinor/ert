@@ -191,6 +191,11 @@ def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> No
 
     run_gui(args, ert_plugin_manager)
 
+def run_run_dialog_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
+    # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
+    from ert.gui.main import run_run_dialog  # noqa: PLC0415
+
+    run_run_dialog(args)
 
 def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
     lint_file(args.config)
@@ -267,6 +272,13 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
+
+    run_dialog_parser = subparsers.add_parser(
+        "status",
+        description="Opens a status view for the specified experiment",
+    )
+    run_dialog_parser.set_defaults(func=run_run_dialog_wrapper)
+    run_dialog_parser.add_argument("experiment_id", type=str, help="UUID for experiment")
 
     # lint_parser
     lint_parser = subparsers.add_parser(
@@ -664,12 +676,12 @@ def main() -> None:
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
         config_dict = yaml.safe_load(conf_file)
         for _, v in config_dict["handlers"].items():
-            if "ert.logging.TimestampedFileHandler" in v.values():
+            if "ert.logging.TimestampedFileHandler" in v.values() and hasattr(args, "config"):
                 v["ert_config"] = args.config
         logging.config.dictConfig(config_dict)
 
     logger = logging.getLogger(__name__)
-    if args.verbose:
+    if hasattr(args, "verbose") and args.verbose:
         root_logger = logging.getLogger()
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.INFO)
