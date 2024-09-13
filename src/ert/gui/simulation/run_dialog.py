@@ -170,7 +170,6 @@ class FMStepOverview(QTableView):
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
-    on_run_model_event = Signal(object)
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -304,8 +303,6 @@ class RunDialog(QDialog):
 
         self.setMinimumSize(self._minimum_width, self._minimum_height)
         self.finished.connect(self._on_finished)
-
-        self.on_run_model_event.connect(self._on_event)
 
         self._restart = False
 
