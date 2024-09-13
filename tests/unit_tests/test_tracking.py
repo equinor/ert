@@ -53,7 +53,7 @@ def check_expression(original, path_expression, expected, msg_start):
     for match in jsonpath_expr.find(original):
         match_found = True
         assert match.value == expected, (
-            f"{msg_start}{str(match.full_path)} value "
+            f"{msg_start}{match.full_path!s} value "
             f"({match.value}) is not equal to ({expected})"
         )
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
@@ -118,7 +118,7 @@ def check_expression(original, path_expression, expected, msg_start):
         ),
         pytest.param(
             "",
-            '    import os\n    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)',  # noqa 501
+            '    import os\n    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)',
             [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--realizations",
@@ -267,7 +267,7 @@ def test_setting_env_context_during_run(
     storage,
 ):
     parser = ArgumentParser(prog="test_main")
-    cmd_line_arguments = [mode] + cmd_line_arguments
+    cmd_line_arguments = [mode, *cmd_line_arguments]
     parsed = ert_parser(
         parser,
         cmd_line_arguments,
@@ -348,7 +348,7 @@ def test_run_information_present_as_env_var_in_fm_context(
             print(line, end="")
 
     parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(parser, [mode] + cmd_line_arguments)
+    parsed = ert_parser(parser, [mode, *cmd_line_arguments])
 
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)

@@ -1166,7 +1166,7 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     driver._poll_once_by_bhist = mock_poll_once_by_bhist
 
     await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
-    job_id = list(driver._iens2jobid.values())[0]
+    job_id = next(iter(driver._iens2jobid.values()))
     await poll(driver, {0})
     assert "bhist is used" in caplog.text
     assert bhist_called

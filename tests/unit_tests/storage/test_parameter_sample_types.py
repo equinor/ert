@@ -365,7 +365,7 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config.ert")
-        assert list(storage.ensembles)[0].load_parameters("KW_NAME")[
+        assert next(iter(storage.ensembles)).load_parameters("KW_NAME")[
             "values"
         ].values.flatten().tolist() == pytest.approx([expected])
 
@@ -398,7 +398,7 @@ def write_file(fname, contents):
             does_not_raise(),
         ),
         (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",  # noqa
+            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",
             "Not expecting a file",
             [],
             pytest.raises(
@@ -572,7 +572,7 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
         JOBNAME my_name%d
         NUM_REALIZATIONS 1
         GEN_KW KW_NAME template.txt kw.txt prior.txt """
-            f"""FORWARD_INIT:{str(load_forward_init)} INIT_FILES:custom_param%d
+            f"""FORWARD_INIT:{load_forward_init!s} INIT_FILES:custom_param%d
         """
         )
         with open("config.ert", mode="w", encoding="utf-8") as fh:

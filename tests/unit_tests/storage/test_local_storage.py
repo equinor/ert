@@ -532,7 +532,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         target=field_list,
         fields=grid.flatmap(fields),
     )
-    def create_field_list(self, fields):  # noqa: PLR6301
+    def create_field_list(self, fields):
         return fields
 
     @rule()

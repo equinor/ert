@@ -98,8 +98,8 @@ class _ExperimentWidget(QWidget):
     def setExperiment(self, experiment: Experiment) -> None:
         self._experiment = experiment
 
-        self._name_label.setText(f"Name: {str(experiment.name)}")
-        self._uuid_label.setText(f"UUID: {str(experiment.id)}")
+        self._name_label.setText(f"Name: {experiment.name!s}")
+        self._uuid_label.setText(f"UUID: {experiment.id!s}")
 
         self._responses_text_edit.setText(yaml.dump(experiment.response_info, indent=4))
         self._parameters_text_edit.setText(
@@ -348,8 +348,8 @@ class _EnsembleWidget(QWidget):
     def setEnsemble(self, ensemble: Ensemble) -> None:
         self._ensemble = ensemble
 
-        self._name_label.setText(f"Name: {str(ensemble.name)}")
-        self._uuid_label.setText(f"UUID: {str(ensemble.id)}")
+        self._name_label.setText(f"Name: {ensemble.name!s}")
+        self._uuid_label.setText(f"UUID: {ensemble.id!s}")
 
         self._tab_widget.setCurrentIndex(0)
 

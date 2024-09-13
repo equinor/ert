@@ -33,11 +33,11 @@ def load_parameters():
 
 
 well_drill_tmpl = (
-    'PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n'  # noqa
-    'PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}\n'  # noqa
+    'PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n'
+    'PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}\n'
     "---------------------------------- \n"
     "{%- for well in well_drill.INJ %}\n"
-    '{{ well.name }} takes value {{  well.value|round(1) }}, implying {{ "on" if  well.value >= 0.5 else "off"}}\n'  # noqa
+    '{{ well.name }} takes value {{  well.value|round(1) }}, implying {{ "on" if  well.value >= 0.5 else "off"}}\n'
     "{%- endfor %}"
 )
 

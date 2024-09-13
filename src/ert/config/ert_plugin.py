@@ -11,11 +11,11 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript, ABC):
-    def getArguments(self, args: List[Any]) -> List[Any]:  # noqa: PLR6301
+    def getArguments(self, args: List[Any]) -> List[Any]:
         return []
 
     def getName(self) -> str:
         return str(self.__class__)
 
-    def getDescription(self) -> str:  # noqa: PLR6301
+    def getDescription(self) -> str:
         return "No description provided!"

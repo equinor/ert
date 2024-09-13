@@ -196,7 +196,7 @@ class SlurmDriver(Driver):
             script_path = Path(script_handle.name)
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
-        sbatch_with_args = self._submit_cmd(name, runpath, num_cpu) + [str(script_path)]
+        sbatch_with_args = [*self._submit_cmd(name, runpath, num_cpu), str(script_path)]
 
         if iens not in self._submit_locks:
             self._submit_locks[iens] = asyncio.Lock()

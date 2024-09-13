@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from argparse import ArgumentParser
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
 import docutils.statemachine
 from docutils import nodes
@@ -302,7 +302,7 @@ def _create_section_with_title(section_id: str, title: str) -> nodes.section:
 
 class ErtForwardModelDocumentation(_ErtDocumentation):
     pm = ErtPluginManager()
-    _JOBS = {
+    _JOBS: ClassVar[dict[str, Any]] = {
         **pm.get_documentation_for_jobs(),
         **pm.get_documentation_for_forward_model_steps(),
     }

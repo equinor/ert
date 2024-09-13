@@ -223,7 +223,7 @@ class EnsembleSnapshot:
         return self._realization_snapshots[real_id]
 
     def get_fm_step(self, real_id: RealId, fm_step_id: FmStepId) -> "FMStepSnapshot":
-        return self._fm_step_snapshots[(real_id, fm_step_id)].copy()
+        return self._fm_step_snapshots[real_id, fm_step_id].copy()
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
@@ -373,7 +373,7 @@ class EnsembleSnapshot:
         fm_step_id: str,
         fm_step: "FMStepSnapshot",
     ) -> "EnsembleSnapshot":
-        self._fm_step_snapshots[(real_id, fm_step_id)].update(fm_step)
+        self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
 
 

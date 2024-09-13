@@ -62,7 +62,7 @@ def plotDistribution(
 
         previous_data = data
 
-    axes.set_xticks([-1] + ensemble_indexes + [len(ensemble_indexes)])
+    axes.set_xticks([-1, *ensemble_indexes, len(ensemble_indexes)])
 
     rotation = 0
     if len(ensemble_list) > 3:

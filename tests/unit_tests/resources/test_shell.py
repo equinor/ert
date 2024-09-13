@@ -37,7 +37,7 @@ class Shell:
 
     def _call_script(self, name, args):
         return subprocess.run(
-            [sys.executable, os.path.join(self.script_dir, name)] + list(args),
+            [sys.executable, os.path.join(self.script_dir, name), *args],
             check=False,
             capture_output=True,
         )

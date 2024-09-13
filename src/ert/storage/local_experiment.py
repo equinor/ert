@@ -217,7 +217,7 @@ class LocalExperiment(BaseMode):
     def metadata(self) -> Dict[str, Any]:
         path = self.mount_point / self._metadata_file
         if not path.exists():
-            raise ValueError(f"{str(self._metadata_file)} does not exist")
+            raise ValueError(f"{self._metadata_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
@@ -242,7 +242,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._parameter_file
         if not path.exists():
-            raise ValueError(f"{str(self._parameter_file)} does not exist")
+            raise ValueError(f"{self._parameter_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
@@ -252,7 +252,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._responses_file
         if not path.exists():
-            raise ValueError(f"{str(self._responses_file)} does not exist")
+            raise ValueError(f"{self._responses_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info

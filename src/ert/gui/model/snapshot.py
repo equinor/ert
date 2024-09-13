@@ -468,7 +468,7 @@ class SnapshotModel(QAbstractItemModel):
                     delta = _estimate_duration(
                         start_time, end_time=node.data.get(ids.END_TIME)
                     )
-                    tt_text = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
+                    tt_text = f"Start time: {start_time!s}\nDuration: {delta!s}"
             if tt_text is not None:
                 return str(tt_text)
 

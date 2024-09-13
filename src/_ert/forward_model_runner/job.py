@@ -82,7 +82,7 @@ class Job:
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self):  # noqa: PLR0912, PLR0915
+    def run(self):
         start_message = Start(self)
 
         errors = self._check_job_files()

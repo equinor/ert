@@ -51,13 +51,13 @@ class ActiveRange:
         for _range in rangestring.split(","):
             if "-" in _range:
                 if len(_range.split("-")) != 2:
-                    raise ValueError(f"Invalid range specified, got {_range} ")
+                    raise ValueError(f"Invalid range specified, got {_range}")
                 realization_bounds = _range.split("-")
                 start = int(realization_bounds[0])
                 end = int(realization_bounds[1])
                 if end < start:
                     raise ValueError(
-                        f"Invalid direction in range specified, got {_range} "
+                        f"Invalid direction in range specified, got {_range}"
                     )
             else:
                 int(_range)

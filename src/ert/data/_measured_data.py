@@ -53,7 +53,7 @@ class MeasuredData:
         standard deviations as-is."""
         pre_index = self.data.index
         post_index = list(self.data.dropna(axis=0, how="all").index)
-        drop_index = set(pre_index) - set(post_index + ["STD", "OBS"])
+        drop_index = set(pre_index) - {*post_index, "STD", "OBS"}
         self._set_data(self.data.drop(index=drop_index))
 
     def get_simulated_data(self) -> pd.DataFrame:
@@ -146,7 +146,7 @@ class MeasuredData:
             measured_data.append(
                 pd.DataFrame(
                     data,
-                    index=("OBS", "STD") + tuple(ds.realization.values),
+                    index=("OBS", "STD", *ds.realization.values),
                     columns=pd.MultiIndex.from_tuples(
                         index_vals,
                         names=[None, "key_index", "data_index"],

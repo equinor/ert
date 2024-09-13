@@ -222,7 +222,7 @@ def test_status_file_is_correct(reporter):
             "Current host",
             expected_j1_line,
             expected_j2_line,
-        ]:  # noqa
+        ]:
             assert expected in f.readline()
 
         # EOF

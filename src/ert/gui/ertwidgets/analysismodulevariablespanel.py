@@ -59,11 +59,11 @@ class AnalysisModuleVariablesPanel(QWidget):
                         analysis_module.__getattribute__(variable_name),
                         cast(
                             float,
-                            [v for v in metadata.metadata if isinstance(v, Ge)][0].ge,
+                            next(v for v in metadata.metadata if isinstance(v, Ge)).ge,
                         ),
                         cast(
                             float,
-                            [v for v in metadata.metadata if isinstance(v, Le)][0].le,
+                            next(v for v in metadata.metadata if isinstance(v, Le)).le,
                         ),
                         0.1,
                     ),
@@ -92,9 +92,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.truncation_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.enkf_truncation,
-            cast(float, [v for v in metadata.metadata if isinstance(v, Gt)][0].gt)
+            cast(float, next(v for v in metadata.metadata if isinstance(v, Gt)).gt)
             + 0.001,
-            cast(float, [v for v in metadata.metadata if isinstance(v, Le)][0].le),
+            cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.01,
         )
         self.truncation_spinner.setEnabled(False)
@@ -127,8 +127,8 @@ class AnalysisModuleVariablesPanel(QWidget):
             self.local_spinner = self.createDoubleSpinBox(
                 var_name,
                 analysis_module.correlation_threshold(ensemble_size),
-                cast(float, [v for v in metadata.metadata if isinstance(v, Ge)][0].ge),
-                cast(float, [v for v in metadata.metadata if isinstance(v, Le)][0].le),
+                cast(float, next(v for v in metadata.metadata if isinstance(v, Ge)).ge),
+                cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
                 0.1,
             )
             self.local_spinner.setObjectName("localization_threshold")

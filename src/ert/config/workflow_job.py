@@ -52,7 +52,7 @@ class WorkflowJob:
 
             # Bare Exception here as we have no control
             # of exceptions in the loaded ErtScript
-            except Exception as err:  # noqa
+            except Exception as err:
                 raise ErtScriptLoadFailure(
                     f"Failed to load {self.name}: {err}"
                 ) from err
