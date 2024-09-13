@@ -14,6 +14,7 @@ from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, stat
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(60)
 async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
     tmpdir, make_ensemble, monkeypatch, caplog

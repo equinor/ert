@@ -77,6 +77,7 @@ def test_ecl_run_make_LSB_MCPU_machine_list():
     ]
 
 
+@pytest.mark.integration_test
 @flow_installed
 def test_flow(init_flow_config, source_root):
     shutil.copy(source_root / "test-data/eclipse/SPE1.DATA", "SPE1.DATA")
@@ -99,6 +100,7 @@ def test_flow(init_flow_config, source_root):
         ecl_run.run(flow_config, ["SPE1.DATA", "--version=no/such/version"])
 
 
+@pytest.mark.integration_test
 @flow_installed
 def test_flow_with_mpi(init_flow_config, source_root):
     """This only tests that ERT will be able to start flow on a data deck with

@@ -318,6 +318,7 @@ def test_that_multiple_keyword_specific_tokens_are_located(contents, expected_er
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @given(
     strategies.lists(
@@ -762,6 +763,7 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
         assert collected_errors[0].end_column == -1
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @given(
     lines=strategies.lists(
@@ -1066,6 +1068,7 @@ DEFINE A <2>
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.integration_test
 def test_that_deprecations_are_handled(contents, expected_errors):
     for expected_error in expected_errors:
         assert_that_config_leads_to_warning(

@@ -177,6 +177,7 @@ def test_report_inconsistent_events(unused_tcp_port):
         reporter.report(Finish())
 
 
+@pytest.mark.integration_test
 def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
@@ -259,6 +260,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     assert len(lines) == 3, "expected 3 Job running messages"
 
 
+@pytest.mark.integration_test
 def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
     # Whenever the receiver end closes the connection, a ConnectionClosedOK is raised
     # The reporter should exit the publisher thread gracefully and not send any

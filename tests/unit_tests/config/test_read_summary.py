@@ -242,6 +242,7 @@ def test_local_well_summary_format_have_cell_index_and_name(keyword, name, lgr_n
     )
 
 
+@pytest.mark.integration_test
 @given(summaries(), st.sampled_from(resfo.Format))
 def test_that_reading_summaries_returns_the_contents_of_the_file(
     tmp_path_factory, summary, format
@@ -483,20 +484,3 @@ def test_that_ambiguous_case_restart_raises_an_informative_error(
         match="Ambiguous reference to unified summary",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
-
-
-@given(summaries())
-def test_that_length_of_fetch_keys_does_not_reduce_performance(
-    tmp_path_factory, summary
-):
-    """With a compiled regex this takes seconds to run, and with
-    a naive implementation it will take almost an hour.
-    """
-    tmp_path = tmp_path_factory.mktemp("summary")
-    smspec, unsmry = summary
-    unsmry.to_file(tmp_path / "TEST.UNSMRY")
-    smspec.to_file(tmp_path / "TEST.SMSPEC")
-    fetch_keys = [str(i) for i in range(100000)]
-    (_, keys, time_map, _) = read_summary(str(tmp_path / "TEST"), fetch_keys)
-    assert all(k in fetch_keys for k in keys)
-    assert len(time_map) == len(unsmry.steps)

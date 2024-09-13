@@ -15,7 +15,7 @@ from tests.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/forward-models/res/script
+# import ecl_config.py and ecl_run from ert/resources/forward-models/res/script
 # package-data path which. These are kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
@@ -104,6 +104,7 @@ with open("env.json", "w") as f:
             assert v == run_env[k]
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @pytest.mark.requires_eclipse
 def test_run(source_root):
@@ -127,6 +128,7 @@ def test_run(source_root):
     assert len(errors) == 0
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @pytest.mark.requires_eclipse
 def test_run_new_log_file(source_root):
@@ -150,6 +152,7 @@ def test_run_new_log_file(source_root):
     assert len(errors) == 0
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_run_api(source_root):
@@ -163,6 +166,7 @@ def test_run_api(source_root):
     assert os.path.isfile("SPE1.DATA")
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run(source_root):
@@ -177,6 +181,7 @@ def test_failed_run(source_root):
         erun.runEclipse(eclrun_config=eclrun_config)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run_nonzero_returncode(monkeypatch):
@@ -193,6 +198,7 @@ def test_failed_run_nonzero_returncode(monkeypatch):
         erun.runEclipse(eclrun_config=eclrun_config)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_failed_run_OK(source_root):
@@ -204,6 +210,7 @@ def test_failed_run_OK(source_root):
     ecl_run.run(econfig, ["SPE1_ERROR", "--version=2019.3", "--ignore-errors"])
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_no_hdf5_output_by_default_with_ecl100(source_root):
@@ -217,6 +224,7 @@ def test_no_hdf5_output_by_default_with_ecl100(source_root):
     assert not os.path.exists("SPE1.h5")
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
@@ -230,6 +238,7 @@ def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
     assert os.path.exists("SPE1.h5")
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_mpi_run(source_root):
@@ -243,6 +252,7 @@ def test_mpi_run(source_root):
     assert os.path.getsize("SPE1_PARALLEL.OUT") > 0
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_summary_block(source_root):

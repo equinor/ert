@@ -61,6 +61,7 @@ async def test_submit(driver: Driver, tmp_path, job_name):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.integration_test
 async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
     os.chdir(tmp_path)
     finished_called = False
@@ -87,6 +88,7 @@ async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
     assert finished_called
 
 
+@pytest.mark.integration_test
 async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     os.chdir(tmp_path)
     aborted_called = False
@@ -121,6 +123,7 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
     assert aborted_called
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=10)
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
     """Submits are allowed to be repeated for the same iens, and are to be
@@ -147,6 +150,7 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
     assert Path("submissionrace").read_text(encoding="utf-8") == "submit2\n"
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     os.chdir(tmp_path)
@@ -215,7 +219,6 @@ async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
         assert "NCPUS=2" in env_lines
 
 
-@pytest.mark.integration_test
 async def test_execute_with_retry_exits_on_filenotfounderror(driver: Driver, caplog):
     caplog.set_level(logging.DEBUG)
     invalid_cmd = ["/usr/bin/foo", "bar"]

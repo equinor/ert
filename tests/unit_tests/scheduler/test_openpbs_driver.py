@@ -4,6 +4,7 @@ import logging
 import os
 import shlex
 import stat
+from functools import partial
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List
@@ -11,10 +12,9 @@ from typing import Dict, List
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from tests.conftest import QSTAT_HEADER, QSTAT_HEADER_FORMAT
-from tests.utils import poll
 
-from ert.scheduler import OpenPBSDriver
+from ert.cli.main import ErtCliError
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import (
     JOB_STATES,
     QDEL_JOB_HAS_FINISHED,
@@ -24,12 +24,18 @@ from ert.scheduler.openpbs_driver import (
     QSUB_PREMATURE_END_OF_MESSAGE,
     FinishedEvent,
     FinishedJob,
+    OpenPBSDriver,
     QueuedJob,
     RunningJob,
     StartedEvent,
     _create_job_class,
     _parse_jobs_dict,
 )
+from tests.conftest import QSTAT_HEADER, QSTAT_HEADER_FORMAT
+from tests.ui_tests.cli.run_cli import run_cli
+from tests.utils import poll
+
+from .conftest import mock_bin
 
 
 @given(st.lists(st.sampled_from(JOB_STATES)))
@@ -576,3 +582,61 @@ async def test_submit_project_code():
     assert f" -A {project_code} " in Path("captured_qsub_args").read_text(
         encoding="utf-8"
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
+    if pytestconfig.getoption("openpbs"):
+        # User provided --openpbs, which means we should use the actual OpenPBS
+        # cluster without mocking anything.
+        return
+    mock_bin(monkeypatch, tmp_path)
+
+
+@pytest.fixture()
+def queue_name_config():
+    if queue_name := os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME"):
+        return f"\nQUEUE_OPTION TORQUE QUEUE {queue_name}"
+    return ""
+
+
+async def mock_failure(message, *args, **kwargs):
+    raise RuntimeError(message)
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(
+    monkeypatch, caplog, queue_name_config
+):
+    monkeypatch.setattr(
+        OpenPBSDriver, "submit", partial(mock_failure, "Submit job failed")
+    )
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
+        f.write(queue_name_config)
+    with pytest.raises(ErtCliError):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "poly.ert",
+        )
+    assert "RuntimeError: Submit job failed" in caplog.text
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(
+    monkeypatch, caplog, queue_name_config
+):
+    monkeypatch.setattr(
+        OpenPBSDriver, "poll", partial(mock_failure, "Status polling failed")
+    )
+    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+        f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
+        f.write(queue_name_config)
+    with pytest.raises(ErtCliError):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "poly.ert",
+        )
+    assert "RuntimeError: Status polling failed" in caplog.text

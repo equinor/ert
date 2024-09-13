@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from hypothesis import assume, given, settings
 
 from ert.config import ErtConfig
@@ -8,6 +9,7 @@ from ert.config.parsing import ConfigKeys
 from .config_dict_generator import config_generators
 
 
+@pytest.mark.integration_test
 @settings(max_examples=10)
 @given(config_generators(), config_generators())
 def test_different_defines_give_different_subst_lists(

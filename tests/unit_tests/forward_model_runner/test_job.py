@@ -40,6 +40,7 @@ def test_run_with_process_failing(
         next(run)
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_usage_counts_grandchildren():

@@ -20,6 +20,7 @@ from ert.config.parsing.observations_parser import (
 observation_contents = stlark.from_lark(observations_parser)
 
 
+@pytest.mark.integration_test
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):

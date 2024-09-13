@@ -4,9 +4,8 @@ from subprocess import PIPE, Popen, TimeoutExpired
 
 import pytest
 
+from tests import import_from_location
 from tests.utils import SOURCE_DIR
-
-from ._import_from_location import import_from_location
 
 # import ecl_config and ecl_run.py from ert/forward-models/res/script
 # package-data path which. These are kept out of the ert package to avoid the
