@@ -37,12 +37,12 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
 
         self.plugin_manager = plugin_manager
-        self.__main_widget: Optional[QWidget] = None
-
-        self.central_widget = QWidget()
-        self.central_layout = QVBoxLayout()
+        self.central_widget = QWidget(self)
+        self.central_layout = QVBoxLayout(self.central_widget)
+        self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget.setLayout(self.central_layout)
-
+        self.central_widget.setMaximumWidth(2400)
+        self.central_widget.setMaximumHeight(1200)
         self.setCentralWidget(self.central_widget)
 
         toolbar = self.addToolBar("Tools")
@@ -142,10 +142,9 @@ class ErtMainWindow(QMainWindow):
             self.restoreState(wnd)
 
     def setWidget(self, widget: QWidget) -> None:
-        self.__main_widget = widget
-        actions = widget.getActions()
-        for action in actions:
-            self.__view_menu.addAction(action)
+        # actions = widget.getActions()
+        # for action in actions:
+        #     self.__view_menu.addAction(action)
 
         self.central_layout.addWidget(widget)
 

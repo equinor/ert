@@ -7,6 +7,8 @@ import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, Tuple
 
+from .sidepanel import SidePanel
+
 if sys.version_info >= (3, 9):
     from importlib.resources import files
 else:
@@ -16,7 +18,7 @@ from collections import Counter
 
 from qtpy.QtCore import QDir, Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QWidget
+from qtpy.QtWidgets import QApplication, QDockWidget, QWidget
 
 from ert.config import (
     ErrorInfo,
@@ -191,11 +193,11 @@ def _setup_main_window(
     config_file = args.config
     window = ErtMainWindow(config_file, plugin_manager)
     window.notifier.set_storage(storage)
-    window.setWidget(
-        ExperimentPanel(
-            config, window.notifier, config_file, facade.get_ensemble_size()
-        )
+    experiment_panel = ExperimentPanel(
+        config, window.notifier, config_file, facade.get_ensemble_size()
     )
+    window.setWidget(experiment_panel)
+    experiment_panel.set_main_frame(window)
 
     plugin_handler = PluginHandler(
         window.notifier,
@@ -208,6 +210,19 @@ def _setup_main_window(
         SummaryPanel(config),
         area=Qt.DockWidgetArea.BottomDockWidgetArea,
     )
+
+    sidepanel: SidePanel = SidePanel()
+    sidepanel.slot_add_widget(experiment_panel, "+")
+
+    dw = window.addDock("", sidepanel, area=Qt.DockWidgetArea.LeftDockWidgetArea)
+    dw.setFeatures(
+        dw.features()
+        & ~QDockWidget.DockWidgetClosable
+        & ~QDockWidget.DockWidgetFloatable
+    )
+
+    experiment_panel.experiment_started.connect(sidepanel.slot_add_widget)
+
     window.addTool(PlotTool(config_file, window))
     window.addTool(ExportTool(config, window.notifier))
     window.addTool(WorkflowsTool(config, window.notifier))

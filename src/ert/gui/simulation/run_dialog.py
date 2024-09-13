@@ -167,7 +167,7 @@ class FMStepOverview(QTableView):
         return super().mouseMoveEvent(event)
 
 
-class RunDialog(QDialog):
+class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
     _RUN_TIME_POLL_RATE = 1000
@@ -181,7 +181,7 @@ class RunDialog(QDialog):
         parent: Optional[QWidget] = None,
         output_path: Optional[Path] = None,
     ):
-        QDialog.__init__(self, parent)
+        QFrame.__init__(self, parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -195,7 +195,7 @@ class RunDialog(QDialog):
         self.fail_msg_box: Optional[ErtMessageBox] = None
 
         self._minimum_width = 1200
-        self._minimum_height = 800
+        self._minimum_height = 600
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -299,12 +299,12 @@ class RunDialog(QDialog):
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)  # type: ignore
-        self.done_button.clicked.connect(self.accept)
+        self.done_button.clicked.connect(self.hide)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumSize(self._minimum_width, self._minimum_height)
-        self.finished.connect(self._on_finished)
+        # self.finished.connect(self._on_finished)
 
         self._restart = False
 
@@ -355,7 +355,8 @@ class RunDialog(QDialog):
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if not self._notifier.is_simulation_running:
-            self.accept()
+            pass
+            # self.accept()
         elif self.killJobs() != QMessageBox.Yes and a0 is not None:
             a0.ignore()
 
@@ -553,14 +554,10 @@ class RunDialog(QDialog):
             file_dialog.close()
 
     def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
-        # QDialog on escape will close without prompting
-        # so call self.close() instead
-        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
-            self.close()
-        elif a0 is not None and a0.key() == Qt.Key.Key_F1:
+        if a0 is not None and a0.key() == Qt.Key.Key_F1:
             self.produce_clipboard_debug_info.emit()
         else:
-            QDialog.keyPressEvent(self, a0)
+            QFrame.keyPressEvent(self, a0)
 
 
 # Cannot use a non-static method here as

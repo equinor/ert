@@ -7,7 +7,7 @@ from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QStandardItemModel
@@ -34,6 +34,7 @@ from ert.shared.status.utils import (
     get_ert_memory_usage,
 )
 
+from ..main_window import ErtMainWindow
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
@@ -61,6 +62,7 @@ def create_md_table(kv: Dict[str, str], output: str) -> str:
 
 class ExperimentPanel(QWidget):
     experiment_type_changed = Signal(ExperimentConfigPanel)
+    experiment_started = Signal(object)
 
     def __init__(
         self,
@@ -175,6 +177,8 @@ class ExperimentPanel(QWidget):
             ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
             experiment_type_valid,
         )
+
+        self._main_frame: Optional[ErtMainWindow] = None
         self.setLayout(layout)
 
     def addExperimentConfigPanel(
@@ -225,6 +229,9 @@ class ExperimentPanel(QWidget):
     def getExperimentName(self) -> str:
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
         return self.get_experiment_arguments().experiment_name
+
+    def set_main_frame(self, main_frame: ErtMainWindow) -> None:
+        self._main_frame = main_frame
 
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
@@ -310,18 +317,24 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
+        self.experiment_started.emit(dialog)
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
-
         self.run_button.setEnabled(False)
         dialog.run_experiment()
+
+        if self._main_frame:
+            dialog.setParent(self._main_frame)
+            self._main_frame.setWidget(dialog)
+
         dialog.show()
+        self.hide()
 
         def exit_handler() -> None:
             self.run_button.setEnabled(True)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 
-        dialog.finished.connect(exit_handler)
+        # dialog.finished.connect(exit_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
