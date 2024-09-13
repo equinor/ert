@@ -42,26 +42,50 @@ jobs:
       run: |
         uv pip install ".[dev]"
 
-    - name: Test GUI
-      if: inputs.test-type == 'gui-test'
+    - name: UI Test
+      if: inputs.test-type == 'ui-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -v --mpl -m "requires_window_manager" --benchmark-disable
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -v --mpl --benchmark-disable tests/ui_tests/gui
+        pytest --cov=ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/unit_tests
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
 
-    - name: Integration Test
-      if: inputs.test-type == 'integration-tests'
+    - name: Performance Test
+      if: inputs.test-type == 'performance-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/performance_tests
 
     - name: Test for a clean repository
       run: |
         # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
         git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
+
+    - name: Upload coverage to Codecov
+      id: codecov1
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+    - name: codecov retry sleep
+      if: steps.codecov1.outcome == 'failure'
+      run: |
+        sleep 30
+    - name: Codecov retry
+      uses: codecov/codecov-action@v4
+      if: steps.codecov1.outcome == 'failure'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+        fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - uses: test-summary/action@v2
       continue-on-error: true

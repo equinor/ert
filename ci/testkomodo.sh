@@ -53,7 +53,7 @@ start_tests () {
     unset OMP_NUM_THREADS
 
     basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
-    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" integration_tests/scheduler
+    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" unit_tests/scheduler
     rm -rf "$basetemp" || true
 
     popd
