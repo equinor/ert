@@ -349,6 +349,14 @@ class ErtConfig:
 
         logger.info(f"Content of the config_dict: {tmp_dict}")
 
+    @classmethod
+    def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
+        for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
+            fm_configuration = Path(fm_step_filename).read_text(encoding="utf-8")
+            logger.info(
+                f"Custom forward_model_step {fm_step} installed as: {fm_configuration}"
+            )
+
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
         if ConfigKeys.ENSPATH not in content_dict:
@@ -378,6 +386,7 @@ class ErtConfig:
     ) -> ConfigDict:
         site_config_dict = cls.read_site_config()
         user_config_dict = cls.read_user_config(user_config_file)
+        cls._log_custom_forward_model_steps(user_config_dict)
 
         for keyword, value in site_config_dict.items():
             if keyword == "QUEUE_OPTION":

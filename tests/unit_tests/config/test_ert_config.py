@@ -263,6 +263,28 @@ def test_logging_config(caplog, config_content, expected):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_custom_forward_models_are_logged(caplog):
+    localhack = "localhack.sh"
+    Path(localhack).write_text("", encoding="utf-8")
+    st = os.stat(localhack)
+    os.chmod(localhack, st.st_mode | stat.S_IEXEC)
+    Path("foo_fm").write_text(f"EXECUTABLE {localhack}", encoding="utf-8")
+    Path("config.ert").write_text(
+        "NUM_REALIZATIONS 1\nINSTALL_JOB foo_fm foo_fm", encoding="utf-8"
+    )
+    with caplog.at_level(logging.INFO):
+        ErtConfig.from_file("config.ert")
+    assert (
+        f"Custom forward_model_step foo_fm installed as: EXECUTABLE {localhack}"
+        in caplog.messages
+    )
+    assert (
+        sum("Custom forward_model_step" in logmessage for logmessage in caplog.messages)
+        == 1
+    ), "check if site-config fm were logged"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_logging_with_comments(caplog):
     """
     Run logging on an actual config file with line comments
