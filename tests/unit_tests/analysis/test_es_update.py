@@ -849,3 +849,229 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         assert scaled_errors_with_autoscale.tolist() == [2, 6]
         assert scaled_errors_without_autoscale.tolist() == [1, 2]
+
+
+def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
+    resp = GenDataConfig(keys=["RESPONSE"])
+    obs = xr.Dataset(
+        {
+            "observations": (["report_step", "index"], [[1.0]]),
+            "std": (["report_step", "index"], [[0.1]]),
+        },
+        coords={"index": [1000], "report_step": [0]},
+        attrs={"response": "RESPONSE"},
+    )
+    experiment = storage.create_experiment(
+        parameters=[uniform_parameter],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        data = rng.uniform(0.8, 1, 3)
+        prior.save_response(
+            "gen_data",
+            xr.Dataset(
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    with pytest.raises(
+        ErtAnalysisError,
+        match="No active observations",
+    ):
+        smoother_update(
+            prior,
+            posterior_ens,
+            ["OBSERVATION"],
+            ["PARAMETER"],
+            UpdateSettings(),
+            ESSettings(),
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_gen_data_missing(storage, uniform_parameter, obs):
+    resp = GenDataConfig(keys=["RESPONSE"])
+    experiment = storage.create_experiment(
+        parameters=[uniform_parameter],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
+        prior.save_response(
+            "gen_data",
+            xr.Dataset(
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    events = []
+
+    update_snapshot = smoother_update(
+        prior,
+        posterior_ens,
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
+        progress_callback=events.append,
+    )
+    assert [step.status for step in update_snapshot.update_step_snapshots] == [
+        ObservationStatus.ACTIVE,
+        ObservationStatus.ACTIVE,
+        ObservationStatus.MISSING_RESPONSE,
+    ]
+
+    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
+    data_section = update_event.data
+    assert data_section.extra["Active observations"] == "2"
+    assert data_section.extra["Deactivated observations - missing respons(es)"] == "1"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_update_subset_parameters(storage, uniform_parameter, obs):
+    no_update_param = GenKwConfig(
+        name="EXTRA_PARAMETER",
+        forward_init=False,
+        template_file="",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+        ],
+        output_file=None,
+        update=False,
+    )
+    resp = GenDataConfig(keys=["RESPONSE"])
+    experiment = storage.create_experiment(
+        parameters=[uniform_parameter, no_update_param],
+        responses=[resp],
+        observations={"OBSERVATION": obs},
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=10,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    for iens in range(prior.ensemble_size):
+        data = rng.uniform(0, 1)
+        prior.save_parameters(
+            "PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+        prior.save_parameters(
+            "EXTRA_PARAMETER",
+            iens,
+            xr.Dataset(
+                {
+                    "values": ("names", [data]),
+                    "transformed_values": ("names", [data]),
+                    "names": ["KEY_1"],
+                }
+            ),
+        )
+
+        data = rng.uniform(0.8, 1, 10)
+        prior.save_response(
+            "gen_data",
+            xr.Dataset(
+                {"values": (["name", "report_step", "index"], [[data]])},
+                coords={
+                    "name": ["RESPONSE"],
+                    "index": range(len(data)),
+                    "report_step": [0],
+                },
+            ),
+            iens,
+        )
+    posterior_ens = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    smoother_update(
+        prior,
+        posterior_ens,
+        ["OBSERVATION"],
+        ["PARAMETER"],
+        UpdateSettings(),
+        ESSettings(),
+    )
+    assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(
+        posterior_ens.load_parameters("EXTRA_PARAMETER", 0)["values"]
+    )
+    assert not prior.load_parameters("PARAMETER", 0)["values"].equals(
+        posterior_ens.load_parameters("PARAMETER", 0)["values"]
+    )

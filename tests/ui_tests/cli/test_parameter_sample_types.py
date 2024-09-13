@@ -11,7 +11,8 @@ import xtgeo
 from ert.libres_facade import LibresFacade
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
-from tests.integration_tests.run_cli import run_cli
+
+from .run_cli import run_cli
 
 
 def load_from_forward_model(ert_config, ensemble):

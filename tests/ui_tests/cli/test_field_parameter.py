@@ -11,7 +11,8 @@ import xtgeo
 from ert.config import ErtConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
-from tests.integration_tests.run_cli import run_cli
+
+from .run_cli import run_cli
 
 
 @pytest.mark.integration_test
