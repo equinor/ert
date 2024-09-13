@@ -61,6 +61,13 @@ pip install -e ".[dev]"
 pytest tests/
 ```
 
+There are many kinds of tests in the `tests` directory, while iterating on your
+code you can run a fast subset of the tests with
+
+```sh
+pytest -n logical tests/unit_tests -m "not integration_tests"
+```
+
 [Git LFS](https://git-lfs.com/) must be installed to get all the files. This is packaged as `git-lfs` on Ubuntu, Fedora or macOS Homebrew. For Equinor RGS node users, it is possible to use `git` from Red Hat Software Collections:
 ```sh
 source /opt/rh/rh-git227/enable
@@ -75,6 +82,20 @@ If you checked out submodules without having git lfs installed, you can force gi
 git submodule foreach "git lfs pull"
 ```
 
+### Build documentation
+
+You can build the documentation after installation by running
+```bash
+pip install ".[dev]"
+sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
+```
+and then open the generated `./tmp/ert_docs/index.html` in a browser.
+
+To automatically reload on changes you may use
+
+```bash
+sphinx-autobuild docs docs/_build/html
+```
 
 ### Style requirements
 
