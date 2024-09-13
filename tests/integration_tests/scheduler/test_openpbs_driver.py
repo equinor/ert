@@ -6,7 +6,7 @@ import pytest
 from ert.cli.main import ErtCliError
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import OpenPBSDriver
-from tests.integration_tests.run_cli import run_cli
+from tests.ui_tests.cli.run_cli import run_cli
 
 from .conftest import mock_bin
 

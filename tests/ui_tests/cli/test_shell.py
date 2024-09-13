@@ -4,7 +4,8 @@ import os.path
 import pytest
 
 from ert.plugins import ErtPluginManager
-from tests.integration_tests.run_cli import run_cli_with_pm
+
+from .run_cli import run_cli_with_pm
 
 
 @pytest.mark.integration_test

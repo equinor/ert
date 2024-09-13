@@ -16,7 +16,7 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.storage import Storage, open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
-from tests.integration_tests.analysis.test_adaptive_localization import (
+from tests.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
 
