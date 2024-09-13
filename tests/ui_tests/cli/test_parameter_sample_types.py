@@ -22,7 +22,6 @@ def load_from_forward_model(ert_config, ensemble):
 
 
 @pytest.mark.usefixtures("set_site_config")
-@pytest.mark.integration_test
 def test_surface_param_update(tmpdir):
     """Full update with a surface parameter, it mirrors the poly example,
     except it uses SURFACE instead of GEN_KW.
@@ -173,7 +172,6 @@ if __name__ == "__main__":
         assert not (surf.values == surf2.values).any()
 
 
-@pytest.mark.integration_test
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.flaky(reruns=5)
 def test_field_param_memory(tmpdir):

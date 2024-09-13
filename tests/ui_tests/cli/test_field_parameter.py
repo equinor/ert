@@ -5,7 +5,6 @@ from textwrap import dedent
 
 import numpy as np
 import numpy.testing
-import pytest
 import xtgeo
 
 from ert.config import ErtConfig
@@ -15,7 +14,6 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
-@pytest.mark.integration_test
 def test_field_param_update(tmpdir):
     """
     This replicates the poly example, only it uses FIELD parameter
@@ -138,7 +136,6 @@ if __name__ == "__main__":
         )
 
 
-@pytest.mark.integration_test
 def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
     """
     This replicates the poly example, only it uses FIELD parameter

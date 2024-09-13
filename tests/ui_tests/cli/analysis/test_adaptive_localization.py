@@ -32,7 +32,6 @@ def run_cli_ES_with_case(poly_config):
     return prior_ensemble, posterior_ensemble
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     set_adaptive_localization_1 = dedent(
@@ -225,7 +224,6 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
     assert set_of_records_from_xr == expected_records
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     """
@@ -263,7 +261,6 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_generalized_variance_increases_in_cutoff():
     rng = np.random.default_rng(42)
