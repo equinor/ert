@@ -37,6 +37,8 @@ from tests.utils import poll
 
 from .conftest import mock_bin
 
+pytestmark = pytest.mark.xdist_group("openpbs")
+
 
 @given(st.lists(st.sampled_from(JOB_STATES)))
 async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
