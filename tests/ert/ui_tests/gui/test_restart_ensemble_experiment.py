@@ -113,13 +113,15 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     qtbot.waitUntil(run_dialog.restart_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    # Assert that the number of boxes in the detailed view is
-    # equal to the number of previously failed realizations
+    # We expect to have the same amount of realizations in list_model
+    # since we reuse the snapshot_model
     realization_widget = run_dialog._tab_widget.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
-    assert list_model.rowCount() == len(failed_realizations)
+    assert (
+        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+    )
 
     # Second restart
     assert any(run_dialog._run_model._create_mask_from_failed_realizations())
@@ -142,12 +144,14 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-    # Assert that the number of boxes in the detailed view is
-    # equal to the number of previously failed realizations
+    # We expect to have the same amount of realizations in list_model
+    # since we reuse the snapshot_model
     realization_widget = run_dialog._tab_widget.currentWidget()
     assert isinstance(realization_widget, RealizationWidget)
     list_model = realization_widget._real_view.model()
     assert list_model
-    assert list_model.rowCount() == len(failed_realizations)
+    assert (
+        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+    )
 
     qtbot.mouseClick(run_dialog.done_button, Qt.MouseButton.LeftButton)

@@ -307,6 +307,8 @@ class RunDialog(QDialog):
 
         self.on_run_model_event.connect(self._on_event)
 
+        self._restart = False
+
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
         self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
@@ -348,8 +350,10 @@ class RunDialog(QDialog):
             a0.ignore()
 
     def run_experiment(self, restart: bool = False) -> None:
-        self._snapshot_model.reset()
-        self._tab_widget.clear()
+        self._restart = restart
+        if restart is False:
+            self._snapshot_model.reset()
+            self._tab_widget.clear()
 
         port_range = None
         if self._run_model.queue_system == QueueSystem.LOCAL:
@@ -431,7 +435,14 @@ class RunDialog(QDialog):
             self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
-                self._snapshot_model._add_snapshot(event.snapshot, str(event.iteration))
+                if self._restart:
+                    self._snapshot_model._update_snapshot(
+                        event.snapshot, str(event.iteration)
+                    )
+                else:
+                    self._snapshot_model._add_snapshot(
+                        event.snapshot, str(event.iteration)
+                    )
             self.update_total_progress(event.progress, event.iteration_label)
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
