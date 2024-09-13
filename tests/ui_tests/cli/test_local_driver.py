@@ -4,8 +4,6 @@ import signal
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 
 def create_ert_config(path: Path):
     ert_config_path = Path(path / "ert_config.ert")
@@ -38,7 +36,6 @@ def create_ert_config(path: Path):
     )
 
 
-@pytest.mark.integration_test
 async def test_subprocesses_live_on_after_ert_dies(tmp_path):
     # Have ERT run a forward model that writes in PID to a file, then sleeps
     # Forcefully terminate ERT and assert that the child process is not terminated

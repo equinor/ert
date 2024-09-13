@@ -52,7 +52,6 @@ def test_that_posterior_has_lower_variance_than_prior():
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     """This is a regression test to make sure ert does not use the wrong order
@@ -128,7 +127,6 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         )
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_update_multiple_param():
     run_cli(

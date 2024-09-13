@@ -1,14 +1,11 @@
 import os
 import os.path
 
-import pytest
-
 from ert.plugins import ErtPluginManager
 
 from .run_cli import run_cli_with_pm
 
 
-@pytest.mark.integration_test
 def test_shell_scripts_integration(tmpdir):
     """
     The following test is a regression test that

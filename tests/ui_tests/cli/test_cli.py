@@ -549,7 +549,6 @@ def fixture_mock_cli_run(monkeypatch):
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_evaluator():
     run_cli(
@@ -564,7 +563,6 @@ def test_ensemble_evaluator():
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-@pytest.mark.integration_test
 def test_es_mda(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
@@ -612,7 +610,6 @@ def test_es_mda(snapshot):
         pytest.param(ES_MDA_MODE, "iter-%d", id=f"{ES_MDA_MODE}"),
     ],
 )
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_cli_does_not_run_without_observations(mode, target):
     def remove_linestartswith(file_name: str, startswith: str):
@@ -627,7 +624,6 @@ def test_cli_does_not_run_without_observations(mode, target):
         run_cli(mode, "--disable-monitor", "--target-case", target, "poly.ert")
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_evaluator_disable_monitoring():
     run_cli(
@@ -639,7 +635,6 @@ def test_ensemble_evaluator_disable_monitoring():
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_cli_test_run(mock_cli_run):
     run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
@@ -650,7 +645,6 @@ def test_cli_test_run(mock_cli_run):
     thread_start_mock.assert_has_calls([[call(), call()]])
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_ies():
     run_cli(
@@ -664,7 +658,6 @@ def test_ies():
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_running_ies_with_different_steplength_produces_different_result():
     """This is a regression test to make sure that different step-lengths
@@ -735,7 +728,6 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
     assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     "prior_mask,reals_rerun_option",
@@ -785,7 +777,6 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 1
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_failing_job_cli_error_message():
     # modify poly_eval.py
@@ -809,7 +800,6 @@ def test_failing_job_cli_error_message():
         pytest.fail(msg="Expected run cli to raise ErtCliError!")
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_exclude_parameter_from_update():
     with fileinput.input("poly.ert", inplace=True) as fin:
@@ -864,7 +854,6 @@ def test_that_driver__init__exceptions_are_propagated(monkeypatch, capsys):
     assert "Foobar error" in captured.err
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     """Verify that the run model now gereneates a cleanup log when
