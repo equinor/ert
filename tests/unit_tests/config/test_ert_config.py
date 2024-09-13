@@ -910,12 +910,13 @@ def test_that_magic_strings_get_substituted_in_workflow():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_unknown_job_gives_config_validation_error():
+@pytest.mark.parametrize("fm_keyword", ["FORWARD_MODEL", "SIMULATION_JOB"])
+def test_that_unknown_job_gives_config_validation_error(fm_keyword):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
-        SIMULATION_JOB NO_SUCH_FORWARD_MODEL_STEP
+        {fm_keyword} NO_SUCH_FORWARD_MODEL_STEP
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:

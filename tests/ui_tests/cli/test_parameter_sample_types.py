@@ -35,7 +35,7 @@ OBS_CONFIG observations
 SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap BASE_SURFACE:surf.irap FORWARD_INIT:True
 GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
 INSTALL_JOB poly_eval POLY_EVAL
-SIMULATION_JOB poly_eval
+FORWARD_MODEL poly_eval
 """
         base_surface = xtgeo.RegularSurface(
             ncol=2,
@@ -200,7 +200,7 @@ def create_poly_with_field(field_dim: Tuple[int, int, int], realisations: int):
 
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
-            SIMULATION_JOB poly_eval
+            FORWARD_MODEL poly_eval
             """
     )
     with open("config.ert", "w", encoding="utf-8") as fh:
