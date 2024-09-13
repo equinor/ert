@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
+        test-type: [ 'performance-tests', 'unit-tests', 'ui-tests' ]
         python-version: [ '3.8', '3.11', '3.12' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml
@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
+        test-type: [ 'performance-tests', 'unit-tests', 'ui-tests' ]
         python-version: [ '3.8', '3.12' ]
         os: [ 'macos-13', 'macos-14', 'macos-14-large']
         exclude:
@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'integration-tests', 'unit-tests', 'gui-test' ]
+        test-type: [ 'performance-tests', 'unit-tests', 'ui-tests' ]
         python-version: [ '3.12' ]
         os: [ 'macos-latest' ]
     uses: ./.github/workflows/test_ert.yml

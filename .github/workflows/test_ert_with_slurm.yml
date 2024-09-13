@@ -69,7 +69,7 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        pytest tests/integration_tests/scheduler --slurm
+        pytest tests/unit_tests/scheduler --slurm
 
     - name: Test poly-example on slurm
       run: |
