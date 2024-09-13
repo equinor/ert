@@ -100,6 +100,7 @@ class File(Reporter):
             job_status.update(
                 max_memory_usage=msg.memory_status.max_rss,
                 current_memory_usage=msg.memory_status.rss,
+                cpu_seconds=msg.memory_status.cpu_seconds,
                 status=_JOB_STATUS_RUNNING,
             )
             memory_logger.info(msg.memory_status)

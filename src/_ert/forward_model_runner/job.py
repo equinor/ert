@@ -17,7 +17,7 @@ from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieP
 from .io import assert_file_executable
 from .reporting.message import (
     Exited,
-    MemoryStatus,
+    ProcessTreeStatus,
     Running,
     Start,
 )
@@ -179,15 +179,16 @@ class Job:
 
         max_memory_usage = 0
         while exit_code is None:
-            (memory_rss, oom_score) = _get_rss_and_oom_score_for_processtree(process)
+            (memory_rss, cpu_seconds, oom_score) = _get_processtree_data(process)
             max_memory_usage = max(memory_rss, max_memory_usage)
             yield Running(
                 self,
-                MemoryStatus(
+                ProcessTreeStatus(
                     rss=memory_rss,
                     max_rss=max_memory_usage,
                     fm_step_id=self.index,
                     fm_step_name=self.job_data.get("name"),
+                    cpu_seconds=cpu_seconds,
                     oom_score=oom_score,
                 ),
             )
@@ -349,9 +350,9 @@ class Job:
         return f"Could not find target_file:{target_file}"
 
 
-def _get_rss_and_oom_score_for_processtree(
+def _get_processtree_data(
     process: Process,
-) -> Tuple[int, Optional[int]]:
+) -> Tuple[int, float, Optional[int]]:
     """Obtain the oom_score (the Linux kernel uses this number to
     decide which process to kill first in out-of-memory siturations).
 
@@ -370,14 +371,16 @@ def _get_rss_and_oom_score_for_processtree(
     oom_score = None
     # A value of None means that we have no information.
     memory_rss = 0
+    cpu_seconds = 0.0
     with contextlib.suppress(ValueError, FileNotFoundError):
         oom_score = int(
             Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
         )
     with contextlib.suppress(
         ValueError, NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
-    ):
+    ), process.oneshot():
         memory_rss = process.memory_info().rss
+        cpu_seconds = process.cpu_times().user
 
     with contextlib.suppress(
         NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
@@ -399,7 +402,9 @@ def _get_rss_and_oom_score_for_processtree(
                     if oom_score is not None
                     else oom_score_child
                 )
-            with contextlib.suppress(NoSuchProcess, AccessDenied, ZombieProcess):
+            with contextlib.suppress(
+                NoSuchProcess, AccessDenied, ZombieProcess
+            ), child.oneshot():
                 memory_rss += child.memory_info().rss
-
-    return (memory_rss, oom_score)
+                cpu_seconds += child.cpu_times().user
+    return (memory_rss, cpu_seconds, oom_score)

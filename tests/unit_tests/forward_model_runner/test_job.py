@@ -1,3 +1,4 @@
+import contextlib
 import os
 import pathlib
 import stat
@@ -11,7 +12,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import numpy as np
 import pytest
 
-from _ert.forward_model_runner.job import Job, _get_rss_and_oom_score_for_processtree
+from _ert.forward_model_runner.job import Job, _get_processtree_data
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 
 
@@ -38,6 +39,56 @@ def test_run_with_process_failing(
 
     with pytest.raises(StopIteration):
         next(run)
+
+
+@pytest.mark.flaky(reruns=5)
+@pytest.mark.integration_test
+def test_cpu_seconds_can_detect_multiprocess():
+    """Run a job that sets of two simultaneous processes that
+    each run for 1 second. We should be able to detect the total
+    cpu seconds consumed to be roughly 2 seconds.
+
+    The test is flaky in that it tries to gather cpu_seconds data while
+    the subprocesses are running. On a loaded CPU this is not very robust,
+    but the most important catch is to be able to obtain a cpu_second
+    number that is larger than the busy-wait times of the individual
+    sub-processes.
+    """
+    pythonscript = "busy.py"
+    with open(pythonscript, "w", encoding="utf-8") as pyscript:
+        pyscript.write(
+            textwrap.dedent(
+                """\
+            import time
+            now = time.time()
+            while time.time() < now + 1:
+                pass"""
+            )
+        )
+    scriptname = "saturate_cpus.sh"
+    with open(scriptname, "w", encoding="utf-8") as script:
+        script.write(
+            textwrap.dedent(
+                """\
+            #!/bin/sh
+            python busy.py &
+            python busy.py"""
+            )
+        )
+    executable = os.path.realpath(scriptname)
+    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    job = Job(
+        {
+            "executable": executable,
+        },
+        0,
+    )
+    job.MEMORY_POLL_PERIOD = 0.1
+    cpu_seconds = 0.0
+    for status in job.run():
+        if isinstance(status, Running):
+            cpu_seconds = max(cpu_seconds, status.memory_status.cpu_seconds)
+    assert 1.4 < cpu_seconds < 2.2
 
 
 @pytest.mark.integration_test
@@ -158,19 +209,39 @@ def test_memory_profile_in_running_events():
     assert min(timedeltas).total_seconds() >= 0.01
 
 
+@dataclass
+class CpuTimes:
+    """Mocks the response of psutil.Process().cpu_times()"""
+
+    user: float
+
+
+@dataclass
+class MockedProcess:
+    """Mocks psutil.Process()"""
+
+    pid: int
+    memory_info = MagicMock()
+
+    def cpu_times(self):
+        return CpuTimes(user=self.pid / 10.0)
+
+    def children(self, recursive: bool):
+        assert recursive
+        if self.pid == 123:
+            return [MockedProcess(124)]
+
+    def oneshot(self):
+        return contextlib.nullcontext()
+
+
+def test_cpu_seconds_for_process_with_children():
+    (_, cpu_seconds, _) = _get_processtree_data(MockedProcess(123))
+    assert cpu_seconds == 123 / 10.0 + 124 / 10.0
+
+
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
-def test_oom_score_is_max_over_processtree(monkeypatch):
-    @dataclass
-    class MockedProcess:
-        """A very lightweight mocked psutil.Process object"""
-
-        pid: int
-        memory_info = MagicMock()
-
-        def children(self, recursive: bool = True):
-            if self.pid == 123:
-                return [MockedProcess(124)]
-
+def test_oom_score_is_max_over_processtree():
     def read_text_side_effect(self: pathlib.Path, *args, **kwargs):
         if self.absolute() == pathlib.Path("/proc/123/oom_score"):
             return "234"
@@ -179,7 +250,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
-        (_, oom_score) = _get_rss_and_oom_score_for_processtree(MockedProcess(123))
+        (_, _, oom_score) = _get_processtree_data(MockedProcess(123))
 
     assert oom_score == 456
 
