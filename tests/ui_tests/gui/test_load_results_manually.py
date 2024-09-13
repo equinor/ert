@@ -5,7 +5,7 @@ from ert.gui.ertwidgets import ClosableDialog, StringBox
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.tools.load_results import LoadResultsPanel
 
-from ..conftest import (
+from .conftest import (
     get_child,
     wait_for_child,
 )

@@ -6,8 +6,7 @@ from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectionWidget,
     EnsembleSelectListWidget,
 )
-
-from ..conftest import get_child
+from tests.ui_tests.gui.conftest import get_child
 
 
 def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):

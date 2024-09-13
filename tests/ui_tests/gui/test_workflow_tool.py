@@ -18,7 +18,7 @@ from ert.run_models import EnsembleExperiment
 from ert.services import StorageService
 from ert.storage import Storage, open_storage
 
-from ..conftest import get_child, wait_for_child
+from .conftest import get_child, wait_for_child
 
 
 @contextmanager
