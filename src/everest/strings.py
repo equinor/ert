@@ -5,7 +5,7 @@ DETACHED_NODE_DIR = "detached_node_output"
 DEFAULT_OUTPUT_DIR = "everest_output"
 DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
 
-EVEREST_SERVER = "everserver"
+EVEREST_SERVER_CONFIG = "everserver_config"
 EVEREST = "everest"
 
 HOSTFILE_NAME = "hostfile"

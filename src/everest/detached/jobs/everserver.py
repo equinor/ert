@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 import argparse
 import json
 import logging
 import os
 import socket
 import ssl
-import sys
 import threading
 import traceback
 from base64 import b64encode
@@ -218,11 +216,11 @@ def _configure_loggers(config: EverestConfig):
     )
 
 
-def main(args):
+def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--config-file", type=str)
     arg_parser.add_argument("--debug", action="store_true")
-    options, _ = arg_parser.parse_known_args(args=args)
+    options = arg_parser.parse_args()
     config = EverestConfig.load_file(options.config_file)
     if options.debug:
         config.logging_level = "debug"
@@ -411,7 +409,3 @@ def _generate_authentication():
     n_bytes = 128
     random_bytes = bytes(os.urandom(n_bytes))
     return b64encode(random_bytes).decode("utf-8")
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
