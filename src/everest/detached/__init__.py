@@ -20,7 +20,7 @@ from everest.config_keys import ConfigKeys as CK
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS, Status
 from everest.strings import (
     EVEREST,
-    EVEREST_SERVER,
+    EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ENDPOINT,
@@ -361,7 +361,7 @@ def start_monitor(config: EverestConfig, callback, polling_interval=5):
 
 
 _EVERSERVER_JOB_PATH = pkg_resources.resource_filename(
-    "everest.detached", os.path.join("jobs", EVEREST_SERVER)
+    "everest.detached", os.path.join("jobs", EVEREST_SERVER_CONFIG)
 )
 
 _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
@@ -478,19 +478,19 @@ def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = Fal
     everserver_config.update(
         {
             "RUNPATH": simulation_path,
-            "JOBNAME": EVEREST_SERVER,
+            "JOBNAME": EVEREST_SERVER_CONFIG,
             "NUM_REALIZATIONS": 1,
             "MAX_SUBMIT": 1,
-            "ENSPATH": os.path.join(detached_node_dir, EVEREST_SERVER),
+            "ENSPATH": os.path.join(detached_node_dir, EVEREST_SERVER_CONFIG),
             "RUNPATH_FILE": os.path.join(detached_node_dir, ".res_runpath_list"),
         }
     )
     install_job = everserver_config.get("INSTALL_JOB", [])
-    install_job.append((EVEREST_SERVER, _EVERSERVER_JOB_PATH))
+    install_job.append((EVEREST_SERVER_CONFIG, _EVERSERVER_JOB_PATH))
     everserver_config["INSTALL_JOB"] = install_job
 
     simulation_job = everserver_config.get("SIMULATION_JOB", [])
-    simulation_job.append([EVEREST_SERVER] + arg_list)
+    simulation_job.append([EVEREST_SERVER_CONFIG] + arg_list)
     everserver_config["SIMULATION_JOB"] = simulation_job
 
     if queue_system in _QUEUE_SYSTEMS:
