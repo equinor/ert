@@ -126,11 +126,11 @@ def test_surface_init_fails_during_forward_model_callback():
     parameter_name = "TOP"
     with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
         content_lines = config_file_handler.read().splitlines()
-        index_line_with_surface_top = [
+        index_line_with_surface_top = next(
             index
             for index, line in enumerate(content_lines)
             if line.startswith(f"SURFACE {parameter_name}")
-        ][0]
+        )
         line_with_surface_top = content_lines[index_line_with_surface_top]
         breaking_line_with_surface_top = line_with_surface_top
         content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
@@ -148,11 +148,11 @@ def test_unopenable_observation_config_fails_gracefully():
     config_file_name = "snake_oil_field.ert"
     with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
         content_lines = config_file_handler.read().splitlines()
-    index_line_with_observation_config = [
+    index_line_with_observation_config = next(
         index
         for index, line in enumerate(content_lines)
         if line.startswith("OBS_CONFIG")
-    ][0]
+    )
     line_with_observation_config = content_lines[index_line_with_observation_config]
     observation_config_rel_path = line_with_observation_config.split(" ")[1]
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)

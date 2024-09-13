@@ -542,7 +542,7 @@ class ErtConfig:
                 except ForwardModelStepValidationError as err:
                     errors.append(
                         ConfigValidationError.with_context(
-                            f"Forward model step pre-experiment validation failed: {str(err)}",
+                            f"Forward model step pre-experiment validation failed: {err!s}",
                             context=fm_step.name,
                         ),
                     )
@@ -694,7 +694,7 @@ class ErtConfig:
                 job_list_errors.append(
                     ErrorInfo(
                         message=f"Validation failed for "
-                        f"forward model step {fm_step.name}: {str(exc)}"
+                        f"forward model step {fm_step.name}: {exc!s}"
                     ).set_context(fm_step.name)
                 )
 

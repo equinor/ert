@@ -110,7 +110,7 @@ def plotCrossEnsembleStatistics(
 
     _addStatisticsLegends(config)
 
-    axes.set_xticks([-1] + ensemble_indexes + [len(ensemble_indexes)])
+    axes.set_xticks([-1, *ensemble_indexes, len(ensemble_indexes)])
 
     rotation = 0
     if len(ensemble_list) > 3:

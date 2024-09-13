@@ -39,7 +39,7 @@ def test_restart_failed_realizations(opened_main_window_clean, qtbot):
                         return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
                     if __name__ == "__main__":
-                        if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {str(failing_reals)}:
+                        if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {failing_reals!s}:
                             sys.exit(1)
                         coeffs = _load_coeffs("parameters.json")
                         output = [_evaluate(coeffs, x) for x in range(10)]

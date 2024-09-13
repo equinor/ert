@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 def _label_msg(label: str) -> str:
     return (
-        f"Set to empty to use the default  {label}.\n"
+        f"Set to empty to use the default {label}.\n"
         "It is also possible to use LaTeX. "
         "Enclose expression with $...$ for example: \n"
         "$\\alpha > \\beta$\n"

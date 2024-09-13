@@ -77,7 +77,7 @@ def _raise_on_main_thread(exception: BaseException) -> None:
 
 
 def _handler(signum: int, frametype: FrameType | None) -> None:
-    global _current_exception  # noqa: PLW0603
+    global _current_exception
     if not _current_exception:
         return
     current_exception, _current_exception = _current_exception, None

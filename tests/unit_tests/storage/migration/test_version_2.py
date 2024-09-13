@@ -20,7 +20,7 @@ def test_migrate_responses(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
         assert len(list(storage.experiments)) == 1
-        experiment = list(storage.experiments)[0]
+        experiment = next(iter(storage.experiments))
         response_info = json.loads(
             (experiment._path / "responses.json").read_text(encoding="utf-8")
         )
@@ -38,5 +38,5 @@ def test_migrate_responses(setup_case, set_ert_config):
 def test_migrate_gen_kw_config(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
-        experiment = list(storage.experiments)[0]
+        experiment = next(iter(storage.experiments))
         assert "template_file_path" not in experiment.parameter_configuration

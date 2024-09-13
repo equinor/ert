@@ -153,7 +153,7 @@ class LegacyEnsemble:
             self.status = self._status_tracker.update_state(self.snapshot.status)
         return snapshot_mutate_event
 
-    async def send_event(  # noqa: PLR6301
+    async def send_event(
         self,
         url: str,
         event: Event,

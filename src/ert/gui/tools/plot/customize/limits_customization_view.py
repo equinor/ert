@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import date
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from qtpy.QtGui import QDoubleValidator, QIntValidator
 from qtpy.QtWidgets import QLabel, QStackedWidget, QWidget
@@ -38,11 +38,11 @@ class StackedInput(QStackedWidget):
 
 
 class LimitsStack(StackedInput):
-    FLOAT_AXIS = [
+    FLOAT_AXIS: ClassVar[list[str]] = [
         PlotContext.VALUE_AXIS,
         PlotContext.DENSITY_AXIS,
     ]
-    INT_AXIS = [PlotContext.INDEX_AXIS, PlotContext.COUNT_AXIS]
+    INT_AXIS: ClassVar[list[str]] = [PlotContext.INDEX_AXIS, PlotContext.COUNT_AXIS]
     NUMBER_AXIS = FLOAT_AXIS + INT_AXIS
 
     def __init__(self) -> None:

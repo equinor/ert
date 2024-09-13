@@ -13,11 +13,11 @@ class SomeClass(BaseMode):
         return "good" if self.can_write else "fail"
 
     @require_write
-    def raises_unless_write(self) -> bool:  # noqa: PLR6301
+    def raises_unless_write(self) -> bool:
         return True
 
     @require_write
-    def concat_if_write(self, a: str, b: str) -> str:  # noqa: PLR6301
+    def concat_if_write(self, a: str, b: str) -> str:
         return a + b
 
 

@@ -37,10 +37,10 @@ def bhist_formatter(jobstats: List[Job]) -> str:
     for job in jobstats:
         string += (
             f"{job.job_id:7.7s} {job.user:7.7s} "
-            f"{job.job_name:9.9s} {str(job.pend):7.7s} "
-            f"{str(job.psusp):7.7s} {str(job.run):7.7s} "
-            f"{str(job.ususp):7.7s} {str(job.ssusp):7.7s} "
-            f"{str(job.unkwn):7.7s} {str(job.total):7.7s}\n"
+            f"{job.job_name:9.9s} {job.pend!s:7.7s} "
+            f"{job.psusp!s:7.7s} {job.run!s:7.7s} "
+            f"{job.ususp!s:7.7s} {job.ssusp!s:7.7s} "
+            f"{job.unkwn!s:7.7s} {job.total!s:7.7s}\n"
         )
     return string
 
@@ -65,9 +65,9 @@ def bhist_long_formatter(jobstats: List[Job]) -> str:
 
             Summary of time in seconds spent in various states by  Mon Apr 19 11:33:14
             PEND     PSUSP    RUN      USUSP    SSUSP    UNKWN    TOTAL\n\t\t"""
-            f"{str(job.pend):8.8s} {str(job.psusp):8.8s} {str(job.run):8.8s}"
-            f"{str(job.ususp):8.8s} {str(job.ssusp):8.8s} {str(job.unkwn):8.8s}"
-            f"{str(job.total):8.8s}"
+            f"{job.pend!s:8.8s} {job.psusp!s:8.8s} {job.run!s:8.8s}"
+            f"{job.ususp!s:8.8s} {job.ssusp!s:8.8s} {job.unkwn!s:8.8s}"
+            f"{job.total!s:8.8s}"
         )
         formatted_job_outputs.append(job_output)
     return f"{50*'-'}".join(formatted_job_outputs)

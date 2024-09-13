@@ -334,18 +334,7 @@ def _read_spec(
 
     with open(spec, mode) as fp:
         for entry in resfo.lazy_read(fp, format):
-            if all(
-                p is not None
-                for p in (
-                    [
-                        date,
-                        n,
-                        nx,
-                        ny,
-                    ]
-                    + list(arrays.values())
-                )
-            ):
+            if all(p is not None for p in [date, n, nx, ny, *arrays.values()]):
                 break
             kw = entry.read_keyword()
             if kw in arrays:

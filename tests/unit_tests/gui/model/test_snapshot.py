@@ -36,9 +36,8 @@ def test_realization_sort_order(full_snapshot):
     for i in range(0, 100):
         iter_index = model.index(i, 0, model.index(0, 0, QModelIndex()))
 
-        assert str(i) == str(iter_index.internalPointer().id_), print(
-            i, iter_index.internalPointer()
-        )
+        assert str(i) == str(iter_index.internalPointer().id_)
+        print(i, iter_index.internalPointer())
 
 
 def test_realization_state_is_queue_finalized_state(fail_snapshot):

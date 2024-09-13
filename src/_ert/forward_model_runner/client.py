@@ -98,7 +98,7 @@ class Client:
             except ConnectionClosedOK as exception:
                 _error_msg = (
                     f"Connection closed received from the server {self.url}! "
-                    f" Exception from {type(exception)}: {str(exception)}"
+                    f" Exception from {type(exception)}: {exception!s}"
                 )
                 raise ClientConnectionClosedOK(_error_msg) from exception
             except (
@@ -112,7 +112,7 @@ class Client:
                         f"Not able to establish the "
                         f"websocket connection {self.url}! Max retries reached!"
                         " Check for firewall issues."
-                        f" Exception from {type(exception)}: {str(exception)}"
+                        f" Exception from {type(exception)}: {exception!s}"
                     )
                     raise ClientConnectionError(_error_msg) from exception
             except ConnectionClosedError as exception:
@@ -120,7 +120,7 @@ class Client:
                     _error_msg = (
                         f"Not been able to send the event"
                         f" to {self.url}! Max retries reached!"
-                        f" Exception from {type(exception)}: {str(exception)}"
+                        f" Exception from {type(exception)}: {exception!s}"
                     )
                     raise ClientConnectionError(_error_msg) from exception
             await asyncio.sleep(0.2 + self._timeout_multiplier * retry)

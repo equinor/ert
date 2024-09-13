@@ -105,6 +105,6 @@ def test_print_progress():
     Finished       50/100
     Unknown         0/100
 
-"""  # noqa
+"""
 
     assert out.getvalue().replace("\r", "\n") == expected

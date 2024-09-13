@@ -110,9 +110,9 @@ def test_rft_csv_export_plugin_exports_rft_data(
 
         plugin_tool = gui.tools["Plugins"]
         plugin_actions = plugin_tool.getAction().menu().actions()
-        rft_plugin = [
+        rft_plugin = next(
             a for a in plugin_actions if a.text() == "GEN_DATA RFT CSV Export"
-        ][0]
+        )
         QTimer.singleShot(500, handle_rft_plugin_dialog)
         rft_plugin.trigger()
 

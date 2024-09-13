@@ -137,7 +137,7 @@ def test_no_cross_talk(full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)  # noqa: F841
+    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")

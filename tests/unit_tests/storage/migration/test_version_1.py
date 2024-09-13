@@ -20,7 +20,7 @@ def test_migrate_gen_kw(setup_case):
     setup_case("block_storage/version-1/poly_example", "poly.ert")
     with open_storage("storage", "w") as storage:
         assert len(list(storage.experiments)) == 1
-        experiment = list(storage.experiments)[0]
+        experiment = next(iter(storage.experiments))
         param_info = json.loads(
             (experiment._path / "parameter.json").read_text(encoding="utf-8")
         )

@@ -262,7 +262,7 @@ class EnsembleEvaluator:
                 #  * job being killed due to MAX_RUNTIME
                 #  * job being killed by user
                 logger.error(
-                    f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
+                    f"a dispatcher abruptly closed a websocket: {connection_error!s}"
                 )
 
     async def forward_checksum(self, event: Event) -> None:

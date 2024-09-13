@@ -87,7 +87,7 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
             dialog_buttons = confirm_terminate_dialog.findChild(
                 QtWidgets.QDialogButtonBox
             ).buttons()
-            yes_button = [b for b in dialog_buttons if "Yes" in b.text()][0]
+            yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
             qtbot.mouseClick(yes_button, Qt.LeftButton)
 
         QTimer.singleShot(100, handle_dialog)

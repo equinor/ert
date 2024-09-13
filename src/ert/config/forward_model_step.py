@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import (
-    Dict,
-    List,
+    ClassVar,
     Literal,
     Optional,
     TypedDict,
@@ -58,16 +59,16 @@ class ForwardModelStepJSON(TypedDict):
     """
 
     name: str
-    executable: List[str]
+    executable: list[str]
     target_file: str
     error_file: str
     start_file: str
     stdout: str
     stderr: str
     stdin: str
-    argList: List[str]
-    environment: Dict[str, str]
-    exec_env: Dict[str, str]
+    argList: list[str]
+    environment: dict[str, str]
+    exec_env: dict[str, str]
     max_running_minutes: int
 
 
@@ -79,9 +80,9 @@ class ForwardModelStepOptions(TypedDict, total=False):
     target_file: NotRequired[str]
     error_file: NotRequired[str]
     max_running_minutes: NotRequired[int]
-    environment: NotRequired[Dict[str, Union[str, int]]]
-    exec_env: NotRequired[Dict[str, Union[str, int]]]
-    default_mapping: NotRequired[Dict[str, Union[str, int]]]
+    environment: NotRequired[dict[str, Union[str, int]]]
+    exec_env: NotRequired[dict[str, Union[str, int]]]
+    default_mapping: NotRequired[dict[str, Union[str, int]]]
 
 
 @dataclass
@@ -153,16 +154,16 @@ class ForwardModelStep:
     max_running_minutes: Optional[int] = None
     min_arg: Optional[int] = None
     max_arg: Optional[int] = None
-    arglist: List[str] = field(default_factory=list)
-    required_keywords: List[str] = field(default_factory=list)
-    arg_types: List[SchemaItemType] = field(default_factory=list)
-    environment: Dict[str, Union[int, str]] = field(default_factory=dict)
-    exec_env: Dict[str, Union[int, str]] = field(default_factory=dict)
-    default_mapping: Dict[str, Union[int, str]] = field(default_factory=dict)
+    arglist: list[str] = field(default_factory=list)
+    required_keywords: list[str] = field(default_factory=list)
+    arg_types: list[SchemaItemType] = field(default_factory=list)
+    environment: dict[str, Union[int, str]] = field(default_factory=dict)
+    exec_env: dict[str, Union[int, str]] = field(default_factory=dict)
+    default_mapping: dict[str, Union[int, str]] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
     help_text: str = ""
 
-    default_env = {
+    default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
         "_ERT_REALIZATION_NUMBER": "<IENS>",
         "_ERT_RUNPATH": "<RUNPATH>",
@@ -210,7 +211,7 @@ class ForwardModelStep:
 
 class ForwardModelStepPlugin(ForwardModelStep):
     def __init__(
-        self, name: str, command: List[str], **kwargs: Unpack[ForwardModelStepOptions]
+        self, name: str, command: list[str], **kwargs: Unpack[ForwardModelStepOptions]
     ):
         if not kwargs:
             kwargs = ForwardModelStepOptions()

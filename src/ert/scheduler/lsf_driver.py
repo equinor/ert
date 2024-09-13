@@ -310,18 +310,24 @@ class LsfDriver(Driver):
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
 
-        bsub_with_args: list[str] = (
-            [str(self._bsub_cmd)]
-            + arg_queue_name
-            + arg_project_code
-            + ["-o", str(runpath / (name + ".LSF-stdout"))]
-            + ["-e", str(runpath / (name + ".LSF-stderr"))]
-            + ["-n", str(num_cpu)]
-            + self._build_resource_requirement_arg(
+        bsub_with_args: list[str] = [
+            str(self._bsub_cmd),
+            *arg_queue_name,
+            *arg_project_code,
+            "-o",
+            str(runpath / (name + ".LSF-stdout")),
+            "-e",
+            str(runpath / (name + ".LSF-stderr")),
+            "-n",
+            str(num_cpu),
+            *self._build_resource_requirement_arg(
                 realization_memory=realization_memory or 0
-            )
-            + ["-J", name, str(script_path), str(runpath)]
-        )
+            ),
+            "-J",
+            name,
+            str(script_path),
+            str(runpath),
+        ]
 
         if iens not in self._submit_locks:
             self._submit_locks[iens] = asyncio.Lock()

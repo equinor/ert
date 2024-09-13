@@ -168,6 +168,7 @@ select = [
   "NPY",  # numpy specific rules
   "C4",  # flake8-comprehensions
   "ASYNC",  # flake8-async
+  "RUF",  # ruff specific rules
 ]
 preview = true
 ignore = ["PLW2901",  # redefined-loop-name
@@ -185,11 +186,18 @@ ignore = ["PLW2901",  # redefined-loop-name
           "PLW3201",  # bad-dunder-method-name
 ]
 
+# Allow EN DASH (U+2013)
+allowed-confusables = ["–"]
+
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = [
-"PLW0603" # global-statement
+"PLW0603",  # global-statement
+"RUF029",  # unused-async
+"RUF018",  # assignment-in-assert
+"RUF006",  # asyncio-dangling-task
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
+"src/ert/dark_storage/*" = ["RUF029"]  # unused-async
 
 [tool.ruff.lint.pylint]
 max-args = 20

@@ -215,7 +215,7 @@ def test_running_flow_given_no_env_config_can_still_read_parent_env(monkeypatch)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(  # noqa
+def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(
     monkeypatch,
 ):
     version = "1111.11"

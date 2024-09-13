@@ -159,8 +159,8 @@ def test_config_file_line_sets_the_corresponding_properties(
             "BASE_SURFACE:base_surface.irap",
             "OUTPUT_FILE:out.txt",
             "INIT_FILES:%dsurf.irap",
-        ]
-        + forward_init_option,
+            *forward_init_option,
+        ],
     )
 
     assert surface_config.ncol == 2
