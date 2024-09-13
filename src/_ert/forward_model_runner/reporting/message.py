@@ -34,8 +34,8 @@ Error message: {error_message}
 
 
 @dataclasses.dataclass
-class MemoryStatus:
-    """Holds memory information that can be represented as a line of CSV data"""
+class ProcessTreeStatus:
+    """Holds processtree information that can be represented as a line of CSV data"""
 
     timestamp: str = ""
     fm_step_id: Optional[int] = None
@@ -45,6 +45,8 @@ class MemoryStatus:
     rss: Optional[int] = None
     max_rss: Optional[int] = None
     free: Optional[int] = None
+
+    cpu_seconds: float = 0.0
 
     oom_score: Optional[int] = None
 
@@ -119,7 +121,7 @@ class Start(Message):
 
 
 class Running(Message):
-    def __init__(self, job: "Job", memory_status: MemoryStatus):
+    def __init__(self, job: "Job", memory_status: ProcessTreeStatus):
         super().__init__(job)
         self.memory_status = memory_status
 
