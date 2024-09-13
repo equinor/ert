@@ -6,7 +6,7 @@ import ert.gui
 from ert.gui.main import GUILogHandler
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
-from tests.unit_tests.gui.conftest import get_child
+from tests.ui_tests.gui.conftest import get_child
 
 
 @pytest.mark.usefixtures("copy_poly_case")

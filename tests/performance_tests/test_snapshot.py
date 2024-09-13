@@ -14,12 +14,13 @@ from ert.ensemble_evaluator.snapshot import (
     FMStepSnapshot,
     RealizationSnapshot,
 )
-
-from ..unit_tests.gui.conftest import (  # noqa: F401
+from tests.ui_tests.gui.conftest import (  # noqa: F401
     active_realizations_fixture,
+)
+from tests.unit_tests.gui.conftest import (  # noqa: F401
     large_snapshot,
 )
-from ..unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
+from tests.unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
     event_queue,
     notifier,
     run_dialog,

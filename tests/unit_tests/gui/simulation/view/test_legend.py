@@ -7,7 +7,7 @@ from qtpy.QtWidgets import QLabel
 
 from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 from ert.gui.simulation.view import ProgressWidget
-from tests.unit_tests.gui.conftest import get_child
+from tests.ui_tests.gui.conftest import get_child
 
 
 @given(

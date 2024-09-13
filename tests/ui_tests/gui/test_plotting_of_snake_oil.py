@@ -22,7 +22,8 @@ from ert.gui.tools.plot.plot_window import (
 )
 from ert.services import StorageService
 from ert.storage import open_storage
-from tests.unit_tests.gui.conftest import (
+
+from .conftest import (
     get_child,
     wait_for_child,
 )

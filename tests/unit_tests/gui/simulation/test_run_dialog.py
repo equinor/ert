@@ -28,9 +28,8 @@ from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.services import StorageService
 from ert.storage import open_storage
 from tests import SnapshotBuilder
+from tests.ui_tests.gui.conftest import wait_for_child
 from tests.unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
-
-from ..conftest import wait_for_child
 
 
 @pytest.fixture
