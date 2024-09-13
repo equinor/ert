@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QAction,
@@ -15,6 +16,7 @@ from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QMenuBar,
+    QMessageBox,
     QPushButton,
     QToolButton,
     QTreeView,
@@ -32,9 +34,11 @@ from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.simulation.view import RealizationWidget
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
+from ert.gui.tools.file.file_dialog import FileDialog
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
@@ -51,6 +55,7 @@ from ert.run_models import (
     SingleTestRun,
 )
 from ert.services import StorageService
+from ert.storage import open_storage
 
 from .conftest import (
     add_experiment_manually,
@@ -215,6 +220,99 @@ def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
         # Cycle through showing all the tabs
         for tab in plot_window._plot_widgets:
             plot_window._central_tab.setCurrentWidget(tab)
+
+
+def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot
+):
+    """
+    This is a regression test for a crash happening when
+    closing the RunDialog with a file open.
+    """
+
+    snake_oil_case = snake_oil_case_storage
+    args_mock = Mock()
+    args_mock.config = "snake_oil.ert"
+
+    def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
+        mb = gui.findChild(QMessageBox, "RUN_PATH_ERROR_BOX")
+
+        if mb is not None:
+            assert mb
+            assert isinstance(mb, QMessageBox)
+            # Continue without deleting the runpath
+            qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+
+    def handle_run_path_dialog(
+        gui: ErtMainWindow,
+        qtbot: QtBot,
+        delete_run_path: bool = True,
+        expect_error: bool = False,
+    ):
+        mb = gui.findChild(QMessageBox, "RUN_PATH_WARNING_BOX")
+
+        if mb is not None:
+            assert mb
+            assert isinstance(mb, QMessageBox)
+
+            if delete_run_path:
+                qtbot.mouseClick(mb.checkBox(), Qt.LeftButton)
+
+            qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+            if expect_error:
+                QTimer.singleShot(
+                    1000, lambda: handle_run_path_error_dialog(gui, qtbot)
+                )
+
+    with StorageService.init_service(
+        project=os.path.abspath(snake_oil_case.ens_path),
+    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
+        experiment_panel = gui.findChild(ExperimentPanel)
+
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
+
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        )
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        fm_step_overview = run_dialog._fm_step_overview
+
+        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+
+        realization_widget = run_dialog.findChild(RealizationWidget)
+
+        click_pos = realization_widget._real_view.rectForIndex(
+            realization_widget._real_list_model.index(0, 0)
+        ).center()
+
+        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
+            qtbot.mouseClick(
+                realization_widget._real_view.viewport(),
+                Qt.LeftButton,
+                pos=click_pos,
+            )
+
+        click_pos = fm_step_overview.visualRect(
+            fm_step_overview.model().index(0, 4)
+        ).center()
+        qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
+
+        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
+
+        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+            run_dialog.close()  # Close the run dialog by pressing 'x' close button
+
+        # Ensure that once the run dialog is closed
+        # another simulation can be started
+        assert run_experiment.isEnabled()
 
 
 @pytest.mark.usefixtures("set_site_config")

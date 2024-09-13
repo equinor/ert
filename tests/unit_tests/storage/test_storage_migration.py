@@ -25,6 +25,7 @@ def copy_shared(tmp_path, block_storage_path):
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",
@@ -176,6 +177,7 @@ def test_that_storage_matches(
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",

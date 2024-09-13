@@ -95,6 +95,7 @@ async def evaluator_to_use_fixture(make_ee_config):
     await run_task
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     evaluator = evaluator_to_use
@@ -187,6 +188,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 break
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(20)
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     evaluator = evaluator_to_use
@@ -423,6 +425,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 raise AssertionError(f"got unexpected event {event} from monitor2")
 
 
+@pytest.mark.integration_test
 async def test_ensure_multi_level_events_in_order(evaluator_to_use):
     evaluator = evaluator_to_use
 

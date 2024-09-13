@@ -30,6 +30,7 @@ def evaluator_to_use():
     return run_evaluator
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(60)
 @pytest.mark.asyncio
 async def test_run_legacy_ensemble(
@@ -65,6 +66,7 @@ async def test_run_legacy_ensemble(
             assert os.path.isfile(f"real_{i}/status.txt")
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(60)
 async def test_run_and_cancel_legacy_ensemble(
     tmpdir, make_ensemble, monkeypatch, evaluator_to_use

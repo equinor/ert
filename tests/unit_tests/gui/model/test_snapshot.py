@@ -1,3 +1,4 @@
+import pytest
 from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
@@ -8,6 +9,7 @@ from ert.gui.model.snapshot import FMStepColorHint, SnapshotModel
 from .gui_models_utils import finish_snapshot
 
 
+@pytest.mark.integration_test
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model = SnapshotModel()
 

@@ -506,6 +506,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -520,6 +521,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
         ) == ErtConfig.from_file(filename)
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -614,6 +616,7 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("use_tmpdir")
 @given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
@@ -922,6 +925,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())

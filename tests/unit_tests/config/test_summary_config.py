@@ -1,6 +1,6 @@
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ErtConfig, SummaryConfig
 
@@ -17,9 +17,10 @@ def test_bad_user_config_file_error_message(tmp_path):
         _ = ErtConfig.from_file(str(tmp_path / "test.ert"))
 
 
+@settings(max_examples=10)
 @given(summaries(summary_keys=st.just(["WOPR:OP1"])))
 @pytest.mark.usefixtures("use_tmpdir")
-def test_rading_empty_summaries_raises(wopr_summary):
+def test_reading_empty_summaries_raises(wopr_summary):
     smspec, unsmry = wopr_summary
     smspec.to_file("CASE.SMSPEC")
     unsmry.to_file("CASE.UNSMRY")

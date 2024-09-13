@@ -724,4 +724,4 @@ class StatefulStorageTest(RuleBasedStateMachine):
             shutil.rmtree(self.tmpdir)
 
 
-TestStorage = StatefulStorageTest.TestCase
+TestStorage = pytest.mark.integration_test(StatefulStorageTest.TestCase)
