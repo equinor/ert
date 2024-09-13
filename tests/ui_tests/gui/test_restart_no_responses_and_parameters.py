@@ -59,7 +59,7 @@ def _open_main_window(
     NUM_REALIZATIONS 10
     MIN_REALIZATIONS 1
     INSTALL_JOB forward_model FORWARD_MODEL
-    SIMULATION_JOB forward_model
+    FORWARD_MODEL forward_model
     """)
     with open("config.ert", "w", encoding="utf-8") as fh:
         fh.writelines(config)

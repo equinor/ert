@@ -31,7 +31,7 @@ def test_field_param_update(tmpdir):
 
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
-            SIMULATION_JOB poly_eval
+            FORWARD_MODEL poly_eval
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
@@ -149,7 +149,7 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
             GRID MY_EGRID.EGRID
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
-            SIMULATION_JOB poly_eval
+            FORWARD_MODEL poly_eval
         """
         )
         with open("config.ert", "w", encoding="utf-8") as fh:
