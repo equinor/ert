@@ -42,11 +42,15 @@ jobs:
       run: |
         uv pip install ".[dev]"
 
-    - name: UI Test
-      if: inputs.test-type == 'ui-tests'
+    - name: GUI Test
+      if: inputs.test-type == 'gui-tests'
       run: |
         pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -v --mpl --benchmark-disable tests/ui_tests/gui
-        pytest --cov=ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
+
+    - name: CLI Test
+      if: inputs.test-type == 'cli-tests'
+      run: |
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
