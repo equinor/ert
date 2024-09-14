@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import threading
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock, call
@@ -11,6 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xtgeo
+from resdata.summary import Summary
 
 import _ert.threading
 import ert.shared
@@ -877,3 +879,53 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
             "0-4",
         )
     assert len([msg for msg in caplog.messages if expected_msg in msg]) == 1
+
+
+def run_sim(start_date):
+    """
+    Create a summary file, the contents of which are not important
+    """
+    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    t_step = summary.add_t_step(1, sim_days=1)
+    t_step["FOPR"] = 1
+    summary.fwrite()
+
+
+def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
+    config_file = tmp_path / "config.ert"
+    monkeypatch.chdir(tmp_path)
+    config_file.write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 2
+
+            ECLBASE ECLIPSE_CASE
+            SUMMARY *
+            MAX_SUBMIT 1 -- will fail first and every time
+            REFCASE ECLIPSE_CASE
+
+            """
+        )
+    )
+    # We create a reference case, but there will be no response
+    run_sim(datetime(2014, 9, 10))
+    with pytest.raises(ErtCliError):
+        run_cli(
+            TEST_RUN_MODE,
+            str(config_file),
+        )
+    assert (
+        f"Realization: 0 failed after reaching max submit (1):\n\t\n"
+        "status from done callback: "
+        "Could not find any unified "
+        f"summary file matching case path "
+        f"{Path().absolute()}/simulations/realization-0/"
+        "iter-0/ECLIPSE_CASE"
+    ) in caplog.messages
+
+    case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
+    assert (
+        f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
+        f"file {case}.SMSPEC not created by forward model!"
+    ) in caplog.messages
