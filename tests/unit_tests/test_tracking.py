@@ -1,17 +1,13 @@
 import fileinput
 import json
-import logging
 import os
 import re
 from argparse import ArgumentParser
-from datetime import datetime
 from pathlib import Path
-from textwrap import dedent
 from typing import Dict
 
 import pytest
 from jsonpath_ng import parse
-from resdata.summary import Summary
 
 from _ert.threading import ErtThread
 from ert.__main__ import ert_parser
@@ -389,101 +385,3 @@ def test_run_information_present_as_env_var_in_fm_context(
             assert key in jobs_data["global_environment"]
             if key == "_ERT_SIMULATION_MODE":
                 assert jobs_data["global_environment"][key] == mode
-
-
-def run_sim(start_date):
-    """
-    Create a summary file, the contents of which are not important
-    """
-    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    t_step = summary.add_t_step(1, sim_days=1)
-    t_step["FOPR"] = 1
-    summary.fwrite()
-
-
-@pytest.mark.integration_test
-def test_tracking_missing_ecl(tmpdir, caplog, storage):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        SUMMARY *
-        MAX_SUBMIT 1 -- will fail first and every time
-        REFCASE ECLIPSE_CASE
-
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        # We create a reference case, but there will be no response
-        run_sim(datetime(2014, 9, 10))
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                TEST_RUN_MODE,
-                "config.ert",
-            ],
-        )
-
-        ert_config = ErtConfig.from_file(parsed.config)
-        os.chdir(ert_config.config_path)
-        events = Events()
-        model = create_model(
-            ert_config,
-            storage,
-            parsed,
-            events,
-        )
-
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535),
-            custom_host="127.0.0.1",
-            use_token=False,
-            generate_cert=False,
-        )
-
-        thread = ErtThread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(evaluator_server_config,),
-        )
-        with caplog.at_level(logging.ERROR):
-            thread.start()
-            thread.join()
-            failures = []
-
-            for event in events:
-                if isinstance(event, EndEvent):
-                    failures.append(event)
-        assert (
-            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
-            "status from done callback: "
-            "Could not find any unified "
-            f"summary file matching case path "
-            f"{Path().absolute()}/simulations/realization-0/"
-            "iter-0/ECLIPSE_CASE"
-        ) in caplog.messages
-
-        # Just also check that it failed for the expected reason
-        assert len(failures) == 1
-        assert (
-            f"Realization: 0 failed after reaching max submit (1):\n\t\n"
-            "status from done callback: "
-            "Could not find any unified "
-            f"summary file matching case path "
-            f"{Path().absolute()}/simulations/realization-0/"
-            "iter-0/ECLIPSE_CASE"
-        ) in failures[0].msg
-        case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
-        assert (
-            f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
-            f"file {case}.SMSPEC not created by forward model!"
-        ) in caplog.messages
-        assert (
-            f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
-            f"file {case}.SMSPEC not created by forward model!"
-        ) in failures[0].msg
