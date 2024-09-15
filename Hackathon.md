@@ -42,3 +42,22 @@ This can be combined with the commands from the previous section to directly sub
 ert status $(<command from previous section> | jq -r .id)
 ```
 
+### Event types
+The events the you receive from the websocket endpoint will be one of the following:
+
+```python
+StatusEvents = Union[
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+    EndEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+    AnalysisReportEvent,
+    RunModelErrorEvent,
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelDataEvent,
+    RunModelUpdateEndEvent,
+]
+```
