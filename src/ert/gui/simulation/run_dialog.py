@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -221,6 +222,8 @@ class RunDialog(QDialog):
         self._job_label = QLabel(self)
         self._job_overview = JobOverview(self._snapshot_model, self)
 
+        self._start_time: datetime = None
+        self._end_time: datetime = None
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
@@ -397,9 +400,12 @@ class RunDialog(QDialog):
 
     @Slot()
     def _on_ticker(self) -> None:
-        runtime = 0
-        # runtime = self._run_model.get_runtime()
-        # TODO: This should be based event timestamps
+        if self._start_time is None:
+            runtime = 0
+        elif self._end_time is None:
+            runtime = (datetime.now() - self._start_time).total_seconds()
+        else:
+            runtime = (self._end_time - self._start_time).total_seconds()
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
@@ -411,7 +417,10 @@ class RunDialog(QDialog):
 
     @Slot(object)
     def _on_event(self, event: object) -> None:
+        if self._start_time is None:
+            self._start_time = event.timestamp
         if isinstance(event, EndEvent):
+            self._end_time = event.timestamp
             self.simulation_done.emit(event.failed, event.msg)
             self._ticker.stop()
             self.done_button.setHidden(False)

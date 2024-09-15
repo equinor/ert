@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Dict, Literal, Optional
 
 from .snapshot import Snapshot
@@ -13,6 +14,7 @@ class _UpdateEvent:
     realization_count: int
     status_count: Dict[str, int]
     iteration: int
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -32,3 +34,4 @@ class EndEvent:
     failed: bool
     msg: Optional[str] = None
     event_type: Literal['EndEvent'] = 'EndEvent'
+    timestamp: datetime = field(default_factory=datetime.now)

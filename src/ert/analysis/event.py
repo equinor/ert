@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Literal
 
@@ -18,6 +19,7 @@ class AnalysisEvent:
 class AnalysisStatusEvent(AnalysisEvent):
     msg: str
     event_type: Literal['AnalysisStatusEvent'] = 'AnalysisStatusEvent'
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -25,12 +27,14 @@ class AnalysisTimeEvent(AnalysisEvent):
     remaining_time: float
     elapsed_time: float
     event_type: Literal['AnalysisTimeEvent'] = 'AnalysisTimeEvent'
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
 class AnalysisReportEvent(AnalysisEvent):
     report: str
     event_type: Literal['AnalysisReportEvent'] = 'AnalysisReportEvent'
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
