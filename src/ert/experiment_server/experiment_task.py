@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import queue
 from multiprocessing.queues import Queue
 from typing import Dict, List
@@ -9,6 +10,9 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.ensemble_evaluator.event import EndEvent, _UpdateEvent
 from ert.run_models.base_run_model import BaseRunModel, StatusEvents
+
+
+logger = logging.getLogger(__name__)
 
 
 class EndTaskEvent:
@@ -34,12 +38,16 @@ class ExperimentTask:
         self._subscribers: Dict[str, Subscriber] = {}
         self._events: List[StatusEvents] = []
 
+    @property
+    def model_type(self) -> str:
+        return str(self._model.name())
+
     def cancel(self) -> None:
         self._model.cancel()
 
     async def run(self):
         loop = asyncio.get_running_loop()
-        print(f"Starting experiment {self._id}")
+        logger.info(f"Starting experiment {self._id}")
 
         port_range = None
         if self._model.queue_system == QueueSystem.LOCAL:
@@ -62,9 +70,6 @@ class ExperimentTask:
 
             if isinstance(item, _UpdateEvent):
                 item.snapshot = item.snapshot.to_dict()
-            # print(item)
-            # print()
-            # print()
             event = jsonable_encoder(item)
             self._events.append(event)
             for sub in self._subscribers.values():
@@ -78,7 +83,7 @@ class ExperimentTask:
                 break
 
         await simulation_future
-        print(f"Experiment {self._id} done")
+        logger.info(f"Experiment {self._id} done")
 
     async def get_event(self, subscriber_id: str) -> StatusEvents:
         if subscriber_id not in self._subscribers:

@@ -1,71 +1,36 @@
 import asyncio
 import multiprocessing as mp
 import uuid
-from contextlib import asynccontextmanager
 from multiprocessing.queues import Queue
-from typing import Dict, Union
+from typing import Dict, List
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket
-from pydantic import BaseModel, Field
 
-from ert.config import ErtConfig
-from ert.gui.simulation.ensemble_experiment_panel import (
-    Arguments as EnsembleExperimentArguments,
-)
-from ert.gui.simulation.ensemble_smoother_panel import (
-    Arguments as EnsembleSmootherArguments,
-)
-from ert.gui.simulation.evaluate_ensemble_panel import (
-    Arguments as EvaluateEnsembleArguments,
-)
-from ert.gui.simulation.iterated_ensemble_smoother_panel import (
-    Arguments as IteratedEnsembleSmootherArguments,
-)
-from ert.gui.simulation.manual_update_panel import Arguments as ManualUpdateArguments
-from ert.gui.simulation.multiple_data_assimilation_panel import (
-    Arguments as MultipleDataAssimilationArguments,
-)
-from ert.gui.simulation.single_test_run_panel import Arguments as SingleTestRunArguments
 from ert.run_models.base_run_model import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import open_storage
 
 from .experiment_task import EndTaskEvent, ExperimentTask
+from .models import Experiment, ExperimentOut
 
-
-class Experiment(BaseModel):
-    args: Union[
-        EnsembleExperimentArguments,
-        EnsembleSmootherArguments,
-        EvaluateEnsembleArguments,
-        IteratedEnsembleSmootherArguments,
-        ManualUpdateArguments,
-        MultipleDataAssimilationArguments,
-        SingleTestRunArguments,
-    ] = Field(..., discriminator="mode")
-    ert_config: ErtConfig
-
-
-mp_ctx = mp.get_context("fork")
 experiments: Dict[str, ExperimentTask] = {}
+app = FastAPI()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup actions
-    yield
-    # Shutdown actions
-
-app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
     return {"message": "ping"}
 
 
-@app.post("/experiments/")
+@app.get("/experiments/", response_model=List[ExperimentOut])
+async def get_experiments():
+    return [ExperimentOut(id=k, type=v.model_type) for k, v in experiments.items()]
+
+
+@app.post("/experiments/", response_model=ExperimentOut)
 async def submit_experiment(experiment: Experiment, background_tasks: BackgroundTasks):
     storage = open_storage(experiment.ert_config.ens_path, "w")
-    status_queue: "Queue[StatusEvents]" = mp_ctx.Queue()
+    status_queue: "Queue[StatusEvents]" = mp.Queue()
     try:
         model = create_model(
             experiment.ert_config,
@@ -83,18 +48,19 @@ async def submit_experiment(experiment: Experiment, background_tasks: Background
     task = ExperimentTask(_id=experiment_id, model=model, status_queue=status_queue)
     experiments[experiment_id] = task
     background_tasks.add_task(task.run)
-    return {"message": "Experiment Started", "experiment_id": experiment_id}
+    return ExperimentOut(id=experiment_id, type=task.model_type)
 
 
-@app.put("/experiments/{experiment_id}/cancel")
+@app.put("/experiments/{experiment_id}/cancel", response_model=ExperimentOut)
 async def cancel_experiment(experiment_id: str):
     if experiment_id not in experiments:
         return HTTPException(
                 status_code=404,
                 detail=f"Experiment with id {experiment_id} does not exist.",
             )
-    experiments[experiment_id].cancel()
-    return {"message": "Experiment canceled", "experiment_id": experiment_id}
+    task = experiments[experiment_id]
+    task.cancel()
+    return ExperimentOut(id=experiment_id, type=task.model_type)
 
 
 @app.websocket("/experiments/{experiment_id}/events")

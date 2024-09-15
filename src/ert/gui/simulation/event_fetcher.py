@@ -49,40 +49,32 @@ class EventFetcher(QObject):
     def consume_and_emit(self) -> None:
         logger.debug("tracking...")
         with connect(f"ws://127.0.0.1:8000/experiments/{self._experiment_id}/events") as websocket:
-            print("Connected")
+            logger.info("Connected")
             while True:
                 try:
                     message = websocket.recv(timeout=1.0)
                 except TimeoutError:
                     message = None
                 if self._stopped:
-                    logger.debug("stopped")
+                    logger.info("Stopped")
                     break
+
                 if message is None:
+                    logger.info("Sleeping")
                     sleep(0.1)
-                    print("Sleep")
                     continue
 
-                print(message)
-                print()
-                print()
+                logger.info("Got message %s".format(message))
                 event_dict = json.loads(message)
-                print(event_dict)
-                print()
-                print()
                 if "snapshot" in event_dict:
                     event_dict["snapshot"] =  Snapshot.from_nested_dict(event_dict["snapshot"])
-                print(event_dict)
-                print()
-                print()
                 try:
                     event_wrapper = EventWrapper(event=event_dict)
                 except ValidationError as e:
-                    print(e)
-                print(event_wrapper)
-                print()
-                print()
+                    logger.error("Error when processing event %s".format(str(event_dict)),exc_info=e)
+
                 event = event_wrapper.event
+
                 # pre-rendering in this thread to avoid work in main rendering thread
                 if (
                     isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent))

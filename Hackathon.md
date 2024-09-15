@@ -39,6 +39,6 @@ ert status <experiment_id>
 This can be combined with the commands from the previous section to directly submit and open a status window by doing the following:
 
 ```bash
-ert status $(<command from previous section> | jq -r .experiment_id)
+ert status $(<command from previous section> | jq -r .id)
 ```
 
