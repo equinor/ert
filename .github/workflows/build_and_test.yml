@@ -156,4 +156,4 @@ jobs:
           find artifacts -name "*.whl" -exec mv '{}' dist/ \;
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.11
+        uses: pypa/gh-action-pypi-publish@v1.10.1
