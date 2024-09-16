@@ -284,6 +284,11 @@ def test_invalid_jobs_json_raises_OSError(tmp_path):
         main(["script.py", str(tmp_path)])
 
 
+def test_missing_directory_exits(tmp_path):
+    with pytest.raises(SystemExit):
+        main(["script.py", str(tmp_path / "non_existent")])
+
+
 @pytest.mark.parametrize(
     "is_interactive_run, ens_id",
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
