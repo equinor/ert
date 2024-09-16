@@ -398,8 +398,7 @@ class RunDialog(QDialog):
         else:
             self.update_total_progress(1.0, "Experiment completed.")
 
-    @Slot()
-    def _on_ticker(self) -> None:
+    def _update_runtime(self):
         if self._start_time is None:
             runtime = 0
         elif self._end_time is None:
@@ -407,6 +406,10 @@ class RunDialog(QDialog):
         else:
             runtime = (self._end_time - self._start_time).total_seconds()
         self.running_time.setText(format_running_time(runtime))
+
+    @Slot()
+    def _on_ticker(self) -> None:
+        self._update_runtime()
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
@@ -423,6 +426,7 @@ class RunDialog(QDialog):
             self._end_time = event.timestamp
             self.simulation_done.emit(event.failed, event.msg)
             self._ticker.stop()
+            self._update_runtime()
             self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
