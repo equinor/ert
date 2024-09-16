@@ -72,6 +72,12 @@ pytest -n logical tests/unit_tests -m "not integration_tests"
 ```sh
 source /opt/rh/rh-git227/enable
 ```
+
+If you have not used git-lfs before, you might have to make changes to your global Git config for git-lfs to work properly.
+```sh
+git lfs install
+```
+
 test-data/block_storage is a submodule and must be checked out.
 ```sh
 git submodule update --init --recursive
