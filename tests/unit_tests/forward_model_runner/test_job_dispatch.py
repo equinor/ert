@@ -272,21 +272,16 @@ def test_job_dispatch_run_subset_specified_as_parameter():
     assert os.path.isfile("job_C.out")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_no_jobs_json_file():
+def test_no_jobs_json_file_raises_IOError(tmp_path):
     with pytest.raises(IOError):
-        main(["script.py", os.path.realpath(os.curdir)])
+        main(["script.py", str(tmp_path)])
 
 
-def test_job_runner_retries_on_missing_jobs_file():
-    path = os.path.realpath(os.curdir)
-    jobs_file = os.path.join(path, JOBS_FILE)
-
-    with open(jobs_file, "w", encoding="utf-8") as f:
-        f.write("not json")
+def test_invalid_jobs_json_raises_OSError(tmp_path):
+    (tmp_path / JOBS_FILE).write_text("not json")
 
     with pytest.raises(OSError):
-        main(["script.py", path])
+        main(["script.py", str(tmp_path)])
 
 
 @pytest.mark.parametrize(
