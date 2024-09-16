@@ -300,7 +300,7 @@ def test_that_giving_non_executable_gives_config_validation_error():
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
-        JOB_SCRIPT  hello
+        JOB_SCRIPT  not-an-executable-anyone-would-have-on-their-laptop
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
