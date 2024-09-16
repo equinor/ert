@@ -81,6 +81,29 @@ class ExperimentPanel(QWidget):
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
         self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.run_button.setMinimumWidth(60)
+        self.run_button.setMinimumHeight(40)
+        self.run_button.setStyleSheet(
+            """
+            QToolButton {            
+            border-radius: 10px;
+            background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #f0f0f0,
+                stop:1 #d9d9d9
+            );
+            border: 1px solid #bfbfbf;
+            padding: 5px;
+            }
+            QToolButton:hover {
+                background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #d8d8d8,
+                stop:1 #c3c3c3
+            );
+            }
+        """
+        )
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
