@@ -71,6 +71,7 @@ async def _write_responses_to_storage(
             )
         except ValueError as err:
             errors.append(str(err))
+            logger.warning(f"Failed to write: {run_arg.iens}", exc_info=err)
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -97,7 +98,7 @@ async def forward_model_ok(
             )
 
     except Exception as err:
-        logging.exception(f"Failed to load results for realization {run_arg.iens}")
+        logger.exception(f"Failed to load results for realization {run_arg.iens}")
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Failed to load results for realization "
