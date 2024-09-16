@@ -189,7 +189,7 @@ def _internalize_batch(ert_config, batch_id, batch_data):
         realizations = [True] * batch_size + [False] * (
             facade.get_ensemble_size() - batch_size
         )
-        facade.load_from_forward_model(ensemble, realizations, 0)
+        facade.load_from_forward_model(ensemble, realizations)
 
 
 if __name__ == "__main__":

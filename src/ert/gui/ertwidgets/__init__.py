@@ -25,6 +25,7 @@ from .searchbox import SearchBox
 from .ensembleselector import EnsembleSelector
 from .checklist import CheckList
 from .stringbox import StringBox
+from .textbox import TextBox
 from .multilinestringbox import MultiLineStringBox
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
@@ -59,6 +60,7 @@ __all__ = [
     "SelectableListModel",
     "StringBox",
     "TargetEnsembleModel",
+    "TextBox",
     "TextModel",
     "ValueModel",
     "showWaitCursorWhileWaiting",
