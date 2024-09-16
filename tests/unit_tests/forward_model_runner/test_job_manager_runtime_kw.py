@@ -1,7 +1,7 @@
 import pytest
 
-from _ert_forward_model_runner.reporting.message import Exited, Finish, Start
-from _ert_forward_model_runner.runner import ForwardModelRunner
+from _ert.forward_model_runner.reporting.message import Exited, Finish, Start
+from _ert.forward_model_runner.runner import ForwardModelRunner
 
 
 @pytest.mark.usefixtures("use_tmpdir")

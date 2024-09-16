@@ -7,9 +7,9 @@ import sys
 import typing
 from datetime import datetime
 
-from _ert_forward_model_runner import reporting
-from _ert_forward_model_runner.reporting.message import Finish, MemoryStatus
-from _ert_forward_model_runner.runner import ForwardModelRunner
+from _ert.forward_model_runner import reporting
+from _ert.forward_model_runner.reporting.message import Finish, MemoryStatus
+from _ert.forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
 
@@ -40,8 +40,8 @@ def _setup_reporters(
 
 
 def _setup_logging(directory: str = "logs"):
-    job_runner_logger = logging.getLogger("_ert_forward_model_runner")
-    memory_csv_logger = logging.getLogger("_ert_forward_model_memory_profiler")
+    job_runner_logger = logging.getLogger("_ert.forward_model_runner")
+    memory_csv_logger = logging.getLogger("_ert.forward_model_memory_profiler")
 
     os.makedirs(directory, exist_ok=True)
 

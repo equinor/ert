@@ -16,10 +16,10 @@ import pandas as pd
 import psutil
 import pytest
 
-from _ert_forward_model_runner.cli import _setup_reporters, main
-from _ert_forward_model_runner.job import killed_by_oom
-from _ert_forward_model_runner.reporting import Event, Interactive
-from _ert_forward_model_runner.reporting.message import Finish, Init
+from _ert.forward_model_runner.cli import _setup_reporters, main
+from _ert.forward_model_runner.job import killed_by_oom
+from _ert.forward_model_runner.reporting import Event, Interactive
+from _ert.forward_model_runner.reporting.message import Finish, Init
 from tests.utils import _mock_ws_thread, wait_until
 
 
@@ -87,7 +87,7 @@ else:
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec(
-        "_ert_forward_model_runner.job_dispatch"
+        "_ert.forward_model_runner.job_dispatch"
     ).origin
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -142,7 +142,7 @@ def test_memory_profile_is_logged_as_csv():
     subprocess.run(
         [
             sys.executable,
-            importlib.util.find_spec("_ert_forward_model_runner.job_dispatch").origin,
+            importlib.util.find_spec("_ert.forward_model_runner.job_dispatch").origin,
             os.getcwd(),
         ],
         check=False,
@@ -251,7 +251,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec(
-        "_ert_forward_model_runner.job_dispatch"
+        "_ert.forward_model_runner.job_dispatch"
     ).origin
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -316,11 +316,11 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("_ert_forward_model_runner.cli.os.killpg") as mock_killpg, patch(
-        "_ert_forward_model_runner.cli.os.getpgid"
+    with patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg, patch(
+        "_ert.forward_model_runner.cli.os.getpgid"
     ) as mock_getpgid, patch(
-        "_ert_forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("_ert_forward_model_runner.cli.ForwardModelRunner") as mock_runner:
+        "_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)
+    ), patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

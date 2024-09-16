@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, Literal, Optional, TypedDict
 import psutil
 
 if TYPE_CHECKING:
-    from _ert_forward_model_runner.job import Job
+    from _ert.forward_model_runner.job import Job
 
     class _ChecksumDictBase(TypedDict):
         type: Literal["file"]
