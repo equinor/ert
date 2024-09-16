@@ -17,7 +17,7 @@ def test_generated_doc():
     out of date. Run `python -m everest.docs` to re-generate.
     """
 
-    committed_file = relpath("..", "..", "docs", "source", "config_generated.rst")
+    committed_file = relpath("..", "..", "docs", "everest", "config_generated.rst")
     with open(committed_file, "r", encoding="utf-8") as fp:
         committed_text = fp.read()
 
