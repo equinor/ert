@@ -102,6 +102,7 @@ def env_save():
         "KMP_DUPLICATE_LIB_OK",
         "KMP_INIT_AT_FORK",
         "QT_API",
+        "COV_CORE_CONTEXT",
     ]
     environment_pre = [
         (key, val) for key, val in os.environ.items() if key not in exceptions
