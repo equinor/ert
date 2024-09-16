@@ -23,9 +23,12 @@ from ert.gui.ertwidgets import (
     SelectableListModel,
     showWaitCursorWhileWaiting,
 )
+from ert.sensitivity_analysis.design_matrix import (
+    initialize_parameters,
+    read_design_matrix,
+)
 
 from ...ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from .design_matrix import initialize_parameters, read_design_matrix
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
 

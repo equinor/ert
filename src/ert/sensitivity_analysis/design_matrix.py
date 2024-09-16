@@ -44,6 +44,7 @@ def read_design_matrix(
     for k, v in defaults.items():
         if k not in design_matrix_sheet.columns:
             design_matrix_sheet[k] = v
+
     design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
 
     parameter_groups = defaultdict(list)
@@ -113,11 +114,11 @@ def initialize_parameters(
     )
     for i in range(len(design_matrix_sheet)):
         for parameter_group in experiment.parameter_configuration:
-            row = design_matrix_sheet.iloc[i][parameter_group]
+            row: pd.Series = design_matrix_sheet.iloc[i][parameter_group]
             ds = xr.Dataset(
                 {
-                    "values": ("names", list(row.values)),
-                    "transformed_values": ("names", list(row.values)),
+                    "values": ("names", list(row.to_numpy())),
+                    "transformed_values": ("names", list(row.to_numpy())),
                     "names": list(row.keys()),
                 }
             )
@@ -162,7 +163,7 @@ def _validate_design_matrix_header(design_matrix: pd.DataFrame) -> None:
         raise ValueError(
             f"Invalid value in design matrix header, error: {err !s}"
         ) from err
-    column_indexes = [int(x.split(":")[1]) for x in unnamed.columns.values]
+    column_indexes = [int(x.split(":")[1]) for x in unnamed.columns.to_numpy()]
     if len(column_indexes) > 0:
         raise ValueError(f"Column headers not present in column {column_indexes}")
 
@@ -198,7 +199,7 @@ def _read_defaultssheet(
     else:
         return {}
 
-    default_df.rename(columns={0: "keys", 1: "defaults"}, inplace=True)
+    default_df = default_df.rename(columns={0: "keys", 1: "defaults"})
     defaults = {}
     for _, row in default_df.iterrows():
         defaults[row["keys"]] = row["defaults"]
