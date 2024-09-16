@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -9,13 +10,16 @@ import xarray as xr
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
-    from ert.storage import Storage
+    from ert.config import (
+        ErtConfig,
+        ParameterConfig,
+    )
+    from ert.storage import LocalEnsemble, LocalStorage
 
 
 def read_design_matrix(
-    ert_config: str,
-    xlsfilename: str,
+    ert_config: ErtConfig,
+    xlsfilename: Path | str,
     designsheetname: str = "DesignSheet01",
     defaultssheetname: str = "DefaultValues",
 ) -> pd.DataFrame:
@@ -29,7 +33,7 @@ def read_design_matrix(
     try:
         _validate_design_matrix_header(design_matrix_sheet)
     except ValueError as err:
-        raise ValueError(f"Design matrix not valid, error: {str(err)}") from err
+        raise ValueError(f"Design matrix not valid, error: {err!s}") from err
 
     # Todo: Check for invalid realizations, drop them maybe?
 
@@ -50,7 +54,7 @@ def read_design_matrix(
             parameter_name = next(
                 val.name
                 for val in ert_config.ensemble_config.parameter_configuration
-                if param in val
+                if isinstance(val, GenKwConfig) and param in val
             )
         except StopIteration:
             parameter_name = "DESIGN_MATRIX"
@@ -61,14 +65,14 @@ def read_design_matrix(
 
 
 def initialize_parameters(
-    design_matrix_sheet,
-    storage: Storage,
+    design_matrix_sheet: pd.DataFrame,
+    storage: LocalStorage,
     ert_config: ErtConfig,
     exp_name: str,
     ens_name: str,
-):
+) -> LocalEnsemble:
     existing_parameters = ert_config.ensemble_config.parameter_configs
-    parameter_configs = []
+    parameter_configs: list[ParameterConfig] = []
     for parameter_group in design_matrix_sheet.columns.get_level_values(0).unique():
         parameters = design_matrix_sheet[parameter_group].columns
         transform_function_definitions: list[TransformFunctionDefinition] = []
@@ -122,7 +126,7 @@ def initialize_parameters(
 
 
 def _read_excel(
-    file_name: str,
+    file_name: Path | str,
     sheet_name: str,
     usecols: int | list[int] | None = None,
     header: int | None = 0,
@@ -143,7 +147,7 @@ def _read_excel(
     return dframe.dropna(axis=1, how="all")
 
 
-def _validate_design_matrix_header(design_matrix):
+def _validate_design_matrix_header(design_matrix: pd.DataFrame) -> None:
     """
     Validate header in user inputted design matrix
     :raises: ValueError if design matrix contains empty headers
@@ -156,14 +160,16 @@ def _validate_design_matrix_header(design_matrix):
         # We catch because int/floats as column headers
         # in xlsx gets read as int/float and is not valid to index by.
         raise ValueError(
-            f"Invalid value in design matrix header, error: {str(err)}"
+            f"Invalid value in design matrix header, error: {err !s}"
         ) from err
     column_indexes = [int(x.split(":")[1]) for x in unnamed.columns.values]
     if len(column_indexes) > 0:
         raise ValueError(f"Column headers not present in column {column_indexes}")
 
 
-def _read_defaultssheet(xlsfilename, defaultssheetname):
+def _read_defaultssheet(
+    xlsfilename: Path | str, defaultssheetname: str
+) -> dict[str, str]:
     """
     Construct a dataframe of keys and values to be used as defaults from the
     first two columns in a spreadsheet.
@@ -185,10 +191,8 @@ def _read_defaultssheet(xlsfilename, defaultssheetname):
         for paramname in default_df.loc[:, 0]:
             if paramname != paramname.strip():
                 raise ValueError(
-                    (
-                        f'Parameter name "{paramname}" in default values contains '
-                        "initial or trailing whitespace."
-                    )
+                    f'Parameter name "{paramname}" in default values contains '
+                    "initial or trailing whitespace."
                 )
 
     else:

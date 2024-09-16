@@ -70,9 +70,7 @@ class TransformFunctionDefinition:
 class GenKwConfig(ParameterConfig):
     template_file: Optional[str]
     output_file: Optional[str]
-    transform_function_definitions: (
-        List[TransformFunctionDefinition] | List[Dict[Any, Any]]
-    )
+    transform_function_definitions: List[TransformFunctionDefinition]
     forward_init_file: Optional[str] = None
 
     def __post_init__(self) -> None:
@@ -90,7 +88,7 @@ class GenKwConfig(ParameterConfig):
                 )
         self._validate()
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
 
     def __len__(self) -> int:

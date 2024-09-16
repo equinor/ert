@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
+import pandas as pd
 from qtpy import QtCore
-from qtpy.QtCore import QEvent, QObject, Qt
+from qtpy.QtCore import QEvent, QModelIndex, QObject, Qt
 from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QTableView,
     QTabWidget,
     QVBoxLayout,
     QWidget,
-    QTableView
 )
+from typing_extensions import override
 
 from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import (
@@ -21,11 +23,11 @@ from ert.gui.ertwidgets import (
     SelectableListModel,
     showWaitCursorWhileWaiting,
 )
-from .design_matrix import read_design_matrix, initialize_parameters
 
+from ...ertwidgets.create_experiment_dialog import CreateExperimentDialog
+from .design_matrix import initialize_parameters, read_design_matrix
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
-from ...ertwidgets.create_experiment_dialog import CreateExperimentDialog
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -33,24 +35,36 @@ if TYPE_CHECKING:
 
 
 class DFModel(QtCore.QAbstractTableModel):
-    def __init__(self, data, parent=None):
+    def __init__(self, data: pd.DataFrame, parent: Optional[QWidget] = None) -> None:
         QtCore.QAbstractTableModel.__init__(self, parent)
         self._df = data
 
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid() and role == Qt.DisplayRole:
-            return QtCore.QVariant(str(self._df.iloc[index.row()][index.column()]))
+    @override
+    def data(
+        self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> QtCore.QVariant:
+        if index.isValid() and role == Qt.ItemDataRole.DisplayRole:
+            return QtCore.QVariant(str(self._df.iloc[index.row()].iloc[index.column()]))
         return QtCore.QVariant()
 
-    def rowCount(self, parent=None):
+    @override
+    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
         return len(self._df.values)
 
-    def columnCount(self, parent=None):
+    @override
+    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
         return self._df.columns.size
 
-    def headerData(self, col, orientation, role=None):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return "\n".join(self._df.columns[col])
+    @override
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: Optional[int] = None
+    ) -> QtCore.QVariant | str:
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
+            return "\n".join(self._df.columns[section])
+        return QtCore.QVariant()
 
 
 def createRow(*widgets: CheckList) -> QHBoxLayout:
@@ -74,7 +88,7 @@ class ManageExperimentsPanel(QTabWidget):
         self._add_initialize_from_scratch_tab()
 
         self.installEventFilter(self)
-        if self.ert_config.analysis_config.design_matrix:
+        if self.ert_config.analysis_config.design_matrix is not None:
             self._add_initialize_from_design_matrix_tab()
 
         self.setWindowTitle("Manage experiments")
@@ -180,11 +194,11 @@ class ManageExperimentsPanel(QTabWidget):
             self.notifier.emitErtChange()
         return super().eventFilter(a0, a1)
 
-    def _add_initialize_from_design_matrix_tab(self):
+    def _add_initialize_from_design_matrix_tab(self) -> None:
         panel = QWidget()
         panel.setObjectName("initialize_from_design_matrix_panel")
         layout = QVBoxLayout()
-
+        assert self.ert_config.analysis_config.design_matrix is not None  # for mypy
         design_matrix = read_design_matrix(
             self.ert_config,
             self.ert_config.analysis_config.design_matrix,
@@ -200,8 +214,10 @@ class ManageExperimentsPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initializeFromDesignMatrix(_):
-            create_experiment_dialog = CreateExperimentDialog(parent=self, notifier=self.notifier)
+        def initializeFromDesignMatrix(_: Any) -> None:
+            create_experiment_dialog = CreateExperimentDialog(
+                parent=self, notifier=self.notifier
+            )
             create_experiment_dialog.show()
             if create_experiment_dialog.exec_():
                 ensemble = initialize_parameters(
