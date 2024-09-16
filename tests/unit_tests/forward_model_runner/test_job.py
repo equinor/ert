@@ -11,13 +11,13 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import numpy as np
 import pytest
 
-from _ert_forward_model_runner.job import Job, _get_rss_and_oom_score_for_processtree
-from _ert_forward_model_runner.reporting.message import Exited, Running, Start
+from _ert.forward_model_runner.job import Job, _get_rss_and_oom_score_for_processtree
+from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 
 
-@patch("_ert_forward_model_runner.job.assert_file_executable")
-@patch("_ert_forward_model_runner.job.Popen")
-@patch("_ert_forward_model_runner.job.Process")
+@patch("_ert.forward_model_runner.job.assert_file_executable")
+@patch("_ert.forward_model_runner.job.Popen")
+@patch("_ert.forward_model_runner.job.Process")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_process_failing(
     mock_process, mock_popen, mock_assert_file_executable

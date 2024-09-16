@@ -2,7 +2,7 @@
 
 import time
 
-from _ert_forward_model_runner.reporting.message import _JOB_STATUS_WAITING
+from _ert.forward_model_runner.reporting.message import _JOB_STATUS_WAITING
 
 
 def create_job_dict(job):

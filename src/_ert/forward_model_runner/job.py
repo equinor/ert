@@ -14,8 +14,8 @@ from typing import Optional, Tuple
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
-from _ert_forward_model_runner.io import assert_file_executable
-from _ert_forward_model_runner.reporting.message import (
+from .io import assert_file_executable
+from .reporting.message import (
     Exited,
     MemoryStatus,
     Running,

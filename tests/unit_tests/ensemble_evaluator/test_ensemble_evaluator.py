@@ -16,7 +16,7 @@ from _ert.events import (
     RealizationSuccess,
     event_to_json,
 )
-from _ert_forward_model_runner.client import Client
+from _ert.forward_model_runner.client import Client
 from ert.ensemble_evaluator import EnsembleEvaluator, EnsembleSnapshot, Monitor
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,

@@ -18,7 +18,7 @@ from typing import (
 )
 
 from _ert.events import Event, Id, event_from_dict, event_to_json
-from _ert_forward_model_runner.client import Client
+from _ert.forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver

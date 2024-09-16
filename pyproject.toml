@@ -78,7 +78,7 @@ dependencies=[
 
 [project.scripts]
 ert = "ert.__main__:main"
-"job_dispatch.py" = "_ert_forward_model_runner.job_dispatch:main"
+"job_dispatch.py" = "_ert.forward_model_runner.job_dispatch:main"
 
 [project.urls]
 Repository = "https://github.com/equinor/ert"

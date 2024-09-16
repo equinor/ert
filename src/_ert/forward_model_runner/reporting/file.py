@@ -6,9 +6,9 @@ import time
 
 import orjson
 
-from _ert_forward_model_runner.io import cond_unlink
-from _ert_forward_model_runner.reporting.base import Reporter
-from _ert_forward_model_runner.reporting.message import (
+from _ert.forward_model_runner.io import cond_unlink
+from _ert.forward_model_runner.reporting.base import Reporter
+from _ert.forward_model_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
@@ -20,11 +20,11 @@ from _ert_forward_model_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert_forward_model_runner.util import data as data_util
+from _ert.forward_model_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
-memory_logger = logging.getLogger("_ert_forward_model_memory_profiler")
+memory_logger = logging.getLogger("_ert.forward_model_memory_profiler")
 append = functools.partial(open, mode="a")
 
 LOG_file = "JOB_LOG"

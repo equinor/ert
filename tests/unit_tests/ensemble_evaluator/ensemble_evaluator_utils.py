@@ -12,7 +12,7 @@ from _ert.events import (
     RealizationUnknown,
     event_to_json,
 )
-from _ert_forward_model_runner.client import Client
+from _ert.forward_model_runner.client import Client
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble
 from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization

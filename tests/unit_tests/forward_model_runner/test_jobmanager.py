@@ -5,8 +5,8 @@ import stat
 
 import pytest
 
-from _ert_forward_model_runner.reporting.message import Checksum, Exited, Start
-from _ert_forward_model_runner.runner import ForwardModelRunner
+from _ert.forward_model_runner.reporting.message import Checksum, Exited, Start
+from _ert.forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.substitution_list import SubstitutionList

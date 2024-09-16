@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 
 import websockets.server
 
+from _ert.forward_model_runner.client import Client
 from _ert.threading import ErtThread
-from _ert_forward_model_runner.client import Client
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
 if TYPE_CHECKING:
