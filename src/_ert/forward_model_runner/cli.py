@@ -98,13 +98,14 @@ def main(args):
     try:
         with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
             jobs_data = json.load(json_file)
-            experiment_id = jobs_data.get("experiment_id")
-            ens_id = jobs_data.get("ens_id")
-            ee_token = jobs_data.get("ee_token")
-            ee_cert_path = jobs_data.get("ee_cert_path")
-            dispatch_url = jobs_data.get("dispatch_url")
-    except ValueError as e:
+    except json.JSONDecodeError as e:
         raise IOError("Job Runner cli failed to load JSON-file.") from e
+
+    experiment_id = jobs_data.get("experiment_id")
+    ens_id = jobs_data.get("ens_id")
+    ee_token = jobs_data.get("ee_token")
+    ee_cert_path = jobs_data.get("ee_cert_path")
+    dispatch_url = jobs_data.get("dispatch_url")
 
     is_interactive_run = len(parsed_args.job) > 0
     reporters = _setup_reporters(
