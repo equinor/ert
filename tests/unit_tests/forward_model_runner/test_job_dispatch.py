@@ -16,7 +16,7 @@ import pandas as pd
 import psutil
 import pytest
 
-from _ert.forward_model_runner.cli import _setup_reporters, main
+from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
 from _ert.forward_model_runner.job import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
@@ -68,7 +68,7 @@ else:
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
@@ -136,7 +136,7 @@ def test_memory_profile_is_logged_as_csv():
         * fm_step_repeats,
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(forward_model_steps))
 
     subprocess.run(
@@ -232,7 +232,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
@@ -278,10 +278,9 @@ def test_no_jobs_json_file():
         main(["script.py", os.path.realpath(os.curdir)])
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_no_json_jobs_json_file():
+def test_job_runner_retries_on_missing_jobs_file():
     path = os.path.realpath(os.curdir)
-    jobs_file = os.path.join(path, "jobs.json")
+    jobs_file = os.path.join(path, JOBS_FILE)
 
     with open(jobs_file, "w", encoding="utf-8") as f:
         f.write("not json")
