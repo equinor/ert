@@ -28,6 +28,7 @@ from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from qtpy.QtCore import QDir
 
+import _ert.forward_model_runner.cli
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
@@ -39,6 +40,11 @@ from ert.storage import Ensemble, open_storage
 from .utils import SOURCE_DIR
 
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
+
+
+@pytest.fixture(autouse=True)
+def no_jobs_file_retry(monkeypatch):
+    monkeypatch.setattr(_ert.forward_model_runner.cli, "JOBS_JSON_RETRY_TIME", 0)
 
 
 @pytest.fixture(autouse=True)

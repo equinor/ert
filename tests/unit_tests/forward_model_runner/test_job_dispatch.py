@@ -10,17 +10,22 @@ import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
+from threading import Lock
 from unittest.mock import mock_open, patch
 
 import pandas as pd
 import psutil
 import pytest
 
+import _ert.forward_model_runner.cli
 from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
 from _ert.forward_model_runner.job import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
+from _ert.threading import ErtThread
 from tests.utils import _mock_ws_thread, wait_until
+
+from .test_event_reporter import _wait_until
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -287,6 +292,31 @@ def test_invalid_jobs_json_raises_OSError(tmp_path):
 def test_missing_directory_exits(tmp_path):
     with pytest.raises(SystemExit):
         main(["script.py", str(tmp_path / "non_existent")])
+
+
+def test_retry_of_jobs_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
+    lock = Lock()
+    lock.acquire()
+    monkeypatch.setattr(_ert.forward_model_runner.cli, "_wait_for_retry", lock.acquire)
+    jobs_json = json.dumps(
+        {
+            "ens_id": "_id_",
+            "dispatch_url": f"ws://localhost:{unused_tcp_port}",
+            "jobList": [],
+        }
+    )
+
+    with _mock_ws_thread("localhost", unused_tcp_port, []):
+        thread = ErtThread(target=main, args=[["script.py", str(tmp_path)]])
+        thread.start()
+        _wait_until(
+            lambda: f"Could not find file {JOBS_FILE}, retrying" in caplog.text,
+            2,
+            "Did not get expected log message from missing jobs.json",
+        )
+        (tmp_path / JOBS_FILE).write_text(jobs_json)
+        lock.release()
+        thread.join()
 
 
 @pytest.mark.parametrize(

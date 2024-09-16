@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import sys
+import time
 import typing
 from datetime import datetime
 
@@ -67,12 +68,26 @@ def _setup_logging(directory: str = "logs"):
     job_runner_logger.setLevel(logging.DEBUG)
 
 
-def _read_jobs_file():
+JOBS_JSON_RETRY_TIME = 30
+
+
+def _wait_for_retry():
+    time.sleep(JOBS_JSON_RETRY_TIME)
+
+
+def _read_jobs_file(retry=True):
     try:
         with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
             return json.load(json_file)
     except json.JSONDecodeError as e:
         raise IOError("Job Runner cli failed to load JSON-file.") from e
+    except FileNotFoundError as e:
+        if retry:
+            logger.error(f"Could not find file {JOBS_FILE}, retrying")
+            _wait_for_retry()
+            return _read_jobs_file(retry=False)
+        else:
+            raise e
 
 
 def main(args):
