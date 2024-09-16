@@ -1,19 +1,24 @@
+from __future__ import annotations
+
 from collections import defaultdict
-from typing import List
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import xarray as xr
 
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
+    from ert.storage import Storage
+
 
 def read_design_matrix(
-    ert_config,
-    xlsfilename,
-    designsheetname="DesignSheet01",
-    defaultssheetname="DefaultValues",
-):
-    # pylint: disable=too-many-arguments
+    ert_config: str,
+    xlsfilename: str,
+    designsheetname: str = "DesignSheet01",
+    defaultssheetname: str = "DefaultValues",
+) -> pd.DataFrame:
     """
     Reads out all file content from different files and create dataframes
     """
@@ -55,12 +60,18 @@ def read_design_matrix(
     return design_matrix_sheet
 
 
-def initialize_parameters(design_matrix_sheet, storage, ert_config, exp_name, ens_name):
+def initialize_parameters(
+    design_matrix_sheet,
+    storage: Storage,
+    ert_config: ErtConfig,
+    exp_name: str,
+    ens_name: str,
+):
     existing_parameters = ert_config.ensemble_config.parameter_configs
     parameter_configs = []
     for parameter_group in design_matrix_sheet.columns.get_level_values(0).unique():
         parameters = design_matrix_sheet[parameter_group].columns
-        transform_function_definitions: List[TransformFunctionDefinition] = []
+        transform_function_definitions: list[TransformFunctionDefinition] = []
         for param in parameters:
             transform_function_definitions.append(
                 TransformFunctionDefinition(
@@ -110,14 +121,19 @@ def initialize_parameters(design_matrix_sheet, storage, ert_config, exp_name, en
     return ensemble
 
 
-def _read_excel(file_name, sheet_name, usecols=None, header=0):
+def _read_excel(
+    file_name: str,
+    sheet_name: str,
+    usecols: int | list[int] | None = None,
+    header: int | None = 0,
+) -> pd.DataFrame:
     """
     Make dataframe from excel file
     :return: Dataframe
     :raises: OsError if file not found
     :raises: ValueError if file not loaded correctly
     """
-    dframe = pd.read_excel(
+    dframe: pd.DataFrame = pd.read_excel(
         file_name,
         sheet_name,
         dtype=str,
