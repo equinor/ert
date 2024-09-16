@@ -42,6 +42,8 @@ This can be combined with the commands from the previous section to directly sub
 ert status $(<command from previous section> | jq -r .id)
 ```
 
+This requires `jq` to be installed (`brew install jq` or `sudo apt install jq`).
+
 ### Event types
 The events the you receive from the websocket endpoint will be one of the following:
 
