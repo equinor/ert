@@ -85,7 +85,7 @@ class ExperimentPanel(QWidget):
         self.run_button.setMinimumHeight(40)
         self.run_button.setStyleSheet(
             """
-            QToolButton {            
+            QToolButton {
             border-radius: 10px;
             background-color: qlineargradient(
                 x1:0, y1:0, x2:0, y2:1,
