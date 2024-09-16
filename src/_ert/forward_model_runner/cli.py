@@ -67,6 +67,14 @@ def _setup_logging(directory: str = "logs"):
     job_runner_logger.setLevel(logging.DEBUG)
 
 
+def _read_jobs_file():
+    try:
+        with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
+            return json.load(json_file)
+    except json.JSONDecodeError as e:
+        raise IOError("Job Runner cli failed to load JSON-file.") from e
+
+
 def main(args):
     parser = argparse.ArgumentParser(
         description=(
@@ -95,11 +103,7 @@ def main(args):
     # Make sure that logging is setup _after_ we have moved to the runpath directory
     _setup_logging()
 
-    try:
-        with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
-            jobs_data = json.load(json_file)
-    except json.JSONDecodeError as e:
-        raise IOError("Job Runner cli failed to load JSON-file.") from e
+    jobs_data = _read_jobs_file()
 
     experiment_id = jobs_data.get("experiment_id")
     ens_id = jobs_data.get("ens_id")
