@@ -41,6 +41,7 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+    secrets: inherit
 
   test-slurm:
     strategy:
@@ -52,6 +53,7 @@ jobs:
     with:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
+    secrets: inherit
 
   test-mac-for-tags:
     if: github.ref_type == 'tag' # only test all variants for tags
@@ -74,6 +76,7 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+    secrets: inherit
 
   test-mac:
     if: github.ref_type != 'tag' # one combination when not tag
@@ -88,6 +91,7 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+    secrets: inherit
 
   docs-ert:
     name: Test ert docs
