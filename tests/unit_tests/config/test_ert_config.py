@@ -668,7 +668,7 @@ def test_num_cpu_vs_torque_queue_cpu_configuration(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_non_existant_job_directory_gives_config_validation_error():
+def test_that_non_existent_job_directory_gives_config_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -758,7 +758,7 @@ def test_that_recursive_define_warns_when_reached_max_iterations():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_loading_non_existant_workflow_gives_validation_error():
+def test_that_loading_non_existent_workflow_gives_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -777,7 +777,7 @@ def test_that_loading_non_existant_workflow_gives_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_loading_non_existant_workflow_job_gives_validation_error():
+def test_that_loading_non_existent_workflow_job_gives_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
