@@ -31,8 +31,7 @@ jobs:
         python-version: ${{ inputs.python-version }}
 
     - name: Install uv
-      run: |
-        pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install HDF5 source files
       if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
