@@ -129,7 +129,7 @@ The configuration file needed to use the ``installable_workflow_jobs`` hook must
 and specify its arguments.
 The built-in internal ``CSV_EXPORT`` workflow job is shown as an example:
 
-.. literalinclude:: ../../../src/ert/resources/workflows/jobs/internal-gui/config/CSV_EXPORT
+.. literalinclude:: ../../../../src/ert/resources/workflows/jobs/internal-gui/config/CSV_EXPORT
 
 Implement the hook specification as follows to register the workflow job ``CSV_EXPORT``:
 
@@ -150,7 +150,7 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
 The second approach does not require creating a workflow job configuration file up-front,
 and allows adding documentation.
 
-.. literalinclude:: ../../../src/ert/plugins/hook_specifications/jobs.py
+.. literalinclude:: ../../../../src/ert/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
 
 Minimal example:

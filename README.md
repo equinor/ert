@@ -93,7 +93,7 @@ git submodule foreach "git lfs pull"
 You can build the documentation after installation by running
 ```bash
 pip install ".[dev]"
-sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
+sphinx-build -n -v -E -W ./docs/ert ./tmp/ert_docs
 ```
 and then open the generated `./tmp/ert_docs/index.html` in a browser.
 
