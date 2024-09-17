@@ -122,6 +122,10 @@ class ErtConfig:
 
         self.observations: Dict[str, xr.Dataset] = self.enkf_obs.datasets
 
+    def write_observations_to_folder(self, dest: Path) -> None:
+        for name, dataset in self.observations.items():
+            dataset.to_netcdf(dest / f"{name}", engine="scipy")
+
     @staticmethod
     def with_plugins(
         forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,

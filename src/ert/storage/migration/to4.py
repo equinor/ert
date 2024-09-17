@@ -20,8 +20,7 @@ def migrate(path: Path) -> None:
         if observations:
             output_path = experiment / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
-            for name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{name}", engine="scipy")
+            ert_config.write_observations_to_folder(dest=output_path)
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
         with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
