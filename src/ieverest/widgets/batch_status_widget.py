@@ -1,8 +1,10 @@
-from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING
+from typing import ClassVar
+
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import QLabel, QSizePolicy, QSpacerItem, QStyle, QWidget, qApp
 
+from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS, JOB_WAITING
 from ieverest.utils import load_ui
 
 
@@ -44,14 +46,14 @@ class BatchStatusWidget(QWidget):
     """A widget monitoring the status of a forward model batch"""
 
     _ICON_SIZE = QSize(24, 24)
-    _STATUS_ICONS = {
+    _STATUS_ICONS: ClassVar = {
         JOB_SUCCESS: "emblem-default",
         JOB_WAITING: "emblem-new",
         JOB_RUNNING: "emblem-system",
         JOB_FAILURE: "emblem-important",
     }
     _DEFAULT_STATUS_ICON = "dialog-question"
-    _STATUS_TEXT = {
+    _STATUS_TEXT: ClassVar = {
         JOB_SUCCESS: "v",
         JOB_WAITING: "-",
         JOB_RUNNING: "*",

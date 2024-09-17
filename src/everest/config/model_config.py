@@ -33,7 +33,7 @@ If specified, it must be a list of numeric values, one per realization.""",
 
     @model_validator(mode="before")
     @classmethod
-    def validate_realizations_weights_same_cardinaltiy(cls, values):  # pylint: disable=E0213 # noqa: E501
+    def validate_realizations_weights_same_cardinaltiy(cls, values):  # pylint: disable=E0213
         weights = values.get("realizations_weights")
         reals = values.get("realizations")
 

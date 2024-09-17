@@ -4,18 +4,19 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from ert.config import ErtConfig
-from everest import MetaDataColumnNames as MDCN
-from everest import export
-from everest.bin.everload_script import everload_entry
-from everest.config import EverestConfig
-from everest.strings import STORAGE_DIR
 from tests.everest.utils import (
     capture_streams,
     create_cached_mocked_test_case,
     relpath,
     tmpdir,
 )
+
+from ert.config import ErtConfig
+from everest import MetaDataColumnNames as MDCN
+from everest import export
+from everest.bin.everload_script import everload_entry
+from everest.config import EverestConfig
+from everest.strings import STORAGE_DIR
 
 CONFIG_PATH = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "mocked_multi_batch.yml"
@@ -161,8 +162,8 @@ def test_everload_entry_not_silent(mocked_internalize, cache_dir):
     """Test running everload without the -s flag"""
     config = get_config(cache_dir)
 
-    no = lambda _: "n"  # noqa #pylint:disable=unnecessary-lambda-assignment
-    yes = lambda _: "y"  # noqa #pylint:disable=unnecessary-lambda-assignment
+    no = lambda _: "n"  # pylint:disable=unnecessary-lambda-assignment
+    yes = lambda _: "y"  # pylint:disable=unnecessary-lambda-assignment
 
     with capture_streams() as (stdout, _):
         with patch("everest.bin.everload_script.input", side_effect=no):

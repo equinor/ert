@@ -1,11 +1,11 @@
 import pytest
+
 from everest.bin.config_branch_script import (
     _updated_initial_guess,
     opt_controls_by_batch,
 )
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-
 from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

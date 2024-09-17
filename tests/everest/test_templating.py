@@ -2,11 +2,11 @@ import json
 import os
 import subprocess
 
-import everest
 import pytest
-from everest.config import EverestConfig
 from ruamel.yaml import YAML
 
+import everest
+from everest.config import EverestConfig
 from tests.everest.utils import relpath, tmpdir
 
 TMPL_TEST_PATH = os.path.join("test_data", "templating")

@@ -2,6 +2,15 @@ import os
 from textwrap import dedent
 
 import pytest
+from ruamel.yaml import YAML
+from seba_sqlite.snapshot import SebaSnapshot
+from tests.everest.utils import (
+    capture_streams,
+    relpath,
+    skipif_no_everest_models,
+    tmpdir,
+)
+
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig
@@ -10,14 +19,6 @@ from everest.detached import (
     context_stop_and_wait,
     everserver_status,
     wait_for_context,
-)
-from ruamel.yaml import YAML
-from seba_sqlite.snapshot import SebaSnapshot
-from tests.everest.utils import (
-    capture_streams,
-    relpath,
-    skipif_no_everest_models,
-    tmpdir,
 )
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

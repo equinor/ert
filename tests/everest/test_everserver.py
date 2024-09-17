@@ -3,14 +3,14 @@ import ssl
 from functools import partial
 from unittest.mock import patch
 
+from ropt.enums import OptimizerExitCode
+from seba_sqlite.snapshot import SebaSnapshot
+
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from everest.strings import OPT_FAILURE_REALIZATIONS, SIM_PROGRESS_ENDPOINT
-from ropt.enums import OptimizerExitCode
-from seba_sqlite.snapshot import SebaSnapshot
-
 from tests.everest.utils import relpath, tmpdir
 
 
@@ -80,6 +80,7 @@ def test_hostfile_storage():
     assert result == expected_result
 
 
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch(
     "everest.detached.jobs.everserver.configure_logger",
     side_effect=configure_everserver_logger,
@@ -88,13 +89,14 @@ def test_hostfile_storage():
 def test_everserver_status_failure(mf_1):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
-    everserver.main(["--config-file", config_file])
+    everserver.main()
     status = everserver_status(config)
 
     assert status["status"] == ServerStatus.failed
     assert "Exception: Configuring logger failed" in status["message"]
 
 
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver.configure_logger")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
@@ -123,13 +125,14 @@ def test_everserver_status_failure(mf_1):
 def test_everserver_status_running_complete(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
-    everserver.main(["--config-file", config_file])
+    everserver.main()
     status = everserver_status(config)
 
     assert status["status"] == ServerStatus.completed
     assert status["message"] == "Optimization completed."
 
 
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver.configure_logger")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
@@ -166,7 +169,7 @@ def test_everserver_status_running_complete(*args):
 def test_everserver_status_failed_job(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
-    everserver.main(["--config-file", config_file])
+    everserver.main()
     status = everserver_status(config)
 
     # The server should fail and store a user-friendly message.
@@ -175,6 +178,7 @@ def test_everserver_status_failed_job(*args):
     assert "3 job failures caused by: job1, job2" in status["message"]
 
 
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver.configure_logger")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
@@ -199,7 +203,7 @@ def test_everserver_status_failed_job(*args):
 def test_everserver_status_exception(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
-    everserver.main(["--config-file", config_file])
+    everserver.main()
     status = everserver_status(config)
 
     # The server should fail, and store the exception that
@@ -208,6 +212,7 @@ def test_everserver_status_exception(*args):
     assert "Exception: Failed optimization" in status["message"]
 
 
+@patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
 @patch("everest.detached.jobs.everserver.configure_logger")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
@@ -228,7 +233,7 @@ def test_everserver_status_exception(*args):
 def test_everserver_status_max_batch_num(*args):
     config_file = "config_one_batch.yml"
     config = EverestConfig.load_file(config_file)
-    everserver.main(["--config-file", config_file])
+    everserver.main()
     status = everserver_status(config)
 
     # The server should complete without error.

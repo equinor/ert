@@ -1,6 +1,5 @@
 from everest import ConfigKeys
 from everest.config import EverestConfig
-
 from tests.everest.utils import relpath
 
 

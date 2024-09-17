@@ -9,7 +9,6 @@ from functools import partial
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
-
 from everest.config import EverestConfig
 from everest.detached import (
     ServerStatus,

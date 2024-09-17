@@ -27,7 +27,7 @@ class PluginSiteConfigEnv:
             if env_value is not None
         ]
 
-        return config_lines + [""]
+        return [*config_lines, ""]
 
     def _get_temp_site_config_path(self):
         self.tmp_dir = tempfile.mkdtemp()

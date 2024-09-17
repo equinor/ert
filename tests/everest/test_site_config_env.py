@@ -3,6 +3,7 @@ import shutil
 from unittest.mock import patch
 
 import pytest
+
 from everest.plugins import hook_impl as everest_implementation
 from everest.plugins import hookimpl
 from everest.plugins.hook_manager import EverestPluginManager
@@ -73,11 +74,16 @@ expected_site_config_extra = [
 
 expected_site_config_content = (
     "\n".join(
-        expected_site_config_extra
-        + ["-- dummy site config", ""]
-        + ["-- dummy site config from plugin 2", ""]
-        + expected_env_lines
-        + ["LOAD_WORKFLOW_JOB dummy/workflow/job/path", ""]
+        [
+            *expected_site_config_extra,
+            "-- dummy site config",
+            "",
+            "-- dummy site config from plugin 2",
+            "",
+            *expected_env_lines,
+            "LOAD_WORKFLOW_JOB dummy/workflow/job/path",
+            "",
+        ]
     )
     + "\n"
 )

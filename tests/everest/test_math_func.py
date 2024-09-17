@@ -4,13 +4,13 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
+
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export
 from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
-
 from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

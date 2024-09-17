@@ -1,8 +1,8 @@
 import os
 
 import pytest
-from everest.config import EverestConfig
 
+from everest.config import EverestConfig
 from tests.everest.utils import relpath, tmpdir
 
 

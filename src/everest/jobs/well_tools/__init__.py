@@ -51,11 +51,11 @@ def well_set(well_data_file, new_entry_file, output_file):
         err_msg = "Expected there to be exactly one new entry " "in {nef}, was {ne}"
         raise ValueError(err_msg.format(nef=new_entry_file, ne=len(new_entry)))
 
-    entry_key = list(new_entry.keys())[0]
+    entry_key = next(iter(new_entry.keys()))
     entry_data = new_entry[entry_key]
 
     if len(well_data) != len(entry_data):
-        err_msg = "Expected number of entries in {well_data_file} to be equal "
+        err_msg = f"Expected number of entries in {well_data_file} to be equal "
         "the number of entries in {new_entry_file} ({nwell} != {nentry})"
         err_msg = err_msg.format(
             well_data_file=well_data_file,
@@ -121,7 +121,7 @@ def well_opdate_filter(well_data_file, start_date, end_date, output_file):
     well_data = everest.jobs.io.load_data(well_data_file)
 
     # pylint: disable=unnecessary-lambda-assignment
-    valid = lambda well: _valid_operational_dates(well, start_date, end_date)  # noqa
+    valid = lambda well: _valid_operational_dates(well, start_date, end_date)
     well_data = list(filter(valid, well_data))
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:

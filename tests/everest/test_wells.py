@@ -1,7 +1,7 @@
 import pytest
+
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 

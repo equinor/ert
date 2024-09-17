@@ -1,9 +1,9 @@
 from collections import OrderedDict
 
 import pandas as pd
-from ert.storage import open_storage
 from seba_sqlite.snapshot import SebaSnapshot
 
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status
 

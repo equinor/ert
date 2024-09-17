@@ -2,13 +2,13 @@ import os
 import tempfile
 from pathlib import Path
 
-import everest
 import pytest
+
+import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.util.forward_models import collect_forward_models
-
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
@@ -108,7 +108,7 @@ def test_invalid_shallow_value():
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         input_constr_weights = config[ConfigKeys.INPUT_CONSTRAINTS][0]
         input_constr_weights = input_constr_weights[ConfigKeys.WEIGHTS]
-        input_constr_weights[list(input_constr_weights.keys())[0]] = invalid_val
+        input_constr_weights[next(iter(input_constr_weights.keys()))] = invalid_val
 
         errors = EverestConfig.lint_config_dict(config)
         has_error(errors, match="value is not a valid float")

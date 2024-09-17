@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
 
-import everest
 import pytest
+from ruamel.yaml import YAML
+
+import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
-from ruamel.yaml import YAML
-
 from tests.everest.utils import MockParser, relpath, skipif_no_everest_models, tmpdir
 
 snake_oil_folder = relpath("test_data", "snake_oil")
@@ -127,4 +127,4 @@ Found  1 validation error:
 
 
     * Value error, job = 'add_templates'\t-c/--config = {template_config_path}
-\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()  # pylint: disable=E1135 # noqa: E501
+\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()  # pylint: disable=E1135

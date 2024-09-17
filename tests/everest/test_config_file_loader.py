@@ -3,12 +3,12 @@ import string
 from unittest.mock import patch
 
 import pytest
-from everest import ConfigKeys as CK
-from everest import config_file_loader as loader
-from everest.config import EverestConfig
 from pydantic_core import ValidationError
 from ruamel.yaml import YAML
 
+from everest import ConfigKeys as CK
+from everest import config_file_loader as loader
+from everest.config import EverestConfig
 from tests.everest.utils import relpath, tmpdir
 
 mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))
@@ -80,7 +80,7 @@ def test_dependent_definitions():
         raw_config = YAML(typ="safe", pure=True).load(f)
 
     conseq_chars = zip(string.ascii_lowercase[:-1], string.ascii_lowercase[1:])
-    for c, cdef in list(conseq_chars) + [(string.ascii_lowercase[-1], "configpath")]:
+    for c, cdef in [*list(conseq_chars), (string.ascii_lowercase[-1], "configpath")]:
         raw_config[CK.DEFINITIONS][c] = "r{{{{ {} }}}}".format(cdef)
 
     with open(config_file, "w", encoding="utf-8") as f:

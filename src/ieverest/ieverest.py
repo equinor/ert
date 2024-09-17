@@ -1,3 +1,7 @@
+from pydantic import ValidationError
+from qtpy.QtCore import QObject, QThread, Signal
+from qtpy.QtWidgets import QFileDialog, QMessageBox, qApp
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig, validation_utils
@@ -19,10 +23,6 @@ from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator import Status
 from everest.strings import OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import configure_logger, makedirs_if_needed
-from pydantic import ValidationError
-from qtpy.QtCore import QObject, QThread, Signal
-from qtpy.QtWidgets import QFileDialog, QMessageBox, qApp
-
 from ieverest import settings
 from ieverest.io import QtDialogsOut, QtStatusBarOut
 from ieverest.main_window import MainWindow
@@ -173,10 +173,10 @@ class IEverest(QObject):
                 return  # user cancelled
         try:
             opened_config = EverestConfig.load_file(filename)
-        except FileNotFoundError:  # noqa
+        except FileNotFoundError:
             app_output().critical(f"File not found {filename}")
             return
-        except ValidationError as e:  # noqa
+        except ValidationError as e:
             app_output().critical(
                 f"Loading config file <{filename}> failed with:\n\n"
                 f"{validation_utils.format_errors(e)}"
@@ -264,7 +264,7 @@ class IEverest(QObject):
         app_output().info("Starting optimization...")
 
         config_dict = self.config.to_dict()
-        app_output().info(f"Running everest with config info\n{str(config_dict)}")
+        app_output().info(f"Running everest with config info\n{config_dict!s}")
         for fm_job in self.config.forward_model:
             job_name = fm_job.split()[0]
             app_output().info(f"Everest forward model contains job {job_name}")
@@ -286,7 +286,7 @@ class IEverest(QObject):
                 context = start_server(self.config, ert_config, self._storage)
                 try:
                     wait_for_server(self.config, timeout=600, context=context)
-                except:  # noqa
+                except:
                     app_output().info("Starting session failed!")
                     return False
         return True

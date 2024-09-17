@@ -95,7 +95,7 @@ def _os():
 
 def _render_definitions(definitions, jinja_env):
     # pylint: disable=unnecessary-lambda-assignment
-    render = lambda s, d: jinja_env.from_string(s).render(**d)  # noqa
+    render = lambda s, d: jinja_env.from_string(s).render(**d)
     for key in definitions:
         if not isinstance(definitions[key], str):
             continue

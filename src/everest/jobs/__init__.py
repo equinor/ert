@@ -18,11 +18,11 @@ script_names = (
 )
 
 __all__ = [
-    "recovery_factor",
     "io",
+    "recovery_factor",
+    "script_names",
     "templating",
     "well_tools",
-    "script_names",
 ]
 
 

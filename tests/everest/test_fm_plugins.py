@@ -4,10 +4,11 @@ from typing import Callable, Iterator, Sequence, Type
 
 import pluggy
 import pytest
+from pydantic import BaseModel
+
 from everest.plugins import hook_impl, hook_specs, hookimpl
 from everest.strings import EVEREST
 from everest.util.forward_models import collect_forward_models
-from pydantic import BaseModel
 
 
 class MockPluginManager(pluggy.PluginManager):

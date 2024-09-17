@@ -1,12 +1,13 @@
 import pytest
+from PyQt5.QtWidgets import QMessageBox
+from qtpy.QtCore import Qt, QTimer
+
 from everest.detached import (
     context_stop_and_wait,
     wait_for_context,
 )
 from ieverest import IEverest
 from ieverest.utils import APP_OUT_DIALOGS, app_output
-from PyQt5.QtWidgets import QMessageBox
-from qtpy.QtCore import Qt, QTimer
 
 
 @pytest.mark.ui_test

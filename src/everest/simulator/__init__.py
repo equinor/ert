@@ -1,5 +1,4 @@
 from ert.simulator.batch_simulator_context import Status
-
 from everest.simulator.simulator import Simulator
 
 JOB_SUCCESS = "Success"
@@ -107,10 +106,10 @@ DEFAULT_WELL_SUMMARY_KEYS = _DEFAULT_WELL_SUMMARY_KEYS + tuple(
 )
 
 __all__ = [
-    "Simulator",
-    "Status",
+    "JOB_FAILURE",
+    "JOB_RUNNING",
     "JOB_SUCCESS",
     "JOB_WAITING",
-    "JOB_RUNNING",
-    "JOB_FAILURE",
+    "Simulator",
+    "Status",
 ]

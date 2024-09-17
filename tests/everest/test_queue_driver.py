@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
+
 from everest.config import EverestConfig
 from everest.queue_driver import queue_driver
 from everest.queue_driver.queue_driver import _extract_queue_system

@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 
 import pytest
-from everest.config.everest_config import EverestConfig
-from ieverest import IEverest
-from ieverest.widgets.export_data_dialog import ExportDataDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from qtpy.QtCore import Qt, QTimer
 
+from everest.config.everest_config import EverestConfig
+from ieverest import IEverest
+from ieverest.widgets.export_data_dialog import ExportDataDialog
 from tests.everest.utils import tmpdir
 
 

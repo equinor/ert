@@ -27,7 +27,7 @@ class OutputDispatcher(object):
                 else:
                     filtered_kwargs = {k: v for k, v in kwargs.items() if k in args}
                     func(message, **filtered_kwargs)
-            except:  # noqa
+            except:
                 logging.getLogger().debug(
                     "Can't find function {} on channel {}".format(func_name, k)
                 )

@@ -7,7 +7,6 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Literal, Optional, Protocol, no_type_check
 
-from ert.config import ErtConfig
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -20,6 +19,7 @@ from pydantic import (
 from ruamel.yaml import YAML, YAMLError
 from typing_extensions import Annotated
 
+from ert.config import ErtConfig
 from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -324,7 +324,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @field_validator("install_templates")
     @classmethod
-    def validate_install_templates_unique_output_files(cls, install_templates):  # pylint: disable=E0213 # noqa: E501
+    def validate_install_templates_unique_output_files(cls, install_templates):  # pylint: disable=E0213
         check_for_duplicate_names(
             [t.output_file for t in install_templates],
             "install_templates",
@@ -791,7 +791,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         except YAMLError as e:
             parser.error(
                 f"The config file: <{config_path}> contains"
-                f" invalid YAML syntax: {str(e)}"
+                f" invalid YAML syntax: {e!s}"
             )
         except ValidationError as e:
             parser.error(

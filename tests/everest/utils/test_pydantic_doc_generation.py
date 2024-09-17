@@ -1,8 +1,8 @@
 import sys
 
 import pytest
-from everest.docs.generate_docs_from_config_spec import generate_docs_pydantic_to_rst
 
+from everest.docs.generate_docs_from_config_spec import generate_docs_pydantic_to_rst
 from tests.everest.utils import relpath
 
 
