@@ -1,4 +1,4 @@
-name: everest-run-tests-build-docs
+name: everest-macos-run-tests-build-docs
 
 on:
   pull_request:
@@ -17,14 +17,24 @@ env:
 
 jobs:
   tests:
-    name: "py_${{ matrix.python-version }}_${{ matrix.test_type }}"
+    if: github.ref_type == 'tag' # only build for mac when tags
+    name: "py-${{ matrix.python-version }}_${{ matrix.test_type }}_${{ matrix.os }}"
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.11', '3.12']
-        os: [ubuntu-22.04]
-        test_type: ['doc', 'ui-test', 'test', 'integration-test', 'everest-models-test']
+        python-version: ['3.8', '3.12']
+        os: ['macos-13', 'macos-14', 'macos-14-large']
+        # https://github.com/actions/runner-images/tree/main?tab=readme-ov-file#available-images
+        exclude:
+          - os: 'macos-14'
+            python-version: '3.8'
+          - os: 'macos-14-large'
+            python-version: '3.8'
+          - os: 'macos-13'
+            python-version: '3.12'
+
+        test_type: ['doc', 'test', 'integration-test', 'everest-models-test']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -35,27 +45,25 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
+        cache-dependency-path: |
+          pyproject.toml
+
+    - name: Install HDF5 source files
+      run: brew install hdf5
 
     - name: Install Everest and dependencies
       run: |
-        pip install ".[dev,everest]"
+        pip install .[dev, everest]
 
     - name: Run Tests
       if: matrix.test_type == 'test'
       run: |
-        pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
+        python -m pytest tests/everest -n 4 -m "not ui_test and not integration_test and not fails_on_macos_github_workflow" --dist loadgroup
 
     - name: Run Integration Tests
       if: matrix.test_type == 'integration-test'
       run: |
-        pytest tests -n 4 -m "integration_test" --dist loadgroup
-
-    - name: Run UI Tests
-      if: matrix.test_type == 'ui-test'
-      env:
-        QT_QPA_PLATFORM: 'minimal'
-      run: |
-        python -m pytest tests/everest -m "ui_test"
+        python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
 
     - name: Build Documentation
       if: matrix.test_type == 'doc'
@@ -68,4 +76,4 @@ jobs:
       if: matrix.test_type == 'everest-models-test'
       run: |
         pip install git+https://github.com/equinor/everest-models.git
-        python -m pytest tests -n 4 -m everest_models_test --dist loadgroup
+        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup

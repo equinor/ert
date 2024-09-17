@@ -8,7 +8,6 @@ from ropt.version import version as ropt_version
 from everest.plugins.hook_manager import EverestPluginManager
 from everest.strings import DATE_FORMAT, DEFAULT_LOGGING_FORMAT
 from everest.util.async_run import async_run  # noqa
-from everest.version import __version__ as everest_version
 
 try:
     import opm.io
@@ -57,7 +56,7 @@ def configure_logger(
 
 def version_info():
     return ("everest:'{}'\nropt:'{}'\nert:'{}'").format(
-        everest_version, ropt_version, ert_version
+        ert_version, ropt_version, ert_version
     )
 
 

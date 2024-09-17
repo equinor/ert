@@ -23,7 +23,7 @@ author = "Equinor & TNO"
 
 def get_version():
     # Retrieve the everest installed version.
-    everest_version = pkg_resources.get_distribution(project).version
+    everest_version = pkg_resources.get_distribution("ert").version
     print("everest version: {}".format(everest_version))
     return everest_version
 

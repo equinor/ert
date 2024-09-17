@@ -5,7 +5,7 @@ import sys
 
 from ieverest.bin.ieverest_script import ieverest_entry
 
-from everest import __version__ as everest_version
+from ert.shared.version import __version__ as everest_version
 from everest import docs
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
