@@ -3,7 +3,7 @@ import pytest
 from hypothesis import given
 from resdata.summary import Summary
 
-from ert.shared.storage.summary_key_utils import is_rate
+from ert.summary_key_type import is_rate
 from tests.unit_tests.config.summary_generator import summary_variables
 
 
