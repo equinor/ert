@@ -352,7 +352,9 @@ class ErtConfig:
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
         for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
-            fm_configuration = Path(fm_step_filename).read_text(encoding="utf-8")
+            fm_configuration = (
+                Path(fm_step_filename).read_text(encoding="utf-8").strip()
+            )
             logger.info(
                 f"Custom forward_model_step {fm_step} installed as: {fm_configuration}"
             )
