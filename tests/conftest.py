@@ -6,14 +6,11 @@ import shutil
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Optional
 from unittest.mock import MagicMock
 
 from qtpy.QtWidgets import QApplication
 
 from _ert.threading import set_signal_handler
-from ert.run_arg import RunArg, create_run_arguments
-from ert.runpaths import Runpaths
 
 if sys.version_info >= (3, 9):
     from importlib.resources import files
@@ -31,7 +28,7 @@ from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
 from ert.services import StorageService
-from ert.storage import Ensemble, open_storage
+from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
 
@@ -474,37 +471,3 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
-
-
-@pytest.fixture
-def run_paths():
-    def func(ert_config: ErtConfig):
-        return Runpaths(
-            jobname_format=ert_config.model_config.jobname_format_string,
-            runpath_format=ert_config.model_config.runpath_format_string,
-            filename=str(ert_config.runpath_file),
-            substitution_list=ert_config.substitution_list,
-        )
-
-    yield func
-
-
-@pytest.fixture
-def run_args(run_paths):
-    def func(
-        ert_config: ErtConfig,
-        ensemble: Ensemble,
-        active_realizations: Optional[int] = None,
-    ) -> List[RunArg]:
-        active_realizations = (
-            ert_config.model_config.num_realizations
-            if active_realizations is None
-            else active_realizations
-        )
-        return create_run_arguments(
-            run_paths(ert_config),
-            [True] * active_realizations,
-            ensemble,
-        )
-
-    yield func
