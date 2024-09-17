@@ -2,12 +2,12 @@ import difflib
 from os.path import exists
 from unittest.mock import PropertyMock, patch
 
+from seba_sqlite.snapshot import SebaSnapshot
+
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-from seba_sqlite.snapshot import SebaSnapshot
-
 from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

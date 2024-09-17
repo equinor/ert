@@ -1,4 +1,10 @@
 import pytest
+from PyQt5.QtWidgets import QAction, QPushButton, QWidget
+from qtpy.QtCore import Qt
+from seba_sqlite.snapshot import SebaSnapshot
+from tests.everest.dialogs_mocker import mock_dialogs_all
+from tests.everest.utils import relpath, tmpdir
+
 from everest.config import EverestConfig
 from everest.detached import (
     ServerStatus,
@@ -7,11 +13,6 @@ from everest.detached import (
     wait_for_context,
 )
 from ieverest import IEverest
-from PyQt5.QtWidgets import QAction, QPushButton, QWidget
-from qtpy.QtCore import Qt
-from seba_sqlite.snapshot import SebaSnapshot
-from tests.everest.dialogs_mocker import mock_dialogs_all
-from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"

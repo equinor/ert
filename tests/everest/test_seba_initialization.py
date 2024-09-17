@@ -2,13 +2,13 @@ import os.path
 
 import numpy
 import pytest
-from everest.config import EverestConfig
-from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.optimizer.everest2ropt import everest2ropt
 from pydantic import ValidationError
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType
 
+from everest.config import EverestConfig
+from everest.config_file_loader import yaml_file_to_substituted_config_dict
+from everest.optimizer.everest2ropt import everest2ropt
 from tests.everest.utils import relpath, tmpdir
 
 _CONFIG_DIR = relpath("test_data/mocked_test_case")

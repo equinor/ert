@@ -398,9 +398,9 @@ def _extract_templating(ever_config: EverestConfig):
                 tmpl_request.output_file,
                 "--template",
                 tmpl_request.template,
+                "--input_files",
+                *res_input,
             ]
-            + ["--input_files"]
-            + res_input
         )
         forward_model.append(f"render {args}")
 

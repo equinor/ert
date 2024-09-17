@@ -1,7 +1,7 @@
 import pytest
-from ieverest import IEverest
 from qtpy.QtCore import Qt
 
+from ieverest import IEverest
 from tests.everest.dialogs_mocker import mock_dialogs_all
 from tests.everest.utils import relpath, tmpdir
 

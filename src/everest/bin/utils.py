@@ -4,12 +4,12 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import Dict, List
+from typing import ClassVar, Dict, List
 
 import colorama
 from colorama import Fore
-from ert.simulator.batch_simulator_context import Status
 
+from ert.simulator.batch_simulator_context import Status
 from everest.config import EverestConfig
 from everest.detached import (
     OPT_PROGRESS_ID,
@@ -108,7 +108,7 @@ class JobProgress:
             JOB_FAILURE: [],  # contains failed simulation numbers i.e [5,6]
         }
     )
-    STATUS_COLOR = {
+    STATUS_COLOR: ClassVar = {
         JOB_RUNNING: Fore.BLUE,
         JOB_SUCCESS: Fore.GREEN,
         JOB_FAILURE: Fore.RED,
@@ -173,7 +173,7 @@ class _DetachedMonitor:
                     print(msg)
                     self._clear_lines = len(msg.split("\n"))
                     self._last_reported_batch = batch
-        except:  # noqa E722
+        except:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
     def get_opt_progress(self, context_status):

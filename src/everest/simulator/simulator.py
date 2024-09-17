@@ -4,13 +4,13 @@ from itertools import count
 from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
-from ert import BatchSimulator, WorkflowRunner
-from ert.config import ErtConfig, HookRuntime
-from ert.storage import open_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
+from ert import BatchSimulator, WorkflowRunner
+from ert.config import ErtConfig, HookRuntime
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,

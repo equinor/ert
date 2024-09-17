@@ -1,7 +1,6 @@
 from typing import Any, List, Optional, Tuple
 
 from ert.config import QueueSystem
-
 from everest.config import EverestConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys

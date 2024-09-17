@@ -4,10 +4,10 @@ import sys
 from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
-from ert.storage import open_storage
 from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.strings import STORAGE_DIR
 
@@ -134,7 +134,7 @@ def _metadata(config: EverestConfig):
                 opt = opt_data[md_row[MetaDataColumnNames.BATCH]]
                 md_row.update(
                     {
-                        MetaDataColumnNames.REAL_AVERAGED_OBJECTIVE: opt.objective_value,  # noqa
+                        MetaDataColumnNames.REAL_AVERAGED_OBJECTIVE: opt.objective_value,
                         MetaDataColumnNames.INCREASED_MERIT: opt.merit_flag,
                     }
                 )

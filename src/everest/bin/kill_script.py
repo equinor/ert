@@ -85,7 +85,7 @@ def kill_everest(options):
         print("Waiting for server to stop ...")
         wait_for_server_to_stop(options.config, timeout=60)
         print("Server stopped.")
-    except:  # noqa E722
+    except:
         logging.debug(traceback.format_exc())
         print(
             "Server is still running after 60 seconds, "

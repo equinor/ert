@@ -2,7 +2,7 @@ from decorator import decorator
 
 
 @decorator
-def plugin_response(func, plugin_name="", *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg # noqa: E501
+def plugin_response(func, plugin_name="", *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
     response = func(*args, **kwargs)
     return (
         PluginResponse(response, PluginMetadata(plugin_name, func.__name__))

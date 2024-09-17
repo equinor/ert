@@ -260,7 +260,7 @@ def main():
         )
         everserver_instance.daemon = True
         everserver_instance.start()
-    except:  # noqa
+    except:
         update_everserver_status(
             config, ServerStatus.failed, message=traceback.format_exc()
         )
@@ -277,7 +277,7 @@ def main():
         if status != ServerStatus.completed:
             update_everserver_status(config, status, message)
             return
-    except:  # noqa
+    except:
         if shared_data[STOP_ENDPOINT]:
             update_everserver_status(
                 config, ServerStatus.stopped, message="Optimization aborted."
@@ -295,7 +295,7 @@ def main():
         for msg in err_msgs:
             logging.getLogger(EVEREST).warning(msg)
         export_to_csv(config, export_ecl=export_ecl)
-    except:  # noqa
+    except:
         update_everserver_status(
             config, ServerStatus.failed, message=traceback.format_exc()
         )

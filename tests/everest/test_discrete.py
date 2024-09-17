@@ -1,6 +1,5 @@
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
-
 from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

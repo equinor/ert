@@ -1,10 +1,10 @@
 import os
 
+from qtpy.QtWidgets import QDialog, QFileDialog
+
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export
-from qtpy.QtWidgets import QDialog, QFileDialog
-
 from ieverest.utils import APP_OUT_DIALOGS, APP_OUT_STATUS_BAR, app_output, load_ui
 
 
@@ -49,7 +49,7 @@ class ExportDataDialog(QDialog):
             try:
                 df = export(self.config)
                 df.to_csv(filename, sep=";", index=False)
-            except:  # noqa
+            except:
                 app_output().critical("Unable to export data to {}".format(filename))
                 raise
 

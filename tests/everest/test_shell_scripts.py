@@ -1,6 +1,5 @@
 from everest.config.everest_config import EverestConfig, get_system_installed_jobs
 from everest.jobs import shell_commands
-
 from tests.everest.utils import relpath
 
 

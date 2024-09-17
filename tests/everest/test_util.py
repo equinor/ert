@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from everest import util
 from everest.bin.utils import report_on_previous_run
 from everest.config import EverestConfig
@@ -10,7 +11,6 @@ from everest.config.everest_config import get_system_installed_jobs
 from everest.config_keys import ConfigKeys
 from everest.detached import ServerStatus
 from everest.strings import SERVER_STATUS
-
 from tests.everest.utils import (
     capture_streams,
     hide_opm,

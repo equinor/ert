@@ -1,8 +1,8 @@
 import numpy as np
+
 from everest.config import EverestConfig
 from everest.simulator import Simulator
 from everest.suite import _EverestWorkflow
-
 from tests.everest.utils import relpath, tmp
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

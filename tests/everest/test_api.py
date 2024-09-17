@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pandas as pd
 import pytest
-from everest.api import EverestDataAPI
-from everest.config import EverestConfig
-from everest.detached import ServerStatus
 from pandas import Timestamp
 from seba_sqlite.database import ControlDefinition, Function
 from seba_sqlite.snapshot import Metadata, OptimizationInfo, SimulationInfo, Snapshot
 
+from everest.api import EverestDataAPI
+from everest.config import EverestConfig
+from everest.detached import ServerStatus
 from tests.everest.utils import relpath, tmpdir
 
 # Global values used to create the mock snapshot.

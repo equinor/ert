@@ -2,9 +2,9 @@ import datetime
 import logging
 import os
 
-from ert.shared.version import version as ert_version
 from ropt.version import version as ropt_version
 
+from ert.shared.version import version as ert_version
 from everest.plugins.hook_manager import EverestPluginManager
 from everest.strings import DATE_FORMAT, DEFAULT_LOGGING_FORMAT
 from everest.util.async_run import async_run  # noqa

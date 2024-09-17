@@ -4,6 +4,6 @@ from ieverest.widgets.plot_widget import PlotWidget
 
 __all__ = [
     "BatchStatusWidget",
-    "PlotWidget",
     "ExportDataDialog",
+    "PlotWidget",
 ]

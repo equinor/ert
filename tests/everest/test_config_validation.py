@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import pytest
+from pydantic import ValidationError
+
 from everest.config import EverestConfig, ModelConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
-from pydantic import ValidationError
-
 from tests.everest.utils import tmpdir
 
 

@@ -2,8 +2,9 @@ import itertools
 import os
 from unittest.mock import patch
 
-import everest
 import pytest
+
+import everest
 from ert.config import ErtConfig
 from everest import ConfigKeys
 from everest.config import EverestConfig
@@ -13,7 +14,6 @@ from everest.config.well_config import WellConfig
 from everest.config.workflow_config import WorkflowConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.util.forward_models import collect_forward_models
-
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
@@ -73,25 +73,23 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
             (
                 "snake_oil_diff",
                 os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR),
-                    "../../jobs/SNAKE_OIL_DIFF",
+                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_DIFF"
                 ),
             ),
             (
                 "snake_oil_simulator",
                 os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR),
-                    "../../jobs/SNAKE_OIL_SIMULATOR",
+                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_SIMULATOR"
                 ),
             ),
             (
                 "snake_oil_npv",
                 os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR),
-                    "../../jobs/SNAKE_OIL_NPV",
+                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_NPV"
                 ),
             ),
-        ] + everest_default_jobs(output_dir)
+            *everest_default_jobs(output_dir),
+        ]
 
         return jobs
 
@@ -186,8 +184,8 @@ def build_tutorial_dict(config_dir, output_dir):
             ("well_order", os.path.join(config_dir, "jobs/WELL_ORDER_MOCK")),
             ("res_mock", os.path.join(config_dir, "jobs/RES_MOCK")),
             ("npv_function", os.path.join(config_dir, "jobs/NPV_FUNCTION_MOCK")),
-        ]
-        + everest_default_jobs(output_dir),
+            *everest_default_jobs(output_dir),
+        ],
         "SIMULATION_JOB": [
             (
                 "copy_file",

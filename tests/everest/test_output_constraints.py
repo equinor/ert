@@ -1,12 +1,13 @@
 import os
 
 import pytest
+from ropt.config.enopt import EnOptConfig
+from ropt.enums import ConstraintType
+
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.suite import _EverestWorkflow
-from ropt.config.enopt import EnOptConfig
-from ropt.enums import ConstraintType
 
 from .test_config_validation import has_error
 from .utils import relpath, tmpdir

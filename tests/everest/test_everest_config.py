@@ -30,7 +30,7 @@ def test_that_control_config_is_initialized_with_control_variables():
     parsed_config = ControlConfig(**controls_dict)
     assert isinstance(parsed_config.variables, List)
 
-    [v1, v2] = parsed_config.variables  # noqa pylint:disable=E0633
+    [v1, v2] = parsed_config.variables
 
     assert isinstance(v1, ControlVariableConfig)
     assert isinstance(v2, ControlVariableConfig)
@@ -51,7 +51,7 @@ def test_that_optimization_config_is_initialized_with_cvar_config():
     assert isinstance(cvar_config, CVaRConfig)
 
     assert cvar_config.number_of_realizations == 999999
-    assert "percentile" not in cvar_config  # noqa pylint:disable=E1135
+    assert "percentile" not in cvar_config
 
 
 def test_that_get_output_dir_returns_same_for_old_and_new():

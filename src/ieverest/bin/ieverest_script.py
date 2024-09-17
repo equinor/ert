@@ -4,10 +4,10 @@ import logging
 import sys
 from argparse import ArgumentParser
 
-from everest.util import version_info
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
 
+from everest.util import version_info
 from ieverest import IEverest
 
 
@@ -32,7 +32,7 @@ def ieverest_entry(args=None):
 
     logging.info(version_info())
 
-    _keep_in_scope_until_exit = IEverest(config_file=options.config_file)  # noqa: F841
+    _keep_in_scope_until_exit = IEverest(config_file=options.config_file)
     sys.exit(app.exec_())
 
 

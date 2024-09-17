@@ -1,8 +1,9 @@
 import os
 
+from ropt.exceptions import ConfigError as ROptConfigError
+
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.utils import get_ropt_plugin_manager
-from ropt.exceptions import ConfigError as ROptConfigError
 
 
 def _get_all_files(folder):
@@ -30,11 +31,11 @@ def test_all_repo_configs():
     # pylint: disable=unnecessary-lambda-assignment
     config_folders = map(lambda fn: os.path.join(repo_dir, fn), config_folders)  # noqa E731
 
-    is_yaml = lambda fn: fn.endswith(".yml")  # noqa E731
-    is_data = lambda fn: any((df in fn for df in data_folders))  # noqa E731
+    is_yaml = lambda fn: fn.endswith(".yml")
+    is_data = lambda fn: any((df in fn for df in data_folders))
 
     def is_config(fn):
-        return is_yaml(fn) and not is_data(fn) and "invalid" not in fn  # noqa E731
+        return is_yaml(fn) and not is_data(fn) and "invalid" not in fn
 
     config_files = [fn for cdir in config_folders for fn in _get_all_files(cdir)]
     config_files = filter(is_config, config_files)

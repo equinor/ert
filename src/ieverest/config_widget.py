@@ -1,9 +1,9 @@
 from io import StringIO
 
-from everest.config import EverestConfig
 from qtpy.QtWidgets import QWidget
 from ruamel.yaml import YAML
 
+from everest.config import EverestConfig
 from ieverest import utils
 
 

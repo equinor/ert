@@ -23,12 +23,12 @@ from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
 __all__ = [
-    "EverestConfig",
+    "CVaRConfig",
     "ControlConfig",
     "ControlVariableConfig",
     "ControlVariableGuessListConfig",
-    "CVaRConfig",
     "EnvironmentConfig",
+    "EverestConfig",
     "ExportConfig",
     "InputConstraintConfig",
     "InstallDataConfig",

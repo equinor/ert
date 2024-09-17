@@ -10,7 +10,6 @@ from functools import partial
 from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.storage import open_storage
-
 from everest import MetaDataColumnNames as MDCN
 from everest import export
 from everest.config import EverestConfig
@@ -82,7 +81,7 @@ def _build_args_parser():
         batch_str = "{}".format(
             batch_str.strip()
         )  # Because isnumeric only works on unicode strings in py27
-        if not batch_str.isnumeric() or batch_str[0] == "0" and len(batch_str) > 1:
+        if not batch_str.isnumeric() or (batch_str[0] == "0" and len(batch_str) > 1):
             parser.error("Invalid batch given: '{}'".format(batch_str))
         return int(batch_str)
 

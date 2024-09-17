@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -12,7 +13,6 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.util import makedirs_if_needed
-
 from tests.everest.utils import relpath, tmpdir
 
 CONFIG_PATH = relpath("..", "..", "examples", "math_func")

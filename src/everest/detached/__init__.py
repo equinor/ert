@@ -10,11 +10,11 @@ from typing import List, Literal, Mapping, Optional, Tuple
 
 import pkg_resources
 import requests
-from ert import BatchContext, BatchSimulator
-from ert.config import ErtConfig, QueueSystem
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 
+from ert import BatchContext, BatchSimulator
+from ert.config import ErtConfig, QueueSystem
 from everest.config import EverestConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS, Status
@@ -136,7 +136,7 @@ def stop_server(config: EverestConfig, retries: int = 5):
             )
             response.raise_for_status()
             return True
-        except:  # noqa
+        except:
             logging.debug(traceback.format_exc())
             time.sleep(retry)
     return False
@@ -309,7 +309,7 @@ def server_is_running(config: EverestConfig):
             proxies=PROXY,  # type: ignore
         )
         response.raise_for_status()
-    except:  # noqa
+    except:
         logging.debug(traceback.format_exc())
         return False
     return True
@@ -356,7 +356,7 @@ def start_monitor(config: EverestConfig, callback, polling_interval=5):
                 ret = bool(callback({OPT_PROGRESS_ID: opt_status}))
                 stop |= ret
             time.sleep(polling_interval)
-    except:  # noqa
+    except:
         logging.debug(traceback.format_exc())
 
 
@@ -490,7 +490,7 @@ def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = Fal
     everserver_config["INSTALL_JOB"] = install_job
 
     simulation_job = everserver_config.get("SIMULATION_JOB", [])
-    simulation_job.append([EVEREST_SERVER_CONFIG] + arg_list)
+    simulation_job.append([EVEREST_SERVER_CONFIG, *arg_list])
     everserver_config["SIMULATION_JOB"] = simulation_job
 
     if queue_system in _QUEUE_SYSTEMS:

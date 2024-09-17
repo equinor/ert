@@ -1,10 +1,10 @@
 import json
 import os
 
-import everest
 import pytest
 from ruamel.yaml import YAML
 
+import everest
 from tests.everest.utils import tmpdir
 
 
