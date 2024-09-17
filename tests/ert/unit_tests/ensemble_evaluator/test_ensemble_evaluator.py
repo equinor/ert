@@ -1,8 +1,11 @@
 import asyncio
+import datetime
 from functools import partial
 from typing import cast
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from _ert.events import (
     EESnapshot,
@@ -17,7 +20,13 @@ from _ert.events import (
     event_to_json,
 )
 from _ert.forward_model_runner.client import Client
-from ert.ensemble_evaluator import EnsembleEvaluator, EnsembleSnapshot, Monitor
+from ert.ensemble_evaluator import (
+    EnsembleEvaluator,
+    EnsembleSnapshot,
+    FMStepSnapshot,
+    Monitor,
+)
+from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -465,3 +474,30 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
                 if "reals" in event.snapshot:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.snapshot.get("status", ensemble_state)
+
+
+@given(
+    num_cpu=st.integers(min_value=1, max_value=64),
+    start=st.datetimes(),
+    duration=st.integers(min_value=-1, max_value=10000),
+    cpu_seconds=st.floats(min_value=0),
+)
+def test_overspent_cpu_is_logged(
+    num_cpu: int,
+    start: datetime.datetime,
+    duration: int,
+    cpu_seconds: float,
+):
+    message = detect_overspent_cpu(
+        num_cpu,
+        "dummy",
+        FMStepSnapshot(
+            start_time=start,
+            end_time=start + datetime.timedelta(seconds=duration),
+            cpu_seconds=cpu_seconds,
+        ),
+    )
+    if duration > 0 and cpu_seconds / duration > num_cpu:
+        assert "Misconfigured NUM_CPU" in message
+    else:
+        assert "NUM_CPU" not in message
