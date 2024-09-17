@@ -16,7 +16,7 @@ import os
 import sys
 from importlib import metadata
 
-sys.path.append(os.path.abspath("./_ext"))
+sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
 

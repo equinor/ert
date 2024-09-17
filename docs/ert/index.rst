@@ -1,4 +1,4 @@
-.. image:: ../src/ert/gui/resources/gui/img/ert_icon.svg
+.. image:: ../../src/ert/gui/resources/gui/img/ert_icon.svg
    :align: center
    :scale: 50%
 
