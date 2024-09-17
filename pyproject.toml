@@ -79,6 +79,16 @@ dependencies = [
 [project.scripts]
 ert = "ert.__main__:main"
 "job_dispatch.py" = "_ert.forward_model_runner.job_dispatch:main"
+everest = "everest.bin.main:start_everest"
+everserver = "everest.detached.jobs.everserver:main"
+recovery_factor = "everest.jobs.scripts.recovery_factor:main"
+render = "everest.jobs.scripts.render:main"
+wdcompl = "everest.jobs.scripts.wdcompl:main"
+wddatefilter = "everest.jobs.scripts.wddatefilter:main"
+wdfilter = "everest.jobs.scripts.wdfilter:main"
+wdreorder = "everest.jobs.scripts.wdreorder:main"
+wdset = "everest.jobs.scripts.wdset:main"
+wdupdate = "everest.jobs.scripts.wdupdate:main"
 
 [project.urls]
 Repository = "https://github.com/equinor/ert"
@@ -130,9 +140,39 @@ types = [
     "types-tqdm",
     "types-psutil",
 ]
+everest = [
+    "python-dateutil",
+    "Jinja2>=2.10",
+    "matplotlib",
+    "pandas",
+    "progressbar2",
+    "pydantic",
+    "ruamel.yaml",
+    "seaborn",
+    "flask",
+    "cryptography",
+    "dnspython",
+    "qtpy",
+    "pluggy",
+    "decorator",
+    "resdata",
+    "PyQt5",
+    "colorama",
+    "numpy<2",
+    "ropt[pandas]<0.7",
+    "ropt-dakota<0.7",
+    "seba-sqlite",
+    "setuptools; python_version >= '3.12'",
+]
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 platforms = ["all"]
+
+[tool.setuptools.package-data]
+everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
+ieverest = ["*.ui"]
+
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
@@ -144,6 +184,12 @@ markers = [
     "requires_window_manager",
     "script",
     "slow",
+    "everest_models_test",
+    "integration_test",
+    "simulation_test",
+    "ui_test",
+    "redundant_test",
+    "fails_on_macos_github_workflow", # Tests marked fail due to gui-related issues
 ]
 log_cli = "false"
 asyncio_mode = "auto"

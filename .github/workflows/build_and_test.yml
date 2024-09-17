@@ -125,7 +125,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv pip install ".[dev, everest]"
 
     - name: Make test directory
       run: |

@@ -40,7 +40,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv pip install ".[dev, everest]"
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
@@ -56,7 +56,7 @@ jobs:
       if: inputs.test-type == 'unit-tests'
       run: |
         pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/unit_tests
-        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'

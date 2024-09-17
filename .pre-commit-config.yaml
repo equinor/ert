@@ -5,6 +5,7 @@ repos:
     -   id: no-commit-to-branch
     -   id: check-json
     -   id: check-yaml
+        exclude: tests/everest/test_data/valid_config_file/invalid_yaml_config.yml # Invalid yml needed for testing
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
         exclude: test-data/eclipse/parse/ERROR.PRT # exact format is needed for testing

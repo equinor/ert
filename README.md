@@ -32,6 +32,18 @@ $ ert --help
 
 For examples and help with configuration, see the [ert Documentation](https://ert.readthedocs.io/en/latest/getting_started/configuration/poly_new/guide.html#configuration-guide).
 
+# Everest™
+
+The primary goal of the Everest tool is to find *optimal* well
+planning and production strategies by utilizing an ensemble of
+reservoir models (e.g., an ensemble of geologically-consistent models).
+This will enable robust decisions about drilling schedule and well
+placement, in order to achieve results of significant practical value.
+
+```bash
+    pip install . "[everest]"
+```
+
 ## Developing
 
 To start developing the Python code, we suggest installing ert in editable mode
@@ -49,7 +61,7 @@ pip install --upgrade pip wheel setuptools
 # Download and install ert
 git clone https://github.com/equinor/ert
 cd ert
-pip install --editable ".[dev]"
+pip install --editable ".[dev, everest]"
 ```
 
 ### Test setup

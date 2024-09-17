@@ -6,7 +6,7 @@ This is the main Everest module.
 from .loader import load
 
 try:
-    from .version import version
+    from ert.shared.version import version
 
     __version__ = version
 except ImportError:
