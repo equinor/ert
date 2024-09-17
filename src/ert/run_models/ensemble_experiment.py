@@ -60,7 +60,7 @@ class EnsembleExperiment(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
-        logger.info(f"Running {self.name}")
+        logger.info(f"Running {self.name()}")
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
