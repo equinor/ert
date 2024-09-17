@@ -9,13 +9,15 @@ from qtpy.QtWidgets import (
     QDialogButtonBox,
     QGridLayout,
     QLabel,
-    QLineEdit,
     QWidget,
 )
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import StringBox, TextModel
-from ert.validation.range_string_argument import NotInStorage
+from ert.validation.proper_name_argument import (
+    ExperimentValidation,
+    ProperNameArgument,
+)
 
 
 class CreateExperimentDialog(QDialog):
@@ -36,16 +38,15 @@ class CreateExperimentDialog(QDialog):
 
         experiment_label = QLabel("Experiment name:")
         self._experiment_edit = StringBox(
-            TextModel(""), placeholder_text="My experiment", minimum_width=200
+            TextModel(""), placeholder_text="My_experiment", minimum_width=200
         )
-        self._experiment_edit.setValidator(
-            NotInStorage(notifier.storage, "experiments")
-        )
+        self._experiment_edit.setValidator(ExperimentValidation(notifier.storage))
 
         ensemble_label = QLabel("Ensemble name:")
-        self._ensemble_edit = QLineEdit()
-        self._ensemble_edit.setMinimumWidth(200)
-        self._ensemble_edit.setPlaceholderText("My ensemble")
+        self._ensemble_edit = StringBox(
+            TextModel(""), placeholder_text="My_ensemble", minimum_width=200
+        )
+        self._ensemble_edit.setValidator(ProperNameArgument())
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -66,10 +67,7 @@ class CreateExperimentDialog(QDialog):
         self._ok_button.setEnabled(False)
 
         def enableOkButton() -> None:
-            self._ok_button.setEnabled(
-                len(self._experiment_edit.text()) != 0
-                and len(self._ensemble_edit.text()) != 0
-            )
+            self._ok_button.setEnabled(self.isConfigurationValid())
 
         self._experiment_edit.textChanged.connect(enableOkButton)
         self._ensemble_edit.textChanged.connect(enableOkButton)
@@ -82,6 +80,14 @@ class CreateExperimentDialog(QDialog):
 
         self.setLayout(layout)
 
+        self._experiment_edit.getValidationSupport().validationChanged.connect(
+            enableOkButton
+        )
+
+        self._ensemble_edit.getValidationSupport().validationChanged.connect(
+            enableOkButton
+        )
+
         self._experiment_edit.setFocus()
 
     @property
@@ -91,3 +97,6 @@ class CreateExperimentDialog(QDialog):
     @property
     def ensemble_name(self) -> str:
         return self._ensemble_edit.text()
+
+    def isConfigurationValid(self) -> bool:
+        return self._experiment_edit.isValid() and self._ensemble_edit.isValid()

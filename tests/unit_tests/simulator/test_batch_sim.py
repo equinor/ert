@@ -146,6 +146,7 @@ def test_that_starting_with_invalid_key_raises_key_error(
         batch_simulator.start("case", _input, storage)
 
 
+@pytest.mark.integration_test
 def test_batch_simulation(batch_simulator, storage):
     # Starting a simulation which should actually run through.
     case_data = [
@@ -283,6 +284,7 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         rsim.start("case", inp, storage)
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_batch_simulation_suffixes(batch_sim_example, storage):
     ert_config = batch_sim_example
@@ -340,7 +342,10 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
     keys = ("W1", "W2", "W3")
     for result, (_, controls) in zip(results, case_data):
         expected = [controls["WELL_ON_OFF"][key] ** 2 for key in keys]
-        assert list(result["ON_OFF"]) == expected
+
+        # [:3] slicing can be removed when responses are not stored in netcdf leading
+        # to redundant nans from combining->selecting
+        assert list(result["ON_OFF"][:3]) == expected
 
         expected = [
             v**2 for key in keys for _, v in controls["WELL_ORDER"][key].items()
@@ -431,6 +436,7 @@ def assertContextStatusOddFailures(batch_ctx: BatchContext, final_state_only=Fal
             assert status == JobState.FAILED
 
 
+@pytest.mark.integration_test
 def test_batch_ctx_status_failing_jobs(setup_case, storage):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 

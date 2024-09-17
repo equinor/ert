@@ -17,7 +17,7 @@ from hypothesis.extra.numpy import from_dtype
 from pydantic import PositiveInt, conint
 from typing_extensions import Self
 
-from ert.config._read_summary import SPECIAL_KEYWORDS
+from ert.summary_key_type import SPECIAL_KEYWORDS
 
 from .egrid_generator import GrdeclKeyword
 
@@ -312,16 +312,18 @@ def smspecs(draw, sum_keys, start_date, use_days=None):
     nx = draw(small_ints)
     ny = draw(small_ints)
     nz = draw(small_ints)
-    keywords = ["TIME    "] + sum_keys
+    keywords = ["TIME    ", *sum_keys]
     if draw(use_days):
-        units = ["DAYS    "] + draw(
-            st.lists(unit_names, min_size=n - 1, max_size=n - 1)
-        )
+        units = [
+            "DAYS    ",
+            *draw(st.lists(unit_names, min_size=n - 1, max_size=n - 1)),
+        ]
     else:
-        units = ["HOURS   "] + draw(
-            st.lists(unit_names, min_size=n - 1, max_size=n - 1)
-        )
-    well_names = [":+:+:+:+"] + draw(st.lists(names, min_size=n - 1, max_size=n - 1))
+        units = [
+            "HOURS   ",
+            *draw(st.lists(unit_names, min_size=n - 1, max_size=n - 1)),
+        ]
+    well_names = [":+:+:+:+", *draw(st.lists(names, min_size=n - 1, max_size=n - 1))]
     if use_locals:  # use local
         lgrs = draw(st.lists(names, min_size=n, max_size=n))
         numlx = draw(st.lists(small_ints, min_size=n, max_size=n))
@@ -332,13 +334,16 @@ def smspecs(draw, sum_keys, start_date, use_days=None):
         numlx = None
         numly = None
         numlz = None
-    region_numbers = [-32676] + draw(
-        st.lists(
-            from_dtype(np.dtype(np.int32), min_value=1, max_value=nx * ny * nz),
-            min_size=len(sum_keys),
-            max_size=len(sum_keys),
-        )
-    )
+    region_numbers = [
+        -32676,
+        *draw(
+            st.lists(
+                from_dtype(np.dtype(np.int32), min_value=1, max_value=nx * ny * nz),
+                min_size=len(sum_keys),
+                max_size=len(sum_keys),
+            )
+        ),
+    ]
     return draw(
         st.builds(
             Smspec,
@@ -430,7 +435,7 @@ def unsmrys(
         minis = [
             SummaryMiniStep(
                 ms.pop(),
-                [ds.pop()] + draw(st.lists(positive_floats, min_size=n, max_size=n)),
+                [ds.pop(), *draw(st.lists(positive_floats, min_size=n, max_size=n))],
             )
         ]
         steps.append(SummaryStep(r, minis))
@@ -478,7 +483,7 @@ def summaries(
         len(set(zip(smspec.keywords, smspec.region_numbers, smspec.well_names)))
         == len(smspec.keywords)
     )
-    dates = [0.0] + draw(time_deltas)
+    dates = [0.0, *draw(time_deltas)]
     try:
         if days:
             _ = first_date + timedelta(days=max(dates))
@@ -497,14 +502,16 @@ def summaries(
             minis.append(
                 SummaryMiniStep(
                     i,
-                    [ds.pop()]
-                    + draw(
-                        st.lists(
-                            positive_floats,
-                            min_size=len(sum_keys),
-                            max_size=len(sum_keys),
-                        )
-                    ),
+                    [
+                        ds.pop(),
+                        *draw(
+                            st.lists(
+                                positive_floats,
+                                min_size=len(sum_keys),
+                                max_size=len(sum_keys),
+                            )
+                        ),
+                    ],
                 )
             )
             i += 1

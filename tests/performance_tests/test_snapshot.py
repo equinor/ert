@@ -10,16 +10,17 @@ from _ert.events import (
 )
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
-    ForwardModel,
+    EnsembleSnapshot,
+    FMStepSnapshot,
     RealizationSnapshot,
-    Snapshot,
 )
-
-from ..unit_tests.gui.conftest import (  # noqa: F401
+from tests.ui_tests.gui.conftest import (  # noqa: F401
     active_realizations_fixture,
+)
+from tests.unit_tests.gui.conftest import (  # noqa: F401
     large_snapshot,
 )
-from ..unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
+from tests.unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
     event_queue,
     notifier,
     run_dialog,
@@ -69,16 +70,16 @@ def test_gui_snapshot(
 def simulate_forward_model_event_handling(
     ensemble_size, forward_models, memory_reports
 ):
-    snapshot = Snapshot()
+    snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = state.ENSEMBLE_STATE_UNKNOWN
     snapshot._metadata = {"foo": "bar"}
 
     for real in range(ensemble_size):
         realization = RealizationSnapshot(
-            active=True, status=state.REALIZATION_STATE_WAITING, forward_models={}
+            active=True, status=state.REALIZATION_STATE_WAITING, fm_steps={}
         )
         for fm_idx in range(forward_models):
-            realization["forward_models"][str(fm_idx)] = ForwardModel(
+            realization["fm_steps"][str(fm_idx)] = FMStepSnapshot(
                 status=state.FORWARD_MODEL_STATE_START,
                 index=str(fm_idx),
                 name=f"FM_{fm_idx}",

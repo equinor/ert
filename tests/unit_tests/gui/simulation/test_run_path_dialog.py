@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
@@ -48,6 +49,7 @@ def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
         qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
 
 
+@pytest.mark.integration_test
 def test_run_path_deleted_error(
     snake_oil_case_storage: ErtConfig, qtbot: QtBot, mocker
 ):
@@ -97,6 +99,7 @@ def test_run_path_deleted_error(
         assert os.path.exists(run_path / dummy_file.name)
 
 
+@pytest.mark.integration_test
 def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
@@ -142,6 +145,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         assert not os.path.exists(run_path / dummy_file.name)
 
 
+@pytest.mark.integration_test
 def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()

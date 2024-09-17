@@ -20,24 +20,23 @@ def test_migrate_responses(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
         assert len(list(storage.experiments)) == 1
-        experiment = list(storage.experiments)[0]
+        experiment = next(iter(storage.experiments))
         response_info = json.loads(
             (experiment._path / "responses.json").read_text(encoding="utf-8")
         )
         assert (
-            list(experiment.response_configuration.values())
-            == ert_config.ensemble_config.response_configuration
+            experiment.response_configuration
+            == ert_config.ensemble_config.response_configs
         )
-    assert list(response_info) == [
-        "SNAKE_OIL_OPR_DIFF",
-        "SNAKE_OIL_WPR_DIFF",
-        "SNAKE_OIL_GPR_DIFF",
+
+    assert set(response_info) == {
+        "gen_data",
         "summary",
-    ]
+    }
 
 
 def test_migrate_gen_kw_config(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-2/snake_oil", "snake_oil.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
-        experiment = list(storage.experiments)[0]
+        experiment = next(iter(storage.experiments))
         assert "template_file_path" not in experiment.parameter_configuration

@@ -10,17 +10,22 @@ import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
+from threading import Lock
 from unittest.mock import mock_open, patch
 
 import pandas as pd
 import psutil
 import pytest
 
-from _ert_forward_model_runner.cli import _setup_reporters, main
-from _ert_forward_model_runner.job import killed_by_oom
-from _ert_forward_model_runner.reporting import Event, Interactive
-from _ert_forward_model_runner.reporting.message import Finish, Init
+import _ert.forward_model_runner.cli
+from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
+from _ert.forward_model_runner.job import killed_by_oom
+from _ert.forward_model_runner.reporting import Event, Interactive
+from _ert.forward_model_runner.reporting.message import Finish, Init
+from _ert.threading import ErtThread
 from tests.utils import _mock_ws_thread, wait_until
+
+from .test_event_reporter import _wait_until
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -68,7 +73,7 @@ else:
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
@@ -87,7 +92,7 @@ else:
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec(
-        "_ert_forward_model_runner.job_dispatch"
+        "_ert.forward_model_runner.job_dispatch"
     ).origin
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -136,13 +141,13 @@ def test_memory_profile_is_logged_as_csv():
         * fm_step_repeats,
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(forward_model_steps))
 
     subprocess.run(
         [
             sys.executable,
-            importlib.util.find_spec("_ert_forward_model_runner.job_dispatch").origin,
+            importlib.util.find_spec("_ert.forward_model_runner.job_dispatch").origin,
             os.getcwd(),
         ],
         check=False,
@@ -232,7 +237,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
         "ert_pid": "",
     }
 
-    with open("jobs.json", "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(job_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
@@ -251,7 +256,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
     os.chmod("setsid", 0o755)
 
     job_dispatch_script = importlib.util.find_spec(
-        "_ert_forward_model_runner.job_dispatch"
+        "_ert.forward_model_runner.job_dispatch"
     ).origin
     # (we wait for the process below)
     job_dispatch_process = Popen(
@@ -272,22 +277,46 @@ def test_job_dispatch_run_subset_specified_as_parameter():
     assert os.path.isfile("job_C.out")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_no_jobs_json_file():
+def test_no_jobs_json_file_raises_IOError(tmp_path):
     with pytest.raises(IOError):
-        main(["script.py", os.path.realpath(os.curdir)])
+        main(["script.py", str(tmp_path)])
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_no_json_jobs_json_file():
-    path = os.path.realpath(os.curdir)
-    jobs_file = os.path.join(path, "jobs.json")
-
-    with open(jobs_file, "w", encoding="utf-8") as f:
-        f.write("not json")
+def test_invalid_jobs_json_raises_OSError(tmp_path):
+    (tmp_path / JOBS_FILE).write_text("not json")
 
     with pytest.raises(OSError):
-        main(["script.py", path])
+        main(["script.py", str(tmp_path)])
+
+
+def test_missing_directory_exits(tmp_path):
+    with pytest.raises(SystemExit):
+        main(["script.py", str(tmp_path / "non_existent")])
+
+
+def test_retry_of_jobs_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
+    lock = Lock()
+    lock.acquire()
+    monkeypatch.setattr(_ert.forward_model_runner.cli, "_wait_for_retry", lock.acquire)
+    jobs_json = json.dumps(
+        {
+            "ens_id": "_id_",
+            "dispatch_url": f"ws://localhost:{unused_tcp_port}",
+            "jobList": [],
+        }
+    )
+
+    with _mock_ws_thread("localhost", unused_tcp_port, []):
+        thread = ErtThread(target=main, args=[["script.py", str(tmp_path)]])
+        thread.start()
+        _wait_until(
+            lambda: f"Could not find file {JOBS_FILE}, retrying" in caplog.text,
+            2,
+            "Did not get expected log message from missing jobs.json",
+        )
+        (tmp_path / JOBS_FILE).write_text(jobs_json)
+        lock.release()
+        thread.join()
 
 
 @pytest.mark.parametrize(
@@ -316,11 +345,11 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("_ert_forward_model_runner.cli.os.killpg") as mock_killpg, patch(
-        "_ert_forward_model_runner.cli.os.getpgid"
+    with patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg, patch(
+        "_ert.forward_model_runner.cli.os.getpgid"
     ) as mock_getpgid, patch(
-        "_ert_forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("_ert_forward_model_runner.cli.ForwardModelRunner") as mock_runner:
+        "_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)
+    ), patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

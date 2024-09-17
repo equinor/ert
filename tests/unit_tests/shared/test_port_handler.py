@@ -384,6 +384,7 @@ def test_def_active_live_nok_nok(unused_tcp_port):
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.skipif(
     not sys.platform.startswith("darwin"), reason="MacOS-specific socket behaviour"
 )
@@ -430,6 +431,7 @@ def test_def_active_close_macos_nok_ok(unused_tcp_port):
     assert sock.fileno() != -1
 
 
+@pytest.mark.integration_test
 @pytest.mark.skipif(
     not sys.platform.startswith("linux"), reason="Linux-specific socket behaviour"
 )
@@ -472,6 +474,7 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.skipif(
     not sys.platform.startswith("darwin"), reason="MacOS-specific socket behaviour"
 )

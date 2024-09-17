@@ -76,13 +76,13 @@ def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
                 raise ValueError(f"Range {start}-{end} has invalid direction")
             if end + 1 > length:
                 raise ValueError(
-                    f"Range endpoint {end} is beyond the mask length {length} "
+                    f"Range endpoint {end} is beyond the mask length {length}"
                 )
             mask[start : end + 1] = [True] * (end + 1 - start)
         elif _range:
             if int(_range) + 1 > length:
                 raise ValueError(
-                    f"Realization index {_range} is beyond the mask length {length} "
+                    f"Realization index {_range} is beyond the mask length {length}"
                 )
             mask[int(_range)] = True
     return mask

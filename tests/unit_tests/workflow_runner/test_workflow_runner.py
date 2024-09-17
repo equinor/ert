@@ -11,6 +11,7 @@ from tests.utils import wait_until
 from .workflow_common import WorkflowCommon
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_workflow_thread_cancel_ert_script():
     WorkflowCommon.createWaitJob()
@@ -104,6 +105,7 @@ def test_workflow_failed_job():
         assert workflow_runner.exception() is not None
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_workflow_success():
     WorkflowCommon.createWaitJob()

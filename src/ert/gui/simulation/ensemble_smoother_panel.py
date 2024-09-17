@@ -18,7 +18,7 @@ from ert.gui.ertwidgets import (
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
 from ert.validation import ProperNameFormatArgument, RangeStringArgument
-from ert.validation.range_string_argument import NotInStorage
+from ert.validation.proper_name_argument import ExperimentValidation
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -55,10 +55,11 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             ),
         )
         self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
         self._experiment_name_field.setValidator(
-            NotInStorage(self.notifier.storage, "experiments")
+            ExperimentValidation(self.notifier.storage)
         )
+        self._experiment_name_field.setObjectName("experiment_field")
+        layout.addRow("Experiment name:", self._experiment_name_field)
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -90,10 +91,13 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
-        self._ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._ensemble_format_field.getValidationSupport().validationChanged.connect(
+            self.simulationConfigurationChanged
+        )
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
 
@@ -111,7 +115,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
     def isConfigurationValid(self) -> bool:
         return (
-            self._ensemble_format_field.isValid()
+            self._experiment_name_field.isValid()
+            and self._ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
         )
 

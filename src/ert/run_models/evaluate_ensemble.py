@@ -63,7 +63,7 @@ class EvaluateEnsemble(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info(f"Running {self.name}")
+        logger.info(f"Running {self.name()}")
         ensemble = self.ensemble
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

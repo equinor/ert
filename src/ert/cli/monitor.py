@@ -11,8 +11,8 @@ from tqdm import tqdm
 
 from ert.ensemble_evaluator import (
     EndEvent,
+    EnsembleSnapshot,
     FullSnapshotEvent,
-    Snapshot,
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator import identifiers as ids
@@ -59,7 +59,7 @@ class Monitor:
 
     def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
-        self._snapshots: Dict[int, Snapshot] = {}
+        self._snapshots: Dict[int, EnsembleSnapshot] = {}
         self._start_time: Optional[datetime] = None
         self._colorize = ansi_color
         # If out is not (like) a tty, disable colors.
@@ -106,7 +106,7 @@ class Monitor:
         failed_jobs: Dict[Optional[str], int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
-                for job in real["forward_models"].values():
+                for job in real["fm_steps"].values():
                     if job.get(ids.STATUS) == FORWARD_MODEL_STATE_FAILURE:
                         err = job.get(ids.ERROR)
                         result = failed_jobs.get(err, 0)

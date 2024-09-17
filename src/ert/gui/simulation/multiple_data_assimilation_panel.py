@@ -25,7 +25,7 @@ from ert.validation import (
     ProperNameFormatArgument,
     RangeStringArgument,
 )
-from ert.validation.range_string_argument import NotInStorage
+from ert.validation.proper_name_argument import ExperimentValidation
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -66,10 +66,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ),
         )
         self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
         self._experiment_name_field.setValidator(
-            NotInStorage(self.notifier.storage, "experiments")
+            ExperimentValidation(self.notifier.storage)
         )
+        self._experiment_name_field.setObjectName("experiment_field")
+        layout.addRow("Experiment name:", self._experiment_name_field)
+
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
@@ -119,13 +121,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
         layout.addRow("Restart from:", self._ensemble_selector)
 
-        self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+            self.simulationConfigurationChanged
+        )
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
 
@@ -158,15 +163,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     @Slot(bool)
     def update_experiment_edit(self, checked: bool) -> None:
+        self._experiment_name_field.clear()
+        self._experiment_name_field.enable_validation(not checked)
+        self._experiment_name_field.setEnabled(not checked)
         if checked:
             self._experiment_name_field.setText(
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
-        else:
-            self._experiment_name_field.clear()
 
-        self._experiment_name_field.enable_validation(not checked)
-        self._experiment_name_field.setEnabled(not checked)
         self._evaluate_weights_box_enabled()
 
     def _evaluate_weights_box_enabled(self) -> None:
@@ -219,7 +223,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             updateVisualizationOfNormalizedWeights
         )
 
@@ -227,7 +231,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def isConfigurationValid(self) -> bool:
         return (
-            self._target_ensemble_format_field.isValid()
+            self._experiment_name_field.isValid()
+            and self._target_ensemble_format_field.isValid()
             and self._active_realizations_field.isValid()
             and self._relative_iteration_weights_box.isValid()
             and self.weights_valid

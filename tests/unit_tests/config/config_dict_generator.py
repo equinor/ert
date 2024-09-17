@@ -526,7 +526,7 @@ def sim_job(installed_jobs):
     possible_job_names = [job_name for job_name, _ in installed_jobs]
     args = small_list(words)
     x = st.builds(
-        lambda job_name, args: [job_name] + args,
+        lambda job_name, args: [job_name, *args],
         st.sampled_from(possible_job_names),
         args,
     )
@@ -630,7 +630,7 @@ def config_generators(draw, use_eclbase=booleans):
     @contextlib.contextmanager
     def generate_files_and_dict(tmp_path_factory, config_file_name=None):
         tmp = py_path.local(tmp_path_factory.mktemp("config_dict"))
-        note(f"Using tmp dir: {str(tmp)}")
+        note(f"Using tmp dir: {tmp!s}")
         with tmp.as_cwd():
             config_values.run_template = [
                 [os.path.join(tmp, src), target]

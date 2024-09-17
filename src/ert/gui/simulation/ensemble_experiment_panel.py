@@ -14,7 +14,10 @@ from ert.gui.ertwidgets import (
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument
-from ert.validation.range_string_argument import NotInStorage
+from ert.validation.proper_name_argument import (
+    ExperimentValidation,
+    ProperNameArgument,
+)
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -46,14 +49,16 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             ),
         )
         self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
         self._experiment_name_field.setValidator(
-            NotInStorage(self.notifier.storage, "experiments")
+            ExperimentValidation(self.notifier.storage)
         )
+        self._experiment_name_field.setObjectName("experiment_field")
+        layout.addRow("Experiment name:", self._experiment_name_field)
 
         self._ensemble_name_field = StringBox(
             TextModel(""), placeholder_text="ensemble"
         )
+        self._ensemble_name_field.setValidator(ProperNameArgument())
         self._ensemble_name_field.setMinimumWidth(250)
 
         layout.addRow("Ensemble name:", self._ensemble_name_field)

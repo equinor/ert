@@ -522,23 +522,34 @@ def _migrate_gen_data(
             {"values": data_file.load(block, 0), "report_step": block.report_step}
         )
     for iens, gen_data in realizations.items():
+        datasets = []
         for name, values in gen_data.items():
-            datasets = []
+            dataset_fragments = []
             for value in values:
-                datasets.append(
+                dataset_fragments.append(
                     xr.Dataset(
-                        {"values": (["report_step", "index"], [value["values"]])},
+                        {
+                            "values": (
+                                ["report_step", "index"],
+                                [value["values"]],
+                            )
+                        },
                         coords={
                             "index": range(len(value["values"])),
                             "report_step": [value["report_step"]],
                         },
                     )
                 )
-            ensemble.save_response(
-                name,
-                xr.combine_by_coords(datasets),  # type: ignore
-                iens,
+
+            datasets.append(
+                xr.combine_by_coords(dataset_fragments).expand_dims(name=[name])
             )
+
+        ensemble.save_response(
+            "gen_data",
+            xr.concat(datasets, dim="name"),  # type: ignore
+            iens,
+        )
 
 
 def _migrate_gen_kw_info(

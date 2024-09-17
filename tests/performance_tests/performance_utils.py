@@ -30,7 +30,7 @@ def write_summary_spec(file, keywords):
         ("INTEHEAD", array([1, 100], dtype=numpy.int32)),
         ("RESTART ", [b"        "] * 8),
         ("DIMENS  ", array([1 + len(keywords), 10, 10, 10, 0, -1], dtype=numpy.int32)),
-        ("KEYWORDS", [f"{x: <8}" for x in ["TIME"] + keywords]),
+        ("KEYWORDS", [f"{x: <8}" for x in ["TIME", *keywords]]),
         ("WGNAMES ", [b":+:+:+:+"] * (len(keywords) + 1)),
         ("NUMS    ", array([-32676] + ([0] * len(keywords)), dtype=numpy.int32)),
         ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
@@ -50,7 +50,7 @@ def write_summary_data(file, x_size, keywords, update_steps):
                 day = float(step + 1)
                 values = [5.0] * num_keys
                 yield "MINISTEP", array([step], dtype=numpy.int32)
-                yield "PARAMS  ", array([day] + values, dtype=numpy.float32)
+                yield "PARAMS  ", array([day, *values], dtype=numpy.float32)
 
     resfo.write(file, content_generator())
 

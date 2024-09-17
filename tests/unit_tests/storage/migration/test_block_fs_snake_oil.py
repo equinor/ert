@@ -97,7 +97,9 @@ def test_migrate_summary(data, forecast, time_map, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
             responses=[
-                SummaryConfig(name="summary", input_file="some_file", keys=["some_key"])
+                SummaryConfig(
+                    name="summary", input_files=["some_file"], keys=["some_key"]
+                )
             ]
         )
         ensemble = experiment.create_ensemble(name="default_0", ensemble_size=5)
@@ -122,11 +124,13 @@ def test_migrate_gen_data(data, forecast, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
             responses=[
-                GenDataConfig(name=name, input_file="some_file")
-                for name in (
-                    "SNAKE_OIL_WPR_DIFF",
-                    "SNAKE_OIL_OPR_DIFF",
-                    "SNAKE_OIL_GPR_DIFF",
+                GenDataConfig(
+                    keys=[
+                        "SNAKE_OIL_WPR_DIFF",
+                        "SNAKE_OIL_OPR_DIFF",
+                        "SNAKE_OIL_GPR_DIFF",
+                    ],
+                    input_files=["some_file"],
                 )
             ]
         )

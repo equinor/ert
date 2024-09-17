@@ -7,7 +7,8 @@ import resfo
 from hypothesis import given
 from resdata.summary import Summary, SummaryVarType
 
-from ert.config._read_summary import _SummaryType, make_summary_key, read_summary
+from ert.config._read_summary import make_summary_key, read_summary
+from ert.summary_key_type import SummaryKeyType
 
 from .summary_generator import (
     inter_region_summary_variables,
@@ -16,118 +17,118 @@ from .summary_generator import (
 )
 
 
-def to_ecl(st: _SummaryType) -> SummaryVarType:
-    if st == _SummaryType.AQUIFER:
+def to_ecl(st: SummaryKeyType) -> SummaryVarType:
+    if st == SummaryKeyType.AQUIFER:
         return SummaryVarType.RD_SMSPEC_AQUIFER_VAR
-    if st == _SummaryType.BLOCK:
+    if st == SummaryKeyType.BLOCK:
         return SummaryVarType.RD_SMSPEC_BLOCK_VAR
-    if st == _SummaryType.COMPLETION:
+    if st == SummaryKeyType.COMPLETION:
         return SummaryVarType.RD_SMSPEC_COMPLETION_VAR
-    if st == _SummaryType.FIELD:
+    if st == SummaryKeyType.FIELD:
         return SummaryVarType.RD_SMSPEC_FIELD_VAR
-    if st == _SummaryType.GROUP:
+    if st == SummaryKeyType.GROUP:
         return SummaryVarType.RD_SMSPEC_GROUP_VAR
-    if st == _SummaryType.LOCAL_BLOCK:
+    if st == SummaryKeyType.LOCAL_BLOCK:
         return SummaryVarType.RD_SMSPEC_LOCAL_BLOCK_VAR
-    if st == _SummaryType.LOCAL_COMPLETION:
+    if st == SummaryKeyType.LOCAL_COMPLETION:
         return SummaryVarType.RD_SMSPEC_LOCAL_COMPLETION_VAR
-    if st == _SummaryType.LOCAL_WELL:
+    if st == SummaryKeyType.LOCAL_WELL:
         return SummaryVarType.RD_SMSPEC_LOCAL_WELL_VAR
-    if st == _SummaryType.NETWORK:
+    if st == SummaryKeyType.NETWORK:
         return SummaryVarType.RD_SMSPEC_NETWORK_VAR
-    if st == _SummaryType.SEGMENT:
+    if st == SummaryKeyType.SEGMENT:
         return SummaryVarType.RD_SMSPEC_SEGMENT_VAR
-    if st == _SummaryType.WELL:
+    if st == SummaryKeyType.WELL:
         return SummaryVarType.RD_SMSPEC_WELL_VAR
-    if st == _SummaryType.REGION:
+    if st == SummaryKeyType.REGION:
         return SummaryVarType.RD_SMSPEC_REGION_VAR
-    if st == _SummaryType.INTER_REGION:
+    if st == SummaryKeyType.INTER_REGION:
         return SummaryVarType.RD_SMSPEC_REGION_2_REGION_VAR
-    if st == _SummaryType.OTHER:
+    if st == SummaryKeyType.OTHER:
         return SummaryVarType.RD_SMSPEC_MISC_VAR
 
 
 @pytest.mark.parametrize("keyword", ["AAQR", "AAQT"])
 def test_aquifer_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_AQUIFER_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.AQUIFER
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.AQUIFER
 
 
 @pytest.mark.parametrize("keyword", ["BOSAT"])
 def test_block_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_BLOCK_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.BLOCK
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.BLOCK
 
 
 @pytest.mark.parametrize("keyword", ["LBOSAT"])
 def test_local_block_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_BLOCK_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.LOCAL_BLOCK
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_BLOCK
 
 
 @pytest.mark.parametrize("keyword", ["CGORL"])
 def test_completion_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_COMPLETION_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.COMPLETION
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.COMPLETION
 
 
 @pytest.mark.parametrize("keyword", ["LCGORL"])
 def test_local_completion_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_COMPLETION_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.LOCAL_COMPLETION
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_COMPLETION
 
 
 @pytest.mark.parametrize("keyword", ["FGOR", "FOPR"])
 def test_field_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_FIELD_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.FIELD
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.FIELD
 
 
 @pytest.mark.parametrize("keyword", ["GGFT", "GOPR"])
 def test_group_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_GROUP_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.GROUP
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.GROUP
 
 
 @pytest.mark.parametrize("keyword", ["NOPR", "NGPR"])
 def test_network_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_NETWORK_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.NETWORK
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.NETWORK
 
 
 @pytest.mark.parametrize("keyword", inter_region_summary_variables)
 def test_inter_region_summary_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_REGION_2_REGION_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.INTER_REGION
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.INTER_REGION
 
 
 @pytest.mark.parametrize("keyword", ["RORFR", "RPR", "ROPT"])
 def test_region_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_REGION_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.REGION
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.REGION
 
 
 @pytest.mark.parametrize("keyword", ["SOPR"])
 def test_segment_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_SEGMENT_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.SEGMENT
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.SEGMENT
 
 
 @pytest.mark.parametrize("keyword", ["WOPR"])
 def test_well_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_WELL_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.WELL
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.WELL
 
 
 @pytest.mark.parametrize("keyword", ["LWOPR"])
 def test_local_well_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_WELL_VAR
-    assert _SummaryType.from_keyword(keyword) == _SummaryType.LOCAL_WELL
+    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_WELL
 
 
 @given(summary_variables())
 def test_that_identify_var_type_is_same_as_ecl(variable):
-    assert Summary.var_type(variable) == to_ecl(_SummaryType.from_keyword(variable))
+    assert Summary.var_type(variable) == to_ecl(SummaryKeyType.from_keyword(variable))
 
 
 @given(st.integers(), st.text(), st.integers(), st.integers())
@@ -242,6 +243,7 @@ def test_local_well_summary_format_have_cell_index_and_name(keyword, name, lgr_n
     )
 
 
+@pytest.mark.integration_test
 @given(summaries(), st.sampled_from(resfo.Format))
 def test_that_reading_summaries_returns_the_contents_of_the_file(
     tmp_path_factory, summary, format
@@ -483,20 +485,3 @@ def test_that_ambiguous_case_restart_raises_an_informative_error(
         match="Ambiguous reference to unified summary",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
-
-
-@given(summaries())
-def test_that_length_of_fetch_keys_does_not_reduce_performance(
-    tmp_path_factory, summary
-):
-    """With a compiled regex this takes seconds to run, and with
-    a naive implementation it will take almost an hour.
-    """
-    tmp_path = tmp_path_factory.mktemp("summary")
-    smspec, unsmry = summary
-    unsmry.to_file(tmp_path / "TEST.UNSMRY")
-    smspec.to_file(tmp_path / "TEST.SMSPEC")
-    fetch_keys = [str(i) for i in range(100000)]
-    (_, keys, time_map, _) = read_summary(str(tmp_path / "TEST"), fetch_keys)
-    assert all(k in fetch_keys for k in keys)
-    assert len(time_map) == len(unsmry.steps)

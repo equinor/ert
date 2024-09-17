@@ -8,37 +8,37 @@ from _ert.events import (
 )
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
-    ForwardModel,
-    Snapshot,
+    EnsembleSnapshot,
+    FMStepSnapshot,
 )
 from tests import SnapshotBuilder
 
 
-def test_snapshot_merge(snapshot: Snapshot):
-    update_event = Snapshot()
-    update_event.update_forward_model(
+def test_snapshot_merge(snapshot: EnsembleSnapshot):
+    update_event = EnsembleSnapshot()
+    update_event.update_fm_step(
         real_id="1",
-        forward_model_id="0",
-        forward_model=ForwardModel(
+        fm_step_id="0",
+        fm_step=FMStepSnapshot(
             status="Finished",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
             end_time=datetime(year=2020, month=10, day=28),
         ),
     )
-    update_event.update_forward_model(
+    update_event.update_fm_step(
         real_id="1",
-        forward_model_id="1",
-        forward_model=ForwardModel(
+        fm_step_id="1",
+        fm_step=FMStepSnapshot(
             status="Running",
             index="1",
             start_time=datetime(year=2020, month=10, day=27),
         ),
     )
-    update_event.update_forward_model(
+    update_event.update_fm_step(
         real_id="9",
-        forward_model_id="0",
-        forward_model=ForwardModel(
+        fm_step_id="0",
+        fm_step=FMStepSnapshot(
             status="Running",
             index="0",
             start_time=datetime(year=2020, month=10, day=27),
@@ -49,7 +49,7 @@ def test_snapshot_merge(snapshot: Snapshot):
 
     assert snapshot.status == state.ENSEMBLE_STATE_UNKNOWN
 
-    assert snapshot.get_job(real_id="1", forward_model_id="0") == ForwardModel(
+    assert snapshot.get_fm_step(real_id="1", fm_step_id="0") == FMStepSnapshot(
         status="Finished",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
@@ -57,17 +57,15 @@ def test_snapshot_merge(snapshot: Snapshot):
         name="forward_model0",
     )
 
-    assert snapshot.get_job(real_id="1", forward_model_id="1") == ForwardModel(
+    assert snapshot.get_fm_step(real_id="1", fm_step_id="1") == FMStepSnapshot(
         status="Running",
         index="1",
         start_time=datetime(year=2020, month=10, day=27),
         name="forward_model1",
     )
 
-    assert (
-        snapshot.get_job(real_id="9", forward_model_id="0").get("status") == "Running"
-    )
-    assert snapshot.get_job(real_id="9", forward_model_id="0") == ForwardModel(
+    assert snapshot.get_fm_step(real_id="9", fm_step_id="0").get("status") == "Running"
+    assert snapshot.get_fm_step(real_id="9", fm_step_id="0") == FMStepSnapshot(
         status="Running",
         index="0",
         start_time=datetime(year=2020, month=10, day=27),
@@ -76,7 +74,7 @@ def test_snapshot_merge(snapshot: Snapshot):
 
 
 def test_update_forward_models_in_partial_from_multiple_messages(snapshot):
-    new_snapshot = Snapshot()
+    new_snapshot = EnsembleSnapshot()
     new_snapshot.update_from_event(
         ForwardModelStepRunning(
             ensemble="1",
@@ -94,7 +92,7 @@ def test_update_forward_models_in_partial_from_multiple_messages(snapshot):
     new_snapshot.update_from_event(
         ForwardModelStepSuccess(ensemble="1", real="0", fm_step="1")
     )
-    forward_models = new_snapshot.to_dict()["reals"]["0"]["forward_models"]
+    forward_models = new_snapshot.to_dict()["reals"]["0"]["fm_steps"]
     assert forward_models["0"]["status"] == state.FORWARD_MODEL_STATE_FAILURE
     assert forward_models["1"]["status"] == state.FORWARD_MODEL_STATE_FINISHED
 

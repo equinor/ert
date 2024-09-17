@@ -682,17 +682,17 @@ def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
         if run_arg.active
     ]
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
-    expected_manifest_values = [
+    expected_manifest_values = {
         "snake_oil_params.txt",
         "snake_oil_opr_diff_199.txt",
         "snake_oil_wpr_diff_199.txt",
         "snake_oil_gpr_diff_199.txt",
         "SNAKE_OIL_FIELD.UNSMRY",
         "SNAKE_OIL_FIELD.SMSPEC",
-    ]
+    }
     for run_path in exp_runpaths:
         manifest_path = Path(run_path) / "manifest.json"
         assert manifest_path.exists()
         with open(manifest_path, encoding="utf-8") as f:
             manifest = orjson.loads(f.read())
-            assert list(manifest.values()) == expected_manifest_values
+            assert set(manifest.values()) == expected_manifest_values

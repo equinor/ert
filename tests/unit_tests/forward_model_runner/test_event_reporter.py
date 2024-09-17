@@ -12,13 +12,13 @@ from _ert.events import (
     ForwardModelStepSuccess,
     event_from_json,
 )
-from _ert_forward_model_runner.client import (
+from _ert.forward_model_runner.client import (
     ClientConnectionClosedOK,
     ClientConnectionError,
 )
-from _ert_forward_model_runner.job import Job
-from _ert_forward_model_runner.reporting import Event
-from _ert_forward_model_runner.reporting.message import (
+from _ert.forward_model_runner.job import Job
+from _ert.forward_model_runner.reporting import Event
+from _ert.forward_model_runner.reporting.message import (
     Exited,
     Finish,
     Init,
@@ -26,7 +26,7 @@ from _ert_forward_model_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert_forward_model_runner.reporting.statemachine import TransitionError
+from _ert.forward_model_runner.reporting.statemachine import TransitionError
 from tests.utils import _mock_ws_thread
 
 
@@ -177,6 +177,7 @@ def test_report_inconsistent_events(unused_tcp_port):
         reporter.report(Finish())
 
 
+@pytest.mark.integration_test
 def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
@@ -198,7 +199,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
         with patch(
-            "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
+            "_ert.forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
             reporter.report(Running(job1, MemoryStatus(max_rss=100, rss=10)))
@@ -235,7 +236,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     job1 = Job({"name": "job1", "stdout": "stdout", "stderr": "stderr"}, 0)
     lines = []
     with _mock_ws_thread(host, unused_tcp_port, lines):
-        with patch("_ert_forward_model_runner.client.Client.send") as patched_send:
+        with patch("_ert.forward_model_runner.client.Client.send") as patched_send:
             patched_send.side_effect = send_func
 
             reporter.report(Init([job1], 1, 19, ens_id="ens_id", real_id=0))
@@ -259,6 +260,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     assert len(lines) == 3, "expected 3 Job running messages"
 
 
+@pytest.mark.integration_test
 def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
     # Whenever the receiver end closes the connection, a ConnectionClosedOK is raised
     # The reporter should exit the publisher thread gracefully and not send any
@@ -287,7 +289,7 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
         )
 
         with patch(
-            "_ert_forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
+            "_ert.forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
             reporter.report(Running(job1, MemoryStatus(max_rss=300, rss=10)))
             # Make sure the publisher thread exits because it got

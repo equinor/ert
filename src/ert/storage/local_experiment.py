@@ -15,9 +15,7 @@ from pydantic import BaseModel
 from ert.config import (
     ExtParamConfig,
     Field,
-    GenDataConfig,
     GenKwConfig,
-    SummaryConfig,
     SurfaceConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
@@ -36,11 +34,7 @@ _KNOWN_PARAMETER_TYPES = {
     ExtParamConfig.__name__: ExtParamConfig,
 }
 
-
-_KNOWN_RESPONSE_TYPES = {
-    SummaryConfig.__name__: SummaryConfig,
-    GenDataConfig.__name__: GenDataConfig,
-}
+from ert.config.responses_index import responses_index
 
 
 class _Index(BaseModel):
@@ -140,7 +134,7 @@ class LocalExperiment(BaseMode):
 
         response_data = {}
         for response in responses or []:
-            response_data.update({response.name: response.to_dict()})
+            response_data.update({response.response_type: response.to_dict()})
         with open(path / cls._responses_file, "w", encoding="utf-8") as f:
             json.dump(response_data, f, default=str, indent=2)
 
@@ -223,7 +217,7 @@ class LocalExperiment(BaseMode):
     def metadata(self) -> Dict[str, Any]:
         path = self.mount_point / self._metadata_file
         if not path.exists():
-            raise ValueError(f"{str(self._metadata_file)} does not exist")
+            raise ValueError(f"{self._metadata_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
@@ -248,7 +242,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._parameter_file
         if not path.exists():
-            raise ValueError(f"{str(self._parameter_file)} does not exist")
+            raise ValueError(f"{self._parameter_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
@@ -258,7 +252,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._responses_file
         if not path.exists():
-            raise ValueError(f"{str(self._responses_file)} does not exist")
+            raise ValueError(f"{self._responses_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
@@ -292,13 +286,17 @@ class LocalExperiment(BaseMode):
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
-    @cached_property
+    @property
     def response_configuration(self) -> Dict[str, ResponseConfig]:
-        params = {}
+        responses = {}
         for data in self.response_info.values():
-            param_type = data.pop("_ert_kind")
-            params[data["name"]] = _KNOWN_RESPONSE_TYPES[param_type](**data)
-        return params
+            ert_kind = data.pop("_ert_kind")
+            assert ert_kind in responses_index
+            response_cls = responses_index[ert_kind]
+            response_instance = response_cls(**data)
+            responses[response_instance.response_type] = response_instance
+
+        return responses
 
     @cached_property
     def update_parameters(self) -> List[str]:
@@ -311,3 +309,12 @@ class LocalExperiment(BaseMode):
             observation.name: xr.open_dataset(observation, engine="scipy")
             for observation in observations
         }
+
+    @cached_property
+    def response_key_to_response_type(self) -> Dict[str, str]:
+        mapping = {}
+        for config in self.response_configuration.values():
+            for key in config.keys:
+                mapping[key] = config.response_type
+
+        return mapping

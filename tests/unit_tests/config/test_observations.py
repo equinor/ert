@@ -188,6 +188,7 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
+@pytest.mark.integration_test
 @settings(max_examples=10)
 @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")

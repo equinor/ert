@@ -8,15 +8,12 @@ The API is typically meant used as part of workflows.
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from ert.storage import Ensemble
 
 
@@ -25,21 +22,13 @@ class ResponseError(Exception):
 
 
 class MeasuredData:
-    def __init__(
-        self,
-        ensemble: Ensemble,
-        keys: Optional[List[str]] = None,
-        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
-    ):
+    def __init__(self, ensemble: Ensemble, keys: Optional[List[str]] = None):
         if keys is None:
             keys = sorted(ensemble.experiment.observations.keys())
         if not keys:
             raise ObservationError("No observation keys provided")
-        if index_lists is not None and len(index_lists) != len(keys):
-            raise ValueError("index list must be same length as observations keys")
 
         self._set_data(self._get_data(ensemble, keys))
-        self._set_data(self.filter_on_column_index(keys, index_lists))
 
     @property
     def data(self) -> pd.DataFrame:
@@ -64,7 +53,7 @@ class MeasuredData:
         standard deviations as-is."""
         pre_index = self.data.index
         post_index = list(self.data.dropna(axis=0, how="all").index)
-        drop_index = set(pre_index) - set(post_index + ["STD", "OBS"])
+        drop_index = set(pre_index) - {*post_index, "STD", "OBS"}
         self._set_data(self.data.drop(index=drop_index))
 
     def get_simulated_data(self) -> pd.DataFrame:
@@ -157,7 +146,7 @@ class MeasuredData:
             measured_data.append(
                 pd.DataFrame(
                     data,
-                    index=("OBS", "STD") + tuple(ds.realization.values),
+                    index=("OBS", "STD", *ds.realization.values),
                     columns=pd.MultiIndex.from_tuples(
                         index_vals,
                         names=[None, "key_index", "data_index"],
@@ -166,33 +155,6 @@ class MeasuredData:
             )
 
         return pd.concat(measured_data, axis=1)
-
-    def filter_on_column_index(
-        self,
-        obs_keys: List[str],
-        index_lists: Optional[List[List[Union[int, datetime]]]] = None,
-    ) -> pd.DataFrame:
-        if index_lists is None or all(index_list is None for index_list in index_lists):
-            return self.data
-        names = self.data.columns.get_level_values(0)
-        data_index = self.data.columns.get_level_values("key_index")
-        cond = self._create_condition(names, data_index, obs_keys, index_lists)
-        return self.data.iloc[:, cond]
-
-    @staticmethod
-    def _create_condition(
-        names: pd.Index,
-        data_index: pd.Index,
-        obs_keys: List[str],
-        index_lists: List[List[Union[int, datetime]]],
-    ) -> "npt.NDArray[np.bool_]":
-        conditions = []
-        for obs_key, index_list in zip(obs_keys, index_lists):
-            if index_list is not None:
-                index_cond = [data_index == index for index in index_list]
-                index_cond = np.logical_or.reduce(index_cond)
-                conditions.append(np.logical_and(index_cond, (names == obs_key)))
-        return np.logical_or.reduce(conditions)
 
 
 class ObservationError(Exception):

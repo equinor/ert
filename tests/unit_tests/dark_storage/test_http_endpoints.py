@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from requests import Response
 
 
+@pytest.mark.integration_test
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
@@ -16,6 +17,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert "name" in answer_json[0]
 
 
+@pytest.mark.integration_test
 def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -32,6 +34,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensemble_json["userdata"]["experiment_name"] == experiment_json[0]["name"]
 
 
+@pytest.mark.integration_test
 def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -48,6 +51,7 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensembles_json[0]["userdata"]["name"] in ("iter-0", "iter-1")
 
 
+@pytest.mark.integration_test
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -61,6 +65,7 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
     assert ensemble_json["POLY_RES@0"]["has_observations"] is True
 
 
+@pytest.mark.integration_test
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -110,6 +115,7 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(record_df1.index) == 3
 
 
+@pytest.mark.integration_test
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
@@ -139,11 +145,13 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     }
 
 
+@pytest.mark.integration_test
 def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.post("/updates/facade")
     assert resp.status_code == 200
 
 
+@pytest.mark.integration_test
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -161,6 +169,7 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["x_axis"]) == 5
 
 
+@pytest.mark.integration_test
 def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
@@ -178,6 +187,7 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["x_axis"]) == 5
 
 
+@pytest.mark.integration_test
 def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -193,6 +203,7 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
     assert misfit.shape == (3, 5)
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "coeffs",
     [

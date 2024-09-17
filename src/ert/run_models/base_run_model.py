@@ -59,7 +59,7 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.identifiers import STATUS
-from ert.ensemble_evaluator.snapshot import Snapshot
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -180,7 +180,7 @@ class BaseRunModel(ABC):
             substitution_list=self.substitution_list,
             eclbase=config.ensemble_config.eclbase,
         )
-        self._iter_snapshot: Dict[int, Snapshot] = {}
+        self._iter_snapshot: Dict[int, EnsembleSnapshot] = {}
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
         # This holds state about the run model
@@ -339,6 +339,7 @@ class BaseRunModel(ABC):
         finally:
             self._clean_env_context()
             self.stop_time = int(time.time())
+
             self.send_event(
                 EndEvent(
                     failed=failed,
@@ -373,18 +374,38 @@ class BaseRunModel(ABC):
             return round(time.time() - self.start_time)
         return self.stop_time - self.start_time
 
-    def _current_status(self) -> tuple[dict[str, int], float, int]:
+    def get_current_status(self) -> dict[str, int]:
+        status: dict[str, int] = defaultdict(int)
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            all_realizations = self._iter_snapshot[current_iter].reals
+
+            if all_realizations:
+                for real in all_realizations.values():
+                    status[str(real["status"])] += 1
+
+        return status
+
+    def get_memory_consumption(self) -> int:
+        max_memory_consumption: int = 0
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            for fm in self._iter_snapshot[current_iter].get_all_fm_steps().values():
+                max_usage = fm.get("max_memory_usage", "0")
+                if max_usage:
+                    max_memory_consumption = max(int(max_usage), max_memory_consumption)
+
+        return max_memory_consumption
+
+    def _current_progress(self) -> tuple[float, int]:
         current_iter = max(list(self._iter_snapshot.keys()))
         done_realizations = 0
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
-        status: dict[str, int] = defaultdict(int)
         realization_count = len(all_realizations)
 
         if all_realizations:
             for real in all_realizations.values():
-                status[str(real["status"])] += 1
-
                 if real["status"] in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
@@ -398,13 +419,14 @@ class BaseRunModel(ABC):
                 else realization_progress
             )
 
-        return status, current_progress, realization_count
+        return current_progress, realization_count
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         if type(event) is EESnapshot:
-            snapshot = Snapshot.from_nested_dict(event.snapshot)
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             self._iter_snapshot[iteration] = snapshot
-            status, current_progress, realization_count = self._current_status()
+            current_progress, realization_count = self._current_progress()
+            status = self.get_current_status()
             self.send_event(
                 FullSnapshotEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
@@ -423,12 +445,13 @@ class BaseRunModel(ABC):
                     f"got snapshot update message without having stored "
                     f"snapshot for iter {iteration}"
                 )
-            snapshot = Snapshot()
+            snapshot = EnsembleSnapshot()
             snapshot.update_from_event(
                 event, source_snapshot=self._iter_snapshot[iteration]
             )
             self._iter_snapshot[iteration].merge_snapshot(snapshot)
-            status, current_progress, realization_count = self._current_status()
+            current_progress, realization_count = self._current_progress()
+            status = self.get_current_status()
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
@@ -551,7 +574,7 @@ class BaseRunModel(ABC):
                 Realization(
                     active=run_arg.active,
                     iens=run_arg.iens,
-                    forward_models=self.ert_config.forward_model_steps,
+                    fm_steps=self.ert_config.forward_model_steps,
                     max_runtime=self.ert_config.analysis_config.max_runtime,
                     run_arg=run_arg,
                     num_cpu=self.ert_config.preferred_num_cpu,
@@ -650,10 +673,12 @@ class BaseRunModel(ABC):
         logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
         logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
         logger.info(
-            f"Experiment run ended with number of realizations succeeding: {num_successful_realizations}"
+            f"Experiment run ended with number of realizations succeeding: "
+            f"{num_successful_realizations}"
         )
         logger.info(
-            f"Experiment run ended with number of realizations failing: {self.ensemble_size - num_successful_realizations}"
+            f"Experiment run ended with number of realizations failing: "
+            f"{self.ensemble_size - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)

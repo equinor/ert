@@ -75,15 +75,16 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
         realizations = list(range(ert_config.model_config.num_realizations))
-        for _, obs in ert_config.observations.items():
-            data_key = obs.attrs["response"]
-            for real in realizations:
+        for real in realizations:
+            gendatas = []
+            for _, obs in ert_config.observations.items():
+                data_key = obs.attrs["response"]
                 if data_key != "summary":
                     obs_highest_index_used = max(obs.index.values)
-                    source.save_response(
-                        data_key,
-                        make_gen_data(int(obs_highest_index_used) + 1),
-                        real,
+                    gendatas.append(
+                        make_gen_data(int(obs_highest_index_used) + 1).expand_dims(
+                            name=[data_key]
+                        )
                     )
                 else:
                     obs_time_list = ens_config.refcase.all_dates
@@ -92,6 +93,12 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                         make_summary_data(["summary"], obs_time_list),
                         real,
                     )
+
+            source.save_response(
+                "gen_data",
+                xr.concat(gendatas, dim="name"),
+                real,
+            )
 
         sample_prior(source, realizations, ens_config.parameters)
 

@@ -54,13 +54,18 @@ def get_response_names(ensemble: Ensemble) -> List[str]:
 
 
 def gen_data_keys(ensemble: Ensemble) -> Iterator[str]:
-    for k, v in ensemble.experiment.response_configuration.items():
-        if isinstance(v, GenDataConfig):
-            if v.report_steps is None:
-                yield f"{k}@0"
+    gen_data_config = ensemble.experiment.response_configuration.get("gen_data")
+
+    if gen_data_config:
+        assert isinstance(gen_data_config, GenDataConfig)
+        for key, report_steps in zip(
+            gen_data_config.keys, gen_data_config.report_steps_list
+        ):
+            if report_steps is None:
+                yield f"{key}@0"
             else:
-                for report_step in v.report_steps:
-                    yield f"{k}@{report_step}"
+                for report_step in report_steps:
+                    yield f"{key}@{report_step}"
 
 
 def data_for_key(

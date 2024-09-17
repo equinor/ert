@@ -157,7 +157,7 @@ class ErtConfig:
         Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
         when the user should be notified with non-fatal configuration problems.
         """
-        user_config_dict = cls.read_user_config(user_config_file)
+        user_config_dict = cls.read_user_config_and_apply_site_config(user_config_file)
         config_dir = path.abspath(path.dirname(user_config_file))
         cls._log_config_file(user_config_file)
         cls._log_config_dict(user_config_dict)
@@ -349,6 +349,16 @@ class ErtConfig:
 
         logger.info(f"Content of the config_dict: {tmp_dict}")
 
+    @classmethod
+    def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
+        for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
+            fm_configuration = (
+                Path(fm_step_filename).read_text(encoding="utf-8").strip()
+            )
+            logger.info(
+                f"Custom forward_model_step {fm_step} installed as: {fm_configuration}"
+            )
+
     @staticmethod
     def apply_config_content_defaults(content_dict: dict, config_dir: str):
         if ConfigKeys.ENSPATH not in content_dict:
@@ -370,12 +380,33 @@ class ErtConfig:
 
     @classmethod
     def read_user_config(cls, user_config_file: str) -> ConfigDict:
-        site_config = cls.read_site_config()
-        return lark_parse(
-            file=user_config_file,
-            schema=init_user_config_schema(),
-            site_config=site_config,
-        )
+        return lark_parse(user_config_file, schema=init_user_config_schema())
+
+    @classmethod
+    def read_user_config_and_apply_site_config(
+        cls, user_config_file: str
+    ) -> ConfigDict:
+        site_config_dict = cls.read_site_config()
+        user_config_dict = cls.read_user_config(user_config_file)
+        cls._log_custom_forward_model_steps(user_config_dict)
+
+        for keyword, value in site_config_dict.items():
+            if keyword == "QUEUE_OPTION":
+                filtered_queue_options = []
+                for queue_option in value:
+                    option_name = queue_option[1]
+                    if option_name in user_config_dict:
+                        continue
+                    filtered_queue_options.append(queue_option)
+                user_config_dict["QUEUE_OPTION"] = (
+                    filtered_queue_options + user_config_dict.get("QUEUE_OPTION", [])
+                )
+            elif isinstance(value, list):
+                original_entries: list = user_config_dict.get(keyword, [])
+                user_config_dict[keyword] = value + original_entries
+            elif keyword not in user_config_dict:
+                user_config_dict[keyword] = value
+        return user_config_dict
 
     @staticmethod
     def check_non_utf_chars(file_path: str) -> None:
@@ -513,7 +544,7 @@ class ErtConfig:
                 except ForwardModelStepValidationError as err:
                     errors.append(
                         ConfigValidationError.with_context(
-                            f"Forward model step pre-experiment validation failed: {str(err)}",
+                            f"Forward model step pre-experiment validation failed: {err!s}",
                             context=fm_step.name,
                         ),
                     )
@@ -665,7 +696,7 @@ class ErtConfig:
                 job_list_errors.append(
                     ErrorInfo(
                         message=f"Validation failed for "
-                        f"forward model step {fm_step.name}: {str(exc)}"
+                        f"forward model step {fm_step.name}: {exc!s}"
                     ).set_context(fm_step.name)
                 )
 

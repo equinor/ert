@@ -626,17 +626,7 @@ def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespa
 def log_process_usage() -> None:
     try:
         usage = resource.getrusage(resource.RUSAGE_SELF)
-
-        if sys.platform == "darwin":
-            # macOS apparently outputs the maxrss value as bytes rather than
-            # kilobytes as on Linux.
-            #
-            # https://stackoverflow.com/questions/59913657/strange-values-of-get-rusage-maxrss-on-macos-and-linux
-            rss_scale = 1000
-        else:
-            rss_scale = 1
-
-        maxrss = usage.ru_maxrss // rss_scale
+        max_rss = ert.shared.status.utils.get_ert_memory_usage()
 
         usage_dict: Dict[str, Union[int, float]] = {
             "User time": usage.ru_utime,
@@ -647,7 +637,7 @@ def log_process_usage() -> None:
             "Socket messages Received": usage.ru_msgrcv,
             "Signals received": usage.ru_nsignals,
             "Swaps": usage.ru_nswap,
-            "Peak memory use (KB)": maxrss,
+            "Peak memory use (KB)": max_rss,
         }
         logger.info(f"Ert process usage: {usage_dict}")
     except Exception as exc:

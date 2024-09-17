@@ -25,6 +25,7 @@ from ert.config.parsing.context_values import (
     ContextString,
 )
 from ert.config.parsing.observations_parser import ObservationConfigError
+from ert.config.parsing.queue_system import QueueSystem
 
 from .config_dict_generator import config_generators
 
@@ -259,6 +260,28 @@ def test_logging_config(caplog, config_content, expected):
         ErtConfig._log_config_file(config_path)
     expected = base_content.format(expected)
     assert expected in caplog.messages
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_custom_forward_models_are_logged(caplog):
+    localhack = "localhack.sh"
+    Path(localhack).write_text("", encoding="utf-8")
+    st = os.stat(localhack)
+    os.chmod(localhack, st.st_mode | stat.S_IEXEC)
+    Path("foo_fm").write_text(f"EXECUTABLE {localhack}", encoding="utf-8")
+    Path("config.ert").write_text(
+        "NUM_REALIZATIONS 1\nINSTALL_JOB foo_fm foo_fm", encoding="utf-8"
+    )
+    with caplog.at_level(logging.INFO):
+        ErtConfig.from_file("config.ert")
+    assert (
+        f"Custom forward_model_step foo_fm installed as: EXECUTABLE {localhack}"
+        in caplog.messages
+    )
+    assert (
+        sum("Custom forward_model_step" in logmessage for logmessage in caplog.messages)
+        == 1
+    ), "check if site-config fm were logged"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -505,6 +528,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -519,6 +543,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
         ) == ErtConfig.from_file(filename)
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -613,6 +638,7 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("use_tmpdir")
 @given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
@@ -667,7 +693,7 @@ def test_num_cpu_vs_torque_queue_cpu_configuration(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_non_existant_job_directory_gives_config_validation_error():
+def test_that_non_existent_job_directory_gives_config_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -757,7 +783,7 @@ def test_that_recursive_define_warns_when_reached_max_iterations():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_loading_non_existant_workflow_gives_validation_error():
+def test_that_loading_non_existent_workflow_gives_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -776,7 +802,7 @@ def test_that_loading_non_existant_workflow_gives_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_loading_non_existant_workflow_job_gives_validation_error():
+def test_that_loading_non_existent_workflow_job_gives_validation_error():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
@@ -884,12 +910,13 @@ def test_that_magic_strings_get_substituted_in_workflow():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_unknown_job_gives_config_validation_error():
+@pytest.mark.parametrize("fm_keyword", ["FORWARD_MODEL", "SIMULATION_JOB"])
+def test_that_unknown_job_gives_config_validation_error(fm_keyword):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
-        """
+        f"""
         NUM_REALIZATIONS  1
-        SIMULATION_JOB NO_SUCH_FORWARD_MODEL_STEP
+        {fm_keyword} NO_SUCH_FORWARD_MODEL_STEP
         """
     )
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
@@ -921,6 +948,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
 @given(config_generators())
@@ -1644,3 +1672,74 @@ def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
 
         with pytest.raises(ConfigValidationError, match="No parameters specified in"):
             ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "max_running_queue_config_entry",
+    [
+        pytest.param(
+            """
+        MAX_RUNNING 6
+        QUEUE_OPTION LSF MAX_RUNNING 2
+        QUEUE_OPTION SLURM MAX_RUNNING 2
+        """,
+            id="general_keyword_max_running",
+        ),
+        pytest.param(
+            """
+        QUEUE_OPTION TORQUE MAX_RUNNING 6
+        MAX_RUNNING 2
+        """,
+            id="queue_option_max_running",
+        ),
+    ],
+)
+def test_queue_config_max_running_queue_option_has_priority_over_general_option(
+    max_running_queue_config_entry,
+):
+    test_config_file = Path("test.ert")
+    test_config_file.write_text(
+        dedent(
+            f"""
+        NUM_REALIZATIONS  100
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM TORQUE
+        {max_running_queue_config_entry}
+        """
+        )
+    )
+
+    config = ErtConfig.from_file(test_config_file)
+    assert config.queue_config.max_running == 6
+
+
+def test_general_option_in_local_config_has_priority_over_site_config(
+    tmp_path, monkeypatch
+):
+    test_site_config = tmp_path / "test_site_config.ert"
+    test_site_config.write_text(
+        "QUEUE_OPTION TORQUE MAX_RUNNING 6\nQUEUE_SYSTEM LOCAL\nQUEUE_OPTION TORQUE SUBMIT_SLEEP 7"
+    )
+    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
+
+    test_config_file = tmp_path / "test.ert"
+    test_config_file.write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  100
+        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+        ENSPATH <STORAGE>/ensemble
+        QUEUE_SYSTEM TORQUE
+        MAX_RUNNING 13
+        SUBMIT_SLEEP 14
+        """
+        )
+    )
+    config = ErtConfig.from_file(test_config_file)
+    assert config.queue_config.max_running == 13
+    assert config.queue_config.submit_sleep == 14
+    assert config.queue_config.queue_system == QueueSystem.TORQUE

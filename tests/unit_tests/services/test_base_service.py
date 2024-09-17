@@ -122,6 +122,7 @@ def test_long_lived(server, tmp_path):
     assert not (tmp_path / "dummy_server.json").exists()
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 time.sleep(30)
@@ -160,6 +161,7 @@ def test_json_created(server):
         assert f.read()
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
@@ -192,6 +194,7 @@ def test_singleton_start(server_script, tmp_path):
     assert not (tmp_path / "dummy_server.json").exists()
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 time.sleep(1)
@@ -205,6 +208,7 @@ def test_singleton_connect(server_script):
         assert server is client
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
@@ -247,6 +251,7 @@ def test_singleton_connect_early(server_script, tmp_path):
     assert not (tmp_path / "dummy_server.json").exists()
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')

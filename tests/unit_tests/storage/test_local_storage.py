@@ -386,12 +386,13 @@ response_configs = st.lists(
         ),
         st.builds(
             SummaryConfig,
-            name=st.text(),
-            input_file=st.text(
-                alphabet=st.characters(min_codepoint=65, max_codepoint=90)
+            name=st.just("summary"),
+            input_files=st.lists(
+                st.text(alphabet=st.characters(min_codepoint=65, max_codepoint=90)),
+                min_size=1,
+                max_size=1,
             ),
             keys=summary_keys,
-            refcase=st.just(None),
         ),
     ),
     unique_by=lambda x: x.name,
@@ -401,11 +402,9 @@ response_configs = st.lists(
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
 coordinates = st.integers(min_value=1, max_value=100)
 
-
 words = st.text(
     min_size=1, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
 )
-
 
 gen_observations = st.integers(min_value=1, max_value=10).flatmap(
     lambda size: st.builds(
@@ -424,7 +423,6 @@ gen_observations = st.integers(min_value=1, max_value=10).flatmap(
         std_scaling=arrays(np.double, shape=size),
     )
 )
-
 
 observations = st.builds(
     EnkfObs,
@@ -534,7 +532,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         target=field_list,
         fields=grid.flatmap(fields),
     )
-    def create_field_list(self, fields):  # noqa: PLR6301
+    def create_field_list(self, fields):
         return fields
 
     @rule()
@@ -726,4 +724,4 @@ class StatefulStorageTest(RuleBasedStateMachine):
             shutil.rmtree(self.tmpdir)
 
 
-TestStorage = StatefulStorageTest.TestCase
+TestStorage = pytest.mark.integration_test(StatefulStorageTest.TestCase)

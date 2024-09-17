@@ -16,8 +16,8 @@ from _ert.events import (
     RealizationSuccess,
     event_to_json,
 )
-from _ert_forward_model_runner.client import Client
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, Snapshot
+from _ert.forward_model_runner.client import Client
+from ert.ensemble_evaluator import EnsembleEvaluator, EnsembleSnapshot, Monitor
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -95,6 +95,7 @@ async def evaluator_to_use_fixture(make_ee_config):
     await run_task
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     evaluator = evaluator_to_use
@@ -107,7 +108,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         # first snapshot before any event occurs
         events = monitor.track()
         snapshot_event = await events.__anext__()
-        snapshot = Snapshot.from_nested_dict(snapshot_event.snapshot)
+        snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -133,17 +134,18 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             )
             await dispatch._send(event_to_json(event))
 
-        def is_completed_snapshot(snapshot: Snapshot) -> bool:
+        def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
             try:
                 assert (
-                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_FAILURE
+                    snapshot.get_fm_step("0", "0")["status"]
+                    == FORWARD_MODEL_STATE_FAILURE
                 )
-                assert snapshot.get_job("0", "0")["error"] == "error"
+                assert snapshot.get_fm_step("0", "0")["error"] == "error"
                 return True
             except AssertionError:
                 return False
 
-        final_snapshot = Snapshot()
+        final_snapshot = EnsembleSnapshot()
         async for event in monitor.track():
             final_snapshot.update_from_event(event)
             if is_completed_snapshot(final_snapshot):
@@ -167,24 +169,26 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
 
-        def check_if_final_snapshot_is_complete(snapshot: Snapshot) -> bool:
+        def check_if_final_snapshot_is_complete(snapshot: EnsembleSnapshot) -> bool:
             try:
                 assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
                 assert (
-                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+                    snapshot.get_fm_step("0", "0")["status"]
+                    == FORWARD_MODEL_STATE_FINISHED
                 )
-                assert not snapshot.get_job("0", "0")["error"]
+                assert not snapshot.get_fm_step("0", "0")["error"]
                 return True
             except AssertionError:
                 return False
 
-        final_snapshot = Snapshot()
+        final_snapshot = EnsembleSnapshot()
         async for event in new_monitor.track():
             final_snapshot = final_snapshot.update_from_event(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(20)
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     evaluator = evaluator_to_use
@@ -233,18 +237,21 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
             )
             await dispatch2._send(event_to_json(event))
 
-        final_snapshot = Snapshot()
+        final_snapshot = EnsembleSnapshot()
 
-        def check_if_all_fm_running(snapshot: Snapshot) -> bool:
+        def check_if_all_fm_running(snapshot: EnsembleSnapshot) -> bool:
             try:
                 assert (
-                    snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+                    snapshot.get_fm_step("0", "0")["status"]
+                    == FORWARD_MODEL_STATE_RUNNING
                 )
                 assert (
-                    snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+                    snapshot.get_fm_step("1", "0")["status"]
+                    == FORWARD_MODEL_STATE_RUNNING
                 )
                 assert (
-                    snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_RUNNING
+                    snapshot.get_fm_step("1", "1")["status"]
+                    == FORWARD_MODEL_STATE_RUNNING
                 )
                 return True
             except AssertionError:
@@ -279,19 +286,19 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
         )
         await dispatch2._send(event_to_json(event))
 
-    def check_if_final_snapshot_is_complete(final_snapshot: Snapshot) -> bool:
+    def check_if_final_snapshot_is_complete(final_snapshot: EnsembleSnapshot) -> bool:
         try:
             assert final_snapshot.status == ENSEMBLE_STATE_UNKNOWN
             assert (
-                final_snapshot.get_job("0", "0")["status"]
+                final_snapshot.get_fm_step("0", "0")["status"]
                 == FORWARD_MODEL_STATE_RUNNING
             )
             assert (
-                final_snapshot.get_job("1", "0")["status"]
+                final_snapshot.get_fm_step("1", "0")["status"]
                 == FORWARD_MODEL_STATE_FINISHED
             )
             assert (
-                final_snapshot.get_job("1", "1")["status"]
+                final_snapshot.get_fm_step("1", "1")["status"]
                 == FORWARD_MODEL_STATE_FAILURE
             )
             return True
@@ -300,7 +307,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
 
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
-        final_snapshot = Snapshot()
+        final_snapshot = EnsembleSnapshot()
         async for event in new_monitor.track():
             final_snapshot = final_snapshot.update_from_event(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
@@ -322,7 +329,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         # first snapshot before any event occurs
         snapshot_event = await events.__anext__()
         assert type(snapshot_event) is EESnapshot
-        snapshot = Snapshot.from_nested_dict(snapshot_event.snapshot)
+        snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
@@ -372,21 +379,33 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             await dispatch2._send(event_to_json(event))
 
             event = await events.__anext__()
-            snapshot = Snapshot.from_nested_dict(event.snapshot)
-            assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
-            assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
-            assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+            assert (
+                snapshot.get_fm_step("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+            )
+            assert (
+                snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+            )
+            assert (
+                snapshot.get_fm_step("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
+            )
 
         # a second monitor connects
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
             full_snapshot_event = await events2.__anext__()
             event = cast(EESnapshot, full_snapshot_event)
-            snapshot = Snapshot.from_nested_dict(event.snapshot)
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-            assert snapshot.get_job("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
-            assert snapshot.get_job("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
-            assert snapshot.get_job("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
+            assert (
+                snapshot.get_fm_step("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+            )
+            assert (
+                snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
+            )
+            assert (
+                snapshot.get_fm_step("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
+            )
 
             # one monitor requests that server exit
             await monitor.signal_cancel()
@@ -406,6 +425,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 raise AssertionError(f"got unexpected event {event} from monitor2")
 
 
+@pytest.mark.integration_test
 async def test_ensure_multi_level_events_in_order(evaluator_to_use):
     evaluator = evaluator_to_use
 

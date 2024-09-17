@@ -4,8 +4,8 @@ from io import StringIO
 from ert.cli.monitor import Monitor
 from ert.ensemble_evaluator.event import SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import (
+    EnsembleSnapshot,
     RealizationSnapshot,
-    Snapshot,
 )
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
@@ -23,7 +23,7 @@ def test_color_always():
 
 def test_legends():
     monitor = Monitor(out=StringIO())
-    snapshot = Snapshot()
+    snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ""
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
@@ -66,7 +66,7 @@ def test_result_failure():
 def test_print_progress():
     out = StringIO()
     monitor = Monitor(out=out)
-    snapshot = Snapshot()
+    snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ""
     for i in range(0, 100):
         status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
@@ -105,6 +105,6 @@ def test_print_progress():
     Finished       50/100
     Unknown         0/100
 
-"""  # noqa
+"""
 
     assert out.getvalue().replace("\r", "\n") == expected

@@ -33,7 +33,7 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 def history_key(key: str) -> str:
     keyword, *rest = key.split(":")
-    return ":".join([keyword + "H"] + rest)
+    return ":".join([keyword + "H", *rest])
 
 
 @dataclass
@@ -401,20 +401,18 @@ class EnkfObs:
                 general_observation, obs_key, time_map, has_refcase
             )
 
-        config_node = ensemble_config[response_key]
-        if not isinstance(config_node, GenDataConfig):
+        gen_data_config = ensemble_config.response_configs.get("gen_data", None)
+        assert isinstance(gen_data_config, GenDataConfig)
+        if response_key not in gen_data_config.keys:
             ConfigWarning.warn(
-                f"{response_key} has implementation type:"
-                f"'{type(config_node)}' - "
-                f"expected:'GEN_DATA' in observation:{obs_key}."
-                "The observation will be ignored",
-                obs_key,
+                f"Observation {obs_key} on GEN_DATA key {response_key}, but GEN_DATA"
+                f" key {response_key} is non-existing"
             )
             return {}
 
-        response_report_steps = (
-            [] if config_node.report_steps is None else config_node.report_steps
-        )
+        _, report_steps = gen_data_config.get_args_for_key(response_key)
+
+        response_report_steps = [] if report_steps is None else report_steps
         if (restart is None and response_report_steps) or (
             restart is not None and restart not in response_report_steps
         ):
@@ -440,7 +438,7 @@ class EnkfObs:
                 obs_key: ObsVector(
                     EnkfObservationImplementationType.GEN_OBS,
                     obs_key,
-                    config_node.name,
+                    response_key,
                     {
                         restart: cls._create_gen_obs(
                             (

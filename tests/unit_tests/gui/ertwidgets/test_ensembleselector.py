@@ -22,7 +22,7 @@ def uniform_parameter():
 
 @pytest.fixture
 def response():
-    return GenDataConfig(name="response")
+    return GenDataConfig(keys=["response"])
 
 
 @pytest.fixture
@@ -98,13 +98,17 @@ def test_changing_ensemble(qtbot, notifier, storage):
 
 
 @pytest.mark.parametrize(
-    "flag, expected", [(True, ["child"]), (False, ["child", "parent"])]
+    "flag, expected",
+    [
+        (True, ["my-experiment : child"]),
+        (False, ["my-experiment : child", "my-experiment : parent"]),
+    ],
 )
 def test_show_only_no_parent(
     qtbot, notifier, storage, uniform_parameter, response, flag, expected
 ):
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter], responses=[response]
+        parameters=[uniform_parameter], responses=[response], name="my-experiment"
     )
     ensemble = experiment.create_ensemble(name="parent", ensemble_size=1)
     experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)

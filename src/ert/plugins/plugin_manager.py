@@ -148,9 +148,9 @@ class ErtPluginManager(pluggy.PluginManager):
             [
                 "-- Content below originated from "
                 f"{plugin_response.plugin_metadata.plugin_name} "
-                f"({plugin_response.plugin_metadata.function_name})"
+                f"({plugin_response.plugin_metadata.function_name})",
+                *plugin_response.data,
             ]
-            + plugin_response.data
             for plugin_response in plugin_responses
         ]
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
@@ -176,14 +176,14 @@ class ErtPluginManager(pluggy.PluginManager):
             for env_var, env_value in config_env_vars.items()
             if env_value is not None
         ]
-        site_config_lines.extend(config_lines + [""])
+        site_config_lines.extend([*config_lines, ""])
 
         install_job_lines = [
             f"INSTALL_JOB {job_name} {job_path}"
             for job_name, job_path in self.get_installable_jobs().items()
         ]
 
-        site_config_lines.extend(install_job_lines + [""])
+        site_config_lines.extend([*install_job_lines, ""])
 
         installable_workflow_jobs = self.get_installable_workflow_jobs()
 
@@ -191,7 +191,7 @@ class ErtPluginManager(pluggy.PluginManager):
             f"LOAD_WORKFLOW_JOB {job_path}"
             for _, job_path in installable_workflow_jobs.items()
         ]
-        site_config_lines.extend(install_workflow_job_lines + [""])
+        site_config_lines.extend([*install_workflow_job_lines, ""])
 
         return "\n".join(site_config_lines) + "\n"
 
@@ -391,4 +391,4 @@ class ErtPluginContext:
         self._reset_environment()
         logger.debug("Deleting temporary directory for site-config")
         if self.tmp_dir is not None:
-            shutil.rmtree(self.tmp_dir)
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)

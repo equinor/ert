@@ -23,73 +23,7 @@ import numpy.typing as npt
 import resfo
 from pydantic import PositiveInt
 
-SPECIAL_KEYWORDS = [
-    "NEWTON",
-    "NAIMFRAC",
-    "NLINEARS",
-    "NLINSMIN",
-    "NLINSMAX",
-    "ELAPSED",
-    "MAXDPR",
-    "MAXDSO",
-    "MAXDSG",
-    "MAXDSW",
-    "STEPTYPE",
-    "WNEWTON",
-]
-
-
-class _SummaryType(Enum):
-    AQUIFER = auto()
-    BLOCK = auto()
-    COMPLETION = auto()
-    FIELD = auto()
-    GROUP = auto()
-    LOCAL_BLOCK = auto()
-    LOCAL_COMPLETION = auto()
-    LOCAL_WELL = auto()
-    NETWORK = auto()
-    SEGMENT = auto()
-    WELL = auto()
-    REGION = auto()
-    INTER_REGION = auto()
-    OTHER = auto()
-
-    @classmethod
-    def from_keyword(cls, summary_keyword: str) -> _SummaryType:
-        KEYWORD_TYPE_MAPPING = {
-            "A": cls.AQUIFER,
-            "B": cls.BLOCK,
-            "C": cls.COMPLETION,
-            "F": cls.FIELD,
-            "G": cls.GROUP,
-            "LB": cls.LOCAL_BLOCK,
-            "LC": cls.LOCAL_COMPLETION,
-            "LW": cls.LOCAL_WELL,
-            "N": cls.NETWORK,
-            "S": cls.SEGMENT,
-            "W": cls.WELL,
-        }
-        if not summary_keyword:
-            raise ValueError("Got empty summary keyword")
-        if any(special in summary_keyword for special in SPECIAL_KEYWORDS):
-            return cls.OTHER
-        if summary_keyword[0] in KEYWORD_TYPE_MAPPING:
-            return KEYWORD_TYPE_MAPPING[summary_keyword[0]]
-        if summary_keyword[0:2] in KEYWORD_TYPE_MAPPING:
-            return KEYWORD_TYPE_MAPPING[summary_keyword[0:2]]
-        if summary_keyword == "RORFR":
-            return cls.REGION
-
-        if any(
-            re.fullmatch(pattern, summary_keyword)
-            for pattern in [r"R.FT.*", r"R..FT.*", r"R.FR.*", r"R..FR.*", r"R.F"]
-        ):
-            return cls.INTER_REGION
-        if summary_keyword[0] == "R":
-            return cls.REGION
-
-        return cls.OTHER
+from ert.summary_key_type import SummaryKeyType
 
 
 def _cell_index(
@@ -128,53 +62,53 @@ def make_summary_key(
     lj: Optional[int] = None,
     lk: Optional[int] = None,
 ) -> Optional[str]:
-    sum_type = _SummaryType.from_keyword(keyword)
+    sum_type = SummaryKeyType.from_keyword(keyword)
     if sum_type in [
-        _SummaryType.FIELD,
-        _SummaryType.OTHER,
+        SummaryKeyType.FIELD,
+        SummaryKeyType.OTHER,
     ]:
         return keyword
     if sum_type in [
-        _SummaryType.REGION,
-        _SummaryType.AQUIFER,
+        SummaryKeyType.REGION,
+        SummaryKeyType.AQUIFER,
     ]:
         return f"{keyword}:{number}"
-    if sum_type == _SummaryType.BLOCK:
+    if sum_type == SummaryKeyType.BLOCK:
         nx, ny = _check_if_missing("block", "dimens", nx, ny)
         (number,) = _check_if_missing("block", "nums", number)
         i, j, k = _cell_index(number - 1, nx, ny)
         return f"{keyword}:{i},{j},{k}"
     if sum_type in [
-        _SummaryType.GROUP,
-        _SummaryType.WELL,
+        SummaryKeyType.GROUP,
+        SummaryKeyType.WELL,
     ]:
         return f"{keyword}:{name}"
-    if sum_type == _SummaryType.SEGMENT:
+    if sum_type == SummaryKeyType.SEGMENT:
         return f"{keyword}:{name}:{number}"
-    if sum_type == _SummaryType.COMPLETION:
+    if sum_type == SummaryKeyType.COMPLETION:
         nx, ny = _check_if_missing("completion", "dimens", nx, ny)
         (number,) = _check_if_missing("completion", "nums", number)
         i, j, k = _cell_index(number - 1, nx, ny)
         return f"{keyword}:{name}:{i},{j},{k}"
-    if sum_type == _SummaryType.INTER_REGION:
+    if sum_type == SummaryKeyType.INTER_REGION:
         (number,) = _check_if_missing("inter region", "nums", number)
         r1 = number % 32768
         r2 = ((number - r1) // 32768) - 10
         return f"{keyword}:{r1}-{r2}"
-    if sum_type == _SummaryType.LOCAL_WELL:
+    if sum_type == SummaryKeyType.LOCAL_WELL:
         (name,) = _check_if_missing("local well", "WGNAMES", name)
         (lgr_name,) = _check_if_missing("local well", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{name}"
-    if sum_type == _SummaryType.LOCAL_BLOCK:
+    if sum_type == SummaryKeyType.LOCAL_BLOCK:
         li, lj, lk = _check_if_missing("local block", "NUMLX", li, lj, lk)
         (lgr_name,) = _check_if_missing("local block", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{li},{lj},{lk}"
-    if sum_type == _SummaryType.LOCAL_COMPLETION:
+    if sum_type == SummaryKeyType.LOCAL_COMPLETION:
         li, lj, lk = _check_if_missing("local completion", "NUMLX", li, lj, lk)
         (name,) = _check_if_missing("local completion", "WGNAMES", name)
         (lgr_name,) = _check_if_missing("local completion", "LGRS", lgr_name)
         return f"{keyword}:{lgr_name}:{name}:{li},{lj},{lk}"
-    if sum_type == _SummaryType.NETWORK:
+    if sum_type == SummaryKeyType.NETWORK:
         (name,) = _check_if_missing("network", "WGNAMES", name)
         return f"{keyword}:{name}"
     raise ValueError(f"Unexpected keyword type: {sum_type}")
@@ -334,18 +268,7 @@ def _read_spec(
 
     with open(spec, mode) as fp:
         for entry in resfo.lazy_read(fp, format):
-            if all(
-                p is not None
-                for p in (
-                    [
-                        date,
-                        n,
-                        nx,
-                        ny,
-                    ]
-                    + list(arrays.values())
-                )
-            ):
+            if all(p is not None for p in [date, n, nx, ny, *arrays.values()]):
                 break
             kw = entry.read_keyword()
             if kw in arrays:
