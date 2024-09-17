@@ -173,6 +173,7 @@ class Event(Reporter):
                 **job_msg,
                 max_memory_usage=msg.memory_status.max_rss,
                 current_memory_usage=msg.memory_status.rss,
+                cpu_seconds=msg.memory_status.cpu_seconds,
             )
             self._dump_event(event)
 
