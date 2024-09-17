@@ -12,7 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import pkg_resources
+from importlib import metadata
 
 # -- Project information -----------------------------------------------------
 
@@ -21,17 +21,15 @@ copyright = "2024, Equinor & TNO"
 author = "Equinor & TNO"
 
 
-def get_version():
-    # Retrieve the everest installed version.
-    everest_version = pkg_resources.get_distribution("ert").version
-    print("everest version: {}".format(everest_version))
-    return everest_version
-
+try:
+    dist_version = metadata.version("ert")
+except metadata.PackageNotFoundError:
+    dist_version = "0.0.0"
 
 # The short X.Y version
-version = get_version()
+version = ".".join(dist_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
-release = version
+release = dist_version
 
 
 # -- General configuration ---------------------------------------------------
