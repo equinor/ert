@@ -1,7 +1,12 @@
-from enum import Enum, auto
-from typing import List
+from __future__ import annotations
 
-special_keys = [
+import re
+from enum import Enum, auto
+from typing import (
+    List,
+)
+
+SPECIAL_KEYWORDS = [
     "NAIMFRAC",
     "NBAKFL",
     "NBYTOT",
@@ -29,6 +34,61 @@ special_keys = [
     "STEPTYPE",
     "WNEWTON",
 ]
+
+
+class SummaryKeyType(Enum):
+    AQUIFER = auto()
+    BLOCK = auto()
+    COMPLETION = auto()
+    FIELD = auto()
+    GROUP = auto()
+    LOCAL_BLOCK = auto()
+    LOCAL_COMPLETION = auto()
+    LOCAL_WELL = auto()
+    NETWORK = auto()
+    SEGMENT = auto()
+    WELL = auto()
+    REGION = auto()
+    INTER_REGION = auto()
+    OTHER = auto()
+
+    @classmethod
+    def from_keyword(cls, summary_keyword: str) -> SummaryKeyType:
+        KEYWORD_TYPE_MAPPING = {
+            "A": cls.AQUIFER,
+            "B": cls.BLOCK,
+            "C": cls.COMPLETION,
+            "F": cls.FIELD,
+            "G": cls.GROUP,
+            "LB": cls.LOCAL_BLOCK,
+            "LC": cls.LOCAL_COMPLETION,
+            "LW": cls.LOCAL_WELL,
+            "N": cls.NETWORK,
+            "S": cls.SEGMENT,
+            "W": cls.WELL,
+        }
+        if not summary_keyword:
+            raise ValueError("Got empty summary keyword")
+        if any(special in summary_keyword for special in SPECIAL_KEYWORDS):
+            return cls.OTHER
+        if summary_keyword[0] in KEYWORD_TYPE_MAPPING:
+            return KEYWORD_TYPE_MAPPING[summary_keyword[0]]
+        if summary_keyword[0:2] in KEYWORD_TYPE_MAPPING:
+            return KEYWORD_TYPE_MAPPING[summary_keyword[0:2]]
+        if summary_keyword == "RORFR":
+            return cls.REGION
+
+        if any(
+            re.fullmatch(pattern, summary_keyword)
+            for pattern in [r"R.FT.*", r"R..FT.*", r"R.FR.*", r"R..FR.*", r"R.F"]
+        ):
+            return cls.INTER_REGION
+        if summary_keyword[0] == "R":
+            return cls.REGION
+
+        return cls.OTHER
+
+
 rate_keys = [
     "OPR",
     "OIR",
@@ -100,62 +160,6 @@ seg_rate_keys = [
 ]
 
 
-class SummaryKeyType(Enum):
-    INVALID = auto()
-    FIELD = auto()
-    REGION = auto()
-    GROUP = auto()
-    WELL = auto()
-    SEGMENT = auto()
-    BLOCK = auto()
-    AQUIFER = auto()
-    COMPLETION = auto()
-    NETWORK = auto()
-    REGION_2_REGION = auto()
-    LOCAL_BLOCK = auto()
-    LOCAL_COMPLETION = auto()
-    LOCAL_WELL = auto()
-    MISC = auto()
-
-    @staticmethod
-    def determine_key_type(key: str) -> "SummaryKeyType":
-        if key in special_keys:
-            return SummaryKeyType.MISC
-
-        if key.startswith("L"):
-            secondary = key[1] if len(key) > 1 else ""
-            return {
-                "B": SummaryKeyType.LOCAL_BLOCK,
-                "C": SummaryKeyType.LOCAL_COMPLETION,
-                "W": SummaryKeyType.LOCAL_WELL,
-            }.get(secondary, SummaryKeyType.MISC)
-
-        if key.startswith("R"):
-            if len(key) == 3 and key[2] == "F":
-                return SummaryKeyType.REGION_2_REGION
-            if key == "RNLF":
-                return SummaryKeyType.REGION_2_REGION
-            if key == "RORFR":
-                return SummaryKeyType.REGION
-            if len(key) >= 4 and key[2] == "F" and key[3] in {"T", "R"}:
-                return SummaryKeyType.REGION_2_REGION
-            if len(key) >= 5 and key[3] == "F" and key[4] in {"T", "R"}:
-                return SummaryKeyType.REGION_2_REGION
-            return SummaryKeyType.REGION
-
-        # default cases or miscellaneous if not matched
-        return {
-            "A": SummaryKeyType.AQUIFER,
-            "B": SummaryKeyType.BLOCK,
-            "C": SummaryKeyType.COMPLETION,
-            "F": SummaryKeyType.FIELD,
-            "G": SummaryKeyType.GROUP,
-            "N": SummaryKeyType.NETWORK,
-            "S": SummaryKeyType.SEGMENT,
-            "W": SummaryKeyType.WELL,
-        }.get(key[0], SummaryKeyType.MISC)
-
-
 def _match_keyword_vector(start: int, rate_keys: List[str], keyword: str) -> bool:
     if len(keyword) < start:
         return False
@@ -169,7 +173,7 @@ def _match_keyword_string(start: int, rate_string: str, keyword: str) -> bool:
 
 
 def is_rate(key: str) -> bool:
-    key_type = SummaryKeyType.determine_key_type(key)
+    key_type = SummaryKeyType.from_keyword(key)
     if key_type in {
         SummaryKeyType.WELL,
         SummaryKeyType.GROUP,
@@ -191,7 +195,7 @@ def is_rate(key: str) -> bool:
     if key_type == SummaryKeyType.SEGMENT:
         return _match_keyword_vector(1, seg_rate_keys, key)
 
-    if key_type == SummaryKeyType.REGION_2_REGION:
+    if key_type == SummaryKeyType.INTER_REGION:
         # Region to region rates are identified by R*FR or R**FR
         if _match_keyword_string(2, "FR", key):
             return True
