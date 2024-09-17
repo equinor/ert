@@ -132,6 +132,6 @@ class QComboBoxWithDescription(QComboBox):
 
     def sizeHint(self):
         original_size_hint = super().sizeHint()
-        new_width = int(original_size_hint.width() * 1.2)
+        new_width = int(original_size_hint.width() + 220)
         new_height = int(super().sizeHint().height() * 1.5)
         return QSize(new_width, new_height)

@@ -229,4 +229,4 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     @classmethod
     def description(cls) -> str:
-        return "Sample parameters → [Evaluate → update] for N iterations"
+        return "Sample parameters → [evaluate → update] several iterations"

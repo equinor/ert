@@ -88,4 +88,4 @@ class EvaluateEnsemble(BaseRunModel):
 
     @classmethod
     def description(cls) -> str:
-        return "Take existing ensemble parameters → evaluate"
+        return "Use existing parameters → evaluate"

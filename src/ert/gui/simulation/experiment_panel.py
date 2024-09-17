@@ -120,15 +120,15 @@ class ExperimentPanel(QWidget):
 
         self._experiment_widgets: dict[Type[BaseRunModel], QWidget] = OrderedDict()
         self.addExperimentConfigPanel(
+            SingleTestRunPanel(run_path, notifier),
+            True,
+        )
+        self.addExperimentConfigPanel(
             EnsembleExperimentPanel(ensemble_size, run_path, notifier),
             True,
         )
         self.addExperimentConfigPanel(
             EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
-            True,
-        )
-        self.addExperimentConfigPanel(
-            SingleTestRunPanel(run_path, notifier),
             True,
         )
 
@@ -137,13 +137,13 @@ class ExperimentPanel(QWidget):
         )
         analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
                 analysis_config, run_path, notifier, ensemble_size
             ),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
