@@ -12,12 +12,13 @@ from contextlib import contextmanager, suppress
 from random import random
 
 import resfo
-from ecl_config import EclrunConfig
+from ecl_config import EclConfig, EclrunConfig, Simulator
 from packaging import version
 
 
 class EclError(RuntimeError):
-    pass
+    def failed_due_to_license_problems(self) -> bool:
+        return "LICENSE ERROR" in self.args[0] or "LICENSE FAILURE" in self.args[0]
 
 
 def await_process_tee(process, *out_files) -> int:
@@ -209,7 +210,12 @@ class EclRun:
     """
 
     def __init__(
-        self, ecl_case, sim, num_cpu=1, check_status=True, summary_conversion=False
+        self,
+        ecl_case: str,
+        sim: Simulator,
+        num_cpu: int = 1,
+        check_status: bool = True,
+        summary_conversion: bool = False,
     ):
         self.sim = sim
         self.check_status = check_status
@@ -392,10 +398,8 @@ class EclRun:
 
             try:
                 self.assertECLEND()
-            except RuntimeError as err:
-                if (
-                    "LICENSE ERROR" in err.args[0] or "LICENSE FAILURE" in err.args[0]
-                ) and retries_left > 0:
+            except EclError as err:
+                if err.failed_due_to_license_problems() and retries_left > 0:
                     time_to_wait = backoff_sleep + int(
                         random() * self.LICENSE_RETRY_STAGGER_FACTOR
                     )
@@ -515,7 +519,7 @@ class EclRun:
         return error_list
 
 
-def run(config, argv):
+def run(config: EclConfig, argv):
     parser = ArgumentParser()
     parser.add_argument("ecl_case")
     parser.add_argument("-v", "--version", dest="version", type=str)

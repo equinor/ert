@@ -267,3 +267,34 @@ def test_summary_block(source_root):
 
     erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
     assert erun.summary_block() is not None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ecl100_license_error_is_caught():
+    prt_error = """\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           CHECKING FOR LICENSES
+
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           LICENSE ERROR  -1 FOR MULTI-SEGMENT WELL OPTION
+ @           FEATURE IS INVALID. CHECK YOUR LICENSE FILE AND
+ @           THE LICENSE LOG FILE"""
+    eclend = """\
+ Error summary
+ Comments               0
+ Warnings               0
+ Problems               0
+ Errors                 1
+ Bugs                   0
+ Final cpu       0.00 elapsed       0.08"""
+
+    Path("FOO.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
+    try:
+        run.assertECLEND()
+        raise AssertionError("EclError not raised")
+    except ecl_run.EclError as err:
+        assert err.failed_due_to_license_problems()
