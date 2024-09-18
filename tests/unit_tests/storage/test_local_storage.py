@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -15,7 +16,6 @@ import xarray as xr
 from hypothesis import assume
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
-from xarray.testing import assert_allclose
 
 from ert.config import (
     EnkfObs,
@@ -38,7 +38,7 @@ from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.unit_tests.config.egrid_generator import egrids
-from tests.unit_tests.config.summary_generator import summary_keys
+from tests.unit_tests.config.summary_generator import summaries, summary_variables
 
 
 def _ensembles(storage):
@@ -379,6 +379,10 @@ parameter_configs = st.lists(
     min_size=1,
 ).map(add_to_name("parameter_"))
 
+summary_selectors = st.one_of(
+    summary_variables(), st.just("*"), summary_variables().map(lambda x: x + "*")
+)
+
 response_configs = st.lists(
     st.one_of(
         st.builds(
@@ -392,12 +396,12 @@ response_configs = st.lists(
                 min_size=1,
                 max_size=1,
             ),
-            keys=summary_keys,
+            keys=st.lists(summary_selectors, min_size=1),
         ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
-).map(add_to_name("response_"))
+)
 
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
 coordinates = st.integers(min_value=1, max_value=100)
@@ -436,10 +440,16 @@ observations = st.builds(
             observations=st.dictionaries(
                 st.integers(min_value=0, max_value=200),
                 gen_observations,
-                max_size=1,
                 min_size=1,
+                max_size=1,
             ),
         ),
+    ),
+    obs_time=st.lists(
+        st.datetimes(
+            min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),
+            max_value=datetime.strptime("3000-1-1", "%Y-%m-%d"),
+        )
     ),
 )
 
@@ -471,6 +481,7 @@ def fields(draw, egrid, num_fields=small_ints) -> List[Field]:
 class Ensemble:
     uuid: UUID
     parameter_values: Dict[str, Any] = field(default_factory=dict)
+    response_values: Dict[str, Any] = field(default_factory=dict)
     failure_messages: Dict[int, str] = field(default_factory=dict)
 
 
@@ -607,14 +618,70 @@ class StatefulStorageTest(RuleBasedStateMachine):
     @rule(
         model_ensemble=ensembles,
     )
-    def get_field(self, model_ensemble: Ensemble):
+    def get_parameters(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        field_names = model_ensemble.parameter_values.keys()
-        for f in field_names:
-            field_data = storage_ensemble.load_parameters(f, 1)
-            np.testing.assert_array_equal(
+        parameter_names = model_ensemble.parameter_values.keys()
+        iens = 1
+
+        for f in parameter_names:
+            parameter_data = storage_ensemble.load_parameters(f, iens)
+            xr.testing.assert_equal(
                 model_ensemble.parameter_values[f],
-                field_data["values"],
+                parameter_data["values"],
+            )
+
+    @rule(
+        model_ensemble=ensembles,
+        summary_data=summaries(
+            start_date=st.datetimes(
+                min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),
+                max_value=datetime.strptime("2010-1-1", "%Y-%m-%d"),
+            ),
+            time_deltas=st.lists(
+                st.floats(
+                    min_value=0.1,
+                    max_value=365,
+                    allow_nan=False,
+                    allow_infinity=False,
+                ),
+                min_size=2,
+                max_size=10,
+            ),
+        ),
+    )
+    def save_summary(self, model_ensemble: Ensemble, summary_data):
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        storage_experiment = storage_ensemble.experiment
+        responses = storage_experiment.response_configuration.values()
+        summary_configs = [p for p in responses if isinstance(p, SummaryConfig)]
+        assume(summary_configs)
+        summary = summary_configs[0]
+        assume(summary.name not in model_ensemble.response_values)
+        smspec, unsmry = summary_data
+        smspec.to_file(self.tmpdir + f"/{summary.input_files[0]}.SMSPEC")
+        unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
+        iens = 1
+
+        try:
+            ds = summary.read_from_file(self.tmpdir, iens)
+        except ValueError as e:  # no match in keys
+            assume(False)
+            raise AssertionError() from e
+        storage_ensemble.save_response(summary.response_type, ds, iens)
+
+        model_ensemble.response_values[summary.name] = ds
+
+    @rule(model_ensemble=ensembles)
+    def get_responses(self, model_ensemble: Ensemble):
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        names = model_ensemble.response_values.keys()
+        iens = 1
+
+        for n in names:
+            data = storage_ensemble.load_responses(n, (iens,))
+            xr.testing.assert_equal(
+                model_ensemble.response_values[n],
+                data.isel(realization=0, drop=True),
             )
 
     @rule(model_ensemble=ensembles, parameter=words)
@@ -683,7 +750,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         )
         for obskey, obs in model_experiment.observations.items():
             assert obskey in storage_experiment.observations
-            assert_allclose(obs, storage_experiment.observations[obskey])
+            xr.testing.assert_allclose(obs, storage_experiment.observations[obskey])
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):
