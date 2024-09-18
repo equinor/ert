@@ -298,3 +298,70 @@ def test_ecl100_license_error_is_caught():
         raise AssertionError("EclError not raised")
     except ecl_run.EclError as err:
         assert err.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ecl300_license_error_is_caught():
+    prt_error = """\
+ @--Message:The message service has been activated
+ @--Message:Checking for licenses
+ @--Message:Checking for licenses
+ @--Message:Checking for licenses
+ @--Error
+ @ ECLIPSE option not allowed in license
+ @ Please ask for a new license
+ @ Run stopping
+            0 Mbytes of storage required
+  No active cells found
+          249 Mbytes (image size)
+"""
+    eclend = """\
+ Error summary
+ Comments               1
+ Warnings               2
+ Problems               0
+ Errors                 1
+ Bugs                   0
+ Final cpu       0.01 elapsed       0.02
+ Emergency stop called from routine   ZSTOPE"""
+
+    Path("FOO.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert exception_info.value.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ecl300_crash_is_not_mistaken_as_license_trouble():
+    prt_error = """\
+ @--Message:The message service has been activated
+ @--Message:Checking for licenses
+ @--Message:Checking for licenses
+ @--Message:Checking for licenses
+ @ Run stopping
+            0 Mbytes of storage required
+  No active cells found
+          249 Mbytes (image size)
+"""
+    eclend = """\
+ Error summary
+ Comments               1
+ Warnings               2
+ Problems               0
+ Errors                 1
+ Bugs                   0
+ Final cpu       0.01 elapsed       0.02
+ Emergency stop called from routine   ZSTOPE"""
+
+    Path("FOO.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert not exception_info.value.failed_due_to_license_problems()
