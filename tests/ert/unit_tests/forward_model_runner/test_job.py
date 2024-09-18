@@ -16,14 +16,13 @@ from _ert.forward_model_runner.job import Job, _get_processtree_data
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 
 
-@patch("_ert.forward_model_runner.job.assert_file_executable")
+@patch("_ert.forward_model_runner.job.check_executable")
 @patch("_ert.forward_model_runner.job.Popen")
 @patch("_ert.forward_model_runner.job.Process")
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_with_process_failing(
-    mock_process, mock_popen, mock_assert_file_executable
-):
+def test_run_with_process_failing(mock_process, mock_popen, mock_check_executable):
     job = Job({}, 0)
+    mock_check_executable.return_value = ""
     type(mock_process.return_value.memory_info.return_value).rss = PropertyMock(
         return_value=10
     )
@@ -290,9 +289,9 @@ def test_run_with_defined_executable_but_missing():
         0,
     )
 
-    with pytest.raises(IOError):
-        for _ in job.run():
-            pass
+    start_message = next(job.run())
+    assert isinstance(start_message, Start)
+    assert "this/is/not/a/file is not a file" in start_message.error_message
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -336,10 +335,9 @@ def test_run_with_defined_executable_no_exec_bit():
         },
         0,
     )
-
-    with pytest.raises(IOError):
-        for _ in job.run():
-            pass
+    start_message = next(job.run())
+    assert isinstance(start_message, Start)
+    assert "foo is not an executable" in start_message.error_message
 
 
 def test_init_job_no_std():
