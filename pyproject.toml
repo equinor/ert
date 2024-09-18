@@ -201,3 +201,16 @@ allowed-confusables = ["–"]
 
 [tool.ruff.lint.pylint]
 max-args = 20
+
+[tool.pyright]
+include = ["src"]
+exclude = ["tests"]
+reportMissingImports = "error"
+typeCheckingMode = "standard"
+pythonVersion = "3.8"
+
+[tool.pyright.defineConstant]
+PYSIDE6 = false
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
