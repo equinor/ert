@@ -154,8 +154,14 @@ unit_names = st.sampled_from(
 )
 
 names = st.text(
-    min_size=8, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
-)
+    min_size=1,
+    max_size=8,
+    alphabet=st.characters(
+        min_codepoint=33,
+        max_codepoint=126,
+        exclude_characters=";{}\"'=",  # These have specific meaning in configs
+    ),
+).map(lambda x: x.ljust(8, " "))
 
 
 @unique

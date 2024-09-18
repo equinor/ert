@@ -20,9 +20,15 @@ from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.plugins import ErtPluginManager
 from tests.unit_tests.config.egrid_generator import egrids
-from tests.unit_tests.config.summary_generator import names, summaries
+from tests.unit_tests.config.summary_generator import summaries
 
 from .run_cli import run_cli_with_pm
+
+names = st.text(
+    min_size=1,
+    max_size=8,
+    alphabet=st.characters(min_codepoint=65, max_codepoint=90),
+)
 
 config_contents = """
 NUM_REALIZATIONS {num_realizations}
@@ -345,7 +351,10 @@ class SurfaceParameter:
     ),
     num_realizations=st.integers(min_value=1, max_value=10),
     parameters=st.lists(
-        st.one_of(field_parameters(), st.builds(SurfaceParameter, names)),
+        st.one_of(
+            field_parameters(),
+            st.builds(SurfaceParameter, names),
+        ),
         unique_by=lambda x: x.name,
         max_size=3,
     ),

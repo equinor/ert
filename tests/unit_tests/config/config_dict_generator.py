@@ -373,10 +373,10 @@ def summary_keys(smspec: Smspec) -> st.SearchStrategy[str]:
             make_summary_key(
                 summary_key,
                 smspec.region_numbers[index],
-                smspec.well_names[index],
+                smspec.well_names[index].rstrip(),
                 smspec.nx,
                 smspec.ny,
-                smspec.lgrs[index] if smspec.lgrs else None,
+                smspec.lgrs[index].rstrip() if smspec.lgrs else None,
                 smspec.numlx[index] if smspec.numlx else None,
                 smspec.numly[index] if smspec.numly else None,
                 smspec.numlz[index] if smspec.numlz else None,

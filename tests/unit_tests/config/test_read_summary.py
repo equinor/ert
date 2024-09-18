@@ -264,8 +264,8 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
         for x in zip_longest(
             [k.rstrip() for k in smspec.keywords],
             smspec.region_numbers,
-            smspec.well_names,
-            local_name,
+            [w.rstrip() for w in smspec.well_names],
+            [l.rstrip() for l in local_name],
             lis,
             ljs,
             lks,
