@@ -170,6 +170,7 @@ class FMStepOverview(QTableView):
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
+    progress_update_event = Signal(dict, int)
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -459,6 +460,7 @@ class RunDialog(QFrame):
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
             )
+            self.progress_update_event.emit(event.status_count, event.realization_count)
         elif isinstance(event, SnapshotUpdateEvent):
             if event.snapshot is not None:
                 self._snapshot_model._update_snapshot(
@@ -468,6 +470,7 @@ class RunDialog(QFrame):
                 event.status_count, event.realization_count
             )
             self.update_total_progress(event.progress, event.iteration_label)
+            self.progress_update_event.emit(event.status_count, event.realization_count)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
