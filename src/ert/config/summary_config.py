@@ -60,12 +60,8 @@ class SummaryConfig(ResponseConfig):
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Optional[SummaryConfig]:
         refcase = Refcase.from_config_dict(config_dict)
-        eclbase = config_dict.get("ECLBASE")  # type: ignore
-        if eclbase is not None:
-            eclbase = eclbase.replace("%d", "<IENS>")
-
-        summary_keys = config_dict.get(ConfigKeys.SUMMARY, [])  # type: ignore
-        if summary_keys:
+        if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):  # type: ignore
+            eclbase: Optional[str] = config_dict.get("ECLBASE")  # type: ignore
             if eclbase is None:
                 raise ConfigValidationError(
                     "In order to use summary responses, ECLBASE has to be set."
@@ -74,7 +70,7 @@ class SummaryConfig(ResponseConfig):
 
             return cls(
                 name="summary",
-                input_files=[eclbase],
+                input_files=[eclbase.replace("%d", "<IENS>")],
                 keys=[key for keys in summary_keys for key in keys],
                 refcase=time_map,
             )
