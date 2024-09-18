@@ -79,7 +79,8 @@ Notice that by using :code:`installable_forward_model_steps`, validation can be 
 where the methods ``validate_pre_experiment`` or ``validate_pre_realization_run`` can
 throw ``ForwardModelStepValidationError`` to indicate that the configuration of the
 forward model step is invalid (which ert then handles gracefully and presents nicely
-to the user).
+to the user). If you want to show a warning in cases where the configuration cannot be
+validated pre-experiment, you can use the ``ForwardModelStepWarning.warn(...)`` method.
 
 To provide documentation for a forward model step given with
 ``installable_jobs``, use the :code:`job_documentation` name. If you are the
