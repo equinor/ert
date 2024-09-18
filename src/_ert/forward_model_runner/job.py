@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
-from .io import assert_file_executable
+from .io import check_executable
 from .reporting.message import (
     Exited,
     ProcessTreeStatus,
@@ -97,10 +97,7 @@ class Job:
 
         yield start_message
 
-        executable = self.job_data.get("executable")
-        assert_file_executable(executable)
-
-        arg_list = [executable]
+        arg_list = [self.job_data.get("executable")]
         if self.job_data.get("argList"):
             arg_list += self.job_data["argList"]
 
@@ -313,6 +310,9 @@ class Job:
             self.job_data.get("error_file")
         ):
             os.unlink(self.job_data.get("error_file"))
+
+        if executable_error := check_executable(self.job_data.get("executable")):
+            errors.append(str(executable_error))
 
         return errors
 

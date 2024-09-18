@@ -6,8 +6,8 @@ def cond_unlink(file):
         os.unlink(file)
 
 
-def assert_file_executable(fname):
-    """The function raises an IOError if the given file is either not a file or
+def check_executable(fname) -> str:
+    """The function returns an error message if the given file is either not a file or
     not an executable.
 
     If the given file name is an absolute path, its functionality is straight
@@ -17,7 +17,7 @@ def assert_file_executable(fname):
 
     """
     if not fname:
-        raise IOError("No executable provided!")
+        return "No executable provided!"
     fname = os.path.expanduser(fname)
 
     potential_executables = [os.path.abspath(fname)]
@@ -28,7 +28,8 @@ def assert_file_executable(fname):
         ]
 
     if not any(map(os.path.isfile, potential_executables)):
-        raise IOError(f"{fname} is not a file!")
+        return f"{fname} is not a file!"
 
     if not any(os.access(fn, os.X_OK) for fn in potential_executables):
-        raise IOError(f"{fname} is not an executable!")
+        return f"{fname} is not an executable!"
+    return ""
