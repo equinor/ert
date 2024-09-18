@@ -14,6 +14,7 @@ from .forward_model_step import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
@@ -62,6 +63,7 @@ __all__ = [
     "ForwardModelStepJSON",
     "ForwardModelStepPlugin",
     "ForwardModelStepValidationError",
+    "ForwardModelStepWarning",
     "GenDataConfig",
     "GenKwConfig",
     "HookRuntime",
