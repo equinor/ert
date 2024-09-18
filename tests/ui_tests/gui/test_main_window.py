@@ -387,12 +387,9 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        combo_box.setCurrentIndex(5)
+        combo_box.setCurrentIndex(3)
 
-        assert (
-            combo_box.currentText()
-            == "Multiple Data Assimilation (ES MDA) - Recommended"
-        )
+        assert combo_box.currentText() == "Multiple data assimilation"
 
         es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
@@ -754,12 +751,9 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
         assert combo_box.count() == 7
-        combo_box.setCurrentIndex(5)
+        combo_box.setCurrentIndex(3)
 
-        assert (
-            combo_box.currentText()
-            == "Multiple Data Assimilation (ES MDA) - Recommended"
-        )
+        assert combo_box.currentText() == "Multiple data assimilation"
 
         es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
