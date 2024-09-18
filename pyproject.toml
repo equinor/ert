@@ -8,13 +8,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ert"
 authors = [
-  {name = "Equinor ASA", email = "fg_sib-scout@equinor.com"},
+    { name = "Equinor ASA", email = "fg_sib-scout@equinor.com" },
 ]
 description = "Ensemble based Reservoir Tool (ERT)"
 requires-python = ">=3.8"
 readme = "README.md"
-license = {text = "GPL-3.0"}
-classifiers=[
+license = { text = "GPL-3.0" }
+classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
     "Intended Audience :: Science/Research",
@@ -30,7 +30,7 @@ classifiers=[
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dynamic = ["version"]
-dependencies=[
+dependencies = [
     "aiohttp",
     "backports-datetime_fromisoformat; python_version < '3.11'",
     "cryptography",
@@ -41,7 +41,7 @@ dependencies=[
     "filelock",
     "httpx",
     "humanize",
-    "importlib_resources;python_version <= '3.8'",
+    "importlib_resources; python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
     "jinja2",
     "lark",
@@ -66,7 +66,7 @@ dependencies=[
     "scipy >= 1.10.1",
     "seaborn",
     "tables; python_version >= '3.9'",  # extra dependency for pandas (hdf5)
-    "tables<3.9;python_version == '3.8'",
+    "tables<3.9; python_version == '3.8'",
     "tabulate",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
@@ -128,7 +128,7 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
-    "types-psutil"
+    "types-psutil",
 ]
 
 [tool.setuptools]
@@ -159,31 +159,32 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
-  "W",  # pycodestyle
-  "I",  # isort
-  "B",  # flake-8-bugbear
-  "SIM",  # flake-8-simplify
-  "F",  # pyflakes
-  "PL",  # pylint
-  "NPY",  # numpy specific rules
-  "C4",  # flake8-comprehensions
-  "ASYNC",  # flake8-async
-  "RUF",  # ruff specific rules
+    "W",     # pycodestyle
+    "I",     # isort
+    "B",     # flake-8-bugbear
+    "SIM",   # flake-8-simplify
+    "F",     # pyflakes
+    "PL",    # pylint
+    "NPY",   # numpy specific rules
+    "C4",    # flake8-comprehensions
+    "ASYNC", # flake8-async
+    "RUF",   # ruff specific rules
 ]
 preview = true
-ignore = ["PLW2901",  # redefined-loop-name
-          "PLR2004",  # magic-value-comparison
-          "PLR0915",  # too-many-statements
-          "PLR0912",  # too-many-branches
-          "PLR0911",  # too-many-return-statements
-          "PLC2701",  # import-private-name
-          "PLR6201",  # literal-membership
-          "PLR0914",  # too-many-locals
-          "PLR6301",  # no-self-use
-          "PLW1641",  # eq-without-hash
-          "PLR0904",  # too-many-public-methods
-          "PLR1702",  # too-many-nested-blocks
-          "PLW3201",  # bad-dunder-method-name
+ignore = [
+    "PLW2901", # redefined-loop-name
+    "PLR2004", # magic-value-comparison
+    "PLR0915", # too-many-statements
+    "PLR0912", # too-many-branches
+    "PLR0911", # too-many-return-statements
+    "PLC2701", # import-private-name
+    "PLR6201", # literal-membership
+    "PLR0914", # too-many-locals
+    "PLR6301", # no-self-use
+    "PLW1641", # eq-without-hash
+    "PLR0904", # too-many-public-methods
+    "PLR1702", # too-many-nested-blocks
+    "PLW3201", # bad-dunder-method-name
 ]
 
 # Allow EN DASH (U+2013)
@@ -191,13 +192,13 @@ allowed-confusables = ["–"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = [
-"PLW0603",  # global-statement
-"RUF029",  # unused-async
-"RUF018",  # assignment-in-assert
-"RUF006",  # asyncio-dangling-task
+    "PLW0603", # global-statement
+    "RUF029",  # unused-async
+    "RUF018",  # assignment-in-assert
+    "RUF006",  # asyncio-dangling-task
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
-"src/ert/dark_storage/*" = ["RUF029"]  # unused-async
+"src/ert/dark_storage/*" = ["RUF029"] # unused-async
 
 [tool.ruff.lint.pylint]
 max-args = 20
