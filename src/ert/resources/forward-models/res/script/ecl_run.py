@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
 from random import random
+from typing import List
 
 import resfo
 from ecl_config import EclConfig, EclrunConfig, Simulator
@@ -18,7 +19,11 @@ from packaging import version
 
 class EclError(RuntimeError):
     def failed_due_to_license_problems(self) -> bool:
-        return "LICENSE ERROR" in self.args[0] or "LICENSE FAILURE" in self.args[0]
+        return (
+            "LICENSE ERROR" in self.args[0]
+            or "LICENSE FAILURE" in self.args[0]
+            or "not allowed in license" in self.args[0]
+        )
 
 
 def await_process_tee(process, *out_files) -> int:
@@ -53,7 +58,8 @@ def await_process_tee(process, *out_files) -> int:
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
-error_pattern = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
+error_pattern_e100 = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
+error_pattern_e300 = rf"^\s@--Error${body_sub_pattern}"
 
 
 def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
@@ -498,23 +504,26 @@ class EclRun:
 
         return EclipseResult(errors=errors, bugs=bugs)
 
-    def parseErrors(self):
+    def parseErrors(self) -> List[str]:
+        """Extract multiline ERROR messages from the PRT file"""
         prt_file = os.path.join(self.runPath(), f"{self.baseName()}.PRT")
         error_list = []
-        error_regexp = re.compile(error_pattern, re.MULTILINE)
+        error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)
+        error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
         with open(prt_file, "r", encoding="utf-8") as filehandle:
             content = filehandle.read()
 
-        offset = 0
-        while True:
-            match = error_regexp.search(content[offset:])
-            if match:
-                error_list.append(
-                    content[offset + match.start() : offset + match.end()]
-                )
-                offset += match.end()
-            else:
-                break
+        for regexp in [error_e100_regexp, error_e300_regexp]:
+            offset = 0
+            while True:
+                match = regexp.search(content[offset:])
+                if match:
+                    error_list.append(
+                        content[offset + match.start() : offset + match.end()]
+                    )
+                    offset += match.end()
+                else:
+                    break
 
         return error_list
 
