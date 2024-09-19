@@ -390,3 +390,112 @@ def test_ecl300_crash_is_not_mistaken_as_license_trouble():
     with pytest.raises(ecl_run.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_license_error_in_slave_is_caught():
+    """If a coupled Eclipse model fails in one of the slave runs
+    due to license issues, there is no trace of licence in the master PRT file.
+
+    The master PRT file must be trace for the paths to the SLAVE runs
+    and then those PRT files must be parsed.
+
+    Note that the name of the DATA file is truncated in the MESSAGE listing
+    the slaves.
+    """
+    Path("slave1").mkdir()
+    Path("slave2").mkdir()
+    master_prt_error = f"""\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           {os.getcwd()}/slave1
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE2   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           {os.getcwd()}/slave2
+
+<various_output>
+
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           SLAVE RUN SLAVE2   HAS STOPPED WITH AN ERROR CONDITION.
+ @           MASTER RUN AND REMAINING SLAVES WILL ALSO STOP.
+ """
+    master_eclend = """
+ Error summary
+ Comments               1
+ Warnings               1
+ Problems               0
+ Errors                 1
+ Bugs                   0"""
+
+    Path("EIGHTCELLS_MASTER.PRT").write_text(
+        master_prt_error + "\n" + master_eclend, encoding="utf-8"
+    )
+    Path("EIGHTCELLS_MASTER.ECLEND").write_text(master_eclend, encoding="utf-8")
+
+    slave_prt_error = """\
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           LICENSE ERROR -15 FOR MULTI-SEGMENT WELL OPTION
+ @           FEATURE IS INVALID. CHECK YOUR LICENSE FILE AND
+ @           THE LICENSE LOG FILE
+    """
+    Path("slave1/EIGHTCELLS_SLAVE.PRT").write_text("", encoding="utf-8")
+    Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
+    Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("EIGHTCELLS_MASTER.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert exception_info.value.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_crash_in_slave_is_not_mistaken_as_license():
+    Path("slave1").mkdir()
+    Path("slave2").mkdir()
+    master_prt_error = f"""\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           {os.getcwd()}/slave1
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE2   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           {os.getcwd()}/slave2
+
+<various_output>
+
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           SLAVE RUN SLAVE2   HAS STOPPED WITH AN ERROR CONDITION.
+ @           MASTER RUN AND REMAINING SLAVES WILL ALSO STOP.
+ """
+    master_eclend = """
+ Error summary
+ Comments               1
+ Warnings               1
+ Problems               0
+ Errors                 1
+ Bugs                   0"""
+
+    Path("EIGHTCELLS_MASTER.PRT").write_text(
+        master_prt_error + "\n" + master_eclend, encoding="utf-8"
+    )
+    Path("EIGHTCELLS_MASTER.ECLEND").write_text(master_eclend, encoding="utf-8")
+
+    slave_prt_error = """\
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           NON-LINEAR CONVERGENCE FAILURE
+    """
+    Path("slave1/EIGHTCELLS_SLAVE.PRT").write_text("", encoding="utf-8")
+    Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
+    Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("EIGHTCELLS_MASTER.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert not exception_info.value.failed_due_to_license_problems()
