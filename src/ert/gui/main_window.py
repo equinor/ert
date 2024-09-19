@@ -4,7 +4,7 @@ import functools
 import webbrowser
 from typing import TYPE_CHECKING, Dict, Optional
 
-from qtpy.QtCore import QSettings, Qt, Signal
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
     QAction,
@@ -75,7 +75,6 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu = view_menu
         self.__add_tools_menu()
         self.__add_help_menu()
-        self.__fetchSettings()
 
     def addDock(
         self,
@@ -138,30 +137,12 @@ class ErtMainWindow(QMainWindow):
         self._workflows_tool.setParent(self)
         tools_menu.addAction(self._workflows_tool.getAction())
 
-    def __saveSettings(self) -> None:
-        settings = QSettings("Equinor", "Ert-Gui")
-        settings.setValue("geometry", self.saveGeometry())
-        settings.setValue("windowState", self.saveState())
-
     def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
-        # Use QT settings saving mechanism
-        # settings stored in ~/.config/Equinor/ErtGui.conf
-
         if closeEvent is not None and self.notifier.is_simulation_running:
             closeEvent.ignore()
         else:
-            self.__saveSettings()
             self.close_signal.emit()
             QMainWindow.closeEvent(self, closeEvent)
-
-    def __fetchSettings(self) -> None:
-        settings = QSettings("Equinor", "Ert-Gui")
-        geo = settings.value("geometry")
-        if geo:
-            self.restoreGeometry(geo)
-        wnd = settings.value("windowState")
-        if wnd:
-            self.restoreState(wnd)
 
     def setWidget(self, widget: QWidget) -> None:
         actions = widget.getActions()
