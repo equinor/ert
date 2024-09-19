@@ -523,7 +523,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
     def __init__(self):
         super().__init__()
-        self.tmpdir = tempfile.mkdtemp()
+        self.tmpdir = tempfile.mkdtemp(prefix="StatefulStorageTest")
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
         self.model: Dict[UUID, Experiment] = {}
         assert list(self.storage.ensembles) == []
