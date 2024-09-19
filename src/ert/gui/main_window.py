@@ -15,9 +15,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
+from ert.gui.tools.export import ExportTool
+from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 
 if TYPE_CHECKING:
@@ -28,11 +31,15 @@ class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
     def __init__(
-        self, config_file: str, plugin_manager: Optional[ErtPluginManager] = None
+        self,
+        config_file: str,
+        ertconfig: ErtConfig,
+        plugin_manager: Optional[ErtPluginManager] = None,
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
         self.tools: Dict[str, Tool] = {}
+        self.ertconfig = ertconfig
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
 
@@ -66,6 +73,7 @@ class ErtMainWindow(QMainWindow):
         view_menu = menuBar.addMenu("&View")
         assert view_menu is not None
         self.__view_menu = view_menu
+        self.__add_tools_menu()
         self.__add_help_menu()
         self.__fetchSettings()
 
@@ -116,6 +124,20 @@ class ErtMainWindow(QMainWindow):
         show_about.setObjectName("about_action")
         show_about.triggered.connect(self.__showAboutMessage)
 
+    def __add_tools_menu(self) -> None:
+        menu_bar = self.menuBar()
+        assert menu_bar is not None
+        tools_menu = menu_bar.addMenu("&Tools")
+        assert tools_menu is not None
+
+        self._export_tool = ExportTool(self.ertconfig, self.notifier)
+        self._export_tool.setParent(self)
+        tools_menu.addAction(self._export_tool.getAction())
+
+        self._workflows_tool = WorkflowsTool(self.ertconfig, self.notifier)
+        self._workflows_tool.setParent(self)
+        tools_menu.addAction(self._workflows_tool.getAction())
+
     def __saveSettings(self) -> None:
         settings = QSettings("Equinor", "Ert-Gui")
         settings.setValue("geometry", self.saveGeometry())
@@ -142,9 +164,9 @@ class ErtMainWindow(QMainWindow):
             self.restoreState(wnd)
 
     def setWidget(self, widget: QWidget) -> None:
-        # actions = widget.getActions()
-        # for action in actions:
-        #     self.__view_menu.addAction(action)
+        actions = widget.getActions()
+        for action in actions:
+            self.__view_menu.addAction(action)
 
         self.central_layout.addWidget(widget)
 

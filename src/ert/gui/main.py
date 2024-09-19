@@ -32,12 +32,10 @@ from ert.gui.tools.event_viewer import (
     GUILogHandler,
     add_gui_log_handler,
 )
-from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
-from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
@@ -191,7 +189,7 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     facade = LibresFacade(config)
     config_file = args.config
-    window = ErtMainWindow(config_file, plugin_manager)
+    window = ErtMainWindow(config_file, config, plugin_manager)
     window.notifier.set_storage(storage)
     experiment_panel = ExperimentPanel(
         config, window.notifier, config_file, facade.get_ensemble_size()
@@ -224,13 +222,13 @@ def _setup_main_window(
     experiment_panel.experiment_started.connect(sidepanel.slot_add_widget)
 
     window.addTool(PlotTool(config_file, window))
-    window.addTool(ExportTool(config, window.notifier))
-    window.addTool(WorkflowsTool(config, window.notifier))
+
     window.addTool(
         ManageExperimentsTool(
             config, window.notifier, config.model_config.num_realizations
         )
     )
+
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
     window.addTool(LoadResultsTool(facade, window.notifier))
     event_viewer = EventViewerTool(log_handler, config_file)

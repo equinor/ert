@@ -322,9 +322,9 @@ class ExperimentPanel(QWidget):
         self.run_button.setEnabled(False)
         dialog.run_experiment()
 
-        if self._main_frame:
-            dialog.setParent(self._main_frame)
-            self._main_frame.setWidget(dialog)
+        # if self._main_frame:
+        #     dialog.setParent(self._main_frame)
+        #     self._main_frame.setWidget(dialog)
 
         dialog.show()
         self.hide()
