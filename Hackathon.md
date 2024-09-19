@@ -23,6 +23,8 @@
 
 ## Technical details
 
+:warning: This is a higly experimental and hacky branch, expect things to break!
+
 ### Starting the experiment server:
 ```bash
 fastapi run src/ert/experiment_server/main.py
