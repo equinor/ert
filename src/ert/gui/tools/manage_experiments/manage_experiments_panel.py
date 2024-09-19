@@ -8,6 +8,7 @@ from qtpy.QtCore import QEvent, QModelIndex, QObject, Qt
 from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPushButton,
     QTableView,
     QTabWidget,
@@ -198,14 +199,25 @@ class ManageExperimentsPanel(QTabWidget):
         return super().eventFilter(a0, a1)
 
     def _add_initialize_from_design_matrix_tab(self) -> None:
+        assert self.ert_config.analysis_config.design_matrix is not None  # for mypy
+        try:
+            design_matrix = read_design_matrix(
+                self.ert_config,
+                self.ert_config.analysis_config.design_matrix,
+            )
+        except (ValueError, KeyError, OSError) as err:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                (
+                    "The following issue where found when attempting to read the "
+                    f'design matrix: "{err}"'
+                ),
+            )
+            return
         panel = QWidget()
         panel.setObjectName("initialize_from_design_matrix_panel")
         layout = QVBoxLayout()
-        assert self.ert_config.analysis_config.design_matrix is not None  # for mypy
-        design_matrix = read_design_matrix(
-            self.ert_config,
-            self.ert_config.analysis_config.design_matrix,
-        )
         view = QTableView()
         self.pandas_model = DFModel(design_matrix)
         view.setModel(self.pandas_model)
@@ -223,15 +235,25 @@ class ManageExperimentsPanel(QTabWidget):
             )
             create_experiment_dialog.show()
             if create_experiment_dialog.exec_():
-                ensemble = initialize_parameters(
-                    self.pandas_model._df,
-                    self.notifier.storage,
-                    self.ert_config,
-                    exp_name=create_experiment_dialog.experiment_name,
-                    ens_name=create_experiment_dialog.ensemble_name,
-                )
-                self.notifier.set_current_ensemble(ensemble)
-                self.notifier.ertChanged.emit()
+                try:
+                    ensemble = initialize_parameters(
+                        self.pandas_model._df,
+                        self.notifier.storage,
+                        self.ert_config,
+                        exp_name=create_experiment_dialog.experiment_name,
+                        ens_name=create_experiment_dialog.ensemble_name,
+                    )
+                    self.notifier.set_current_ensemble(ensemble)
+                    self.notifier.ertChanged.emit()
+                except (ValueError, KeyError, OSError) as err:
+                    QMessageBox.warning(
+                        self,
+                        "Warning",
+                        (
+                            "Something went wrong when initializing the ensemble "
+                            f'got "{err}"'
+                        ),
+                    )
 
         initialize_button.clicked.connect(initializeFromDesignMatrix)
 
