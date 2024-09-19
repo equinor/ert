@@ -15,11 +15,13 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.tools.export import ExportTool
+from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 
@@ -136,6 +138,11 @@ class ErtMainWindow(QMainWindow):
         self._workflows_tool = WorkflowsTool(self.ertconfig, self.notifier)
         self._workflows_tool.setParent(self)
         tools_menu.addAction(self._workflows_tool.getAction())
+
+        facade = LibresFacade(self.ertconfig)
+        self._load_results_tool = LoadResultsTool(facade, self.notifier)
+        self._load_results_tool.setParent(self)
+        tools_menu.addAction(self._load_results_tool.getAction())
 
     def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
         if closeEvent is not None and self.notifier.is_simulation_running:

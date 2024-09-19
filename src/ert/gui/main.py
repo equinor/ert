@@ -32,7 +32,6 @@ from ert.gui.tools.event_viewer import (
     GUILogHandler,
     add_gui_log_handler,
 )
-from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
@@ -228,11 +227,6 @@ def _setup_main_window(
             config, window.notifier, config.model_config.num_realizations
         )
     )
-
     window.addTool(PluginsTool(plugin_handler, window.notifier, config))
-    window.addTool(LoadResultsTool(facade, window.notifier))
-    event_viewer = EventViewerTool(log_handler, config_file)
-    window.addTool(event_viewer)
-    window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()
     return window
