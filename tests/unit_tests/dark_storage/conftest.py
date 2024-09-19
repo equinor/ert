@@ -57,6 +57,14 @@ def dark_storage_client(monkeypatch):
 
 
 @pytest.fixture
+def dark_storage_client_snake_oil(monkeypatch):
+    with dark_storage_app_(monkeypatch) as dark_app:
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage/snake_oil/ensemble")
+        with TestClient(dark_app) as client:
+            yield client
+
+
+@pytest.fixture
 def env(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
 

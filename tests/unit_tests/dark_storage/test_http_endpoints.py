@@ -116,6 +116,38 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
+def test_get_summary_response(
+    copy_snake_oil_case_storage, dark_storage_client_snake_oil
+):
+    resp: Response = dark_storage_client_snake_oil.get("/experiments")
+    experiment_json = resp.json()
+
+    assert len(experiment_json) == 1
+
+    # ensemble_experiment, so only 1 ensemble
+    assert len(experiment_json[0]["ensemble_ids"]) == 1
+
+    ensemble_id = experiment_json[0]["ensemble_ids"][0]
+
+    resp_ensemble: Response = dark_storage_client_snake_oil.get(
+        f"/ensembles/{ensemble_id}"
+    ).json()
+    userdata = resp_ensemble["userdata"]
+
+    assert resp_ensemble["size"] == 5
+    assert userdata == {"name": "default_0", "experiment_name": "ensemble-experiment"}
+
+    resp_response: Response = dark_storage_client_snake_oil.get(
+        f"/ensembles/{ensemble_id}/records/FOPR",
+        headers={"accept": "text/csv"},
+    )
+    stream = io.BytesIO(resp_response.content)
+    record_df = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+    assert len(record_df.columns) == 200
+    assert len(record_df.index) == 5
+
+
+@pytest.mark.integration_test
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
