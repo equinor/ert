@@ -66,7 +66,7 @@ class DFModel(QtCore.QAbstractTableModel):
             orientation == Qt.Orientation.Horizontal
             and role == Qt.ItemDataRole.DisplayRole
         ):
-            return "\n".join(self._df.columns[section])
+            return self._df.columns[section]
         return QtCore.QVariant()
 
 

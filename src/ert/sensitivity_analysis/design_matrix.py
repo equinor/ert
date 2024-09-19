@@ -47,7 +47,7 @@ def read_design_matrix(
             design_matrix_sheet[k] = v
 
     # ignoring errors here is deprecated in pandas, should find another solution
-    design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
+    # design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
 
     existing_parameters = {
         param.name
@@ -132,7 +132,6 @@ def _read_excel(
     dframe: pd.DataFrame = pd.read_excel(
         file_name,
         sheet_name,
-        dtype=str,
         usecols=usecols,
         header=header,
     )
