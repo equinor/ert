@@ -293,11 +293,36 @@ def test_ecl100_license_error_is_caught():
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
     run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
-    try:
+    with pytest.raises(ecl_run.EclError) as exception_info:
         run.assertECLEND()
-        raise AssertionError("EclError not raised")
-    except ecl_run.EclError as err:
-        assert err.failed_due_to_license_problems()
+    assert exception_info.value.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ecl100_crash_is_not_mistaken_as_license_trouble():
+    prt_error = """\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           CHECKING FOR LICENSES
+
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           NON-LINEAR CONVERGENCE FAILURE"""
+    eclend = """\
+ Error summary
+ Comments               0
+ Warnings               0
+ Problems               0
+ Errors                 1
+ Bugs                   0
+ Final cpu       0.00 elapsed       0.08"""
+
+    Path("FOO.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
+    Path("FOO.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert not exception_info.value.failed_due_to_license_problems()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
