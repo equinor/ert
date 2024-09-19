@@ -54,5 +54,5 @@ class SingleTestRun(EnsembleExperiment):
         return "Sample parameters → evaluate single realization"
 
     @classmethod
-    def group(cls) -> None:
+    def group(cls) -> Optional[str]:
         return SINGLE_TEST_RUN_GROUP
