@@ -17,6 +17,7 @@
 - Create a GUI for ERT using Svelte, React or the web-framework of your choice
 - Add Workflow status to the GUI (either in existing GUI, or something new)
 - Make a mobile app for ERT showing the experiment status
+- Add support for multiple users to experiment server
 - Create a visualization of an experiment config (what is sent to the server), for example showing the jobs, settings etc.
 - Create a new configuration for ERT
 - ... or anything cool you can think of related to ERT, experiments, GUI, events, etc. :tada:
