@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,9 +11,10 @@ from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 if TYPE_CHECKING:
     from ert.config import (
         ErtConfig,
-        ParameterConfig,
     )
     from ert.storage import LocalEnsemble, LocalStorage
+
+DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
 
 def read_design_matrix(
@@ -40,28 +40,27 @@ def read_design_matrix(
     if designsheetname == defaultssheetname:
         raise ValueError("Design-sheet and defaults-sheet can not be the same")
 
+    # This should probably handle/(fill in) missing values in design_matrix_sheet as well
     defaults = _read_defaultssheet(xlsfilename, defaultssheetname)
     for k, v in defaults.items():
         if k not in design_matrix_sheet.columns:
             design_matrix_sheet[k] = v
 
+    # ignoring errors here is deprecated in pandas, should find another solution
     design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
 
-    parameter_groups = defaultdict(list)
-    parameter_map = []
-    for param in design_matrix_sheet.columns:
-        try:
-            # Try to match the parameter name to existing parameter group
-            parameter_name = next(
-                val.name
-                for val in ert_config.ensemble_config.parameter_configuration
-                if isinstance(val, GenKwConfig) and param in val
-            )
-        except StopIteration:
-            parameter_name = "DESIGN_MATRIX"
-        parameter_groups[parameter_name].append(param)
-        parameter_map.append((parameter_name, param))
-    design_matrix_sheet.columns = pd.MultiIndex.from_tuples(parameter_map)
+    existing_parameters = {
+        param.name
+        for param_group in ert_config.ensemble_config.parameter_configuration
+        if isinstance(param_group, GenKwConfig)
+        for param in param_group.transform_function_definitions
+    }
+    intersect = existing_parameters.intersection(set(design_matrix_sheet.columns))
+    # This errors if parameters exists already, this behaviour should be discussed.
+    if intersect:
+        msg = "The following parameters were specified both"
+        f"as gen_kw and in the design matrix: {intersect}"
+        raise ValueError(msg)
     return design_matrix_sheet
 
 
@@ -72,37 +71,30 @@ def initialize_parameters(
     exp_name: str,
     ens_name: str,
 ) -> LocalEnsemble:
-    existing_parameters = ert_config.ensemble_config.parameter_configs
-    parameter_configs: list[ParameterConfig] = []
-    for parameter_group in design_matrix_sheet.columns.get_level_values(0).unique():
-        parameters = design_matrix_sheet[parameter_group].columns
-        transform_function_definitions: list[TransformFunctionDefinition] = []
-        for param in parameters:
-            transform_function_definitions.append(
-                TransformFunctionDefinition(
-                    name=param,
-                    param_name="RAW",
-                    values=[],
-                )
-            )
-        existing = existing_parameters.get(parameter_group)
-        parameter_configs.append(
-            GenKwConfig(
-                name=parameter_group,
-                forward_init=False,
-                template_file=existing.template_file
-                if isinstance(existing, GenKwConfig)
-                else None,
-                output_file=existing.output_file
-                if isinstance(existing, GenKwConfig)
-                else None,
-                transform_function_definitions=transform_function_definitions,
-                update=False,
+    existing_parameters = ert_config.ensemble_config.parameter_configuration
+    parameters = design_matrix_sheet.columns
+    transform_function_definitions: list[TransformFunctionDefinition] = []
+    for param in parameters:
+        transform_function_definitions.append(
+            TransformFunctionDefinition(
+                name=param,
+                param_name="RAW",
+                values=[],
             )
         )
+    existing_parameters.append(
+        GenKwConfig(
+            name=DESIGN_MATRIX_GROUP,
+            forward_init=False,
+            template_file=None,
+            output_file=None,
+            transform_function_definitions=transform_function_definitions,
+            update=False,
+        )
+    )
 
     experiment = storage.create_experiment(
-        parameters=parameter_configs,
+        parameters=existing_parameters,
         responses=ert_config.ensemble_config.response_configuration,
         observations=ert_config.observations,
         name=exp_name,
@@ -110,19 +102,18 @@ def initialize_parameters(
     ensemble = storage.create_ensemble(
         experiment,
         name=ens_name,
-        ensemble_size=max(design_matrix_sheet.index),
+        ensemble_size=len(design_matrix_sheet.index),
     )
-    for i in range(len(design_matrix_sheet)):
-        for parameter_group in experiment.parameter_configuration:
-            row: pd.Series = design_matrix_sheet.iloc[i][parameter_group]
-            ds = xr.Dataset(
-                {
-                    "values": ("names", list(row.to_numpy())),
-                    "transformed_values": ("names", list(row.to_numpy())),
-                    "names": list(row.keys()),
-                }
-            )
-            ensemble.save_parameters(parameter_group, i, ds)
+    for i in design_matrix_sheet.index:
+        row: pd.Series = design_matrix_sheet.iloc[i]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.to_numpy())),
+                "transformed_values": ("names", list(row.to_numpy())),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters(DESIGN_MATRIX_GROUP, i, ds)
     return ensemble
 
 
