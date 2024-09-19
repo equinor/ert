@@ -42,8 +42,10 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
     if "PSUM" in keyword:
         n = int(keyword[4:])
         if n < poly_ran["sum_obs_count"]:
-            count = poly_ran["summary_data_entries"] // poly_ran["sum_obs_every"]
-            assert len(obs) == count
+            num_summary_obs = poly_ran["sum_obs_count"] * (
+                poly_ran["summary_data_entries"] // poly_ran["sum_obs_every"]
+            )
+            assert len(obs) == num_summary_obs
             assert obs[0].errors[0] == 0.1
             assert obs[0].x_axis[0] == "2010-01-02T00:00:00.000000000"
             assert obs[0].values[0] == 2.6357
@@ -56,11 +58,12 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
     elif "POLY_RES_" in keyword:
         n = int(keyword.split("@")[0][9:])
         if n < poly_ran["gen_obs_count"]:
-            count = poly_ran["gen_data_entries"] // poly_ran["gen_obs_every"]
-            assert len(obs) == count
-            assert len(obs[0].errors) == 1
-            assert len(obs[0].x_axis) == 1
-            assert len(obs[0].values) == 1
+            num_general_obs = poly_ran["gen_obs_count"]
+            rows_per_obs = poly_ran["gen_data_entries"] // poly_ran["gen_obs_every"]
+            assert len(obs) == num_general_obs
+            assert len(obs[0].errors) == rows_per_obs
+            assert len(obs[0].x_axis) == rows_per_obs
+            assert len(obs[0].values) == rows_per_obs
         else:
             assert len(obs) == 0
     else:
