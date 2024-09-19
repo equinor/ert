@@ -33,6 +33,18 @@ from ert.plugins import ErtPluginManager
 if TYPE_CHECKING:
     from ert.gui.tools import Tool
 
+BUTTON_STYLE_SHEET: str = """
+    QPushButton {
+    border: 2px solid darkgrey;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0);
+    padding-bottom: 10px;
+    }
+    QPushButton:hover {
+       background-color: rgba(255, 255, 255, 200);
+    }
+"""
+
 
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
@@ -110,16 +122,7 @@ class ErtMainWindow(QMainWindow):
         button.setFixedSize(80, 80)
         button.setIcon(QIcon("img:play_circle_outlined.svg"))
         button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setStyleSheet(
-            """
-            QPushButton {
-            border: 2px solid darkgrey;
-            border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0);
-            padding-bottom: 10px;
-            }
-            """
-        )
+        button.setStyleSheet(BUTTON_STYLE_SHEET)
         padding = 30
         button.setIconSize(
             QSize(button.size().width() - padding, button.size().height() - padding)
@@ -133,16 +136,7 @@ class ErtMainWindow(QMainWindow):
         button.setFixedSize(80, 80)
         button.setIcon(tool.getIcon())
         button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setStyleSheet(
-            """
-            QPushButton {
-            border: 2px solid darkgrey;
-            border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0);
-            padding-bottom: 10px;
-            }
-            """
-        )
+        button.setStyleSheet(BUTTON_STYLE_SHEET)
         padding = 30
         button.setIconSize(
             QSize(button.size().width() - padding, button.size().height() - padding)
