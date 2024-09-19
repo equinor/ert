@@ -14,6 +14,7 @@ concurrency:
 
 env:
   NO_PROJECT_RES: 1
+  UV_SYSTEM_PYTHON: 1
 
 jobs:
   tests:
@@ -23,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.11', '3.12']
-        os: [ubuntu-22.04]
+        os: [ubuntu-latest]
         test_type: ['doc', 'ui-test', 'test', 'integration-test', 'everest-models-test']
     runs-on: ${{ matrix.os }}
     steps:
@@ -34,11 +35,13 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: "pip"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install Everest and dependencies
       run: |
-        pip install ".[dev,everest]"
+        uv pip install ".[dev,everest]"
 
     - name: Run Tests
       if: matrix.test_type == 'test'
@@ -60,14 +63,14 @@ jobs:
     - name: Build Documentation
       if: matrix.test_type == 'doc'
       run: |
-        pip install git+https://github.com/equinor/everest-models.git
+        uv pip install git+https://github.com/equinor/everest-models.git
         mkdir tmp
         sphinx-build -n -v -E -W ./docs/everest ./tmp/everest_docs
 
     - name: Run tests requiring everest-models
       if: matrix.test_type == 'everest-models-test'
       run: |
-        pip install git+https://github.com/equinor/everest-models.git
+        uv pip install git+https://github.com/equinor/everest-models.git
         python -m pytest tests -n 4 -m everest_models_test --dist loadgroup
 
     - name: Test docs entry point
