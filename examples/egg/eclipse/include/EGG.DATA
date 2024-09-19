@@ -83,6 +83,15 @@ TOPS
 INCLUDE
  '../include/grid/PERM.INC' /
 
+COPY
+PERMX PERMY /
+PERMX PERMZ /
+/
+
+MULTIPLY
+PERMZ 0.1 /
+/
+
 NTG
   25200*1 /
 
