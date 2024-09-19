@@ -40,7 +40,7 @@ class CreateExperimentDialog(QDialog):
         self._experiment_edit = StringBox(
             TextModel(""),
             placeholder_text=notifier.storage.get_unique_experiment_name(
-                "My_experiment"
+                "new_experiment"
             ),
             minimum_width=200,
         )
@@ -49,7 +49,7 @@ class CreateExperimentDialog(QDialog):
         ensemble_label = QLabel("Ensemble name:")
         self._ensemble_edit = StringBox(
             TextModel(""),
-            placeholder_text=notifier.storage.get_unique_experiment_name("My_ensemble"),
+            placeholder_text=notifier.storage.get_unique_experiment_name("ensemble"),
             minimum_width=200,
         )
         self._ensemble_edit.setValidator(ProperNameArgument())
