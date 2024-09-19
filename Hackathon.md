@@ -31,7 +31,7 @@
 fastapi run src/ert/experiment_server/main.py
 ```
 
-You can now see the documentation be visiting: http://127.0.0.1:8000/docs
+You can now see the documentation by visiting: http://127.0.0.1:8000/docs
 
 Note that the websocket endpoint (`"ws://127.0.0.1:8000/experiments/{experiment_id}/events"`) will not show up in the documentation.
 
