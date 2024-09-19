@@ -1,5 +1,28 @@
 # ERT GUI Hackathon
 
+## Event Details
+
+### Program
+
+```text
+09:00 - 09:30 - Intro and selection of groups
+09:30 - 11:00 - Hack
+11:00 - 11:30 - Lunch
+11:30 - 14:30 - Hack
+14:30 - 15:00 - Demo
+```
+
+### Task suggestions
+
+- Create a GUI for ERT using Svelte, React or the web-framework of your choice
+- Add Workflow status to the GUI (either in existing GUI, or something new)
+- Make a mobile app for ERT showing the experiment status
+- Create a visualization of an experiment config (what is sent to the server), for example showing the jobs, settings etc.
+- Create a new configuration for ERT
+- ... or anything cool you can think of related to ERT, experiments, GUI, events, etc. :tada:
+
+## Technical details
+
 ### Starting the experiment server:
 ```bash
 fastapi run src/ert/experiment_server/main.py
