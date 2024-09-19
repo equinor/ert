@@ -1,4 +1,5 @@
 import datetime
+import glob
 import os
 import os.path
 import re
@@ -9,6 +10,7 @@ import time
 from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
+from pathlib import Path
 from random import random
 from typing import List
 
@@ -17,13 +19,30 @@ from ecl_config import EclConfig, EclrunConfig, Simulator
 from packaging import version
 
 
+def ecl_output_has_license_error(ecl_output: str):
+    return (
+        "LICENSE ERROR" in ecl_output
+        or "LICENSE FAILURE" in ecl_output
+        or "not allowed in license" in ecl_output
+    )
+
+
 class EclError(RuntimeError):
     def failed_due_to_license_problems(self) -> bool:
-        return (
-            "LICENSE ERROR" in self.args[0]
-            or "LICENSE FAILURE" in self.args[0]
-            or "not allowed in license" in self.args[0]
-        )
+        # self.args[0] contains the multiline ERROR messages and SLAVE startup messages
+        if ecl_output_has_license_error(self.args[0]):
+            return True
+        if re.search(a_slave_failed_pattern, self.args[0]):
+            for match in re.finditer(slave_run_paths, self.args[0], re.MULTILINE):
+                (ecl_case_starts_with, ecl_case_dir) = match.groups()
+                for prt_file in glob.glob(
+                    f"{ecl_case_dir}/{ecl_case_starts_with}*.PRT"
+                ):
+                    if ecl_output_has_license_error(
+                        Path(prt_file).read_text(encoding="utf-8")
+                    ):
+                        return True
+        return False
 
 
 def await_process_tee(process, *out_files) -> int:
@@ -60,6 +79,12 @@ body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
 error_pattern_e100 = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
 error_pattern_e300 = rf"^\s@--Error${body_sub_pattern}"
+slave_started_pattern = (
+    rf"^\s@--MESSAGE{date_sub_pattern}\s^\s@\s+STARTING SLAVE.+${body_sub_pattern}"
+)
+a_slave_failed_pattern = r"\s@\s+SLAVE RUN.*HAS STOPPED WITH AN ERROR CONDITION.\s*"
+slave_run_paths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
+slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"
 
 
 def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
@@ -510,10 +535,11 @@ class EclRun:
         error_list = []
         error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)
         error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
+        slave_started_regexp = re.compile(slave_started_pattern, re.MULTILINE)
         with open(prt_file, "r", encoding="utf-8") as filehandle:
             content = filehandle.read()
 
-        for regexp in [error_e100_regexp, error_e300_regexp]:
+        for regexp in [error_e100_regexp, error_e300_regexp, slave_started_regexp]:
             offset = 0
             while True:
                 match = regexp.search(content[offset:])
