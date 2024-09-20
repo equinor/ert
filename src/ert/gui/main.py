@@ -27,7 +27,6 @@ from ert.config import (
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
-    EventViewerTool,
     GUILogHandler,
     add_gui_log_handler,
 )
@@ -171,7 +170,7 @@ def _setup_main_window(
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
     config_file = args.config
-    window = ErtMainWindow(config_file, config, plugin_manager)
+    window = ErtMainWindow(config_file, config, plugin_manager, log_handler)
     facade = LibresFacade(config)
     window.notifier.set_storage(storage)
     experiment_panel = ExperimentPanel(

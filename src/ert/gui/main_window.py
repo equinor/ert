@@ -21,6 +21,7 @@ from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
+from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
@@ -53,12 +54,14 @@ class ErtMainWindow(QMainWindow):
         config_file: str,
         ertconfig: ErtConfig,
         plugin_manager: Optional[ErtPluginManager] = None,
+        log_handler: Optional[GUILogHandler] = None,
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
         self.tools: Dict[str, Tool] = {}
         self.ertconfig = ertconfig
         self.config_file = config_file
+        self.log_handler = log_handler
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
 
@@ -152,6 +155,14 @@ class ErtMainWindow(QMainWindow):
         assert menu_bar is not None
         tools_menu = menu_bar.addMenu("&Tools")
         assert tools_menu is not None
+
+        if self.log_handler:
+            self._event_viewer_tool = EventViewerTool(
+                self.log_handler, self.config_file
+            )
+            self._event_viewer_tool.setParent(self)
+            tools_menu.addAction(self._event_viewer_tool.getAction())
+            self.close_signal.connect(self._event_viewer_tool.close_wnd)
 
         self._export_tool = ExportTool(self.ertconfig, self.notifier)
         self._export_tool.setParent(self)
