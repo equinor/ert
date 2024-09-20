@@ -51,7 +51,7 @@ jobs:
     - name: Run Integration Tests
       if: matrix.test_type == 'integration-test'
       run: |
-        pytest tests -n 4 -m "integration_test" --dist loadgroup
+        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup
 
     - name: Run UI Tests
       if: matrix.test_type == 'ui-test'
