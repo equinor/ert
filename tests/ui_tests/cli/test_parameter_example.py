@@ -27,7 +27,11 @@ from .run_cli import run_cli_with_pm
 names = st.text(
     min_size=1,
     max_size=8,
-    alphabet=st.characters(min_codepoint=65, max_codepoint=90),
+    alphabet=st.characters(
+        min_codepoint=33,
+        max_codepoint=126,
+        exclude_characters="\"'$,:%",  # These have specific meaning in configs
+    ),
 )
 
 config_contents = """
@@ -208,12 +212,20 @@ class FieldParameter:
     def outext(self):
         return extension(self.outfformat)
 
+    @property
+    def out_filename(self):
+        return self.name.replace("/", "slash") + "." + self.outext
+
+    @property
+    def in_filename(self):
+        return self.name.replace("/", "slash") + "." + self.inext
+
     def declaration(self):
-        decl = f"FIELD {self.name} PARAMETER {self.name}.{self.outext} "
+        decl = f"FIELD {self.name} PARAMETER {self.out_filename} "
         if self.forward_init:
-            decl += f" FORWARD_INIT:True INIT_FILES:{self.name}.{self.outext} "
+            decl += f" FORWARD_INIT:True INIT_FILES:{self.out_filename} "
         else:
-            decl += f" INIT_FILES:{self.name}%d.{self.inext} "
+            decl += f" INIT_FILES:%d{self.in_filename} "
         if self.min is not None:
             decl += f" MIN:{self.min} "
         if self.max is not None:
@@ -226,28 +238,28 @@ class FieldParameter:
         # If forward_init, a forward model step is expected to produce the
         # init file. The following COPY_FILE is that forward model step.
         if self.forward_init:
-            decl += f'\nFORWARD_MODEL COPY_FILE(<FROM>="../../../{self.name}.{self.outext}",<TO>=.)'
+            decl += f'\nFORWARD_MODEL COPY_FILE(<FROM>="../../../{self.out_filename}",<TO>=.)'
         return decl
 
     def create_file(self, io_source: IoProvider, num_realizations: int):
         if self.forward_init:
             io_source.create_field(
                 self.name,
-                f"{self.name}.{self.outext}",
+                f"{self.out_filename}",
                 self.outfformat,
             )
         else:
             for i in range(num_realizations):
                 io_source.create_field(
-                    self.name, f"{self.name}{i}.{self.inext}", self.infformat
+                    self.name, str(i) + self.in_filename, self.infformat
                 )
 
     def check(self, io_source: IoProvider, mask, num_realizations: int):
         for i in range(num_realizations):
             if self.forward_init:
-                values = io_source.field_values[f"{self.name}.{self.outext}"]
+                values = io_source.field_values[self.out_filename]
             else:
-                values = io_source.field_values[f"{self.name}{i}.{self.inext}"]
+                values = io_source.field_values[str(i) + self.in_filename]
                 if self.input_transform:
                     values = self.input_transform(values)
                 if self.output_transform:
@@ -256,7 +268,7 @@ class FieldParameter:
                     values = np.clip(values, self.min, self.max)
             path = Path(f"simulations/realization-{i}/iter-0")
             read_values = read_field(
-                path / f"{self.name}.{self.outext}",
+                path / self.out_filename,
                 self.name,
                 shape=Shape(*io_source.dims),
                 mask=mask,
@@ -298,41 +310,44 @@ class SurfaceParameter:
     name: str
     forward_init: bool
 
+    @property
+    def filename(self):
+        return self.name.replace("/", "slash") + ".irap"
+
     def declaration(self):
-        filename = self.name + ".irap"
         if self.forward_init:
             return (
-                f"SURFACE {self.name} OUTPUT_FILE:{filename} "
-                f"INIT_FILES:{filename} BASE_SURFACE:BASE{filename} "
+                f"SURFACE {self.name} OUTPUT_FILE:{self.filename} "
+                f"INIT_FILES:{self.filename} BASE_SURFACE:BASE{self.filename} "
                 "FORWARD_INIT:True\n"
                 # If forward_init, a forward model step is expected to produce the
                 # init file. The following COPY_FILE is that forward model step.
-                f'FORWARD_MODEL COPY_FILE(<FROM>="../../../{filename}",<TO>=.)'
+                f'FORWARD_MODEL COPY_FILE(<FROM>="../../../{self.filename}",<TO>=.)'
             )
 
         else:
             return (
-                f"SURFACE {self.name} OUTPUT_FILE:{filename}"
-                f" INIT_FILES:{self.name}%d.irap BASE_SURFACE:BASE{filename}"
+                f"SURFACE {self.name} OUTPUT_FILE:{self.filename}"
+                f" INIT_FILES:%d{self.filename} BASE_SURFACE:BASE{self.filename}"
             )
 
     def create_file(self, io_source: IoProvider, num_realizations: int):
-        io_source.create_surface(f"BASE{self.name}.irap")
+        io_source.create_surface("BASE" + self.filename)
         if self.forward_init:
-            io_source.create_surface(f"{self.name}.irap")
+            io_source.create_surface(self.filename)
         else:
             for i in range(num_realizations):
-                io_source.create_surface(f"{self.name}{i}.irap")
+                io_source.create_surface(str(i) + self.filename)
 
     def check(self, io_source: IoProvider, mask, num_realizations: int):
         for i in range(num_realizations):
             values = io_source.surface_values[
-                f"{self.name}.irap" if self.forward_init else f"{self.name}{i}.irap"
+                self.filename if self.forward_init else str(i) + self.filename
             ]
             path = Path(f"simulations/realization-{i}/iter-0")
             np.testing.assert_allclose(
                 xtgeo.surface_from_file(
-                    path / f"{self.name}.irap",
+                    path / self.filename,
                     "irap_ascii",
                 ).values,
                 values,
