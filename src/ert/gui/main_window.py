@@ -13,7 +13,6 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
     QPushButton,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -27,6 +26,7 @@ from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
+from ert.gui.tools.plugins import PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 
@@ -93,22 +93,6 @@ class ErtMainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        toolbar = self.addToolBar("Tools")
-        assert toolbar is not None
-        self.toolbar = toolbar
-        self.toolbar.setObjectName("Toolbar")
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-
-        self.setCorner(Qt.Corner.TopLeftCorner, Qt.DockWidgetArea.LeftDockWidgetArea)
-        self.setCorner(
-            Qt.Corner.BottomLeftCorner, Qt.DockWidgetArea.BottomDockWidgetArea
-        )
-
-        self.setCorner(Qt.Corner.TopRightCorner, Qt.DockWidgetArea.RightDockWidgetArea)
-        self.setCorner(
-            Qt.Corner.BottomRightCorner, Qt.DockWidgetArea.BottomDockWidgetArea
-        )
-
         menuBar = self.menuBar()
         assert menuBar is not None
         view_menu = menuBar.addMenu("&View")
@@ -162,15 +146,10 @@ class ErtMainWindow(QMainWindow):
         self.__view_menu.addAction(dock_widget.toggleViewAction())
         return dock_widget
 
-    def addTool(self, tool: Tool) -> None:
+    def addTool(self, tool: PluginsTool) -> None:
         tool.setParent(self)
         self.tools[tool.getName()] = tool
-        self.toolbar.addAction(tool.getAction())
-
-        if tool.isPopupMenu():
-            tool_button = self.toolbar.widgetForAction(tool.getAction())
-            assert tool_button is not None
-            tool_button.setPopupMode(QToolButton.InstantPopup)
+        self.menuBar().addMenu(tool.get_menu())
 
     def __add_help_menu(self) -> None:
         menuBar = self.menuBar()
