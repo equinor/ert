@@ -290,9 +290,13 @@ def test_run_with_defined_executable_but_missing():
         0,
     )
 
-    with pytest.raises(IOError):
-        for _ in job.run():
-            pass
+    msg_generator = job.run()
+    start_msg = next(msg_generator)
+    assert isinstance(start_msg, Start)
+
+    exit_message = next(msg_generator)
+    assert isinstance(exit_message, Exited)
+    assert "file is not a file" in str(exit_message.error_message)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -337,9 +341,13 @@ def test_run_with_defined_executable_no_exec_bit():
         0,
     )
 
-    with pytest.raises(IOError):
-        for _ in job.run():
-            pass
+    msg_generator = job.run()
+    start_msg = next(msg_generator)
+    assert isinstance(start_msg, Start)
+
+    exit_message = next(msg_generator)
+    assert isinstance(exit_message, Exited)
+    assert "foo is not an executable" in str(exit_message.error_message)
 
 
 def test_init_job_no_std():

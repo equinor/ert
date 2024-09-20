@@ -24,7 +24,7 @@ def _setup_reporters(
     ee_token=None,
     ee_cert_path=None,
     experiment_id=None,
-):
+) -> typing.List[reporting.Reporter]:
     reporters: typing.List[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())

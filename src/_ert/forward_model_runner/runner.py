@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import List
 
 from _ert.forward_model_runner.job import Job
 from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
@@ -21,7 +22,7 @@ class ForwardModelRunner:
         if self.simulation_id is not None:
             os.environ["ERT_RUN_ID"] = self.simulation_id
 
-        self.jobs = []
+        self.jobs: List[Job] = []
         for index, job_data in enumerate(job_data_list):
             self.jobs.append(Job(job_data, index))
 
