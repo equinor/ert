@@ -21,6 +21,7 @@ from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
+from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
@@ -79,6 +80,7 @@ class ErtMainWindow(QMainWindow):
         self.side_frame.setLayout(self.vbox_layout)
 
         self.add_experiment_button()
+        self.central_panels = []
         self._plot_tool = PlotTool(self.config_file, self)
         self.add_sidebar_button(self._plot_tool)
 
@@ -97,6 +99,16 @@ class ErtMainWindow(QMainWindow):
         self.__add_tools_menu()
         self.__add_help_menu()
 
+    def post_init(self):
+        experiment_panel = ExperimentPanel(
+            self.ertconfig,
+            self.notifier,
+            self.config_file,
+            self.facade.get_ensemble_size(),
+        )
+        self.central_layout.addWidget(experiment_panel)
+        self.central_panels.append(experiment_panel)
+
     def add_experiment_button(self) -> None:
         button = QPushButton(self.side_frame)
         button.setFixedSize(80, 80)
@@ -108,8 +120,12 @@ class ErtMainWindow(QMainWindow):
             QSize(button.size().width() - padding, button.size().height() - padding)
         )
         button.setToolTip("Start Simulation")
-        # button.clicked.connect(self.experiment_panel.show)
+        button.clicked.connect(self.toggle_visibility)
         self.vbox_layout.addWidget(button)
+
+    def toggle_visibility(self) -> None:
+        for panel in self.central_panels:
+            panel.show()
 
     def add_sidebar_button(self, tool: Tool) -> None:
         button = QPushButton(self.side_frame)

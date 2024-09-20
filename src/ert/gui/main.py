@@ -25,13 +25,11 @@ from ert.config import (
     capture_validation,
 )
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
     GUILogHandler,
     add_gui_log_handler,
 )
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
-from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
@@ -162,28 +160,23 @@ def _start_initial_gui_window(
 
 
 def _setup_main_window(
-    config: ErtConfig,
+    ert_config: ErtConfig,
     args: Namespace,
     log_handler: GUILogHandler,
     storage: Storage,
     plugin_manager: Optional[ErtPluginManager] = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
-    config_file = args.config
-    window = ErtMainWindow(config_file, config, plugin_manager, log_handler)
-    facade = LibresFacade(config)
+    window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)
     window.notifier.set_storage(storage)
-    experiment_panel = ExperimentPanel(
-        config, window.notifier, config_file, facade.get_ensemble_size()
-    )
-    window.setWidget(experiment_panel)
 
     plugin_handler = PluginHandler(
         window.notifier,
-        [wfj for wfj in config.workflow_jobs.values() if wfj.is_plugin()],
+        [wfj for wfj in ert_config.workflow_jobs.values() if wfj.is_plugin()],
         window,
     )
 
-    window.addTool(PluginsTool(plugin_handler, window.notifier, config))
+    window.addTool(PluginsTool(plugin_handler, window.notifier, ert_config))
+    window.post_init()
     window.adjustSize()
     return window
