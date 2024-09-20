@@ -107,15 +107,20 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
     objective_functions: List[ObjectiveFunctionConfig] = Field(
         description="List of objective function specifications",
     )
-    optimization: OptimizationConfig = Field(description="Optimizer options")
-    model: ModelConfig = Field(
+    optimization: Optional[OptimizationConfig] = Field(
+        default=OptimizationConfig(),
+        description="Optimizer options",
+    )
+    model: Optional[ModelConfig] = Field(
+        default=ModelConfig(),
         description="Configuration of the Everest model",
     )
 
     # It IS required but is currently used in a non-required manner by tests
     # Thus, it is to be made explicitly required as the other logic
     # is being rewritten
-    environment: EnvironmentConfig = Field(
+    environment: Optional[EnvironmentConfig] = Field(
+        default=EnvironmentConfig(),
         description="The environment of Everest, specifies which folders are used "
         "for simulation and output, as well as the level of detail in Everest-logs",
     )
@@ -747,9 +752,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         defaults = {
             "controls": [],
             "objective_functions": [],
-            "optimization": OptimizationConfig(),
-            "model": ModelConfig(),
-            "environment": EnvironmentConfig(),
             "config_path": ".",
         }
 
