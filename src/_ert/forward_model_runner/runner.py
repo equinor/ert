@@ -18,7 +18,6 @@ class ForwardModelRunner:
         self.ert_pid = jobs_data.get("ert_pid")
         self.global_environment = jobs_data.get("global_environment")
         job_data_list = jobs_data["jobList"]
-
         if self.simulation_id is not None:
             os.environ["ERT_RUN_ID"] = self.simulation_id
 
@@ -79,7 +78,6 @@ class ForwardModelRunner:
         for job in job_queue:
             for status_update in job.run():
                 yield status_update
-
                 if not status_update.success():
                     yield Checksum(checksum_dict={}, run_path=os.getcwd())
                     yield Finish().with_error("Not all jobs completed successfully.")
