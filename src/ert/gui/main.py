@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import webbrowser
+import warnings
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, Tuple
 
@@ -159,18 +160,6 @@ def _start_initial_gui_window(
             _main_window,
             ert_config.ens_path,
         )
-
-
-def _clicked_help_button(menu_label: str, link: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.info(f"Pressed help button {menu_label}")
-    webbrowser.open(link)
-
-
-def _clicked_about_button(about_dialog: QWidget) -> None:
-    logger = logging.getLogger(__name__)
-    logger.info("Pressed help button About")
-    about_dialog.show()
 
 
 def _setup_main_window(
