@@ -83,6 +83,13 @@ class Job:
         self.std_out = job_data.get("stdout")
 
     def run(self):
+        try:
+            for msg in self._run():
+                yield msg
+        except Exception as e:
+            yield Exited(self, exit_code=1).with_error(str(e))
+
+    def _run(self):
         start_message = Start(self)
 
         errors = self._check_job_files()
