@@ -232,9 +232,6 @@ class ExperimentPanel(QWidget):
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
         return self.get_experiment_arguments().experiment_name
 
-    # def set_main_frame(self, main_frame: ErtMainWindow) -> None:
-    #     self._main_frame = main_frame
-
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -323,13 +320,8 @@ class ExperimentPanel(QWidget):
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
         self.run_button.setEnabled(False)
         dialog.run_experiment()
-
-        # if self._main_frame:
-        #     dialog.setParent(self._main_frame)
-        #     self._main_frame.setWidget(dialog)
-
-        dialog.show()
-        self.hide()
+        # dialog.show()
+        # self.hide()
 
         def exit_handler() -> None:
             self.run_button.setEnabled(True)

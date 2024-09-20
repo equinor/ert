@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 
 from ert.gui.tools import Tool
@@ -25,9 +24,6 @@ class ManageExperimentsTool(Tool):
         if not self._manage_experiments_panel:
             self._manage_experiments_panel = ManageExperimentsPanel(
                 self.ert_config, self.notifier, self.ensemble_size
-            )
-            self._manage_experiments_panel.setWindowModality(
-                Qt.WindowModality.ApplicationModal
             )
 
         self._manage_experiments_panel.show()

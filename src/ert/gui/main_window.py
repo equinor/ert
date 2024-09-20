@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import functools
 import webbrowser
 from typing import TYPE_CHECKING, Dict, Optional
 
-from qtpy.QtCore import QSize, Qt, Signal
+from qtpy.QtCore import QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon
 from qtpy.QtWidgets import (
     QAction,
@@ -22,6 +23,7 @@ from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.simulation import ExperimentPanel
+from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
@@ -80,8 +82,8 @@ class ErtMainWindow(QMainWindow):
         self.log_handler = log_handler
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
+        self.dialog_panels = []
         self.central_panels = []
-        self.central_panels_index = 0
 
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
@@ -105,7 +107,15 @@ class ErtMainWindow(QMainWindow):
             self.notifier,
             self.ert_config.model_config.num_realizations,
         )
+
         self._create_sidebar_button(self._manage_experiments_tool)
+
+        self.results_button = self._create_sidebar_button()
+        self.results_button.setIcon(QIcon("img:in_progress.svg"))
+        self.results_button.setToolTip("Show Results")
+        self.results_button.setEnabled(False)
+        menu = QMenu()
+        self.results_button.setMenu(menu)
 
         self.vbox_layout.addStretch()
         self.central_layout.addWidget(self.side_frame)
@@ -117,6 +127,43 @@ class ErtMainWindow(QMainWindow):
         self.__add_tools_menu()
         self.__add_help_menu()
 
+    @Slot(object)
+    def slot_add_widget(self, run_dialog: RunDialog):
+        print("hello!")
+        for widget in self.central_panels:
+            widget.setVisible(False)
+
+        self.dialog_panels.append(run_dialog)
+
+        run_dialog.setParent(self)
+        self.central_layout.addWidget(run_dialog)
+        self.results_button.setEnabled(True)
+        date_time = datetime.datetime.utcnow().strftime("%Y-%d-%m %H:%M:%S")
+        act = self.results_button.menu().addAction(date_time)
+        act.setProperty("index", len(self.dialog_panels) - 1)
+        act.triggered.connect(self.select_dialog_panel)
+
+    def select_dialog_panel(self):
+        actor = self.sender()
+        index = int(actor.property("index"))
+
+        for w in self.central_panels:
+            w.hide()
+
+        for i in range(len(self.dialog_panels)):
+            should_be_visible = i == index
+            self.dialog_panels[i].setVisible(should_be_visible)
+
+    def select_widget(self) -> None:
+        index = 0
+
+        for w in self.dialog_panels:
+            w.hide()
+
+        for i in range(len(self.central_panels)):
+            should_be_visible = i == index
+            self.central_panels[i].setVisible(should_be_visible)
+
     def post_init(self):
         experiment_panel = ExperimentPanel(
             self.ert_config,
@@ -126,6 +173,8 @@ class ErtMainWindow(QMainWindow):
         )
         self.central_layout.addWidget(experiment_panel)
         self.central_panels.append(experiment_panel)
+
+        experiment_panel.experiment_started.connect(self.slot_add_widget)
 
         plugin_handler = PluginHandler(
             self.notifier,
@@ -150,23 +199,27 @@ class ErtMainWindow(QMainWindow):
             button.setToolTip(tool.getName())
             button.clicked.connect(tool.trigger)
         self.vbox_layout.addWidget(button)
-        button.setProperty("INDEX", self.central_panels_index)
-        self.central_panels_index += 1
+        button.setProperty("index", len(self.central_panels) - 1)
         return button
 
     def add_experiment_button(self) -> None:
         button = self._create_sidebar_button()
         button.setIcon(QIcon("img:play_circle_outlined.svg"))
         button.setToolTip("Start Simulation")
-        button.clicked.connect(self.toggle_visibility)
+        button.clicked.connect(self.select_widget)
 
         menu = QMenu()
-        menu.addAction("Single Test Run")
-        menu.addAction("Ensemble Experiment")
-        menu.addAction("Manual Update")
-        menu.addAction("ES MDA")
-        menu.addAction("Ensemble Smoother")
         menu.setStyleSheet(MENU_ITEM_STYLE_SHEET)
+
+        for sim_mode in [
+            "Single test run",
+            "Ensemble Experiment",
+            "Manual Update",
+            "ES MDA",
+            "Ensemble Smoother",
+        ]:
+            act = menu.addAction(sim_mode)
+            act.triggered.connect(self.select_widget)
         button.setMenu(menu)
 
     def toggle_visibility(self) -> None:
