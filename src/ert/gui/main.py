@@ -29,7 +29,6 @@ from ert.gui.tools.event_viewer import (
     GUILogHandler,
     add_gui_log_handler,
 )
-from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
@@ -169,14 +168,6 @@ def _setup_main_window(
     # window reference must be kept until app.exec returns:
     window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)
     window.notifier.set_storage(storage)
-
-    plugin_handler = PluginHandler(
-        window.notifier,
-        [wfj for wfj in ert_config.workflow_jobs.values() if wfj.is_plugin()],
-        window,
-    )
-
-    window.addTool(PluginsTool(plugin_handler, window.notifier, ert_config))
     window.post_init()
     window.adjustSize()
     return window

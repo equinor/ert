@@ -13,11 +13,10 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QPushButton,
     QVBoxLayout,
-    QWidget,
 )
 
 from ert import LibresFacade
-from ert.config import ErtConfig
+from ert.config import ert_config
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
@@ -27,7 +26,7 @@ from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsTool
 from ert.gui.tools.plot import PlotTool
-from ert.gui.tools.plugins import PluginsTool
+from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 
@@ -53,14 +52,14 @@ class ErtMainWindow(QMainWindow):
     def __init__(
         self,
         config_file: str,
-        ertconfig: ErtConfig,
+        ert_config: ert_config,
         plugin_manager: Optional[ErtPluginManager] = None,
         log_handler: Optional[GUILogHandler] = None,
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
         self.tools: Dict[str, Tool] = {}
-        self.ertconfig = ertconfig
+        self.ert_config = ert_config
         self.config_file = config_file
         self.log_handler = log_handler
 
@@ -72,7 +71,7 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget.setLayout(self.central_layout)
 
-        self.facade = LibresFacade(self.ertconfig)
+        self.facade = LibresFacade(self.ert_config)
 
         self.side_frame = QFrame(self)
         self.side_frame.setFrameShape(QFrame.Box)
@@ -85,7 +84,9 @@ class ErtMainWindow(QMainWindow):
         self.add_sidebar_button(self._plot_tool)
 
         self._manage_experiments_tool = ManageExperimentsTool(
-            self.ertconfig, self.notifier, self.ertconfig.model_config.num_realizations
+            self.ert_config,
+            self.notifier,
+            self.ert_config.model_config.num_realizations,
         )
         self.add_sidebar_button(self._manage_experiments_tool)
 
@@ -101,13 +102,22 @@ class ErtMainWindow(QMainWindow):
 
     def post_init(self):
         experiment_panel = ExperimentPanel(
-            self.ertconfig,
+            self.ert_config,
             self.notifier,
             self.config_file,
             self.facade.get_ensemble_size(),
         )
         self.central_layout.addWidget(experiment_panel)
         self.central_panels.append(experiment_panel)
+
+        plugin_handler = PluginHandler(
+            self.notifier,
+            [wfj for wfj in self.ert_config.workflow_jobs.values() if wfj.is_plugin()],
+            self,
+        )
+        plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
+        plugins_tool.setParent(self)
+        self.menuBar().addMenu(plugins_tool.get_menu())
 
     def add_experiment_button(self) -> None:
         button = QPushButton(self.side_frame)
@@ -140,11 +150,6 @@ class ErtMainWindow(QMainWindow):
         button.setToolTip(tool.getName())
         button.clicked.connect(tool.trigger)
         self.vbox_layout.addWidget(button)
-
-    def addTool(self, tool: PluginsTool) -> None:
-        tool.setParent(self)
-        self.tools[tool.getName()] = tool
-        self.menuBar().addMenu(tool.get_menu())
 
     def __add_help_menu(self) -> None:
         menuBar = self.menuBar()
@@ -180,11 +185,11 @@ class ErtMainWindow(QMainWindow):
             tools_menu.addAction(self._event_viewer_tool.getAction())
             self.close_signal.connect(self._event_viewer_tool.close_wnd)
 
-        self._export_tool = ExportTool(self.ertconfig, self.notifier)
+        self._export_tool = ExportTool(self.ert_config, self.notifier)
         self._export_tool.setParent(self)
         tools_menu.addAction(self._export_tool.getAction())
 
-        self._workflows_tool = WorkflowsTool(self.ertconfig, self.notifier)
+        self._workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
         self._workflows_tool.setParent(self)
         tools_menu.addAction(self._workflows_tool.getAction())
 
@@ -198,9 +203,6 @@ class ErtMainWindow(QMainWindow):
         else:
             self.close_signal.emit()
             QMainWindow.closeEvent(self, closeEvent)
-
-    def setWidget(self, widget: QWidget) -> None:
-        self.central_layout.addWidget(widget)
 
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
