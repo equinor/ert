@@ -14,7 +14,7 @@ TMPL_CONFIG_FILE = "config.yml"
 TMPL_WELL_DRILL_FILE = os.path.join("templates", "well_drill_info.tmpl")
 TMPL_DUAL_INPUT_FILE = os.path.join("templates", "dual_input.tmpl")
 
-MATH_TEST_PATH = relpath("..", "..", "examples", "math_func")
+MATH_TEST_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 MATH_CONFIG_FILE = "config_minimal.yml"
 
 

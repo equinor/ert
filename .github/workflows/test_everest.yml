@@ -71,7 +71,7 @@ jobs:
       if: matrix.test_type == 'everest-models-test'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        python -m pytest tests -n 4 -m everest_models_test --dist loadgroup
+        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup
 
     - name: Test docs entry point
       if: matrix.test_type == 'everest-docs-entry-test'

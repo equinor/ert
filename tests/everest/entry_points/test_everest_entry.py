@@ -20,7 +20,7 @@ from everest.simulator import JOB_SUCCESS
 from ieverest.bin.ieverest_script import ieverest_entry
 from tests.everest.utils import capture_streams, relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 

@@ -14,7 +14,7 @@ from everest.detached import (
 )
 from ieverest import IEverest
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 

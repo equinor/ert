@@ -19,7 +19,7 @@ from tests.everest.utils import (
     tmpdir,
 )
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"

@@ -13,7 +13,7 @@ from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
 from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 CONFIG_FILE_IN_CONSTR = "config_in_constr.yml"

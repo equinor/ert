@@ -51,19 +51,19 @@ jobs:
 
     - name: Test poly example
       run: |
-        pushd test-data/poly_example
+        pushd test-data/ert/poly_example
         ert test_run poly.ert
         popd
 
     - name: Test snake_oil
       run: |
-        pushd test-data/snake_oil
+        pushd test-data/ert/snake_oil
         uv pip install oil_reservoir_synthesizer resdata
         ert test_run snake_oil.ert
         popd
 
     - name: Test snake_oil_field
       run: |
-        pushd test-data/snake_oil_field
+        pushd test-data/ert/snake_oil_field
         ert test_run snake_oil.ert
         popd

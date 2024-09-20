@@ -85,7 +85,7 @@ def test_everest_output(start_mock):
 
 
 @patch("ert.simulator.BatchSimulator.start", return_value=None)
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_save_running_config(start_mock):
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)

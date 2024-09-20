@@ -14,7 +14,7 @@ NO_PROJECT_RES = (
 
 @pytest.mark.skipif(NO_PROJECT_RES[0], reason=NO_PROJECT_RES[1])
 def test_init_no_project_res():
-    root_dir = relpath("..", "..", "examples", "egg")
+    root_dir = relpath("..", "..", "test-data", "everest", "egg")
     config_file = os.path.join("everest", "model", "config.yml")
     with tmp(root_dir):
         config_dict = EverestConfig.load_file(config_file)

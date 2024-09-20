@@ -461,7 +461,7 @@ SUM_KEYS = [
         for group in ["FIELD", "INJECT", "PRODUC"]
     ]
 ]
-ROOT = os.path.join("..", "..", "examples", "egg")
+ROOT = os.path.join("..", "..", "test-data", "everest", "egg")
 
 
 def sort_res_summary(ert_config):

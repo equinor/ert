@@ -581,7 +581,7 @@ def test_lint_report_steps():
 @pytest.mark.fails_on_macos_github_workflow
 def test_lint_everest_models_jobs():
     pytest.importorskip("everest_models")
-    config_file = relpath("../../examples/egg/everest/model/config.yml")
+    config_file = relpath("../../test-data/everest/egg/everest/model/config.yml")
     config = EverestConfig.load_file(config_file).to_dict()
     # Check initial config file is valid
     assert len(EverestConfig.lint_config_dict(config)) == 0

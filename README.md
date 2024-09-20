@@ -131,7 +131,7 @@ As a simple test of your `ert` installation, you may try to run one of the
 examples, for instance:
 
 ```
-cd test-data/poly_example
+cd test-data/ert/poly_example
 # for non-gui trial run
 ert test_run poly.ert
 # for gui trial run
@@ -150,9 +150,9 @@ command `ulimit -a`. In order to increase maximum number of open files, run
 ## Example usage
 
 ### Basic ert test
-To test if ert itself is working, go to `test-data/poly_example` and start ert by running `poly.ert` with `ert gui`
+To test if ert itself is working, go to `test-data/ert/poly_example` and start ert by running `poly.ert` with `ert gui`
 ```
-cd test-data/poly_example
+cd test-data/ert/poly_example
 ert gui poly.ert
 ````
 This opens up the ert graphical user interface.

@@ -51,7 +51,7 @@ def set_shared_status(context_status, event, shared_data, progress):
     }
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_certificate_generation():
     everest_config = EverestConfig.load_file("config_minimal.yml")
     cert, key, pw = everserver._generate_certificate(everest_config)
@@ -65,7 +65,7 @@ def test_certificate_generation():
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_hostfile_storage():
     config = EverestConfig.load_file("config_minimal.yml")
 
@@ -85,7 +85,7 @@ def test_hostfile_storage():
     "everest.detached.jobs.everserver.configure_logger",
     side_effect=configure_everserver_logger,
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_status_failure(mf_1):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -121,7 +121,7 @@ def test_everserver_status_failure(mf_1):
     "everest.detached.jobs.everserver.export_to_csv",
     side_effect=partial(check_status, status=ServerStatus.exporting_to_csv),
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_status_running_complete(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -165,7 +165,7 @@ def test_everserver_status_running_complete(*args):
         ],
     ),
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_status_failed_job(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -199,7 +199,7 @@ def test_everserver_status_failed_job(*args):
     "everest.detached.jobs.everserver._sim_monitor",
     side_effect=partial(set_shared_status, progress=[]),
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_status_exception(*args):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -229,7 +229,7 @@ def test_everserver_status_exception(*args):
     "everest.detached.jobs.everserver._sim_monitor",
     side_effect=partial(set_shared_status, progress=[]),
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_status_max_batch_num(*args):
     config_file = "config_one_batch.yml"
     config = EverestConfig.load_file(config_file)

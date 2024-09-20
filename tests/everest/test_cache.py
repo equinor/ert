@@ -5,7 +5,7 @@ from everest.simulator import Simulator
 from everest.suite import _EverestWorkflow
 from tests.everest.utils import relpath, tmp
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_RESTART = "config_restart.yml"
 
 

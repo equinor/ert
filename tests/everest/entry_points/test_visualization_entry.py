@@ -8,7 +8,9 @@ from everest.config import EverestConfig
 from everest.detached import ServerStatus
 from tests.everest.utils import capture_streams, relpath
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func", "config_advanced.yml")
+CONFIG_PATH = relpath(
+    "..", "..", "test-data", "everest", "math_func", "config_advanced.yml"
+)
 CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
 
 

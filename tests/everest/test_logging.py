@@ -15,7 +15,7 @@ from everest.detached import (
 from everest.util import makedirs_if_needed
 from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE = "config_fm_failure.yml"
 
 

@@ -19,7 +19,7 @@ install_test_dependencies () {
 run_ert_with_opm () {
     pushd "${CI_TEST_ROOT}"
 
-    cp -r "${CI_SOURCE_ROOT}/test-data/flow_example" ert_with_opm
+    cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
 
     ert test_run flow.ert ||
