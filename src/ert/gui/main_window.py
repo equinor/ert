@@ -8,7 +8,6 @@ from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon
 from qtpy.QtWidgets import (
     QAction,
-    QDockWidget,
     QFrame,
     QHBoxLayout,
     QMainWindow,
@@ -90,14 +89,8 @@ class ErtMainWindow(QMainWindow):
 
         self.central_widget.setMaximumWidth(2400)
         self.central_widget.setMaximumHeight(1200)
-
         self.setCentralWidget(self.central_widget)
 
-        menuBar = self.menuBar()
-        assert menuBar is not None
-        view_menu = menuBar.addMenu("&View")
-        assert view_menu is not None
-        self.__view_menu = view_menu
         self.__add_tools_menu()
         self.__add_help_menu()
 
@@ -128,23 +121,6 @@ class ErtMainWindow(QMainWindow):
         button.setToolTip(tool.getName())
         button.clicked.connect(tool.trigger)
         self.vbox_layout.addWidget(button)
-
-    def addDock(
-        self,
-        name: str,
-        widget: Optional[QWidget],
-        area: Qt.DockWidgetArea = Qt.DockWidgetArea.RightDockWidgetArea,
-        allowed_areas: Qt.DockWidgetArea = Qt.DockWidgetArea.AllDockWidgetAreas,
-    ) -> QDockWidget:
-        dock_widget = QDockWidget(name)
-        dock_widget.setObjectName(f"{name}Dock")
-        dock_widget.setWidget(widget)
-        dock_widget.setAllowedAreas(allowed_areas)
-
-        self.addDockWidget(area, dock_widget)
-
-        self.__view_menu.addAction(dock_widget.toggleViewAction())
-        return dock_widget
 
     def addTool(self, tool: PluginsTool) -> None:
         tool.setParent(self)
@@ -197,10 +173,6 @@ class ErtMainWindow(QMainWindow):
             QMainWindow.closeEvent(self, closeEvent)
 
     def setWidget(self, widget: QWidget) -> None:
-        actions = widget.getActions()
-        for action in actions:
-            self.__view_menu.addAction(action)
-
         self.central_layout.addWidget(widget)
 
     def __showAboutMessage(self) -> None:
