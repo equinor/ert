@@ -450,7 +450,6 @@ class LocalStorage(BaseMode):
     @require_write
     def _migrate(self, version: int) -> None:
         from ert.storage.migration import (  # noqa: PLC0415
-            block_fs,
             to2,
             to3,
             to4,
@@ -462,10 +461,16 @@ class LocalStorage(BaseMode):
         try:
             self._index = self._load_index()
             if version == 0:
-                self._release_lock()
-                block_fs.migrate(self.path)
-                self._acquire_lock()
-                self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
+                logger.error(
+                    "Attempted BlockFS migration",
+                )
+                raise NotImplementedError(
+                    "Outdated storage (blockfs) is no longer supported by ERT. In "
+                    "order to use this storage, try to first open it with an older "
+                    "version of ert <= 10.3.* before re-opening it with this version. "
+                    "This is not guaranteed to work, ideally the ERT config should be "
+                    "the same as it was at the time of creation of the storage."
+                )
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(enumerate([to2, to3, to4, to5, to6, to7], start=1))
                 for from_version, migration in migrations[version - 1 :]:
