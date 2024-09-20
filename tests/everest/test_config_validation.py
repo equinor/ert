@@ -917,18 +917,14 @@ def test_that_missing_required_fields_cause_error():
     error_dicts = e.value.errors()
 
     # Expect missing error for:
-    # controls, objective_functions, optimization,
-    # model, environment, config_path,
-    assert len(error_dicts) == 6
+    # controls, objective_functions, config_path
+    assert len(error_dicts) == 3
 
     config_with_defaults = EverestConfig.with_defaults()
     config_args = {}
     required_argnames = [
         "controls",
         "objective_functions",
-        "optimization",
-        "model",
-        "environment",
         "config_path",
     ]
 

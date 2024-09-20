@@ -6,7 +6,7 @@ from everest.config.validation_utils import check_path_valid
 
 
 class EnvironmentConfig(BaseModel, extra="forbid"):  # type: ignore
-    simulation_folder: str = Field(
+    simulation_folder: Optional[str] = Field(
         default="simulation_folder", description="Folder used for simulation by Everest"
     )
     output_folder: Optional[str] = Field(

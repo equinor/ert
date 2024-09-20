@@ -1,6 +1,6 @@
-model (required)
+model (optional)
 ----------------
-Type: *ModelConfig*
+Type: *Optional[ModelConfig]*
 
 Configuration of the Everest model
 
@@ -341,9 +341,9 @@ a group of control variables
 
 
 
-optimization (required)
+optimization (optional)
 -----------------------
-Type: *OptimizationConfig*
+Type: *Optional[OptimizationConfig]*
 
 Optimizer options
 
@@ -694,14 +694,14 @@ List of objective function specifications
 
 
 
-environment (required)
+environment (optional)
 ----------------------
-Type: *EnvironmentConfig*
+Type: *Optional[EnvironmentConfig]*
 
 The environment of Everest, specifies which folders are used for simulation and output, as well as the level of detail in Everest-logs
 
 **simulation_folder (optional)**
-    Type: *str*
+    Type: *Optional[str]*
 
     Folder used for simulation by Everest
 

@@ -13,10 +13,7 @@ from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
 REQUIRED_TOP_KEYS = (
-    ConfigKeys.OPTIMIZATION,
     ConfigKeys.OBJECTIVE_FUNCTIONS,
-    ConfigKeys.ENVIRONMENT,
-    ConfigKeys.MODEL,
     ConfigKeys.CONTROLS,
 )
 OPTIONAL_TOP_KEYS = (

@@ -72,14 +72,14 @@ def test_valid_config_file():
 
     assert EverestConfig.load_file_with_argparser("test", parser=parser) is not None
 
-    config.environment = None
+    config.objective_functions = None
     yaml = YAML(typ="safe", pure=True)
     with open("test", "w", encoding="utf-8") as f:
         yaml.dump(config.to_dict(), f)
 
     # Check a valid config file is also linted
     assert EverestConfig.load_file_with_argparser("test", parser=parser) is None
-    assert "environment" in parser.get_error()
+    assert "objective_functions" in parser.get_error()
     assert "Field required" in parser.get_error()
 
     # Check a invalid yaml errors are reported to the parser
