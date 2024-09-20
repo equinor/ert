@@ -1,6 +1,7 @@
 copy_test_files () {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
     ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
+    ln -s ${CI_SOURCE_ROOT}/examples ${CI_TEST_ROOT}/examples
 
     ln -s ${CI_SOURCE_ROOT}/src ${CI_TEST_ROOT}/src
 
