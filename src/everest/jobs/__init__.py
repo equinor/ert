@@ -1,6 +1,6 @@
+import importlib
 import os
-
-import pkg_resources
+from pathlib import Path
 
 from everest.jobs import io, templating, well_tools
 
@@ -26,10 +26,13 @@ __all__ = [
 ]
 
 
-def _inject_scripts():
-    def fetch_script_path(script_name):
+def _inject_scripts() -> None:
+    def fetch_script_path(script_name: str) -> str:
         rel_script_path = os.path.join("scripts", script_name)
-        return pkg_resources.resource_filename("everest.jobs", rel_script_path)
+        return str(
+            Path(importlib.util.find_spec("everest.jobs").origin).parent
+            / rel_script_path
+        )
 
     _scripts = {}
     for script_name in script_names:

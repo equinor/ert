@@ -1,3 +1,4 @@
+import importlib
 import json
 import logging
 import os
@@ -6,9 +7,9 @@ import time
 import traceback
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import List, Literal, Mapping, Optional, Tuple
 
-import pkg_resources
 import requests
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
@@ -360,9 +361,11 @@ def start_monitor(config: EverestConfig, callback, polling_interval=5):
         logging.debug(traceback.format_exc())
 
 
-_EVERSERVER_JOB_PATH = pkg_resources.resource_filename(
-    "everest.detached", os.path.join("jobs", EVEREST_SERVER_CONFIG)
+_EVERSERVER_JOB_PATH = str(
+    Path(importlib.util.find_spec("everest.detached").origin).parent
+    / os.path.join("jobs", EVEREST_SERVER_CONFIG)
 )
+
 
 _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
     "LSF": {
