@@ -56,7 +56,7 @@ python3 -m venv my_virtualenv
 source my_virtualenv/bin/activate
 
 # Update build dependencies
-pip install --upgrade pip wheel setuptools
+pip install --upgrade pip
 
 # Download and install ert
 git clone https://github.com/equinor/ert
@@ -69,7 +69,7 @@ pip install --editable ".[dev, everest]"
 Additional development packages must be installed to run the test suite:
 
 ```sh
-pip install -e ".[dev]"
+pip install -e ".[dev, everest]"
 pytest tests/
 ```
 

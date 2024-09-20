@@ -43,7 +43,7 @@ dependencies = [
     "humanize",
     "importlib_resources; python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
-    "jinja2",
+    "jinja2 >= 2.10",
     "lark",
     "lxml",
     "matplotlib",
@@ -142,28 +142,15 @@ types = [
     "types-setuptools"
 ]
 everest = [
-    "python-dateutil",
-    "Jinja2>=2.10",
-    "matplotlib",
-    "pandas",
     "progressbar2",
-    "pydantic",
     "ruamel.yaml",
-    "seaborn",
     "flask",
-    "cryptography",
-    "dnspython",
-    "qtpy",
-    "pluggy",
     "decorator",
     "resdata",
-    "PyQt5",
     "colorama",
-    "numpy<2",
     "ropt[pandas]<0.7",
     "ropt-dakota<0.7",
     "seba-sqlite",
-    "setuptools; python_version >= '3.12'",
 ]
 
 [tool.setuptools]
