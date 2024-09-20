@@ -71,17 +71,17 @@ class _MetaMessage(type):
 class Message(metaclass=_MetaMessage):
     def __init__(self, job=None):
         self.timestamp = dt.now()
-        self.job = job
-        self.error_message = None
+        self.job: Optional[Job] = job
+        self.error_message: Optional[str] = None
 
     def __repr__(self):
         return type(self).__name__
 
-    def with_error(self, message):
+    def with_error(self, message: str):
         self.error_message = message
         return self
 
-    def success(self):
+    def success(self) -> bool:
         return self.error_message is None
 
 
@@ -116,7 +116,7 @@ class Finish(Message):
 
 
 class Start(Message):
-    def __init__(self, job):
+    def __init__(self, job: "Job"):
         super().__init__(job)
 
 
@@ -127,7 +127,7 @@ class Running(Message):
 
 
 class Exited(Message):
-    def __init__(self, job, exit_code):
+    def __init__(self, job, exit_code: int):
         super().__init__(job)
         self.exit_code = exit_code
 
