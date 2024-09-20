@@ -81,14 +81,14 @@ class ErtMainWindow(QMainWindow):
         self.add_experiment_button()
         self.central_panels = []
         self._plot_tool = PlotTool(self.config_file, self)
-        self.add_sidebar_button(self._plot_tool)
+        self._create_sidebar_button(self._plot_tool)
 
         self._manage_experiments_tool = ManageExperimentsTool(
             self.ert_config,
             self.notifier,
             self.ert_config.model_config.num_realizations,
         )
-        self.add_sidebar_button(self._manage_experiments_tool)
+        self._create_sidebar_button(self._manage_experiments_tool)
 
         self.vbox_layout.addStretch()
         self.central_layout.addWidget(self.side_frame)
@@ -119,37 +119,31 @@ class ErtMainWindow(QMainWindow):
         plugins_tool.setParent(self)
         self.menuBar().addMenu(plugins_tool.get_menu())
 
-    def add_experiment_button(self) -> None:
+    def _create_sidebar_button(self, tool: Optional[Tool] = None) -> QPushButton:
         button = QPushButton(self.side_frame)
         button.setFixedSize(80, 80)
-        button.setIcon(QIcon("img:play_circle_outlined.svg"))
         button.setCursor(QCursor(Qt.PointingHandCursor))
         button.setStyleSheet(BUTTON_STYLE_SHEET)
         padding = 30
         button.setIconSize(
             QSize(button.size().width() - padding, button.size().height() - padding)
         )
+        if tool:
+            button.setIcon(QIcon(tool.getIcon()))
+            button.setToolTip(tool.getName())
+            button.clicked.connect(tool.trigger)
+        self.vbox_layout.addWidget(button)
+        return button
+
+    def add_experiment_button(self) -> None:
+        button = self._create_sidebar_button()
+        button.setIcon(QIcon("img:play_circle_outlined.svg"))
         button.setToolTip("Start Simulation")
         button.clicked.connect(self.toggle_visibility)
-        self.vbox_layout.addWidget(button)
 
     def toggle_visibility(self) -> None:
         for panel in self.central_panels:
             panel.show()
-
-    def add_sidebar_button(self, tool: Tool) -> None:
-        button = QPushButton(self.side_frame)
-        button.setFixedSize(80, 80)
-        button.setIcon(tool.getIcon())
-        button.setCursor(QCursor(Qt.PointingHandCursor))
-        button.setStyleSheet(BUTTON_STYLE_SHEET)
-        padding = 30
-        button.setIconSize(
-            QSize(button.size().width() - padding, button.size().height() - padding)
-        )
-        button.setToolTip(tool.getName())
-        button.clicked.connect(tool.trigger)
-        self.vbox_layout.addWidget(button)
 
     def __add_help_menu(self) -> None:
         menuBar = self.menuBar()
@@ -170,6 +164,8 @@ class ErtMainWindow(QMainWindow):
         show_about.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         show_about.setObjectName("about_action")
         show_about.triggered.connect(self.__showAboutMessage)
+
+        self.help_menu = help_menu
 
     def __add_tools_menu(self) -> None:
         menu_bar = self.menuBar()
