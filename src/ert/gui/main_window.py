@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QMainWindow,
+    QMenu,
     QPushButton,
     QVBoxLayout,
 )
@@ -44,6 +45,21 @@ BUTTON_STYLE_SHEET: str = """
        background-color: rgba(255, 255, 255, 200);
     }
 """
+MENU_ITEM_STYLE_SHEET: str = """
+    QMenu:item {
+        border: 2px solid darkgrey;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0);
+        padding-top:5px;
+        padding-left: 5px;
+        background: rgba(0,0,0,0);
+        font-weight: bold;
+        font-size: 13px;
+    }
+    QMenu:item:selected {
+        background-color: rgba(255, 255, 255, 200);
+    }
+"""
 
 
 class ErtMainWindow(QMainWindow):
@@ -64,6 +80,8 @@ class ErtMainWindow(QMainWindow):
         self.log_handler = log_handler
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
+        self.central_panels = []
+        self.central_panels_index = 0
 
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
@@ -79,7 +97,6 @@ class ErtMainWindow(QMainWindow):
         self.side_frame.setLayout(self.vbox_layout)
 
         self.add_experiment_button()
-        self.central_panels = []
         self._plot_tool = PlotTool(self.config_file, self)
         self._create_sidebar_button(self._plot_tool)
 
@@ -133,6 +150,8 @@ class ErtMainWindow(QMainWindow):
             button.setToolTip(tool.getName())
             button.clicked.connect(tool.trigger)
         self.vbox_layout.addWidget(button)
+        button.setProperty("INDEX", self.central_panels_index)
+        self.central_panels_index += 1
         return button
 
     def add_experiment_button(self) -> None:
@@ -140,6 +159,15 @@ class ErtMainWindow(QMainWindow):
         button.setIcon(QIcon("img:play_circle_outlined.svg"))
         button.setToolTip("Start Simulation")
         button.clicked.connect(self.toggle_visibility)
+
+        menu = QMenu()
+        menu.addAction("Single Test Run")
+        menu.addAction("Ensemble Experiment")
+        menu.addAction("Manual Update")
+        menu.addAction("ES MDA")
+        menu.addAction("Ensemble Smoother")
+        menu.setStyleSheet(MENU_ITEM_STYLE_SHEET)
+        button.setMenu(menu)
 
     def toggle_visibility(self) -> None:
         for panel in self.central_panels:
