@@ -407,10 +407,8 @@ def _handle_includes(
         raise ConfigValidationError.from_collected(errors)
 
 
-def _parse_file(file: str) -> Tree[Instruction]:
+def _parse_contents(content: str, file: str) -> Tree[Instruction]:
     try:
-        with open(file, encoding="utf-8") as f:
-            content = f.read()
         tree = _parser.parse(content + "\n")
         return (
             StringQuotationTransformer()
@@ -435,6 +433,13 @@ def _parse_file(file: str) -> Tree[Instruction]:
                 filename=file,
             )
         ) from e
+
+
+def _parse_file(file: str) -> Tree[Instruction]:
+    try:
+        with open(file, encoding="utf-8") as f:
+            content = f.read()
+        return _parse_contents(content, file)
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
