@@ -46,7 +46,7 @@ class PluginsTool(Tool):
             plugin_action.setToolTip(plugin.getDescription())
             plugin_action.triggered.connect(plugin_runner.run)
 
-    def get_menu(self):
+    def get_menu(self) -> QMenu:
         return self.menu
 
     def trigger(self) -> None:

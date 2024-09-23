@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon
@@ -15,10 +15,11 @@ from qtpy.QtWidgets import (
     QMenu,
     QPushButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from ert import LibresFacade
-from ert.config import ert_config
+from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
@@ -70,20 +71,20 @@ class ErtMainWindow(QMainWindow):
     def __init__(
         self,
         config_file: str,
-        ert_config: ert_config,
+        ert_config: ErtConfig,
         plugin_manager: Optional[ErtPluginManager] = None,
         log_handler: Optional[GUILogHandler] = None,
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
-        self.tools: Dict[str, Tool] = {}
+        self.plugins_tool: Optional[PluginsTool] = None
         self.ert_config = ert_config
         self.config_file = config_file
         self.log_handler = log_handler
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
-        self.dialog_panels = []
-        self.central_panels = []
+        self.dialog_panels: list[RunDialog] = []
+        self.central_panels: list[QWidget] = []
 
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
@@ -128,8 +129,7 @@ class ErtMainWindow(QMainWindow):
         self.__add_help_menu()
 
     @Slot(object)
-    def slot_add_widget(self, run_dialog: RunDialog):
-        print("hello!")
+    def slot_add_widget(self, run_dialog: RunDialog) -> None:
         for widget in self.central_panels:
             widget.setVisible(False)
 
@@ -139,13 +139,16 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.addWidget(run_dialog)
         self.results_button.setEnabled(True)
         date_time = datetime.datetime.utcnow().strftime("%Y-%d-%m %H:%M:%S")
-        act = self.results_button.menu().addAction(date_time)
-        act.setProperty("index", len(self.dialog_panels) - 1)
-        act.triggered.connect(self.select_dialog_panel)
+        act = self.results_button.menu()
 
-    def select_dialog_panel(self):
+        if act:
+            act.addAction(date_time)
+            act.setProperty("index", len(self.dialog_panels) - 1)
+            act.triggered.connect(self.select_dialog_panel)
+
+    def select_dialog_panel(self) -> None:
         actor = self.sender()
-        index = int(actor.property("index"))
+        index = int(actor.property("index")) if actor else 0
 
         for w in self.central_panels:
             w.hide()
@@ -164,7 +167,7 @@ class ErtMainWindow(QMainWindow):
             should_be_visible = i == index
             self.central_panels[i].setVisible(should_be_visible)
 
-    def post_init(self):
+    def post_init(self) -> None:
         experiment_panel = ExperimentPanel(
             self.ert_config,
             self.notifier,
@@ -181,9 +184,10 @@ class ErtMainWindow(QMainWindow):
             [wfj for wfj in self.ert_config.workflow_jobs.values() if wfj.is_plugin()],
             self,
         )
-        plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
-        plugins_tool.setParent(self)
-        self.menuBar().addMenu(plugins_tool.get_menu())
+        self.plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
+        if self.plugins_tool:
+            self.plugins_tool.setParent(self)
+            self.menuBar().addMenu(self.plugins_tool.get_menu())
 
     def _create_sidebar_button(self, tool: Optional[Tool] = None) -> QPushButton:
         button = QPushButton(self.side_frame)
@@ -238,7 +242,7 @@ class ErtMainWindow(QMainWindow):
             help_link_item = help_menu.addAction(menu_label)
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))  # type: ignore
+            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
         show_about = help_menu.addAction("About")
         assert show_about is not None
@@ -275,11 +279,12 @@ class ErtMainWindow(QMainWindow):
         tools_menu.addAction(self._load_results_tool.getAction())
 
     def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
-        if closeEvent is not None and self.notifier.is_simulation_running:
-            closeEvent.ignore()
-        else:
-            self.close_signal.emit()
-            QMainWindow.closeEvent(self, closeEvent)
+        if closeEvent is not None:
+            if self.notifier.is_simulation_running:
+                closeEvent.ignore()
+            else:
+                self.close_signal.emit()
+                QMainWindow.closeEvent(self, closeEvent)
 
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
