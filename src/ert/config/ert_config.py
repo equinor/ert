@@ -62,7 +62,9 @@ from .parsing.observations_parser import (
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
-    parse,
+)
+from .parsing.observations_parser import (
+    parse as parse_observations,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
@@ -241,7 +243,7 @@ class ErtConfig:
                         f" config file {obs_config_file!r}",
                         obs_config_file,
                     )
-                obs_config_content = parse(obs_config_file)
+                obs_config_content = parse_observations(obs_config_file)
         except ObservationConfigError as err:
             errors.append(err)
 
