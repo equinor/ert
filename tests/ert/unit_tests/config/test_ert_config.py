@@ -293,11 +293,11 @@ def test_logging_with_comments(caplog):
 
     config = dedent(
         """
-    NUM_REALIZATIONS 1 -- inline comment
-    -- Regular comment
-    ECLBASE PRED_RUN
-    SUMMARY *
-    """
+        NUM_REALIZATIONS 1 -- inline comment
+        -- Regular comment
+        ECLBASE PRED_RUN
+        SUMMARY *
+        """
     )
     with open("config.ert", "w", encoding="utf-8") as fh:
         fh.writelines(config)
@@ -445,10 +445,11 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
         data_file = "data_file.DATA"
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.write(
-                """NUM_REALIZATIONS 1
-            DATA_FILE data_file.DATA
-            ECLBASE data_file_<ITER>
-            """
+                """
+                NUM_REALIZATIONS 1
+                DATA_FILE data_file.DATA
+                ECLBASE data_file_<ITER>
+                """
             )
         with open(data_file, mode="w", encoding="utf-8") as fh:
             fh.write(
@@ -475,9 +476,10 @@ def test_that_double_comments_are_handled(tmpdir):
     with tmpdir.as_cwd():
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.write(
-                """NUM_REALIZATIONS 1 -- foo -- bar -- 2
-                   JOBNAME &SUM$VAR@12@#£¤<
-            """
+                """
+                NUM_REALIZATIONS 1 -- foo -- bar -- 2
+                JOBNAME &SUM$VAR@12@#£¤<
+                """
             )
         ert_config = ErtConfig.from_file("config.ert")
         assert ert_config.model_config.num_realizations == 1
@@ -568,43 +570,26 @@ def test_that_parsing_ert_config_result_in_expected_values(
         )
 
 
-def test_default_ens_path(tmpdir):
-    with tmpdir.as_cwd():
-        config_file = "test.ert"
-        with open(config_file, "w", encoding="utf-8") as f:
-            f.write(
-                """
-NUM_REALIZATIONS  1
-            """
-            )
-        ert_config = ErtConfig.from_file(config_file)
-        # By default, the ensemble path is set to 'storage'
-        default_ens_path = ert_config.ens_path
+def test_default_ens_path():
+    # By default, the ensemble path is set to 'storage'
+    default_ens_path = ErtConfig.from_file_contents("NUM_REALIZATIONS 1\n").ens_path
+    # Set the ENSPATH in the config file
+    set_in_file_ens_path = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nENSPATH storage\n"
+    ).ens_path
 
-        with open(config_file, "a", encoding="utf-8") as f:
-            f.write(
-                """
-ENSPATH storage
-            """
-            )
+    assert os.path.abspath(default_ens_path) == os.path.abspath(set_in_file_ens_path)
 
-        # Set the ENSPATH in the config file
-        ert_config = ErtConfig.from_file(config_file)
-        set_in_file_ens_path = ert_config.ens_path
-
-        assert default_ens_path == set_in_file_ens_path
-
-        config_dict = {
+    dict_set_ens_path = ErtConfig.from_dict(
+        {
             ConfigKeys.NUM_REALIZATIONS: 1,
             "ENSPATH": os.path.join(os.getcwd(), "storage"),
         }
+    ).ens_path
 
-        dict_set_ens_path = ErtConfig.from_dict(config_dict).ens_path
-
-        assert dict_set_ens_path == config_dict["ENSPATH"]
+    assert os.path.abspath(dict_set_ens_path) == os.path.abspath(default_ens_path)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "max_running_value, expected_error",
     [
@@ -614,9 +599,7 @@ ENSPATH storage
     ],
 )
 def test_queue_config_max_running_invalid_values(max_running_value, expected_error):
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
+    contents = dedent(
         f"""
         NUM_REALIZATIONS  1
         DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
@@ -626,21 +609,17 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         QUEUE_OPTION LOCAL MAX_RUNNING {max_running_value}
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     if expected_error:
         with pytest.raises(
             expected_exception=ConfigValidationError,
             match=expected_error,
         ):
-            ErtConfig.from_file(test_config_file_name)
+            ErtConfig.from_file_contents(contents)
     else:
-        ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file_contents(contents)
 
 
-@pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("use_tmpdir")
 @given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
 def test_num_cpu_vs_torque_queue_cpu_configuration(
     num_cpu_int, num_nodes_int, num_cpus_per_node_int
@@ -660,8 +639,6 @@ def test_num_cpu_vs_torque_queue_cpu_configuration(
     else:
         expected_error = None
 
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS 1
@@ -679,74 +656,51 @@ def test_num_cpu_vs_torque_queue_cpu_configuration(
         test_config_contents += (
             f"QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE {num_cpus_per_node}\n"
         )
-
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     if expected_error:
         with pytest.raises(
             expected_exception=ConfigValidationError,
             match=expected_error,
         ):
-            ErtConfig.from_file(test_config_file_name)
+            ErtConfig.from_file_contents(test_config_contents)
     else:
-        ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file_contents(test_config_contents)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_non_existent_job_directory_gives_config_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-        ENSPATH <STORAGE>/ensemble
-        INSTALL_JOB_DIRECTORY does_not_exist
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="Unable to locate job directory",
     ):
-        ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                INSTALL_JOB_DIRECTORY does_not_exist
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_empty_job_directory_gives_warning():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-        ENSPATH <STORAGE>/ensemble
-        INSTALL_JOB_DIRECTORY empty
-        """
-    )
-    os.mkdir("empty")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+def test_that_empty_job_directory_gives_warning(tmp_path):
+    (tmp_path / "empty").mkdir()
     with pytest.warns(ConfigWarning, match="No files found in job directory"):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                INSTALL_JOB_DIRECTORY {tmp_path / 'empty'}
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_recursive_define_warns_when_early_liveness_detection_mechanism_triggers():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <A> <A>
-        RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     with pytest.warns(
         ConfigWarning,
         match="Gave up replacing in runpath/realization-<IENS>/iter-<ITER>/<A>."
@@ -755,69 +709,45 @@ def test_that_recursive_define_warns_when_early_liveness_detection_mechanism_tri
         "This still contains the replacement value: <A>, "
         "which would be replaced by <A>. Probably this causes a loop.",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <A> <A>
+                RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_recursive_define_warns_when_reached_max_iterations():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <A> a/<A>
-        RUNPATH runpath/realization-<IENS>/iter-<ITER>/<A>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with pytest.warns(
-        ConfigWarning,
-        match="Gave up replacing in runpath/realization-<IENS>/iter-<ITER>/<A>.\n"
-        "After replacing the value is now: "
-        "runpath/realization-<IENS>/iter-<ITER>/(a/){100}<A>.\n"
-        "This still contains the replacement value: <A>, "
-        "which would be replaced by a/<A>. Probably this causes a loop.",
-    ):
-        _ = ErtConfig.from_file(test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_loading_non_existent_workflow_gives_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        LOAD_WORKFLOW does_not_exist
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match='Cannot find file or directory "does_not_exist"',
     ):
-        ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW does_not_exist
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_loading_non_existent_workflow_job_gives_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        LOAD_WORKFLOW_JOB does_not_exist
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match='Cannot find file or directory "does_not_exist"',
     ):
-        ErtConfig.from_file(test_config_file_name)
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW_JOB does_not_exist
+                """
+            )
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -825,18 +755,19 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
     test_config_file_name = "test.ert"
     job_script_file = os.path.abspath("not_executable")
     job_name = "JOB_NAME"
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS  1
-        LOAD_WORKFLOW_JOB {job_name}
-        """
-    )
     with open(job_name, "w", encoding="utf-8") as fh:
         fh.write(f"EXECUTABLE {job_script_file}\n")
     with open(job_script_file, "w", encoding="utf-8") as fh:
         fh.write("#!/bin/sh\n")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                LOAD_WORKFLOW_JOB {job_name}
+                """
+            )
+        )
     with pytest.raises(
         expected_exception=ConfigValidationError,
     ):
@@ -846,17 +777,14 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
 @pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_char_in_unquoted_is_allowed(c):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS 1
-        RUNPATH path{c}a/b
-        """
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            RUNPATH path{c}a/b
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.from_file(test_config_file_name)
     assert f"path{c}a/b" in ert_config.model_config.runpath_format_string
 
 
@@ -909,43 +837,35 @@ def test_that_magic_strings_get_substituted_in_workflow():
     assert ert_config.workflows["workflow"].cmd_list[0][1] == ["0"]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("fm_keyword", ["FORWARD_MODEL", "SIMULATION_JOB"])
 def test_that_unknown_job_gives_config_validation_error(fm_keyword):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS  1
-        {fm_keyword} NO_SUCH_FORWARD_MODEL_STEP
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(
         ConfigValidationError,
         match="Could not find forward model step 'NO_SUCH_FORWARD_MODEL_STEP'",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  1
+                {fm_keyword} NO_SUCH_FORWARD_MODEL_STEP
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_unknown_hooked_job_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        HOOK_WORKFLOW NO_SUCH_JOB PRE_SIMULATION
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(
         ConfigValidationError,
         match="Cannot setup hook for non-existing job name 'NO_SUCH_JOB'",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                HOOK_WORKFLOW NO_SUCH_JOB PRE_SIMULATION
+                """
+            )
+        )
 
 
 @pytest.mark.integration_test
@@ -966,22 +886,18 @@ def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
             _ = ErtConfig.from_dict(config_dict)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_include_statements_with_multiple_values_raises_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        INCLUDE this and that and some-other
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(
         ConfigValidationError, match="Keyword:INCLUDE must have exactly one argument"
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                INCLUDE this and that and some-other
+                """
+            )
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1030,10 +946,10 @@ def test_that_workflow_job_subdirectories_are_not_loaded():
     test_config_file.write_text(
         dedent(
             f"""
-        NUM_REALIZATIONS  1
-        JOBNAME JOOOOOB
-        WORKFLOW_JOB_DIRECTORY {wfjob_dir}
-        """
+            NUM_REALIZATIONS  1
+            JOBNAME JOOOOOB
+            WORKFLOW_JOB_DIRECTORY {wfjob_dir}
+            """
         ),
         encoding="utf-8",
     )
@@ -1103,39 +1019,31 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
         assert "wf" not in ert_config.workflows
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_define_statements_with_less_than_one_argument_raises_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <USER>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(
         ConfigValidationError,
         match="DEFINE must have (two or more|at least 2) arguments",
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <USER>
+                """
+            )
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_define_statements_with_more_than_one_argument():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <TEST1> 111 222 333
-        DEFINE <TEST2> <TEST1> 444 555
-        """
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            DEFINE <TEST1> 111 222 333
+            DEFINE <TEST2> <TEST1> 444 555
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.substitution_list.get("<TEST1>") == "111 222 333"
     assert ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
 
@@ -1166,17 +1074,14 @@ def test_that_include_statements_work():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_define_string_quotes_are_removed():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        DEFINE <A> "A"
-        NUM_REALIZATIONS 1
-        """
+    ert_Config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            DEFINE <A> "A"
+            NUM_REALIZATIONS 1
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_Config = ErtConfig.from_file(test_config_file_name)
     assert ert_Config.substitution_list.get("<A>") == "A"
 
 
@@ -1213,20 +1118,16 @@ def test_that_included_files_uses_paths_relative_to_itself():
     assert ert_config.installed_forward_model_steps["FM"].name == "FM"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
 def test_that_boolean_values_can_be_any_case(val, expected):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS  1
-        STOP_LONG_RUNNING {val}
-        """
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS  1
+            STOP_LONG_RUNNING {val}
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.queue_config.stop_long_running == expected
 
 
@@ -1326,28 +1227,25 @@ def test_that_defines_in_included_files_has_immediate_effect():
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_that_multiple_errors_are_shown_for_forward_model():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL does_not_exist
-        FORWARD_MODEL does_not_exist2
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError) as err:
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                FORWARD_MODEL does_not_exist
+                FORWARD_MODEL does_not_exist2
+                """
+            )
+        )
 
     expected_nice_messages_list = [
         (
-            "test.ert: Line 3 (Column 15-29): "
+            "Line 3 (Column 15-29): "
             "Could not find forward model step 'does_not_exist' "
             "in list of installed forward model steps: []"
         ),
         (
-            "test.ert: Line 4 (Column 15-30): "
+            "Line 4 (Column 15-30): "
             "Could not find forward model step 'does_not_exist2' "
             "in list of installed forward model steps: []"
         ),
@@ -1361,20 +1259,17 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefines_work_with_setenv():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS 1
-        DEFINE <X> 3
-        SETENV VAR <X>
-        DEFINE <X> 4
-        SETENV VAR2 <X>
-    """
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <X> 3
+            SETENV VAR <X>
+            DEFINE <X> 4
+            SETENV VAR2 <X>
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.from_file(user_config_file=test_config_file_name)
 
     assert ert_config.env_vars["VAR"] == "3"
     assert ert_config.env_vars["VAR2"] == "4"
@@ -1478,7 +1373,6 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "obsolete_analysis_keyword,error_msg",
     [
@@ -1494,24 +1388,14 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 def test_that_removed_analysis_module_keywords_raises_error(
     obsolete_analysis_keyword, error_msg
 ):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-        obsolete_keyword = (
-            "ANALYSIS_SET_VAR STD_ENKF " + obsolete_analysis_keyword + " 1"
-        )
-        fh.write(obsolete_keyword)
-
     with pytest.raises(
         ConfigValidationError,
         match=error_msg,
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            f"ANALYSIS_SET_VAR STD_ENKF {obsolete_analysis_keyword} 1\n"
+        )
 
 
 def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tmp_path):
@@ -1520,7 +1404,7 @@ def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tm
     os.chmod(config_file, 0x0)
     caplog.set_level(logging.WARNING)
 
-    with pytest.raises(OSError, match="[Pp]ermission"):
+    with pytest.raises(OSError, match="Permission"):
         ErtConfig.from_file(config_file)
 
 
@@ -1638,12 +1522,11 @@ def test_job_name_with_slash_fails_validation(tmp_path):
         ErtConfig.from_file(str(config_file))
 
 
-def test_using_relative_path_to_eclbase_sets_jobname_to_basename(tmp_path):
-    config_file = Path(tmp_path) / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d")
-
+def test_using_relative_path_to_eclbase_sets_jobname_to_basename():
     assert (
-        ErtConfig.from_file(str(config_file)).model_config.jobname_format_string
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d"
+        ).model_config.jobname_format_string
         == "eclbase_<IENS>"
     )
 
@@ -1674,23 +1557,22 @@ def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
             ErtConfig.from_file("config.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "max_running_queue_config_entry",
     [
         pytest.param(
             """
-        MAX_RUNNING 6
-        QUEUE_OPTION LSF MAX_RUNNING 2
-        QUEUE_OPTION SLURM MAX_RUNNING 2
-        """,
+            MAX_RUNNING 6
+            QUEUE_OPTION LSF MAX_RUNNING 2
+            QUEUE_OPTION SLURM MAX_RUNNING 2
+            """,
             id="general_keyword_max_running",
         ),
         pytest.param(
             """
-        QUEUE_OPTION TORQUE MAX_RUNNING 6
-        MAX_RUNNING 2
-        """,
+            QUEUE_OPTION TORQUE MAX_RUNNING 6
+            MAX_RUNNING 2
+            """,
             id="queue_option_max_running",
         ),
     ],
@@ -1698,22 +1580,21 @@ def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
 def test_queue_config_max_running_queue_option_has_priority_over_general_option(
     max_running_queue_config_entry,
 ):
-    test_config_file = Path("test.ert")
-    test_config_file.write_text(
-        dedent(
-            f"""
-        NUM_REALIZATIONS  100
-        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-        ENSPATH <STORAGE>/ensemble
-        QUEUE_SYSTEM TORQUE
-        {max_running_queue_config_entry}
-        """
-        )
+    assert (
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS  100
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                QUEUE_SYSTEM TORQUE
+                {max_running_queue_config_entry}
+                """
+            )
+        ).queue_config.max_running
+        == 6
     )
-
-    config = ErtConfig.from_file(test_config_file)
-    assert config.queue_config.max_running == 6
 
 
 def test_general_option_in_local_config_has_priority_over_site_config(
@@ -1729,14 +1610,14 @@ def test_general_option_in_local_config_has_priority_over_site_config(
     test_config_file.write_text(
         dedent(
             """
-        NUM_REALIZATIONS  100
-        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-        ENSPATH <STORAGE>/ensemble
-        QUEUE_SYSTEM TORQUE
-        MAX_RUNNING 13
-        SUBMIT_SLEEP 14
-        """
+            NUM_REALIZATIONS  100
+            DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+            RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+            ENSPATH <STORAGE>/ensemble
+            QUEUE_SYSTEM TORQUE
+            MAX_RUNNING 13
+            SUBMIT_SLEEP 14
+            """
         )
     )
     config = ErtConfig.from_file(test_config_file)

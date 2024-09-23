@@ -53,6 +53,7 @@ from .parsing import (
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
+    parse_contents,
 )
 from .parsing import (
     parse as parse_config,
@@ -160,6 +161,12 @@ class ErtConfig:
         cls._log_config_file(user_config_file)
         cls._log_config_dict(user_config_dict)
         cls.apply_config_content_defaults(user_config_dict, config_dir)
+        return cls.from_dict(user_config_dict)
+
+    @classmethod
+    def from_file_contents(cls, user_config_file_contents: str) -> Self:
+        user_config_dict = cls.read_user_config_contents(user_config_file_contents)
+        cls.apply_config_content_defaults(user_config_dict, ".")
         return cls.from_dict(user_config_dict)
 
     @classmethod
@@ -381,6 +388,10 @@ class ErtConfig:
     @classmethod
     def read_user_config(cls, user_config_file: str) -> ConfigDict:
         return parse_config(user_config_file, schema=init_user_config_schema())
+
+    @classmethod
+    def read_user_config_contents(cls, user_config: str) -> ConfigDict:
+        return parse_contents(user_config, schema=init_user_config_schema())
 
     @classmethod
     def _merge_user_and_site_config(
