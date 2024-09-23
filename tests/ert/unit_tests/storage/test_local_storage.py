@@ -735,11 +735,15 @@ class StatefulStorageTest(RuleBasedStateMachine):
         )
         assert ensemble in self.storage.ensembles
         model_ensemble = Ensemble(ensemble.id)
-        self.model[experiment_id].ensembles[ensemble.id] = model_ensemble
-        assert (
-            ensemble.get_ensemble_state()
-            == [RealizationStorageState.PARENT_FAILURE] * size
-        )
+        model_experiment = self.model[experiment_id]
+        model_experiment.ensembles[ensemble.id] = model_ensemble
+        state = [RealizationStorageState.PARENT_FAILURE] * size
+        iens = 1
+        if list(prior.response_values.keys()) == [
+            r.name for r in model_experiment.responses
+        ]:
+            state[iens] = RealizationStorageState.UNDEFINED
+        assert ensemble.get_ensemble_state() == state
 
         return model_ensemble
 
