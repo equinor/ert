@@ -200,7 +200,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     names = st.text(
         min_size=1,
         max_size=8,
-        alphabet=st.characters(min_codepoint=65, max_codepoint=90),
+        alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
     )
     seen = set()
     unique_names = names.filter(lambda x: x not in seen).map(lambda x: seen.add(x) or x)

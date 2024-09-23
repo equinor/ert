@@ -157,8 +157,8 @@ names = st.text(
     min_size=1,
     max_size=8,
     alphabet=st.characters(
-        min_codepoint=33,
-        max_codepoint=126,
+        min_codepoint=ord("!"),
+        max_codepoint=ord("~"),
         exclude_characters=";{}\"'=",  # These have specific meaning in configs
     ),
 ).map(lambda x: x.ljust(8, " "))

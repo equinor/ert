@@ -102,7 +102,9 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str
 
 
 words = st.text(
-    min_size=0, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
+    min_size=0,
+    max_size=8,
+    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
 )
 
 
