@@ -90,7 +90,7 @@ If you have not used git-lfs before, you might have to make changes to your glob
 git lfs install
 ```
 
-test-data/block_storage is a submodule and must be checked out.
+test-data/ert/block_storage is a submodule and must be checked out.
 ```sh
 git submodule update --init --recursive
 ```

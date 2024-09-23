@@ -455,10 +455,10 @@ def snake_oil_default_storage(snake_oil_case_storage):
 
 @pytest.fixture(scope="session")
 def block_storage_path(source_root):
-    path = source_root / "test-data/block_storage/snake_oil"
+    path = source_root / "test-data/ert/block_storage/snake_oil"
     if not path.is_dir():
         pytest.skip(
-            "'test-data/block_storage' has not been checked out.\n"
+            "'test-data/ert/block_storage' has not been checked out.\n"
             "Make sure you have git-lfs installed and run: "
             "git submodule update --init --recursive"
         )
