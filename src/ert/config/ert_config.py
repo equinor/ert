@@ -106,12 +106,6 @@ class ErtConfig:
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ErtConfig):
-            return False
-
-        return all(getattr(self, attr) == getattr(other, attr) for attr in vars(self))
-
     def __post_init__(self) -> None:
         self.config_path = (
             path.dirname(path.abspath(self.user_config_file))
