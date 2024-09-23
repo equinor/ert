@@ -91,10 +91,10 @@ jobs:
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - uses: test-summary/action@v2
+      if: ${{ !cancelled() }}
       continue-on-error: true
       with:
         paths: junit.xml
-      if: always()
 
     - name: Test CLI
       run: |
