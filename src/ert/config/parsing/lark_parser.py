@@ -494,6 +494,16 @@ def parse(
     )
 
 
+def parse_contents(
+    contents: str,
+    schema: SchemaItemDict,
+    pre_defines: Optional[List[Tuple[str, str]]] = None,
+) -> ConfigDict:
+    return _transform_tree(
+        _parse_contents(contents, "./config.ert"), "./config.ert", schema, pre_defines
+    )
+
+
 def _transform_tree(
     tree: Tree[Instruction],
     file: str,
@@ -518,11 +528,9 @@ def _transform_tree(
     # add to this list
     _handle_includes(tree, pre_defines.copy(), filepath)
 
-    config_dict = _tree_to_dict(
+    return _tree_to_dict(
         config_file=file,
         pre_defines=pre_defines,
         tree=tree,
         schema=schema,
     )
-
-    return config_dict
