@@ -392,7 +392,11 @@ response_configs = st.lists(
             SummaryConfig,
             name=st.just("summary"),
             input_files=st.lists(
-                st.text(alphabet=st.characters(min_codepoint=65, max_codepoint=90)),
+                st.text(
+                    alphabet=st.characters(
+                        min_codepoint=ord("A"), max_codepoint=ord("Z")
+                    )
+                ),
                 min_size=1,
                 max_size=1,
             ),
@@ -407,7 +411,9 @@ ensemble_sizes = st.integers(min_value=1, max_value=1000)
 coordinates = st.integers(min_value=1, max_value=100)
 
 words = st.text(
-    min_size=1, max_size=8, alphabet=st.characters(min_codepoint=65, max_codepoint=90)
+    min_size=1,
+    max_size=8,
+    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
 )
 
 gen_observations = st.integers(min_value=1, max_value=10).flatmap(
