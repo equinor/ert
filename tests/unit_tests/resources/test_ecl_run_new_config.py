@@ -499,3 +499,84 @@ def test_crash_in_slave_is_not_mistaken_as_license():
     with pytest.raises(ecl_run.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_too_few_parsed_error_messages_gives_warning():
+    prt_error = """\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE"""
+    eclend = """
+ Error summary
+ Comments               0
+ Warnings               0
+ Problems               0
+ Errors                 1
+ Bugs                   0"""
+
+    Path("ECLCASE.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("ECLCASE.ECLEND").write_text(eclend, encoding="utf-8")
+
+    Path("ECLCASE.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert "Warning, mismatch between stated Error count" in str(exception_info.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_correct_number_of_parsed_error_messages_gives_no_warning():
+    prt_error = """\
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS A DUMMY ERROR MESSAGE"""
+    eclend = """
+ Error summary
+ Comments               0
+ Warnings               0
+ Problems               0
+ Errors                 1
+ Bugs                   0"""
+
+    Path("ECLCASE.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("ECLCASE.ECLEND").write_text(eclend, encoding="utf-8")
+
+    Path("ECLCASE.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert "Warning, mismatch between stated Error count" not in str(
+        exception_info.value
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_slave_started_message_are_not_counted_as_errors():
+    prt_error = f"""\
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS A DUMMY ERROR MESSAGE
+
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           {os.getcwd()}/slave1"""
+    eclend = """
+ Error summary
+ Comments               0
+ Warnings               0
+ Problems               0
+ Errors                 1
+ Bugs                   0"""
+
+    Path("ECLCASE.PRT").write_text(prt_error + "\n" + eclend, encoding="utf-8")
+    Path("ECLCASE.ECLEND").write_text(eclend, encoding="utf-8")
+
+    Path("ECLCASE.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
+    with pytest.raises(ecl_run.EclError) as exception_info:
+        run.assertECLEND()
+    assert "Warning, mismatch between stated Error count" not in str(
+        exception_info.value
+    )

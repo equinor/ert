@@ -449,7 +449,6 @@ class EclRun:
                     return
                 else:
                     raise err from None
-
             if self.num_cpu > 1:
                 self.summary_block()
 
@@ -494,10 +493,19 @@ class EclRun:
         if result.errors > 0:
             error_list = self.parseErrors()
             sep = "\n\n...\n\n"
-            error_msg = sep.join(error_list)
+            error_and_slave_msg = sep.join(error_list)
+            extra_message = ""
+            error_messages = [
+                error for error in error_list if not "STARTING SLAVE" in str(error)
+            ]
+            if result.errors != len(error_messages):
+                extra_message = (
+                    f"\n\nWarning, mismatch between stated Error count ({result.errors}) "
+                    f"and number of ERROR messages found in PRT ({len(error_messages)})."
+                )
             raise EclError(
                 "Eclipse simulation failed with:"
-                f"{result.errors:d} errors:\n\n{error_msg}"
+                f"{result.errors:d} errors:\n\n{error_and_slave_msg}{extra_message}"
             )
 
         if result.bugs > 0:
