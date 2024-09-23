@@ -1,7 +1,6 @@
 copy_test_files () {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
     ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
-    ln -s ${CI_SOURCE_ROOT}/examples ${CI_TEST_ROOT}/examples
 
     ln -s ${CI_SOURCE_ROOT}/src ${CI_TEST_ROOT}/src
 
@@ -54,7 +53,7 @@ start_tests () {
     unset OMP_NUM_THREADS
 
     basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
-    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" unit_tests/scheduler
+    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" ert/unit_tests/scheduler
     rm -rf "$basetemp" || true
 
     popd
