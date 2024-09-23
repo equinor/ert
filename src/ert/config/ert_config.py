@@ -55,7 +55,7 @@ from .parsing import (
     init_user_config_schema,
 )
 from .parsing import (
-    parse as lark_parse,
+    parse as parse_config,
 )
 from .parsing.observations_parser import (
     GenObsValues,
@@ -372,11 +372,13 @@ class ErtConfig:
 
     @classmethod
     def read_site_config(cls) -> ConfigDict:
-        return lark_parse(file=site_config_location(), schema=init_site_config_schema())
+        return parse_config(
+            file=site_config_location(), schema=init_site_config_schema()
+        )
 
     @classmethod
     def read_user_config(cls, user_config_file: str) -> ConfigDict:
-        return lark_parse(user_config_file, schema=init_user_config_schema())
+        return parse_config(user_config_file, schema=init_user_config_schema())
 
     @classmethod
     def read_user_config_and_apply_site_config(
@@ -998,7 +1000,7 @@ def _forward_model_step_from_config_file(
     schema = init_forward_model_schema()
 
     try:
-        content_dict = lark_parse(file=config_file, schema=schema, pre_defines=[])
+        content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
 
         specified_arg_types: List[Tuple[int, str]] = content_dict.get(
             ForwardModelStepKeys.ARG_TYPE, []
