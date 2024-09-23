@@ -44,23 +44,23 @@ jobs:
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ui_tests/gui
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui
 
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/unit_tests
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/ert/unit_tests
         pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/performance_tests
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests
 
     - name: Test for a clean repository
       run: |

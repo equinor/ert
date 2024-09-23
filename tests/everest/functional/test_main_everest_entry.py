@@ -21,10 +21,10 @@ from everest.detached import (
     wait_for_context,
 )
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
-EGG_CONFIG_PATH = relpath("..", "..", "examples", "egg")
+EGG_CONFIG_PATH = relpath("..", "..", "test-data", "everest", "egg")
 WELL_ORDER = "everest/model/config.yml"
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")

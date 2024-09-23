@@ -33,7 +33,9 @@ _gradient_info = [
 ]
 
 CONFIG_MULTIOBJ_CACHE_PATH = relpath("test_data", "cached_results_config_multiobj")
-CONFIG_PATH = relpath("..", "..", "examples", "math_func", "config_multiobj.yml")
+CONFIG_PATH = relpath(
+    "..", "..", "test-data", "everest", "math_func", "config_multiobj.yml"
+)
 expected_objective_values = [-0.75, -4.75, -0.765651, -4.70363, -0.507788, -4.47678]
 
 expected_control_values = [
@@ -529,7 +531,7 @@ def test_get_summary_keys_single_key(_, api_no_gradient):
 @patch.object(EverestConfig, "optimization_output_dir", new_callable=PropertyMock)
 @patch("everest.api.everest_data_api.SebaSnapshot")
 @patch("everest.api.everest_data_api.SebaSnapshot.get_snapshot")
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_output_folder(_1, _2, _3):
     config_file = "config_multiobj.yml"
     config = EverestConfig.load_file(config_file)
@@ -546,7 +548,7 @@ def test_output_folder(_1, _2, _3):
     "everest.api.everest_data_api.everserver_status",
     return_value={"status": ServerStatus.completed},
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everest_csv(everserver_status_mock, _1, _2, _3):
     config_file = "config_multiobj.yml"
     config = EverestConfig.load_file(config_file)

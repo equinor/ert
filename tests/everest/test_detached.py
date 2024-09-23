@@ -61,7 +61,7 @@ class MockContext:
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_https_requests():
     everest_config = EverestConfig.load_file("config_minimal_slow.yml")
 
@@ -121,7 +121,7 @@ def test_https_requests():
             assert ServerStatus.stopped == server_status["status"]
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_server_status():
     config = EverestConfig.load_file("config_minimal.yml")
 
@@ -219,7 +219,7 @@ def _get_reference_config():
     return everest_config, reference_config
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_detached_mode_config_base():
     everest_config, reference = _get_reference_config()
     ert_config = generate_everserver_ert_config(everest_config)
@@ -237,7 +237,7 @@ def test_detached_mode_config_base():
         ("slurm", 5, "test_slurm"),
     ],
 )
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
     everest_config, _ = _get_reference_config()
 
@@ -267,7 +267,7 @@ def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
         )
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_detached_mode_config_debug():
     everest_config, reference = _get_reference_config()
     ert_config = generate_everserver_ert_config(everest_config, debug_mode=True)
@@ -279,7 +279,7 @@ def test_detached_mode_config_debug():
 
 
 @pytest.mark.parametrize("queue_system", ["lsf", "slurm"])
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_detached_mode_config_only_sim(queue_system):
     everest_config, reference = _get_reference_config()
 
@@ -292,7 +292,7 @@ def test_detached_mode_config_only_sim(queue_system):
     assert ert_config == reference
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_detached_mode_config_error():
     """
     We are not allowing the simulator queue to be local and at the
@@ -305,7 +305,7 @@ def test_detached_mode_config_error():
         generate_everserver_ert_config(everest_config)
 
 
-@tmpdir(relpath("..", "..", "examples", "math_func"))
+@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
 def test_detached_mode_config_queue_name():
     everest_config, reference = _get_reference_config()
 

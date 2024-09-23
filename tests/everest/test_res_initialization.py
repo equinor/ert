@@ -401,7 +401,7 @@ def test_install_data_no_init():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
-@tmpdir(relpath("../../examples/egg"))
+@tmpdir(relpath("../../test-data/everest/egg"))
 def test_summary_default():
     config_dir = "everest/model"
     config_file = os.path.join(config_dir, "config.yml")
@@ -435,7 +435,7 @@ def test_summary_default():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.fails_on_macos_github_workflow
-@tmpdir(relpath("../../examples/egg"))
+@tmpdir(relpath("../../test-data/everest/egg"))
 def test_summary_default_no_opm():
     config_dir = "everest/model"
     config_file = os.path.join(config_dir, "config.yml")

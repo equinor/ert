@@ -10,7 +10,7 @@ from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
 from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE = "config_advanced.yml"
 CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
 

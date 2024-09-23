@@ -11,7 +11,7 @@ from everest.config.export_config import ExportConfig
 from everest.export import export, validate_export
 from tests.everest.utils import create_cached_mocked_test_case, relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
 CONFIG_PATH_MOCKED_TEST_CASE = relpath("test_data", "mocked_test_case")

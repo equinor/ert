@@ -20,12 +20,12 @@ from tests.everest.utils import (
 )
 
 EGG_DATA = relpath(
-    "../../examples/egg/eclipse/include/",
+    "../../test-data/everest/egg/eclipse/include/",
     "realizations/realization-0/eclipse/model/EGG.DATA",
 )
 SPE1_DATA = relpath("test_data/eclipse/SPE1.DATA")
 
-CONFIG_PATH = relpath("..", "..", "examples", "math_func")
+CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 
 
 @skipif_no_opm

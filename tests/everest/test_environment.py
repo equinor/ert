@@ -7,7 +7,7 @@ from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from tests.everest.utils import relpath, tmpdir
 
-root = os.path.join("..", "..", "examples", "math_func")
+root = os.path.join("..", "..", "test-data", "everest", "math_func")
 config_file = "config_minimal.yml"
 
 
