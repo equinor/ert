@@ -383,13 +383,9 @@ class ErtConfig:
         return parse_config(user_config_file, schema=init_user_config_schema())
 
     @classmethod
-    def read_user_config_and_apply_site_config(
-        cls, user_config_file: str
+    def _merge_user_and_site_config(
+        cls, user_config_dict: ConfigDict, site_config_dict: ConfigDict
     ) -> ConfigDict:
-        site_config_dict = cls.read_site_config()
-        user_config_dict = cls.read_user_config(user_config_file)
-        cls._log_custom_forward_model_steps(user_config_dict)
-
         for keyword, value in site_config_dict.items():
             if keyword == "QUEUE_OPTION":
                 filtered_queue_options = []
@@ -407,6 +403,15 @@ class ErtConfig:
             elif keyword not in user_config_dict:
                 user_config_dict[keyword] = value
         return user_config_dict
+
+    @classmethod
+    def read_user_config_and_apply_site_config(
+        cls, user_config_file: str
+    ) -> ConfigDict:
+        site_config_dict = cls.read_site_config()
+        user_config_dict = cls.read_user_config(user_config_file)
+        cls._log_custom_forward_model_steps(user_config_dict)
+        return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
 
     @staticmethod
     def check_non_utf_chars(file_path: str) -> None:
