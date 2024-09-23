@@ -280,6 +280,10 @@ class EclRun:
     def baseName(self):
         return self.base_name
 
+    @property
+    def prt_path(self):
+        return Path(self.run_path) / (self.baseName() + ".PRT")
+
     def numCpu(self):
         return self.num_cpu
 
@@ -489,6 +493,7 @@ class EclRun:
         return ecl_sum
 
     def assertECLEND(self):
+        tail_length = 5000
         result = self.readECLEND()
         if result.errors > 0:
             error_list = self.parseErrors()
@@ -502,7 +507,9 @@ class EclRun:
                 extra_message = (
                     f"\n\nWarning, mismatch between stated Error count ({result.errors}) "
                     f"and number of ERROR messages found in PRT ({len(error_messages)})."
-                )
+                    f"\n\nTail ({tail_length} bytes) of PRT-file {self.prt_path}:\n\n"
+                ) + tail_textfile(self.prt_path, 5000)
+
             raise EclError(
                 "Eclipse simulation failed with:"
                 f"{result.errors:d} errors:\n\n{error_and_slave_msg}{extra_message}"
@@ -517,7 +524,7 @@ class EclRun:
 
         report_file = os.path.join(self.run_path, f"{self.base_name}.ECLEND")
         if not os.path.isfile(report_file):
-            report_file = os.path.join(self.run_path, f"{self.base_name}.PRT")
+            report_file = self.prt_path
 
         errors = None
         bugs = None
@@ -539,12 +546,11 @@ class EclRun:
 
     def parseErrors(self) -> List[str]:
         """Extract multiline ERROR messages from the PRT file"""
-        prt_file = os.path.join(self.runPath(), f"{self.baseName()}.PRT")
         error_list = []
         error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)
         error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
         slave_started_regexp = re.compile(slave_started_pattern, re.MULTILINE)
-        with open(prt_file, "r", encoding="utf-8") as filehandle:
+        with open(self.prt_path, "r", encoding="utf-8") as filehandle:
             content = filehandle.read()
 
         for regexp in [error_e100_regexp, error_e300_regexp, slave_started_regexp]:
@@ -604,3 +610,14 @@ def run(config: EclConfig, argv):
     except EclError as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
+
+
+def tail_textfile(file_path: Path, num_chars: int) -> str:
+    if not file_path.exists():
+        return f"No output file {file_path}"
+    with open(file_path, encoding="utf-8") as file:
+        file.seek(0, 2)
+        file_end_position = file.tell()
+        seek_position = max(0, file_end_position - num_chars)
+        file.seek(seek_position)
+        return file.read()[-num_chars:]
