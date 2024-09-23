@@ -263,7 +263,7 @@ def _substitute_args(
         raise ValueError(
             "Expected "
             "Union[FileContextToken, List[Tuple[FileContextToken]]], "
-            f"got {arg}"
+            f"got {type(arg)}"
         )
 
     return [
