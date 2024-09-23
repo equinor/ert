@@ -602,3 +602,59 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 
         with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
             run_dialog.close()
+
+
+def test_that_first_realization_is_set_by_default(
+    snake_oil_case_storage: ErtConfig, qtbot: QtBot
+):
+    snake_oil_case = snake_oil_case_storage
+    args_mock = Mock()
+    args_mock.config = "snake_oil.ert"
+
+    with StorageService.init_service(
+        project=os.path.abspath(snake_oil_case.ens_path),
+    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
+        experiment_panel = gui.findChild(ExperimentPanel)
+
+        assert isinstance(experiment_panel, ExperimentPanel)
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
+        assert isinstance(simulation_mode_combo, QComboBox)
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings._experiment_name_field.setText("new_experiment_name")
+
+        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        assert run_experiment
+        assert isinstance(run_experiment, QToolButton)
+
+        QTimer.singleShot(
+            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+        )
+        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+
+        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+        run_dialog = gui.findChild(RunDialog)
+        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        job_overview = run_dialog._job_overview
+
+        qtbot.waitUntil(job_overview.isVisible, timeout=20000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(job_overview.isHidden, timeout=20000)
+        qtbot.mouseClick(run_dialog.show_details_button, Qt.LeftButton)
+
+        realization_widget = run_dialog.findChild(RealizationWidget)
+
+        first_realization = realization_widget._real_list_model.index(0, 0)
+        real_list = realization_widget._real_view
+        assert len(real_list.selectedIndexes()) == 1
+        assert real_list.selectedIndexes()[0] == first_realization
+
+        job_stdout = job_overview.model().index(0, 4)
+        job_stderr = job_overview.model().index(0, 5)
+
+        assert job_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
+        assert job_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
+
+        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+            run_dialog.close()
