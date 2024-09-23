@@ -6,7 +6,7 @@ import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
-from ert.config.parsing import init_user_config_schema, lark_parse
+from ert.config.parsing import init_user_config_schema, parse
 from ert.enkf_main import sample_prior
 from ert.field_utils import Shape, read_field
 
@@ -79,7 +79,7 @@ def parse_field_line(tmp_path, grid_shape, egrid_file):
             "NUM_REALIZATIONS 1\nGRID " + egrid_file + "\n" + field_line + "\n",
             encoding="utf-8",
         )
-        parsed = lark_parse(str(config_file), init_user_config_schema(), None)
+        parsed = parse(str(config_file), init_user_config_schema(), None)
 
         return Field.from_config_list(parsed["GRID"], grid_shape, parsed["FIELD"][0])
 
