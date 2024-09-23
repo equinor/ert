@@ -42,7 +42,7 @@ jobs:
 
       - name: Run benchmark
         run: |
-          pytest tests/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields --benchmark-json output.json
+          pytest tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields --benchmark-json output.json
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1

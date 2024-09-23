@@ -10,7 +10,7 @@ The following is a set of guidelines for contributing to ERT.
 
 ## Test categories
 
-Tests that are in the `tests/unit_tests` directory and are
+Tests that are in the `tests/ert/unit_tests` directory and are
 not marked with `integration_test` are ment to be exceptionally
 fast and reliable. This is so that one can run those while
 iterating on the code. This means special care has to

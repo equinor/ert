@@ -13,7 +13,7 @@ Don't allow the performance to gradually change inadvertantly when adding a new 
 
 ## Fixture with example data
 
-There is a fixture `template_config` in the `ert/tests/performance_tests/conftest.py` file. This fixture is run once for each of the "cases_to_run", also defined in `conftest.py`. See below for more about this.
+There is a fixture `template_config` in the `ert/tests/ert/performance_tests/conftest.py` file. This fixture is run once for each of the "cases_to_run", also defined in `conftest.py`. See below for more about this.
 
 If your test depends on the `poly_ran` fixture, each of the cases will become a separate parameter for your test, e.g. the test will potentially be run many times.
 

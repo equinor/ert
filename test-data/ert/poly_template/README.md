@@ -6,7 +6,7 @@ This is a template for instantiating a forward model that generates a variant of
 ## Usage
 
 To instantiate a version of the template, run the `make_poly_example()` function
-in `tests/performance_tests/performance_utils.py`, or the main function in there.
+in `tests/ert/performance_tests/performance_utils.py`, or the main function in there.
 
 It takes several parameters:
 
