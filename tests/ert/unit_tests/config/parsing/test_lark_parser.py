@@ -6,7 +6,7 @@ import pytest
 from ert.config.parsing import (
     ConfigValidationError,
     init_user_config_schema,
-    lark_parse,
+    parse,
 )
 
 
@@ -33,7 +33,7 @@ def test_that_missing_arglist_does_not_affect_subsequent_calls():
         )
 
     with pytest.raises(ConfigValidationError, match="must have at least"):
-        _ = lark_parse("config.ert", schema=init_user_config_schema())
+        _ = parse("config.ert", schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -48,7 +48,7 @@ def test_that_setenv_does_not_expand_envvar():
             )
         )
 
-    config = lark_parse("config.ert", schema=init_user_config_schema())
+    config = parse("config.ert", schema=init_user_config_schema())
     # then res config should read the SETENV as is
     assert config["SETENV"] == [["PATH", "$PATH:added"]]
 
@@ -64,7 +64,7 @@ def test_that_realisation_is_a_alias_of_realization():
             )
         )
 
-    config = lark_parse("config.ert", schema=init_user_config_schema())
+    config = parse("config.ert", schema=init_user_config_schema())
     assert config["NUM_REALIZATIONS"] == 1
 
 
@@ -93,9 +93,7 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    config_dict = lark_parse(
-        file=test_config_file_name, schema=init_user_config_schema()
-    )
+    config_dict = parse(file=test_config_file_name, schema=init_user_config_schema())
     defines = config_dict["DEFINE"]
 
     assert ["<A>", "2"] not in defines
@@ -119,12 +117,12 @@ def test_include_non_existing_file(tmpdir):
         with pytest.raises(
             ConfigValidationError, match=r"INCLUDE file:.*does_not_exists not found"
         ):
-            _ = lark_parse("config.ert", schema=init_user_config_schema())
+            _ = parse("config.ert", schema=init_user_config_schema())
 
 
 def test_invalid_user_config():
     with pytest.raises(FileNotFoundError):
-        _ = lark_parse("this/is/not/a/file", schema=init_user_config_schema())
+        _ = parse("this/is/not/a/file", schema=init_user_config_schema())
 
 
 def test_that_unknown_queue_option_gives_error_message(tmp_path):
@@ -135,7 +133,7 @@ def test_that_unknown_queue_option_gives_error_message(tmp_path):
     with pytest.raises(
         ConfigValidationError, match="'QUEUE_OPTION' argument 1 must be one of"
     ):
-        _ = lark_parse(str(test_user_config), schema=init_user_config_schema())
+        _ = parse(str(test_user_config), schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -154,13 +152,13 @@ def test_include_cyclical_raises_error():
         fh.write(test_include_contents)
 
     with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
     # Test self include raises cyclical include error
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_self_include)
     with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert->test.ert"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -176,7 +174,7 @@ def test_that_giving_incorrect_queue_name_in_queue_option_fails():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="VOCAL"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -186,7 +184,7 @@ def test_that_giving_no_keywords_fails_gracefully():
         fh.write("")
 
     with pytest.raises(ConfigValidationError, match="must be set"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
@@ -196,7 +194,7 @@ def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
     with open(config_file_name, mode="w", encoding="utf-8") as fh:
         fh.write(config_file_contents)
     with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
-        _ = lark_parse(config_file_name, schema=init_user_config_schema())
+        _ = parse(config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -212,7 +210,7 @@ def test_that_invalid_boolean_values_are_handled_gracefully():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="boolean"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -230,7 +228,7 @@ def test_not_executable_job_script_fails_gracefully():
     with open(config_file_name, mode="w", encoding="utf-8") as fh:
         fh.write(config_file_contents)
     with pytest.raises(ConfigValidationError, match=f"not executable.*{script_name}"):
-        _ = lark_parse(config_file_name, schema=init_user_config_schema())
+        _ = parse(config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -258,7 +256,7 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
         ConfigValidationError,
         match="Could not find executable",
     ):
-        _ = lark_parse(config_file_name, schema=init_user_config_schema())
+        _ = parse(config_file_name, schema=init_user_config_schema())
 
     os.chmod(path_location, 0x775)
 
@@ -275,7 +273,7 @@ def test_that_giving_non_int_values_give_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="integer"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -291,7 +289,7 @@ def test_that_giving_non_float_values_give_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="number"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -307,7 +305,7 @@ def test_that_giving_non_executable_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="executable"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -323,7 +321,7 @@ def test_that_giving_too_many_arguments_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -339,4 +337,4 @@ def test_that_giving_too_few_arguments_gives_config_validation_error():
         fh.write(test_config_contents)
 
     with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
-        _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=init_user_config_schema())

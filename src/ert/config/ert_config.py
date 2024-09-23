@@ -53,7 +53,9 @@ from .parsing import (
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
-    lark_parse,
+)
+from .parsing import (
+    parse as lark_parse,
 )
 from .parsing.observations_parser import (
     GenObsValues,

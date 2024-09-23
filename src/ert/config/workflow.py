@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
-from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, lark_parse
+from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 
 if TYPE_CHECKING:
     from ert.substitution_list import SubstitutionList
@@ -37,7 +37,7 @@ class Workflow:
         job_dict: Dict[str, WorkflowJob],
     ) -> List[Tuple[WorkflowJob, Any]]:
         schema = init_workflow_schema()
-        config_dict = lark_parse(src_file, schema, pre_defines=context)
+        config_dict = parse(src_file, schema, pre_defines=context)
 
         parsed_workflow_job_names = config_dict.keys() - {"DEFINE"}
 
