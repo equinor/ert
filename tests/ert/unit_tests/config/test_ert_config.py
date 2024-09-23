@@ -1638,7 +1638,7 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, r
     assert issubclass(recwarn[0].category, ConfigWarning)
     assert (
         recwarn[0].message.info.message
-        == "Config contians a SUMMARY key but no simulation job known to generate a summary file detected in the forward model"
+        == "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
     )
 
 

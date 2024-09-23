@@ -3,14 +3,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Set, Union
+from typing import TYPE_CHECKING, Optional, Set, Union, no_type_check
 
 import xarray as xr
 
 from ._read_summary import read_summary
 from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
-from .parsing.config_errors import ConfigValidationError
+from .parsing.config_errors import ConfigValidationError, ConfigWarning
 from .response_config import ResponseConfig
 from .responses_index import responses_index
 
@@ -57,17 +57,31 @@ class SummaryConfig(ResponseConfig):
     def response_type(self) -> str:
         return "summary"
 
+    @no_type_check
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Optional[SummaryConfig]:
         refcase = Refcase.from_config_dict(config_dict)
-        if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):  # type: ignore
-            eclbase: Optional[str] = config_dict.get("ECLBASE")  # type: ignore
+        if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):
+            eclbase: Optional[str] = config_dict.get("ECLBASE")
             if eclbase is None:
                 raise ConfigValidationError(
                     "In order to use summary responses, ECLBASE has to be set."
                 )
             time_map = set(refcase.dates) if refcase is not None else None
-
+            forward_model = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
+            names = [step[0] for step in forward_model]
+            simulation_step_exists = False
+            for job_name in names:
+                for name in ["eclipse", "flow"]:
+                    if name in job_name.lower():
+                        simulation_step_exists = True
+                        break
+                if simulation_step_exists:
+                    break
+            if not simulation_step_exists:
+                ConfigWarning.warn(
+                    "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
+                )
             return cls(
                 name="summary",
                 input_files=[eclbase.replace("%d", "<IENS>")],
