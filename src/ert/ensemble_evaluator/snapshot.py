@@ -252,6 +252,7 @@ class EnsembleSnapshot:
         status: str,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
+        exec_hosts: Optional[str] = None,
         callback_status_message: Optional[str] = None,
     ) -> "EnsembleSnapshot":
         self._realization_snapshots[real_id].update(
@@ -260,6 +261,7 @@ class EnsembleSnapshot:
                     status=status,
                     start_time=start_time,
                     end_time=end_time,
+                    exec_hosts=exec_hosts,
                     callback_status_message=callback_status_message,
                 )
             )
@@ -279,6 +281,7 @@ class EnsembleSnapshot:
             status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
             start_time = None
             end_time = None
+            exec_hosts = event.exec_hosts
             callback_status_message = None
 
             if e_type is RealizationRunning:
@@ -296,6 +299,7 @@ class EnsembleSnapshot:
                 status,
                 start_time,
                 end_time,
+                exec_hosts,
                 callback_status_message,
             )
 
@@ -397,6 +401,7 @@ class RealizationSnapshot(TypedDict, total=False):
     active: Optional[bool]
     start_time: Optional[datetime]
     end_time: Optional[datetime]
+    exec_hosts: Optional[str]
     fm_steps: Dict[str, FMStepSnapshot]
     callback_status_message: Optional[str]
 
@@ -409,6 +414,7 @@ def _realization_dict_to_realization_snapshot(
         active=source.get("active"),
         start_time=source.get("start_time"),
         end_time=source.get("end_time"),
+        exec_hosts=source.get("exec_hosts"),
         callback_status_message=source.get("callback_status_message"),
         fm_steps=source.get("fm_steps", {}),
     )

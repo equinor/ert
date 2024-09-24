@@ -500,16 +500,22 @@ class LsfDriver(Driver):
         event: Optional[Event] = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
-            event = StartedEvent(iens=iens)
+            event = StartedEvent(iens=iens, exec_hosts=self._jobs[job_id].exec_hosts)
         elif isinstance(new_state, FinishedJobFailure):
             logger.info(f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed")
             exit_code = await self._get_exit_code(job_id)
-            event = FinishedEvent(iens=iens, returncode=exit_code)
+            event = FinishedEvent(
+                iens=iens,
+                returncode=exit_code,
+                exec_hosts=self._jobs[job_id].exec_hosts,
+            )
         elif isinstance(new_state, FinishedJobSuccess):
             logger.info(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
             )
-            event = FinishedEvent(iens=iens, returncode=0)
+            event = FinishedEvent(
+                iens=iens, returncode=0, exec_hosts=self._jobs[job_id].exec_hosts
+            )
 
         if event:
             if isinstance(event, FinishedEvent):

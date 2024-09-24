@@ -28,7 +28,7 @@ from _ert.events import Event, ForwardModelStepChecksum, Id
 from ert.constant_filenames import CERT_FILE
 
 from .driver import Driver
-from .event import FinishedEvent
+from .event import FinishedEvent, StartedEvent
 from .job import Job, JobState
 
 if TYPE_CHECKING:
@@ -307,6 +307,9 @@ class Scheduler:
 
             # Any event implies the job has at least started
             job.started.set()
+
+            if isinstance(event, (StartedEvent, FinishedEvent)) and event.exec_hosts:
+                self._jobs[event.iens].exec_hosts = event.exec_hosts
 
             if (
                 isinstance(event, FinishedEvent)

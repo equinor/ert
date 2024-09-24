@@ -6,7 +6,14 @@ import pytest
 from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QComboBox, QPushButton, QToolButton, QWidget
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QLabel,
+    QPushButton,
+    QToolButton,
+    QWidget,
+)
 
 import ert
 from ert.config import ErtConfig
@@ -457,6 +464,98 @@ def test_run_dialog_memory_usage_showing(
     )
     max_memory_value = fm_step_model.data(max_memory_column_proxy_index, Qt.DisplayRole)
     assert max_memory_value == "60.00 KB"
+
+
+@pytest.mark.parametrize(
+    "events, tab_widget_count, expected_host_info",
+    [
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(
+                            ["0"],
+                            status=state.REALIZATION_STATE_UNKNOWN,
+                            exec_hosts="COMP_01",
+                        )
+                    ),
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
+                    progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
+                    iteration=0,
+                ),
+                EndEvent(failed=False, msg=""),
+            ],
+            1,
+            ", assigned to host: COMP_01",
+            id="Simulation where exec_host present",
+        ),
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0"], status=state.REALIZATION_STATE_UNKNOWN)
+                    ),
+                    iteration_label="Foo",
+                    current_iteration=0,
+                    total_iterations=1,
+                    progress=0.25,
+                    realization_count=4,
+                    status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
+                    iteration=0,
+                ),
+                EndEvent(failed=False, msg=""),
+            ],
+            1,
+            "",
+            id="Simulation where exec_host not present",
+        ),
+    ],
+)
+def test_run_dialog_fm_label_show_correct_info(
+    events, tab_widget_count, expected_host_info, qtbot: QtBot, event_queue, run_dialog
+):
+    run_dialog.run_experiment()
+    for event in events:
+        event_queue.put(event)
+
+    qtbot.waitUntil(
+        lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
+    )
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+
+    # This is the container of realization boxes
+    realization_box = run_dialog._tab_widget.widget(0)
+    assert type(realization_box) == RealizationWidget
+    # Click the first realization box
+    qtbot.mouseClick(realization_box, Qt.LeftButton)
+    fm_step_model = run_dialog._fm_step_overview.model()
+    assert fm_step_model._real == 0
+
+    fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
+    assert not fm_step_label.text()
+
+    realization_box._item_clicked(run_dialog._fm_step_overview.model().index(0, 0))
+    assert (
+        fm_step_label.text() == f"Realization id 0 in iteration 0{expected_host_info}"
+    )
 
 
 @pytest.mark.integration_test

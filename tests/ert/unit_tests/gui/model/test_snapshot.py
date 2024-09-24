@@ -62,3 +62,31 @@ def test_snapshot_model_data_intact_on_full_update(full_snapshot, fail_snapshot)
     first_real = model.index(0, 0, model.index(0, 0))
 
     assert first_real.internalPointer().children["0"].data["status"] == "Finished"
+
+
+@pytest.mark.parametrize(
+    "has_exec_hosts, expected_value",
+    [
+        pytest.param(
+            True,
+            "COMP-01",
+            id="Host assigned",
+        ),
+        pytest.param(
+            False,
+            None,
+            id="No host assigned",
+        ),
+    ],
+)
+def test_snapshot_model_exec_hosts_propagated(
+    full_snapshot, fail_snapshot, has_exec_hosts, expected_value
+):
+    model = SnapshotModel()
+    a_snapshot = full_snapshot if has_exec_hosts else fail_snapshot
+
+    model._add_snapshot(SnapshotModel.prerender(a_snapshot), "0")
+    model._update_snapshot(SnapshotModel.prerender(a_snapshot), "0")
+
+    first_real = model.index(0, 0, model.index(0, 0))
+    assert first_real.internalPointer().data.exec_hosts == expected_value
