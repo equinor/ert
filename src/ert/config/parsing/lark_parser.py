@@ -408,6 +408,7 @@ def _handle_includes(
 
 
 def _parse_contents(content: str, file: str) -> Tree[Instruction]:
+    file = os.path.normpath(os.path.abspath(file))
     try:
         tree = _parser.parse(content + "\n")
         return (
@@ -435,11 +436,11 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
         ) from e
 
 
-def _parse_file(file: str) -> Tree[Instruction]:
+def read_file(file: str) -> str:
+    file = os.path.normpath(os.path.abspath(file))
     try:
         with open(file, encoding="utf-8") as f:
-            content = f.read()
-        return _parse_contents(content, file)
+            return f.read()
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -484,23 +485,26 @@ def _parse_file(file: str) -> Tree[Instruction]:
         ) from e
 
 
+def _parse_file(file: str) -> Tree[Instruction]:
+    return _parse_contents(read_file(file), file)
+
+
 def parse(
     file: str,
     schema: SchemaItemDict,
     pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
-    return _transform_tree(
-        _parse_file(os.path.normpath(os.path.abspath(file))), file, schema, pre_defines
-    )
+    return _transform_tree(_parse_file(file), file, schema, pre_defines)
 
 
 def parse_contents(
     contents: str,
     schema: SchemaItemDict,
+    file_name: str,
     pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
     return _transform_tree(
-        _parse_contents(contents, "./config.ert"), "./config.ert", schema, pre_defines
+        _parse_contents(contents, file_name), file_name, schema, pre_defines
     )
 
 

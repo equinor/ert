@@ -7,7 +7,6 @@ import stat
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from hypothesis import assume, given, settings
@@ -254,10 +253,8 @@ def test_logging_config(caplog, config_content, expected):
     base_content = "Content of the configuration file (file_name):\n{}"
     config_path = "file_name"
 
-    with patch("builtins.open", mock_open(read_data=config_content)), patch(
-        "os.path.isfile", MagicMock(return_value=True)
-    ), caplog.at_level(logging.INFO):
-        ErtConfig._log_config_file(config_path)
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path, config_content)
     expected = base_content.format(expected)
     assert expected in caplog.messages
 
@@ -299,10 +296,8 @@ def test_logging_with_comments(caplog):
         SUMMARY *
         """
     )
-    with open("config.ert", "w", encoding="utf-8") as fh:
-        fh.writelines(config)
     with caplog.at_level(logging.INFO):
-        ErtConfig._log_config_file("config.ert")
+        ErtConfig._log_config_file("config.ert", config)
     assert (
         """
 NUM_REALIZATIONS 1
@@ -1514,12 +1509,9 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
         assert error in str(err.value)
 
 
-def test_job_name_with_slash_fails_validation(tmp_path):
-    config_file = Path(tmp_path) / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
-
+def test_job_name_with_slash_fails_validation():
     with pytest.raises(ConfigValidationError, match="JOBNAME cannot contain '/'"):
-        ErtConfig.from_file(str(config_file))
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
 
 
 def test_using_relative_path_to_eclbase_sets_jobname_to_basename():
@@ -1597,18 +1589,9 @@ def test_queue_config_max_running_queue_option_has_priority_over_general_option(
     )
 
 
-def test_general_option_in_local_config_has_priority_over_site_config(
-    tmp_path, monkeypatch
-):
-    test_site_config = tmp_path / "test_site_config.ert"
-    test_site_config.write_text(
-        "QUEUE_OPTION TORQUE MAX_RUNNING 6\nQUEUE_SYSTEM LOCAL\nQUEUE_OPTION TORQUE SUBMIT_SLEEP 7"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-    test_config_file = tmp_path / "test.ert"
-    test_config_file.write_text(
-        dedent(
+def test_general_option_in_local_config_has_priority_over_site_config():
+    config = ErtConfig.from_file_contents(
+        user_config_contents=dedent(
             """
             NUM_REALIZATIONS  100
             DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
@@ -1618,9 +1601,15 @@ def test_general_option_in_local_config_has_priority_over_site_config(
             MAX_RUNNING 13
             SUBMIT_SLEEP 14
             """
-        )
+        ),
+        site_config_contents=dedent(
+            """
+        QUEUE_OPTION TORQUE MAX_RUNNING 6
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION TORQUE SUBMIT_SLEEP 7
+        """
+        ),
     )
-    config = ErtConfig.from_file(test_config_file)
     assert config.queue_config.max_running == 13
     assert config.queue_config.submit_sleep == 14
     assert config.queue_config.queue_system == QueueSystem.TORQUE
