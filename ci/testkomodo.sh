@@ -38,7 +38,7 @@ start_tests () {
 
     export ECL_SKIP_SIGNAL=ON
 
-    pushd ${CI_TEST_ROOT}/tests
+    pushd ${CI_TEST_ROOT}/tests/ert
 
     pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
@@ -53,7 +53,7 @@ start_tests () {
     unset OMP_NUM_THREADS
 
     basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
-    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" ert/unit_tests/scheduler
+    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" unit_tests/scheduler
     rm -rf "$basetemp" || true
 
     popd
