@@ -162,7 +162,7 @@ class ErtConfig:
             user_config_contents, user_config_file
         )
         config_dir = path.abspath(path.dirname(user_config_file))
-        cls._log_config_file(user_config_file)
+        cls._log_config_file(user_config_file, user_config_contents)
         cls._log_config_dict(user_config_dict)
         cls.apply_config_content_defaults(user_config_dict, config_dir)
         return cls.from_dict(user_config_dict)
@@ -316,38 +316,36 @@ class ErtConfig:
         ]
 
     @classmethod
-    def _log_config_file(cls, config_file: str) -> None:
+    def _log_config_file(cls, config_file: str, config_file_contents: str) -> None:
         """
         Logs what configuration was used to start ert. Because the config
         parsing is quite convoluted we are not able to remove all the comments,
         but the easy ones are filtered out.
         """
-        if config_file is not None and path.isfile(config_file):
-            config_context = ""
-            with open(config_file, "r", encoding="utf-8") as file_obj:
-                for line in file_obj:
-                    line = line.strip()
-                    if not line or line.startswith("--"):
-                        continue
-                    if "--" in line and not any(x in line for x in ['"', "'"]):
-                        # There might be a comment in this line, but it could
-                        # also be an argument to a job, so we do a quick check
-                        line = line.split("--")[0].rstrip()
-                    if any(
-                        kw in line
-                        for kw in [
-                            "FORWARD_MODEL",
-                            "LOAD_WORKFLOW",
-                            "LOAD_WORKFLOW_JOB",
-                            "HOOK_WORKFLOW",
-                            "WORKFLOW_JOB_DIRECTORY",
-                        ]
-                    ):
-                        continue
-                    config_context += line + "\n"
-            logger.info(
-                f"Content of the configuration file ({config_file}):\n" + config_context
-            )
+        config_context = ""
+        for line in config_file_contents.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("--"):
+                continue
+            if "--" in line and not any(x in line for x in ['"', "'"]):
+                # There might be a comment in this line, but it could
+                # also be an argument to a job, so we do a quick check
+                line = line.split("--")[0].rstrip()
+            if any(
+                kw in line
+                for kw in [
+                    "FORWARD_MODEL",
+                    "LOAD_WORKFLOW",
+                    "LOAD_WORKFLOW_JOB",
+                    "HOOK_WORKFLOW",
+                    "WORKFLOW_JOB_DIRECTORY",
+                ]
+            ):
+                continue
+            config_context += line + "\n"
+        logger.info(
+            f"Content of the configuration file ({config_file}):\n" + config_context
+        )
 
     @classmethod
     def _log_config_dict(cls, content_dict: Dict[str, Any]) -> None:

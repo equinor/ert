@@ -7,7 +7,6 @@ import stat
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from hypothesis import assume, given, settings
@@ -254,10 +253,8 @@ def test_logging_config(caplog, config_content, expected):
     base_content = "Content of the configuration file (file_name):\n{}"
     config_path = "file_name"
 
-    with patch("builtins.open", mock_open(read_data=config_content)), patch(
-        "os.path.isfile", MagicMock(return_value=True)
-    ), caplog.at_level(logging.INFO):
-        ErtConfig._log_config_file(config_path)
+    with caplog.at_level(logging.INFO):
+        ErtConfig._log_config_file(config_path, config_content)
     expected = base_content.format(expected)
     assert expected in caplog.messages
 
@@ -299,10 +296,8 @@ def test_logging_with_comments(caplog):
         SUMMARY *
         """
     )
-    with open("config.ert", "w", encoding="utf-8") as fh:
-        fh.writelines(config)
     with caplog.at_level(logging.INFO):
-        ErtConfig._log_config_file("config.ert")
+        ErtConfig._log_config_file("config.ert", config)
     assert (
         """
 NUM_REALIZATIONS 1
