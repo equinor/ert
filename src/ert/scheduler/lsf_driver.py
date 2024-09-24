@@ -94,6 +94,7 @@ _STATE_ORDER: dict[Type[AnyJob], int] = {
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
 FLAKY_SSH_RETURNCODE = 255
 JOB_ALREADY_FINISHED_BKILL_MSG = "Job has already finished"
+BSUB_FAILURE_MESSAGES = ("Job not submitted",)
 
 
 def _parse_jobs_dict(jobs: Mapping[str, JobState]) -> dict[str, AnyJob]:
@@ -340,6 +341,7 @@ class LsfDriver(Driver):
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
                 total_attempts=self._bsub_retries,
                 retry_interval=self._sleep_time_between_cmd_retries,
+                error_on_msgs=BSUB_FAILURE_MESSAGES,
             )
             if not process_success:
                 self._job_error_message_by_iens[iens] = process_message
@@ -392,7 +394,7 @@ class LsfDriver(Driver):
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
                 total_attempts=3,
                 retry_interval=self._sleep_time_between_cmd_retries,
-                exit_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
+                return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
             )
             await asyncio.create_subprocess_shell(
                 f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
