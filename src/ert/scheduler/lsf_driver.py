@@ -109,14 +109,15 @@ class JobData:
     iens: int
     job_state: AnyJob
     submitted_timestamp: float
+    exec_hosts: str = "-"
 
 
 def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
     data: Dict[str, JobState] = {}
     for line in bjobs_output.splitlines():
         tokens = line.split(sep="^")
-        if len(tokens) == 2:
-            job_id, job_state = tokens
+        if len(tokens) == 3:
+            job_id, job_state, _ = tokens
             if job_state not in get_args(JobState):
                 logger.error(
                     f"Unknown state {job_state} obtained from "
@@ -124,6 +125,17 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
                 )
                 continue
             data[job_id] = cast(JobState, job_state)
+    return data
+
+
+def parse_bjobs_exec_hosts(bjobs_output: str) -> Dict[str, str]:
+    data: Dict[str, str] = {}
+    for line in bjobs_output.splitlines():
+        tokens = line.split(sep="^")
+        if len(tokens) == 3:
+            job_id, _, exec_hosts = tokens
+            if exec_hosts != "-":
+                data[job_id] = exec_hosts
     return data
 
 
@@ -423,7 +435,7 @@ class LsfDriver(Driver):
                     str(self._bjobs_cmd),
                     "-noheader",
                     "-o",
-                    "jobid stat delimiter='^'",
+                    "jobid stat exec_host delimiter='^'",
                     *current_jobids,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
@@ -440,6 +452,14 @@ class LsfDriver(Driver):
                     f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
                 )
             bjobs_states = _parse_jobs_dict(parse_bjobs(stdout.decode(errors="ignore")))
+            bjobs_exec_hosts = parse_bjobs_exec_hosts(stdout.decode(errors="ignore"))
+
+            for jobid, exec_hosts in bjobs_exec_hosts.items():
+                if self._jobs[jobid].exec_hosts == "-":
+                    logger.info(
+                        f"Realization {self._jobs[jobid].iens} was executed on host: {exec_hosts}"
+                    )
+                    self._jobs[jobid].exec_hosts = exec_hosts
 
             job_ids_found_in_bjobs_output = set(bjobs_states.keys())
             if (
@@ -491,7 +511,6 @@ class LsfDriver(Driver):
             logger.info(f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) failed")
             exit_code = await self._get_exit_code(job_id)
             event = FinishedEvent(iens=iens, returncode=exit_code)
-
         elif isinstance(new_state, FinishedJobSuccess):
             logger.info(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"

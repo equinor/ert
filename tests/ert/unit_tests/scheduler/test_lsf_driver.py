@@ -36,6 +36,7 @@ from ert.scheduler.lsf_driver import (
     filter_job_ids_on_submission_time,
     parse_bhist,
     parse_bjobs,
+    parse_bjobs_exec_hosts,
 )
 from tests.ert.utils import poll, wait_until
 
@@ -428,13 +429,13 @@ def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
     "bjobs_output, expected",
     [
         pytest.param(
-            "1^RUN",
+            "1^RUN^-",
             {"1": "RUN"},
             id="basic",
         ),
-        pytest.param("1^DONE", {"1": "DONE"}, id="done"),
+        pytest.param("1^DONE^-", {"1": "DONE"}, id="done"),
         pytest.param(
-            "1^DONE\n2^RUN",
+            "1^DONE^-\n2^RUN^-",
             {"1": "DONE", "2": "RUN"},
             id="two_jobs",
         ),
@@ -444,13 +445,43 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
     assert parse_bjobs(bjobs_output) == expected
 
 
+@pytest.mark.parametrize(
+    "bjobs_output, expected",
+    [
+        pytest.param(
+            "1^RUN^st-vgrid01",
+            {"1": "st-vgrid01"},
+            id="one_host",
+        ),
+        pytest.param("1^DONE^-", {}, id="no_host"),
+        pytest.param(
+            "1^DONE^st-vgrid02\n2^RUN^-",
+            {"1": "st-vgrid02"},
+            id="only_one_host_outputs",
+        ),
+    ],
+)
+def test_parse_bjobs_exec_hosts_happy_path(bjobs_output, expected):
+    assert parse_bjobs_exec_hosts(bjobs_output) == expected
+
+
 @given(
     st.integers(min_value=1),
-    nonempty_string_without_whitespace(),
     st.from_type(JobState),
 )
-def test_parse_bjobs(job_id, username, job_state):
-    assert parse_bjobs(f"{job_id}^{job_state}") == {str(job_id): job_state}
+def test_parse_bjobs(job_id, job_state):
+    assert parse_bjobs(f"{job_id}^{job_state}^-") == {str(job_id): job_state}
+
+
+@given(
+    st.integers(min_value=1),
+    st.from_type(JobState),
+    nonempty_string_without_whitespace(),
+)
+def test_parse_bjobs_exec_host(job_id, job_state, exec_host):
+    assert parse_bjobs_exec_hosts(f"{job_id}^{job_state}^{exec_host}") == {
+        str(job_id): exec_host
+    }
 
 
 @given(nonempty_string_without_whitespace().filter(lambda x: x not in valid_jobstates))
@@ -460,7 +491,7 @@ def test_parse_bjobs_invalid_state_is_ignored(random_state):
 
 def test_parse_bjobs_invalid_state_is_logged(caplog):
     # (cannot combine caplog with hypothesis)
-    parse_bjobs("1^FOO")
+    parse_bjobs("1^FOO^-")
     assert "Unknown state FOO" in caplog.text
 
 
@@ -468,7 +499,7 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
     "bjobs_script, expectation",
     [
         pytest.param(
-            "echo '1^DONE'; exit 0",
+            "echo '1^DONE^-'; exit 0",
             does_not_raise(),
             id="all-good",
         ),
@@ -484,13 +515,13 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
             id="empty_cluster_specific_id",
         ),
         pytest.param(
-            "echo '1^DONE'; echo 'Job <2> is not found' >&2 ; exit 255",
+            "echo '1^DONE^-'; echo 'Job <2> is not found' >&2 ; exit 255",
             # If we have some success and some failures, actual command returns 255
             does_not_raise(),
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            "echo '2^DONE'",
+            "echo '2^DONE^-'",
             pytest.raises(asyncio.TimeoutError),
             id="wrong-job-id",
         ),
@@ -500,7 +531,7 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
             id="exit-1",
         ),
         pytest.param(
-            "echo '1^DONE'; exit 1",
+            "echo '1^DONE^-'; exit 1",
             # (this is not observed in reality)
             does_not_raise(),
             id="correct_output_but_exitcode_1",
