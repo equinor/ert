@@ -157,7 +157,7 @@ class ErtConfig:
         Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
         when the user should be notified with non-fatal configuration problems.
         """
-        user_config_dict = cls.read_user_config_and_apply_site_config(user_config_file)
+        user_config_dict = cls._read_user_config_and_apply_site_config(user_config_file)
         config_dir = path.abspath(path.dirname(user_config_file))
         cls._log_config_file(user_config_file)
         cls._log_config_dict(user_config_dict)
@@ -166,7 +166,7 @@ class ErtConfig:
 
     @classmethod
     def from_file_contents(cls, user_config_file_contents: str) -> Self:
-        user_config_dict = cls.read_user_config_contents(user_config_file_contents)
+        user_config_dict = cls._read_user_config_contents(user_config_file_contents)
         cls.apply_config_content_defaults(user_config_dict, ".")
         return cls.from_dict(user_config_dict)
 
@@ -390,7 +390,7 @@ class ErtConfig:
         )
 
     @classmethod
-    def read_user_config_contents(cls, user_config: str) -> ConfigDict:
+    def _read_user_config_contents(cls, user_config: str) -> ConfigDict:
         return parse_contents(
             user_config, file_name="./config.ert", schema=init_user_config_schema()
         )
@@ -418,7 +418,7 @@ class ErtConfig:
         return user_config_dict
 
     @classmethod
-    def read_user_config_and_apply_site_config(
+    def _read_user_config_and_apply_site_config(
         cls, user_config_file: str
     ) -> ConfigDict:
         site_config_dict = cls.read_site_config()
