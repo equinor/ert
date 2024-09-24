@@ -9,7 +9,7 @@ from .forward_model_keywords import ForwardModelStepKeys
 from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
-from .lark_parser import parse, parse_contents
+from .lark_parser import parse, parse_contents, read_file
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
@@ -43,4 +43,5 @@ __all__ = [
     "init_workflow_schema",
     "parse",
     "parse_contents",
+    "read_file",
 ]

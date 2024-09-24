@@ -54,6 +54,7 @@ from .parsing import (
     init_site_config_schema,
     init_user_config_schema,
     parse_contents,
+    read_file,
 )
 from .parsing import (
     parse as parse_config,
@@ -381,13 +382,20 @@ class ErtConfig:
 
     @classmethod
     def read_site_config(cls) -> ConfigDict:
-        return parse_config(
-            file=site_config_location(), schema=init_site_config_schema()
+        site_config_file = site_config_location()
+        return parse_contents(
+            read_file(site_config_file),
+            file_name=site_config_file,
+            schema=init_site_config_schema(),
         )
 
     @classmethod
     def read_user_config(cls, user_config_file: str) -> ConfigDict:
-        return parse_config(user_config_file, schema=init_user_config_schema())
+        return parse_contents(
+            read_file(user_config_file),
+            file_name=user_config_file,
+            schema=init_user_config_schema(),
+        )
 
     @classmethod
     def read_user_config_contents(cls, user_config: str) -> ConfigDict:
