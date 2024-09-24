@@ -41,7 +41,7 @@ UNQUOTED: (/[^\" \t\n]/)+
 UNQUOTED_ARGUMENT: (/[^\" \t\n\(\),=]/)+
 
 forward_model_arguments: "(" [ argument ("," argument)*] ")"
-argument_value: (STRING | UNQUOTED_ARGUMENT)+
+argument_value: (STRING (", " STRING)* | UNQUOTED_ARGUMENT)+
 argument: UNQUOTED_ARGUMENT "=" argument_value
 
 KEYWORD_NAME: /(?!FORWARD_MODEL\b)/ LETTER (LETTER | DIGIT | "_" | "-" | "<" | ">" )*
@@ -415,6 +415,7 @@ def _parse_file(file: str) -> Tree[Instruction]:
         return (
             StringQuotationTransformer()
             * FileContextTransformer(file)
+            # * ArgumentToListTransformer(),
             * ArgumentToStringTransformer()
             * InstructionTransformer()
         ).transform(tree)

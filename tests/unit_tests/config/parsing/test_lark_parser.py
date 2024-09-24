@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 
+from ert.config.ert_config import ErtConfig
 from ert.config.parsing import (
     ConfigValidationError,
     init_user_config_schema,
@@ -340,3 +341,22 @@ def test_that_giving_too_few_arguments_gives_config_validation_error():
 
     with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
         _ = lark_parse(test_config_file_name, schema=init_user_config_schema())
+
+
+def test_that_multiarg_fm_is_parsed_correctly(
+    tmp_path,
+):
+    files_to_delete = ["foo", "bar", "foobar"]
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL DELETE_FILE(<FILES>='foo', 'bar', 'foobar')
+        """
+        )
+    )
+
+    config = ErtConfig.with_plugins().from_file(tmp_path / "test.ert")
+    delete_fm_step = config.forward_model_steps[0]
+    delete_fm_step_args = delete_fm_step.private_args["<FILES>"]
+    assert delete_fm_step_args == files_to_delete
