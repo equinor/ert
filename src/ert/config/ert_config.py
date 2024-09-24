@@ -158,8 +158,9 @@ class ErtConfig:
         when the user should be notified with non-fatal configuration problems.
         """
         user_config_contents = read_file(user_config_file)
+        site_config_dict = cls.read_site_config()
         user_config_dict = cls._read_user_config_and_apply_site_config(
-            user_config_contents, user_config_file
+            user_config_contents, user_config_file, site_config_dict
         )
         config_dir = path.abspath(path.dirname(user_config_file))
         cls._log_config_file(user_config_file, user_config_contents)
@@ -422,9 +423,11 @@ class ErtConfig:
 
     @classmethod
     def _read_user_config_and_apply_site_config(
-        cls, user_config_contents: str, user_config_file: str
+        cls,
+        user_config_contents: str,
+        user_config_file: str,
+        site_config_dict: ConfigDict,
     ) -> ConfigDict:
-        site_config_dict = cls.read_site_config()
         user_config_dict = cls._read_user_config_contents(
             user_config_contents,
             file_name=user_config_file,
