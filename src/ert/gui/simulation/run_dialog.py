@@ -219,6 +219,7 @@ class RunDialog(QDialog):
         self._snapshot_model.rowsInserted.connect(self.on_snapshot_new_iteration)
 
         self._fm_step_label = QLabel(self)
+        self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
@@ -335,10 +336,21 @@ class RunDialog(QDialog):
     def _select_real(self, index: QModelIndex) -> None:
         real = index.row()
         iter_ = index.model().get_iter()  # type: ignore
+        exec_hosts = None
+
+        iter_node = self._snapshot_model.root.children.get(str(iter_), None)
+        if iter_node:
+            real_node = iter_node.children.get(str(real), None)
+            if real_node:
+                exec_hosts = real_node.data.exec_hosts
+
         self._fm_step_overview.set_realization(iter_, real)
-        self._fm_step_label.setText(
+        text = (
             f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
         )
+        if exec_hosts and exec_hosts != "-":
+            text += f", assigned to host: {exec_hosts}"
+        self._fm_step_label.setText(text)
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if not self._notifier.is_simulation_running:

@@ -168,6 +168,8 @@ class SnapshotModel(QAbstractItemModel):
                 data = real_node.data
                 if real_status := real.get("status"):
                     data.status = real_status
+                if real_exec_hosts := real.get("exec_hosts"):
+                    data.exec_hosts = real_exec_hosts
                 for real_fm_step_id, color in (
                     metadata["aggr_fm_step_status_colors"].get(real_id, {}).items()
                 ):
@@ -240,6 +242,7 @@ class SnapshotModel(QAbstractItemModel):
                 data=RealNodeData(
                     status=real.get("status"),
                     active=real.get("active"),
+                    exec_hosts=real.get("exec_hosts"),
                     fm_step_status_color_by_id=metadata.get(
                         "aggr_fm_step_status_colors", defaultdict(None)
                     )[real_id],

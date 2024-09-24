@@ -34,6 +34,7 @@ class SnapshotBuilder(BaseModel):
         self,
         real_ids: Sequence[str],
         status: Optional[str],
+        exec_hosts: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
     ) -> EnsembleSnapshot:
@@ -49,6 +50,7 @@ class SnapshotBuilder(BaseModel):
                     fm_steps=deepcopy(self.fm_steps),
                     start_time=start_time,
                     end_time=end_time,
+                    exec_hosts=exec_hosts,
                     status=status,
                 ),
             )

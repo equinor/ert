@@ -24,6 +24,7 @@ def full_snapshot() -> EnsembleSnapshot:
     real = RealizationSnapshot(
         status=REALIZATION_STATE_RUNNING,
         active=True,
+        exec_hosts="COMP-01",
         fm_steps={
             "0": FMStepSnapshot(
                 start_time=dt.now(),

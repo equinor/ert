@@ -62,6 +62,7 @@ class Job:
         self.real = real
         self.state = JobState.WAITING
         self.started = asyncio.Event()
+        self.exec_hosts: str = "-"
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self._aborted = False
         self._scheduler: Scheduler = scheduler
@@ -263,6 +264,7 @@ class Job:
             "event_type": _queue_jobstate_event_type[state],
             "queue_event_type": state,
             "real": str(self.iens),
+            "exec_hosts": self.exec_hosts,
         }
         self.state = state
         if state == JobState.FAILED:

@@ -110,6 +110,7 @@ class RealizationBaseEvent(BaseEvent):
     real: str
     ensemble: Union[str, None] = None
     queue_event_type: Union[str, None] = None
+    exec_hosts: Union[str, None] = None
 
 
 class RealizationPending(RealizationBaseEvent):
