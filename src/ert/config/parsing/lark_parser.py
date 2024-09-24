@@ -408,6 +408,7 @@ def _handle_includes(
 
 
 def _parse_contents(content: str, file: str) -> Tree[Instruction]:
+    file = os.path.normpath(os.path.abspath(file))
     try:
         tree = _parser.parse(content + "\n")
         return (
@@ -436,6 +437,7 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
 
 
 def read_file(file: str) -> str:
+    file = os.path.normpath(os.path.abspath(file))
     try:
         with open(file, encoding="utf-8") as f:
             return f.read()
@@ -492,9 +494,7 @@ def parse(
     schema: SchemaItemDict,
     pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
-    return _transform_tree(
-        _parse_file(os.path.normpath(os.path.abspath(file))), file, schema, pre_defines
-    )
+    return _transform_tree(_parse_file(file), file, schema, pre_defines)
 
 
 def parse_contents(
