@@ -739,9 +739,11 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_experiment.ensembles[ensemble.id] = model_ensemble
         state = [RealizationStorageState.PARENT_FAILURE] * size
         iens = 1
-        if list(prior.response_values.keys()) == [
-            r.name for r in model_experiment.responses
-        ]:
+        if (
+            list(prior.response_values.keys())
+            == [r.name for r in model_experiment.responses]
+            and not iens in prior.failure_messages
+        ):
             state[iens] = RealizationStorageState.UNDEFINED
         assert ensemble.get_ensemble_state() == state
 
