@@ -391,7 +391,9 @@ class ErtConfig:
 
     @classmethod
     def read_user_config_contents(cls, user_config: str) -> ConfigDict:
-        return parse_contents(user_config, schema=init_user_config_schema())
+        return parse_contents(
+            user_config, file_name="./config.ert", schema=init_user_config_schema()
+        )
 
     @classmethod
     def _merge_user_and_site_config(

@@ -500,10 +500,11 @@ def parse(
 def parse_contents(
     contents: str,
     schema: SchemaItemDict,
+    file_name: str,
     pre_defines: Optional[List[Tuple[str, str]]] = None,
 ) -> ConfigDict:
     return _transform_tree(
-        _parse_contents(contents, "./config.ert"), "./config.ert", schema, pre_defines
+        _parse_contents(contents, file_name), file_name, schema, pre_defines
     )
 
 
