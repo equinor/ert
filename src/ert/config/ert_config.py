@@ -390,14 +390,6 @@ class ErtConfig:
         )
 
     @classmethod
-    def read_user_config(cls, user_config_file: str) -> ConfigDict:
-        return parse_contents(
-            read_file(user_config_file),
-            file_name=user_config_file,
-            schema=init_user_config_schema(),
-        )
-
-    @classmethod
     def read_user_config_contents(cls, user_config: str) -> ConfigDict:
         return parse_contents(
             user_config, file_name="./config.ert", schema=init_user_config_schema()
@@ -430,7 +422,11 @@ class ErtConfig:
         cls, user_config_file: str
     ) -> ConfigDict:
         site_config_dict = cls.read_site_config()
-        user_config_dict = cls.read_user_config(user_config_file)
+        user_config_dict = parse_contents(
+            read_file(user_config_file),
+            file_name=user_config_file,
+            schema=init_user_config_schema(),
+        )
         cls._log_custom_forward_model_steps(user_config_dict)
         return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
 
