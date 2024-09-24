@@ -89,3 +89,18 @@ StatusEvents = Union[
     RunModelUpdateEndEvent,
 ]
 ```
+
+### ert next.js frontent
+
+A very small next.js frontend has been set up in: frontend/ert-gui. First make sure you have node.js installed.
+To run it, first start the experiment server, then navigate to:
+
+```bash
+cd frontend/ert-gui
+```
+
+and run:
+
+```bash
+npm run dev
+```
