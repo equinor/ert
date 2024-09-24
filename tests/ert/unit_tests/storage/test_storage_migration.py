@@ -1,6 +1,8 @@
 import json
+import logging
 import os
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -8,7 +10,11 @@ from packaging import version
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
-from ert.storage.local_storage import local_storage_set_ert_config
+from ert.storage.local_storage import (
+    _LOCAL_STORAGE_VERSION,
+    local_storage_set_ert_config,
+)
+from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
 @pytest.fixture()
@@ -291,3 +297,46 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
         with pytest.raises(KeyError):
             ensembles[0].load_responses("GEN", (0,))
+
+
+def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
+    with open(tmp_path / "config.ert", mode="w", encoding="utf-8") as f:
+        f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(tmp_path / "storage")])
+
+    os.makedirs(tmp_path / "storage")
+    with open(tmp_path / "storage" / "index.json", "w+", encoding="utf-8") as f:
+        f.write("""{"version": 0}""")
+
+    os.makedirs(tmp_path / "storage" / "experiments")
+    os.makedirs(tmp_path / "storage" / "ensembles")
+
+    Path(tmp_path / "storage" / "experiments" / "exp_dummy.txt").write_text(
+        "", encoding="utf-8"
+    )
+    Path(tmp_path / "storage" / "ensembles" / "ens_dummy.txt").write_text(
+        "", encoding="utf-8"
+    )
+
+    with caplog.at_level(level=logging.INFO):
+        run_cli("test_run", str(tmp_path / "config.ert"))
+
+    assert (tmp_path / "storage" / "_blockfs_backup").exists()
+    assert "Blockfs storage backed up" in caplog.messages
+
+    with open(tmp_path / "storage" / "index.json", encoding="utf-8") as f:
+        index = json.load(f)
+        assert index["version"] == _LOCAL_STORAGE_VERSION
+        assert index["migrations"] == []
+
+    with open(
+        tmp_path / "storage" / "_blockfs_backup" / "index.json", encoding="utf-8"
+    ) as f:
+        index = json.load(f)
+        assert index["version"] == 0
+
+    assert (
+        tmp_path / "storage" / "_blockfs_backup" / "experiments" / "exp_dummy.txt"
+    ).exists()
+    assert (
+        tmp_path / "storage" / "_blockfs_backup" / "ensembles" / "ens_dummy.txt"
+    ).exists()
