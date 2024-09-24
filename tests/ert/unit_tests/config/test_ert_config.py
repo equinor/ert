@@ -1592,18 +1592,9 @@ def test_queue_config_max_running_queue_option_has_priority_over_general_option(
     )
 
 
-def test_general_option_in_local_config_has_priority_over_site_config(
-    tmp_path, monkeypatch
-):
-    test_site_config = tmp_path / "test_site_config.ert"
-    test_site_config.write_text(
-        "QUEUE_OPTION TORQUE MAX_RUNNING 6\nQUEUE_SYSTEM LOCAL\nQUEUE_OPTION TORQUE SUBMIT_SLEEP 7"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-    test_config_file = tmp_path / "test.ert"
-    test_config_file.write_text(
-        dedent(
+def test_general_option_in_local_config_has_priority_over_site_config():
+    config = ErtConfig.from_file_contents(
+        user_config_contents=dedent(
             """
             NUM_REALIZATIONS  100
             DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
@@ -1613,9 +1604,15 @@ def test_general_option_in_local_config_has_priority_over_site_config(
             MAX_RUNNING 13
             SUBMIT_SLEEP 14
             """
-        )
+        ),
+        site_config_contents=dedent(
+            """
+        QUEUE_OPTION TORQUE MAX_RUNNING 6
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION TORQUE SUBMIT_SLEEP 7
+        """
+        ),
     )
-    config = ErtConfig.from_file(test_config_file)
     assert config.queue_config.max_running == 13
     assert config.queue_config.submit_sleep == 14
     assert config.queue_config.queue_system == QueueSystem.TORQUE

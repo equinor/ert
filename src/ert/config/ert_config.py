@@ -169,9 +169,20 @@ class ErtConfig:
         return cls.from_dict(user_config_dict)
 
     @classmethod
-    def from_file_contents(cls, user_config_file_contents: str) -> Self:
-        user_config_dict = cls._read_user_config_contents(
-            user_config_file_contents, "./config.ert"
+    def from_file_contents(
+        cls,
+        user_config_contents: str,
+        site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
+    ) -> Self:
+        site_config_dict = parse_contents(
+            site_config_contents,
+            file_name="site_config.ert",
+            schema=init_site_config_schema(),
+        )
+        user_config_dict = cls._read_user_config_and_apply_site_config(
+            user_config_contents,
+            "./config.ert",
+            site_config_dict,
         )
         cls.apply_config_content_defaults(user_config_dict, ".")
         return cls.from_dict(user_config_dict)
