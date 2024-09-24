@@ -571,6 +571,45 @@ async def test_that_bsub_will_retry_and_fail(
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
+        # All these have been manually obtained on the command line by perturbing the command arguments to bsub:
+        (255, "No such queue. Job not submitted"),
+        (255, "Too many processors requested. Job not submitted."),
+        (255, 'Error near "select" : duplicate section. Job not submitted.'),
+        (
+            255,
+            "Error in select section: Expected number, string, "
+            'name, or "(" but found end of section. Job not submitted.',
+        ),
+        (
+            255,
+            "Error with <select[rhel < 8 && cs & x86_64Linux] rusage[mem=50]>:"
+            " '&' cannot be used in the resource requirement section. Job not submitted.",
+        ),
+        (255, "Error in rusage section. Job not submitted."),
+        (255, "Job not submitted."),
+    ],
+)
+async def test_that_bsub_will_fail_without_retries(
+    monkeypatch, tmp_path, exit_code, error_msg
+):
+    monkeypatch.chdir(tmp_path)
+    bin_path = Path("bin")
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+    bsub_path = bin_path / "bsub"
+    bsub_path.write_text(
+        f'#!/bin/sh\necho . >> bsubcalls\necho "{error_msg}" >&2\nexit {exit_code}'
+    )
+    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    driver = LsfDriver()
+    with pytest.raises(RuntimeError):
+        await driver.submit(0, "sleep 10")
+    assert len(Path("bsubcalls").read_text(encoding="utf-8").strip()) == 1
+
+
+@pytest.mark.parametrize(
+    ("exit_code, error_msg"),
+    [
         (0, "void"),
         (FLAKY_SSH_RETURNCODE, ""),
     ],
