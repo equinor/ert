@@ -435,11 +435,10 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
         ) from e
 
 
-def _parse_file(file: str) -> Tree[Instruction]:
+def read_file(file: str) -> str:
     try:
         with open(file, encoding="utf-8") as f:
-            content = f.read()
-        return _parse_contents(content, file)
+            return f.read()
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
@@ -482,6 +481,10 @@ def _parse_file(file: str) -> Tree[Instruction]:
                 for bad_line in bad_byte_lines
             ]
         ) from e
+
+
+def _parse_file(file: str) -> Tree[Instruction]:
+    return _parse_contents(read_file(file), file)
 
 
 def parse(
