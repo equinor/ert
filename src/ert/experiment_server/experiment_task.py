@@ -34,16 +34,14 @@ class ExperimentTask:
     def __init__(self, _id: str, model: BaseRunModel, status_queue: "Queue[StatusEvents]" ) -> None:
         self._id = _id
         self._model = model
+        self.model_type = str(model.name())
         self._status_queue = status_queue
         self._subscribers: Dict[str, Subscriber] = {}
         self._events: List[StatusEvents] = []
 
-    @property
-    def model_type(self) -> str:
-        return str(self._model.name())
-
     def cancel(self) -> None:
-        self._model.cancel()
+        if self._model is not None:
+            self._model.cancel()
 
     async def run(self):
         loop = asyncio.get_running_loop()
@@ -83,6 +81,7 @@ class ExperimentTask:
                 break
 
         await simulation_future
+        self._model = None
         logger.info(f"Experiment {self._id} done")
 
     async def get_event(self, subscriber_id: str) -> StatusEvents:
