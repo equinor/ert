@@ -166,7 +166,9 @@ class ErtConfig:
 
     @classmethod
     def from_file_contents(cls, user_config_file_contents: str) -> Self:
-        user_config_dict = cls._read_user_config_contents(user_config_file_contents)
+        user_config_dict = cls._read_user_config_contents(
+            user_config_file_contents, "./config.ert"
+        )
         cls.apply_config_content_defaults(user_config_dict, ".")
         return cls.from_dict(user_config_dict)
 
@@ -390,9 +392,9 @@ class ErtConfig:
         )
 
     @classmethod
-    def _read_user_config_contents(cls, user_config: str) -> ConfigDict:
+    def _read_user_config_contents(cls, user_config: str, file_name: str) -> ConfigDict:
         return parse_contents(
-            user_config, file_name="./config.ert", schema=init_user_config_schema()
+            user_config, file_name=file_name, schema=init_user_config_schema()
         )
 
     @classmethod
