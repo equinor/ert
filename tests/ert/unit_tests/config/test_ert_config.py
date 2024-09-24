@@ -1509,12 +1509,9 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
         assert error in str(err.value)
 
 
-def test_job_name_with_slash_fails_validation(tmp_path):
-    config_file = Path(tmp_path) / "config.ert"
-    config_file.write_text("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
-
+def test_job_name_with_slash_fails_validation():
     with pytest.raises(ConfigValidationError, match="JOBNAME cannot contain '/'"):
-        ErtConfig.from_file(str(config_file))
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\nJOBNAME dir/eclbase")
 
 
 def test_using_relative_path_to_eclbase_sets_jobname_to_basename():
