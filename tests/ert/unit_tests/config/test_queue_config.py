@@ -68,7 +68,6 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
     assert queue_config.queue_options.project_code == "test_code"
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "GENERIC", "*"])
 def test_that_an_invalid_queue_system_provided_raises_validation_error(
     invalid_queue_system,
@@ -76,35 +75,29 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(
     """There is actually a "queue-system" called GENERIC, but it is
     only there for making queue options global, it should not be
     possible to try to use it"""
-    filename = "config.ert"
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {invalid_queue_system}\n")
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match=f"'QUEUE_SYSTEM' argument 1 must be one of .* was '{invalid_queue_system}'",
     ):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {invalid_queue_system}\n"
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @pytest.mark.parametrize(
     "queue_system, invalid_option", [("LOCAL", "BSUB_CMD"), ("TORQUE", "BOGUS")]
 )
 def test_that_invalid_queue_option_raises_validation_error(
     queue_system, invalid_option
 ):
-    filename = "config.ert"
-
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {invalid_option}")
-
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match=f"Invalid QUEUE_OPTION for {queue_system}: '{invalid_option}'",
     ):
-        _ = ErtConfig.from_file(filename)
+        _ = ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n"
+            f"QUEUE_OPTION {queue_system} {invalid_option}"
+        )
 
 
 @st.composite
@@ -116,17 +109,16 @@ def memory_with_unit(draw):
     return f"{memory_value}{unit}"
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @given(memory_with_unit())
 def test_supported_memory_units_to_realization_memory(
     memory_with_unit,
 ):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"REALIZATION_MEMORY {memory_with_unit}\n")
-
-    assert ErtConfig.from_file(filename).queue_config.realization_memory > 0
+    assert (
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_with_unit}\n"
+        ).queue_config.realization_memory
+        > 0
+    )
 
 
 @pytest.mark.parametrize(
@@ -144,123 +136,99 @@ def test_supported_memory_units_to_realization_memory(
         ("10Pb", 10 * 1024**5),
     ],
 )
-def test_realization_memory_unit_support(memory_spec: str, expected_bytes, tmpdir):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"REALIZATION_MEMORY {memory_spec}\n")
-
+def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
     assert (
-        ErtConfig.from_file(filename).queue_config.realization_memory == expected_bytes
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_spec}\n"
+        ).queue_config.realization_memory
+        == expected_bytes
     )
 
 
 @pytest.mark.parametrize("invalid_memory_spec", ["-1", "-1b", "b", "4ub"])
-def test_invalid_realization_memory(invalid_memory_spec: str, tmpdir):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"REALIZATION_MEMORY {invalid_memory_spec}\n")
-
+def test_invalid_realization_memory(invalid_memory_spec: str):
     with pytest.raises(ConfigValidationError):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {invalid_memory_spec}\n"
+        )
 
 
-def test_conflicting_realization_slurm_memory(tmpdir):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("REALIZATION_MEMORY 10Mb\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY 20M\n")
-
+def test_conflicting_realization_slurm_memory():
     with pytest.raises(ConfigValidationError), pytest.warns(
         ConfigWarning, match="deprecated"
     ):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "REALIZATION_MEMORY 10Mb\n"
+            "QUEUE_SYSTEM SLURM\n"
+            "QUEUE_OPTION SLURM MEMORY 20M\n"
+        )
 
 
-def test_conflicting_realization_slurm_memory_per_cpu(tmpdir):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("REALIZATION_MEMORY 10Mb\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 20M\n")
-
+def test_conflicting_realization_slurm_memory_per_cpu():
     with pytest.raises(ConfigValidationError):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "REALIZATION_MEMORY 10Mb\n"
+            "QUEUE_SYSTEM SLURM\n"
+            "QUEUE_OPTION SLURM MEMORY_PER_CPU 20M\n"
+        )
 
 
-def test_conflicting_realization_openpbs_memory_per_job(tmpdir):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("REALIZATION_MEMORY 10Mb\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n")
-
+def test_conflicting_realization_openpbs_memory_per_job():
     with pytest.raises(ConfigValidationError), pytest.warns(
         ConfigWarning, match="deprecated"
     ):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "REALIZATION_MEMORY 10Mb\n"
+            "QUEUE_SYSTEM TORQUE\n"
+            "QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n"
+        )
 
 
-def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only_warns(
-    tmpdir,
-):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("REALIZATION_MEMORY 10Mb\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n")
-
+def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only_warns():
     with pytest.warns(ConfigWarning):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "REALIZATION_MEMORY 10Mb\n"
+            "QUEUE_SYSTEM SLURM\n"
+            "QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n"
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 @pytest.mark.parametrize("torque_memory_with_unit_str", ["gb", "mb", "1 gb"])
 def test_that_invalid_memory_pr_job_raises_validation_error(
-    torque_memory_with_unit_str, tmpdir
+    torque_memory_with_unit_str,
 ):
-    filename = tmpdir / "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {torque_memory_with_unit_str}")
     with pytest.raises(ConfigValidationError), pytest.warns(
         ConfigWarning, match="deprecated"
     ):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM TORQUE\n"
+            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {torque_memory_with_unit_str}"
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
     [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
 )
 def test_that_overwriting_QUEUE_OPTIONS_warns(
-    tmp_path, monkeypatch, queue_system, queue_system_option, caplog
+    queue_system, queue_system_option, caplog
 ):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n")
-        f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n")
-    test_site_config = tmp_path / "test_site_config.ert"
-    test_site_config.write_text(
-        "JOB_SCRIPT job_dispatch.py\n"
-        f"QUEUE_SYSTEM {queue_system}\n"
-        f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
-        f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n"
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
     with caplog.at_level(logging.INFO):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            user_config_contents="NUM_REALIZATIONS 1\n"
+            f"QUEUE_SYSTEM {queue_system}\n"
+            f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n"
+            f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
+            site_config_contents="JOB_SCRIPT job_dispatch.py\n"
+            f"QUEUE_SYSTEM {queue_system}\n"
+            f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
+            f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
+        )
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
         " test_0 \n New value: test_1"
@@ -270,7 +238,6 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
     ) not in caplog.text
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
     [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE")],
@@ -278,13 +245,12 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
 def test_initializing_empty_config_queue_options_resets_to_default_value(
     queue_system, queue_system_option
 ):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {queue_system_option}\n")
-        f.write(f"QUEUE_OPTION {queue_system} MAX_RUNNING\n")
-    config_object = ErtConfig.from_file(filename)
+    config_object = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {queue_system_option}\n"
+        f"QUEUE_OPTION {queue_system} MAX_RUNNING\n"
+    )
 
     if queue_system == "LSF":
         assert config_object.queue_config.queue_options.lsf_queue is None
@@ -293,7 +259,6 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     assert config_object.queue_config.queue_options.max_running == 0
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, queue_option, queue_value, err_msg",
     [
@@ -302,42 +267,36 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     ],
 )
 def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_msg):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {queue_option} {queue_value}\n")
+    file_contents = (
+        "NUM_REALIZATIONS 1\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {queue_option} {queue_value}\n"
+    )
 
     with pytest.raises(ConfigValidationError, match=err_msg):
         if queue_system == "TORQUE":
             with pytest.warns(ConfigWarning, match="deprecated"):
-                ErtConfig.from_file(filename)
+                ErtConfig.from_file_contents(file_contents)
         else:
-            ErtConfig.from_file(filename)
+            ErtConfig.from_file_contents(file_contents)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_configuring_another_queue_system_gives_warning():
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM LSF\n")
-        f.write("QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n")
-
     with pytest.warns(ConfigWarning, match="should be a valid number"):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM LSF\n"
+            "QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n"
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_slurm_queue_mem_options_are_validated():
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write("QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n")
-
     with pytest.raises(ConfigValidationError) as e:
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM SLURM\n"
+            "QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n"
+        )
 
     info = e.value.errors[0]
 
@@ -351,34 +310,28 @@ def test_that_slurm_queue_mem_options_are_validated():
     "mem_per_job",
     ["5gb", "5mb", "5kb"],
 )
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM SLURM\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
-
     with pytest.warns(ConfigWarning, match="deprecated"):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM SLURM\n"
+            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n"
+        )
 
 
 @pytest.mark.parametrize(
     "mem_per_job",
     ["5", "5g"],
 )
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_torque_queue_mem_options_are_corrected(mem_per_job: str):
-    filename = "config.ert"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("QUEUE_SYSTEM TORQUE\n")
-        f.write(f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n")
-
     with pytest.raises(ConfigValidationError) as e, pytest.warns(
         ConfigWarning, match="deprecated"
     ):
-        ErtConfig.from_file(filename)
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM TORQUE\n"
+            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n"
+        )
 
     info = e.value.errors[0]
 
@@ -390,9 +343,8 @@ def test_that_torque_queue_mem_options_are_corrected(mem_per_job: str):
     assert info.end_column == info.column + len(mem_per_job)
 
 
-def test_max_running_property(tmp_path):
-    config_path = tmp_path / "config.ert"
-    config_path.write_text(
+def test_max_running_property():
+    config = ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\n"
         "QUEUE_SYSTEM TORQUE\n"
         "QUEUE_OPTION TORQUE MAX_RUNNING 17\n"
@@ -400,34 +352,32 @@ def test_max_running_property(tmp_path):
         "QUEUE_OPTION LOCAL MAX_RUNNING 11\n"
         "QUEUE_OPTION LOCAL MAX_RUNNING 13\n"
     )
-    config = ErtConfig.from_file(config_path)
 
     assert config.queue_config.queue_system == QueueSystem.TORQUE
     assert config.queue_config.max_running == 19
 
 
 @pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
-def test_multiple_submit_sleep_keywords(tmp_path, queue_system):
-    config_path = tmp_path / "config.ert"
-    config_path.write_text(
+def test_multiple_submit_sleep_keywords(queue_system):
+    config = ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\n"
         "QUEUE_SYSTEM LSF\n"
         "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
         f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
         "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
     )
-    config = ErtConfig.from_file(config_path)
     assert config.queue_config.submit_sleep == 42
 
 
-def test_multiple_max_submit_keywords(tmp_path):
-    config_path = tmp_path / "config.ert"
-    config_path.write_text("NUM_REALIZATIONS 1\nMAX_SUBMIT 10\nMAX_SUBMIT 42\n")
-    config = ErtConfig.from_file(config_path)
-    assert config.queue_config.max_submit == 42
+def test_multiple_max_submit_keywords():
+    assert (
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\nMAX_SUBMIT 10\nMAX_SUBMIT 42\n"
+        ).queue_config.max_submit
+        == 42
+    )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "max_submit_value, error_msg",
     [
@@ -437,14 +387,12 @@ def test_multiple_max_submit_keywords(tmp_path):
     ],
 )
 def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
-    with open("file.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"MAX_SUBMIT {max_submit_value}\n")
     with pytest.raises(ConfigValidationError, match=error_msg):
-        ErtConfig.from_file("file.ert")
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n" f"MAX_SUBMIT {max_submit_value}\n"
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, key, value",
     [
@@ -457,8 +405,8 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
     ],
 )
 def test_global_queue_options(queue_system, key, value):
-    def _check_results():
-        ert_config = ErtConfig.from_file("config.ert")
+    def _check_results(contents):
+        ert_config = ErtConfig.from_file_contents(contents)
         if key == "MAX_RUNNING":
             assert ert_config.queue_config.max_running == value
         elif key == "SUBMIT_SLEEP":
@@ -466,21 +414,16 @@ def test_global_queue_options(queue_system, key, value):
         else:
             raise KeyError("Unexpected key")
 
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {key} 10\n")
-        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
-    _check_results()
+    _check_results(
+        "NUM_REALIZATIONS 1\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {key} 10\n"
+        f"QUEUE_OPTION GENERIC {key} {value}\n"
+    )
 
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"{key} {value}\n")
-    _check_results()
+    _check_results(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, key, value",
     [
@@ -493,8 +436,8 @@ def test_global_queue_options(queue_system, key, value):
     ],
 )
 def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, value):
-    def _check_results():
-        ert_config = ErtConfig.from_file("config.ert")
+    def _check_results(contents):
+        ert_config = ErtConfig.from_file_contents(contents)
         if key == "MAX_RUNNING":
             assert ert_config.queue_config.max_running == value
         elif key == "SUBMIT_SLEEP":
@@ -502,22 +445,21 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
         else:
             raise KeyError("Unexpected key")
 
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION {queue_system} {key} {value}\n")
-        f.write(f"{key} {value + 42}\n")
-    _check_results()
+    _check_results(
+        "NUM_REALIZATIONS 1\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION {queue_system} {key} {value}\n"
+        f"{key} {value + 42}\n"
+    )
 
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
-        f.write(f"{key} {value + 42}\n")
-    _check_results()
+    _check_results(
+        "NUM_REALIZATIONS 1\n"
+        f"QUEUE_SYSTEM {queue_system}\n"
+        f"QUEUE_OPTION GENERIC {key} {value}\n"
+        f"{key} {value + 42}\n"
+    )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "queue_system, key, value",
     [
@@ -530,26 +472,24 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
     ],
 )
 def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"QUEUE_OPTION GENERIC {key} {value}\n")
     with pytest.raises(
         ConfigValidationError, match="Input should be greater than or equal to 0"
     ):
-        ErtConfig.from_file("config.ert")
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            f"QUEUE_SYSTEM {queue_system}\n"
+            f"QUEUE_OPTION GENERIC {key} {value}\n"
+        )
 
-    with open("config.ert", mode="w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write(f"QUEUE_SYSTEM {queue_system}\n")
-        f.write(f"{key} {value}\n")
     error_msg = (
         "must have a positive integer value"
         if key == "MAX_RUNNING"
         else "Input should be greater than or equal to 0"
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
-        ErtConfig.from_file("config.ert")
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n" f"QUEUE_SYSTEM {queue_system}\n" f"{key} {value}\n"
+        )
 
 
 @pytest.mark.parametrize(

@@ -49,12 +49,9 @@ JOBNAME <A>%d""",
     ],
 )
 def test_that_user_defined_substitution_works_as_expected(
-    defines, expected, tmp_path, monkeypatch, run_args, prior_ensemble
+    defines, expected, run_args, prior_ensemble
 ):
-    monkeypatch.chdir(tmp_path)
-    config_file = tmp_path / "config_file.ert"
-    config_file.write_text(defines)
     assert (
-        run_args(ErtConfig.from_file(config_file), prior_ensemble)[0].job_name
+        run_args(ErtConfig.from_file_contents(defines), prior_ensemble)[0].job_name
         == expected
     )
