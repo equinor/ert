@@ -130,7 +130,7 @@ class QComboBoxWithDescription(QComboBox):
         model.setData(index, description, DESCRIPTION_ROLE)
         model.setData(index, group, GROUP_TITLE_ROLE)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
         original_size_hint = super().sizeHint()
         new_width = int(original_size_hint.width() + 220)
         new_height = int(super().sizeHint().height() * 1.5)

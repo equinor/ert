@@ -193,5 +193,5 @@ class MultipleDataAssimilation(UpdateRunModel):
         return "[Sample|restart] → [evaluate → update] for each weight"
 
     @classmethod
-    def group(cls) -> str:
+    def group(cls) -> Optional[str]:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
