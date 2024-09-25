@@ -40,23 +40,41 @@ start_tests () {
 
     pushd ${CI_TEST_ROOT}/tests/ert
 
+    set +e
+
     pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
+    retun_code_0=$?
     pytest --eclipse-simulator -v --mpl \
         -m "not limit_memory and requires_window_manager" --benchmark-disable
+    retun_code_1=$?
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
     export OMP_NUM_THREADS=1
 
     pytest -n 2 --durations=0 -m "limit_memory" --memray
+    retun_code_2=$?
 
     unset OMP_NUM_THREADS
 
     basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
     pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" unit_tests/scheduler
+    retun_code_3=$?
     rm -rf "$basetemp" || true
 
     popd
 
     run_ert_with_opm
+    retun_code_4=$?
+
+    set -e
+
+    # We error if one or more returncodes are nonzero
+    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4; do
+        if [ $code -ne 0 ]; then
+            echo "One or more tests failed."
+            return 1
+        fi
+    done
+
 }
