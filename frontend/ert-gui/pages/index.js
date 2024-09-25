@@ -64,7 +64,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
-      <h1>WebSocket Progress Bar Example</h1>
+      <h1>Experiment Progress</h1>
       <div>
         <label htmlFor="experiment-select">Choose an experiment:</label>
         <select

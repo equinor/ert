@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   try {
     // Forward the request to the backend server
-    const backendRes = await fetch('http://localhost:8000/experiments', {
+    const backendRes = await fetch('http://localhost:8000/experiments/', {
       method: req.method, // Forward the HTTP method
       headers: {
         // Forward the relevant headers
