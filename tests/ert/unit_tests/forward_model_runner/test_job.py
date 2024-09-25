@@ -111,7 +111,7 @@ def test_memory_usage_counts_grandchildren():
                 parent = os.fork()
                 if not parent:
                     os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(int(1e7))])
-            time.sleep(1)"""  # Too low sleep will make the test faster but flaky
+            time.sleep(3)"""  # Too low sleep will make the test faster but flaky
             )
         )
     executable = os.path.realpath(scriptname)
