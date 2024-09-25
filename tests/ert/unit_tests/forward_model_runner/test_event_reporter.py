@@ -214,6 +214,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     assert len(lines) == 0, "expected 0 Job running messages"
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"

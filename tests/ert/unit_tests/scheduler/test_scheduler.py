@@ -479,6 +479,7 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
     assert killed_iens == [6, 7, 8, 9]
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, iens_stride, realization_runtime",
@@ -525,6 +526,7 @@ async def test_submit_sleep(
     assert max(deltas) <= submit_sleep + 0.1
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "submit_sleep, realization_max_runtime, max_running",

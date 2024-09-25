@@ -350,6 +350,7 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=3)
 async def test_kill_before_submit_is_finished(
     tmp_path, monkeypatch, caplog, pytestconfig
