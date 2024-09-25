@@ -1,15 +1,14 @@
 import asyncio
-import copy
 import logging
 import queue
 from multiprocessing.queues import Queue
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from fastapi.encoders import jsonable_encoder
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.ensemble_evaluator.event import EndEvent, _UpdateEvent, FullSnapshotEvent, SnapshotUpdateEvent
+from ert.ensemble_evaluator.event import EndEvent, _UpdateEvent
 from ert.run_models.base_run_model import BaseRunModel, StatusEvents
 
 
@@ -20,9 +19,8 @@ class EndTaskEvent:
     pass
 
 class Subscriber:
-    def __init__(self, compressed_events: bool) -> None:
+    def __init__(self) -> None:
         self.index = 0
-        self.compressed_events = compressed_events
         self._event = asyncio.Event()
 
     def notify(self):
@@ -40,9 +38,6 @@ class ExperimentTask:
         self._status_queue = status_queue
         self._subscribers: Dict[str, Subscriber] = {}
         self._events: List[StatusEvents] = []
-
-        self._compressed_events: List[StatusEvents] = []
-        self._allow_compression = False
 
     def cancel(self) -> None:
         if self._model is not None:
@@ -70,7 +65,6 @@ class ExperimentTask:
             except queue.Empty:
                 await asyncio.sleep(0.01)
                 continue
-            self._compressed_events.append(copy.deepcopy(item))
 
             if isinstance(item, _UpdateEvent):
                 item.snapshot = item.snapshot.to_dict()
@@ -87,43 +81,17 @@ class ExperimentTask:
                 break
 
         await simulation_future
-        self._compress_events()
-        self._allow_compression = True
         self._model = None
         logger.info(f"Experiment {self._id} done")
 
-    def _compress_events(self):
-        items = self._compressed_events
-        compressed_items = []
-        for event in items:
-            last_event = compressed_items[-1] if compressed_items else None
-            if isinstance(last_event, FullSnapshotEvent) and isinstance(event, SnapshotUpdateEvent):
-                last_event.snapshot.merge_snapshot(event.snapshot)
-            elif isinstance(last_event, FullSnapshotEvent) and isinstance(event, FullSnapshotEvent):
-                compressed_items.pop()
-                compressed_items.append(event)
-            else:
-                compressed_items.append(event)
-
-        self._compressed_events = []
-        for item in compressed_items:
-            if isinstance(item, _UpdateEvent):
-                item.snapshot = item.snapshot.to_dict()
-            event = jsonable_encoder(item)
-            self._compressed_events.append(event)
-        self._compressed_events.append(EndTaskEvent())
-
-
     async def get_event(self, subscriber_id: str) -> StatusEvents:
         if subscriber_id not in self._subscribers:
-            self._subscribers[subscriber_id] = Subscriber(compressed_events=self._allow_compression)
+            self._subscribers[subscriber_id] = Subscriber()
         subscriber = self._subscribers[subscriber_id]
 
-        event_list = self._compressed_events if subscriber.compressed_events else self._events
-
-        while subscriber.index >= len(event_list):
+        while subscriber.index >= len(self._events):
             await subscriber.wait_for_event()
 
-        event = event_list[subscriber.index]
+        event = self._events[subscriber.index]
         self._subscribers[subscriber_id].index += 1
         return event
