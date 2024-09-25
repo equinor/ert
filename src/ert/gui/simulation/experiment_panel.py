@@ -88,12 +88,10 @@ class ExperimentPanel(QWidget):
         )
 
         experiment_type_layout = QHBoxLayout()
-        experiment_type_layout.addSpacing(10)
+        experiment_type_layout.setContentsMargins(0, 0, 0, 0)
         experiment_type_layout.addWidget(
             self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
-
-        experiment_type_layout.addSpacing(20)
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
@@ -129,9 +127,8 @@ class ExperimentPanel(QWidget):
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
 
-        layout.addSpacing(5)
+        layout.setContentsMargins(0, 0, 10, 10)
         layout.addLayout(experiment_type_layout)
-        layout.addSpacing(10)
 
         self._experiment_stack = QStackedWidget()
         self._experiment_stack.setLineWidth(1)

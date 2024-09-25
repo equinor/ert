@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
-from typing import TYPE_CHECKING, Optional
+from typing import Dict, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon
@@ -28,14 +28,11 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
-from ert.gui.tools.manage_experiments import ManageExperimentsTool
-from ert.gui.tools.plot import PlotTool
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
+from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
-
-if TYPE_CHECKING:
-    from ert.gui.tools import Tool
 
 BUTTON_STYLE_SHEET: str = """
     QPushButton {
@@ -83,40 +80,48 @@ class ErtMainWindow(QMainWindow):
         self.log_handler = log_handler
 
         self.setWindowTitle(f"ERT - {config_file} - {find_ert_info()}")
-        self.dialog_panels: list[RunDialog] = []
-        self.central_panels: list[QWidget] = []
-
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
+        self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
-
         self.facade = LibresFacade(self.ert_config)
-
         self.side_frame = QFrame(self)
-        self.side_frame.setFrameShape(QFrame.Box)
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
-        self.add_experiment_button()
-        self._plot_tool = PlotTool(self.config_file, self)
-        self._create_sidebar_button(self._plot_tool)
+        self.central_panels_map: Dict[str, QWidget] = {}
 
-        self._manage_experiments_tool = ManageExperimentsTool(
-            self.ert_config,
-            self.notifier,
-            self.ert_config.model_config.num_realizations,
+        button = self._add_sidebar_button(
+            "Start Simulation", QIcon("img:play_circle_outlined.svg")
         )
-
-        self._create_sidebar_button(self._manage_experiments_tool)
-
-        self.results_button = self._create_sidebar_button()
-        self.results_button.setIcon(QIcon("img:in_progress.svg"))
-        self.results_button.setToolTip("Show Results")
-        self.results_button.setEnabled(False)
         menu = QMenu()
-        self.results_button.setMenu(menu)
+        menu.setStyleSheet(MENU_ITEM_STYLE_SHEET)
+
+        for sim_mode in [
+            "Single test run",
+            "Ensemble Experiment",
+            "Manual Update",
+            "ES MDA",
+            "Ensemble Smoother",
+        ]:
+            act = menu.addAction(sim_mode)
+            act.triggered.connect(self.select_central_widget)
+            # todo use sim modes to select correct panels directly
+            act.setProperty("index", "Start Simulation")
+        button.setMenu(menu)
+
+        self._plot_window: Optional[PlotWindow] = None
+        self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
+
+        self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
+        self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
+        self.results_button = self._add_sidebar_button(
+            "Show Results", QIcon("img:in_progress.svg")
+        )
+        self.results_button.setEnabled(False)
+        self.results_button.setMenu(QMenu())
 
         self.vbox_layout.addStretch()
         self.central_layout.addWidget(self.side_frame)
@@ -128,44 +133,34 @@ class ErtMainWindow(QMainWindow):
         self.__add_tools_menu()
         self.__add_help_menu()
 
+    def select_central_widget(self):
+        actor = self.sender()
+        index_name = actor.property("index")
+
+        if index_name == "Create plot" and not self._plot_window:
+            self._plot_window = PlotWindow(self.config_file, self)
+            self.central_layout.addWidget(self._plot_window)
+            self.central_panels_map["Create plot"] = self._plot_window
+
+        for i, widget in self.central_panels_map.items():
+            widget.setVisible(i == index_name)
+
     @Slot(object)
     def slot_add_widget(self, run_dialog: RunDialog) -> None:
-        for widget in self.central_panels:
+        for widget in self.central_panels_map.values():
             widget.setVisible(False)
-
-        self.dialog_panels.append(run_dialog)
 
         run_dialog.setParent(self)
         self.central_layout.addWidget(run_dialog)
         self.results_button.setEnabled(True)
         date_time = datetime.datetime.utcnow().strftime("%Y-%d-%m %H:%M:%S")
+        self.central_panels_map[date_time] = run_dialog
         act = self.results_button.menu()
 
         if act:
             act.addAction(date_time)
-            act.setProperty("index", len(self.dialog_panels) - 1)
-            act.triggered.connect(self.select_dialog_panel)
-
-    def select_dialog_panel(self) -> None:
-        actor = self.sender()
-        index = int(actor.property("index")) if actor else 0
-
-        for w in self.central_panels:
-            w.hide()
-
-        for i in range(len(self.dialog_panels)):
-            should_be_visible = i == index
-            self.dialog_panels[i].setVisible(should_be_visible)
-
-    def select_widget(self) -> None:
-        index = 0
-
-        for w in self.dialog_panels:
-            w.hide()
-
-        for i in range(len(self.central_panels)):
-            should_be_visible = i == index
-            self.central_panels[i].setVisible(should_be_visible)
+            act.setProperty("index", date_time)
+            act.triggered.connect(self.select_central_widget)
 
     def post_init(self) -> None:
         experiment_panel = ExperimentPanel(
@@ -175,7 +170,7 @@ class ErtMainWindow(QMainWindow):
             self.facade.get_ensemble_size(),
         )
         self.central_layout.addWidget(experiment_panel)
-        self.central_panels.append(experiment_panel)
+        self.central_panels_map["Start Simulation"] = experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
@@ -189,46 +184,31 @@ class ErtMainWindow(QMainWindow):
             self.plugins_tool.setParent(self)
             self.menuBar().addMenu(self.plugins_tool.get_menu())
 
-    def _create_sidebar_button(self, tool: Optional[Tool] = None) -> QPushButton:
+        self._manage_experiments_panel = ManageExperimentsPanel(
+            self.ert_config,
+            self.notifier,
+            self.ert_config.model_config.num_realizations,
+        )
+
+        self.central_panels_map["Manage experiments"] = self._manage_experiments_panel
+        self._manage_experiments_panel.hide()
+        self.central_layout.addWidget(self._manage_experiments_panel)
+
+    def _add_sidebar_button(self, name: str, icon: QIcon) -> QPushButton:
         button = QPushButton(self.side_frame)
         button.setFixedSize(80, 80)
         button.setCursor(QCursor(Qt.PointingHandCursor))
         button.setStyleSheet(BUTTON_STYLE_SHEET)
-        padding = 30
-        button.setIconSize(
-            QSize(button.size().width() - padding, button.size().height() - padding)
-        )
-        if tool:
-            button.setIcon(QIcon(tool.getIcon()))
-            button.setToolTip(tool.getName())
-            button.clicked.connect(tool.trigger)
+        pad = 30
+        icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
+        button.setIconSize(icon_size)
+        button.setIcon(icon)
+        button.setToolTip(name)
         self.vbox_layout.addWidget(button)
-        button.setProperty("index", len(self.central_panels) - 1)
+
+        button.clicked.connect(self.select_central_widget)
+        button.setProperty("index", name)
         return button
-
-    def add_experiment_button(self) -> None:
-        button = self._create_sidebar_button()
-        button.setIcon(QIcon("img:play_circle_outlined.svg"))
-        button.setToolTip("Start Simulation")
-        button.clicked.connect(self.select_widget)
-
-        menu = QMenu()
-        menu.setStyleSheet(MENU_ITEM_STYLE_SHEET)
-
-        for sim_mode in [
-            "Single test run",
-            "Ensemble Experiment",
-            "Manual Update",
-            "ES MDA",
-            "Ensemble Smoother",
-        ]:
-            act = menu.addAction(sim_mode)
-            act.triggered.connect(self.select_widget)
-        button.setMenu(menu)
-
-    def toggle_visibility(self) -> None:
-        for panel in self.central_panels:
-            panel.show()
 
     def __add_help_menu(self) -> None:
         menuBar = self.menuBar()

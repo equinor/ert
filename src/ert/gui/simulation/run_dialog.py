@@ -53,7 +53,6 @@ from ert.gui.model.snapshot import (
     SnapshotModel,
 )
 from ert.gui.tools.file import FileDialog
-from ert.gui.tools.plot import PlotTool
 from ert.run_models import (
     BaseRunModel,
     RunModelStatusEvent,
@@ -227,11 +226,6 @@ class RunDialog(QFrame):
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
-        self.plot_tool = PlotTool(config_file, self.parent())  # type: ignore
-        self.plot_button = QPushButton(self.plot_tool.getName())
-        self.plot_button.clicked.connect(self.plot_tool.trigger)
-        self.plot_button.setEnabled(True)
-
         self.kill_button = QPushButton("Terminate experiment")
         self.done_button = QPushButton("Done")
         self.done_button.setHidden(True)
@@ -260,7 +254,6 @@ class RunDialog(QFrame):
         button_layout.addWidget(self.memory_usage)
         button_layout.addStretch()
         button_layout.addWidget(self.copy_debug_info_button)
-        button_layout.addWidget(self.plot_button)
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
