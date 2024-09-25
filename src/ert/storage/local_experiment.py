@@ -12,15 +12,10 @@ import xarray as xr
 import xtgeo
 from pydantic import BaseModel
 
-from ert.config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    SurfaceConfig,
-)
+from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
-from ert.storage.mode import BaseMode, Mode, require_write
+from ert.storage.mode import BaseMode, Mode, lock_access, require_write
 
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
@@ -81,6 +76,7 @@ class LocalExperiment(BaseMode):
         )
 
     @classmethod
+    @lock_access
     def create(
         cls,
         storage: LocalStorage,

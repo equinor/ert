@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+import fcntl
+import os
 from enum import Enum
 from functools import wraps
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Literal,
-)
+from typing import TYPE_CHECKING, Callable, Literal
 
 if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, TypeVar
@@ -103,5 +101,23 @@ def require_write(func: F[C, P, T]) -> F[C, P, T]:
     def inner(self_: C, /, *args: P.args, **kwargs: P.kwargs) -> T:
         self_.assert_can_write()
         return func(self_, *args, **kwargs)
+
+    return inner
+
+
+def lock_access(func: F[C, P, T]) -> F[C, P, T]:
+    _LOCK_FILE = "storage.lock"
+
+    @wraps(func)
+    def inner(self_: C, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        lock_fd = os.open(_LOCK_FILE, os.O_CREAT | os.O_RDWR)
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX)
+            result = func(self_, *args, **kwargs)
+        finally:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            os.close(lock_fd)
+
+        return result
 
     return inner
