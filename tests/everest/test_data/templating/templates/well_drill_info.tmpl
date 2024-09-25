@@ -1,0 +1,6 @@
+PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}
+PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}
+----------------------------------
+{%- for well_name, value in well_drill.items() %}
+{{ well_name }} takes value {{ value }}, implying {{ "on" if value >= 0.5 else "off"}}
+{%- endfor %}

@@ -4,8 +4,10 @@ import contextlib
 import json
 import logging
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -450,7 +452,6 @@ class LocalStorage(BaseMode):
     @require_write
     def _migrate(self, version: int) -> None:
         from ert.storage.migration import (  # noqa: PLC0415
-            block_fs,
             to2,
             to3,
             to4,
@@ -462,10 +463,43 @@ class LocalStorage(BaseMode):
         try:
             self._index = self._load_index()
             if version == 0:
-                self._release_lock()
-                block_fs.migrate(self.path)
-                self._acquire_lock()
-                self._add_migration_information(0, _LOCAL_STORAGE_VERSION, "block_fs")
+                # Make a backup of current storage,
+                # and initialize a new blank storage.
+                # And print a lengthy message explaining to the user how to
+                # migrate the blockfs storage
+                bkup_path = self.path / "_blockfs_backup"
+                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                os.mkdir(bkup_path)
+                for dir in dirs:
+                    shutil.move(self.path / dir, bkup_path / dir)
+
+                self._index = self._load_index()
+
+                logger.info("Blockfs storage backed up")
+                print(
+                    dedent(f"""
+                    Detected outdated storage (blockfs), which is no longer supported
+                    by ERT. Its contents are copied to:
+
+                    {self.path / '_ert_block_storage_backup'}
+
+                    In order to migrate this storage, do the following:
+
+                    (1) with ert version <= 10.3.*, open up the same ert config with:
+                    ENSPATH={self.path / '_ert_block_storage_backup'}
+
+                    (2) with current ert version, open up the same storage again.
+                    The contents of the storage should now be up-to-date, and you may
+                    copy the ensembles and experiments into the original folder @
+                     {self.path}.
+
+                    This is not guaranteed to work. Other than setting the custom
+                    ENSPATH, the ERT config should ideally be the same as it was
+                    when the old blockfs storage was created.
+                """)
+                )
+                return None
+
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(enumerate([to2, to3, to4, to5, to6, to7], start=1))
                 for from_version, migration in migrations[version - 1 :]:

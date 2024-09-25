@@ -1,57 +1,79 @@
-name: Test everest
+name: everest-run-tests-build-docs
 
-# This job checks whether current main of everest
-# is compatible with the changes. It is not required to pass
-# before merging, but breakage should be followed by fix in everest
-# after merge.
-
-on: [pull_request]
-
-env:
-  UV_SYSTEM_PYTHON: 1
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags: "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+env:
+  NO_PROJECT_RES: 1
+  UV_SYSTEM_PYTHON: 1
+
 jobs:
-  test-everest:
-    name: Test everest
-    timeout-minutes: 40
-    runs-on: ubuntu-latest
+  tests:
+    name: "py_${{ matrix.python-version }}_${{ matrix.test_type }}"
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.8', '3.11', '3.12']
+        os: [ubuntu-latest]
+        test_type: ['doc', 'ui-test', 'test', 'integration-test', 'everest-models-test']
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
-    - name: Install ert
+    - name: Install Everest and dependencies
       run: |
-        uv pip install .
+        uv pip install ".[dev,everest]"
 
-    - name: Install everest and dependencies
+    - name: Run Tests
+      if: matrix.test_type == 'test'
       run: |
-        git clone https://github.com/equinor/everest.git
-        uv pip install git+https://github.com/equinor/everest-models.git
+        pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
 
-    - name: Test everest
+    - name: Run Integration Tests
+      if: matrix.test_type == 'integration-test'
+      run: |
+        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup
+
+    - name: Run UI Tests
+      if: matrix.test_type == 'ui-test'
       env:
         QT_QPA_PLATFORM: 'minimal'
-        NO_PROJECT_RES: 1
       run: |
-        pushd everest
-        uv pip install ".[test]"
+        python -m pytest tests/everest -m "ui_test"
 
-        pytest tests -n 4 --dist loadgroup -m "not ui_test"
-        pytest tests -m "ui_test"
+    - name: Build Documentation
+      if: matrix.test_type == 'doc'
+      run: |
+        uv pip install git+https://github.com/equinor/everest-models.git
+        mkdir tmp
+        sphinx-build -n -v -E -W ./docs/everest ./tmp/everest_docs
+
+    - name: Run tests requiring everest-models
+      if: matrix.test_type == 'everest-models-test'
+      run: |
+        uv pip install git+https://github.com/equinor/everest-models.git
+        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup
+
+    - name: Test docs entry point
+      if: matrix.test_type == 'everest-docs-entry-test'
+      run: |
+        python -m everest.docs

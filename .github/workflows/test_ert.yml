@@ -31,8 +31,7 @@ jobs:
         python-version: ${{ inputs.python-version }}
 
     - name: Install uv
-      run: |
-        pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install HDF5 source files
       if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
@@ -40,28 +39,28 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv pip install ".[dev, everest]"
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -v --mpl --benchmark-disable tests/ui_tests/gui
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui
 
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/unit_tests
-        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/ert/unit_tests
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/performance_tests
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests
 
     - name: Test for a clean repository
       run: |
@@ -92,10 +91,16 @@ jobs:
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - uses: test-summary/action@v2
+      if: ${{ !cancelled() }}
       continue-on-error: true
       with:
         paths: junit.xml
-      if: always()
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Test CLI
       run: |

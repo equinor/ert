@@ -9,7 +9,7 @@ import typing
 from datetime import datetime
 
 from _ert.forward_model_runner import reporting
-from _ert.forward_model_runner.reporting.message import Finish, MemoryStatus
+from _ert.forward_model_runner.reporting.message import Finish, ProcessTreeStatus
 from _ert.forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
@@ -62,7 +62,7 @@ def _setup_logging(directory: str = "logs"):
     memory_csv_logger.addHandler(csv_handler)
     memory_csv_logger.setLevel(logging.INFO)
     # Write the CSV header to the file:
-    memory_csv_logger.info(MemoryStatus().csv_header())
+    memory_csv_logger.info(ProcessTreeStatus().csv_header())
 
     job_runner_logger.addHandler(handler)
     job_runner_logger.setLevel(logging.DEBUG)

@@ -13,6 +13,7 @@ from typing import (
 
 from typing_extensions import NotRequired, Unpack
 
+from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitution_list import SubstitutionList
 
 from .parsing import (
@@ -28,6 +29,10 @@ class ForwardModelStepValidationError(Exception):
     Can be subtyped by the implementation of ForwardModelStepPlugin and
     thrown from `validate_pre_realization_run` or `validate_pre_experiment`.
     """
+
+
+class ForwardModelStepWarning(ConfigWarning):
+    pass
 
 
 class ForwardModelStepJSON(TypedDict):

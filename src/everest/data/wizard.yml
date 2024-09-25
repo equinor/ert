@@ -1,0 +1,26 @@
+controls: []
+
+objective_functions: []
+
+optimization:
+  algorithm: optpp_q_newton
+
+model:
+  realizations: []
+
+install_jobs:
+  -
+    name: schmerge
+    source: /project/res/etc/ERT/Config/jobs/wpro/SCHMERGE
+  -
+    name: npv
+    source: /project/res/etc/ERT/Config/jobs/wpro/NPV
+
+environment:
+  simulation_folder: ~
+
+install_data: []
+
+install_templates: []
+
+forward_model: []

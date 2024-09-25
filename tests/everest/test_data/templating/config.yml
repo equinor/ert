@@ -1,0 +1,42 @@
+wells:
+  - { name: PROD1, drill_time: 30 }
+  - { name: PROD2, drill_time: 60 }
+
+controls:
+  -
+    name: well_drill
+    type: well_control
+    min: 0
+    max: 1
+    variables:
+      - { name: PROD1, initial_guess: 1 }
+      - { name: PROD2, initial_guess: 0.9 }
+
+
+objective_functions:
+  -
+    name: objectf_by_tmpl
+
+
+optimization:
+  algorithm: conmin_mfd
+  max_iterations: 1
+
+
+model:
+  realizations: [0]
+
+environment:
+  output_folder: everest_output
+  simulation_folder: simulations_by_templating
+  log_level: debug
+  random_seed: 123
+
+
+install_templates:
+  -
+    template: <CONFIG_PATH>/templates/well_drill_info.tmpl
+    output_file: well_drill_info
+  -
+    template: <CONFIG_PATH>/templates/the_optimal_template.tmpl
+    output_file: objectf_by_tmpl

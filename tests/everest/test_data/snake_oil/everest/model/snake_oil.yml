@@ -1,0 +1,60 @@
+definitions:
+  eclbase: eclipse/ECL
+
+wells:
+  - {name: W1}
+  - {name: W2}
+  - {name: W3}
+  - {name: W4}
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 1
+    variables:
+      -
+        name: W1
+        initial_guess: 0
+      -
+        name: W2
+        initial_guess: 0
+      -
+        name: W3
+        initial_guess: 1
+      -
+        name: W4
+        initial_guess: 1
+
+objective_functions:
+  -
+    name: snake_oil_nvp
+
+install_jobs:
+  -
+    name: snake_oil_diff
+    source: ../../jobs/SNAKE_OIL_DIFF
+  -
+    name: snake_oil_simulator
+    source: ../../jobs/SNAKE_OIL_SIMULATOR
+  -
+    name: snake_oil_npv
+    source: ../../jobs/SNAKE_OIL_NPV
+
+optimization:
+  algorithm: optpp_q_newton
+
+simulator:
+  max_runtime: 3600
+
+environment:
+  simulation_folder: simulations
+
+model:
+  realizations: [0]
+
+forward_model:
+  - snake_oil_simulator
+  - snake_oil_npv
+  - snake_oil_diff

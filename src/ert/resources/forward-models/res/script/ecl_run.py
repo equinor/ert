@@ -1,4 +1,5 @@
 import datetime
+import glob
 import os
 import os.path
 import re
@@ -9,15 +10,39 @@ import time
 from argparse import ArgumentParser
 from collections import namedtuple
 from contextlib import contextmanager, suppress
+from pathlib import Path
 from random import random
+from typing import List
 
 import resfo
-from ecl_config import EclrunConfig
+from ecl_config import EclConfig, EclrunConfig, Simulator
 from packaging import version
 
 
+def ecl_output_has_license_error(ecl_output: str):
+    return (
+        "LICENSE ERROR" in ecl_output
+        or "LICENSE FAILURE" in ecl_output
+        or "not allowed in license" in ecl_output
+    )
+
+
 class EclError(RuntimeError):
-    pass
+    def failed_due_to_license_problems(self) -> bool:
+        # self.args[0] contains the multiline ERROR messages and SLAVE startup messages
+        if ecl_output_has_license_error(self.args[0]):
+            return True
+        if re.search(a_slave_failed_pattern, self.args[0]):
+            for match in re.finditer(slave_run_paths, self.args[0], re.MULTILINE):
+                (ecl_case_starts_with, ecl_case_dir) = match.groups()
+                for prt_file in glob.glob(
+                    f"{ecl_case_dir}/{ecl_case_starts_with}*.PRT"
+                ):
+                    if ecl_output_has_license_error(
+                        Path(prt_file).read_text(encoding="utf-8")
+                    ):
+                        return True
+        return False
 
 
 def await_process_tee(process, *out_files) -> int:
@@ -52,7 +77,14 @@ def await_process_tee(process, *out_files) -> int:
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
-error_pattern = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
+error_pattern_e100 = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
+error_pattern_e300 = rf"^\s@--Error${body_sub_pattern}"
+slave_started_pattern = (
+    rf"^\s@--MESSAGE{date_sub_pattern}\s^\s@\s+STARTING SLAVE.+${body_sub_pattern}"
+)
+a_slave_failed_pattern = r"\s@\s+SLAVE RUN.*HAS STOPPED WITH AN ERROR CONDITION.\s*"
+slave_run_paths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
+slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"
 
 
 def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
@@ -209,7 +241,12 @@ class EclRun:
     """
 
     def __init__(
-        self, ecl_case, sim, num_cpu=1, check_status=True, summary_conversion=False
+        self,
+        ecl_case: str,
+        sim: Simulator,
+        num_cpu: int = 1,
+        check_status: bool = True,
+        summary_conversion: bool = False,
     ):
         self.sim = sim
         self.check_status = check_status
@@ -242,6 +279,10 @@ class EclRun:
 
     def baseName(self):
         return self.base_name
+
+    @property
+    def prt_path(self):
+        return Path(self.run_path) / (self.baseName() + ".PRT")
 
     def numCpu(self):
         return self.num_cpu
@@ -392,10 +433,8 @@ class EclRun:
 
             try:
                 self.assertECLEND()
-            except RuntimeError as err:
-                if (
-                    "LICENSE ERROR" in err.args[0] or "LICENSE FAILURE" in err.args[0]
-                ) and retries_left > 0:
+            except EclError as err:
+                if err.failed_due_to_license_problems() and retries_left > 0:
                     time_to_wait = backoff_sleep + int(
                         random() * self.LICENSE_RETRY_STAGGER_FACTOR
                     )
@@ -414,7 +453,6 @@ class EclRun:
                     return
                 else:
                     raise err from None
-
             if self.num_cpu > 1:
                 self.summary_block()
 
@@ -455,14 +493,26 @@ class EclRun:
         return ecl_sum
 
     def assertECLEND(self):
+        tail_length = 5000
         result = self.readECLEND()
         if result.errors > 0:
             error_list = self.parseErrors()
             sep = "\n\n...\n\n"
-            error_msg = sep.join(error_list)
+            error_and_slave_msg = sep.join(error_list)
+            extra_message = ""
+            error_messages = [
+                error for error in error_list if not "STARTING SLAVE" in str(error)
+            ]
+            if result.errors != len(error_messages):
+                extra_message = (
+                    f"\n\nWarning, mismatch between stated Error count ({result.errors}) "
+                    f"and number of ERROR messages found in PRT ({len(error_messages)})."
+                    f"\n\nTail ({tail_length} bytes) of PRT-file {self.prt_path}:\n\n"
+                ) + tail_textfile(self.prt_path, 5000)
+
             raise EclError(
                 "Eclipse simulation failed with:"
-                f"{result.errors:d} errors:\n\n{error_msg}"
+                f"{result.errors:d} errors:\n\n{error_and_slave_msg}{extra_message}"
             )
 
         if result.bugs > 0:
@@ -474,7 +524,7 @@ class EclRun:
 
         report_file = os.path.join(self.run_path, f"{self.base_name}.ECLEND")
         if not os.path.isfile(report_file):
-            report_file = os.path.join(self.run_path, f"{self.base_name}.PRT")
+            report_file = self.prt_path
 
         errors = None
         bugs = None
@@ -494,28 +544,31 @@ class EclRun:
 
         return EclipseResult(errors=errors, bugs=bugs)
 
-    def parseErrors(self):
-        prt_file = os.path.join(self.runPath(), f"{self.baseName()}.PRT")
+    def parseErrors(self) -> List[str]:
+        """Extract multiline ERROR messages from the PRT file"""
         error_list = []
-        error_regexp = re.compile(error_pattern, re.MULTILINE)
-        with open(prt_file, "r", encoding="utf-8") as filehandle:
+        error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)
+        error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
+        slave_started_regexp = re.compile(slave_started_pattern, re.MULTILINE)
+        with open(self.prt_path, "r", encoding="utf-8") as filehandle:
             content = filehandle.read()
 
-        offset = 0
-        while True:
-            match = error_regexp.search(content[offset:])
-            if match:
-                error_list.append(
-                    content[offset + match.start() : offset + match.end()]
-                )
-                offset += match.end()
-            else:
-                break
+        for regexp in [error_e100_regexp, error_e300_regexp, slave_started_regexp]:
+            offset = 0
+            while True:
+                match = regexp.search(content[offset:])
+                if match:
+                    error_list.append(
+                        content[offset + match.start() : offset + match.end()]
+                    )
+                    offset += match.end()
+                else:
+                    break
 
         return error_list
 
 
-def run(config, argv):
+def run(config: EclConfig, argv):
     parser = ArgumentParser()
     parser.add_argument("ecl_case")
     parser.add_argument("-v", "--version", dest="version", type=str)
@@ -557,3 +610,14 @@ def run(config, argv):
     except EclError as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
+
+
+def tail_textfile(file_path: Path, num_chars: int) -> str:
+    if not file_path.exists():
+        return f"No output file {file_path}"
+    with open(file_path, encoding="utf-8") as file:
+        file.seek(0, 2)
+        file_end_position = file.tell()
+        seek_position = max(0, file_end_position - num_chars)
+        file.seek(seek_position)
+        return file.read()[-num_chars:]

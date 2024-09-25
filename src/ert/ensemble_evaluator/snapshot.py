@@ -346,6 +346,7 @@ class EnsembleSnapshot:
             if type(event) is ForwardModelStepRunning:
                 fm["current_memory_usage"] = event.current_memory_usage
                 fm["max_memory_usage"] = event.max_memory_usage
+                fm["cpu_seconds"] = event.cpu_seconds
             if type(event) is ForwardModelStepStart:
                 fm["stdout"] = event.std_out
                 fm["stderr"] = event.std_err
@@ -384,6 +385,7 @@ class FMStepSnapshot(TypedDict, total=False):
     index: Optional[str]
     current_memory_usage: Optional[int]
     max_memory_usage: Optional[int]
+    cpu_seconds: Optional[float]
     name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]

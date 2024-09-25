@@ -10,6 +10,7 @@ from .config import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepWarning,
     ForwardModelStepDocumentation,
 )
 from .data import MeasuredData
@@ -27,6 +28,7 @@ __all__ = [
     "ForwardModelStepJSON",
     "ForwardModelStepPlugin",
     "ForwardModelStepValidationError",
+    "ForwardModelStepWarning",
     "JobState",
     "JobStatus",
     "LibresFacade",

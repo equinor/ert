@@ -33,7 +33,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install ERT with style dependencies
       run: |

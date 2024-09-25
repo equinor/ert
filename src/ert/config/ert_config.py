@@ -53,14 +53,20 @@ from .parsing import (
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
-    lark_parse,
+    parse_contents,
+    read_file,
+)
+from .parsing import (
+    parse as parse_config,
 )
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
-    parse,
+)
+from .parsing.observations_parser import (
+    parse as parse_observations,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
@@ -105,12 +111,6 @@ class ErtConfig:
     observation_config: List[
         Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
     ] = field(default_factory=list)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ErtConfig):
-            return False
-
-        return all(getattr(self, attr) == getattr(other, attr) for attr in vars(self))
 
     def __post_init__(self) -> None:
         self.config_path = (
@@ -157,11 +157,34 @@ class ErtConfig:
         Warnings will be issued with :python:`warnings.warn(category=ConfigWarning)`
         when the user should be notified with non-fatal configuration problems.
         """
-        user_config_dict = cls.read_user_config_and_apply_site_config(user_config_file)
+        user_config_contents = read_file(user_config_file)
+        site_config_dict = cls.read_site_config()
+        user_config_dict = cls._read_user_config_and_apply_site_config(
+            user_config_contents, user_config_file, site_config_dict
+        )
         config_dir = path.abspath(path.dirname(user_config_file))
-        cls._log_config_file(user_config_file)
+        cls._log_config_file(user_config_file, user_config_contents)
         cls._log_config_dict(user_config_dict)
         cls.apply_config_content_defaults(user_config_dict, config_dir)
+        return cls.from_dict(user_config_dict)
+
+    @classmethod
+    def from_file_contents(
+        cls,
+        user_config_contents: str,
+        site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
+    ) -> Self:
+        site_config_dict = parse_contents(
+            site_config_contents,
+            file_name="site_config.ert",
+            schema=init_site_config_schema(),
+        )
+        user_config_dict = cls._read_user_config_and_apply_site_config(
+            user_config_contents,
+            "./config.ert",
+            site_config_dict,
+        )
+        cls.apply_config_content_defaults(user_config_dict, ".")
         return cls.from_dict(user_config_dict)
 
     @classmethod
@@ -245,7 +268,7 @@ class ErtConfig:
                         f" config file {obs_config_file!r}",
                         obs_config_file,
                     )
-                obs_config_content = parse(obs_config_file)
+                obs_config_content = parse_observations(obs_config_file)
         except ObservationConfigError as err:
             errors.append(err)
 
@@ -305,38 +328,36 @@ class ErtConfig:
         ]
 
     @classmethod
-    def _log_config_file(cls, config_file: str) -> None:
+    def _log_config_file(cls, config_file: str, config_file_contents: str) -> None:
         """
         Logs what configuration was used to start ert. Because the config
         parsing is quite convoluted we are not able to remove all the comments,
         but the easy ones are filtered out.
         """
-        if config_file is not None and path.isfile(config_file):
-            config_context = ""
-            with open(config_file, "r", encoding="utf-8") as file_obj:
-                for line in file_obj:
-                    line = line.strip()
-                    if not line or line.startswith("--"):
-                        continue
-                    if "--" in line and not any(x in line for x in ['"', "'"]):
-                        # There might be a comment in this line, but it could
-                        # also be an argument to a job, so we do a quick check
-                        line = line.split("--")[0].rstrip()
-                    if any(
-                        kw in line
-                        for kw in [
-                            "FORWARD_MODEL",
-                            "LOAD_WORKFLOW",
-                            "LOAD_WORKFLOW_JOB",
-                            "HOOK_WORKFLOW",
-                            "WORKFLOW_JOB_DIRECTORY",
-                        ]
-                    ):
-                        continue
-                    config_context += line + "\n"
-            logger.info(
-                f"Content of the configuration file ({config_file}):\n" + config_context
-            )
+        config_context = ""
+        for line in config_file_contents.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("--"):
+                continue
+            if "--" in line and not any(x in line for x in ['"', "'"]):
+                # There might be a comment in this line, but it could
+                # also be an argument to a job, so we do a quick check
+                line = line.split("--")[0].rstrip()
+            if any(
+                kw in line
+                for kw in [
+                    "FORWARD_MODEL",
+                    "LOAD_WORKFLOW",
+                    "LOAD_WORKFLOW_JOB",
+                    "HOOK_WORKFLOW",
+                    "WORKFLOW_JOB_DIRECTORY",
+                ]
+            ):
+                continue
+            config_context += line + "\n"
+        logger.info(
+            f"Content of the configuration file ({config_file}):\n" + config_context
+        )
 
     @classmethod
     def _log_config_dict(cls, content_dict: Dict[str, Any]) -> None:
@@ -376,20 +397,23 @@ class ErtConfig:
 
     @classmethod
     def read_site_config(cls) -> ConfigDict:
-        return lark_parse(file=site_config_location(), schema=init_site_config_schema())
+        site_config_file = site_config_location()
+        return parse_contents(
+            read_file(site_config_file),
+            file_name=site_config_file,
+            schema=init_site_config_schema(),
+        )
 
     @classmethod
-    def read_user_config(cls, user_config_file: str) -> ConfigDict:
-        return lark_parse(user_config_file, schema=init_user_config_schema())
+    def _read_user_config_contents(cls, user_config: str, file_name: str) -> ConfigDict:
+        return parse_contents(
+            user_config, file_name=file_name, schema=init_user_config_schema()
+        )
 
     @classmethod
-    def read_user_config_and_apply_site_config(
-        cls, user_config_file: str
+    def _merge_user_and_site_config(
+        cls, user_config_dict: ConfigDict, site_config_dict: ConfigDict
     ) -> ConfigDict:
-        site_config_dict = cls.read_site_config()
-        user_config_dict = cls.read_user_config(user_config_file)
-        cls._log_custom_forward_model_steps(user_config_dict)
-
         for keyword, value in site_config_dict.items():
             if keyword == "QUEUE_OPTION":
                 filtered_queue_options = []
@@ -407,6 +431,20 @@ class ErtConfig:
             elif keyword not in user_config_dict:
                 user_config_dict[keyword] = value
         return user_config_dict
+
+    @classmethod
+    def _read_user_config_and_apply_site_config(
+        cls,
+        user_config_contents: str,
+        user_config_file: str,
+        site_config_dict: ConfigDict,
+    ) -> ConfigDict:
+        user_config_dict = cls._read_user_config_contents(
+            user_config_contents,
+            file_name=user_config_file,
+        )
+        cls._log_custom_forward_model_steps(user_config_dict)
+        return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
 
     @staticmethod
     def check_non_utf_chars(file_path: str) -> None:
@@ -1002,7 +1040,7 @@ def _forward_model_step_from_config_file(
     schema = init_forward_model_schema()
 
     try:
-        content_dict = lark_parse(file=config_file, schema=schema, pre_defines=[])
+        content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
 
         specified_arg_types: List[Tuple[int, str]] = content_dict.get(
             ForwardModelStepKeys.ARG_TYPE, []

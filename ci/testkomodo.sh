@@ -12,13 +12,13 @@ copy_test_files () {
 }
 
 install_test_dependencies () {
-    pip install ".[dev]"
+    pip install ".[dev, everest]"
 }
 
 run_ert_with_opm () {
     pushd "${CI_TEST_ROOT}"
 
-    cp -r "${CI_SOURCE_ROOT}/test-data/flow_example" ert_with_opm
+    cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
 
     ert test_run flow.ert ||
@@ -38,7 +38,7 @@ start_tests () {
 
     export ECL_SKIP_SIGNAL=ON
 
-    pushd ${CI_TEST_ROOT}/tests
+    pushd ${CI_TEST_ROOT}/tests/ert
 
     pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup

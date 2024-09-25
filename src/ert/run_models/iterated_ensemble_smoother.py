@@ -120,11 +120,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        log_msg = (
-            f"Running {self.name} for {self._total_iterations} "
-            f'iteration{"s" if (self._total_iterations != 1) else ""}.'
-        )
-        logger.info(log_msg)
+        self.log_at_startup()
 
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(

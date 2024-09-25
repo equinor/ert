@@ -189,6 +189,24 @@ class BaseRunModel(ABC):
         self.start_iteration = start_iteration
         self.validate()
 
+    def log_at_startup(self) -> None:
+        keys_to_drop = [
+            "_end_queue",
+            "_queue_config",
+            "_status_queue",
+            "_storage",
+            "ert_config",
+            "rng",
+            "run_paths",
+            "substitution_list",
+        ]
+        settings_dict = {
+            key: value
+            for key, value in self.__dict__.items()
+            if key not in keys_to_drop
+        }
+        logger.info(f"Running '{self.name()}' with settings {settings_dict}")
+
     @classmethod
     @abstractmethod
     def name(cls) -> str: ...

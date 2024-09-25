@@ -1,0 +1,4 @@
+EXECUTABLE  everserver
+
+STDOUT ../../logs/everest_server.stdout
+STDERR ../../logs/everest_server.stderr
