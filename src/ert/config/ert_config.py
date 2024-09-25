@@ -158,34 +158,56 @@ class ErtConfig:
         when the user should be notified with non-fatal configuration problems.
         """
         user_config_contents = read_file(user_config_file)
-        site_config_dict = cls.read_site_config()
-        user_config_dict = cls._read_user_config_and_apply_site_config(
-            user_config_contents, user_config_file, site_config_dict
-        )
-        config_dir = path.abspath(path.dirname(user_config_file))
         cls._log_config_file(user_config_file, user_config_contents)
+        site_config_file = site_config_location()
+        site_config_contents = read_file(site_config_file)
+        user_config_dict = cls._config_dict_from_contents(
+            user_config_contents,
+            site_config_contents,
+            user_config_file,
+            site_config_file,
+        )
         cls._log_config_dict(user_config_dict)
-        cls.apply_config_content_defaults(user_config_dict, config_dir)
         return cls.from_dict(user_config_dict)
+
+    @classmethod
+    def _config_dict_from_contents(
+        cls,
+        user_config_contents: str,
+        site_config_contents: str,
+        config_file_name: str,
+        site_config_name: str,
+    ) -> ConfigDict:
+        site_config_dict = parse_contents(
+            site_config_contents,
+            file_name=site_config_name,
+            schema=init_site_config_schema(),
+        )
+        user_config_dict = cls._read_user_config_and_apply_site_config(
+            user_config_contents,
+            config_file_name,
+            site_config_dict,
+        )
+        config_dir = path.abspath(path.dirname(config_file_name))
+        cls.apply_config_content_defaults(user_config_dict, config_dir)
+        return user_config_dict
 
     @classmethod
     def from_file_contents(
         cls,
         user_config_contents: str,
         site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
+        config_file_name="./config.ert",
+        site_config_name="site_config.ert",
     ) -> Self:
-        site_config_dict = parse_contents(
-            site_config_contents,
-            file_name="site_config.ert",
-            schema=init_site_config_schema(),
+        return cls.from_dict(
+            cls._config_dict_from_contents(
+                user_config_contents,
+                site_config_contents,
+                config_file_name,
+                site_config_name,
+            )
         )
-        user_config_dict = cls._read_user_config_and_apply_site_config(
-            user_config_contents,
-            "./config.ert",
-            site_config_dict,
-        )
-        cls.apply_config_content_defaults(user_config_dict, ".")
-        return cls.from_dict(user_config_dict)
 
     @classmethod
     def from_dict(cls, config_dict) -> Self:
