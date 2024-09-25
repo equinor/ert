@@ -27,6 +27,13 @@
 :warning: This is a higly experimental and hacky branch, expect things to break!
 
 ### Starting the experiment server:
+If you are on a mac you first need to increase the ulimit, as running multiple experiments can open a lot of files:
+```bash
+ulimit -n 4096
+```
+
+Then you can start the experiment server in production mode:
+
 ```bash
 fastapi run src/ert/experiment_server/main.py
 ```
