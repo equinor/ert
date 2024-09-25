@@ -354,6 +354,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
             assert act == pytest.approx(exp)
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=3)  # https://github.com/equinor/ert/issues/7309
 @pytest.mark.timeout(10)
 def test_stop_sim(copy_case, storage):

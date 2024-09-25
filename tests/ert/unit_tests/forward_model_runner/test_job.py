@@ -142,6 +142,7 @@ def test_memory_usage_counts_grandchildren():
     assert max_seens[1] + memory_per_numbers_list < max_seens[2]
 
 
+@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_in_running_events():
