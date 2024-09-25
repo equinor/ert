@@ -5,8 +5,8 @@
 ### Program
 
 ```text
-09:00 - 09:30 - Intro and selection of groups
-09:30 - 11:00 - Hack
+08:45 - 09:15 - Intro and selection of groups
+09:15 - 11:00 - Hack
 11:00 - 11:30 - Lunch
 11:30 - 14:30 - Hack
 14:30 - 15:00 - Demo
