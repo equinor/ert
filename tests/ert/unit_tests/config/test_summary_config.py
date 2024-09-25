@@ -7,14 +7,13 @@ from ert.config import ConfigValidationError, ErtConfig, SummaryConfig
 from .summary_generator import summaries
 
 
-def test_bad_user_config_file_error_message(tmp_path):
-    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 10\n SUMMARY FOPR")
+def test_bad_user_config_file_error_message():
     with pytest.raises(
         ConfigValidationError,
         match=r"Line 2 .* When using SUMMARY keyword,"
         " the config must also specify ECLBASE",
     ):
-        _ = ErtConfig.from_file(str(tmp_path / "test.ert"))
+        _ = ErtConfig.from_file_contents("NUM_REALIZATIONS 10\n SUMMARY FOPR")
 
 
 @settings(max_examples=10)

@@ -467,25 +467,21 @@ def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
             ErtConfig.from_file("config.ert")
 
 
-def test_that_double_comments_are_handled(tmpdir):
-    with tmpdir.as_cwd():
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.write(
-                """
-                NUM_REALIZATIONS 1 -- foo -- bar -- 2
-                JOBNAME &SUM$VAR@12@#£¤<
-                """
-            )
-        ert_config = ErtConfig.from_file("config.ert")
-        assert ert_config.model_config.num_realizations == 1
-        assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
+def test_that_double_comments_are_handled():
+    ert_config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1 -- foo -- bar -- 2
+        JOBNAME &SUM$VAR@12@#£¤<
+        """
+    )
+    assert ert_config.model_config.num_realizations == 1
+    assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
 
 
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
-def test_bad_user_config_file_error_message(tmp_path):
-    (tmp_path / "test.ert").write_text("NUM_REL 10\n")
+def test_bad_user_config_file_error_message():
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
-        _ = ErtConfig.from_file(str(tmp_path / "test.ert"))
+        _ = ErtConfig.from_file_contents("NUM_REL 10\n")
 
 
 @pytest.mark.usefixtures("use_tmpdir")

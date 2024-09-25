@@ -14,20 +14,16 @@ from ert.config import (
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_analysis_config_from_file_is_same_as_from_dict():
-    with open("analysis_config", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
+    assert ErtConfig.from_file_contents(
+        dedent(
+            """
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 10
                 ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
                 """
-            )
         )
-    analysis_config = ErtConfig.from_file("analysis_config").analysis_config
-    assert analysis_config == AnalysisConfig.from_dict(
+    ).analysis_config == AnalysisConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 10,
             ConfigKeys.MIN_REALIZATIONS: "10",

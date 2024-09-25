@@ -6,11 +6,8 @@ from ert.config import ConfigValidationError, ErtConfig
 from ert.config.parsing import ConfigKeys
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_default_num_cpu():
-    with open("file.ert", mode="w", encoding="utf-8") as f:
-        f.write(f"{ConfigKeys.NUM_REALIZATIONS} 1")
-    ert_config = ErtConfig.from_file("file.ert")
+    ert_config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1")
     assert ert_config.preferred_num_cpu == 1
 
 
@@ -57,7 +54,6 @@ PARALLEL
     assert ert_config.preferred_num_cpu == data_file_num_cpu
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "num_cpu_value, error_msg",
     [
@@ -67,8 +63,8 @@ PARALLEL
     ],
 )
 def test_wrong_num_cpu_raises_validation_error(num_cpu_value, error_msg):
-    with open("file.ert", mode="w", encoding="utf-8") as f:
-        f.write(f"{ConfigKeys.NUM_REALIZATIONS} 1\n")
-        f.write(f"{ConfigKeys.NUM_CPU} {num_cpu_value}\n")
     with pytest.raises(ConfigValidationError, match=error_msg):
-        ErtConfig.from_file("file.ert")
+        ErtConfig.from_file_contents(
+            f"{ConfigKeys.NUM_REALIZATIONS} 1\n"
+            f"{ConfigKeys.NUM_CPU} {num_cpu_value}\n"
+        )

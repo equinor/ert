@@ -346,48 +346,35 @@ def test_ert_config_throws_on_missing_forward_model_step(
             )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_substitutions_can_be_done_in_job_names():
     """
     Regression test for a usage case involving setting ECL100 or ECL300
     that was broken by changes to forward_model substitutions.
     """
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    ert_config = ErtConfig.with_plugins().from_file_contents(
         """
         NUM_REALIZATIONS  1
         DEFINE <ECL100OR300> E100
         FORWARD_MODEL ECLIPS<ECL100OR300>(<VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.name == "ECLIPSE100"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_parsing_forward_model_with_double_dash_is_possible():
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
-
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    res_config = ErtConfig.with_plugins().from_file_contents(
         """
         NUM_REALIZATIONS  1
         JOBNAME job_%d--hei
         FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -395,7 +382,6 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     """this is a regression test, making sure that we do not by mistake introduce
     spaces while parsing forward model lines that contain quotation marks
@@ -404,34 +390,29 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     which by the ert config parser is interpreted as a comment - to circumvent the
     comment interpretation, quotation marks are used"""
 
-    test_config_file_name = "test.ert"
     str_with_quotes = """smt/<foo>"/bar"/xx/"t--s.s"/yy/"z/z"/oo"""
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS  1
-        JOBNAME job_%d
-        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>={str_with_quotes})
-        """
+    ert_config = ErtConfig.with_plugins().from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS  1
+            JOBNAME job_%d
+            FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>={str_with_quotes})
+            """
+        )
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert list(ert_config.forward_model_steps[0].private_args.values()) == [
         "foo",
         "smt/<foo>/bar/xx/t--s.s/yy/z/z/oo",
     ]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_comments_are_ignored():
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
 
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    res_config = ErtConfig.with_plugins().from_file_contents(
         """
         NUM_REALIZATIONS  1
         --comment
@@ -439,10 +420,6 @@ def test_that_comments_are_ignored():
         FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -450,25 +427,19 @@ def test_that_comments_are_ignored():
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     """This is a regression test, making sure that quoted strings behave consistently.
     They should all result in the same.
     See https://github.com/equinor/ert/issues/2766"""
 
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    res_config = ErtConfig.with_plugins().from_file_contents(
         """
-    NUM_REALIZATIONS  1
-    FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt)
-    FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt)
-    FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt)
-    """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt)
+        """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    res_config = ErtConfig.with_plugins().from_file(test_config_file_name)
 
     assert res_config.forward_model_steps[0].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_steps[0].private_args["<TO>"] == "some stuff"
@@ -483,20 +454,14 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     assert res_config.forward_model_steps[2].private_args["<FILE>"] == "file.txt"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_positional_forward_model_args_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL RMS <IENS>
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="Did not expect character: <"):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL RMS <IENS>
+            """
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -557,20 +522,14 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
         _ = ErtConfig.from_file(test_config_file_name)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_spaces_in_forward_model_args_are_dropped():
-    test_config_file_name = "test.ert"
     # Intentionally inserted several spaces before comma
-    test_config_contents = dedent(
+    ert_config = ErtConfig.with_plugins().from_file_contents(
         """
         NUM_REALIZATIONS  1
         FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
-    ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.private_args.get("<VERSION>") == "2024.1"
@@ -603,24 +562,17 @@ def test_that_forward_model_with_different_token_kinds_are_added():
 
 
 @pytest.mark.parametrize("eclipse_v", ["100", "300"])
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_eclipse_jobs_require_version_field(eclipse_v):
-    test_config_file_name = "test.ert"
-
-    test_config_contents = dedent(
-        f"""
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL ECLIPSE{eclipse_v}
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(
         ConfigValidationError,
         match=f".*Forward model step ECLIPSE{eclipse_v} must be given a VERSION argument.*",
     ):
-        _ = ErtConfig.with_plugins().from_file(test_config_file_name)
+        _ = ErtConfig.with_plugins().from_file_contents(
+            f"""
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL ECLIPSE{eclipse_v}
+            """
+        )
 
 
 @pytest.mark.parametrize("eclipse_v", ["100", "300"])
@@ -661,15 +613,9 @@ def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
     eclipse_v,
 ):
-    ert_config_contents = (
+    _ = ErtConfig.with_plugins().from_file_contents(
         f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
     )
-
-    # Write config file
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
-
-    _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
@@ -777,9 +723,9 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
     (tmp_path / "test.ert").write_text(
         dedent(
             """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL PluginFM(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
-        """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL PluginFM(<arg1>=hello,<arg2>=world,<arg3>=derpyderp)
+            """
         )
     )
 
@@ -851,10 +797,10 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
     (tmp_path / "test.ert").write_text(
         dedent(
             """
-        NUM_REALIZATIONS  1
-        FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
-        FORWARD_MODEL FM2
-        """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+            FORWARD_MODEL FM2
+            """
         )
     )
 
