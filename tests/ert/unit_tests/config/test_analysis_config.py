@@ -14,13 +14,17 @@ from ert.config import (
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
-def test_analysis_config_from_file_is_same_as_from_dict():
+def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
+    with open(tmp_path / "my_design_matrix.xlsx", "w", encoding="utf-8"):
+        pass
+    monkeypatch.chdir(tmp_path)
     assert ErtConfig.from_file_contents(
         dedent(
             """
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 10
                 ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
+                DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet DEFAULT_SHEET:my_default_sheet
                 """
         )
     ).analysis_config == AnalysisConfig.from_dict(
@@ -29,6 +33,11 @@ def test_analysis_config_from_file_is_same_as_from_dict():
             ConfigKeys.MIN_REALIZATIONS: "10",
             ConfigKeys.ANALYSIS_SET_VAR: [
                 ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
+            ],
+            ConfigKeys.DESIGN_MATRIX: [
+                "my_design_matrix.xlsx",
+                "DESIGN_SHEET:my_sheet",
+                "DEFAULT_SHEET:my_default_sheet",
             ],
         }
     )
@@ -76,6 +85,49 @@ def test_invalid_min_realization_raises_config_validation_error():
             {
                 ConfigKeys.NUM_REALIZATIONS: 1,
                 ConfigKeys.MIN_REALIZATIONS: "1s",
+            }
+        )
+
+
+def test_invalid_design_matrix_format_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="DESIGN_MATRIX must be of format .xls or .xlsx; is 'my_matrix.txt'",
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DESIGN_MATRIX: [
+                    "my_matrix.txt",
+                    "DESIGN_SHEET:sheet1",
+                    "DEFAULT_SHEET:sheet2",
+                ],
+            }
+        )
+
+
+def test_design_matrix_without_design_sheet_raises_validation_error():
+    with pytest.raises(ConfigValidationError, match="Missing required DESIGN_SHEET"):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    "my_matrix.xlsx",
+                    "DESIGN_:design",
+                    "DEFAULT_SHEET:default",
+                ],
+            }
+        )
+
+
+def test_design_matrix_without_default_sheet_raises_validation_error():
+    with pytest.raises(ConfigValidationError, match="Missing required DEFAULT_SHEET"):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    "my_matrix.xlsx",
+                    "DESIGN_SHEET:design",
+                    "DEFAULT_:default",
+                ],
             }
         )
 
