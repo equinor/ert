@@ -567,6 +567,20 @@ class LocalStorage(BaseMode):
             f.write(data)
             os.rename(f.name, filename)
 
+    def _to_netcdf_transaction(
+        self, filename: str | os.PathLike[str], dataset: xr.Dataset
+    ) -> None:
+        """
+        Writes the dataset to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            dataset.to_netcdf(f, engine="scipy")
+            os.rename(f.name, filename)
+
 
 def _storage_version(path: Path) -> int:
     if not path.exists():

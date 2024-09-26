@@ -146,7 +146,7 @@ class LocalExperiment(BaseMode):
             output_path = path / "observations"
             output_path.mkdir()
             for obs_name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
+                storage._to_netcdf_transaction(output_path / f"{obs_name}", dataset)
 
         simulation_data = simulation_arguments if simulation_arguments else {}
         storage._write_transaction(

@@ -591,8 +591,8 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_observation_scaling_factors(self, dataset: xr.Dataset) -> None:
-        dataset.to_netcdf(
-            self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+        self._storage._to_netcdf_transaction(
+            self.mount_point / "observation_scaling_factors.nc", dataset
         )
 
     def load_observation_scaling_factors(
@@ -622,7 +622,7 @@ class LocalEnsemble(BaseMode):
         }
         dataset = xr.Dataset(data_vars)
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
-        dataset.to_netcdf(path=file_path, engine="scipy")
+        self._storage._to_netcdf_transaction(file_path, dataset)
 
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
@@ -822,7 +822,9 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
         path.parent.mkdir(exist_ok=True)
 
-        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+        self._storage._to_netcdf_transaction(
+            path, dataset.expand_dims(realizations=[realization])
+        )
 
     @require_write
     def save_response(
@@ -857,7 +859,7 @@ class LocalEnsemble(BaseMode):
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
-        data.to_netcdf(output_path / f"{response_type}.nc", engine="scipy")
+        self._storage._to_netcdf_transaction(output_path / f"{response_type}.nc", data)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
