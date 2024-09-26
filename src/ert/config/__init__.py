@@ -1,6 +1,7 @@
 from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
 from .capture_validation import capture_validation
+from .design_matrix import DesignMatrix
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
@@ -48,6 +49,7 @@ __all__ = [
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
+    "DesignMatrix",
     "ESSettings",
     "EnkfObs",
     "EnkfObservationImplementationType",
