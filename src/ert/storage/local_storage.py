@@ -38,6 +38,8 @@ from ert.storage.mode import (
 )
 from ert.storage.realization_storage_state import RealizationStorageState
 
+from ._write_transaction import write_transaction
+
 if TYPE_CHECKING:
     from ert.config import ParameterConfig, ResponseConfig
 
@@ -446,8 +448,10 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _save_index(self) -> None:
-        with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
-            print(self._index.model_dump_json(indent=4), file=f)
+        write_transaction(
+            self.path / "index.json",
+            self._index.model_dump_json(indent=4).encode("utf-8"),
+        )
 
     @require_write
     def _migrate(self, version: int) -> None:
