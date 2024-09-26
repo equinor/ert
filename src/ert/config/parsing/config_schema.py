@@ -261,6 +261,20 @@ def install_job_directory_keyword() -> SchemaItem:
     )
 
 
+def design_matrix_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.DESIGN_MATRIX,
+        argc_min=3,
+        argc_max=3,
+        type_map=[
+            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.STRING,
+            SchemaItemType.STRING,
+        ],
+        multi_occurrence=False,
+    )
+
+
 class ConfigSchemaDict(SchemaItemDict):
     def check_required(
         self,
@@ -345,6 +359,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         positive_int_keyword(ConfigKeys.NUM_CPU),
         positive_int_keyword(ConfigKeys.MAX_RUNNING),
         string_keyword(ConfigKeys.REALIZATION_MEMORY),
+        design_matrix_keyword(),
         queue_system_keyword(False),
         queue_option_keyword(),
         job_script_keyword(),

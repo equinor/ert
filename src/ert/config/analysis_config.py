@@ -10,6 +10,7 @@ from typing import Any, Dict, Final, List, Optional, Union, no_type_check
 from pydantic import ValidationError
 
 from .analysis_module import ESSettings, IESSettings
+from .design_matrix import DesignMatrix
 from .parsing import (
     AnalysisMode,
     ConfigDict,
@@ -40,6 +41,7 @@ class AnalysisConfig:
     ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
+    design_matrix_args: Optional[DesignMatrix] = None
 
     @no_type_check
     @classmethod
@@ -78,6 +80,9 @@ class AnalysisConfig:
             )
 
         min_realization = min(min_realization, num_realization)
+
+        design_matrix_config_list = config_dict.get(ConfigKeys.DESIGN_MATRIX, None)
+
         options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         observation_settings: Dict[str, Any] = {
             "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
@@ -189,6 +194,9 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_module=es_settings,
             ies_module=ies_settings,
+            design_matrix_args=DesignMatrix.from_config_list(design_matrix_config_list)
+            if design_matrix_config_list is not None
+            else None,
         )
         return config
 
