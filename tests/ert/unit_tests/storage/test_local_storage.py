@@ -13,7 +13,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 import xarray as xr
-from hypothesis import assume
+from hypothesis import assume, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
@@ -481,6 +481,54 @@ def fields(draw, egrid, num_fields=small_ints) -> List[Field]:
         )
         for i in range(draw(num_fields))
     ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(st.binary())
+def test_write_transaction(data):
+    with open_storage(".", "w") as storage:
+        filepath = Path("./file.txt")
+        storage._write_transaction(filepath, data)
+
+        assert filepath.read_bytes() == data
+
+
+class RaisingWriteNamedTemporaryFile:
+    def __init__(self, *args, **kwargs):
+        self.wrapped = tempfile.NamedTemporaryFile(*args, **kwargs)  # noqa
+
+    def __enter__(self, *args, **kwargs):
+        self.actual_handle = self.wrapped.__enter__(*args, **kwargs)
+        mock_handle = MagicMock()
+
+        def ctrlc(_):
+            raise RuntimeError()
+
+        mock_handle.write = ctrlc
+        return mock_handle
+
+    def __exit__(self, *args, **kwargs):
+        self.wrapped.__exit__(*args, **kwargs)
+
+
+def test_write_transaction_failure(tmp_path):
+    with open_storage(tmp_path, "w") as storage:
+        path = tmp_path / "file.txt"
+        with patch(
+            "ert.storage.local_storage.NamedTemporaryFile",
+            RaisingWriteNamedTemporaryFile,
+        ), pytest.raises(RuntimeError):
+            storage._write_transaction(path, b"deadbeaf")
+
+        assert not path.exists()
+
+
+def test_write_transaction_overwrites(tmp_path):
+    with open_storage(tmp_path, "w") as storage:
+        path = tmp_path / "file.txt"
+        path.write_text("abc")
+        storage._write_transaction(path, b"deadbeaf")
+        assert path.read_bytes() == b"deadbeaf"
 
 
 @dataclass

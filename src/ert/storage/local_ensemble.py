@@ -18,7 +18,6 @@ from typing_extensions import deprecated
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
-from ._write_transaction import write_transaction
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -144,7 +143,9 @@ class LocalEnsemble(BaseMode):
             started_at=datetime.now(),
         )
 
-        write_transaction(path / "index.json", index.model_dump_json().encode("utf-8"))
+        storage._write_transaction(
+            path / "index.json", index.model_dump_json().encode("utf-8")
+        )
 
         return cls(storage, path, Mode.WRITE)
 
@@ -422,7 +423,9 @@ class LocalEnsemble(BaseMode):
         error = _Failure(
             type=failure_type, message=message if message else "", time=datetime.now()
         )
-        write_transaction(filename, error.model_dump_json().encode("utf-8"))
+        self._storage._write_transaction(
+            filename, error.model_dump_json().encode("utf-8")
+        )
 
     def unset_failure(
         self,

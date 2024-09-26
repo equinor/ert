@@ -22,8 +22,6 @@ from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
-from ._write_transaction import write_transaction
-
 if TYPE_CHECKING:
     from ert.config.parameter_config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsemble
@@ -131,7 +129,7 @@ class LocalExperiment(BaseMode):
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
-        write_transaction(
+        storage._write_transaction(
             path / cls._parameter_file,
             json.dumps(parameter_data, indent=2).encode("utf-8"),
         )
@@ -139,7 +137,7 @@ class LocalExperiment(BaseMode):
         response_data = {}
         for response in responses or []:
             response_data.update({response.response_type: response.to_dict()})
-        write_transaction(
+        storage._write_transaction(
             path / cls._responses_file,
             json.dumps(response_data, default=str, indent=2).encode("utf-8"),
         )
@@ -151,7 +149,7 @@ class LocalExperiment(BaseMode):
                 dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
 
         simulation_data = simulation_arguments if simulation_arguments else {}
-        write_transaction(
+        storage._write_transaction(
             path / cls._metadata_file,
             json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
         )
