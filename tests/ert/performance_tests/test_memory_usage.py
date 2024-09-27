@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import List
 
+import memray
 import numpy as np
 import py
 import pytest
@@ -38,8 +39,6 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.limit_memory("130 MB")
 @pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
@@ -54,12 +53,16 @@ def test_memory_smoothing(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
-        smoother_update(
-            prior_ens,
-            posterior_ens,
-            list(ert_config.observations.keys()),
-            list(ert_config.ensemble_config.parameters),
-        )
+        with memray.Tracker(poly_template / "memray.bin"):
+            smoother_update(
+                prior_ens,
+                posterior_ens,
+                list(ert_config.observations.keys()),
+                list(ert_config.ensemble_config.parameters),
+            )
+
+    stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
+    assert stats.peak_memory_allocated < 1024**2 * 130
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
