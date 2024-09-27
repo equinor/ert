@@ -683,7 +683,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
-        iens = 1
+        iens = 0
         assume(not storage_ensemble.realizations_initialized([iens]))
         for f in fields:
             with patch(
@@ -709,7 +709,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def get_parameters(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameter_names = model_ensemble.parameter_values.keys()
-        iens = 1
+        iens = 0
 
         for f in parameter_names:
             parameter_data = storage_ensemble.load_parameters(f, iens)
@@ -748,7 +748,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         smspec, unsmry = summary_data
         smspec.to_file(self.tmpdir + f"/{summary.input_files[0]}.SMSPEC")
         unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
-        iens = 1
+        iens = 0
 
         try:
             ds = summary.read_from_file(self.tmpdir, iens)
@@ -763,7 +763,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def get_responses(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         names = model_ensemble.response_values.keys()
-        iens = 1
+        iens = 0
 
         for n in names:
             data = storage_ensemble.load_responses(n, (iens,))
@@ -820,7 +820,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_experiment = self.model[experiment_id]
         model_experiment.ensembles[ensemble.id] = model_ensemble
         state = [RealizationStorageState.PARENT_FAILURE] * size
-        iens = 1
+        iens = 0
         if (
             list(prior.response_values.keys())
             == [r.name for r in model_experiment.responses]
