@@ -1,12 +1,11 @@
-import os
-
-from tests.everest.utils import relpath
+from pathlib import Path
 
 from everest.docs.generate_docs_from_config_spec import generate_docs_pydantic_to_rst
 
-committed_file = os.path.abspath(
-    relpath("..", "..", "docs", "everest", "config_generated.rst")
-)
+committed_file = (
+    Path(__file__).parents[3] / "docs" / "everest" / "config_generated.rst"
+).resolve()
+
 
 print(f"Writing new docs contents to {committed_file}")
 docs_content = generate_docs_pydantic_to_rst()
