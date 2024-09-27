@@ -443,14 +443,6 @@ class _EverestWorkflow(object):
             seed=self._config.environment.random_seed,
         )
 
-        # Configure restarting:
-        if self.config.optimization.restart is not None:
-            optimizer.repeat(
-                iterations=self.config.optimization.restart.max_restarts + 1,
-                restart_from=self.config.optimization.restart.restart_from,
-                metadata_var="restart",
-            )
-
         # Initialize output tables. `min_header_len` is set to ensure that all
         # tables have the same number of header lines, simplifying code that
         # reads them as fixed width tables. `maximize` is set because ropt

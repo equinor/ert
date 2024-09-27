@@ -577,47 +577,6 @@ Optimizer options
     The default is to use parallel evaluation if supported.
 
 
-**restart (optional)**
-    Type: *Optional[RestartConfig]*
-
-    Optional restarting configuration.
-
-    Restarting the optimization from scratch from a new initial point can be
-    beneficial to the optimization process for some optimization algorithms. This
-    option can be used to direct Everest to restart the optimization once or
-    multiple times.
-
-    **max_restarts (optional)**
-        Type: *int*
-
-        The maximum number of restarts.
-
-        Sets the maximum number of times that the optimization process will be
-        restarted.
-
-        The default is equal to a single restart.
-
-
-    **restart_from (required)**
-        Type: *Literal['initial', 'last', 'optimal', 'last_optimal']*
-
-        Restart from the initial, optimal or the last controls.
-
-        When restarting, the initial values for the new run are set according to this field:
-        - initial: Use the initial controls from the configuration
-        - last: Use the last controls used by the previous run
-        - optimal: Use the controls from the optimal solution found so far
-        - last_optimal: Use the controls from the optimal solution found in previous run
-
-        When restarting from optimal values, the best result obtained so far (either
-        overall, or in the last restart run) is used, which is defined as the result
-        with the maximal weighted total objective value. If the `constraint_tolerance`
-        option is set in the `optimization` section, this tolerance will be used to
-        exclude results that violate a constraint.
-
-
-
-
 
 objective_functions (required)
 ------------------------------

@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from everest.config.cvar_config import CVaRConfig
-from everest.config.restart_config import RestartConfig
 from everest.optimizer.utils import get_ropt_plugin_manager
 
 
@@ -194,16 +193,6 @@ iteration. By setting parallel to True, multiple functions may be evaluated in
 parallel, if supported by the optimization algorithm.
 
 The default is to use parallel evaluation if supported.
-""",
-    )
-    restart: Optional[RestartConfig] = Field(
-        default=None,
-        description="""Optional restarting configuration.
-
-Restarting the optimization from scratch from a new initial point can be
-beneficial to the optimization process for some optimization algorithms. This
-option can be used to direct Everest to restart the optimization once or
-multiple times.
 """,
     )
 
