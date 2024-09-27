@@ -25,12 +25,10 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-many-arguments
 class EvaluateEnsemble(BaseRunModel):
     """
-    This workflow will evaluate ensembles which have parameters, but no
-    simulation has been performed, so there are no responses. This can
-    be used in instances where the parameters are sampled manually, or
-    after performing a manual update step. This will always read parameter
-    and response configuration from the stored ensemble, and will not
-    reflect any changes to the user configuration on disk.
+    This workflow will evaluate ensembles which have parameters, but no simulation has been performed, so there are no responses.<br>
+    This can be used in instances where the parameters are sampled manually, or after performing a manual update step.<br>
+    The workflow will always read parameter and response configuration from the stored ensemble,<br>
+    and will not reflect any changes to the user configuration on disk.<br>
     """
 
     def __init__(
