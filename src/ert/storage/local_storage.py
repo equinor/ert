@@ -6,7 +6,9 @@ import logging
 import os
 import shutil
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
 from typing import (
@@ -71,6 +73,7 @@ class LocalStorage(BaseMode):
     LOCK_TIMEOUT = 5
     EXPERIMENTS_PATH = "experiments"
     ENSEMBLES_PATH = "ensembles"
+    SWAP_PATH = "swp"
 
     def __init__(
         self,
@@ -247,6 +250,10 @@ class LocalStorage(BaseMode):
 
     def _experiment_path(self, experiment_id: UUID) -> Path:
         return self.path / self.EXPERIMENTS_PATH / str(experiment_id)
+
+    @cached_property
+    def _swap_path(self) -> Path:
+        return self.path / self.SWAP_PATH
 
     def __enter__(self) -> LocalStorage:
         return self
@@ -446,8 +453,10 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _save_index(self) -> None:
-        with open(self.path / "index.json", mode="w", encoding="utf-8") as f:
-            print(self._index.model_dump_json(indent=4), file=f)
+        self._write_transaction(
+            self.path / "index.json",
+            self._index.model_dump_json(indent=4).encode("utf-8"),
+        )
 
     @require_write
     def _migrate(self, version: int) -> None:
@@ -545,6 +554,32 @@ class LocalStorage(BaseMode):
             )
         else:
             return experiment_name + "_0"
+
+    def _write_transaction(self, filename: str | os.PathLike[str], data: bytes) -> None:
+        """
+        Writes the data to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            f.write(data)
+            os.rename(f.name, filename)
+
+    def _to_netcdf_transaction(
+        self, filename: str | os.PathLike[str], dataset: xr.Dataset
+    ) -> None:
+        """
+        Writes the dataset to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            dataset.to_netcdf(f, engine="scipy")
+            os.rename(f.name, filename)
 
 
 def _storage_version(path: Path) -> int:

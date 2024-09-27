@@ -129,24 +129,30 @@ class LocalExperiment(BaseMode):
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
-        with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f, indent=2)
+        storage._write_transaction(
+            path / cls._parameter_file,
+            json.dumps(parameter_data, indent=2).encode("utf-8"),
+        )
 
         response_data = {}
         for response in responses or []:
             response_data.update({response.response_type: response.to_dict()})
-        with open(path / cls._responses_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str, indent=2)
+        storage._write_transaction(
+            path / cls._responses_file,
+            json.dumps(response_data, default=str, indent=2).encode("utf-8"),
+        )
 
         if observations:
             output_path = path / "observations"
             output_path.mkdir()
             for obs_name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
+                storage._to_netcdf_transaction(output_path / f"{obs_name}", dataset)
 
-        with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
-            simulation_data = simulation_arguments if simulation_arguments else {}
-            json.dump(simulation_data, f, cls=ContextBoolEncoder)
+        simulation_data = simulation_arguments if simulation_arguments else {}
+        storage._write_transaction(
+            path / cls._metadata_file,
+            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
+        )
 
         return cls(storage, path, Mode.WRITE)
 
