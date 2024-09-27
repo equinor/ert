@@ -15,7 +15,6 @@ from .model_config import ModelConfig
 from .objective_function_config import ObjectiveFunctionConfig
 from .optimization_config import OptimizationConfig
 from .output_constraint_config import OutputConstraintConfig
-from .restart_config import RestartConfig
 from .sampler_config import SamplerConfig
 from .server_config import ServerConfig
 from .simulator_config import SimulatorConfig
@@ -38,7 +37,6 @@ __all__ = [
     "ObjectiveFunctionConfig",
     "OptimizationConfig",
     "OutputConstraintConfig",
-    "RestartConfig",
     "SamplerConfig",
     "ServerConfig",
     "SimulatorConfig",
