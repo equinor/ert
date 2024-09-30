@@ -105,4 +105,8 @@ class EnsembleExperiment(BaseRunModel):
 
     @classmethod
     def description(cls) -> str:
-        return "Sample parameters → evaluate (N realizations)"
+        return "Sample parameters → evaluate all realizations"
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        return None

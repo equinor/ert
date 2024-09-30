@@ -17,7 +17,6 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QFrame,
     QHBoxLayout,
-    QLabel,
     QMessageBox,
     QStackedWidget,
     QStyle,
@@ -49,8 +48,7 @@ from .single_test_run_panel import SingleTestRunPanel
 if TYPE_CHECKING:
     from ert.config import ErtConfig
 
-EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE = "Run Experiment"
-EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE = "Experiment running..."
+EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
 
 
 def create_md_table(kv: Dict[str, str], output: str) -> str:
@@ -90,9 +88,6 @@ class ExperimentPanel(QWidget):
         experiment_type_layout = QHBoxLayout()
         experiment_type_layout.addSpacing(10)
         experiment_type_layout.addWidget(
-            QLabel("Experiment type:"), 0, Qt.AlignmentFlag.AlignVCenter
-        )
-        experiment_type_layout.addWidget(
             self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
 
@@ -100,11 +95,34 @@ class ExperimentPanel(QWidget):
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
+        self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.run_button.setMinimumWidth(60)
+        self.run_button.setMinimumHeight(40)
+        self.run_button.setStyleSheet(
+            """
+            QToolButton {
+            border-radius: 10px;
+            background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #f0f0f0,
+                stop:1 #d9d9d9
+            );
+            border: 1px solid #bfbfbf;
+            padding: 5px;
+            }
+            QToolButton:hover {
+                background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #d8d8d8,
+                stop:1 #c3c3c3
+            );
+            }
+        """
+        )
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
@@ -138,17 +156,13 @@ class ExperimentPanel(QWidget):
         )
         analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
-            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
                 analysis_config, run_path, notifier, ensemble_size
             ),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
@@ -157,7 +171,10 @@ class ExperimentPanel(QWidget):
             ),
             experiment_type_valid,
         )
-
+        self.addExperimentConfigPanel(
+            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
+            experiment_type_valid,
+        )
         self.setLayout(layout)
 
     def addExperimentConfigPanel(
@@ -168,7 +185,9 @@ class ExperimentPanel(QWidget):
         experiment_type = panel.get_experiment_type()
         self._experiment_widgets[experiment_type] = panel
         self._experiment_type_combo.addDescriptionItem(
-            experiment_type.name(), experiment_type.description()
+            experiment_type.name(),
+            experiment_type.description(),
+            experiment_type.group(),
         )
 
         if not mode_enabled:
@@ -294,12 +313,10 @@ class ExperimentPanel(QWidget):
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
 
         self.run_button.setEnabled(False)
-        self.run_button.setText(EXPERIMENT_IS_RUNNING_BUTTON_MESSAGE)
         dialog.run_experiment()
         dialog.show()
 
         def exit_handler() -> None:
-            self.run_button.setText(EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE)
             self.run_button.setEnabled(True)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
@@ -316,9 +333,14 @@ class ExperimentPanel(QWidget):
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
+        widgets = QApplication.topLevelWidgets()
+        is_run_dialog_open = False
+        for w in widgets:
+            if isinstance(w, RunDialog) and w.isVisible():
+                is_run_dialog_open = True
+                break
         self.run_button.setEnabled(
-            self.run_button.text() == EXPERIMENT_READY_TO_RUN_BUTTON_MESSAGE
-            and widget.isConfigurationValid()
+            not is_run_dialog_open and widget.isConfigurationValid()
         )
 
     def populate_clipboard_debug_info(self) -> None:

@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
+
 
 class MultipleDataAssimilation(UpdateRunModel):
     """
@@ -184,8 +186,12 @@ class MultipleDataAssimilation(UpdateRunModel):
 
     @classmethod
     def name(cls) -> str:
-        return "Multiple Data Assimilation (ES MDA) - Recommended"
+        return "Multiple data assimilation"
 
     @classmethod
     def description(cls) -> str:
-        return "[Sample|restart] → [Evaluate → update] for each weight"
+        return "[Sample|restart] → [evaluate → update] for each weight"
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        return MULTIPLE_DATA_ASSIMILATION_GROUP

@@ -489,12 +489,14 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
             assert "I failed :(" in text
             qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
 
+        simulation_mode_combo = gui.findChild(QComboBox)
+        simulation_mode_combo.setCurrentText("Single realization test-run")
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+        run_dialog.close()
 
 
 @pytest.mark.integration_test
