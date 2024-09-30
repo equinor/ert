@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 class SingleTestRun(EnsembleExperiment):
     """
     Single test is equivalent to EnsembleExperiment, in that it
-    samples the prior and evaluates it. There are two key differences:
-    1) Single test run always runs locally using the local queue
-    2) Only a single realization is run
+    samples the prior and evaluates it.<br>There are two key differences:<br>
+    1) Single test run always runs locally using the <b>local queue</b><br>
+    2) Only a <b>single realization</b> (realization-0) is run<br>
     """
 
     def __init__(

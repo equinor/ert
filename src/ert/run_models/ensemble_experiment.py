@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 class EnsembleExperiment(BaseRunModel):
     """
     This workflow will create a new experiment and a new ensemble from
-    the user configuration. It will never overwrite existing ensembles, and
-    will always sample parameters.
+    the user configuration.<br>It will never overwrite existing ensembles, and
+    will always sample parameters.<br>
     """
 
     def __init__(
