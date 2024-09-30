@@ -1,5 +1,6 @@
 copy_test_files () {
     cp -r "${CI_SOURCE_ROOT}"/tests "${CI_TEST_ROOT}"
+    cp -r "${CI_SOURCE_ROOT}"/docs "${CI_TEST_ROOT}"/docs
     ln -s "${CI_SOURCE_ROOT}"/test-data "${CI_TEST_ROOT}"/test-data
 
     ln -s "${CI_SOURCE_ROOT}"/src "${CI_TEST_ROOT}"/src
@@ -31,6 +32,13 @@ run_ert_with_opm () {
             cat logs/ert-log* || true
         )
     popd
+}
+
+run_everest_tests () {
+    python -m pytest tests/everest -s \
+    --ignore-glob "*test_visualization_entry*" \
+     -m "not simulation_test and not redundant_test and not ui_test"
+    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m pytest tests/everest -s -m "ui_test"
 }
 
 start_tests () {
@@ -67,10 +75,12 @@ start_tests () {
     run_ert_with_opm
     return_code_4=$?
 
+    run_everest_tests
+    return_code_5=$?
     set -e
 
     # We error if one or more returncodes are nonzero
-    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4; do
+    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4 $return_code_5; do
         if [ "$code" -ne 0 ]; then
             echo "One or more tests failed."
             return 1
