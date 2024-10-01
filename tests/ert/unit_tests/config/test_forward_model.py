@@ -954,7 +954,7 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
     )
 
 
-def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path, caplog):
+def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
     (tmp_path / "test.ert").write_text(
         """
         NUM_REALIZATIONS  1
@@ -989,8 +989,3 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path, 
                 FMWithAssertionError,
             ]
         ).from_file(tmp_path / "test.ert")
-
-    assert (
-        "Unexpected plugin forward model exception:I should be a warning"
-        in caplog.messages
-    )
