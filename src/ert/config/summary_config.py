@@ -69,15 +69,11 @@ class SummaryConfig(ResponseConfig):
                 )
             time_map = set(refcase.dates) if refcase is not None else None
             forward_model = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
-            names = [step[0] for step in forward_model]
-            simulation_step_exists = False
-            for job_name in names:
-                for name in ["eclipse", "flow"]:
-                    if name in job_name.lower():
-                        simulation_step_exists = True
-                        break
-                if simulation_step_exists:
-                    break
+            names = [fm_step[0] for fm_step in forward_model]
+            simulation_step_exists = any(
+                any(sim in _name.lower() for sim in ["eclipse", "flow"])
+                for _name in names
+            )
             if not simulation_step_exists:
                 ConfigWarning.warn(
                     "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
