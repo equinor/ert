@@ -712,6 +712,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
     QTimer.singleShot(20000, lambda: handle_error_dialog(run_dialog))
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -809,14 +810,12 @@ def test_validation_of_experiment_names_in_run_models(
         (IteratedEnsembleSmoother.name(), "iterated_ensemble_smoother_panel"),
     )
     for exp_type, panel_name in experiment_types_to_test:
-        print(f"{exp_type}")
         experiment_types.setCurrentText(exp_type)
 
         experiment_config_panel = get_child(gui, QWidget, name=panel_name)
         experiment_field = get_child(
             experiment_config_panel, StringBox, name="experiment_field"
         )
-        print(f"{experiment_field.get_text=}")
         experiment_field.setText(" @not val id")
         assert not run_experiment.isEnabled()
 
