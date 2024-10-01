@@ -215,28 +215,26 @@ def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
 def ensemble_experiment_has_run(
     tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
 ):
-    monkeypatch.chdir(tmp_path)
-    test_files = _ensemble_experiment_run(
-        run_experiment, source_root, tmp_path_factory, True
+    yield from _ensemble_experiment_has_run(
+        tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, True
     )
-    shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path / "poly.ert") as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
-    ):
-        yield gui
 
 
 @pytest.fixture
 def ensemble_experiment_has_run_no_failure(
     tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
 ):
+    yield from _ensemble_experiment_has_run(
+        tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, False
+    )
+
+
+def _ensemble_experiment_has_run(
+    tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, failing
+):
     monkeypatch.chdir(tmp_path)
     test_files = _ensemble_experiment_run(
-        run_experiment, source_root, tmp_path_factory, False
+        run_experiment, source_root, tmp_path_factory, failing
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
     with _open_main_window(tmp_path / "poly.ert") as (
