@@ -1025,3 +1025,11 @@ Extract summary data
     :module: everest_models.jobs.fm_extract_summary_data.parser
     :func: build_argument_parser
     :prog: fm_extract_summary_data
+
+Select wells
+============
+
+.. argparse::
+    :module: everest_models.jobs.fm_select_wells.parser
+    :func: build_argument_parser
+    :prog: fm_select_wells
