@@ -457,7 +457,7 @@ class LsfDriver(Driver):
             for jobid, exec_hosts in bjobs_exec_hosts.items():
                 if self._jobs[jobid].exec_hosts == "-":
                     logger.info(
-                        f"Realization {self._jobs[jobid].iens} was executed on host: {exec_hosts}"
+                        f"Realization {self._jobs[jobid].iens} was assigned to host: {exec_hosts}"
                     )
                     self._jobs[jobid].exec_hosts = exec_hosts
 
