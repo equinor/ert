@@ -449,14 +449,14 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
     "bjobs_output, expected",
     [
         pytest.param(
-            "1^RUN^st-vgrid01",
-            {"1": "st-vgrid01"},
+            "1^RUN^abc-comp01",
+            {"1": "abc-comp01"},
             id="one_host",
         ),
         pytest.param("1^DONE^-", {}, id="no_host"),
         pytest.param(
-            "1^DONE^st-vgrid02\n2^RUN^-",
-            {"1": "st-vgrid02"},
+            "1^DONE^abc-comp02\n2^RUN^-",
+            {"1": "abc-comp02"},
             id="only_one_host_outputs",
         ),
     ],
