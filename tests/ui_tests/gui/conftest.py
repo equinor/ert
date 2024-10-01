@@ -411,9 +411,9 @@ def add_experiment_manually(
 V = TypeVar("V")
 
 
-def wait_for_child(gui, qtbot: QtBot, typ: Type[V], *args, **kwargs) -> V:
-    qtbot.waitUntil(lambda: gui.findChild(typ, *args, **kwargs) is not None)
-    return get_child(gui, typ, *args, **kwargs)
+def wait_for_child(gui, qtbot: QtBot, typ: Type[V], timeout=5000, **kwargs) -> V:
+    qtbot.waitUntil(lambda: gui.findChild(typ) is not None, timeout=timeout)
+    return get_child(gui, typ, **kwargs)
 
 
 def get_child(gui: QWidget, typ: Type[V], *args, **kwargs) -> V:
