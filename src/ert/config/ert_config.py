@@ -608,6 +608,11 @@ class ErtConfig:
                             context=fm_step.name,
                         ),
                     )
+                except Exception as e:  # type: ignore
+                    ConfigWarning.warn(str(e), context=fm_step.name)
+                    logger.warning(
+                        f"Unexpected plugin forward model exception:" f"{e!s}"
+                    )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
