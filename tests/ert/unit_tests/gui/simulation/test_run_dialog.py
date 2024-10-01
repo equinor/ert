@@ -81,11 +81,9 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
     with qtbot.waitSignal(run_dialog.finished, timeout=30000):
 
         def handle_dialog():
-            qtbot.waitUntil(
-                lambda: run_dialog.findChild(QtWidgets.QMessageBox) is not None
+            confirm_terminate_dialog = wait_for_child(
+                run_dialog, qtbot, QtWidgets.QMessageBox
             )
-            confirm_terminate_dialog = run_dialog.findChild(QtWidgets.QMessageBox)
-            assert isinstance(confirm_terminate_dialog, QtWidgets.QMessageBox)
             dialog_buttons = confirm_terminate_dialog.findChild(
                 QtWidgets.QDialogButtonBox
             ).buttons()
