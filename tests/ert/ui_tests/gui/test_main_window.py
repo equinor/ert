@@ -279,8 +279,7 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
         )
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-        run_dialog = gui.findChild(RunDialog)
+        run_dialog = wait_for_child(gui, qtbot, RunDialog)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
         fm_step_overview = run_dialog._fm_step_overview
 

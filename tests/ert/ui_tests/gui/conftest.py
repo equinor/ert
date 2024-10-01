@@ -285,9 +285,7 @@ def run_experiment_fixture(request):
 
         # The Run dialog opens, click show details and wait until done appears
         # then click it
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
-
+        run_dialog = wait_for_child(gui, qtbot, RunDialog)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
