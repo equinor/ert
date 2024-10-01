@@ -285,7 +285,7 @@ def run_experiment_fixture(request):
 
         # The Run dialog opens, click show details and wait until done appears
         # then click it
-        run_dialog = wait_for_child(gui, qtbot, RunDialog)
+        run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
         qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
@@ -411,9 +411,9 @@ def add_experiment_manually(
 V = TypeVar("V")
 
 
-def wait_for_child(gui, qtbot: QtBot, typ: Type[V], *args, **kwargs) -> V:
-    qtbot.waitUntil(lambda: gui.findChild(typ, *args, **kwargs) is not None)
-    return get_child(gui, typ, *args, **kwargs)
+def wait_for_child(gui, qtbot: QtBot, typ: Type[V], timeout=5000, **kwargs) -> V:
+    qtbot.waitUntil(lambda: gui.findChild(typ) is not None, timeout=timeout)
+    return get_child(gui, typ, **kwargs)
 
 
 def get_child(gui: QWidget, typ: Type[V], *args, **kwargs) -> V:
