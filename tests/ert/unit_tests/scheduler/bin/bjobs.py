@@ -27,7 +27,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def bjobs_formatter(jobstats: List[Job]) -> str:
-    return "".join([f"{job.job_id}^{job.job_state}\n" for job in jobstats])
+    return "".join([f"{job.job_id}^{job.job_state}^-\n" for job in jobstats])
 
 
 def read(path: Path, default: Optional[str] = None) -> Optional[str]:
