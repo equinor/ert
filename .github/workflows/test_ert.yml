@@ -46,6 +46,14 @@ jobs:
       run: |
         pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui
 
+    - name: Upload artifact images
+      uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      continue-on-error: true
+      with:
+        name: test-images-${{ github.run_number }}-${{ github.run_id }}
+        path: /tmp/tmp*/**/*.png
+
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
