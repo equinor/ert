@@ -107,13 +107,13 @@ def _start_initial_gui_window(
             config_warnings = [
                 cast(ConfigWarning, w.message).info
                 for w in all_warnings
-                if w.category == ConfigWarning
+                if issubclass(w.category, ConfigWarning)
                 and not cast(ConfigWarning, w.message).info.is_deprecation
             ]
             deprecations = [
                 cast(ConfigWarning, w.message).info
                 for w in all_warnings
-                if w.category == ConfigWarning
+                if issubclass(w.category, ConfigWarning)
                 and cast(ConfigWarning, w.message).info.is_deprecation
             ]
             error_messages += error.errors
@@ -146,13 +146,13 @@ def _start_initial_gui_window(
     config_warnings = [
         cast(ConfigWarning, w.message).info
         for w in all_warnings
-        if w.category == ConfigWarning
+        if issubclass(w.category, ConfigWarning)
         and not cast(ConfigWarning, w.message).info.is_deprecation
     ]
     deprecations = [
         cast(ConfigWarning, w.message).info
         for w in all_warnings
-        if w.category == ConfigWarning
+        if issubclass(w.category, ConfigWarning)
         and cast(ConfigWarning, w.message).info.is_deprecation
     ]
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
