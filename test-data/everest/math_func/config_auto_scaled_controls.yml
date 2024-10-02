@@ -5,7 +5,7 @@ controls:
     min: -1
     max: 1
     initial_guess: 0.2
-    perturbation_magnitude : 0.01
+    perturbation_magnitude : 0.001
     auto_scale: True
     scaled_range: [0.3, 0.7]
     variables:
@@ -21,8 +21,8 @@ objective_functions:
 
 optimization:
   algorithm: optpp_q_newton
-  convergence_tolerance: 0.005
-  max_batch_num: 9
+  convergence_tolerance: 0.001
+  max_batch_num: 10
 
 install_jobs:
   -

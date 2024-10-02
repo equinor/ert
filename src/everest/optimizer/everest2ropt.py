@@ -180,6 +180,7 @@ def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
     enabled = []
     variables: StrListDict = defaultdict(list)
     gradients: StrListDict = defaultdict(list)
+    auto_scale = False
 
     for group in controls:
         sampler = _collect_sampler(group.sampler, ropt_config)
@@ -208,6 +209,13 @@ def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
                     if isinstance(ropt_names, list)
                     else control_names.append
                 )(ropt_names)
+
+            if control.auto_scale:
+                auto_scale = True
+
+    if not auto_scale:
+        del variables["scales"]
+        del variables["offsets"]
 
     ropt_config["variables"] = dict(variables)
     ropt_config["variables"]["indices"] = (
