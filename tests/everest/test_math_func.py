@@ -337,12 +337,6 @@ def test_remove_run_path():
 
 @tmpdir(CONFIG_PATH)
 def test_math_func_auto_scaled_controls():
-    mn = -1
-    mx = 1
-    ex = (0.25 - mn) / (mx - mn) * 0.4 + 0.3
-    ey = (0.25 - mn) / (mx - mn) * 0.4 + 0.3
-    ez = (0.5 - mn) / (mx - mn) * 0.4 + 0.3
-
     config = EverestConfig.load_file(CONFIG_AUTO_SCALED_CONTROLS)
 
     workflow = _EverestWorkflow(config)
@@ -352,9 +346,9 @@ def test_math_func_auto_scaled_controls():
     # Check resulting points
     x, y, z = (workflow.result.controls["point_" + p] for p in ("x", "y", "z"))
 
-    assert x == pytest.approx(ex, abs=0.05)
-    assert y == pytest.approx(ey, abs=0.05)
-    assert z == pytest.approx(ez, abs=0.05)
+    assert x == pytest.approx(0.25, abs=0.05)
+    assert y == pytest.approx(0.25, abs=0.05)
+    assert z == pytest.approx(0.5, abs=0.05)
 
     # Check optimum value
     optim = -workflow.result.total_objective  # distance is provided as -distance
