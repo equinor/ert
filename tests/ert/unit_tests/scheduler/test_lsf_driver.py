@@ -1010,6 +1010,20 @@ def not_found_bjobs(monkeypatch, tmp_path):
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
+async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
+    caplog.set_level(logging.INFO)
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
+
+    job_id = next(iter(driver._jobs.keys()))
+    driver.update_and_log_exec_hosts({job_id: "COMP-01"})
+    driver.update_and_log_exec_hosts({job_id: "COMP-02"})
+
+    await poll(driver, {0})
+    assert caplog.text.count("was assigned to host:") == 1
+
+
 async def test_lsf_stdout_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()

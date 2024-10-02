@@ -452,14 +452,9 @@ class LsfDriver(Driver):
                     f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
                 )
             bjobs_states = _parse_jobs_dict(parse_bjobs(stdout.decode(errors="ignore")))
-            bjobs_exec_hosts = parse_bjobs_exec_hosts(stdout.decode(errors="ignore"))
-
-            for jobid, exec_hosts in bjobs_exec_hosts.items():
-                if self._jobs[jobid].exec_hosts == "-":
-                    logger.info(
-                        f"Realization {self._jobs[jobid].iens} was assigned to host: {exec_hosts}"
-                    )
-                    self._jobs[jobid].exec_hosts = exec_hosts
+            self.update_and_log_exec_hosts(
+                parse_bjobs_exec_hosts(stdout.decode(errors="ignore"))
+            )
 
             job_ids_found_in_bjobs_output = set(bjobs_states.keys())
             if (
@@ -624,6 +619,14 @@ class LsfDriver(Driver):
         self._bhist_cache = data
         self._bhist_cache_timestamp = time.time()
         return _parse_jobs_dict(jobs)
+
+    def update_and_log_exec_hosts(self, bjobs_exec_hosts: Dict[str, str]) -> None:
+        for job_id, exec_hosts in bjobs_exec_hosts.items():
+            if self._jobs[job_id].exec_hosts == "-":
+                logger.info(
+                    f"Realization {self._jobs[job_id].iens} was assigned to host: {exec_hosts}"
+                )
+                self._jobs[job_id].exec_hosts = exec_hosts
 
     def _build_resource_requirement_arg(self, realization_memory: int) -> List[str]:
         resource_requirement_string = build_resource_requirement_string(
