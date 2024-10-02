@@ -453,11 +453,10 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
             {"1": "abc-comp01"},
             id="one_host",
         ),
-        pytest.param("1^DONE^-", {}, id="no_host"),
         pytest.param(
             "1^DONE^abc-comp02\n2^RUN^-",
-            {"1": "abc-comp02"},
-            id="only_one_host_outputs",
+            {"1": "abc-comp02", "2": "-"},
+            id="two_hosts_output",
         ),
     ],
 )

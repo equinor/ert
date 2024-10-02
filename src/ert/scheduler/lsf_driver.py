@@ -134,8 +134,7 @@ def parse_bjobs_exec_hosts(bjobs_output: str) -> Dict[str, str]:
         tokens = line.split(sep="^")
         if len(tokens) == 3:
             job_id, _, exec_hosts = tokens
-            if exec_hosts != "-":
-                data[job_id] = exec_hosts
+            data[job_id] = exec_hosts
     return data
 
 
