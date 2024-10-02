@@ -952,3 +952,40 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
     ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
         tmp_path / "test.ert"
     )
+
+
+def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL FMWithAssertionError(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+        FORWARD_MODEL FMWithFMStepValidationError
+        """
+    )
+
+    class FMWithAssertionError(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(name="FMWithAssertionError", command=["the_executable.sh"])
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            raise AssertionError("I should be a warning")
+
+    class FMWithFMStepValidationError(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(
+                name="FMWithFMStepValidationError",
+                command=["the_executable.sh"],
+            )
+
+        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+            raise ForwardModelStepValidationError("I should not be a warning")
+
+    with pytest.raises(
+        ConfigValidationError, match="I should not be a warning"
+    ), pytest.warns(ConfigWarning, match="I should be a warning"):
+        _ = ErtConfig.with_plugins(
+            forward_model_step_classes=[
+                FMWithFMStepValidationError,
+                FMWithAssertionError,
+            ]
+        ).from_file(tmp_path / "test.ert")
