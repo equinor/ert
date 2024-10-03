@@ -92,7 +92,7 @@ jobs:
         test-type: [ 'test', 'integration-test', 'everest-models-test' ]
         python-version: [ '3.12' ]
         os: [ 'macos-latest' ]
-    uses: ./.github/workflows/test_ert.yml
+    uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}

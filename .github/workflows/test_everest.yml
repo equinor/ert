@@ -34,7 +34,7 @@ jobs:
       uses: astral-sh/setup-uv@v3
 
     - name: Install HDF5 source files on mac
-      if: ${{ inputs.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
+      if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
       run: brew install hdf5
 
     - name: Install Everest and dependencies
@@ -42,22 +42,22 @@ jobs:
         uv pip install ".[dev,everest]"
 
     - name: Run Tests Linux
-      if: ${{ inputs.test-type == 'test' && inputs.os != 'macOS'}}
+      if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
         pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
 
     - name: Run Tests macOS
-      if: ${{ inputs.test-type == 'test' && inputs.os == 'macOS'}}
+      if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
         python -m pytest tests/everest -n 4 -m "not ui_test and not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
 
     - name: Run Integration Tests Linux
-      if: ${{inputs.test-type == 'integration-test' && inputs.os != 'macOS'}}
+      if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
       run: |
         pytest tests/everest -n 4 -m "integration_test" --dist loadgroup
 
     - name: Run Integration Tests macOS
-      if: ${{inputs.test-type == 'integration-test' && inputs.os == 'macOS'}}
+      if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
       run: |
         python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
 
