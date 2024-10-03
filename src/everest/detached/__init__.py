@@ -385,6 +385,7 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
         ],
         "name": "PARTITION",
     },
+    "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
 }
 
 
@@ -416,7 +417,7 @@ def _generate_queue_options(
     config: EverestConfig,
     queue_options: List[Tuple[str, str]],
     res_queue_name: str,  # Literal["LSF_QUEUE", "PARTITION"]?
-    queue_system: Literal["LSF", "SLURM"],
+    queue_system: Literal["LSF", "SLURM", "TORQUE"],
 ):
     queue_name_simulator = (
         config.simulator.name if config.simulator is not None else None
@@ -451,7 +452,7 @@ def _generate_queue_options(
 
 
 def _find_res_queue_system(config: EverestConfig):
-    queue_system_simulator: Literal["lsf", "local", "slurm"] = "local"
+    queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
     if config.simulator is not None:
         queue_system_simulator = config.simulator.queue_system or queue_system_simulator
 
