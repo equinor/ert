@@ -65,7 +65,7 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         Examples to set memory requirement is:
         * rusage[mem=1000]""",
     )
-    queue_system: Optional[Literal["lsf", "local", "slurm"]] = Field(
+    queue_system: Optional[Literal["lsf", "local", "slurm", "torque"]] = Field(
         default="local",
         description="Defines which queue system the everest server runs on.",
     )
@@ -117,4 +117,41 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         This option is disabled by default, since it will not be necessary for
         the most common use of a standard optimization with a continuous
         optimizer.""",
+    )
+    qsub_cmd: Optional[str] = Field(default="qsub", description="The submit command")
+    qstat_cmd: Optional[str] = Field(default="qstat", description="The query command")
+    qdel_cmd: Optional[str] = Field(default="qdel", description="The kill command")
+    qstat_options: Optional[str] = Field(
+        default="-x",
+        description="Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.",
+    )
+    cluster_label: Optional[str] = Field(
+        default=None,
+        description="The name of the cluster you are running simulations in.",
+    )
+    memory_per_job: Optional[str] = Field(
+        default=None,
+        description="""You can specify the amount of memory you will need for running your job. This will ensure that not too many jobs will run on a single shared memory node at once, possibly crashing the compute node if it runs out of memory.
+    You can get an indication of the memory requirement by watching the course of a local run using the htop utility. Whether you should set the peak memory usage as your requirement or a lower figure depends on how simultaneously each job will run.
+    The option to be supplied will be used as a string in the qsub argument. You must specify the unit, either gb or mb.
+    """,
+    )
+    keep_qsub_output: Optional[int] = Field(
+        default=0,
+        description="Set to 1 to keep error messages from qsub. Usually only to be used if somethign is seriously wrong with the queue environment/setup.",
+    )
+    submit_sleep: Optional[float] = Field(
+        default=0.5,
+        description="To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5",
+    )
+    queue_query_timeout: Optional[int] = Field(
+        default=126,
+        description="""
+    The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may intermittently not respond and give error messages when submitting jobs or asking for job statuses. The timeout (in seconds) determines how long ERT will wait before it will give up. Applies to job submission (qsub) and job status queries (qstat). Default is 126 seconds.
+    ERT will do exponential sleeps, starting at 2 seconds, and the provided timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64 in order to be explicit about the number of retries. Set to zero to disallow flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two re-attempts. Example allowing six retries:
+    """,
+    )
+    project_code: Optional[str] = Field(
+        default=None,
+        description="String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.",
     )
