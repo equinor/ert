@@ -1033,3 +1033,11 @@ Select wells
     :module: everest_models.jobs.fm_select_wells.parser
     :func: build_argument_parser
     :prog: fm_select_wells
+
+Well trajectory
+===============
+
+.. argparse::
+    :module: everest_models.jobs.fm_well_trajectory.parser
+    :func: build_argument_parser
+    :prog: fm_well_trajectory
