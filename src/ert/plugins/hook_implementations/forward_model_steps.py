@@ -194,7 +194,7 @@ will *only* delete the link, and not the target.
             examples="""
             .. code-block:: bash
 
-                FORWARD_MODEL DELETE_FILE(<FILES>=path/file path/file2 path/fileN)
+                FORWARD_MODEL DELETE_FILE(<FILES>="path/file path/file2 path/fileN")
 """,
         )
 
