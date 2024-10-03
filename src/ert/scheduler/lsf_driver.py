@@ -621,7 +621,7 @@ class LsfDriver(Driver):
 
     def update_and_log_exec_hosts(self, bjobs_exec_hosts: Dict[str, str]) -> None:
         for job_id, exec_hosts in bjobs_exec_hosts.items():
-            if self._jobs[job_id].exec_hosts == "-":
+            if self._jobs[job_id].exec_hosts == "-" and exec_hosts != "-":
                 logger.info(
                     f"Realization {self._jobs[job_id].iens} was assigned to host: {exec_hosts}"
                 )
