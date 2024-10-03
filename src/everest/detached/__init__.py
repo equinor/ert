@@ -386,6 +386,7 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
         ],
         "name": "PARTITION",
     },
+    "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
 }
 
 
