@@ -451,7 +451,7 @@ def _generate_queue_options(
 
 
 def _find_res_queue_system(config: EverestConfig):
-    queue_system_simulator: Literal["lsf", "local", "slurm"] = "local"
+    queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
     if config.simulator is not None:
         queue_system_simulator = config.simulator.queue_system or queue_system_simulator
 
