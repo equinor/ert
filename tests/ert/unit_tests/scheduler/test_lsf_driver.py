@@ -1293,7 +1293,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
             {{
                 echo "killed" > {tmp_path}/was_killed
                 do_stop=1
-                exit -1
+                exit 15
             }}
             trap handle SIGTERM
             while [[ $do_stop == 0 ]]
