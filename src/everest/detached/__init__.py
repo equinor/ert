@@ -77,6 +77,7 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         file_path=os.path.join(log_dir, "simulations.log"),
         log_level=logging.INFO,
     )
+    print("Configured loggers")
 
     global _server  # noqa: PLW0603
     global _context  # noqa: PLW0603
