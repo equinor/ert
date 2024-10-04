@@ -93,6 +93,8 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
 
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
+        # This is within the range for ephemeral ports as defined by
+        # most unix flavors https://en.wikipedia.org/wiki/Ephemeral_port
         args.port_range = range(49152, 51819)
 
     evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)

@@ -19,8 +19,6 @@ def run_cli_ES_with_case(poly_config):
         "--realizations",
         "1-50",
         poly_config,
-        "--port-range",
-        "1024-65535",
         "--experiment-name",
         "test-experiment",
     )
