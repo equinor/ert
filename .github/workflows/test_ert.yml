@@ -57,7 +57,8 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -sv --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
+      shell: bash
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
