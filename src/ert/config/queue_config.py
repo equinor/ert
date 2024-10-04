@@ -5,9 +5,10 @@ import re
 import shutil
 from abc import abstractmethod
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Dict, List, Mapping, Optional, no_type_check
+from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
 
 import pydantic
+from pydantic import Field
 from typing_extensions import Annotated
 
 from .parsing import (
@@ -27,6 +28,7 @@ NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
 
 @pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
 class QueueOptions:
+    name: str
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: Optional[str] = None
@@ -79,6 +81,8 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.LOCAL.lower()] = QueueSystem.LOCAL.lower()
+
     @property
     def driver_options(self) -> Dict[str, Any]:
         return {}
@@ -86,6 +90,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.LSF.lower()] = QueueSystem.LSF.lower()
     bhist_cmd: Optional[NonEmptyString] = None
     bjobs_cmd: Optional[NonEmptyString] = None
     bkill_cmd: Optional[NonEmptyString] = None
@@ -97,6 +102,7 @@ class LsfQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
@@ -107,6 +113,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.TORQUE.lower()] = QueueSystem.TORQUE.lower()
     qsub_cmd: Optional[NonEmptyString] = None
     qstat_cmd: Optional[NonEmptyString] = None
     qdel_cmd: Optional[NonEmptyString] = None
@@ -124,6 +131,7 @@ class TorqueQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["queue_name"] = driver_dict.pop("queue")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
@@ -141,6 +149,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.SLURM.lower()]
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
@@ -156,6 +165,7 @@ class SlurmQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
         driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
@@ -255,8 +265,10 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: QueueOptions = field(default_factory=QueueOptions)
-    queue_options_test_run: QueueOptions = field(default_factory=LocalQueueOptions)
+    queue_options: Union[
+        LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
+    ] = Field(default_factory=LocalQueueOptions, discriminator="name")
+    queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
