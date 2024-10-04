@@ -157,21 +157,6 @@ class EnsembleConfig:
         config = self.response_configs["gen_data"]
         return key in config.keys
 
-    def addNode(self, config_node: Union[ParameterConfig, ResponseConfig]) -> None:
-        assert config_node is not None
-        if config_node.name in self:
-            raise ConfigValidationError(
-                f"Config node with key {config_node.name!r} already present in ensemble config"
-            )
-
-        if isinstance(config_node, ParameterConfig):
-            logger.info(
-                f"Adding {type(config_node).__name__} config (of size {len(config_node)}) to parameter_configs"
-            )
-            self.parameter_configs[config_node.name] = config_node
-        else:
-            self.response_configs[config_node.name] = config_node
-
     def get_keylist_gen_kw(self) -> List[str]:
         return [
             val.name
