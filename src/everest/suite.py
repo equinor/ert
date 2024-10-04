@@ -410,6 +410,16 @@ class _EverestWorkflow(object):
         # is retained for now via the seba_sqlite package.
         seba_storage = SqliteStorage(optimizer, self.config.optimization_output_dir)
 
+        optimizer.add_observer(
+            EventType.FINISHED_EVALUATION,
+            self._handle_optimization_finished_batch_event,
+        )
+
+        optimizer.add_observer(
+            EventType.FINISHED_OPTIMIZER_STEP,
+            self._handle_optimization_finish_event,
+        )
+
         # Run the optimization:
         exit_code = optimizer.run().exit_code
 
@@ -476,3 +486,46 @@ class _EverestWorkflow(object):
             maximize=True,
         )
         return optimizer
+
+    def _handle_optimization_finish_event(self, event):
+        print("hey")
+        pass
+
+    def _handle_optimization_finished_batch_event(self, event):
+        config = event.config
+
+        for result in event.results:
+            batch_id = result.batch_id
+            result.to_netcdf(config, "test.nc")
+            print(batch_id)
+
+        pass
+        # logger.debug("Storing batch results in the sqlite database")
+        # converted_results = tuple(convert_to_maximize(result) for result in event.results)
+        # results = []
+        # best_value = -np.inf
+        # best_results = None
+        # for item in converted_results:
+        #    if isinstance(item, GradientResults):
+        #        results.append(item)
+        #    if (
+        #        isinstance(item, FunctionResults)
+        #        and item.functions is not None
+        #        and item.functions.weighted_objective > best_value
+        #    ):
+        #        best_value = item.functions.weighted_objective
+        #        best_results = item
+        # if best_results is not None:
+        #    results = [best_results] + results
+        # last_batch = -1
+        # for item in results:
+        #    if item.batch_id != last_batch:
+        #        self._database.add_batch()
+        #    self._store_results(event.config, item)
+        #    if item.batch_id != last_batch:
+        #        self._database.set_batch_ended
+        #    last_batch = item.batch_id
+        # self._database.set_batch_ended(time.time(), True)
+        ## Merit values are dakota specific, load them if the output file exists:
+        # self._database.update_calculation_result(_get_merit_values(self._merit_file))
+        # backup_data(self._database.location)
