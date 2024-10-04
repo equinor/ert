@@ -12,20 +12,20 @@ from .types import MaybeWithContext
 class ConfigWarning(UserWarning):
     info: WarningInfo
 
-    @staticmethod
-    def warn(message: str, context: MaybeWithContext = "") -> None:
-        ConfigWarning._formatted_warn(ConfigWarning.with_context(message, context))
+    @classmethod
+    def warn(cls, message: str, context: MaybeWithContext = "") -> None:
+        cls._formatted_warn(cls.with_context(message, context))
 
-    @staticmethod
-    def deprecation_warn(message: str, context: MaybeWithContext = "") -> None:
-        warning = ConfigWarning.with_context(message, context)
+    @classmethod
+    def deprecation_warn(cls, message: str, context: MaybeWithContext = "") -> None:
+        warning = cls.with_context(message, context)
         if not hasattr(context, "token"):
             warning.info.set_context_keyword(context)
         warning.info.is_deprecation = True
-        ConfigWarning._formatted_warn(warning)
+        cls._formatted_warn(warning)
 
-    @staticmethod
-    def _formatted_warn(config_warning: ConfigWarning) -> None:
+    @classmethod
+    def _formatted_warn(cls, config_warning: ConfigWarning) -> None:
         temp = warnings.formatwarning
 
         def ert_formatted_warning(

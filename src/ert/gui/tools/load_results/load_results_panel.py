@@ -67,10 +67,10 @@ class LoadResultsPanel(QWidget):
         self._iterations_field.setObjectName("iterations_field_lrm")
         layout.addRow("Iteration to load:", self._iterations_field)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
-        self._iterations_field.getValidationSupport().validationChanged.connect(  # noqa
+        self._iterations_field.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
 

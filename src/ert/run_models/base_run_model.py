@@ -189,6 +189,24 @@ class BaseRunModel(ABC):
         self.start_iteration = start_iteration
         self.validate()
 
+    def log_at_startup(self) -> None:
+        keys_to_drop = [
+            "_end_queue",
+            "_queue_config",
+            "_status_queue",
+            "_storage",
+            "ert_config",
+            "rng",
+            "run_paths",
+            "substitution_list",
+        ]
+        settings_dict = {
+            key: value
+            for key, value in self.__dict__.items()
+            if key not in keys_to_drop
+        }
+        logger.info(f"Running '{self.name()}' with settings {settings_dict}")
+
     @classmethod
     @abstractmethod
     def name(cls) -> str: ...
@@ -196,6 +214,14 @@ class BaseRunModel(ABC):
     @classmethod
     @abstractmethod
     def description(cls) -> str: ...
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        """Default value to prevent errors in children classes
+        since only EnsembleExperiment and EnsembleSmoother should
+        override it
+        """
+        return None
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
@@ -376,6 +402,7 @@ class BaseRunModel(ABC):
                 for real in all_realizations.values():
                     status[str(real["status"])] += 1
 
+        status["Finished"] += self.active_realizations.count(False)
         return status
 
     def get_memory_consumption(self) -> int:
@@ -391,10 +418,10 @@ class BaseRunModel(ABC):
 
     def _current_progress(self) -> tuple[float, int]:
         current_iter = max(list(self._iter_snapshot.keys()))
-        done_realizations = 0
+        done_realizations = self.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
-        realization_count = len(all_realizations)
+        realization_count = len(self.active_realizations)
 
         if all_realizations:
             for real in all_realizations.values():
@@ -404,7 +431,9 @@ class BaseRunModel(ABC):
                 ]:
                     done_realizations += 1
 
-            realization_progress = float(done_realizations) / len(all_realizations)
+            realization_progress = float(done_realizations) / len(
+                self.active_realizations
+            )
             current_progress = (
                 (current_iter + realization_progress) / self._total_iterations
                 if self._total_iterations != 1

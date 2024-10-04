@@ -1,0 +1,11 @@
+prices:
+    FOPT:
+        - { date: 1999-01-01, value: 60, currency: USD }
+
+well_costs:
+    - { well: A1, value: 10000000, currency: USD }
+    - { well: A2, value: 20000000 }
+    - { well: A3, value: 5000000, currency: USD }
+    - { well: A4, value: 100000000, currency: GBP }
+    - { well: A5, value: 1000000 }
+    - { well: A6, value: 100000, currency: USD }

@@ -223,7 +223,7 @@ class EnsembleSnapshot:
         return self._realization_snapshots[real_id]
 
     def get_fm_step(self, real_id: RealId, fm_step_id: FmStepId) -> "FMStepSnapshot":
-        return self._fm_step_snapshots[(real_id, fm_step_id)].copy()
+        return self._fm_step_snapshots[real_id, fm_step_id].copy()
 
     def get_successful_realizations(self) -> typing.List[int]:
         return [
@@ -346,6 +346,7 @@ class EnsembleSnapshot:
             if type(event) is ForwardModelStepRunning:
                 fm["current_memory_usage"] = event.current_memory_usage
                 fm["max_memory_usage"] = event.max_memory_usage
+                fm["cpu_seconds"] = event.cpu_seconds
             if type(event) is ForwardModelStepStart:
                 fm["stdout"] = event.std_out
                 fm["stderr"] = event.std_err
@@ -373,7 +374,7 @@ class EnsembleSnapshot:
         fm_step_id: str,
         fm_step: "FMStepSnapshot",
     ) -> "EnsembleSnapshot":
-        self._fm_step_snapshots[(real_id, fm_step_id)].update(fm_step)
+        self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
 
 
@@ -384,6 +385,7 @@ class FMStepSnapshot(TypedDict, total=False):
     index: Optional[str]
     current_memory_usage: Optional[int]
     max_memory_usage: Optional[int]
+    cpu_seconds: Optional[float]
     name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]

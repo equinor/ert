@@ -35,7 +35,7 @@ class Refcase:
 
     @property
     def all_dates(self) -> List[datetime]:
-        return [self.start_date] + list(self.dates)
+        return [self.start_date, *self.dates]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Optional["Refcase"]:

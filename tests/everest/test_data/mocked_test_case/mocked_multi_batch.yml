@@ -1,0 +1,78 @@
+definitions:
+    numeric_key: 1
+    bool_key: True
+    eclbase: MOCKED_TEST_CASE
+    local_jobs_folder: r{{configpath}}/jobs
+    refcase_folder: r{{configpath}}/eclipse/refcase
+    spe1_datafile: r{{refcase_folder}}/SPE1.DATA
+
+wells:
+  - { name: w00}
+  - { name: w01}
+  - { name: w02}
+  - { name: w03}
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 0.1
+    perturbation_magnitude : 0.005
+    perturbation_type : absolute
+    variables:
+      - { name: w00, initial_guess: 0.0626 }
+      - { name: w01, initial_guess: 0.0627 }
+      - { name: w02, initial_guess: 0.0628 }
+      - { name: w03, initial_guess: 0.0629 }
+
+
+objective_functions:
+  -
+    name: npv_function
+  -
+    name: group_sum
+    normalization: 1000
+
+
+optimization:
+  algorithm: optpp_q_newton
+  perturbation_num: 2
+  convergence_tolerance: 1
+
+
+install_jobs:
+  -
+    name: well_order
+    source: r{{local_jobs_folder}}/WELL_ORDER_MOCK
+  -
+    name: res_mock
+    source: r{{local_jobs_folder}}/RES_MOCK
+  -
+    name: npv_function
+    source: r{{local_jobs_folder}}/NPV_FUNCTION_MOCK
+  -
+    name: controls_sum
+    source: r{{local_jobs_folder}}/CONTROLS_SUM
+
+simulator:
+  max_runtime: 3600
+
+model:
+  realizations: r{{ range(2) | list() }}
+  # NOTE: This is not a related datafile, just needed one to get eclipse
+  # export in tests. Can be replaced by any other datafile of your preferance.
+  data_file: r{{spe1_datafile}}
+
+
+forward_model:
+  - well_order well_order.json SCHEDULE.INC ordered_wells.json
+  - res_mock r{{ eclbase }}
+  - npv_function r{{ eclbase }} npv_function
+  - controls_sum group
+
+environment:
+  simulation_folder: sim_folder
+  output_folder: mocked_multi_batch_output
+  log_level: warning
+  random_seed: 123456

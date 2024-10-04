@@ -208,16 +208,6 @@ def get_observations_for_obs_keys(
     return observations
 
 
-def get_observation_name(ensemble: Ensemble, observation_keys: List[str]) -> str:
-    observations_dict = ensemble.experiment.observations
-    for key in observation_keys:
-        observation = observations_dict[key]
-        if observation.response == "summary":
-            return observation.name.values.flatten()[0]
-        return key
-    return ""
-
-
 def get_observation_keys_for_response(
     ensemble: Ensemble, response_key: str
 ) -> List[str]:

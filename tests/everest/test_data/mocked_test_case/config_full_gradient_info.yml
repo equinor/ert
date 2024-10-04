@@ -1,0 +1,60 @@
+# Config file that is only targeting the optimization section.
+wells:
+  - {name: w00}
+  - {name: w01}
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 0.1
+    variables:
+      -
+        name: w00
+        initial_guess: 0.0626
+      -
+        name: w01
+        initial_guess: 0.0624
+
+objective_functions:
+  -
+    name: npv_function
+
+install_jobs:
+  -
+    name: well_order
+    source: jobs/WELL_ORDER_MOCK
+  -
+    name: npv_function
+    source: jobs/NPV_FUNCTION_MOCK
+  -
+    name: res_mock
+    source: jobs/RES_MOCK
+
+optimization:
+  algorithm: conmin_mfd
+  perturbation_num: 20
+  max_iterations: 10
+  max_function_evaluations: 1000
+  convergence_tolerance: 1.0e-7
+  constraint_tolerance: 1.0e-7
+  speculative: false
+  max_batch_num: 10
+  options:
+    - '131.3 = No'
+    - 'LOG HIGH'
+    - 'Dostuff: 1'
+    - speculate
+
+environment:
+  random_seed: 1234
+  simulation_folder: full_gradient/simulations
+
+model:
+  realizations: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+forward_model:
+  - well_order well_order.json SCHEDULE.INC ordered_wells.json
+  - res_mock MOCKED_TEST_CASE
+  - npv_function MOCKED_TEST_CASE npv_function

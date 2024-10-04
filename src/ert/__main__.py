@@ -17,7 +17,7 @@ import yaml
 
 import ert.shared
 from _ert.threading import set_signal_handler
-from ert.cli.main import ErtCliError, ErtTimeoutError, run_cli
+from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
@@ -681,12 +681,12 @@ def main() -> None:
         with ErtPluginContext(logger=logging.getLogger()) as context:
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)
-    except (ErtCliError, ErtTimeoutError) as err:
-        logger.exception(str(err))
+    except ErtCliError as err:
+        logger.debug(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
         err_msg = err.cli_message()
-        logger.exception(err_msg)
+        logger.debug(err_msg)
         sys.exit(err_msg)
     except BaseException as err:
         logger.exception(f'ERT crashed unexpectedly with "{err}"')

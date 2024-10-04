@@ -13,7 +13,7 @@ from _ert.threading import ErtThread
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
-from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -31,10 +31,6 @@ from ert.storage.local_storage import local_storage_set_ert_config
 
 
 class ErtCliError(Exception):
-    pass
-
-
-class ErtTimeoutError(Exception):
     pass
 
 
@@ -123,13 +119,12 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     with contextlib.ExitStack() as exit_stack:
         out: TextIO
         if args.disable_monitoring:
-            out = exit_stack.enter_context(
-                open(os.devnull, "w", encoding="utf-8")  # noqa
-            )
+            out = exit_stack.enter_context(open(os.devnull, "w", encoding="utf-8"))
         else:
             out = sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)
         thread.start()
+        end_event: Optional[EndEvent] = None
         try:
             end_event = monitor.monitor(
                 status_queue, ert_config.analysis_config.log_path
@@ -141,7 +136,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
     thread.join()
     storage.close()
 
-    if end_event.failed:
+    if end_event is not None and end_event.failed:
         # If monitor has not reported, give some info if the job failed
         msg = end_event.msg if args.disable_monitoring else ""
         raise ErtCliError(msg)

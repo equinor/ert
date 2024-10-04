@@ -38,13 +38,19 @@ class CreateExperimentDialog(QDialog):
 
         experiment_label = QLabel("Experiment name:")
         self._experiment_edit = StringBox(
-            TextModel(""), placeholder_text="My_experiment", minimum_width=200
+            TextModel(""),
+            placeholder_text=notifier.storage.get_unique_experiment_name(
+                "new_experiment"
+            ),
+            minimum_width=200,
         )
         self._experiment_edit.setValidator(ExperimentValidation(notifier.storage))
 
         ensemble_label = QLabel("Ensemble name:")
         self._ensemble_edit = StringBox(
-            TextModel(""), placeholder_text="My_ensemble", minimum_width=200
+            TextModel(""),
+            placeholder_text=notifier.storage.get_unique_experiment_name("ensemble"),
+            minimum_width=200,
         )
         self._ensemble_edit.setValidator(ProperNameArgument())
 
@@ -61,10 +67,9 @@ class CreateExperimentDialog(QDialog):
 
         self._ok_button.clicked.connect(
             lambda: self.onDone.emit(
-                self._experiment_edit.text(), self._ensemble_edit.text()
+                self._experiment_edit.get_text, self._ensemble_edit.get_text
             )
         )
-        self._ok_button.setEnabled(False)
 
         def enableOkButton() -> None:
             self._ok_button.setEnabled(self.isConfigurationValid())
@@ -92,11 +97,11 @@ class CreateExperimentDialog(QDialog):
 
     @property
     def experiment_name(self) -> str:
-        return self._experiment_edit.text()
+        return self._experiment_edit.get_text
 
     @property
     def ensemble_name(self) -> str:
-        return self._ensemble_edit.text()
+        return self._ensemble_edit.get_text
 
     def isConfigurationValid(self) -> bool:
         return self._experiment_edit.isValid() and self._ensemble_edit.isValid()

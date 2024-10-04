@@ -305,7 +305,7 @@ class BatchContext:
                 (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
                 (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg)
             ]
-        """  # noqa
+        """
         try:
             run_arg = self.run_args[iens]
         except IndexError as e:

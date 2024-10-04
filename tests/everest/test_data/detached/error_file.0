@@ -1,0 +1,20 @@
+INFO:everest:everest 0.10a1
+seba    3.0.0
+libres  2.6.3.
+INFO:everest:Using random seed: 999
+INFO:everest:To deterministically reproduce this experiment, add the above random seed to your configuration file.
+INFO:everest:output directory: /equinor/config_folder/everest_output
+INFO:werkzeug: * Running on https://0.0.0.0:5001/ (Press CTRL+C to quit)
+INFO:everest:Starting optimization ...
+  00: Error when parsing config_file:"DISTANCE3" Keyword:ARGLIST must have at least 1 arguments.
+** Warning: job: 'distance3' not available ...
+
+Error message: ext_joblist_get_job_copy: asked for job:distance3 which does not exist
+
+See file: /tmp/ert_abort_dump.20200127-111217.log for more details of the crash.
+Setting the environment variable "ERT_SHOW_BACKTRACE" will show the backtrace on stderr.
+
+Error message: Program received signal:6
+
+See file: /tmp/ert_abort_dump.20200127-111217.log for more details of the crash.
+Setting the environment variable "ERT_SHOW_BACKTRACE" will show the backtrace on stderr.

@@ -33,13 +33,17 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install ERT and dependencies
       run: |
-        uv pip install ".[dev, types]"
+        uv pip install ".[dev, types, everest]"
 
     - run: echo ::add-matcher::.github/mypy-matcher.json
-    - name: Run mypy
+    - name: Run mypy ert
       run: |
         mypy src/ert
+
+    - name: Run mypy everest
+      run: |
+        mypy src/everest

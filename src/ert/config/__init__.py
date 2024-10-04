@@ -1,5 +1,6 @@
 from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
+from .capture_validation import capture_validation
 from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
@@ -14,6 +15,7 @@ from .forward_model_step import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
@@ -62,6 +64,7 @@ __all__ = [
     "ForwardModelStepJSON",
     "ForwardModelStepPlugin",
     "ForwardModelStepValidationError",
+    "ForwardModelStepWarning",
     "GenDataConfig",
     "GenKwConfig",
     "HookRuntime",
@@ -79,6 +82,7 @@ __all__ = [
     "WarningInfo",
     "Workflow",
     "WorkflowJob",
+    "capture_validation",
     "field_transform",
     "lint_file",
 ]

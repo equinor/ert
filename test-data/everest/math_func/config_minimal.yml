@@ -1,0 +1,43 @@
+controls:
+  -
+    name: point
+    type: generic_control
+    min: -1.0
+    max: 1.0
+    initial_guess: 0.1
+    perturbation_magnitude : 0.001
+    variables:
+        - name: x
+        - name: y
+        - name: z
+
+
+objective_functions:
+  -
+    name: distance
+
+
+optimization:
+  algorithm: optpp_q_newton
+  convergence_tolerance: 0.001
+  max_batch_num: 4
+  constraint_tolerance: 0.1  # To test that it is ignored.
+
+
+install_jobs:
+  -
+    name: distance3
+    source: jobs/DISTANCE3
+
+model:
+  realizations: [0]
+
+forward_model:
+  - distance3 --point-file point.json
+              --target 0.5 0.5 0.5
+              --out distance
+
+environment:
+  simulation_folder: sim_output
+  log_level: debug
+  random_seed: 123

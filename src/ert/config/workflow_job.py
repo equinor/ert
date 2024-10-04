@@ -14,7 +14,7 @@ from .parsing import (
     SchemaItemType,
     WorkflowJobKeys,
     init_workflow_job_schema,
-    lark_parse,
+    parse,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
 
 def workflow_job_parser(file: str) -> ConfigDict:
     schema = init_workflow_job_schema()
-    return lark_parse(file, schema=schema)
+    return parse(file, schema=schema)
 
 
 class ErtScriptLoadFailure(ValueError):
@@ -52,7 +52,7 @@ class WorkflowJob:
 
             # Bare Exception here as we have no control
             # of exceptions in the loaded ErtScript
-            except Exception as err:  # noqa
+            except Exception as err:
                 raise ErtScriptLoadFailure(
                     f"Failed to load {self.name}: {err}"
                 ) from err

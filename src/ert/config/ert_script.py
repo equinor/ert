@@ -158,7 +158,7 @@ class ErtScript:
             return uw.args[0]
         except Exception as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
-            self.output_stack_trace(f"{str(e)}\n{full_trace}")
+            self.output_stack_trace(f"{e!s}\n{full_trace}")
             return None
         finally:
             self.cleanup()

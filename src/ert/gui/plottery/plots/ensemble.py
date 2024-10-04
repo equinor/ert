@@ -7,7 +7,7 @@ import pandas as pd
 
 from ert.gui.plottery.plots.history import plotHistory
 from ert.gui.tools.plot.plot_api import EnsembleObject
-from ert.shared.storage.summary_key_utils import is_rate
+from ert.summary_key_type import is_rate
 
 from .observations import plotObservations
 from .plot_tools import PlotTools

@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
+
 
 class MultipleDataAssimilation(UpdateRunModel):
     """
@@ -80,8 +82,7 @@ class MultipleDataAssimilation(UpdateRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        logger.info(f"Running {self.name} with normalized weights {self.weights}")
-
+        self.log_at_startup()
         if self.restart_run:
             id = self.prior_ensemble_id
             try:
@@ -185,8 +186,12 @@ class MultipleDataAssimilation(UpdateRunModel):
 
     @classmethod
     def name(cls) -> str:
-        return "Multiple Data Assimilation (ES MDA) - Recommended"
+        return "Multiple data assimilation"
 
     @classmethod
     def description(cls) -> str:
-        return "[Sample|restart] → [Evaluate → update] for each weight"
+        return "[Sample|restart] → [evaluate → update] for each weight"
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        return MULTIPLE_DATA_ASSIMILATION_GROUP

@@ -1,0 +1,45 @@
+controls:
+  -
+    name: point
+    type: generic_control
+    perturbation_magnitude : 0.01
+    min: -2.0
+    max: 2.0
+    variables:
+        - name: x
+          initial_guess: 0.0
+        - name: y
+          initial_guess: 0.0
+        - name: z
+          initial_guess: 0.0
+
+objective_functions:
+  -
+    name: distance
+
+optimization:
+  backend: scipy
+  algorithm: slsqp
+  max_batch_num: 5
+  cvar:
+    percentile: 0.5
+    # number_of_realizations: 1
+
+
+install_jobs:
+  -
+    name: distance3
+    source: jobs/DISTANCE3
+
+model:
+  realizations: [0, 1]
+
+forward_model:
+  - distance3 --point-file point.json --realization r{{realization}}
+              --target 0.5 0.5 0.5
+              --out distance
+
+environment:
+  output_folder: distance_output
+  simulation_folder: sim_output
+  random_seed: 999

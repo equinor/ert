@@ -8,13 +8,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ert"
 authors = [
-  {name = "Equinor ASA", email = "fg_sib-scout@equinor.com"},
+    { name = "Equinor ASA", email = "fg_sib-scout@equinor.com" },
 ]
 description = "Ensemble based Reservoir Tool (ERT)"
 requires-python = ">=3.8"
 readme = "README.md"
-license = {text = "GPL-3.0"}
-classifiers=[
+license = { text = "GPL-3.0" }
+classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
     "Intended Audience :: Science/Research",
@@ -30,7 +30,7 @@ classifiers=[
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dynamic = ["version"]
-dependencies=[
+dependencies = [
     "aiohttp",
     "backports-datetime_fromisoformat; python_version < '3.11'",
     "cryptography",
@@ -41,9 +41,9 @@ dependencies=[
     "filelock",
     "httpx",
     "humanize",
-    "importlib_resources;python_version <= '3.8'",
+    "importlib_resources; python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
-    "jinja2",
+    "jinja2 >= 2.10",
     "lark",
     "lxml",
     "matplotlib",
@@ -66,7 +66,7 @@ dependencies=[
     "scipy >= 1.10.1",
     "seaborn",
     "tables; python_version >= '3.9'",  # extra dependency for pandas (hdf5)
-    "tables<3.9;python_version == '3.8'",
+    "tables<3.9; python_version == '3.8'",
     "tabulate",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
@@ -78,7 +78,17 @@ dependencies=[
 
 [project.scripts]
 ert = "ert.__main__:main"
-"job_dispatch.py" = "_ert_forward_model_runner.job_dispatch:main"
+"job_dispatch.py" = "_ert.forward_model_runner.job_dispatch:main"
+everest = "everest.bin.main:start_everest"
+everserver = "everest.detached.jobs.everserver:main"
+recovery_factor = "everest.jobs.scripts.recovery_factor:main"
+render = "everest.jobs.scripts.render:main"
+wdcompl = "everest.jobs.scripts.wdcompl:main"
+wddatefilter = "everest.jobs.scripts.wddatefilter:main"
+wdfilter = "everest.jobs.scripts.wdfilter:main"
+wdreorder = "everest.jobs.scripts.wdreorder:main"
+wdset = "everest.jobs.scripts.wdset:main"
+wdupdate = "everest.jobs.scripts.wdupdate:main"
 
 [project.urls]
 Repository = "https://github.com/equinor/ert"
@@ -128,11 +138,29 @@ types = [
     "types-decorator",
     "types-docutils",
     "types-tqdm",
-    "types-psutil"
+    "types-psutil",
+    "types-setuptools"
+]
+everest = [
+    "progressbar2",
+    "ruamel.yaml",
+    "flask",
+    "decorator",
+    "resdata",
+    "colorama",
+    "ropt[pandas]>=0.7,<0.8",
+    "ropt-dakota>=0.7,<0.8",
+    "seba-sqlite",
 ]
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 platforms = ["all"]
+
+[tool.setuptools.package-data]
+everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
+ieverest = ["*.ui"]
+
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
@@ -144,6 +172,12 @@ markers = [
     "requires_window_manager",
     "script",
     "slow",
+    "everest_models_test",
+    "integration_test",
+    "simulation_test",
+    "ui_test",
+    "redundant_test",
+    "fails_on_macos_github_workflow", # Tests marked fail due to gui-related issues
 ]
 log_cli = "false"
 asyncio_mode = "auto"
@@ -159,37 +193,59 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
-  "W",  # pycodestyle
-  "I",  # isort
-  "B",  # flake-8-bugbear
-  "SIM",  # flake-8-simplify
-  "F",  # pyflakes
-  "PL",  # pylint
-  "NPY",  # numpy specific rules
-  "C4",  # flake8-comprehensions
-  "ASYNC",  # flake8-async
+    "W",     # pycodestyle
+    "I",     # isort
+    "B",     # flake-8-bugbear
+    "SIM",   # flake-8-simplify
+    "F",     # pyflakes
+    "PL",    # pylint
+    "NPY",   # numpy specific rules
+    "C4",    # flake8-comprehensions
+    "ASYNC", # flake8-async
+    "RUF",   # ruff specific rules
 ]
 preview = true
-ignore = ["PLW2901",  # redefined-loop-name
-          "PLR2004",  # magic-value-comparison
-          "PLR0915",  # too-many-statements
-          "PLR0912",  # too-many-branches
-          "PLR0911",  # too-many-return-statements
-          "PLC2701",  # import-private-name
-          "PLR6201",  # literal-membership
-          "PLR0914",  # too-many-locals
-          "PLR6301",  # no-self-use
-          "PLW1641",  # eq-without-hash
-          "PLR0904",  # too-many-public-methods
-          "PLR1702",  # too-many-nested-blocks
-          "PLW3201",  # bad-dunder-method-name
+ignore = [
+    "PLW2901", # redefined-loop-name
+    "PLR2004", # magic-value-comparison
+    "PLR0915", # too-many-statements
+    "PLR0912", # too-many-branches
+    "PLR0911", # too-many-return-statements
+    "PLC2701", # import-private-name
+    "PLR6201", # literal-membership
+    "PLR0914", # too-many-locals
+    "PLR6301", # no-self-use
+    "PLW1641", # eq-without-hash
+    "PLR0904", # too-many-public-methods
+    "PLR1702", # too-many-nested-blocks
+    "PLW3201", # bad-dunder-method-name
 ]
+
+# Allow EN DASH (U+2013)
+allowed-confusables = ["–"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*" = [
-"PLW0603" # global-statement
+    "PLW0603", # global-statement
+    "RUF029",  # unused-async
+    "RUF018",  # assignment-in-assert
+    "RUF006",  # asyncio-dangling-task
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
+"src/ert/dark_storage/*" = ["RUF029"] # unused-async
 
 [tool.ruff.lint.pylint]
 max-args = 20
+
+[tool.pyright]
+include = ["src"]
+exclude = ["tests"]
+reportMissingImports = "error"
+typeCheckingMode = "standard"
+pythonVersion = "3.8"
+
+[tool.pyright.defineConstant]
+PYSIDE6 = false
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false

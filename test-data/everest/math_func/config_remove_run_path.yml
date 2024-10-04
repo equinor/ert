@@ -1,0 +1,55 @@
+wells: []
+
+controls:
+  -
+    name: point
+    type: generic_control
+    min: -1.0
+    max: 1.0
+    initial_guess: 0
+    perturbation_magnitude : 0.001
+    variables:
+        - name: x
+        - name: y
+        - name: z
+
+objective_functions:
+  -
+    name: distance
+
+install_jobs:
+  -
+    name: distance3
+    source: jobs/DISTANCE3
+  -
+    name: toggle_failure
+    source: jobs/FAIL_SIMULATION
+
+forward_model:
+  - distance3 --point-file point.json
+              --target 0.5 0.5 0.5
+              --out distance
+
+  - toggle_failure
+
+
+model:
+  realizations: [0]
+
+optimization:
+  algorithm: optpp_q_newton
+  convergence_tolerance: 0.005
+  min_realizations_success: 1
+  min_pert_success: 1
+  max_iterations: 1
+  perturbation_num: 2
+
+environment:
+  log_level: debug
+  random_seed: 123
+  simulation_folder: scratch/advanced/
+  output_folder: everest_output/
+
+
+simulator:
+  delete_run_path: True

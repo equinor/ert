@@ -85,6 +85,7 @@ class ForwardModelStepRunning(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_RUNNING_TYPE = Id.FORWARD_MODEL_STEP_RUNNING
     max_memory_usage: Union[int, None] = None
     current_memory_usage: Union[int, None] = None
+    cpu_seconds: float = 0.0
 
 
 class ForwardModelStepSuccess(ForwardModelStepBaseEvent):

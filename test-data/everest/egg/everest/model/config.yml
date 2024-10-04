@@ -1,0 +1,118 @@
+definitions:
+  eclbase: eclipse/model/EGG
+  realization_folder: r{{configpath}}/../../eclipse/include/realizations/realization-r{{realization}}/eclipse
+  data_file: r{{realization_folder}}/model/EGG.DATA
+
+wells:
+  - { name: PROD1 }
+  - { name: PROD2 }
+  - { name: PROD3 }
+  - { name: PROD4 }
+  - { name: INJECT1 }
+  - { name: INJECT2 }
+  - { name: INJECT3 }
+  - { name: INJECT4 }
+  - { name: INJECT5 }
+  - { name: INJECT6 }
+  - { name: INJECT7 }
+  - { name: INJECT8 }
+
+controls:
+  -
+    name: well_rate
+    type: generic_control
+    min: 0
+    max: 1
+    perturbation_magnitude: 0.15
+    variables:
+      -
+        name: PROD1
+        index: 1
+        initial_guess: 0.2
+      -
+        name: PROD2
+        index: 1
+        initial_guess: 0.6
+      -
+        name: PROD3
+        index: 1
+        initial_guess: 0.2
+      -
+        name: PROD4
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT1
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT2
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT3
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT4
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT5
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT6
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT7
+        index: 1
+        initial_guess: 0.6
+      -
+        name: INJECT8
+        index: 1
+        initial_guess: 0.6
+
+objective_functions:
+  - name: rf
+
+
+optimization:
+  algorithm: optpp_q_newton
+  min_realizations_success: 1
+  perturbation_num: 1  # per realization
+  speculative: True
+  max_iterations: 2
+  max_function_evaluations: 3
+  convergence_tolerance: 1.0E+1
+
+model:
+  realizations: [0, 1, 2]
+  data_file: r{{data_file}}
+  report_steps: ['2014-05-30', '2014-08-28', '2014-11-26', '2015-02-24', '2015-05-25', '2015-08-23', '2015-11-21', '2016-02-19', '2016-05-19']
+
+environment:
+  simulation_folder: egg_simulations
+  random_seed: 123456
+
+simulator:
+  queue_system: local
+  cores: 3
+
+install_data:
+  -
+    source: r{{realization_folder}}
+    target: eclipse
+  -
+    source: r{{ configpath }}/../input/files
+    target: files
+    link: true
+
+
+forward_model:
+  - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
+  - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
+  - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
+  - eclipse100 r{{eclbase}}.DATA --version 2020.2
+  - rf                -s r{{ eclbase }} -o rf

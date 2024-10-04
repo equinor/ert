@@ -142,7 +142,7 @@ class GenDataConfig(ResponseConfig):
                     errors.append(str(err))
             else:
                 for report_step in report_steps:
-                    filename = input_file % report_step  # noqa
+                    filename = input_file % report_step
                     try:
                         datasets_per_report_step.append(
                             _read_file(_run_path / filename, report_step)

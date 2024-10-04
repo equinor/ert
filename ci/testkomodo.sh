@@ -1,24 +1,24 @@
 copy_test_files () {
-    cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
-    ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
+    cp -r "${CI_SOURCE_ROOT}"/tests "${CI_TEST_ROOT}"
+    ln -s "${CI_SOURCE_ROOT}"/test-data "${CI_TEST_ROOT}"/test-data
 
-    ln -s ${CI_SOURCE_ROOT}/src ${CI_TEST_ROOT}/src
+    ln -s "${CI_SOURCE_ROOT}"/src "${CI_TEST_ROOT}"/src
 
     # Trick ERT to find a fake source root
-    mkdir ${CI_TEST_ROOT}/.git
+    mkdir "${CI_TEST_ROOT}"/.git
 
     # Keep pytest configuration:
-    ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
+    ln -s "${CI_SOURCE_ROOT}"/pyproject.toml "${CI_TEST_ROOT}"/pyproject.toml
 }
 
 install_test_dependencies () {
-    pip install ".[dev]"
+    pip install ".[dev, everest]"
 }
 
 run_ert_with_opm () {
     pushd "${CI_TEST_ROOT}"
 
-    cp -r "${CI_SOURCE_ROOT}/test-data/flow_example" ert_with_opm
+    cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
 
     ert test_run flow.ert ||
@@ -38,25 +38,43 @@ start_tests () {
 
     export ECL_SKIP_SIGNAL=ON
 
-    pushd ${CI_TEST_ROOT}/tests
+    pushd "${CI_TEST_ROOT}"/tests/ert
+
+    set +e
 
     pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
+    return_code_0=$?
     pytest --eclipse-simulator -v --mpl \
         -m "not limit_memory and requires_window_manager" --benchmark-disable
+    return_code_1=$?
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
     export OMP_NUM_THREADS=1
 
     pytest -n 2 --durations=0 -m "limit_memory" --memray
+    return_code_2=$?
 
     unset OMP_NUM_THREADS
 
-    basetemp=$(mktemp -d -p $_ERT_TESTS_SHARED_TMP)
-    pytest --timeout=3600 -v --$_ERT_TESTS_QUEUE_SYSTEM --basetemp="$basetemp" integration_tests/scheduler
+    basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
+    pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" unit_tests/scheduler
+    return_code_3=$?
     rm -rf "$basetemp" || true
 
     popd
 
     run_ert_with_opm
+    return_code_4=$?
+
+    set -e
+
+    # We error if one or more returncodes are nonzero
+    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4; do
+        if [ "$code" -ne 0 ]; then
+            echo "One or more tests failed."
+            return 1
+        fi
+    done
+
 }

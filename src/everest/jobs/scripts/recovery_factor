@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import argparse
+
+from everest.jobs import recovery_factor
+
+
+def _build_argument_parser() -> argparse.ArgumentParser:
+    description = (
+        'Loads the summary data from "load_case" ("some/path/<load_case>.UNSMRY") '
+        'and calculates recovery factor, then dump result to "output_file".'
+    )
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        "--load_case",
+        "-s",
+        required=True,
+        help="eclipse load-case name",
+    )
+    parser.add_argument(
+        "--output_file",
+        required=False,
+        default="rf",
+        help="the output file, defaults to rf",
+    )
+    return parser
+
+
+def main():
+    arg_parser = _build_argument_parser()
+    args = arg_parser.parse_args()
+
+    recovery_factor(
+        args.load_case,
+        args.output_file,
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -11,7 +11,8 @@ _Short description of the approach_
 - [ ] PR title captures the intent of the changes, and is fitting for release notes.
 - [ ] Added appropriate release note label
 - [ ] Commit history is consistent and clean, in line with the [contribution guidelines](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md).
-- [ ] Make sure tests pass locally (after every commit!)
+- [ ] Make sure unit tests pass locally after every commit (`git rebase -i main
+      --exec 'pytest tests/ert/unit_tests -n logical -m "not integration_test"'`)
 
 ## When applicable
 - [ ] **When there are user facing changes**: Updated documentation

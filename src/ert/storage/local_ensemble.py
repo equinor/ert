@@ -45,6 +45,10 @@ class _Failure(BaseModel):
     time: datetime
 
 
+def _escape_filename(filename: str) -> str:
+    return filename.replace("%", "%25").replace("/", "%2F")
+
+
 class LocalEnsemble(BaseMode):
     """
     Represents an ensemble within the local storage system of ERT.
@@ -139,8 +143,9 @@ class LocalEnsemble(BaseMode):
             started_at=datetime.now(),
         )
 
-        with open(path / "index.json", mode="w", encoding="utf-8") as f:
-            print(index.model_dump_json(), file=f)
+        storage._write_transaction(
+            path / "index.json", index.model_dump_json().encode("utf-8")
+        )
 
         return cls(storage, path, Mode.WRITE)
 
@@ -265,7 +270,7 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
         return all(
-            (path / f"{parameter}.nc").exists()
+            (path / (_escape_filename(parameter) + ".nc")).exists()
             for parameter in self.experiment.parameter_configuration
         )
 
@@ -324,7 +329,10 @@ class LocalEnsemble(BaseMode):
             i
             for i in range(self.ensemble_size)
             if all(
-                (self._realization_dir(i) / f"{parameter.name}.nc").exists()
+                (
+                    self._realization_dir(i)
+                    / (_escape_filename(parameter.name) + ".nc")
+                ).exists()
                 for parameter in self.experiment.parameter_configuration.values()
                 if not parameter.forward_init
             )
@@ -415,8 +423,9 @@ class LocalEnsemble(BaseMode):
         error = _Failure(
             type=failure_type, message=message if message else "", time=datetime.now()
         )
-        with open(filename, mode="w", encoding="utf-8") as f:
-            print(error.model_dump_json(), file=f)
+        self._storage._write_transaction(
+            filename, error.model_dump_json().encode("utf-8")
+        )
 
     def unset_failure(
         self,
@@ -517,7 +526,9 @@ class LocalEnsemble(BaseMode):
     ) -> xr.Dataset:
         try:
             return xr.open_dataset(
-                self.mount_point / f"realization-{realization}" / f"{group}.nc",
+                self.mount_point
+                / f"realization-{realization}"
+                / f"{_escape_filename(group)}.nc",
                 engine="scipy",
             )
         except FileNotFoundError as e:
@@ -538,7 +549,9 @@ class LocalEnsemble(BaseMode):
         if realizations is None:
             datasets = [
                 xr.open_dataset(p, engine="scipy")
-                for p in sorted(self.mount_point.glob(f"realization-*/{group}.nc"))
+                for p in sorted(
+                    self.mount_point.glob(f"realization-*/{_escape_filename(group)}.nc")
+                )
             ]
         else:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
@@ -578,8 +591,8 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_observation_scaling_factors(self, dataset: xr.Dataset) -> None:
-        dataset.to_netcdf(
-            self.mount_point / "observation_scaling_factors.nc", engine="scipy"
+        self._storage._to_netcdf_transaction(
+            self.mount_point / "observation_scaling_factors.nc", dataset
         )
 
     def load_observation_scaling_factors(
@@ -609,7 +622,7 @@ class LocalEnsemble(BaseMode):
         }
         dataset = xr.Dataset(data_vars)
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
-        dataset.to_netcdf(path=file_path, engine="scipy")
+        self._storage._to_netcdf_transaction(file_path, dataset)
 
     @lru_cache  # noqa: B019
     def load_responses(self, key: str, realizations: Tuple[int]) -> xr.Dataset:
@@ -806,10 +819,12 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
-        path = self._realization_dir(realization) / f"{group}.nc"
+        path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
         path.parent.mkdir(exist_ok=True)
 
-        dataset.expand_dims(realizations=[realization]).to_netcdf(path, engine="scipy")
+        self._storage._to_netcdf_transaction(
+            path, dataset.expand_dims(realizations=[realization])
+        )
 
     @require_write
     def save_response(
@@ -820,8 +835,8 @@ class LocalEnsemble(BaseMode):
 
         Parameters
         ----------
-        group : str
-            Response group name for saving dataset.
+        response_type : str
+            A name for the type of response stored, e.g., "summary, or "gen_data".
         realization : int
             Realization index for saving group.
         data : Dataset
@@ -844,7 +859,7 @@ class LocalEnsemble(BaseMode):
         output_path = self._realization_dir(realization)
         Path.mkdir(output_path, parents=True, exist_ok=True)
 
-        data.to_netcdf(output_path / f"{response_type}.nc", engine="scipy")
+        self._storage._to_netcdf_transaction(output_path / f"{response_type}.nc", data)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
@@ -859,7 +874,7 @@ class LocalEnsemble(BaseMode):
         path = self._realization_dir(realization)
         return {
             e: RealizationStorageState.INITIALIZED
-            if (path / f"{e}.nc").exists()
+            if (path / (_escape_filename(e) + ".nc")).exists()
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.parameter_configuration
         }

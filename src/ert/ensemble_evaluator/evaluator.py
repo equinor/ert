@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import traceback
 from contextlib import asynccontextmanager, contextmanager
@@ -47,6 +48,7 @@ from _ert.events import (
 )
 from ert.ensemble_evaluator import identifiers as ids
 
+from ._ensemble import FMStepSnapshot
 from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
 from .snapshot import EnsembleSnapshot
@@ -161,12 +163,20 @@ class EnsembleEvaluator:
             return
 
         max_memory_usage = -1
-        for fm_step in self.ensemble.snapshot.get_all_fm_steps().values():
+        for (real_id, _), fm_step in self.ensemble.snapshot.get_all_fm_steps().items():
+            # Infer max memory usage
             memory_usage = fm_step.get(ids.MAX_MEMORY_USAGE) or "-1"
             max_memory_usage = max(int(memory_usage), max_memory_usage)
+
+            if cpu_message := detect_overspent_cpu(
+                self.ensemble.reals[int(real_id)].num_cpu, real_id, fm_step
+            ):
+                logger.warning(cpu_message)
+
         logger.info(
             f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
         )
+
         await self._append_message(self.ensemble.update_snapshot(events))
 
     async def _cancelled_handler(self, events: Sequence[EnsembleCancelled]) -> None:
@@ -262,7 +272,7 @@ class EnsembleEvaluator:
                 #  * job being killed due to MAX_RUNTIME
                 #  * job being killed by user
                 logger.error(
-                    f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
+                    f"a dispatcher abruptly closed a websocket: {connection_error!s}"
                 )
 
     async def forward_checksum(self, event: Event) -> None:
@@ -425,3 +435,24 @@ class EnsembleEvaluator:
     def _get_ens_id(source: str) -> str:
         # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]
+
+
+def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:
+    """Produces a message warning about misconfiguration of NUM_CPU if
+    so is detected. Returns an empty string if everything is ok."""
+    now = datetime.datetime.now()
+    duration = (
+        (fm_step.get(ids.END_TIME) or now) - (fm_step.get(ids.START_TIME) or now)
+    ).total_seconds()
+    if duration <= 0:
+        return ""
+    cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
+    parallelization_obtained = cpu_seconds / duration
+    if parallelization_obtained > num_cpu:
+        return (
+            f"Misconfigured NUM_CPU, forward model step '{fm_step.get(ids.NAME)}' for "
+            f"realization {real_id} spent {cpu_seconds} cpu seconds "
+            f"with wall clock duration {duration:.1f} seconds, "
+            f"a factor of {parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
+        )
+    return ""

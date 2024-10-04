@@ -43,7 +43,7 @@ jobs:
         sudo apt-get install xvfb libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install ERT and dependencies
       run: |
@@ -51,19 +51,19 @@ jobs:
 
     - name: Test poly example
       run: |
-        pushd test-data/poly_example
+        pushd test-data/ert/poly_example
         ert test_run poly.ert
         popd
 
     - name: Test snake_oil
       run: |
-        pushd test-data/snake_oil
+        pushd test-data/ert/snake_oil
         uv pip install oil_reservoir_synthesizer resdata
         ert test_run snake_oil.ert
         popd
 
     - name: Test snake_oil_field
       run: |
-        pushd test-data/snake_oil_field
+        pushd test-data/ert/snake_oil_field
         ert test_run snake_oil.ert
         popd

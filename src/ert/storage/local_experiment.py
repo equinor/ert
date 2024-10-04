@@ -129,24 +129,30 @@ class LocalExperiment(BaseMode):
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
             parameter_data.update({parameter.name: parameter.to_dict()})
-        with open(path / cls._parameter_file, "w", encoding="utf-8") as f:
-            json.dump(parameter_data, f, indent=2)
+        storage._write_transaction(
+            path / cls._parameter_file,
+            json.dumps(parameter_data, indent=2).encode("utf-8"),
+        )
 
         response_data = {}
         for response in responses or []:
             response_data.update({response.response_type: response.to_dict()})
-        with open(path / cls._responses_file, "w", encoding="utf-8") as f:
-            json.dump(response_data, f, default=str, indent=2)
+        storage._write_transaction(
+            path / cls._responses_file,
+            json.dumps(response_data, default=str, indent=2).encode("utf-8"),
+        )
 
         if observations:
             output_path = path / "observations"
             output_path.mkdir()
             for obs_name, dataset in observations.items():
-                dataset.to_netcdf(output_path / f"{obs_name}", engine="scipy")
+                storage._to_netcdf_transaction(output_path / f"{obs_name}", dataset)
 
-        with open(path / cls._metadata_file, "w", encoding="utf-8") as f:
-            simulation_data = simulation_arguments if simulation_arguments else {}
-            json.dump(simulation_data, f, cls=ContextBoolEncoder)
+        simulation_data = simulation_arguments if simulation_arguments else {}
+        storage._write_transaction(
+            path / cls._metadata_file,
+            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
+        )
 
         return cls(storage, path, Mode.WRITE)
 
@@ -217,7 +223,7 @@ class LocalExperiment(BaseMode):
     def metadata(self) -> Dict[str, Any]:
         path = self.mount_point / self._metadata_file
         if not path.exists():
-            raise ValueError(f"{str(self._metadata_file)} does not exist")
+            raise ValueError(f"{self._metadata_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             return json.load(f)
 
@@ -242,7 +248,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._parameter_file
         if not path.exists():
-            raise ValueError(f"{str(self._parameter_file)} does not exist")
+            raise ValueError(f"{self._parameter_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info
@@ -252,7 +258,7 @@ class LocalExperiment(BaseMode):
         info: Dict[str, Any]
         path = self.mount_point / self._responses_file
         if not path.exists():
-            raise ValueError(f"{str(self._responses_file)} does not exist")
+            raise ValueError(f"{self._responses_file!s} does not exist")
         with open(path, encoding="utf-8", mode="r") as f:
             info = json.load(f)
         return info

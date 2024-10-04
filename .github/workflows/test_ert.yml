@@ -31,8 +31,7 @@ jobs:
         python-version: ${{ inputs.python-version }}
 
     - name: Install uv
-      run: |
-        pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install HDF5 source files
       if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
@@ -40,22 +39,36 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv pip install ".[dev, everest]"
 
-    - name: Test GUI
-      if: inputs.test-type == 'gui-test'
+    - name: GUI Test
+      if: inputs.test-type == 'gui-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -v --mpl -m "requires_window_manager" --benchmark-disable
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui
+
+    - name: Upload artifact images
+      uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      continue-on-error: true
+      with:
+        name: test-images-${{ github.run_number }}-${{ github.run_id }}
+        path: /tmp/tmp*/**/*.png
+
+    - name: CLI Test
+      if: inputs.test-type == 'cli-tests'
+      run: |
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "not integration_test and not requires_window_manager" --benchmark-disable --dist loadgroup
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --dist loadgroup tests/ert/unit_tests
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
 
-    - name: Integration Test
-      if: inputs.test-type == 'integration-tests'
+    - name: Performance Test
+      if: inputs.test-type == 'performance-tests'
       run: |
-        pytest tests --junit-xml=junit.xml -n logical --show-capture=stderr -v -m "integration_test and not requires_window_manager" --benchmark-disable
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests
 
     - name: Test for a clean repository
       run: |
@@ -63,11 +76,39 @@ jobs:
         git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
 
+    - name: Upload coverage to Codecov
+      id: codecov1
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+    - name: codecov retry sleep
+      if: steps.codecov1.outcome == 'failure'
+      run: |
+        sleep 30
+    - name: Codecov retry
+      uses: codecov/codecov-action@v4
+      if: steps.codecov1.outcome == 'failure'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+        fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
+
     - uses: test-summary/action@v2
+      if: ${{ !cancelled() }}
       continue-on-error: true
       with:
         paths: junit.xml
-      if: always()
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Test CLI
       run: |

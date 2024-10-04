@@ -1,0 +1,36 @@
+controls:
+  -
+    name: not_really_important_for_this_test
+    type: generic_control
+    min: -1.0
+    max: 1.0
+    initial_guess: 0
+    variables:
+        - name: x
+
+objective_functions:
+  -
+    name: not_really_important_for_this_test
+
+optimization:
+  algorithm: optpp_q_newton
+
+install_jobs:
+  -
+    name: create_file
+    source: CREATE_FILE
+
+model:
+  realizations: [0]
+
+forward_model:
+  - create_file -n new_test_file.txt
+  - make_directory created_test_folder
+  - copy_directory created_test_folder test_folder_copy
+  - copy_file new_test_file.txt created_test_folder/new_test_file_copy.txt
+  - move_file new_test_file.txt created_test_folder/new_test_file.txt
+  - symlink created_test_folder/new_test_file.txt sym_link
+
+environment:
+  simulation_folder: sim_output
+  log_level: debug

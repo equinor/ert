@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, ClassVar, List, Optional
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 
@@ -17,7 +17,7 @@ class PlotContext:
     INDEX_AXIS = "INDEX"
     COUNT_AXIS = "COUNT"
     DENSITY_AXIS = "DENSITY"
-    AXIS_TYPES = [
+    AXIS_TYPES: ClassVar[list[str | None]] = [
         UNKNOWN_AXIS,
         COUNT_AXIS,
         DATE_AXIS,

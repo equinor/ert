@@ -1,0 +1,78 @@
+wells: []
+
+controls:
+  - name: point
+    max: 1.0
+    min: -1.0
+    initial_guess: 0.25
+    perturbation_magnitude: 0.005
+    type: generic_control
+    variables:
+      - name: x
+        index: 0
+      - name: x
+        index: 1
+      - name: x
+        index: 2
+
+objective_functions:
+  - name: distance
+
+input_constraints:
+  - weights:
+      point.x-0: 0
+      point.x-1: 0
+      point.x-2: 1
+    upper_bound: 0.4
+
+output_constraints:
+  - name: x-0_coord
+    lower_bound: 0.1
+    scale: 0.1
+
+
+# Optimal value expected at x=0.1, y=0, z=0.4, with distance 3.72
+
+
+install_jobs:
+  - name: adv_distance3
+    source: jobs/ADV_DISTANCE3
+  - name: adv_dump_controls
+    source: jobs/ADV_DUMP_CONTROLS
+
+
+forward_model:
+ # Compute distance (squared and negated) between 2 points
+  - adv_distance3     --point-file point.json --target-file data/r{{ realization}}/target.json
+    --out distance
+ # Write the value of each control to a separate file
+  - adv_dump_controls --controls-file point.json --out-suffix _coord
+# Left this  here for testing/debugging purposes
+#  - sleep --min 0.1 --max 5 --fail-chance 0.5
+
+
+
+model:
+  realizations: [0, 2]
+  realizations_weights: [0.25, 0.75]
+
+
+install_data:
+  - link: false
+    source: r{{ configpath }}/adv_target_r{{ realization }}.json
+    target: data/r{{ realization}}/target.json
+
+
+install_templates: []
+
+optimization:
+  algorithm: optpp_q_newton
+  convergence_tolerance: 0.005
+  perturbation_num: 7
+  speculative: true
+
+environment:
+  log_level: debug
+  random_seed: 999
+  simulation_folder: scratch/advanced/
+  output_folder: everest_output/

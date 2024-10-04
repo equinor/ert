@@ -1,0 +1,88 @@
+wells:
+  - { name: w00}
+  - { name: w01}
+  - { name: w02}
+  - { name: w03}
+  - { name: w04}
+  - { name: w05}
+  - { name: w06}
+  - { name: w07}
+  - { name: w08}
+  - { name: w09}
+  - { name: w10}
+  - { name: w11}
+  - { name: w12}
+  - { name: w13}
+  - { name: w14}
+  - { name: w15}
+
+controls:
+  -
+    name: group
+    type: well_control
+    min: 0
+    max: 0.1
+    perturbation_magnitude : 0.005
+    perturbation_type : absolute
+    variables:
+      - { name: w00, initial_guess: 0.0626 }
+      - { name: w01, initial_guess: 0.0627 }
+      - { name: w02, initial_guess: 0.0628 }
+      - { name: w03, initial_guess: 0.0629 }
+      - { name: w04, initial_guess: 0.0630 }
+      - { name: w05, initial_guess: 0.0631 }
+      - { name: w06, initial_guess: 0.0632 }
+      - { name: w07, initial_guess: 0.0633 }
+      - { name: w08, initial_guess: 0.0617 }
+      - { name: w09, initial_guess: 0.0618 }
+      - { name: w10, initial_guess: 0.0619 }
+      - { name: w11, initial_guess: 0.0620 }
+      - { name: w12, initial_guess: 0.0621 }
+      - { name: w13, initial_guess: 0.0622 }
+      - { name: w14, initial_guess: 0.0623 }
+      - { name: w15, initial_guess: 0.0624 }
+
+
+objective_functions:
+  -
+    name: npv_function
+  -
+    name: out_fpr_diff
+
+
+optimization:
+  algorithm: optpp_q_newton
+  max_iterations: 2
+  max_function_evaluations: 2
+  perturbation_num: 2
+
+
+install_jobs:
+  -
+    name: well_order
+    source: jobs/WELL_ORDER_MOCK
+  -
+    name: res_mock
+    source: jobs/RES_MOCK
+  -
+    name: npv_function
+    source: jobs/NPV_FUNCTION_MOCK
+  -
+    name: fpr_diff
+    source: jobs/FPR_DIFF_MOCK
+
+
+model:
+  realizations: [0, 1]
+
+forward_model:
+  - well_order well_order.json SCHEDULE.INC ordered_wells.json
+  - res_mock MOCKED_TEST_CASE
+  - npv_function MOCKED_TEST_CASE npv_function
+  - fpr_diff MOCKED_TEST_CASE out_fpr_diff
+
+environment:
+  output_folder: everest_output
+  simulation_folder: simulations
+  log_level: warning
+  random_seed: 743

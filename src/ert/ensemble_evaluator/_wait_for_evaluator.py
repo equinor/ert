@@ -42,7 +42,7 @@ async def wait_for_evaluator(
     token: Optional[str] = None,
     cert: Optional[Union[str, bytes]] = None,
     healthcheck_endpoint: str = "/healthcheck",
-    timeout: Optional[float] = None,  # noqa: ASYNC109
+    timeout: Optional[float] = None,
     connection_timeout: float = 2,
 ) -> None:
     if timeout is None:

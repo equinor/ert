@@ -1,57 +1,87 @@
-name: Test everest
+name: everest-run-tests-build-docs
 
-# This job checks whether current main of everest
-# is compatible with the changes. It is not required to pass
-# before merging, but breakage should be followed by fix in everest
-# after merge.
-
-on: [pull_request]
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+      test-type:
+        type: string
 
 env:
+  NO_PROJECT_RES: 1
   UV_SYSTEM_PYTHON: 1
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 jobs:
-  test-everest:
-    name: Test everest
-    timeout-minutes: 40
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.12']
+  tests-everest:
+    name: Run everest tests
+    timeout-minutes: 60
+    runs-on: ${{ inputs.os }}
+
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Set up Python
+    - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ inputs.python-version }}
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
-    - name: Install ert
+    - name: Install HDF5 source files on mac
+      if: ${{ runner.os == 'macOS' && (inputs.python-version == '3.8' || inputs.python-version == '3.9' )}}
+      run: brew install hdf5
+
+    - name: Install Everest and dependencies
       run: |
-        uv pip install .
+        uv pip install ".[dev,everest]"
 
-    - name: Install everest and dependencies
+    - name: Run Tests Linux
+      if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        git clone https://github.com/equinor/everest.git
-        uv pip install git+https://github.com/equinor/everest-models.git
+        pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
 
-    - name: Test everest
+    - name: Run Tests macOS
+      if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
+      run: |
+        python -m pytest tests/everest -n 4 -m "not ui_test and not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
+
+    - name: Run Integration Tests Linux
+      if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
+      run: |
+        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup
+
+    - name: Run Integration Tests macOS
+      if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
+      run: |
+        python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
+
+    - name: Run UI Tests
+      if: inputs.test-type == 'ui-test'
       env:
         QT_QPA_PLATFORM: 'minimal'
-        NO_PROJECT_RES: 1
       run: |
-        pushd everest
-        uv pip install ".[test]"
+        python -m pytest tests/everest -m "ui_test"
 
-        pytest tests -n 4 --dist loadgroup -m "not ui_test"
-        pytest tests -m "ui_test"
+    - name: Build Documentation
+      if: inputs.test-type == 'doc'
+      run: |
+        uv pip install git+https://github.com/equinor/everest-models.git
+        mkdir tmp
+        sphinx-build -n -v -E -W ./docs/everest ./tmp/everest_docs
+
+    - name: Run tests requiring everest-models
+      if: inputs.test-type == 'everest-models-test'
+      run: |
+        uv pip install git+https://github.com/equinor/everest-models.git
+        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup
+
+    - name: Test docs entry point
+      if: inputs.test-type == 'everest-docs-entry-test'
+      run: |
+        python -m everest.docs

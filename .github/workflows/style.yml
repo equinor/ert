@@ -33,14 +33,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v3
 
     - name: Install ERT with style dependencies
       run: |
         uv pip install ".[style]"
-
-    - name: Add matching rule
-      run: echo ::add-matcher::.github/flake8-matcher.json
 
     - name: Run style check
       if: ${{ always() }}

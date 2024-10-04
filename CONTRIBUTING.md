@@ -6,7 +6,32 @@ The following is a set of guidelines for contributing to ERT.
 
 1. Automatic code formatting is applied via pre-commit hooks. You
    can see how to set that up [here](https://pre-commit.com/).
-1. All code must be testable and unit tested.
+2. All code must be testable and unit tested.
+
+## Test categories
+
+Tests that are in the `tests/ert/unit_tests` directory and are
+not marked with `integration_test` are ment to be exceptionally
+fast and reliable. This is so that one can run those while
+iterating on the code. This means special care has to
+be made when placing tests here.
+
+### Integration tests
+
+By "integration test" we simply mean unit tests that did not quite
+cut it, either because they are too slow, too unreliable, have difficult
+to understand error messages, etc.
+
+### UI tests
+
+These tests are ment to test behavior from a user interaction view to
+ensure that the application behaves the way the user expects independently
+of code changes. We have two user interfaces, the cli and the gui so those
+are subdirectories.
+
+## Performance tests
+
+Tests that runtime and memory performance does not degrade.
 
 ## Commits
 
@@ -63,18 +88,3 @@ noise in the review process.
   * rebase onto base branch if necessary,
   * squash whatever still needs squashing, and
   * [fast-forward](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-linear-history) merge.
-
-### Build documentation
-
-You can build the documentation after installation by running
-```bash
-pip install ".[dev]"
-sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
-```
-and then open the generated `./tmp/ert_docs/index.html` in a browser.
-
-To automatically reload on changes you may use
-
-```bash
-sphinx-autobuild docs docs/_build/html
-```

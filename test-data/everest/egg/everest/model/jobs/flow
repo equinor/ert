@@ -1,0 +1,6 @@
+EXECUTABLE  ./flow.py
+STDOUT flow.stdout
+STDERR flow.stderr
+
+TARGET_FILE flow.ok
+ARGLIST <ECL_FILE> <JOB_ID> <RUN_FOLDER>

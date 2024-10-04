@@ -1,0 +1,40 @@
+controls:
+  - name: point
+    type: generic_control
+    min: 0
+    max: 10
+    initial_guess: 0
+    control_type: integer
+    variables:
+      - name: x
+      - name: y
+
+objective_functions:
+  - name: func
+
+input_constraints:
+  - weights: { point.x: 1.0, point.y: 1.0 }
+    upper_bound: 10
+
+optimization:
+  backend: scipy
+  algorithm: differential_evolution
+  max_function_evaluations: 4
+  backend_options:
+    seed: 9
+  parallel: False
+
+install_jobs:
+  - name: discrete
+    source: jobs/DISCRETE
+
+model:
+  realizations: [0]
+
+forward_model:
+  - discrete --point-file point.json --out func
+
+environment:
+  simulation_folder: sim_output
+  log_level: debug
+  random_seed: 999

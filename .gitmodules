@@ -1,4 +1,4 @@
-[submodule "test-data/block_storage"]
-	path = test-data/block_storage
+[submodule "test-data/ert/block_storage"]
+	path = test-data/ert/block_storage
 	url = https://github.com/equinor/ert-testdata
 	ignore = dirty

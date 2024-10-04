@@ -1,5 +1,4 @@
 import io
-from itertools import chain
 from typing import Any, Dict, List, Mapping, Union
 from uuid import UUID, uuid4
 
@@ -14,7 +13,6 @@ from ert.dark_storage.common import (
     ensemble_parameters,
     gen_data_keys,
     get_observation_keys_for_response,
-    get_observation_name,
     get_observations_for_obs_keys,
 )
 from ert.dark_storage.enkf import get_storage
@@ -46,11 +44,12 @@ async def get_record_observations(
         js.ObservationOut(
             id=uuid4(),
             userdata={},
-            errors=list(chain.from_iterable([obs["errors"] for obs in obss])),
-            values=list(chain.from_iterable([obs["values"] for obs in obss])),
-            x_axis=list(chain.from_iterable([obs["x_axis"] for obs in obss])),
-            name=get_observation_name(ensemble, obs_keys),
+            errors=obs["errors"],
+            values=obs["values"],
+            x_axis=obs["x_axis"],
+            name=obs["name"],
         )
+        for obs in obss
     ]
 
 

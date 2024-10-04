@@ -12,13 +12,15 @@ if TYPE_CHECKING:
 
     from .base_run_model import StatusEvents
 
+SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
+
 
 class SingleTestRun(EnsembleExperiment):
     """
     Single test is equivalent to EnsembleExperiment, in that it
-    samples the prior and evaluates it. There are two key differences:
-    1) Single test run always runs locally using the local queue
-    2) Only a single realization is run
+    samples the prior and evaluates it.<br>There are two key differences:<br>
+    1) Single test run always runs locally using the <b>local queue</b><br>
+    2) Only a <b>single realization</b> (realization-0) is run<br>
     """
 
     def __init__(
@@ -49,4 +51,8 @@ class SingleTestRun(EnsembleExperiment):
 
     @classmethod
     def description(cls) -> str:
-        return "Sample parameters → evaluate (one realization)"
+        return "Sample parameters → evaluate single realization"
+
+    @classmethod
+    def group(cls) -> Optional[str]:
+        return SINGLE_TEST_RUN_GROUP

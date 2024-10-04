@@ -33,7 +33,7 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 def history_key(key: str) -> str:
     keyword, *rest = key.split(":")
-    return ":".join([keyword + "H"] + rest)
+    return ":".join([keyword + "H", *rest])
 
 
 @dataclass
