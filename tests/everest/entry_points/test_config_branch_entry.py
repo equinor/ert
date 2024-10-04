@@ -8,9 +8,8 @@ from everest.bin.config_branch_script import config_branch_entry
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE = "config_advanced.yml"
 CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
 
@@ -22,8 +21,7 @@ CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
     new_callable=PropertyMock,
     return_value=CACHED_SEBA_FOLDER,
 )
-@tmpdir(CONFIG_PATH)
-def test_config_branch_entry(get_opt_output_dir_mock):
+def test_config_branch_entry(get_opt_output_dir_mock, copy_math_func_test_data_to_tmp):
     new_config_file_name = "new_restart_config.yml"
     batch_id = 1
 
@@ -65,8 +63,9 @@ def test_config_branch_entry(get_opt_output_dir_mock):
     new_callable=PropertyMock,
     return_value=CACHED_SEBA_FOLDER,
 )
-@tmpdir(CONFIG_PATH)
-def test_config_branch_preserves_config_section_order(get_opt_output_dir_mock):
+def test_config_branch_preserves_config_section_order(
+    get_opt_output_dir_mock, copy_math_func_test_data_to_tmp
+):
     new_config_file_name = "new_restart_config.yml"
     batch_id = 1
 

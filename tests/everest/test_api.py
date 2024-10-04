@@ -10,7 +10,7 @@ from seba_sqlite.snapshot import Metadata, OptimizationInfo, SimulationInfo, Sna
 from everest.api import EverestDataAPI
 from everest.config import EverestConfig
 from everest.detached import ServerStatus
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
 # Global values used to create the mock snapshot.
 _functions = ["f0", "f1"]
@@ -531,8 +531,7 @@ def test_get_summary_keys_single_key(_, api_no_gradient):
 @patch.object(EverestConfig, "optimization_output_dir", new_callable=PropertyMock)
 @patch("everest.api.everest_data_api.SebaSnapshot")
 @patch("everest.api.everest_data_api.SebaSnapshot.get_snapshot")
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_output_folder(_1, _2, _3):
+def test_output_folder(_1, _2, _3, copy_math_func_test_data_to_tmp):
     config_file = "config_multiobj.yml"
     config = EverestConfig.load_file(config_file)
     assert config.environment is not None
@@ -548,8 +547,9 @@ def test_output_folder(_1, _2, _3):
     "everest.api.everest_data_api.everserver_status",
     return_value={"status": ServerStatus.completed},
 )
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_everest_csv(everserver_status_mock, _1, _2, _3):
+def test_everest_csv(
+    everserver_status_mock, _1, _2, _3, copy_math_func_test_data_to_tmp
+):
     config_file = "config_multiobj.yml"
     config = EverestConfig.load_file(config_file)
     expected = config.export_path

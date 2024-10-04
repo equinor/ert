@@ -7,14 +7,11 @@ from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.suite import _EverestWorkflow
 from tests.everest.test_config_validation import has_error
-from tests.everest.utils import relpath, tmpdir
 
-CONFIG_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "config_multi_objectives.yml"
 
 
-@tmpdir(CONFIG_DIR)
-def test_config_multi_objectives():
+def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     config_dict = config.to_dict()
 
@@ -71,15 +68,13 @@ def test_config_multi_objectives():
     _EverestWorkflow(config)
 
 
-@tmpdir(CONFIG_DIR)
-def test_multi_objectives2res():
+def test_multi_objectives2res(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     res = everest_to_ert_config(config, site_config=ErtConfig.read_site_config())
     ErtConfig.with_plugins().from_dict(config_dict=res)
 
 
-@tmpdir(CONFIG_DIR)
-def test_multi_objectives2ropt():
+def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
     # pylint: disable=unbalanced-tuple-unpacking
     config = EverestConfig.load_file(CONFIG_FILE)
     config_dict = config.to_dict()
@@ -103,8 +98,7 @@ def test_multi_objectives2ropt():
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_DIR)
-def test_multi_objectives_run():
+def test_multi_objectives_run(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     workflow = _EverestWorkflow(config)
     workflow.start_optimization()

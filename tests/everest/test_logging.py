@@ -13,9 +13,7 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.util import makedirs_if_needed
-from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE = "config_fm_failure.yml"
 
 
@@ -29,8 +27,7 @@ def string_exists_in_file(file_path, string):
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.fails_on_macos_github_workflow
-@tmpdir(CONFIG_PATH)
-def test_logging_setup():
+def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file(CONFIG_FILE)
 
     wait_for_context()

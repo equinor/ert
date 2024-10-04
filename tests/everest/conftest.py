@@ -7,6 +7,7 @@ from typing import Callable, Dict, Iterator, Optional, Union
 import pytest
 
 from everest.config.control_config import ControlConfig
+from tests.everest.utils import relpath
 
 
 @pytest.fixture(scope="session")
@@ -82,3 +83,43 @@ def control_config(
     config = deepcopy(control_data_no_variables)
     config["variables"] = request.param
     return ControlConfig.model_validate(config)
+
+
+@pytest.fixture
+def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("..", "..", "test-data", "everest", "math_func")
+    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def copy_mocked_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("test_data", "mocked_test_case")
+    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def copy_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("test_data")
+    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def copy_template_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("test_data", "templating")
+    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("..", "..", "test-data", "everest", "egg")
+    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
+    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def change_to_tmpdir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)

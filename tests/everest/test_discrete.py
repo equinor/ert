@@ -1,13 +1,10 @@
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
-from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_DISCRETE = "config_discrete.yml"
 
 
-@tmpdir(CONFIG_PATH)
-def test_discrete_optimizer():
+def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_DISCRETE)
 
     workflow = _EverestWorkflow(config)

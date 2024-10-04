@@ -8,13 +8,11 @@ from qtpy.QtCore import Qt, QTimer
 from everest.config.everest_config import EverestConfig
 from ieverest import IEverest
 from ieverest.widgets.export_data_dialog import ExportDataDialog
-from tests.everest.utils import tmpdir
 
 
 @pytest.mark.ui_test
 @pytest.mark.xdist_group(name="starts_everest")
-@tmpdir(None)
-def test_export_data_dialog(qtbot, monkeypatch):
+def test_export_data_dialog(qtbot, monkeypatch, change_to_tmpdir):
     ieverest = IEverest()
 
     config = EverestConfig.with_defaults()

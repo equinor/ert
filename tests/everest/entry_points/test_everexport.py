@@ -13,17 +13,14 @@ from everest.bin.utils import ProgressBar
 from everest.config import EverestConfig
 from tests.everest.utils import (
     create_cached_mocked_test_case,
-    relpath,
     satisfy,
     satisfy_callable,
-    tmpdir,
 )
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
-CONFIG_PATH_MOCKED_TEST_CASE = relpath("test_data", "mocked_test_case")
+
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
 
@@ -71,8 +68,7 @@ def cache_dir(request, monkeypatch):
 
 
 @patch("everest.bin.utils.export_with_progress", side_effect=export_mock)
-@tmpdir(CONFIG_PATH)
-def test_everexport_entry_run(mocked_func):
+def test_everexport_entry_run(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport with not flags"""
     # NOTE: there is probably a bug concerning output folders. Everexport
     # seems to assume that the folder where the file will be saved exists.
@@ -88,8 +84,7 @@ def test_everexport_entry_run(mocked_func):
 
 
 @patch("everest.bin.utils.export_with_progress", side_effect=empty_mock)
-@tmpdir(CONFIG_PATH)
-def test_everexport_entry_empty(mocked_func):
+def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport with no data"""
     # NOTE: When there is no data (ie, the optimization has not yet run)
     # the current behavior is to create an empty .csv file. It is arguable
@@ -112,9 +107,10 @@ def test_everexport_entry_empty(mocked_func):
     side_effect=validate_export_mock,
 )
 @patch("everest.bin.utils.export")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_batches(mocked_func, validate_export_mock):
+def test_everexport_entry_batches(
+    mocked_func, validate_export_mock, copy_math_func_test_data_to_tmp
+):
     """Test running everexport with the --batches flag"""
     everexport_entry([CONFIG_FILE_MINIMAL, "--batches", "0", "2"])
 
@@ -135,8 +131,7 @@ def test_everexport_entry_batches(mocked_func, validate_export_mock):
 
 
 @patch("everest.bin.everexport_script.export_to_csv")
-@tmpdir(CONFIG_PATH)
-def test_everexport_entry_no_export(mocked_func):
+def test_everexport_entry_no_export(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport on config file with skip_export flag
     set to true"""
 
@@ -157,8 +152,7 @@ def test_everexport_entry_no_export(mocked_func):
 
 
 @patch("everest.bin.everexport_script.export_to_csv")
-@tmpdir(CONFIG_PATH)
-def test_everexport_entry_empty_export(mocked_func):
+def test_everexport_entry_empty_export(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport on config file with empty export section"""
 
     # Add empty export section to config file
@@ -171,9 +165,10 @@ def test_everexport_entry_empty_export(mocked_func):
 
 
 @patch("everest.bin.utils.export")
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_no_usr_def_ecl_keys(mocked_func):
+def test_everexport_entry_no_usr_def_ecl_keys(
+    mocked_func, copy_mocked_test_data_to_tmp
+):
     """Test running everexport with config file containing only the
     keywords label without any list of keys"""
 
@@ -204,9 +199,10 @@ def test_everexport_entry_no_usr_def_ecl_keys(mocked_func):
 
 
 @patch("everest.bin.utils.export")
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cache_dir):
+def test_everexport_entry_internalized_usr_def_ecl_keys(
+    mocked_func, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everexport with config file containing a key in the
     list of user defined ecl keywords, that has been internalized on
     a previous run"""
@@ -246,9 +242,10 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cache_dir):
 
 
 @patch("everest.bin.utils.export")
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir, caplog):
+def test_everexport_entry_non_int_usr_def_ecl_keys(
+    mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
+):
     """Test running everexport  when config file contains non internalized
     ecl keys in the user defined keywords list"""
 
@@ -294,9 +291,10 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, cache_dir, caplo
 
 
 @patch("everest.bin.utils.export")
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_not_available_batches(mocked_func, cache_dir, caplog):
+def test_everexport_entry_not_available_batches(
+    mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
+):
     """Test running everexport  when config file contains non existing
     batch numbers in the list of user defined batches"""
 

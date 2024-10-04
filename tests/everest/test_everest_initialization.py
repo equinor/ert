@@ -4,7 +4,6 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
-from tests.everest.utils import relpath, tmp
 
 NO_PROJECT_RES = (
     os.environ.get("NO_PROJECT_RES", False),
@@ -13,20 +12,16 @@ NO_PROJECT_RES = (
 
 
 @pytest.mark.skipif(NO_PROJECT_RES[0], reason=NO_PROJECT_RES[1])
-def test_init_no_project_res():
-    root_dir = relpath("..", "..", "test-data", "everest", "egg")
+def test_init_no_project_res(copy_egg_test_data_to_tmp):
     config_file = os.path.join("everest", "model", "config.yml")
-    with tmp(root_dir):
-        config_dict = EverestConfig.load_file(config_file)
-        _EverestWorkflow(config_dict)
+    config_dict = EverestConfig.load_file(config_file)
+    _EverestWorkflow(config_dict)
 
 
-def test_init():
-    root_dir = relpath("test_data", "mocked_test_case")
+def test_init(copy_mocked_test_data_to_tmp):
     config_file = os.path.join("mocked_test_case.yml")
-    with tmp(root_dir):
-        config_dict = EverestConfig.load_file(config_file)
-        _EverestWorkflow(config_dict)
+    config_dict = EverestConfig.load_file(config_file)
+    _EverestWorkflow(config_dict)
 
 
 def test_no_config_init():

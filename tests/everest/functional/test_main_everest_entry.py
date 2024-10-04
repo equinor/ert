@@ -6,9 +6,7 @@ from ruamel.yaml import YAML
 from seba_sqlite.snapshot import SebaSnapshot
 from tests.everest.utils import (
     capture_streams,
-    relpath,
     skipif_no_everest_models,
-    tmpdir,
 )
 
 from everest import __version__ as everest_version
@@ -21,10 +19,7 @@ from everest.detached import (
     wait_for_context,
 )
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
-
-EGG_CONFIG_PATH = relpath("..", "..", "test-data", "everest", "egg")
 WELL_ORDER = "everest/model/config.yml"
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
@@ -84,9 +79,8 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.flaky(reruns=5)
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everest_entry_run():
+def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     wait_for_context()
     # Setup command line arguments
     with capture_streams():
@@ -119,8 +113,7 @@ def test_everest_entry_run():
     context_stop_and_wait()
 
 
-@tmpdir(CONFIG_PATH)
-def test_everest_entry_monitor_no_run():
+def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
     with capture_streams():
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
@@ -132,16 +125,14 @@ def test_everest_entry_monitor_no_run():
     context_stop_and_wait()
 
 
-@tmpdir(CONFIG_PATH)
-def test_everest_main_export_entry():
+def test_everest_main_export_entry(copy_math_func_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams():
         start_everest(["everest", "export", CONFIG_FILE_MINIMAL])
     assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
 
 
-@tmpdir(CONFIG_PATH)
-def test_everest_main_lint_entry():
+def test_everest_main_lint_entry(copy_math_func_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, err):
         start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
@@ -172,11 +163,10 @@ controls -> 0 -> initial_guess
     assert validation_msg in err.getvalue()
 
 
-@tmpdir(EGG_CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-def test_everest_main_configdump_entry():
+def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, _):
         start_everest(["everest", "render", WELL_ORDER])

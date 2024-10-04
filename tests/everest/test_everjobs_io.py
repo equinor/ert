@@ -5,11 +5,9 @@ import pytest
 from ruamel.yaml import YAML
 
 import everest
-from tests.everest.utils import tmpdir
 
 
-@tmpdir(None)
-def test_safe_open():
+def test_safe_open(change_to_tmpdir):
     filename = "a/relative/path"
     assert not os.path.exists(filename)
 
@@ -24,8 +22,7 @@ def test_safe_open():
         assert "".join(fin.readlines()) == "testing testing"
 
 
-@tmpdir(None)
-def test_load_data():
+def test_load_data(change_to_tmpdir):
     data = {"secret": "data"}
 
     json_file = "data.json"

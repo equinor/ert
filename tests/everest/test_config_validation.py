@@ -10,7 +10,6 @@ from pydantic import ValidationError
 from everest.config import EverestConfig, ModelConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
-from tests.everest.utils import tmpdir
 
 
 def has_error(error: Union[ValidationError, List[dict]], match: str):
@@ -579,8 +578,9 @@ def test_that_min_realizations_success_is_nonnegative():
         ("./", False),
     ],
 )
-@tmpdir(None)
-def test_that_install_data_allows_runpath_root_as_target(target, link):
+def test_that_install_data_allows_runpath_root_as_target(
+    target, link, change_to_tmpdir
+):
     data = {"source": "relative/path_<GEO_ID>", "target": target, "link": link}
     os.makedirs("config_dir/relative/path_0")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
@@ -595,8 +595,7 @@ def test_that_install_data_allows_runpath_root_as_target(target, link):
         assert install_data_config.target == Path(data["source"]).name
 
 
-@tmpdir(None)
-def test_that_install_data_source_exists():
+def test_that_install_data_source_exists(change_to_tmpdir):
     data = {
         "source": "relative/path",
         "target": "xxx",
@@ -619,8 +618,7 @@ def test_that_install_data_source_exists():
     )
 
 
-@tmpdir(None)
-def test_that_model_data_file_exists():
+def test_that_model_data_file_exists(change_to_tmpdir):
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
@@ -641,8 +639,7 @@ def test_that_model_data_file_exists():
     )
 
 
-@tmpdir(None)
-def test_that_model_report_steps_invalid_dates_errors():
+def test_that_model_report_steps_invalid_dates_errors(change_to_tmpdir):
     os.makedirs("config_dir/relative/path")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
@@ -676,8 +673,7 @@ def test_that_model_report_steps_invalid_dates_errors():
         ("install_workflow_jobs",),
     ],
 )
-@tmpdir(None)
-def test_that_non_existing_install_job_errors(install_keyword):
+def test_that_non_existing_install_job_errors(install_keyword, change_to_tmpdir):
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
@@ -700,8 +696,9 @@ def test_that_non_existing_install_job_errors(install_keyword):
         ("install_workflow_jobs",),
     ],
 )
-@tmpdir(None)
-def test_that_existing_install_job_with_malformed_executable_errors(install_keyword):
+def test_that_existing_install_job_with_malformed_executable_errors(
+    install_keyword, change_to_tmpdir
+):
     with open("malformed.ert", "w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE
@@ -739,9 +736,8 @@ def test_that_existing_install_job_with_malformed_executable_errors(install_keyw
         ("install_workflow_jobs",),
     ],
 )
-@tmpdir(None)
 def test_that_existing_install_job_with_non_executable_executable_errors(
-    install_keyword,
+    install_keyword, change_to_tmpdir
 ):
     with open("exec.ert", "w+", encoding="utf-8") as f:
         f.write(
@@ -778,8 +774,9 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
         ("install_workflow_jobs",),
     ],
 )
-@tmpdir(None)
-def test_that_existing_install_job_with_non_existing_executable_errors(install_keyword):
+def test_that_existing_install_job_with_non_existing_executable_errors(
+    install_keyword, change_to_tmpdir
+):
     with open("exec.ert", "w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE non_existing
@@ -864,8 +861,7 @@ def test_that_objective_function_aliases_are_consistent():
     )
 
 
-@tmpdir(None)
-def test_that_install_templates_must_have_unique_names():
+def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
     for f in ["hey", "hesy", "heyyy"]:
         pathlib.Path(f).write_text(f, encoding="utf-8")
 
@@ -892,8 +888,7 @@ def test_that_install_templates_must_have_unique_names():
     )
 
 
-@tmpdir(None)
-def test_that_install_template_template_must_be_existing_file():
+def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")

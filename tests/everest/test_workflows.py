@@ -5,15 +5,14 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
-from tests.everest.utils import relpath, skipif_no_everest_models, tmpdir
+from tests.everest.utils import relpath, skipif_no_everest_models
 
 CONFIG_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "config_workflow.yml"
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_DIR)
-def test_workflow_run():
+def test_workflow_run(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     workflow = _EverestWorkflow(config)
 

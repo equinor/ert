@@ -9,16 +9,14 @@ from ropt.enums import ConstraintType
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.everest2ropt import everest2ropt
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
 _CONFIG_DIR = relpath("test_data/mocked_test_case")
 _CONFIG_FILE = "mocked_test_case.yml"
 
 
-@tmpdir(_CONFIG_DIR)
 def test_tutorial_everest2ropt():
-    ever_config = EverestConfig.load_file(_CONFIG_FILE)
-
+    ever_config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     ropt_config = EnOptConfig.model_validate(everest2ropt(ever_config))
 
     realizations = ropt_config.realizations
@@ -28,11 +26,8 @@ def test_tutorial_everest2ropt():
     assert realizations.weights[0] == 0.5
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_controls():
-    config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "mocked_test_case.yml")
-    )
+    config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
 
     controls = config.controls
     assert len(controls) == 1
@@ -43,11 +38,8 @@ def test_everest2ropt_controls():
     assert len(ropt_config.variables.upper_bounds) == 16
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_controls_auto_scale():
-    config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "mocked_test_case.yml")
-    )
+    config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     controls = config.controls
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
@@ -56,11 +48,8 @@ def test_everest2ropt_controls_auto_scale():
     assert numpy.allclose(ropt_config.variables.upper_bounds, 0.7)
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_variables_auto_scale():
-    config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "mocked_test_case.yml")
-    )
+    config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     controls = config.controls
     controls[0].variables[1].auto_scale = True
     controls[0].variables[1].scaled_range = [0.3, 0.7]
@@ -73,10 +62,9 @@ def test_everest2ropt_variables_auto_scale():
     assert numpy.allclose(ropt_config.variables.upper_bounds[2:], 0.1)
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_controls_input_constraint():
     config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "config_input_constraints.yml")
+        os.path.join(_CONFIG_DIR, "config_input_constraints.yml")
     )
     input_constraints_ever_config = config.input_constraints
     # Check that there are two input constraints entries in the config
@@ -100,10 +88,9 @@ def test_everest2ropt_controls_input_constraint():
     assert exp_rhs == ropt_config.linear_constraints.rhs_values.tolist()
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_controls_input_constraint_auto_scale():
     config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "config_input_constraints.yml")
+        os.path.join(_CONFIG_DIR, "config_input_constraints.yml")
     )
     input_constraints_ever_config = config.input_constraints
     # Check that there are two input constraints entries in the config
@@ -141,10 +128,8 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     )
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_controls_optimizer_setting():
-    config = os.path.join("mocked_test_case", "config_full_gradient_info.yml")
-
+    config = os.path.join(_CONFIG_DIR, "config_full_gradient_info.yml")
     config = EverestConfig.load_file(config)
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
     assert len(ropt_config.realizations.names) == 15
@@ -153,19 +138,15 @@ def test_everest2ropt_controls_optimizer_setting():
     assert ropt_config.realizations.names == tuple(range(15))
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_constraints():
-    config = os.path.join("mocked_test_case", "config_output_constraints.yml")
+    config = os.path.join(_CONFIG_DIR, "config_output_constraints.yml")
     config = EverestConfig.load_file(config)
-
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
-
     assert len(ropt_config.nonlinear_constraints.names) == 16
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_backend_options():
-    config = os.path.join("mocked_test_case", "config_output_constraints.yml")
+    config = os.path.join(_CONFIG_DIR, "config_output_constraints.yml")
     config = EverestConfig.load_file(config)
 
     config.optimization.options = ["test = 1"]
@@ -182,9 +163,8 @@ def test_everest2ropt_backend_options():
     assert ropt_config.optimizer.options["test"] == 1
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_samplers():
-    config = os.path.join("mocked_test_case", "config_samplers.yml")
+    config = os.path.join(_CONFIG_DIR, "config_samplers.yml")
     config = EverestConfig.load_file(config)
 
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
@@ -203,9 +183,10 @@ def test_everest2ropt_samplers():
             assert not ropt_config.samplers[idx].shared
 
 
-@tmpdir(_CONFIG_DIR)
 def test_everest2ropt_cvar():
-    config_dict = yaml_file_to_substituted_config_dict(_CONFIG_FILE)
+    config_dict = yaml_file_to_substituted_config_dict(
+        os.path.join(_CONFIG_DIR, _CONFIG_FILE)
+    )
 
     config_dict["optimization"]["cvar"] = {}
 
@@ -249,11 +230,8 @@ def test_everest2ropt_cvar():
     assert ropt_config.realization_filters[0].options["percentile"] == 0.3
 
 
-@tmpdir(relpath("test_data"))
 def test_everest2ropt_arbitrary_backend_options():
-    config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "mocked_test_case.yml")
-    )
+    config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     config.optimization.backend_options = {"a": [1]}
 
     ropt_config = EnOptConfig.model_validate(everest2ropt(config))
@@ -261,8 +239,7 @@ def test_everest2ropt_arbitrary_backend_options():
     assert ropt_config.optimizer.options["a"] == [1]
 
 
-@tmpdir(relpath("test_data"))
-def test_everest2ropt_no_algorithm_name():
+def test_everest2ropt_no_algorithm_name(copy_test_data_to_tmp):
     config = EverestConfig.load_file(
         os.path.join("valid_config_file", "valid_yaml_config_no_algorithm.yml")
     )

@@ -3,11 +3,9 @@ import os
 import pytest
 
 from everest.config import EverestConfig
-from tests.everest.utils import relpath, tmpdir
 
 
-@tmpdir(relpath("test_data"))
-def test_optimization_config():
+def test_optimization_config(copy_test_data_to_tmp):
     config_directory = "mocked_test_case"
     cfg = os.path.join(config_directory, "config_full_gradient_info.yml")
     full_config_dict = EverestConfig.load_file(cfg)

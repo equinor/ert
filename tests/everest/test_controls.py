@@ -16,7 +16,7 @@ from everest.config.control_variable_config import (
 )
 from everest.config.input_constraint_config import InputConstraintConfig
 from everest.config.well_config import WellConfig
-from tests.everest.utils import relpath, tmp, tmpdir
+from tests.everest.utils import relpath
 
 cfg_dir = relpath("test_data", "mocked_test_case")
 mocked_config = relpath(cfg_dir, "mocked_test_case.yml")
@@ -114,8 +114,7 @@ def _perturb_control_zero(
     return exp_var_def
 
 
-@tmpdir(relpath("test_data"))
-def test_variable_name_index_validation():
+def test_variable_name_index_validation(copy_test_data_to_tmp):
     config = EverestConfig.load_file(
         os.path.join("mocked_test_case", "mocked_test_case.yml")
     )
@@ -174,7 +173,7 @@ def test_variable_name_index_validation():
 
 
 @pytest.mark.integration_test
-def test_individual_control_variable_config():
+def test_individual_control_variable_config(copy_test_data_to_tmp):
     config_file = os.path.join("mocked_test_case", "config_input_constraints.yml")
 
     global_min = (0, 0.7, 1.3, None)
@@ -184,26 +183,25 @@ def test_individual_control_variable_config():
     test_base = (global_min, global_max, global_init, fill_missing)
 
     for gmin, gmax, ginit, fill in itertools.product(*test_base):
-        with tmp(relpath("test_data")):
-            config = EverestConfig.load_file(config_file)
-            exp_var_def = _perturb_control_zero(config, gmin, gmax, ginit, fill)
+        config = EverestConfig.load_file(config_file)
+        exp_var_def = _perturb_control_zero(config, gmin, gmax, ginit, fill)
 
-            # Not complete configuration
-            if None in [gmin, gmax, ginit] and not fill:
-                with pytest.raises(expected_exception=ValidationError):
-                    EverestConfig.model_validate(config.to_dict())
-                continue
+        # Not complete configuration
+        if None in [gmin, gmax, ginit] and not fill:
+            with pytest.raises(expected_exception=ValidationError):
+                EverestConfig.model_validate(config.to_dict())
+            continue
 
-            # Invalid parameters
-            def valid_control(var: ControlVariableConfig) -> bool:
-                return var.min <= var.initial_guess <= var.max
+        # Invalid parameters
+        def valid_control(var: ControlVariableConfig) -> bool:
+            return var.min <= var.initial_guess <= var.max
 
-            if not all(map(valid_control, exp_var_def)):
-                with pytest.raises(expected_exception=ValidationError):
-                    EverestConfig.model_validate(config.to_dict())
-                continue
+        if not all(map(valid_control, exp_var_def)):
+            with pytest.raises(expected_exception=ValidationError):
+                EverestConfig.model_validate(config.to_dict())
+            continue
 
-            EverestConfig.model_validate(config.to_dict())
+        EverestConfig.model_validate(config.to_dict())
 
 
 def test_control_variable_name():

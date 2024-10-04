@@ -3,15 +3,14 @@ from qtpy.QtCore import Qt
 
 from ieverest import IEverest
 from tests.everest.dialogs_mocker import mock_dialogs_all
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
 CASE_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "mocked_test_case.yml"
 
 
 @pytest.mark.ui_test
-@tmpdir(CASE_DIR)
-def test_load_run(qapp, qtbot, mocker):
+def test_load_run(qapp, qtbot, mocker, copy_mocked_test_data_to_tmp):
     """Load a configuration and run it from the UI"""
 
     qapp.setAttribute(Qt.AA_X11InitThreads)

@@ -8,14 +8,14 @@ import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
-from tests.everest.utils import MockParser, relpath, skipif_no_everest_models, tmpdir
+from tests.everest.utils import MockParser, relpath, skipif_no_everest_models
 
-snake_oil_folder = relpath("test_data", "snake_oil")
+# snake_oil_folder = relpath("test_data", "snake_oil")
 
 
 @pytest.mark.integration_test
-@tmpdir(snake_oil_folder)
-def test_default_seed():
+def test_default_seed(copy_test_data_to_tmp, monkeypatch):
+    monkeypatch.chdir("snake_oil")
     config_file = os.path.join("everest/model", "snake_oil_all.yml")
     config = EverestConfig.load_file(config_file)
     assert config.environment.random_seed is None
@@ -55,8 +55,8 @@ def test_read_file():
     assert exp_fn == everest_config.config_file
 
 
-@tmpdir(relpath("test_data", "valid_config_file"))
-def test_valid_config_file():
+def test_valid_config_file(copy_test_data_to_tmp, monkeypatch):
+    monkeypatch.chdir("valid_config_file")
     # pylint: disable=unsupported-membership-test
     parser = MockParser()
 
@@ -96,11 +96,11 @@ def test_valid_config_file():
     assert "could not find expected ':'" in parser.get_error()
 
 
-@tmpdir(relpath("test_data", "valid_config_file", "forward_models"))
 @pytest.mark.fails_on_macos_github_workflow
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-def test_valid_forward_model_config_files():
+def test_valid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
+    monkeypatch.chdir("valid_config_file/forward_models")
     parser = MockParser()
     EverestConfig.load_file_with_argparser(
         "valid_config_maintained_forward_models.yml", parser=parser
@@ -109,11 +109,11 @@ def test_valid_forward_model_config_files():
     assert parser.get_error() is None
 
 
-@tmpdir(relpath("test_data", "valid_config_file", "forward_models"))
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.fails_on_macos_github_workflow
-def test_invalid_forward_model_config_files():
+def test_invalid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
+    monkeypatch.chdir("valid_config_file/forward_models")
     parser = MockParser()
     next((Path.cwd() / "input" / "templates").glob("*")).unlink()
     EverestConfig.load_file_with_argparser(

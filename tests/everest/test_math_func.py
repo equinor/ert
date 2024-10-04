@@ -11,9 +11,6 @@ from everest.config.export_config import ExportConfig
 from everest.export import export
 from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
-from tests.everest.utils import relpath, tmpdir
-
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 CONFIG_FILE_IN_CONSTR = "config_in_constr.yml"
@@ -25,8 +22,7 @@ CONFIG_FILE_REMOVE_RUN_PATH = "config_remove_run_path.yml"
 
 
 @pytest.mark.redundant_test  # superseded by test_math_func_advanced and _multiobj
-@tmpdir(CONFIG_PATH)
-def test_math_func_minimal():
+def test_math_func_minimal(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
     workflow = _EverestWorkflow(config)
     assert workflow is not None
@@ -62,8 +58,7 @@ def test_math_func_minimal():
 
 
 @pytest.mark.redundant_test  # superseded by test_math_func_advanced and _multiobj
-@tmpdir(CONFIG_PATH)
-def test_math_func_in_constr():
+def test_math_func_in_constr(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_IN_CONSTR)
     workflow = _EverestWorkflow(config)
     assert workflow is not None
@@ -94,8 +89,7 @@ def test_math_func_in_constr():
 
 
 @pytest.mark.redundant_test  # superseded by test_math_func_advanced and _multiobj
-@tmpdir(CONFIG_PATH)
-def test_math_func_out_constr():
+def test_math_func_out_constr(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_OUT_CONSTR)
     workflow = _EverestWorkflow(config)
     assert workflow is not None
@@ -130,8 +124,7 @@ def test_math_func_out_constr():
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_PATH)
-def test_math_func_multiobj():
+def test_math_func_multiobj(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_MULTIOBJ)
 
     workflow = _EverestWorkflow(config)
@@ -216,8 +209,7 @@ def test_math_func_multiobj():
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_PATH)
-def test_math_func_advanced():
+def test_math_func_advanced(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
 
     workflow = _EverestWorkflow(config)
@@ -287,8 +279,7 @@ def test_math_func_advanced():
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_PATH)
-def test_remove_run_path():
+def test_remove_run_path(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_REMOVE_RUN_PATH)
 
     simulation_should_fail = "simulation_2"
@@ -335,8 +326,7 @@ def test_remove_run_path():
     ), "Simulation folder should be there, something went wrong and was removed"
 
 
-@tmpdir(CONFIG_PATH)
-def test_math_func_auto_scaled_controls():
+def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_AUTO_SCALED_CONTROLS)
 
     workflow = _EverestWorkflow(config)
