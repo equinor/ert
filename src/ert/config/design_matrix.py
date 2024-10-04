@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 import pandas as pd
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 from ._option_dict import option_dict
 from .parsing import (
@@ -28,6 +27,8 @@ class DesignMatrix:
     xls_filename: Path
     design_sheet: str
     default_sheet: str
+    design_matrix_df: Optional[pd.DataFrame] = None
+    parameter_configuration: Optional[list[ParameterConfig]] = None
 
     @classmethod
     def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
@@ -71,8 +72,7 @@ class DesignMatrix:
 
     def read_design_matrix(
         self,
-        parameter_configurations: List[ParameterConfig],
-    ) -> pd.DataFrame:
+    ) -> None:
         """
         Reads out all file content from different files and create dataframes
         """
@@ -80,8 +80,7 @@ class DesignMatrix:
             self.xls_filename, self.design_sheet
         )
         if "REAL" in design_matrix_df.columns:
-            design_matrix_df.set_index(design_matrix_df["REAL"])
-            del design_matrix_df["REAL"]
+            design_matrix_df = design_matrix_df.set_index("REAL", drop=True)
         try:
             DesignMatrix._validate_design_matrix_header(design_matrix_df)
         except ValueError as err:
@@ -98,42 +97,30 @@ class DesignMatrix:
 
         # ignoring errors here is deprecated in pandas, should find another solution
         # design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
-
-        parameter_groups = defaultdict(list)
-        parameter_map = []
-        all_genkw_configs = [
-            param_group
-            for param_group in parameter_configurations
-            if isinstance(param_group, GenKwConfig)
-        ]
-        errors = {}
-        for param in design_matrix_df.columns:
-            par_gp = []
-            for param_group in all_genkw_configs:
-                if param in param_group:
-                    par_gp.append(param_group.name)
-
-            if not par_gp:
-                parameter_name = "DESIGN_MATRIX"
-                parameter_groups[parameter_name].append(param)
-                parameter_map.append((parameter_name, param))
-            elif len(par_gp) == 1:
-                parameter_name = par_gp[0]
-                parameter_groups[parameter_name].append(param)
-                parameter_map.append((parameter_name, param))
-            else:
-                errors[param] = par_gp
-
-        if errors:
-            msg = ""
-            for key, value in errors.items():
-                msg += (
-                    f"The following parameter '{key}' was found in multiple"
-                    f" GenKw parameters groups: {value}."
+        parameter_configuration = {}
+        transform_function_definitions: list[TransformFunctionDefinition] = []
+        for parameter in design_matrix_df.columns:
+            transform_function_definitions.append(
+                TransformFunctionDefinition(
+                    name=parameter,
+                    param_name="RAW",
+                    values=[],
                 )
-            raise ValueError(msg)
-        design_matrix_df.columns = pd.MultiIndex.from_tuples(parameter_map)
-        return design_matrix_df
+            )
+        parameter_configuration[DESIGN_MATRIX_GROUP] = GenKwConfig(
+            name=DESIGN_MATRIX_GROUP,
+            forward_init=False,
+            template_file=None,
+            output_file=None,
+            transform_function_definitions=transform_function_definitions,
+            update=False,
+        )
+
+        design_matrix_df.columns = pd.MultiIndex.from_product(
+            [[DESIGN_MATRIX_GROUP], design_matrix_df.columns]
+        )
+        self.design_matrix_df = design_matrix_df
+        self.parameter_configuration = parameter_configuration
 
     @staticmethod
     def _read_excel(
@@ -205,8 +192,4 @@ class DesignMatrix:
                     "initial or trailing whitespace."
                 )
 
-        default_df = default_df.rename(columns={0: "keys", 1: "defaults"})
-        defaults = {}
-        for _, row in default_df.iterrows():
-            defaults[row["keys"]] = row["defaults"]
-        return defaults
+        return {row[0]: row[1] for _, row in default_df.iterrows()}
