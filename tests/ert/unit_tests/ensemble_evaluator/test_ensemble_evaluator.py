@@ -29,6 +29,7 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
@@ -97,6 +98,7 @@ async def test_when_task_prematurely_ends_raises_exception(
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
     evaluator = EnsembleEvaluator(ensemble, make_ee_config())
+    evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()
     yield evaluator
@@ -469,11 +471,22 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         # about realizations, the state of the ensemble up until that point
         # should be not final (i.e. not cancelled, stopped, failed).
         ensemble_state = snapshot_event.snapshot.get("status")
+        final_event_was_EETerminated = False
+        snapshot_event_received = False
         async for event in monitor.track():
+            if isinstance(event, EETerminated):
+                assert snapshot_event_received == True
+                final_event_was_EETerminated = True
+                assert ensemble_state == ENSEMBLE_STATE_STOPPED
             if type(event) in [EESnapshot, EESnapshotUpdate]:
+                # if we get an snapshot event than this need to be valid
+                assert final_event_was_EETerminated == False
+                snapshot_event_received = True
                 if "reals" in event.snapshot:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.snapshot.get("status", ensemble_state)
+        assert final_event_was_EETerminated == True
+        assert snapshot_event_received == True
 
 
 @given(
