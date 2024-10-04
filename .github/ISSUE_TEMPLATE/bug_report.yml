@@ -35,8 +35,6 @@ body:
       description: |
         Please check of the environments where this behavior has been observed.
       options:
-        - label: python 3.8
-        - label: python 3.9
         - label: python 3.10
         - label: python 3.11
         - label: python 3.12
