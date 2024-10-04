@@ -2,25 +2,16 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
 
 
-# Python 3.8 does not implement UserDict as a MutableMapping, meaning it's not
-# possible to specify the key and value types.
-#
-# Instead, we only set the types during type checking
-if TYPE_CHECKING:
-    from collections import UserDict
-
-    _UserDict = UserDict[str, str]
-else:
-    from collections import UserDict as _UserDict
+from collections import UserDict
 
 
-class SubstitutionList(_UserDict):
+class SubstitutionList(UserDict[str, str]):
     def substitute(
         self,
         to_substitute: str,
