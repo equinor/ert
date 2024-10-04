@@ -545,7 +545,7 @@ class Experiment:
     ensembles: Dict[UUID, Ensemble] = field(default_factory=dict)
     parameters: List[ParameterConfig] = field(default_factory=list)
     responses: List[ResponseConfig] = field(default_factory=list)
-    observations: Dict[str, xr.Dataset] = field(default_factory=dict)
+    observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
 class StatefulStorageTest(RuleBasedStateMachine):
