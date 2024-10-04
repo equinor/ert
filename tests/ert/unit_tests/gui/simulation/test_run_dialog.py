@@ -532,6 +532,7 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
 
         for keyword in ["Single realization test-run", "Local", r"minimal\_config.ert"]:
             assert keyword in clipboard_text
+        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
 @pytest.mark.integration_test
