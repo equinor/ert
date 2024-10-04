@@ -1262,9 +1262,6 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
 
     The bug intended to catch is if the driver gives up on killing before submission
     is not done yet, it is important not to let the realization through in that scenario.
-
-    The design of the test alludes to much more flakyness than what is probable in reality,
-    thus reruns are allowed to make this pass.
     """
     monkeypatch.chdir(tmp_path)
 
@@ -1286,7 +1283,6 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
         dedent(
             f"""\
             #!/bin/bash
-
             do_stop=0
 
             function handle()
@@ -1296,6 +1292,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
                 exit 15
             }}
             trap handle SIGTERM
+            touch {tmp_path}/trap_handle_installed
             while [[ $do_stop == 0 ]]
             do
                 sleep 0.1
@@ -1326,10 +1323,12 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
         # detail we do not want to track.
         assert returncode in (SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
 
-        if returncode != LSF_FAILED_JOB:
-            # We will only see the was_killed file if a compute node
-            # got a chance to start to job script:
-            wait_until((tmp_path / "was_killed").exists, timeout=4)
-
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)
+
+    # Normally the job script in this test should never get a chance to start,
+    # but if the system is loaded, the script will start before the kill command is
+    # processed. If the script starts, we assert that it was killed in
+    # a controlled fashion:
+    if (tmp_path / "trap_handle_installed").exists():
+        wait_until((tmp_path / "was_killed").exists, timeout=4)
