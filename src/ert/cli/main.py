@@ -34,10 +34,6 @@ class ErtCliError(Exception):
     pass
 
 
-class ErtTimeoutError(Exception):
-    pass
-
-
 def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> None:
     ert_dir = os.path.abspath(os.path.dirname(args.config))
     os.chdir(ert_dir)
