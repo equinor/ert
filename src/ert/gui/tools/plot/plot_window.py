@@ -106,7 +106,7 @@ class PlotWindow(QMainWindow):
             self._api = PlotApi()
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
-            logger.exception(e)
+            logger.exception(f"plot api request failed: {e}")
             open_error_dialog("Request failed", str(e))
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
@@ -191,7 +191,7 @@ class PlotWindow(QMainWindow):
                         ensemble.id, key
                     )
                 except (RequestError, TimeoutError) as e:
-                    logger.exception(e)
+                    logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
 
             observations = None
@@ -201,7 +201,7 @@ class PlotWindow(QMainWindow):
                         [ensembles.id for ensembles in selected_ensembles], key
                     )
                 except (RequestError, TimeoutError) as e:
-                    logger.exception(e)
+                    logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
 
             std_dev_images: Dict[str, npt.NDArray[np.float32]] = {}
@@ -221,7 +221,7 @@ class PlotWindow(QMainWindow):
                             key, ensemble.id, layer
                         )
                     except (RequestError, TimeoutError) as e:
-                        logger.exception(e)
+                        logger.exception(f"plot api request failed: {e}")
                         open_error_dialog("Request failed", f"{e}")
             else:
                 plot_widget.showLayerWidget.emit(False)
@@ -241,7 +241,7 @@ class PlotWindow(QMainWindow):
                     )
 
                 except (RequestError, TimeoutError) as e:
-                    logger.exception(e)
+                    logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
                     plot_context.history_data = None
 
