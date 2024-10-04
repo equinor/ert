@@ -93,24 +93,9 @@ class ErtMainWindow(QMainWindow):
 
         self.central_panels_map: Dict[str, QWidget] = {}
 
-        button = self._add_sidebar_button(
+        self._add_sidebar_button(
             "Start Simulation", QIcon("img:play_circle_outlined.svg")
         )
-        menu = QMenu()
-        menu.setStyleSheet(MENU_ITEM_STYLE_SHEET)
-
-        for sim_mode in [
-            "Single test run",
-            "Ensemble Experiment",
-            "Manual Update",
-            "ES MDA",
-            "Ensemble Smoother",
-        ]:
-            act = menu.addAction(sim_mode)
-            act.triggered.connect(self.select_central_widget)
-            # todo use sim modes to select correct panels directly
-            act.setProperty("index", "Start Simulation")
-        button.setMenu(menu)
 
         self._plot_window: Optional[PlotWindow] = None
         self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
