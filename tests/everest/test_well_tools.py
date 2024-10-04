@@ -6,7 +6,6 @@ import pytest
 from ruamel.yaml import YAML
 
 import everest
-from tests.everest.utils import tmpdir
 
 
 def _dump_sort_data(well_data_file, well_order_file):
@@ -41,8 +40,7 @@ def _dump_sort_data(well_data_file, well_order_file):
     ]
 
 
-@tmpdir(None)
-def test_well_reorder():
+def test_well_reorder(change_to_tmpdir):
     well_data_file = "well_data.json"
     well_order_file = "well_order.yml"
     output_file = "ordered_well_data.json"
@@ -63,8 +61,7 @@ def test_well_reorder():
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_well_reorder_script():
+def test_well_reorder_script(change_to_tmpdir):
     assert os.access(everest.jobs.wdreorder, os.X_OK)
 
     well_data_file = "well_data.json"
@@ -120,8 +117,7 @@ def _dump_filter_data(well_data_file, well_filter_file):
     ]
 
 
-@tmpdir(None)
-def test_well_filter():
+def test_well_filter(change_to_tmpdir):
     well_data_file = "well_data.yml"
     well_filter_file = "well_filter.json"
     output_file = "ordered_well_data.json"
@@ -142,8 +138,7 @@ def test_well_filter():
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_well_filter_script():
+def test_well_filter_script(change_to_tmpdir):
     assert os.access(everest.jobs.wdfilter, os.X_OK)
 
     well_data_file = "well_data.json"
@@ -214,8 +209,7 @@ def _dump_merge_data(well_data_file, additional_data_files):
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_well_update():
+def test_well_update(change_to_tmpdir):
     assert os.access(everest.jobs.wdupdate, os.X_OK)
 
     well_data_file = "well_data.json"
@@ -251,8 +245,7 @@ def test_well_update():
             assert merge_well_data == load_data
 
 
-@tmpdir(None)
-def test_well_set_invalid_data_length():
+def test_well_set_invalid_data_length(change_to_tmpdir):
     name = everest.ConfigKeys.NAME
 
     well_data_file = "well_data.yml"
@@ -278,8 +271,7 @@ def test_well_set_invalid_data_length():
         )
 
 
-@tmpdir(None)
-def test_well_set_too_many_entries():
+def test_well_set_too_many_entries(change_to_tmpdir):
     name = everest.ConfigKeys.NAME
 
     well_data_file = "well_data.yml"
@@ -305,8 +297,7 @@ def test_well_set_too_many_entries():
         )
 
 
-@tmpdir(None)
-def test_well_set_new_entry():
+def test_well_set_new_entry(change_to_tmpdir):
     name = everest.ConfigKeys.NAME
 
     well_data_file = "well_data.yml"
@@ -341,8 +332,7 @@ def test_well_set_new_entry():
         assert set_well_data == json.load(f)
 
 
-@tmpdir(None)
-def test_well_set_entry():
+def test_well_set_entry(change_to_tmpdir):
     name = everest.ConfigKeys.NAME
 
     well_data_file = "well_data.yml"
@@ -378,8 +368,7 @@ def test_well_set_entry():
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_well_set_script():
+def test_well_set_script(change_to_tmpdir):
     assert os.access(everest.jobs.wdset, os.X_OK)
     name = everest.ConfigKeys.NAME
 
@@ -500,8 +489,7 @@ def _dump_completion_data(well_data_file, start_date):
     ]
 
 
-@tmpdir(None)
-def test_add_completion_date():
+def test_add_completion_date(change_to_tmpdir):
     well_data_file = "well_data.yml"
     output_file = "humble_wells.json"
     start_date = "2001-01-02"
@@ -522,8 +510,7 @@ def test_add_completion_date():
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_completion_date_script():
+def test_completion_date_script(change_to_tmpdir):
     assert os.access(everest.jobs.wdcompl, os.X_OK)
 
     well_data_file = "well_data.yml"
@@ -640,8 +627,7 @@ def _dump_compl_filter_data(well_data_file):
     return filtered_well_data, "2001-01-30", "2003-03-07"
 
 
-@tmpdir(None)
-def test_filter_completion_date():
+def test_filter_completion_date(change_to_tmpdir):
     well_data_file = "well_data.yml"
     output_file = "filtered_well_data.json"
 
@@ -660,8 +646,7 @@ def test_filter_completion_date():
 
 
 @pytest.mark.integration_test
-@tmpdir(None)
-def test_filter_completion_date_script():
+def test_filter_completion_date_script(change_to_tmpdir):
     assert os.access(everest.jobs.wddatefilter, os.X_OK)
 
     well_data_file = "well_data.yml"

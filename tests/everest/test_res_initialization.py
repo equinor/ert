@@ -20,15 +20,12 @@ from tests.everest.utils import (
     relpath,
     skipif_no_everest_models,
     skipif_no_opm,
-    tmp,
-    tmpdir,
 )
 
 NO_PROJECT_RES = (
     os.environ.get("NO_PROJECT_RES", False),
     "Skipping tests when no access to /project/res",
 )
-
 SNAKE_CONFIG_DIR = "snake_oil/everest/model"
 SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
@@ -213,8 +210,7 @@ def build_tutorial_dict(config_dir, output_dir):
     }
 
 
-@tmpdir(relpath("test_data"))
-def test_snake_everest_to_ert():
+def test_snake_everest_to_ert(copy_test_data_to_tmp):
     # Load config file
     ever_config_dict = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
@@ -233,8 +229,7 @@ def test_snake_everest_to_ert():
     )
 
 
-@tmpdir(relpath("test_data"))
-def test_snake_everest_to_ert_slurm():
+def test_snake_everest_to_ert_slurm(copy_test_data_to_tmp):
     snake_slurm_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_slurm.yml")
     # Load config file
     ever_config_dict = EverestConfig.load_file(snake_slurm_config_path)
@@ -255,8 +250,7 @@ def test_snake_everest_to_ert_slurm():
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
-@tmpdir(relpath("test_data"))
-def test_tutorial_everest_to_ert():
+def test_tutorial_everest_to_ert(copy_test_data_to_tmp):
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     # Load config file
     ever_config_dict = EverestConfig.load_file(tutorial_config_path)
@@ -279,8 +273,7 @@ def test_tutorial_everest_to_ert():
 
 
 @skipif_no_opm
-@tmpdir(relpath("test_data"))
-def test_combined_wells_everest_to_ert():
+def test_combined_wells_everest_to_ert(copy_test_data_to_tmp):
     config_mocked_multi_batch = os.path.join(
         TUTORIAL_CONFIG_DIR, "mocked_multi_batch.yml"
     )
@@ -303,8 +296,7 @@ def test_combined_wells_everest_to_ert():
     assert any(inj_in_strings)
 
 
-@tmpdir(relpath("test_data"))
-def test_lsf_queue_system():
+def test_lsf_queue_system(copy_test_data_to_tmp):
     snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
     ever_config = EverestConfig.load_file(snake_all_path)
 
@@ -316,8 +308,7 @@ def test_lsf_queue_system():
     assert queue_system == "LSF"
 
 
-@tmpdir(relpath("test_data"))
-def test_queue_configuration():
+def test_queue_configuration(copy_test_data_to_tmp):
     snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
     ever_config = EverestConfig.load_file(snake_all_path)
 
@@ -353,7 +344,7 @@ def test_queue_config():
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
-def test_install_data_no_init():
+def test_install_data_no_init(copy_test_data_to_tmp):
     """
     TODO: When default jobs are handled in Everest this test should be
     deleted as it is superseded by test_install_data.
@@ -365,44 +356,42 @@ def test_install_data_no_init():
     test_base = list(zip(sources, targets, links, cmd_list))
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base[1:2]:
-        with tmp(relpath("test_data")):
-            ever_config = EverestConfig.load_file(tutorial_config_path)
+        ever_config = EverestConfig.load_file(tutorial_config_path)
 
-            if ever_config.install_data is None:
-                ever_config.install_data = []
+        if ever_config.install_data is None:
+            ever_config.install_data = []
 
-            ever_config.install_data.append(
-                InstallDataConfig(
-                    source=source,
-                    target=target,
-                    link=link,
-                )
+        ever_config.install_data.append(
+            InstallDataConfig(
+                source=source,
+                target=target,
+                link=link,
             )
+        )
 
-            errors = EverestConfig.lint_config_dict(ever_config.to_dict())
-            assert len(errors) == 0
+        errors = EverestConfig.lint_config_dict(ever_config.to_dict())
+        assert len(errors) == 0
 
-            ert_config_dict = everest_to_ert_config(ever_config)
+        ert_config_dict = everest_to_ert_config(ever_config)
 
-            output_dir = ever_config.output_dir
-            tutorial_dict = build_tutorial_dict(
-                os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
-            )
+        output_dir = ever_config.output_dir
+        tutorial_dict = build_tutorial_dict(
+            os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
+        )
 
-            config_dir = ever_config.config_directory
-            tutorial_dict["SIMULATION_JOB"].insert(
-                0,
-                (cmd, os.path.join(config_dir, source), target),
-            )
-            assert tutorial_dict == ert_config_dict
+        config_dir = ever_config.config_directory
+        tutorial_dict["SIMULATION_JOB"].insert(
+            0,
+            (cmd, os.path.join(config_dir, source), target),
+        )
+        assert tutorial_dict == ert_config_dict
 
 
 @skipif_no_opm
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
-@tmpdir(relpath("../../test-data/everest/egg"))
-def test_summary_default():
+def test_summary_default(copy_egg_test_data_to_tmp):
     config_dir = "everest/model"
     config_file = os.path.join(config_dir, "config.yml")
     everconf = EverestConfig.load_file(config_file)
@@ -435,8 +424,7 @@ def test_summary_default():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.fails_on_macos_github_workflow
-@tmpdir(relpath("../../test-data/everest/egg"))
-def test_summary_default_no_opm():
+def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     config_dir = "everest/model"
     config_file = os.path.join(config_dir, "config.yml")
     everconf = EverestConfig.load_file(config_file)
@@ -460,7 +448,7 @@ def test_summary_default_no_opm():
 
 
 @pytest.mark.simulation_test
-def test_install_data():
+def test_install_data(copy_test_data_to_tmp):
     """
     TODO: When default jobs are handled in Everest this test should not
     be a simulation test.
@@ -473,46 +461,44 @@ def test_install_data():
     test_base = zip(sources, targets, links, cmds)
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base:
-        with tmp(relpath("test_data")):
-            ever_config = EverestConfig.load_file(tutorial_config_path)
+        ever_config = EverestConfig.load_file(tutorial_config_path)
 
-            if ever_config.install_data is None:
-                ever_config.install_data = []
+        if ever_config.install_data is None:
+            ever_config.install_data = []
 
-            ever_config.install_data.append(
-                InstallDataConfig(
-                    source=source,
-                    target=target,
-                    link=link,
-                )
+        ever_config.install_data.append(
+            InstallDataConfig(
+                source=source,
+                target=target,
+                link=link,
             )
+        )
 
-            errors = EverestConfig.lint_config_dict(ever_config.to_dict())
-            assert len(errors) == 0
+        errors = EverestConfig.lint_config_dict(ever_config.to_dict())
+        assert len(errors) == 0
 
-            ert_config_dict = everest_to_ert_config(ever_config)
+        ert_config_dict = everest_to_ert_config(ever_config)
 
-            output_dir = ever_config.output_dir
-            tutorial_dict = build_tutorial_dict(
-                os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
+        output_dir = ever_config.output_dir
+        tutorial_dict = build_tutorial_dict(
+            os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
+        )
+        config_dir = ever_config.config_directory
+        tutorial_dict["SIMULATION_JOB"].insert(
+            0,
+            (cmd, os.path.join(config_dir, source), target),
+        )
+        assert tutorial_dict == ert_config_dict
+
+        # Instantiate res
+        ErtConfig.with_plugins().from_dict(
+            config_dict=everest_to_ert_config(
+                ever_config, site_config=ErtConfig.read_site_config()
             )
-            config_dir = ever_config.config_directory
-            tutorial_dict["SIMULATION_JOB"].insert(
-                0,
-                (cmd, os.path.join(config_dir, source), target),
-            )
-            assert tutorial_dict == ert_config_dict
-
-            # Instantiate res
-            ErtConfig.with_plugins().from_dict(
-                config_dict=everest_to_ert_config(
-                    ever_config, site_config=ErtConfig.read_site_config()
-                )
-            )
+        )
 
 
-@tmpdir(relpath("test_data"))
-def test_strip_date_job_insertion():
+def test_strip_date_job_insertion(copy_test_data_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.model.report_steps = [
@@ -530,8 +516,7 @@ def test_strip_date_job_insertion():
     assert snake_dict == ert_config_dict
 
 
-@tmpdir(relpath("test_data"))
-def test_forward_model_job_insertion():
+def test_forward_model_job_insertion(copy_test_data_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
@@ -544,8 +529,7 @@ def test_forward_model_job_insertion():
         assert res_job in jobs
 
 
-@tmpdir(relpath("test_data"))
-def test_workflow_job():
+def test_workflow_job(copy_test_data_to_tmp):
     workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
@@ -558,8 +542,7 @@ def test_workflow_job():
     )
 
 
-@tmpdir(relpath("test_data"))
-def test_workflows():
+def test_workflows(copy_test_data_to_tmp):
     workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
@@ -577,8 +560,7 @@ def test_workflows():
     assert hooks[0] == ("pre_simulation", "PRE_SIMULATION")
 
 
-@tmpdir(relpath("test_data"))
-def test_user_config_jobs_precedence():
+def test_user_config_jobs_precedence(copy_test_data_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     first_job = everest.jobs.script_names[0]
@@ -594,8 +576,7 @@ def test_user_config_jobs_precedence():
     assert job[0][1] == os.path.join(config_dir, "expected_source")
 
 
-@tmpdir(relpath("test_data"))
-def test_user_config_num_cpu():
+def test_user_config_num_cpu(copy_test_data_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 

@@ -2,14 +2,11 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.suite import _EverestWorkflow
-from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_STDDEV = "config_stddev.yml"
 
 
-@tmpdir(CONFIG_PATH)
-def test_mathfunc_stddev():
+def test_mathfunc_stddev(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_STDDEV)
 
     workflow = _EverestWorkflow(config)

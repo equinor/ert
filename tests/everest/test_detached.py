@@ -37,7 +37,6 @@ from everest.strings import (
     SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
-from tests.everest.utils import relpath, tmpdir
 
 
 class MockContext:
@@ -61,8 +60,7 @@ class MockContext:
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_https_requests():
+def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal_slow.yml")
 
     expected_server_status = ServerStatus.never_run
@@ -121,8 +119,7 @@ def test_https_requests():
             assert ServerStatus.stopped == server_status["status"]
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_server_status():
+def test_server_status(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
 
     # Check status file does not exist before initial status update
@@ -157,8 +154,10 @@ def test_server_status():
 
 
 @patch("everest.detached.server_is_running", return_value=False)
-@tmpdir(relpath("test_data", "detached"))
-def test_wait_for_server(server_is_running_mock, caplog):
+def test_wait_for_server(
+    server_is_running_mock, caplog, copy_test_data_to_tmp, monkeypatch
+):
+    monkeypatch.chdir("detached")
     config = EverestConfig.load_file("valid_yaml_config.yml")
 
     with caplog.at_level(logging.DEBUG), pytest.raises(RuntimeError):
@@ -219,8 +218,7 @@ def _get_reference_config():
     return everest_config, reference_config
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_detached_mode_config_base():
+def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
     everest_config, reference = _get_reference_config()
     ert_config = generate_everserver_ert_config(everest_config)
 
@@ -237,8 +235,9 @@ def test_detached_mode_config_base():
         ("slurm", 5, "test_slurm"),
     ],
 )
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
+def test_everserver_queue_config_equal_to_run_config(
+    copy_math_func_test_data_to_tmp, queue_system, cores, name
+):
     everest_config, _ = _get_reference_config()
 
     simulator_config = {CK.QUEUE_SYSTEM: queue_system, CK.CORES: cores}
@@ -267,8 +266,7 @@ def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
         )
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_detached_mode_config_debug():
+def test_detached_mode_config_debug(copy_math_func_test_data_to_tmp):
     everest_config, reference = _get_reference_config()
     ert_config = generate_everserver_ert_config(everest_config, debug_mode=True)
 
@@ -279,8 +277,7 @@ def test_detached_mode_config_debug():
 
 
 @pytest.mark.parametrize("queue_system", ["lsf", "slurm"])
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_detached_mode_config_only_sim(queue_system):
+def test_detached_mode_config_only_sim(copy_math_func_test_data_to_tmp, queue_system):
     everest_config, reference = _get_reference_config()
 
     reference["QUEUE_SYSTEM"] = queue_system.upper()
@@ -292,8 +289,7 @@ def test_detached_mode_config_only_sim(queue_system):
     assert ert_config == reference
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_detached_mode_config_error():
+def test_detached_mode_config_error(copy_math_func_test_data_to_tmp):
     """
     We are not allowing the simulator queue to be local and at the
     same time the everserver queue to be something other than local
@@ -305,8 +301,7 @@ def test_detached_mode_config_error():
         generate_everserver_ert_config(everest_config)
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_detached_mode_config_queue_name():
+def test_detached_mode_config_queue_name(copy_math_func_test_data_to_tmp):
     everest_config, reference = _get_reference_config()
 
     queue_name = "put_me_in_the_queue"

@@ -9,7 +9,7 @@ from ruamel.yaml import YAML
 from everest import ConfigKeys as CK
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
 mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))
 
@@ -57,11 +57,9 @@ def test_load_config_as_yaml():
     assert rendered_template is not None
 
 
-@tmpdir(mocked_root)
-def test_configpath_in_defs():
+def test_configpath_in_defs(copy_mocked_test_data_to_tmp):
     config_file = "mocked_multi_batch.yml"
     config = EverestConfig.load_file(config_file)
-
     defs = {
         "numeric_key": 1,
         "bool_key": True,
@@ -73,8 +71,7 @@ def test_configpath_in_defs():
     assert defs == config.definitions
 
 
-@tmpdir(mocked_root)
-def test_dependent_definitions():
+def test_dependent_definitions(copy_mocked_test_data_to_tmp):
     config_file = "mocked_multi_batch.yml"
     with open(config_file, encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
@@ -103,8 +100,7 @@ def test_dependent_definitions():
     assert defs == config.definitions
 
 
-@tmpdir(mocked_root)
-def test_dependent_definitions_value_error():
+def test_dependent_definitions_value_error(copy_mocked_test_data_to_tmp):
     config_file = "mocked_multi_batch.yml"
     with open(config_file, encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
@@ -121,16 +117,14 @@ def test_dependent_definitions_value_error():
         EverestConfig.load_file(config_file)
 
 
-@tmpdir(mocked_root)
-def test_load_empty_configuration():
+def test_load_empty_configuration(copy_mocked_test_data_to_tmp):
     with open("empty_config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("")
     with pytest.raises(ValidationError, match="missing"):
         EverestConfig.load_file("empty_config.yml")
 
 
-@tmpdir(mocked_root)
-def test_load_invalid_configuration():
+def test_load_invalid_configuration(copy_mocked_test_data_to_tmp):
     with open("invalid_config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("asdf")
     with pytest.raises(ValidationError, match="missing"):

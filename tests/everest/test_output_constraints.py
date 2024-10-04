@@ -10,14 +10,11 @@ from everest.optimizer.everest2ropt import everest2ropt
 from everest.suite import _EverestWorkflow
 
 from .test_config_validation import has_error
-from .utils import relpath, tmpdir
 
-CONFIG_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "config_output_constraints.yml"
 
 
-@tmpdir(CONFIG_DIR)
-def test_constraints_init():
+def test_constraints_init(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     constr = list(config.output_constraints or [])
 
@@ -45,8 +42,7 @@ def test_constraints_init():
     assert [cn.scale for cn in constr] == 16 * [7500]
 
 
-@tmpdir(CONFIG_DIR)
-def test_wrong_output_constr_def():
+def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
     # No RHS
     errors = EverestConfig.lint_config_dict(
         {
@@ -188,8 +184,7 @@ def test_wrong_output_constr_def():
     assert has_error(errors, "unable to parse string as a number")
 
 
-@tmpdir(CONFIG_DIR)
-def test_upper_bound_output_constraint_def():
+def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
     with open("conf_file", "w", encoding="utf-8") as f:
         f.write(" ")
 
@@ -237,8 +232,7 @@ def test_upper_bound_output_constraint_def():
 
 
 @pytest.mark.integration_test
-@tmpdir(CONFIG_DIR)
-def test_sim_output_constraints():
+def test_sim_output_constraints(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     workflow = _EverestWorkflow(config)
     assert workflow is not None

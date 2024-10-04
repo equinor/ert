@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QAction, QPushButton, QWidget
 from qtpy.QtCore import Qt
 from seba_sqlite.snapshot import SebaSnapshot
 from tests.everest.dialogs_mocker import mock_dialogs_all
-from tests.everest.utils import relpath, tmpdir
 
 from everest.config import EverestConfig
 from everest.detached import (
@@ -14,15 +13,13 @@ from everest.detached import (
 )
 from ieverest import IEverest
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
 @pytest.mark.flaky(reruns=5)
-@tmpdir(CONFIG_PATH)
 @pytest.mark.ui_test
 @pytest.mark.xdist_group(name="starts_everest")
-def test_ui_optimization(qapp, qtbot, mocker):
+def test_ui_optimization(qapp, qtbot, mocker, copy_math_func_test_data_to_tmp):
     """Load a configuration and run it from the UI"""
 
     wait_for_context()

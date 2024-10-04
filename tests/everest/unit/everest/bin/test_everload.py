@@ -7,8 +7,6 @@ import pytest
 from tests.everest.utils import (
     capture_streams,
     create_cached_mocked_test_case,
-    relpath,
-    tmpdir,
 )
 
 from ert.config import ErtConfig
@@ -18,7 +16,6 @@ from everest.bin.everload_script import everload_entry
 from everest.config import EverestConfig
 from everest.strings import STORAGE_DIR
 
-CONFIG_PATH = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "mocked_multi_batch.yml"
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
@@ -62,9 +59,10 @@ def assertBackup(config: EverestConfig):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_run(mocked_internalize, cache_dir):
+def test_everload_entry_run(
+    mocked_internalize, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everload on an optimization case"""
     config = get_config(cache_dir)
     everload_entry([CONFIG_FILE, "-s"])
@@ -76,9 +74,8 @@ def test_everload_entry_run(mocked_internalize, cache_dir):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_run_empty_batch_list(_):
+def test_everload_entry_run_empty_batch_list(_, copy_mocked_test_data_to_tmp):
     """Test running everload on an optimization case"""
     with pytest.raises(SystemExit), capture_streams() as (_, err):
         everload_entry([CONFIG_FILE, "-s", "-b"])
@@ -89,9 +86,10 @@ def test_everload_entry_run_empty_batch_list(_):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_missing_folders(mocked_internalize, cache_dir):
+def test_everload_entry_missing_folders(
+    mocked_internalize, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everload when output folders are missing"""
     config = get_config(cache_dir)
     shutil.rmtree(config.simulation_dir)
@@ -104,9 +102,10 @@ def test_everload_entry_missing_folders(mocked_internalize, cache_dir):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_batches(mocked_internalize, cache_dir):
+def test_everload_entry_batches(
+    mocked_internalize, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everload with a selection of batches"""
     config = get_config(cache_dir)
     # pick every second batch (assume there are at least 2)
@@ -122,9 +121,10 @@ def test_everload_entry_batches(mocked_internalize, cache_dir):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_invalid_batches(mocked_internalize):
+def test_everload_entry_invalid_batches(
+    mocked_internalize, copy_mocked_test_data_to_tmp
+):
     """Test running everload with no or wrong batches"""
     with pytest.raises(SystemExit), capture_streams() as (_, err):
         everload_entry([CONFIG_FILE, "-s", "-b", "-2", "5412"])
@@ -138,9 +138,10 @@ def test_everload_entry_invalid_batches(mocked_internalize):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_overwrite(mocked_internalize, cache_dir):
+def test_everload_entry_overwrite(
+    mocked_internalize, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everload with the --overwrite flag"""
     config = get_config(cache_dir)
     everload_entry([CONFIG_FILE, "-s", "--overwrite"])
@@ -156,9 +157,10 @@ def test_everload_entry_overwrite(mocked_internalize, cache_dir):
 
 
 @patch("everest.bin.everload_script._internalize_batch")
-@tmpdir(CONFIG_PATH)
 @pytest.mark.fails_on_macos_github_workflow
-def test_everload_entry_not_silent(mocked_internalize, cache_dir):
+def test_everload_entry_not_silent(
+    mocked_internalize, cache_dir, copy_mocked_test_data_to_tmp
+):
     """Test running everload without the -s flag"""
     config = get_config(cache_dir)
 

@@ -3,14 +3,11 @@ import pytest
 from everest.config import EverestConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.suite import _EverestWorkflow
-from tests.everest.utils import relpath, tmpdir
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_ADVANCED = "config_advanced_scipy.yml"
 
 
-@tmpdir(CONFIG_PATH)
-def test_sampler_uniform():
+def test_sampler_uniform(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
     config.controls[0].sampler = SamplerConfig(**{"method": "uniform"})
 
@@ -39,8 +36,7 @@ def test_sampler_uniform():
     assert expected_opt == pytest.approx(workflow.result.total_objective, abs=0.001)
 
 
-@tmpdir(CONFIG_PATH)
-def test_sampler_mixed():
+def test_sampler_mixed(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
     config.controls[0].variables[0].sampler = SamplerConfig(**{"method": "uniform"})
     config.controls[0].variables[1].sampler = SamplerConfig(**{"method": "norm"})

@@ -9,12 +9,9 @@ from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export, validate_export
-from tests.everest.utils import create_cached_mocked_test_case, relpath, tmpdir
-
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
+from tests.everest.utils import create_cached_mocked_test_case, relpath
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
-CONFIG_PATH_MOCKED_TEST_CASE = relpath("test_data", "mocked_test_case")
 CASHED_RESULTS_FOLDER = relpath("test_data", "cached_results_config_multiobj")
 CONFIG_FILE = "config_multiobj.yml"
 DATA = pd.DataFrame(
@@ -68,8 +65,7 @@ def test_filter_double_wildcard():
     )
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_only_non_gradient_with_increased_merit():
+def test_export_only_non_gradient_with_increased_merit(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -91,8 +87,7 @@ def test_export_only_non_gradient_with_increased_merit():
         assert merit_flag == 1
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_only_non_gradient():
+def test_export_only_non_gradient(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -115,8 +110,7 @@ def test_export_only_non_gradient():
     assert 1 in df["increased_merit"].values
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_only_increased_merit():
+def test_export_only_increased_merit(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -139,8 +133,7 @@ def test_export_only_increased_merit():
     assert 0 not in df["increased_merit"].values
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_all_batches():
+def test_export_all_batches(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -162,8 +155,7 @@ def test_export_all_batches():
     assert 0 in df["increased_merit"].values
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_only_give_batches():
+def test_export_only_give_batches(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -180,9 +172,8 @@ def test_export_only_give_batches():
         assert id == 2
 
 
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_export_batches_progress(cache_dir):
+def test_export_batches_progress(cache_dir, copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
 
     shutil.copytree(
@@ -200,8 +191,7 @@ def test_export_batches_progress(cache_dir):
         assert id == 2
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_nothing_for_empty_batch_list():
+def test_export_nothing_for_empty_batch_list(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -219,8 +209,7 @@ def test_export_nothing_for_empty_batch_list():
     assert df.empty
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_nothing():
+def test_export_nothing(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(
@@ -238,8 +227,7 @@ def test_export_nothing():
     assert df.empty
 
 
-@tmpdir(CONFIG_PATH)
-def test_get_export_path():
+def test_get_export_path(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     # Test default export path when no csv_output_filepath is defined
@@ -275,9 +263,8 @@ def test_get_export_path():
     assert expected_export_path == new_config.export_path
 
 
-@tmpdir(CONFIG_PATH_MOCKED_TEST_CASE)
 @pytest.mark.fails_on_macos_github_workflow
-def test_validate_export(cache_dir):
+def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
 
     shutil.copytree(
@@ -353,8 +340,7 @@ def test_validate_export(cache_dir):
     assert config.export.batches == [0]
 
 
-@tmpdir(CONFIG_PATH)
-def test_export_gradients():
+def test_export_gradients(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     os.makedirs(config.optimization_output_dir)
     shutil.copy(

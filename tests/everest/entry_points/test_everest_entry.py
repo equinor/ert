@@ -18,9 +18,8 @@ from everest.detached import (
 from everest.jobs import shell_commands
 from everest.simulator import JOB_SUCCESS
 from ieverest.bin.ieverest_script import ieverest_entry
-from tests.everest.utils import capture_streams, relpath, tmpdir
+from tests.everest.utils import capture_streams
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
@@ -80,13 +79,13 @@ def run_detached_monitor_mock(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_debug(
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
     caplog,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest with --debug"""
     with caplog.at_level(logging.DEBUG):
@@ -111,12 +110,12 @@ def test_everest_entry_debug(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry(
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest in detached mode"""
     everest_entry([CONFIG_FILE_MINIMAL])
@@ -134,13 +133,13 @@ def test_everest_entry(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_detached_already_run(
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
@@ -171,11 +170,11 @@ def test_everest_entry_detached_already_run(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_detached_already_run_monitor(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
@@ -199,7 +198,6 @@ def test_everest_entry_detached_already_run_monitor(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_detached_running(
     everserver_status_mock,
     wait_for_server_to_stop_mock,
@@ -209,6 +207,7 @@ def test_everest_entry_detached_running(
     start_monitor_mock,
     server_is_running_mock_kill_script,
     server_is_running_mock_everest_script,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test everest detached, optimization is running"""
     # can't start a new run if one is already running
@@ -248,11 +247,11 @@ def test_everest_entry_detached_running(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_detached_running_monitor(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test everest detached, optimization is running, monitoring"""
     # Attach to a running optimization.
@@ -269,11 +268,11 @@ def test_everest_entry_detached_running_monitor(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_monitor_no_run(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test everest detached, optimization is running, monitoring"""
     # Attach to a running optimization.
@@ -300,7 +299,6 @@ def test_everest_entry_monitor_no_run(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_show_all_jobs(
     everserver_status_mock,
     get_opt_status_mock,
@@ -309,6 +307,7 @@ def test_everest_entry_show_all_jobs(
     start_server_mock,
     wait_for_server_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest with --show-all-jobs"""
 
@@ -335,7 +334,6 @@ def test_everest_entry_show_all_jobs(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_everest_entry_no_show_all_jobs(
     everserver_status_mock,
     get_opt_status_mock,
@@ -344,6 +342,7 @@ def test_everest_entry_no_show_all_jobs(
     start_server_mock,
     wait_for_server_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest without --show-all-jobs"""
 
@@ -372,13 +371,13 @@ def test_everest_entry_no_show_all_jobs(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_monitor_entry_show_all_jobs(
     everserver_status_mock,
     get_opt_status_mock,
     get_server_context_mock,
     query_server_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest with and without --show-all-jobs"""
 
@@ -404,13 +403,13 @@ def test_monitor_entry_show_all_jobs(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-@tmpdir(CONFIG_PATH)
 def test_monitor_entry_no_show_all_jobs(
     everserver_status_mock,
     get_opt_status_mock,
     get_server_context_mock,
     query_server_mock,
     server_is_running_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     """Test running everest without --show-all-jobs"""
 
@@ -436,9 +435,11 @@ def test_monitor_entry_no_show_all_jobs(
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@tmpdir(CONFIG_PATH)
 def test_exception_raised_when_server_run_fails(
-    start_server_mock, wait_for_server_mock, start_monitor_mock
+    start_server_mock,
+    wait_for_server_mock,
+    start_monitor_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
         everest_entry([CONFIG_FILE_MINIMAL])
@@ -453,9 +454,8 @@ def test_exception_raised_when_server_run_fails(
         error="Reality was ripped to shreds!",
     ),
 )
-@tmpdir(CONFIG_PATH)
 def test_exception_raised_when_server_run_fails_monitor(
-    start_monitor_mock, server_is_running_mock
+    start_monitor_mock, server_is_running_mock, copy_math_func_test_data_to_tmp
 ):
     with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
         monitor_entry([CONFIG_FILE_MINIMAL])
@@ -467,9 +467,11 @@ def test_exception_raised_when_server_run_fails_monitor(
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@tmpdir(CONFIG_PATH)
 def test_complete_status_for_normal_run(
-    start_server_mock, wait_for_server_mock, start_monitor_mock
+    start_server_mock,
+    wait_for_server_mock,
+    start_monitor_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     everest_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
@@ -486,9 +488,8 @@ def test_complete_status_for_normal_run(
     "everest.bin.monitor_script.run_detached_monitor",
     side_effect=run_detached_monitor_mock,
 )
-@tmpdir(CONFIG_PATH)
 def test_complete_status_for_normal_run_monitor(
-    start_monitor_mock, server_is_running_mock
+    start_monitor_mock, server_is_running_mock, copy_math_func_test_data_to_tmp
 ):
     monitor_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)

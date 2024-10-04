@@ -16,7 +16,6 @@ from tests.everest.utils import (
     hide_opm,
     relpath,
     skipif_no_opm,
-    tmpdir,
 )
 
 EGG_DATA = relpath(
@@ -24,8 +23,6 @@ EGG_DATA = relpath(
     "realizations/realization-0/eclipse/model/EGG.DATA",
 )
 SPE1_DATA = relpath("test_data/eclipse/SPE1.DATA")
-
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 
 
 @skipif_no_opm
@@ -52,8 +49,7 @@ def test_loadgroups_no_opm():
         util.read_groupnames(EGG_DATA)
 
 
-@tmpdir(None)
-def test_get_values():
+def test_get_values(change_to_tmpdir):
     exp_dir = "the_config_directory"
     exp_file = "the_config_file"
     rel_out_dir = "the_output_directory"
@@ -75,8 +71,7 @@ def test_get_values():
     config.environment.output_folder = rel_out_dir
 
 
-@tmpdir(None)
-def test_makedirs():
+def test_makedirs(change_to_tmpdir):
     output_dir = os.path.join("unittest_everest_output")
     cwd = os.getcwd()
 
@@ -92,8 +87,7 @@ def test_makedirs():
     assert len(os.listdir(cwd)) == 1
 
 
-@tmpdir(None)
-def test_makedirs_already_exists():
+def test_makedirs_already_exists(change_to_tmpdir):
     output_dir = os.path.join("unittest_everest_output")
     cwd = os.getcwd()
 
@@ -108,8 +102,7 @@ def test_makedirs_already_exists():
     assert len(os.listdir(cwd)) == 1
 
 
-@tmpdir(None)
-def test_makedirs_roll_existing():
+def test_makedirs_roll_existing(change_to_tmpdir):
     output_dir = os.path.join("unittest_everest_output")
     cwd = os.getcwd()
 
@@ -129,8 +122,7 @@ def test_makedirs_roll_existing():
     assert len(os.listdir(cwd)) == 3
 
 
-@tmpdir(CONFIG_PATH)
-def test_get_everserver_status_path():
+def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     cwd = os.getcwd()
     session_path = os.path.join(
@@ -153,8 +145,7 @@ def test_get_system_installed_job_names():
     "everest.bin.utils.everserver_status",
     return_value={"status": ServerStatus.failed, "message": "mock error"},
 )
-@tmpdir(None)
-def test_report_on_previous_run(_):
+def test_report_on_previous_run(_, change_to_tmpdir):
     with open("config_file", "w", encoding="utf-8") as f:
         f.write(" ")
     config = EverestConfig.with_defaults(**{ConfigKeys.CONFIGPATH: "config_file"})

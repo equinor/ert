@@ -6,15 +6,13 @@ from everest.bin.config_branch_script import (
 )
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-from tests.everest.utils import relpath, tmpdir
+from tests.everest.utils import relpath
 
-CONFIG_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 CONFIG_FILE = "config_advanced.yml"
 CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
 
 
-@tmpdir(CONFIG_PATH)
-def test_get_controls_for_batch():
+def test_get_controls_for_batch(copy_math_func_test_data_to_tmp):
     assert opt_controls_by_batch(CACHED_SEBA_FOLDER, 1) is not None
 
     assert opt_controls_by_batch(CACHED_SEBA_FOLDER, 42) is None
@@ -38,8 +36,7 @@ def test_get_controls_for_batch():
     )
 
 
-@tmpdir(CONFIG_PATH)
-def test_update_controls_initial_guess():
+def test_update_controls_initial_guess(copy_math_func_test_data_to_tmp):
     old_controls = load_yaml(CONFIG_FILE)[CK.CONTROLS]
 
     assert len(old_controls) == 1

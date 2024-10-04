@@ -7,19 +7,15 @@ from ruamel.yaml import YAML
 
 import everest
 from everest.config import EverestConfig
-from tests.everest.utils import relpath, tmpdir
 
-TMPL_TEST_PATH = os.path.join("test_data", "templating")
 TMPL_CONFIG_FILE = "config.yml"
 TMPL_WELL_DRILL_FILE = os.path.join("templates", "well_drill_info.tmpl")
 TMPL_DUAL_INPUT_FILE = os.path.join("templates", "dual_input.tmpl")
 
-MATH_TEST_PATH = relpath("..", "..", "test-data", "everest", "math_func")
 MATH_CONFIG_FILE = "config_minimal.yml"
 
 
-@tmpdir(relpath(TMPL_TEST_PATH))
-def test_render_invalid():
+def test_render_invalid(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
     prod_wells = {"PROD%d" % idx: 0.3 * idx for idx in range(4)}
@@ -45,8 +41,7 @@ def test_render_invalid():
         render(prod_in, TMPL_WELL_DRILL_FILE, None)
 
 
-@tmpdir(relpath(TMPL_TEST_PATH))
-def test_render():
+def test_render(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
     wells = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
@@ -76,8 +71,7 @@ def test_render():
             assert expected_string == line
 
 
-@tmpdir(relpath(TMPL_TEST_PATH))
-def test_render_multiple_input():
+def test_render_multiple_input(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
     wells_north = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
@@ -99,8 +93,7 @@ def test_render_multiple_input():
     assert output == ["0.2 vs 0.8"]
 
 
-@tmpdir(relpath(TMPL_TEST_PATH))
-def test_render_executable():
+def test_render_executable(copy_template_test_data_to_tmp):
     assert os.access(everest.jobs.render, os.X_OK)
 
     # Dump input
@@ -132,15 +125,13 @@ def test_render_executable():
 
 
 @pytest.mark.integration_test
-@tmpdir(relpath(TMPL_TEST_PATH))
-def test_install_template():
+def test_install_template(copy_template_test_data_to_tmp):
     config = EverestConfig.load_file(TMPL_CONFIG_FILE)
     workflow = everest.suite._EverestWorkflow(config)
     workflow.start_optimization()
 
 
-@tmpdir(None)
-def test_well_order_template():
+def test_well_order_template(change_to_tmpdir):
     order_tmpl = everest.templates.fetch_template("well_order.tmpl")
 
     well_order = {
@@ -173,8 +164,7 @@ def test_well_order_template():
 
 
 @pytest.mark.integration_test
-@tmpdir(relpath(MATH_TEST_PATH))
-def test_user_specified_data_n_template():
+def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp):
     """
     Ensure that a user specifying a data resource and an installed_template
     with "extra_data", the results of that template will be passed to the

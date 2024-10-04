@@ -1,21 +1,16 @@
-import os
-
 import pytest
 
 import everest
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
-from tests.everest.utils import relpath, tmpdir
 
-root = os.path.join("..", "..", "test-data", "everest", "math_func")
-config_file = "config_minimal.yml"
+CONFIG_FILE = "config_minimal.yml"
 
 
 @pytest.mark.integration_test
-@tmpdir(relpath(root))
-def test_seed():
+def test_seed(copy_math_func_test_data_to_tmp):
     random_seed = 42
-    config = EverestConfig.load_file(config_file)
+    config = EverestConfig.load_file(CONFIG_FILE)
     config.environment.random_seed = random_seed
 
     ever_workflow = everest.suite._EverestWorkflow(config)
@@ -28,9 +23,8 @@ def test_seed():
 
 
 @pytest.mark.integration_test
-@tmpdir(relpath(root))
-def test_loglevel():
-    config = EverestConfig.load_file(config_file)
+def test_loglevel(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file(CONFIG_FILE)
     config.environment.log_level = "info"
     ever_workflow = everest.suite._EverestWorkflow(config)
     config = ever_workflow.config

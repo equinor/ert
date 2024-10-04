@@ -17,11 +17,11 @@ from everest.strings import (
 )
 from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
-from tests.everest.utils import relpath, tmpdir
 
 
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_that_one_experiment_creates_one_ensemble_per_batch():
+def test_that_one_experiment_creates_one_ensemble_per_batch(
+    copy_math_func_test_data_to_tmp,
+):
     config = EverestConfig.load_file("config_minimal.yml")
     workflow = _EverestWorkflow(config)
     assert workflow is not None
@@ -43,8 +43,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch():
 
 @pytest.mark.integration_test
 @patch("ert.simulator.BatchSimulator.start", return_value=None)
-@tmpdir(relpath("test_data", "mocked_test_case"))
-def test_everest_output(start_mock):
+def test_everest_output(start_mock, copy_mocked_test_data_to_tmp):
     config_folder = os.getcwd()
     config = EverestConfig.load_file("mocked_test_case.yml")
     everest_output_dir = config.output_dir
@@ -107,8 +106,7 @@ def test_everest_output(start_mock):
 
 
 @patch("ert.simulator.BatchSimulator.start", return_value=None)
-@tmpdir(relpath("..", "..", "test-data", "everest", "math_func"))
-def test_save_running_config(start_mock):
+def test_save_running_config(start_mock, copy_math_func_test_data_to_tmp):
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
     ert_config = ErtConfig.with_plugins().from_dict(

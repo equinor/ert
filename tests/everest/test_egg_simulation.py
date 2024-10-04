@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 
 import pytest
 
@@ -15,11 +14,9 @@ from everest.simulator.everest_to_ert import everest_to_ert_config
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
-    relpath,
     skipif_no_everest_models,
     skipif_no_opm,
     skipif_no_simulator,
-    tmpdir,
 )
 
 CONFIG_FILE = "everest/model/config.yml"
@@ -461,7 +458,6 @@ SUM_KEYS = [
         for group in ["FIELD", "INJECT", "PRODUC"]
     ]
 ]
-ROOT = os.path.join("..", "..", "test-data", "everest", "egg")
 
 
 def sort_res_summary(ert_config):
@@ -565,8 +561,7 @@ def _generate_exp_ert_config(config_path, output_dir):
 
 
 @skipif_no_opm
-@tmpdir(relpath(ROOT))
-def test_egg_model_convert():
+def test_egg_model_convert(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     ert_config = everest_to_ert_config(config)
 
@@ -581,10 +576,9 @@ def test_egg_model_convert():
 
 
 @hide_opm
-@tmpdir(relpath(ROOT))
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-def test_egg_model_convert_no_opm():
+def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     ert_config = everest_to_ert_config(config)
 
@@ -601,8 +595,7 @@ def test_egg_model_convert_no_opm():
 
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@tmpdir(relpath(ROOT))
-def test_opm_fail_default_summary_keys():
+def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
     pytest.importorskip("everest_models")
 
     config = EverestConfig.load_file(CONFIG_FILE)
@@ -628,8 +621,7 @@ def test_opm_fail_default_summary_keys():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @skipif_no_opm
-@tmpdir(relpath(ROOT))
-def test_opm_fail_explicit_summary_keys():
+def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     extra_sum_keys = [
         "GOIR:PRODUC",
         "GOIT:INJECT",
@@ -674,8 +666,7 @@ def test_opm_fail_explicit_summary_keys():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
-@tmpdir(relpath(ROOT))
-def test_init_egg_model():
+def test_init_egg_model(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     ert_config = everest_to_ert_config(config, site_config=ErtConfig.read_site_config())
     ErtConfig.with_plugins().from_dict(config_dict=ert_config)
@@ -685,8 +676,7 @@ def test_init_egg_model():
 @pytest.mark.everest_models_test
 @skipif_no_simulator
 @pytest.mark.simulation_test
-@tmpdir(relpath(ROOT))
-def test_run_egg_model():
+def test_run_egg_model(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     # test callback
@@ -791,8 +781,7 @@ def test_run_egg_model():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @skipif_no_opm
-@tmpdir(relpath(ROOT))
-def test_egg_model_wells_json_output_no_none():
+def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     _ = everest_to_ert_config(config)
 
@@ -812,9 +801,9 @@ def test_egg_model_wells_json_output_no_none():
 @skipif_no_simulator
 @pytest.mark.simulation_test
 @pytest.mark.timeout(0)
-def test_egg_snapshot(tmp_path, snapshot, monkeypatch):
-    shutil.copytree(relpath(ROOT), tmp_path, dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
+def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
+    # shutil.copytree(relpath(ROOT), tmp_path, dirs_exist_ok=True)
+    # monkeypatch.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
     class CBTracker(object):
