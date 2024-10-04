@@ -196,6 +196,17 @@ def create_run_path(
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
+            mkdir_waittime = 0.0
+            while not run_path.exists() and mkdir_waittime < 5:
+                # This should be a very rare event, but can in theory happen
+                # on network mounted disks.
+                mkdir_waittime += 0.1
+                time.sleep(0.1)
+            if mkdir_waittime > 0:
+                logger.warning(
+                    f"Slow runpath creation, {run_path} took "
+                    f"{mkdir_waittime} seconds to verify for existence."
+                )
             for source_file, target_file in ert_config.ert_templates:
                 target_file = substitution_list.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
