@@ -36,13 +36,12 @@ from ert.plugins import ErtPluginManager
 
 BUTTON_STYLE_SHEET: str = """
     QPushButton {
-    border: 2px solid darkgrey;
     border-radius: 10px;
     background-color: rgba(255, 255, 255, 0);
     padding-bottom: 10px;
     }
     QPushButton:hover {
-       background-color: rgba(255, 255, 255, 200);
+       background-color: rgba(50, 50, 50, 90);
     }
 """
 MENU_ITEM_STYLE_SHEET: str = """
@@ -181,7 +180,7 @@ class ErtMainWindow(QMainWindow):
 
     def _add_sidebar_button(self, name: str, icon: QIcon) -> QPushButton:
         button = QPushButton(self.side_frame)
-        button.setFixedSize(80, 80)
+        button.setFixedSize(60, 60)
         button.setCursor(QCursor(Qt.PointingHandCursor))
         button.setStyleSheet(BUTTON_STYLE_SHEET)
         pad = 30
