@@ -49,21 +49,17 @@ class PatchedBatchSimulator(BatchSimulator):
         try:
             ens_config = ert_config.ensemble_config
             for control_name, variables in controls.items():
-                ens_config.addNode(
-                    ExtParamConfig(
-                        name=control_name,
-                        input_keys=variables,
-                        output_file=control_name + ".json",
-                    )
+                ens_config.parameter_configs[control_name] = ExtParamConfig(
+                    name=control_name,
+                    input_keys=variables,
+                    output_file=control_name + ".json",
                 )
 
             if "gen_data" not in ens_config:
-                ens_config.addNode(
-                    GenDataConfig(
-                        keys=results,
-                        input_files=[f"{k}" for k in results],
-                        report_steps_list=[None for _ in results],
-                    )
+                ens_config.response_configs["gen_data"] = GenDataConfig(
+                    keys=results,
+                    input_files=[f"{k}" for k in results],
+                    report_steps_list=[None for _ in results],
                 )
             else:
                 existing_gendata = ens_config.response_configs["gen_data"]

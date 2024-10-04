@@ -538,7 +538,7 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
     # configuration key. When initializing an ERT config object, it is ignored.
     # It is used by the Simulator object to inject ExtParamConfig nodes.
     for control in ever_config.controls or []:
-        ens_config.addNode(
+        ens_config.parameter_configs[control.name] = (
             ExtParamConfig(
                 name=control.name,
                 input_keys=_get_variables(control.variables),
