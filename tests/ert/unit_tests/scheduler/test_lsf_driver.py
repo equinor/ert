@@ -1326,7 +1326,10 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
         # detail we do not want to track.
         assert returncode in (SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
 
+        if returncode != LSF_FAILED_JOB:
+            # We will only see the was_killed file if a compute node
+            # got a chance to start to job script:
+            wait_until((tmp_path / "was_killed").exists, timeout=4)
+
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)
-
-    wait_until((tmp_path / "was_killed").exists, timeout=10)
