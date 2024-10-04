@@ -11,7 +11,7 @@ authors = [
     { name = "Equinor ASA", email = "fg_sib-scout@equinor.com" },
 ]
 description = "Ensemble based Reservoir Tool (ERT)"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "GPL-3.0" }
 classifiers = [
@@ -21,8 +21,6 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -41,7 +39,6 @@ dependencies = [
     "filelock",
     "httpx",
     "humanize",
-    "importlib_resources; python_version <= '3.8'",
     "iterative_ensemble_smoother>=0.2.6",
     "jinja2 >= 2.10",
     "lark",
@@ -70,8 +67,7 @@ dependencies = [
     "resfo",
     "scipy >= 1.10.1",
     "seaborn",
-    "tables; python_version >= '3.9'",  # extra dependency for pandas (hdf5)
-    "tables<3.9; python_version == '3.8'",
+    "tables",  # extra dependency for pandas (hdf5)
     "tabulate",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
@@ -244,7 +240,7 @@ include = ["src"]
 exclude = ["tests"]
 reportMissingImports = "error"
 typeCheckingMode = "standard"
-pythonVersion = "3.8"
+pythonVersion = "3.11"
 
 [tool.pyright.defineConstant]
 PYSIDE6 = false

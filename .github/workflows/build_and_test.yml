@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
+        python-version: [ '3.10', '3.11', '3.12' ]
 
     uses: ./.github/workflows/build-wheels.yml
     with:
@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.8', '3.11', '3.12' ]
+        python-version: [ '3.11', '3.12' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test', 'ui-test', 'integration-test', 'everest-models-test', 'doc', 'everest-docs-entry-test' ]
-        python-version: [ '3.8', '3.11', '3.12' ]
+        python-version: [ '3.11', '3.12' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_everest.yml
     with:
@@ -62,7 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ '3.8', '3.11', '3.12' ]
+        python-version: [ '3.11', '3.12' ]
     uses: ./.github/workflows/test_ert_with_slurm.yml
     with:
       os: ${{ matrix.os }}
@@ -106,11 +106,9 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'test', 'integration-test', 'everest-models-test' ]
-        python-version: [ '3.8', '3.12' ]
         os: [ 'macos-13', 'macos-14', 'macos-14-large']
+        python-version: [ '3.12' ]
         exclude:
-          - os: 'macos-14'
-            python-version: '3.8'
           - os: 'macos-13'
             python-version: '3.12'
     uses: ./.github/workflows/test_everest.yml
@@ -126,11 +124,9 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.8', '3.12' ]
+        python-version: [ '3.12' ]
         os: [ 'macos-13', 'macos-14']
         exclude:
-          - os: 'macos-14'
-            python-version: '3.8'
           - os: 'macos-13'
             python-version: '3.12'
 
