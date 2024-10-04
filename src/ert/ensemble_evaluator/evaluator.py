@@ -87,6 +87,7 @@ class EnsembleEvaluator:
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
         self._batching_interval: int = 2
+        self._complete_batch: asyncio.Event = asyncio.Event()
 
     async def _publisher(self) -> None:
         while True:
@@ -140,6 +141,7 @@ class EnsembleEvaluator:
                 and asyncio.get_running_loop().time() - start_time
                 < self._batching_interval
             ):
+                self._complete_batch.clear()
                 try:
                     event = await asyncio.wait_for(self._events.get(), timeout=0.1)
                     function = event_handler[type(event)]
@@ -147,6 +149,7 @@ class EnsembleEvaluator:
                     self._events.task_done()
                 except asyncio.TimeoutError:
                     continue
+            self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
 
     async def _fm_handler(
@@ -329,10 +332,11 @@ class EnsembleEvaluator:
 
             logger.debug("Sending termination-message to clients...")
 
+            await self._events.join()
+            await self._complete_batch.wait()
+            await self._batch_processing_queue.join()
             event = EETerminated(ensemble=self._ensemble.id_)
             await self._events_to_send.put(event)
-            await self._events.join()
-            await self._batch_processing_queue.join()
             await self._events_to_send.join()
         logger.debug("Async server exiting.")
 
