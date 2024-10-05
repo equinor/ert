@@ -4,10 +4,11 @@ import logging
 import re
 import shutil
 from abc import abstractmethod
-from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Dict, List, Mapping, Optional, no_type_check
+from dataclasses import asdict, field, fields
+from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
 
 import pydantic
+from pydantic.dataclasses import dataclass
 from typing_extensions import Annotated
 
 from .parsing import (
@@ -27,6 +28,7 @@ NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
 
 @pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
 class QueueOptions:
+    name: str
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: Optional[str] = None
@@ -79,6 +81,8 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
+
     @property
     def driver_options(self) -> Dict[str, Any]:
         return {}
@@ -86,6 +90,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.LSF] = QueueSystem.LSF
     bhist_cmd: Optional[NonEmptyString] = None
     bjobs_cmd: Optional[NonEmptyString] = None
     bkill_cmd: Optional[NonEmptyString] = None
@@ -97,6 +102,7 @@ class LsfQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
@@ -107,6 +113,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
     qsub_cmd: Optional[NonEmptyString] = None
     qstat_cmd: Optional[NonEmptyString] = None
     qdel_cmd: Optional[NonEmptyString] = None
@@ -124,6 +131,7 @@ class TorqueQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["queue_name"] = driver_dict.pop("queue")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
@@ -133,7 +141,7 @@ class TorqueQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory_per_job")
     @classmethod
-    def check_memory_per_job(cls, value: str) -> str:
+    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
         if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -141,13 +149,14 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
+    name: Literal[QueueSystem.SLURM] = QueueSystem.SLURM
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
     squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
-    memory: str = ""
+    memory: Optional[NonEmptyString] = None
     memory_per_cpu: Optional[NonEmptyString] = None
     partition: Optional[NonEmptyString] = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
@@ -156,6 +165,7 @@ class SlurmQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
+        driver_dict.pop("name")
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
         driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
@@ -169,7 +179,7 @@ class SlurmQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory", "memory_per_cpu")
     @classmethod
-    def check_memory_per_job(cls, value: str) -> str:
+    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
         if not queue_memory_usage_formats[QueueSystem.SLURM].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -179,7 +189,9 @@ class SlurmQueueOptions(QueueOptions):
 class QueueMemoryStringFormat:
     suffixes: List[str]
 
-    def validate(self, mem_str_format: str) -> bool:
+    def validate(self, mem_str_format: Optional[str]) -> bool:
+        if mem_str_format is None:
+            return True
         return (
             re.match(
                 r"\d+(" + "|".join(self.suffixes) + ")$",
@@ -255,8 +267,10 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: QueueOptions = field(default_factory=QueueOptions)
-    queue_options_test_run: QueueOptions = field(default_factory=LocalQueueOptions)
+    queue_options: Union[
+        LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
+    ] = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
+    queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
@@ -349,7 +363,7 @@ class QueueConfig:
             selected_queue_system,
             queue_options,
             queue_options_test_run,
-            stop_long_running=stop_long_running,
+            stop_long_running=bool(stop_long_running),
         )
 
     def create_local_copy(self) -> QueueConfig:

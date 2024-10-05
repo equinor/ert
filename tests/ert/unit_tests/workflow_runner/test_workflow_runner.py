@@ -98,9 +98,14 @@ def test_workflow_failed_job():
     workflow_runner = WorkflowRunner(workflow)
 
     assert not workflow_runner.isRunning()
-    with patch.object(
-        WorkflowRunner, "run_blocking", side_effect=Exception("mocked workflow error")
-    ), workflow_runner:
+    with (
+        patch.object(
+            WorkflowRunner,
+            "run_blocking",
+            side_effect=Exception("mocked workflow error"),
+        ),
+        workflow_runner,
+    ):
         workflow_runner.wait()
         assert workflow_runner.exception() is not None
 

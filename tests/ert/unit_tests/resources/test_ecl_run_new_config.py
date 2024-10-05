@@ -70,8 +70,9 @@ def test_get_version_raise():
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @mock.patch.dict(os.environ, {"LSB_JOBID": "some-id"})
 def test_env(eclrun_conf):
-    with open("eclrun", "w", encoding="utf-8") as f, open(
-        "DUMMY.DATA", "w", encoding="utf-8"
+    with (
+        open("eclrun", "w", encoding="utf-8") as f,
+        open("DUMMY.DATA", "w", encoding="utf-8"),
     ):
         f.write(
             """#!/usr/bin/env python

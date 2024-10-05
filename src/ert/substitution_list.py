@@ -2,25 +2,20 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import Any, Optional
+
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile("<[^<>]+>")
 
 
-# Python 3.8 does not implement UserDict as a MutableMapping, meaning it's not
-# possible to specify the key and value types.
-#
-# Instead, we only set the types during type checking
-if TYPE_CHECKING:
-    from collections import UserDict
-
-    _UserDict = UserDict[str, str]
-else:
-    from collections import UserDict as _UserDict
+from collections import UserDict
 
 
-class SubstitutionList(_UserDict):
+class SubstitutionList(UserDict[str, str]):
     def substitute(
         self,
         to_substitute: str,
@@ -75,6 +70,41 @@ class SubstitutionList(_UserDict):
 
     def __str__(self) -> str:
         return f"SubstitutionList({self._concise_representation()})"
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        def _serialize(instance: Any, info: Any) -> Any:
+            return dict(instance)
+
+        from_str_schema = core_schema.chain_schema(
+            [
+                core_schema.str_schema(),
+                core_schema.no_info_plain_validator_function(cls),
+            ]
+        )
+
+        return core_schema.json_or_python_schema(
+            json_schema=from_str_schema,
+            python_schema=core_schema.union_schema(
+                [
+                    from_str_schema,
+                    core_schema.is_instance_schema(cls),
+                ]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                _serialize, info_arg=True
+            ),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        return handler(core_schema.str_schema())
 
 
 def _replace_strings(subst_list: SubstitutionList, string: str) -> Optional[str]:

@@ -95,7 +95,9 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert isinstance(gui, Suggestor)
         suggestions = gui.findChildren(SuggestorMessage)
         shown_messages = [elem.lbl.text() for elem in suggestions]
-        assert all(e in m for m, e in zip(shown_messages, expected_message_types))
+        assert all(
+            e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -139,9 +141,10 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
 def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     qapp, tmp_path
 ):
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly-no-gen-kw.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if "GEN_KW" not in line:
                 fout.write(line)
@@ -264,9 +267,12 @@ def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
                     1000, lambda: handle_run_path_error_dialog(gui, qtbot)
                 )
 
-    with StorageService.init_service(
-        project=os.path.abspath(snake_oil_case.ens_path),
-    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+    with (
+        StorageService.init_service(
+            project=os.path.abspath(snake_oil_case.ens_path),
+        ),
+        open_storage(snake_oil_case.ens_path, mode="w") as storage,
+    ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
         experiment_panel = gui.findChild(ExperimentPanel)
 

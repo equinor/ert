@@ -118,7 +118,9 @@ class ForwardModelStatus:
         end_time = _deserialize_date(status_data["end_time"])
         status = cls(status_data["run_id"], start_time, end_time=end_time)
 
-        for fm_step, state in zip(fm_steps_data["jobList"], status_data["jobs"]):
+        for fm_step, state in zip(
+            fm_steps_data["jobList"], status_data["jobs"], strict=False
+        ):
             status.add_step(ForwardModelStepStatus.load(fm_step, state, path))
 
         return status

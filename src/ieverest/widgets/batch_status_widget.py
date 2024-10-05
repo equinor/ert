@@ -170,7 +170,7 @@ class BatchStatusWidget(QWidget):
             wdg.setFixedSize(self._ICON_SIZE)
 
         # update the buttons
-        for wdg, info in zip(self._jobs_wdgs, progress):
+        for wdg, info in zip(self._jobs_wdgs, progress, strict=False):
             job_status = get_job_status(info)
             icon_name = self._STATUS_ICONS.get(job_status, self._DEFAULT_STATUS_ICON)
 

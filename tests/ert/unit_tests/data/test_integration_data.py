@@ -122,7 +122,7 @@ def create_summary_observation():
     rng = np.random.default_rng()
     values = rng.uniform(0, 1.5, 200)
     errors = values * 0.1
-    for restart, (value, error) in enumerate(zip(values, errors)):
+    for restart, (value, error) in enumerate(zip(values, errors, strict=False)):
         observations += f"""
     \nSUMMARY_OBSERVATION FOPR_{restart + 1}
 {{
@@ -159,4 +159,6 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil, create_measured_data)
     """
     obs_keys = facade_snake_oil.get_observations().datasets.keys()
     measured_data = create_measured_data(obs_keys)
-    snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
+    snapshot.assert_match(
+        measured_data.data.round(10).to_csv(), "snake_oil_measured_output.csv"
+    )

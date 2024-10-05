@@ -1,5 +1,6 @@
 import abc
-from typing import TYPE_CHECKING, List, Set, no_type_check
+from collections import UserDict
+from typing import List, Set, no_type_check
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -8,19 +9,8 @@ from .context_values import ContextList, ContextString
 from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo
 
-# Python 3.8 does not implement UserDict as a MutableMapping, meaning it's not
-# possible to specify the key and value types.
-#
-# Instead, we only set the types during type checking
-if TYPE_CHECKING:
-    from collections import UserDict
 
-    _UserDict = UserDict[str, SchemaItem]
-else:
-    from collections import UserDict as _UserDict
-
-
-class SchemaItemDict(_UserDict):
+class SchemaItemDict(UserDict[str, SchemaItem]):
     def search_for_unset_required_keywords(
         self, config_dict: ConfigDict, filename: str
     ) -> None:
