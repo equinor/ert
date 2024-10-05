@@ -147,7 +147,7 @@ def _generate_step(
     ]
 
     with open(config_file, "w", encoding="utf-8") as conf:
-        for key, val in zip(forward_model_keywords, values):
+        for key, val in zip(forward_model_keywords, values, strict=False):
             if key == "ENV" and val:
                 for k, v in val.items():
                     conf.write(f"{key} {k} {v}\n")

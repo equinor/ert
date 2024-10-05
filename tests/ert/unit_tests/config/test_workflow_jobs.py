@@ -28,7 +28,10 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.warns(
-        ConfigWarning, match="Duplicate workflow jobs with name 'CAREFUL_COPY_FILE'"
-    ), ErtPluginContext():
+    with (
+        pytest.warns(
+            ConfigWarning, match="Duplicate workflow jobs with name 'CAREFUL_COPY_FILE'"
+        ),
+        ErtPluginContext(),
+    ):
         _ = ErtConfig.from_file(test_config_file_name)

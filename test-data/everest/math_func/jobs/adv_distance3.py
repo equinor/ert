@@ -6,7 +6,7 @@ import sys
 
 
 def compute_distance_squared(p, q):
-    d = ((i - j) ** 2 for i, j in zip(p, q))
+    d = ((i - j) ** 2 for i, j in zip(p, q, strict=False))
     d = sum(d)
     return -d
 

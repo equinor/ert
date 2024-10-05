@@ -37,7 +37,7 @@ def create_run_arguments(
     job_names = runpaths.get_jobnames(range(len(active_realizations)), iteration)
 
     for iens, (run_path, job_name, active) in enumerate(
-        zip(paths, job_names, active_realizations)
+        zip(paths, job_names, active_realizations, strict=False)
     ):
         run_args.append(
             RunArg(

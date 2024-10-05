@@ -287,7 +287,9 @@ class BaseRunModel(ABC):
             return [
                 initial and not completed
                 for initial, completed in zip(
-                    self._initial_realizations_mask, self._completed_realizations_mask
+                    self._initial_realizations_mask,
+                    self._completed_realizations_mask,
+                    strict=False,
                 )
             ]
         else:

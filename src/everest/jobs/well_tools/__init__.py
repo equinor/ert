@@ -65,7 +65,7 @@ def well_set(well_data_file, new_entry_file, output_file):
         )
         raise ValueError(err_msg)
 
-    for well_entry, data_elem in zip(well_data, entry_data):
+    for well_entry, data_elem in zip(well_data, entry_data, strict=False):
         well_entry[entry_key] = data_elem
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:

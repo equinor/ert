@@ -232,7 +232,7 @@ class _DetachedMonitor:
         labels = ("Waiting", "Pending", "Running", "Complete", "FAILED")
         return " | ".join(
             f"{color}{key}: {value}{Fore.RESET}"
-            for color, key, value in zip(colors, labels, status)
+            for color, key, value in zip(colors, labels, status, strict=False)
         )
 
     @classmethod

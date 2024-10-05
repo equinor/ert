@@ -189,6 +189,7 @@ def _get_observations_and_responses(
                         list(observations_and_responses["report_step"].data)
                         * len(observations_and_responses["index"].data),
                         observations_and_responses["index"].data,
+                        strict=False,
                     )
                 ]
             )
@@ -351,6 +352,7 @@ def _load_observations_and_responses(
         ens_mean_mask,
         ens_std_mask,
         indexes,
+        strict=False,
     ):
         update_snapshot.append(
             ObservationAndResponseSnapshot(

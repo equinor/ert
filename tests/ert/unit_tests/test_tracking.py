@@ -299,7 +299,7 @@ def test_setting_env_context_during_run(
     thread.join()
 
     expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
-    for event, environment in zip(queue.events, queue.environment):
+    for event, environment in zip(queue.events, queue.environment, strict=False):
         if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
             for key in expected:
                 assert key in environment

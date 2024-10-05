@@ -141,7 +141,8 @@ class MeasuredData:
                 index_vals = ds.observations.coords.to_index().droplevel("report_step")
 
             index_vals = [
-                (name, data_i, i) for i, (name, data_i) in zip(data_index, index_vals)
+                (name, data_i, i)
+                for i, (name, data_i) in zip(data_index, index_vals, strict=False)
             ]
             measured_data.append(
                 pd.DataFrame(

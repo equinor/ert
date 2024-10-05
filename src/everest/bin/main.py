@@ -104,7 +104,9 @@ class EverestMain(object):
         pubmets.remove("methods_help")  # Current method should not show up in desc
         maxlen = max(len(m) for m in pubmets)
         docstrs = [getattr(cls, m).__doc__ for m in pubmets]
-        doclist = [m.ljust(maxlen + 1) + d for m, d in zip(pubmets, docstrs)]
+        doclist = [
+            m.ljust(maxlen + 1) + d for m, d in zip(pubmets, docstrs, strict=False)
+        ]
         return "\n".join(doclist)
 
     def run(self, args):

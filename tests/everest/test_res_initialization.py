@@ -362,7 +362,7 @@ def test_install_data_no_init():
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmd_list = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = list(zip(sources, targets, links, cmd_list))
+    test_base = list(zip(sources, targets, links, cmd_list, strict=False))
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base[1:2]:
         with tmp(relpath("test_data")):
@@ -470,7 +470,7 @@ def test_install_data():
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmds = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = zip(sources, targets, links, cmds)
+    test_base = zip(sources, targets, links, cmds, strict=False)
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base:
         with tmp(relpath("test_data")):

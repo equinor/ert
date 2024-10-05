@@ -457,7 +457,9 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
 
     with open(runpath_list_path, "r", encoding="utf-8") as f:
-        dumped_runpaths = list(zip(*[line.split() for line in f.readlines()]))[1]
+        dumped_runpaths = list(
+            zip(*[line.split() for line in f.readlines()], strict=False)
+        )[1]
 
     assert list(exp_runpaths) == list(dumped_runpaths)
 
