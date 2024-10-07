@@ -5,6 +5,7 @@ import re
 import shutil
 import stat
 import subprocess
+import textwrap
 from pathlib import Path
 from unittest import mock
 
@@ -46,7 +47,7 @@ def eclrun_conf():
             "ECLPATH": "/prog/res/ecl/grid",
             "PATH": "/prog/res/ecl/grid/macros",
             "F_UFMTENDIAN": "big",
-            "LSB_JOB_ID": None,
+            "LSB_JOBID": None,
         }
     }
 
@@ -68,110 +69,101 @@ def test_get_version_raise():
 
 
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-@mock.patch.dict(os.environ, {"LSB_JOBID": "some-id"})
-def test_env(eclrun_conf):
-    with open("eclrun", "w", encoding="utf-8") as f, open(
-        "DUMMY.DATA", "w", encoding="utf-8"
-    ):
-        f.write(
-            """#!/usr/bin/env python
-import os
-import json
-with open("env.json", "w") as f:
-    json.dump(dict(os.environ), f)
-"""
-        )
+def test_eclrun_will_prepend_path_and_get_env_vars_from_ecl100config(
+    eclrun_conf,
+):
+    # GIVEN a mocked eclrun that only dumps it env variables
+    Path("eclrun").write_text(
+        textwrap.dedent(
+            """\
+                #!/usr/bin/env python
+                import os
+                import json
+                with open("env.json", "w") as f:
+                    json.dump(dict(os.environ), f)
+                """
+        ),
+        encoding="utf-8",
+    )
     os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
+    Path("DUMMY.DATA").write_text("", encoding="utf-8")
     econfig = ecl_config.Ecl100Config()
-    eclrun_config = ecl_config.EclrunConfig(econfig, "2019.3")
+    eclrun_config = ecl_config.EclrunConfig(econfig, "dummyversion")
     erun = ecl_run.EclRun("DUMMY", None, check_status=False)
     with mock.patch.object(
         erun, "_get_run_command", mock.MagicMock(return_value="./eclrun")
     ):
+        # WHEN eclrun is run
         erun.runEclipse(eclrun_config=eclrun_config)
+
+    # THEN the env provided to eclrun is the same
+    # as the env from ecl_config, but PATH has been
+    # prepended with the value from ecl_config
     with open("env.json", encoding="utf-8") as f:
         run_env = json.load(f)
 
-    eclrun_env = eclrun_conf["eclrun_env"]
-    for k, v in eclrun_env.items():
-        if v is None:
-            assert k not in run_env
-            continue
+    expected_eclrun_env = eclrun_conf["eclrun_env"]
+    for key, value in expected_eclrun_env.items():
+        if value is None:
+            assert key not in run_env
+            continue  # Typically LSB_JOBID
 
-        if k == "PATH":
-            assert run_env[k].startswith(v)
+        if key == "PATH":
+            assert run_env[key].startswith(value)
         else:
-            assert v == run_env[k]
+            assert value == run_env[key]
 
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @pytest.mark.requires_eclipse
-def test_run(source_root):
+@pytest.mark.parametrize(
+    "version, expected_suffix",
+    [
+        ("2019.1", "LOG"),
+        # Eclipse100 changed the suffix for logfile from 2019.3
+        ("2019.3", "OUT"),
+    ],
+)
+def test_ecl100_binary_can_produce_output(source_root, version, expected_suffix):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
 
     erun = ecl_run.EclRun("SPE1.DATA", None)
-    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.1"))
+    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, version))
 
-    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
-    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.LOG")
-
-    assert os.path.isfile(ok_path)
-    assert os.path.isfile(log_path)
-    assert os.path.getsize(log_path) > 0
-
-    errors = erun.parseErrors()
-    assert len(errors) == 0
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-@pytest.mark.requires_eclipse
-def test_run_new_log_file(source_root):
-    shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
-        "SPE1.DATA",
-    )
-    econfig = ecl_config.Ecl100Config()
-
-    erun = ecl_run.EclRun("SPE1.DATA", None)
-    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
-
-    ok_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OK")
-    log_path = os.path.join(erun.runPath(), f"{erun.baseName()}.OUT")
+    ok_path = Path(erun.runPath()) / f"{erun.baseName()}.OK"
+    log_or_out_path = Path(erun.runPath()) / f"{erun.baseName()}.{expected_suffix}"
 
     assert os.path.isfile(ok_path)
-    assert os.path.isfile(log_path)
-    assert os.path.getsize(log_path) > 0
+    assert log_or_out_path.exists()
+    assert log_or_out_path.stat().st_size > 0
 
-    errors = erun.parseErrors()
-    assert len(errors) == 0
+    assert len(erun.parseErrors()) == 0
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_run_api(source_root):
+def test_forward_model_cmd_line_api_works(source_root):
+    # ecl_run.run() is the forward model wrapper around ecl_run.runEclipse()
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
-
-    assert os.path.isfile("SPE1.DATA")
+    ecl_run.run(ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3"])
+    assert Path("SPE1.OK").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_failed_run(source_root):
+def test_eclrun_will_raise_on_deck_errors(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1_ERROR.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -201,9 +193,9 @@ def test_failed_run_nonzero_returncode(monkeypatch):
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_failed_run_OK(source_root):
+def test_deck_errors_can_be_ignored(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1_ERROR.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
     econfig = ecl_config.Ecl100Config()
@@ -215,57 +207,67 @@ def test_failed_run_OK(source_root):
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_no_hdf5_output_by_default_with_ecl100(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    # check that by default .h5 file IS NOT produced
     ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
-    assert not os.path.exists("SPE1.h5")
+    assert not Path("SPE1.h5").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_flag_to_produce_hdf5_output_with_ecl100(source_root):
+def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
-    # check that with flag .h5 file IS produced
     ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
-    assert os.path.exists("SPE1.h5")
+    assert Path("SPE1.h5").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_mpi_run(source_root):
+def test_mpi_run_is_managed_by_system_tool(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1_PARALLEL.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1_PARALLEL.DATA",
         "SPE1_PARALLEL.DATA",
     )
+    assert re.findall(
+        r"PARALLEL\s+2", Path("SPE1_PARALLEL.DATA").read_text(encoding="utf-8")
+    ), "Test requires a deck needing 2 CPUs"
     econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2019.3", "--num-cpu=2"])
-    assert os.path.isfile("SPE1_PARALLEL.OUT")
-    assert os.path.getsize("SPE1_PARALLEL.OUT") > 0
+    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2019.3"])
+
+    assert Path("SPE1_PARALLEL.OUT").stat().st_size > 0, "Eclipse did not run at all"
+    assert Path("SPE1_PARALLEL.MSG").exists(), "No output from MPI process 1"
+    assert Path("SPE1_PARALLEL.2.MSG").exists(), "No output from MPI process 2"
+    assert not Path(
+        "SPE1_PARALLEL.3.MSG"
+    ).exists(), "There should not be 3 MPI processes"
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_summary_block(source_root):
+def test_summary_block_will_return_something(source_root):
     shutil.copy(
-        os.path.join(source_root, "test-data/ert/eclipse/SPE1.DATA"),
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
     econfig = ecl_config.Ecl100Config()
     erun = ecl_run.EclRun("SPE1.DATA", None)
-    ret_value = erun.summary_block()
-    assert ret_value is None
+
+    assert not Path("SPE1.UNSMRY").exists()
+    assert (
+        erun.summary_block() is None
+    ), "summary_block() should return None where there is no SMRY file"
 
     erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
+    assert Path("SPE1.UNSMRY").exists()
     assert erun.summary_block() is not None
 
 
