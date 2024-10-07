@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.plot_api import PlotApiKeyDefinition
 
 
 class FilterPopup(QDialog):

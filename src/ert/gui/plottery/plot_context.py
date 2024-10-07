@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, ClassVar, List, Optional
 if TYPE_CHECKING:
     from pandas import DataFrame
 
+    from ert.gui.plot_api import EnsembleObject
     from ert.gui.plottery import PlotConfig
-    from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class PlotContext:

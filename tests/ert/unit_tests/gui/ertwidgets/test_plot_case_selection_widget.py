@@ -1,7 +1,7 @@
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.plot_api import EnsembleObject
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectionWidget,
     EnsembleSelectListWidget,

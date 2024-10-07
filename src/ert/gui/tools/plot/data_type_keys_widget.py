@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import SearchBox
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.plot_api import PlotApiKeyDefinition
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel

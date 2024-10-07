@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ert.gui.plottery import PlotConfig
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+    from ert.gui.plot_api import PlotApiKeyDefinition
 
 
 class PlotConfigFactory:

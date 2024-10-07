@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from ert.gui.tools.plot.plot_api import PlotApi
+from ert.gui.plot_api import PlotApi
 from ert.services import StorageService
 
 

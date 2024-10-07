@@ -19,8 +19,8 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
+from ert.gui.plot_api import PlotApiKeyDefinition
 from ert.gui.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
 
 from .default_customization_view import DefaultCustomizationView

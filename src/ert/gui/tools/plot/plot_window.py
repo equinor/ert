@@ -10,6 +10,7 @@ from qtpy.QtCore import Qt, Slot
 from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
+from ert.gui.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.plottery import PlotConfig, PlotContext
 from ert.gui.plottery.plots.cesp import CrossEnsembleStatisticsPlot
 from ert.gui.plottery.plots.distribution import DistributionPlot
@@ -18,11 +19,9 @@ from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.plottery.plots.statistics import StatisticsPlot
 from ert.gui.plottery.plots.std_dev import StdDevPlot
-from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
-from .plot_api import PlotApi
 from .plot_ensemble_selection_widget import EnsembleSelectionWidget
 from .plot_widget import PlotWidget
 

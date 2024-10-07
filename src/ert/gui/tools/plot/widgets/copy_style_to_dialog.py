@@ -11,8 +11,8 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import CheckList
+from ert.gui.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot import FilterableKwListModel, FilterPopup
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class CopyStyleToDialog(QDialog):

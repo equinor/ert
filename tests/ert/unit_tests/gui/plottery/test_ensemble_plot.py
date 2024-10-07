@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
+from ert.gui.plot_api import EnsembleObject
 from ert.gui.plottery import PlotConfig, PlotContext
 from ert.gui.plottery.plots.ensemble import EnsemblePlot
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.summary_key_type import is_rate
 
 

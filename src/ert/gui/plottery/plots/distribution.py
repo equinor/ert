@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.plot_api import EnsembleObject
 
 from .plot_tools import PlotTools
 

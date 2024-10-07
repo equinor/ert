@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.plot_api import EnsembleObject
 
 
 class StatisticsPlot:

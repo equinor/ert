@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.plot_api import PlotApiKeyDefinition
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
 

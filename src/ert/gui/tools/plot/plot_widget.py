@@ -20,7 +20,7 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.plot_api import EnsembleObject
 
 if TYPE_CHECKING:
     from ert.gui.plottery import PlotContext

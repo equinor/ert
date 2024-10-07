@@ -7,8 +7,8 @@ import pandas as pd
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from ert.gui.plot_api import EnsembleObject
 from ert.gui.plottery import PlotContext
-from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class StdDevPlot:

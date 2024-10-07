@@ -7,7 +7,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.plot_api import EnsembleObject
 
 from .plot_tools import PlotTools
 
