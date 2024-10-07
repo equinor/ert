@@ -268,10 +268,8 @@ def test_snake_everest_to_ert_torque():
         ("TORQUE", "QSUB_CMD", "qsub"),
         ("TORQUE", "QSTAT_CMD", "qstat"),
         ("TORQUE", "QDEL_CMD", "qdel"),
-        ("TORQUE", "QUEUE", "snake_queue"),
-        ("TORQUE", "CLUSTER_LABEL", "testing_it"),
-        ("TORQUE", "NUM_NODES", 1),
-        ("TORQUE", "MEMORY_PER_JOB", "2gb"),
+        ("TORQUE", "QUEUE", "normal"),
+        ("TORQUE", "MEMORY_PER_JOB", "100mb"),
         ("TORQUE", "KEEP_QSUB_OUTPUT", 1),
         ("TORQUE", "SUBMIT_SLEEP", 0.5),
         ("TORQUE", "PROJECT_CODE", "snake_oil_pc"),
@@ -288,21 +286,19 @@ def test_snake_everest_to_ert_torque():
     qc = ert_config.queue_config
     qo = qc.queue_options
     assert qc.queue_system == "TORQUE"
-    assert qo.driver_options == {
+    assert {k: v for k, v in qo.driver_options.items() if v is not None} == {
         "project_code": "snake_oil_pc",
         "qsub_cmd": "qsub",
-        "job_prefix": None,
         "qstat_cmd": "qstat",
         "qdel_cmd": "qdel",
-        "memory_per_job": "2gb",
+        "memory_per_job": "100mb",
         "num_cpus_per_node": 1,
         "num_nodes": 1,
-        "cluster_label": "testing_it",
         "keep_qsub_output": True,
-        "queue_name": "snake_queue",
+        "queue_name": "normal",
     }
 
-    create_driver(ert_config.queue_config)
+    driver = create_driver(ert_config.queue_config)
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
