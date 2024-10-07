@@ -1,6 +1,6 @@
 import datetime
 
-from ert.gui.plottery import PlotConfig, PlotLimits, PlotStyle
+from ert.gui.tools.plot.plottery import PlotConfig, PlotLimits, PlotStyle
 
 
 def test_plot_style_test_defaults():

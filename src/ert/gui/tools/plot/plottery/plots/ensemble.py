@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Dict, Optional
 import numpy as np
 import pandas as pd
 
-from ert.gui.plottery.plots.history import plotHistory
 from ert.summary_key_type import is_rate
 
+from .history import plotHistory
 from .observations import plotObservations
 from .plot_tools import PlotTools
 
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.plottery import PlotConfig, PlotContext
     from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:

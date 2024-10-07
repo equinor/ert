@@ -1,7 +1,7 @@
 import datetime
 from copy import copy
 
-from ert.gui.plottery import PlotLimits
+from ert.gui.tools.plot.plottery import PlotLimits
 
 
 def test_plot_limits_construction():

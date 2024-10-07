@@ -2,13 +2,12 @@ from typing import TYPE_CHECKING, List, Tuple
 
 from qtpy.QtWidgets import QHBoxLayout
 
-from ert.gui.tools.plot import ColorBox
-from ert.gui.tools.plot import style_chooser as sc
-
+from .color_chooser import ColorBox
 from .customization_view import CustomizationView, WidgetProperty
+from .style_chooser import STYLESET_TOGGLE
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class StyleCustomizationView(CustomizationView):
@@ -34,7 +33,7 @@ class StyleCustomizationView(CustomizationView):
             "observs_style",
             "Observation",
             "Line and marker style for the observation line.",
-            line_style_set=sc.STYLESET_TOGGLE,
+            line_style_set=STYLESET_TOGGLE,
         )
 
         self["default_style"].createLabelLayout(layout)

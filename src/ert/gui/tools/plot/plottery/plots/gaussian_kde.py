@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 class GaussianKDEPlot:

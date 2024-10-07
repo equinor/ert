@@ -19,8 +19,8 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
 
 from .default_customization_view import DefaultCustomizationView
@@ -29,7 +29,7 @@ from .statistics_customization_view import StatisticsCustomizationView
 from .style_customization_view import StyleCustomizationView
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.customize import CustomizationView
+    from .customization_view import CustomizationView
 
 
 class PlotCustomizer(QObject):

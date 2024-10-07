@@ -21,7 +21,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from .plot_api import EnsembleObject
 
 
 class EnsembleSelectionWidget(QWidget):

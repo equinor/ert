@@ -20,17 +20,17 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from .plot_api import EnsembleObject
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotContext
-    from ert.gui.plottery.plots.cesp import CrossEnsembleStatisticsPlot
-    from ert.gui.plottery.plots.distribution import DistributionPlot
-    from ert.gui.plottery.plots.ensemble import EnsemblePlot
-    from ert.gui.plottery.plots.gaussian_kde import GaussianKDEPlot
-    from ert.gui.plottery.plots.histogram import HistogramPlot
-    from ert.gui.plottery.plots.statistics import StatisticsPlot
-    from ert.gui.plottery.plots.std_dev import StdDevPlot
+    from .plottery import PlotContext
+    from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
+    from .plottery.plots.distribution import DistributionPlot
+    from .plottery.plots.ensemble import EnsemblePlot
+    from .plottery.plots.gaussian_kde import GaussianKDEPlot
+    from .plottery.plots.histogram import HistogramPlot
+    from .plottery.plots.statistics import StatisticsPlot
+    from .plottery.plots.std_dev import StdDevPlot
 
 
 class CustomNavigationToolbar(NavigationToolbar2QT):

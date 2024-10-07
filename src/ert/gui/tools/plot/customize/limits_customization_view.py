@@ -7,15 +7,13 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 from qtpy.QtGui import QDoubleValidator, QIntValidator
 from qtpy.QtWidgets import QLabel, QStackedWidget, QWidget
 
-from ert.gui.plottery import PlotContext
-from ert.gui.plottery.plot_limits import PlotLimits
-from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
-from ert.gui.tools.plot.widgets.custom_date_edit import CustomDateEdit
+from ert.gui.tools.plot.plottery import PlotContext, PlotLimits
+from ert.gui.tools.plot.widgets import ClearableLineEdit, CustomDateEdit
 
 from .customization_view import CustomizationView
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class StackedInput(QStackedWidget):

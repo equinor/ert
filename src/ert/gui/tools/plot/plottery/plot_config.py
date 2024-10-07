@@ -4,7 +4,8 @@ import itertools
 from copy import copy
 from typing import Any, List, Optional, Tuple
 
-from ert.gui.plottery import PlotLimits, PlotStyle
+from .plot_limits import PlotLimits
+from .plot_style import PlotStyle
 
 
 class PlotConfig:

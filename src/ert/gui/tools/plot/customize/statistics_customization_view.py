@@ -4,12 +4,11 @@ from typing import TYPE_CHECKING, Optional
 
 from qtpy.QtWidgets import QComboBox, QHBoxLayout
 
-from ert.gui.tools.plot import style_chooser as sc
-
 from .customization_view import CustomizationView, WidgetProperty
+from .style_chooser import STYLESET_AREA
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class StatisticsCustomizationView(CustomizationView):
@@ -46,25 +45,25 @@ class StatisticsCustomizationView(CustomizationView):
             "std_style",
             "Std dev",
             "Line and marker style for the unbiased standard deviation lines.",
-            line_style_set=sc.STYLESET_AREA,
+            line_style_set=STYLESET_AREA,
         )
         self.addStyleChooser(
             "min_max_style",
             "Min/max",
             "Line and marker style for the min/max lines.",
-            line_style_set=sc.STYLESET_AREA,
+            line_style_set=STYLESET_AREA,
         )
         self.addStyleChooser(
             "p10_p90_style",
             "P10-P90",
             "Line and marker style for the P10-P90 lines.",
-            line_style_set=sc.STYLESET_AREA,
+            line_style_set=STYLESET_AREA,
         )
         self.addStyleChooser(
             "p33_p67_style",
             "P33-P67",
             "Line and marker style for the P33-P67 lines.",
-            line_style_set=sc.STYLESET_AREA,
+            line_style_set=STYLESET_AREA,
         )
         self.addSpacing()
 

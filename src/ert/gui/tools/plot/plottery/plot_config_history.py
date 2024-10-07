@@ -1,6 +1,6 @@
 from typing import List
 
-from ert.gui.plottery import PlotConfig
+from .plot_config import PlotConfig
 
 
 class PlotConfigHistory:

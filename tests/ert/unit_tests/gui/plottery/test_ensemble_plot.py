@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from ert.gui.plottery import PlotConfig, PlotContext
-from ert.gui.plottery.plots.ensemble import EnsemblePlot
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+from ert.gui.tools.plot.plottery.plots import EnsemblePlot
 from ert.summary_key_type import is_rate
 
 
@@ -30,7 +30,7 @@ def plot_context(request):
 def test_ensemble_plot_handles_rate(plot_context: PlotContext):
     figure = Figure()
     with patch(
-        "ert.gui.plottery.plots.ensemble.EnsemblePlot._plotLines"
+        "ert.gui.tools.plot.plottery.plots.ensemble.EnsemblePlot._plotLines"
     ) as mock_plotLines:
         EnsemblePlot().plot(
             figure,

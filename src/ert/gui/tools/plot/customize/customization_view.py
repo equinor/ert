@@ -11,12 +11,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
+from ert.gui.tools.plot.widgets import ClearableLineEdit
 
-from .. import style_chooser as sc
+from .style_chooser import STYLESET_DEFAULT, StyleChooser
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class CustomizationView(QWidget):
@@ -111,9 +111,9 @@ class CustomizationView(QWidget):
         attribute_name: str,
         title: str,
         tool_tip: Optional[str] = None,
-        line_style_set: str = sc.STYLESET_DEFAULT,
+        line_style_set: str = STYLESET_DEFAULT,
     ) -> None:
-        style_chooser = sc.StyleChooser(line_style_set=line_style_set)
+        style_chooser = StyleChooser(line_style_set=line_style_set)
         self[attribute_name] = style_chooser
         self.addRow(title, self[attribute_name])
 

@@ -4,7 +4,7 @@ from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QColor, QIcon
 from typing_extensions import override
 
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from .plot_api import PlotApiKeyDefinition
 
 
 class DataTypeKeysListModel(QAbstractItemModel):

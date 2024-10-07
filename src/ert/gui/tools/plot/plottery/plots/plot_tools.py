@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.plottery import PlotContext
+    from ert.gui.tools.plot.plottery import PlotContext
 
 
 class PlotTools:
