@@ -1,5 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ert.gui.plottery import PlotConfig
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
+if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class PlotConfigFactory:
