@@ -2,6 +2,10 @@ changelog:
   exclude:
     labels:
         - release-notes:skip
+        - release-notes:flaky-test-fix
+        - release-notes:unreleased-feature-changes
+        - release-notes:unreleased-bug-fix
+        - release-notes:formatting
   categories:
     - title: User impact 🛠
       labels:
@@ -21,6 +25,14 @@ changelog:
     - title: Maintenance
       labels:
         - release-notes:maintenance
+        - release-notes:logging
+        - release-notes:refactor
+    - title: Documentation changes
+      labels:
+        - release-notes:documentation-changes
+    - title: Build System
+      labels:
+        - release-notes:build-system
     - title: Dependencies
       labels:
         - release-notes:dependency
