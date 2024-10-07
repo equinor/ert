@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, List, Optional
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
-
 if TYPE_CHECKING:
     from pandas import DataFrame
 
     from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class PlotContext:

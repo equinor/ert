@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from ert.gui.plottery.plots.history import plotHistory
-from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.summary_key_type import is_rate
 
 from .observations import plotObservations
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.plot_api import EnsembleObject
 
 
 class EnsemblePlot:
