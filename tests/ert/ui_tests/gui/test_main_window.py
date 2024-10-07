@@ -688,6 +688,10 @@ def test_that_a_failing_job_shows_error_message_with_context(
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
     def handle_error_dialog(run_dialog):
+        qtbot.waitUntil(
+            lambda: run_dialog.fail_msg_box is not None,
+            timeout=20000,
+        )
         error_dialog = run_dialog.fail_msg_box
         assert error_dialog
         text = error_dialog.details_text.toPlainText()
@@ -703,13 +707,13 @@ def test_that_a_failing_job_shows_error_message_with_context(
         ]
         for substring in expected_substrings:
             assert substring in text
-        qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.LeftButton)
+        error_dialog.accept()
 
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
-    QTimer.singleShot(20000, lambda: handle_error_dialog(run_dialog))
+    QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
     qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 

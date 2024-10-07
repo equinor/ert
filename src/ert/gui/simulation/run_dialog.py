@@ -192,6 +192,7 @@ class RunDialog(QDialog):
         self._run_model = run_model
         self._event_queue = event_queue
         self._notifier = notifier
+        self.fail_msg_box: Optional[ErtMessageBox] = None
 
         self._minimum_width = 1200
         self._minimum_height = 800
@@ -420,7 +421,8 @@ class RunDialog(QDialog):
         if failed:
             self.update_total_progress(1.0, "Failed")
             self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
-            self.fail_msg_box.exec_()
+            self.fail_msg_box.setModal(True)
+            self.fail_msg_box.show()
         else:
             self.update_total_progress(1.0, "Experiment completed.")
 

@@ -23,7 +23,7 @@ from typing import (
     get_type_hints,
 )
 
-from .driver import Driver
+from .driver import Driver, FailedSubmit
 from .event import Event, FinishedEvent, StartedEvent
 
 logger = logging.getLogger(__name__)
@@ -274,7 +274,7 @@ class OpenPBSDriver(Driver):
         )
         if not process_success:
             self._job_error_message_by_iens[iens] = process_message
-            raise RuntimeError(process_message)
+            raise FailedSubmit(process_message)
 
         job_id_ = process_message
         logger.debug(f"Realization {iens} accepted by PBS, got id {job_id_}")

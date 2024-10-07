@@ -68,12 +68,14 @@ start_tests () {
     basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
     pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" unit_tests/scheduler
     return_code_3=$?
+    pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" ui_tests/cli/test_missing_runpath.py
+    return_code_4=$?
     rm -rf "$basetemp" || true
 
     popd
 
     run_ert_with_opm
-    return_code_4=$?
+    return_code_5=$?
 
     run_everest_tests
     return_code_5=$?
