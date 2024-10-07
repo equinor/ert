@@ -169,18 +169,22 @@ def test_that_storage_matches(
             tuple(ensemble.get_realization_list_with_responses("summary")),
         )
         snapshot.assert_match(
-            summary_data.to_dataframe(dim_order=["time", "name", "realization"])
+            summary_data.sort("time", "response_key", "realization")
+            .to_pandas()
+            .set_index(["time", "response_key", "realization"])
             .transform(np.sort)
             .to_csv(),
             "summary_data",
         )
         snapshot.assert_match_dir(
             {
-                key: value.to_dataframe().to_csv()
+                key: value.to_pandas().to_csv()
                 for key, value in experiment.observations.items()
             },
             "observations",
         )
+
+        assert ensemble.get_summary_keyset() == ["FOPR"]
 
 
 @pytest.mark.integration_test

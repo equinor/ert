@@ -767,7 +767,7 @@ class UpdateRunModel(BaseRunModel):
                 analysis_config=self.update_settings,
                 es_settings=self.es_settings,
                 parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observations.keys(),
+                observations=prior.experiment.observation_keys,
                 global_scaling=weight,
                 rng=self.rng,
                 progress_callback=functools.partial(

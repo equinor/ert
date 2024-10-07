@@ -2,6 +2,7 @@ import io
 from asyncio import get_event_loop
 from typing import Awaitable, TypeVar
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -46,9 +47,9 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
                 poly_ran["summary_data_entries"] // poly_ran["sum_obs_every"]
             )
             assert len(obs) == num_summary_obs
-            assert obs[0].errors[0] == 0.1
-            assert obs[0].x_axis[0] == "2010-01-02T00:00:00.000000000"
-            assert obs[0].values[0] == 2.6357
+            assert np.isclose(obs[0].errors[0], 0.1)
+            assert obs[0].x_axis[0].startswith("2010-01-02T00:00:00")
+            assert np.isclose(obs[0].values[0], 2.6357)
             assert len(obs[0].errors) == 1
             assert len(obs[0].x_axis) == 1
             assert len(obs[0].values) == 1

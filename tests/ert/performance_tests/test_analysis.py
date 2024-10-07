@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+import polars
 import scipy as sp
 import xarray as xr
 import xtgeo
@@ -77,19 +78,15 @@ def test_and_benchmark_adaptive_localization_with_fields(
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
     resp = GenDataConfig(keys=["RESPONSE"])
-    obs = xr.Dataset(
+    obs = polars.DataFrame(
         {
-            "observations": (
-                ["report_step", "index"],
-                observations.reshape((1, num_observations)),
-            ),
-            "std": (
-                ["report_step", "index"],
-                observation_noise.reshape(1, num_observations),
-            ),
-        },
-        coords={"report_step": [0], "index": np.arange(len(observations))},
-        attrs={"response": "RESPONSE"},
+            "response_key": "RESPONSE",
+            "observation_key": "OBSERVATION",
+            "report_step": 0,
+            "index": np.arange(len(observations)),
+            "observations": observations,
+            "std": observation_noise,
+        }
     )
 
     param_group = "PARAM_FIELD"
@@ -109,7 +106,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
     experiment = storage.create_experiment(
         parameters=[config],
         responses=[resp],
-        observations={"OBSERVATION": obs},
+        observations={"gen_data": obs},
     )
 
     prior_ensemble = storage.create_ensemble(
@@ -135,13 +132,13 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
         prior_ensemble.save_response(
             "gen_data",
-            xr.Dataset(
-                {"values": (["name", "report_step", "index"], [[Y[:, iens]]])},
-                coords={
-                    "name": ["RESPONSE"],
+            polars.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": 0,
                     "index": range(len(Y[:, iens])),
-                    "report_step": [0],
-                },
+                    "values": Y[:, iens],
+                }
             ),
             iens,
         )

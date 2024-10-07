@@ -29,5 +29,8 @@ class ErtSummary:
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> List[str]:
-        obs_keys = self.ert_config.observations.keys()
-        return sorted(obs_keys, key=lambda k: k.lower())
+        keys = []
+        for df in self.ert_config.observations.values():
+            keys.extend(df["observation_key"].unique().to_list())
+
+        return sorted(keys, key=lambda k: k.lower())

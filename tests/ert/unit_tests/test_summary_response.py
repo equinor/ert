@@ -51,13 +51,12 @@ def test_load_summary_response_restart_not_zero(
         facade = LibresFacade.from_config_file("config.ert")
         facade.load_from_forward_model(ensemble, [True], 0)
 
-        df = ensemble.load_responses("summary", (0,)).to_dataframe()
-        df = df.unstack(level="name")
-        df.columns = [col[1] for col in df.columns.values]
-        df.index = df.index.rename(
-            {"time": "Date", "realization": "Realization"}
-        ).reorder_levels(["Realization", "Date"])
+        df = ensemble.load_responses("summary", (0,))
+        df = df.pivot(on="response_key", values="values")
+        df = df[df.columns[:17]]
+        df = df.rename({"time": "Date", "realization": "Realization"})
+
         snapshot.assert_match(
-            df.dropna().iloc[:, :15].to_csv(),
+            df.to_pandas().to_csv(index=False),
             "summary_restart",
         )

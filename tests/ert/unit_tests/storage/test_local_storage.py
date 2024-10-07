@@ -11,6 +11,7 @@ from uuid import UUID
 
 import hypothesis.strategies as st
 import numpy as np
+import polars
 import pytest
 import xarray as xr
 from hypothesis import assume, given
@@ -88,25 +89,18 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
             ValueError,
             match="Dataset for response group 'RESPONSE' must contain a 'values' variable",
         ):
-            ensemble.save_response(
-                "RESPONSE",
-                xr.Dataset(),
-                0,
-            )
+            ensemble.save_response("RESPONSE", polars.DataFrame(), 0)
 
         # Test for dataset with 'values' but no actual data
-        empty_data = xr.Dataset(
+        empty_data = polars.DataFrame(
             {
-                "values": (
-                    ["report_step", "index"],
-                    np.array([], dtype=float).reshape(0, 0),
-                )
-            },
-            coords={
-                "index": np.array([], dtype=int),
-                "report_step": np.array([], dtype=int),
-            },
+                "response_key": [],
+                "report_step": [],
+                "index": [],
+                "values": [],
+            }
         )
+
         with pytest.raises(
             ValueError,
             match="Responses RESPONSE are empty. Cannot proceed with saving to storage.",
@@ -762,15 +756,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
     @rule(model_ensemble=ensembles)
     def get_responses(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        names = model_ensemble.response_values.keys()
+        response_types = model_ensemble.response_values.keys()
         iens = 0
 
-        for n in names:
-            data = storage_ensemble.load_responses(n, (iens,))
-            xr.testing.assert_equal(
-                model_ensemble.response_values[n],
-                data.isel(realization=0, drop=True),
-            )
+        for response_type in response_types:
+            ensemble_data = storage_ensemble.load_responses(response_type, (iens,))
+            model_data = model_ensemble.response_values[response_type]
+            assert ensemble_data.equals(model_data)
 
     @rule(model_ensemble=ensembles, parameter=words)
     def load_unknown_parameter(self, model_ensemble: Ensemble, parameter: str):
@@ -844,7 +836,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         )
         for obskey, obs in model_experiment.observations.items():
             assert obskey in storage_experiment.observations
-            xr.testing.assert_allclose(obs, storage_experiment.observations[obskey])
+            assert obs.equals(storage_experiment.observations[obskey])
 
     @rule(model_ensemble=ensembles)
     def get_ensemble(self, model_ensemble: Ensemble):

@@ -115,7 +115,7 @@ class CSVExportJob(ErtScript):
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
 
-        data.to_csv(output_file)
+        data.to_csv(output_file, float_format="%.6f")
 
         export_info = (
             f"Exported {len(data.index)} rows and {len(data.columns)} "

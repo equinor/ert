@@ -1,10 +1,11 @@
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
-import xarray as xr
+import polars
 
 from ert.validation import rangestring_to_list
 
@@ -42,9 +43,28 @@ class EnkfObs:
     obs_time: List[datetime]
 
     def __post_init__(self) -> None:
-        self.datasets: Dict[str, xr.Dataset] = {
-            name: obs.to_dataset([]) for name, obs in sorted(self.obs_vectors.items())
-        }
+        grouped: Dict[str, List[polars.DataFrame]] = {}
+        for vec in self.obs_vectors.values():
+            if vec.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
+                if "summary" not in grouped:
+                    grouped["summary"] = []
+
+                grouped["summary"].append(vec.to_dataset([]))
+
+            elif vec.observation_type == EnkfObservationImplementationType.GEN_OBS:
+                if "gen_data" not in grouped:
+                    grouped["gen_data"] = []
+
+                grouped["gen_data"].append(vec.to_dataset([]))
+
+        datasets: Dict[str, polars.DataFrame] = {}
+
+        for name, dfs in grouped.items():
+            non_empty_dfs = [df for df in dfs if not df.is_empty()]
+            if len(non_empty_dfs) > 0:
+                datasets[name] = polars.concat(non_empty_dfs).sort("observation_key")
+
+        self.datasets = datasets
 
     def __len__(self) -> int:
         return len(self.obs_vectors)
@@ -61,8 +81,12 @@ class EnkfObs:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, EnkfObs):
             return False
+
+        if self.datasets.keys() != other.datasets.keys():
+            return False
+
         # Datasets contains the full observations, so if they are equal, everything is
-        return self.datasets == other.datasets
+        return all(self.datasets[k].equals(other.datasets[k]) for k in self.datasets)
 
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
@@ -461,3 +485,7 @@ class EnkfObs:
 
     def __repr__(self) -> str:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
+
+    def write_to_folder(self, dest: Path) -> None:
+        for name, dataset in self.datasets.items():
+            dataset.write_parquet(dest / name)

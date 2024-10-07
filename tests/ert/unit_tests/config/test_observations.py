@@ -198,12 +198,32 @@ def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
     with config_generator(tmp_path_factory) as config_values:
         observations = ErtConfig.from_dict(
             config_values.to_config_dict("test.ert", os.getcwd())
-        ).enkf_obs
-        for o in config_values.observations:
-            assert o.name in observations
-        assert sorted({o.name for o in config_values.observations}) == list(
-            observations.datasets.keys()
-        )
+        ).observations
+
+        non_empty_observations = {
+            _response_type: _df
+            for _response_type, _df in observations.items()
+            if not _df.is_empty()
+        }
+
+        for _obs in config_values.observations:
+            if (
+                _obs.class_name == "SUMMARY_OBSERVATION"
+                and "summary" in non_empty_observations
+            ):
+                assert _obs.name in non_empty_observations["summary"]["observation_key"]
+            if (
+                _obs.class_name == "GENERAL_OBSERVATION"
+                and _obs.value is not None
+                and "gen_data" in non_empty_observations
+            ):
+                assert (
+                    _obs.name in non_empty_observations["gen_data"]["observation_key"]
+                )
+
+        for df in observations.values():
+            obs_keys_list = df["observation_key"].to_list()
+            assert sorted(obs_keys_list) == obs_keys_list
 
 
 def test_that_empty_observations_file_causes_exception(tmpdir):

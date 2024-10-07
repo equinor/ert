@@ -25,6 +25,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
+import polars
 import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
@@ -314,7 +315,7 @@ class LocalStorage(BaseMode):
         self,
         parameters: Optional[List[ParameterConfig]] = None,
         responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, xr.Dataset]] = None,
+        observations: Optional[Dict[str, polars.DataFrame]] = None,
         simulation_arguments: Optional[Dict[Any, Any]] = None,
         name: Optional[str] = None,
     ) -> LocalExperiment:
@@ -327,7 +328,7 @@ class LocalStorage(BaseMode):
             The parameters for the experiment.
         responses : list of ResponseConfig, optional
             The responses for the experiment.
-        observations : dict of str to Dataset, optional
+        observations : dict of str to DataFrame, optional
             The observations for the experiment.
         simulation_arguments : SimulationArguments, optional
             The simulation arguments for the experiment.
@@ -579,6 +580,20 @@ class LocalStorage(BaseMode):
         self._swap_path.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
             dataset.to_netcdf(f, engine="scipy")
+            os.rename(f.name, filename)
+
+    def _to_parquet_transaction(
+        self, filename: str | os.PathLike[str], dataframe: polars.DataFrame
+    ) -> None:
+        """
+        Writes the dataset to the filename as a transaction.
+
+        Guarantees to not leave half-written or empty files on disk if the write
+        fails or the process is killed.
+        """
+        self._swap_path.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
+            dataframe.write_parquet(f)
             os.rename(f.name, filename)
 
 

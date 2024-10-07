@@ -151,7 +151,7 @@ class StorageWidget(QWidget):
             ensemble = self._notifier.storage.create_experiment(
                 parameters=self._ert_config.ensemble_config.parameter_configuration,
                 responses=self._ert_config.ensemble_config.response_configuration,
-                observations=self._ert_config.observations,
+                observations=self._ert_config.enkf_obs.datasets,
                 name=create_experiment_dialog.experiment_name,
             ).create_ensemble(
                 name=create_experiment_dialog.ensemble_name,
