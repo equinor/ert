@@ -213,7 +213,7 @@ def ensemble_experiment_has_run_no_failure(
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui):
+    def func(experiment_mode, gui, click_done=True):
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
@@ -245,25 +245,23 @@ def run_experiment_fixture(request):
             QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
-        # The Run dialog opens, click show details and wait until done appears
-        # then click it
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
-        run_dialog = gui.findChild(RunDialog)
+        if click_done:
+            # The Run dialog opens, click show details and wait until done appears
+            # then click it
+            run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
+            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+            qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-        qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-
-        # Assert that the number of boxes in the detailed view is
-        # equal to the number of realizations
-        realization_widget = run_dialog._tab_widget.currentWidget()
-        assert isinstance(realization_widget, RealizationWidget)
-        list_model = realization_widget._real_view.model()
-        assert (
-            list_model.rowCount()
-            == experiment_panel.config.model_config.num_realizations
-        )
-
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
+            # Assert that the number of boxes in the detailed view is
+            # equal to the number of realizations
+            realization_widget = run_dialog._tab_widget.currentWidget()
+            assert isinstance(realization_widget, RealizationWidget)
+            list_model = realization_widget._real_view.model()
+            assert (
+                list_model.rowCount()
+                == experiment_panel.config.model_config.num_realizations
+            )
+            qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
     return func
 

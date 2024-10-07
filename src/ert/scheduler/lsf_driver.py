@@ -8,10 +8,10 @@ import re
 import shlex
 import shutil
 import stat
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import (
     Dict,
     Iterable,
@@ -27,7 +27,7 @@ from typing import (
     get_args,
 )
 
-from .driver import SIGNAL_OFFSET, Driver
+from .driver import SIGNAL_OFFSET, Driver, FailedSubmit
 from .event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
@@ -298,16 +298,22 @@ class LsfDriver(Driver):
             f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
         )
         script_path: Optional[Path] = None
-        with tempfile.NamedTemporaryFile(
-            dir=runpath,
-            prefix=".lsf_submit_",
-            suffix=".sh",
-            mode="w",
-            encoding="utf-8",
-            delete=False,
-        ) as script_handle:
-            script_handle.write(script)
-            script_path = Path(script_handle.name)
+        try:
+            with NamedTemporaryFile(
+                dir=runpath,
+                prefix=".lsf_submit_",
+                suffix=".sh",
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+            ) as script_handle:
+                script_handle.write(script)
+                script_path = Path(script_handle.name)
+        except OSError as err:
+            error_message = f"Could not create submit script: {err}"
+            self._job_error_message_by_iens[iens] = error_message
+            raise FailedSubmit(error_message) from err
+
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
 
@@ -345,11 +351,11 @@ class LsfDriver(Driver):
             )
             if not process_success:
                 self._job_error_message_by_iens[iens] = process_message
-                raise RuntimeError(process_message)
+                raise FailedSubmit(process_message)
 
             match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
             if match is None:
-                raise RuntimeError(
+                raise FailedSubmit(
                     f"Could not understand '{process_message}' from bsub"
                 )
             job_id = match[1]

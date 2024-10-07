@@ -13,6 +13,10 @@ SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal value when a process exited due to a signal"""
 
 
+class FailedSubmit(RuntimeError):
+    pass
+
+
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 

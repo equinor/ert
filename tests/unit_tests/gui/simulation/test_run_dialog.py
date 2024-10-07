@@ -481,6 +481,10 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
         def handle_error_dialog(run_dialog):
+            qtbot.waitUntil(
+                lambda: run_dialog.fail_msg_box is not None,
+                timeout=20000,
+            )
             error_dialog = run_dialog.fail_msg_box
             assert error_dialog
             text = error_dialog.details_text.toPlainText()

@@ -18,7 +18,7 @@ from ert.constant_filenames import ERROR_file
 from ert.load_status import LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
 
-from .driver import Driver
+from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
@@ -63,12 +63,19 @@ class Job:
         self.state = JobState.WAITING
         self.started = asyncio.Event()
         self.returncode: asyncio.Future[int] = asyncio.Future()
-        self._aborted = False
         self._scheduler: Scheduler = scheduler
         self._callback_status_msg: str = ""
         self._requested_max_submit: Optional[int] = None
         self._start_time: Optional[float] = None
         self._end_time: Optional[float] = None
+
+    def unschedule(self, msg: str) -> None:
+        self.state = JobState.ABORTED
+        self.real.run_arg.ensemble_storage.set_failure(
+            self.real.run_arg.iens,
+            RealizationStorageState.LOAD_FAILURE,
+            f"Job not scheduled due to {msg}",
+        )
 
     @property
     def iens(self) -> int:
@@ -95,15 +102,21 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
-            await self.driver.submit(
-                self.real.iens,
-                self.real.job_script,
-                self.real.run_arg.runpath,
-                num_cpu=self.real.num_cpu,
-                realization_memory=self.real.realization_memory,
-                name=self.real.run_arg.job_name,
-                runpath=Path(self.real.run_arg.runpath),
-            )
+            try:
+                await self.driver.submit(
+                    self.real.iens,
+                    self.real.job_script,
+                    self.real.run_arg.runpath,
+                    num_cpu=self.real.num_cpu,
+                    realization_memory=self.real.realization_memory,
+                    name=self.real.run_arg.job_name,
+                    runpath=Path(self.real.run_arg.runpath),
+                )
+            except FailedSubmit as err:
+                await self._send(JobState.FAILED)
+                logger.error(f"Failed to submit: {err}")
+                self.returncode.cancel()
+                return
 
             await self._send(JobState.PENDING)
             await self.started.wait()

@@ -24,7 +24,7 @@ import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.async_utils import get_running_loop
-from _ert.events import Event, ForwardModelStepChecksum, Id
+from _ert.events import Event, ForwardModelStepChecksum, Id, event_from_dict
 from ert.constant_filenames import CERT_FILE
 
 from .driver import Driver
@@ -276,10 +276,26 @@ class Scheduler:
         # does internalization at a time
         forward_model_ok_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
-            self._job_tasks[iens] = asyncio.create_task(
-                job.run(sem, forward_model_ok_lock, self._max_submit),
-                name=f"job-{iens}_task",
-            )
+            if job.state != JobState.ABORTED:
+                self._job_tasks[iens] = asyncio.create_task(
+                    job.run(sem, forward_model_ok_lock, self._max_submit),
+                    name=f"job-{iens}_task",
+                )
+            else:
+                failure = job.real.run_arg.ensemble_storage.get_failure(iens)
+                await self._events.put(
+                    event_from_dict(
+                        {
+                            "ensemble": self._ens_id,
+                            "event_type": Id.REALIZATION_FAILURE,
+                            "queue_event_type": JobState.FAILED,
+                            "callback_status_message": failure.message
+                            if failure
+                            else None,
+                            "real": str(iens),
+                        }
+                    )
+                )
         logger.info("All tasks started")
         self._running.set()
         try:
@@ -317,8 +333,14 @@ class Scheduler:
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
         cert_path = f"{runpath}/{CERT_FILE}"
-        if self._ee_cert is not None:
-            Path(cert_path).write_text(self._ee_cert, encoding="utf-8")
+        try:
+            if self._ee_cert is not None:
+                Path(cert_path).write_text(self._ee_cert, encoding="utf-8")
+        except OSError as err:
+            error_msg = f"Could not write ensemble certificate: {err}"
+            self._jobs[iens].unschedule(error_msg)
+            logger.error(error_msg)
+            return
         jobs = _JobsJson(
             experiment_id=None,
             ens_id=self._ens_id,
@@ -328,8 +350,14 @@ class Scheduler:
             ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
-        with open(jobs_path, "rb") as fp:
-            data = orjson.loads(fp.read())
-        with open(jobs_path, "wb") as fp:
-            data.update(asdict(jobs))
-            fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+        try:
+            with open(jobs_path, "rb") as fp:
+                data = orjson.loads(fp.read())
+            with open(jobs_path, "wb") as fp:
+                data.update(asdict(jobs))
+                fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+        except OSError as err:
+            error_msg = f"Could not update jobs.json: {err}"
+            self._jobs[iens].unschedule(error_msg)
+            logger.error(error_msg)
+            return
