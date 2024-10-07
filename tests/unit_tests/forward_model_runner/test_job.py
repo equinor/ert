@@ -43,6 +43,7 @@ def test_run_with_process_failing(
 
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
 def test_cpu_seconds_can_detect_multiprocess():
     """Run a job that sets of two simultaneous processes that
     each run for 1 second. We should be able to detect the total
