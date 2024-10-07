@@ -49,14 +49,13 @@ simulator:
   max_runtime: 3600
   queue_system: torque
   name: normal
-  qsub_cmd: "qsub"
-  qstat_cmd: "qstat"
-  qdel_cmd: "qdel"
-  cluster_label: "testing_it"
-  memory_per_job: "100mb"
+  qsub_cmd: qsub
+  qstat_cmd: qstat
+  qdel_cmd: qdel
+  memory_per_job: 100mb
   keep_qsub_output: 1
   submit_sleep: 0.5
-  project_code: "snake_oil_pc"
+  project_code: snake_oil_pc
 
 environment:
   simulation_folder: simulations
