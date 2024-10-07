@@ -15,8 +15,8 @@ from ert.gui.ertwidgets import SearchBox
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
-from .filter_popup import FilterPopup
 from .plot_api import PlotApiKeyDefinition
+from .widgets import FilterPopup
 
 
 class _LegendMarker(QWidget):

@@ -1,4 +1,6 @@
-from typing import List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional
 
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtGui import QCursor
@@ -12,7 +14,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from .plot_api import PlotApiKeyDefinition
+if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class FilterPopup(QDialog):

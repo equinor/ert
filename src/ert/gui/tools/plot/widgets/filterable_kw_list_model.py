@@ -1,8 +1,11 @@
-from typing import Dict, List
+from __future__ import annotations
 
-from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from typing import TYPE_CHECKING, Dict, List
 
-from .plot_api import PlotApiKeyDefinition
+from ert.gui.ertwidgets import SelectableListModel
+
+if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class FilterableKwListModel(SelectableListModel):

@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -11,8 +13,12 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import CheckList
-from ert.gui.tools.plot import FilterableKwListModel, FilterPopup
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
+from .filter_popup import FilterPopup
+from .filterable_kw_list_model import FilterableKwListModel
+
+if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 
 
 class CopyStyleToDialog(QDialog):
