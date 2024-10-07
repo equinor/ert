@@ -11,12 +11,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
+from ert.gui.tools.plot.widgets import ClearableLineEdit
 
 from .. import style_chooser as sc
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class CustomizationView(QWidget):

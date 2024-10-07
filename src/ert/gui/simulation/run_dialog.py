@@ -53,7 +53,7 @@ from ert.gui.model.snapshot import (
     SnapshotModel,
 )
 from ert.gui.tools.file import FileDialog
-from ert.gui.tools.plot.plot_tool import PlotTool
+from ert.gui.tools.plot import PlotTool
 from ert.run_models import (
     BaseRunModel,
     RunModelStatusEvent,

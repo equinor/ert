@@ -1,7 +1,8 @@
 from typing import Dict, List
 
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+
+from .plot_api import PlotApiKeyDefinition
 
 
 class FilterableKwListModel(SelectableListModel):

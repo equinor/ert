@@ -8,7 +8,7 @@ from ert.gui.tools.plot import style_chooser as sc
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 class StyleCustomizationView(CustomizationView):

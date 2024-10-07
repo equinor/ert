@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
-    from ert.gui.plottery import PlotContext
+    from ert.gui.tools.plot.plottery import PlotContext
 
 
 def plotHistory(plot_context: "PlotContext", axes: "Axes") -> None:

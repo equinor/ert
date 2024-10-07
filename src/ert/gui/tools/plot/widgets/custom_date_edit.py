@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidgetAction,
 )
 
-from ert.gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
+from .clearable_line_edit import ClearableLineEdit
 
 
 class CustomDateEdit(QWidget):

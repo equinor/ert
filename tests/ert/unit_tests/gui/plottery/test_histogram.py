@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 from matplotlib.figure import Figure
 
-from ert.gui.plottery import PlotConfig, PlotContext
-from ert.gui.plottery.plots.histogram import HistogramPlot
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+from ert.gui.tools.plot.plottery.plots import HistogramPlot
 
 
 @pytest.fixture(

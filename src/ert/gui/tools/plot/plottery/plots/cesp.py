@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from pandas import DataFrame
 
-    from ert.gui.plottery import PlotConfig, PlotContext
+    from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 CcsData = TypedDict(

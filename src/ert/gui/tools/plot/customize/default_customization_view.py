@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
-    from ert.gui.plottery import PlotConfig
+    from ert.gui.tools.plot.plottery import PlotConfig
 
 
 def _label_msg(label: str) -> str:

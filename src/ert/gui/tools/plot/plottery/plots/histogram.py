@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.plottery import PlotContext, PlotStyle
+    from ert.gui.tools.plot.plottery import PlotContext, PlotStyle
 
 
 class HistogramPlot:

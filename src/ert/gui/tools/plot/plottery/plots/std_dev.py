@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,8 +9,9 @@ import pandas as pd
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ert.gui.plottery import PlotContext
-from ert.gui.tools.plot.plot_api import EnsembleObject
+if TYPE_CHECKING:
+    from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.tools.plot.plottery import PlotContext
 
 
 class StdDevPlot:

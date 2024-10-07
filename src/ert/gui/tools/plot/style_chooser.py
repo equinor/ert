@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.plottery import PlotStyle
+from .plottery import PlotStyle
 
 STYLE_OFF = ("Off", None)
 STYLE_AREA = ("Area", "#")
