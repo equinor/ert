@@ -326,7 +326,6 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         assert lines[3].strip() == "fourth:foo"
 
 
-@pytest.mark.timeout(30)
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     (

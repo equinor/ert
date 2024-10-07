@@ -107,7 +107,7 @@ jobs:
       matrix:
         test-type: [ 'test', 'integration-test', 'everest-models-test' ]
         python-version: [ '3.8', '3.12' ]
-        os: [ 'macos-13', 'macos-14']
+        os: [ 'macos-13', 'macos-14', 'macos-14-large']
         exclude:
           - os: 'macos-14'
             python-version: '3.8'
