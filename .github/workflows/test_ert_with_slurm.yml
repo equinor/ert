@@ -70,6 +70,7 @@ jobs:
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
         pytest tests/ert/unit_tests/scheduler --slurm
+        pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
 
     - name: Test poly-example on slurm
       run: |

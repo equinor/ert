@@ -5,18 +5,18 @@ import itertools
 import logging
 import shlex
 import stat
-import tempfile
 import time
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import (
     Iterator,
     Optional,
     Tuple,
 )
 
-from .driver import SIGNAL_OFFSET, Driver
+from .driver import SIGNAL_OFFSET, Driver, FailedSubmit
 from .event import Event, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
@@ -184,16 +184,21 @@ class SlurmDriver(Driver):
             f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
         )
         script_path: Optional[Path] = None
-        with tempfile.NamedTemporaryFile(
-            dir=runpath,
-            prefix=".slurm_submit_",
-            suffix=".sh",
-            mode="w",
-            encoding="utf-8",
-            delete=False,
-        ) as script_handle:
-            script_handle.write(script)
-            script_path = Path(script_handle.name)
+        try:
+            with NamedTemporaryFile(
+                dir=runpath,
+                prefix=".slurm_submit_",
+                suffix=".sh",
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+            ) as script_handle:
+                script_handle.write(script)
+                script_path = Path(script_handle.name)
+        except OSError as err:
+            error_message = f"Could not create submit script: {err}"
+            self._job_error_message_by_iens[iens] = error_message
+            raise FailedSubmit(error_message) from err
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
         sbatch_with_args = [*self._submit_cmd(name, runpath, num_cpu), str(script_path)]
@@ -214,10 +219,10 @@ class SlurmDriver(Driver):
             )
             if not process_success:
                 self._job_error_message_by_iens[iens] = process_message
-                raise RuntimeError(process_message)
+                raise FailedSubmit(process_message)
 
             if not process_message:
-                raise RuntimeError("sbatch returned empty jobid")
+                raise FailedSubmit("sbatch returned empty jobid")
             job_id = process_message
             logger.info(f"Realization {iens} accepted by SLURM, got id {job_id}")
 
