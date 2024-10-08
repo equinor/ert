@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
+import pandas as pd
 from qtpy import QtCore
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout, QLabel, QPushButton
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -11,13 +12,11 @@ from ert.gui.ertwidgets import (
     StringBox,
     TextModel,
 )
+from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument
-from ert.validation.proper_name_argument import (
-    ExperimentValidation,
-    ProperNameArgument,
-)
+from ert.validation.proper_name_argument import ExperimentValidation, ProperNameArgument
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -78,6 +77,10 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        dm_param_button = QPushButton("Show DM parameters")
+        dm_param_button.clicked.connect(self.on_dm_params_clicked)
+        layout.addRow("Show DM parameters", dm_param_button)
+
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
@@ -91,6 +94,11 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    def on_dm_params_clicked(self):
+        df_sample = pd.DataFrame({"Column1": [1, 2, 3], "Column2": ["A", "B", "C"]})
+        viewer = DesignMatrixPanel(df_sample)
+        viewer.exec_()
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
