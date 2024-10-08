@@ -102,7 +102,7 @@ class ErtMainWindow(QMainWindow):
         self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
-            "Show Results", QIcon("img:in_progress.svg")
+            "Simulation status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.run_dialog_counter = 0
