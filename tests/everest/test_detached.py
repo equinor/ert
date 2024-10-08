@@ -161,7 +161,7 @@ def test_server_status():
 def test_wait_for_server(server_is_running_mock, caplog):
     config = EverestConfig.load_file("valid_yaml_config.yml")
 
-    with caplog.at_level(logging.DEBUG), pytest.raises(Exception):
+    with caplog.at_level(logging.DEBUG), pytest.raises(RuntimeError):
         wait_for_server(config, timeout=1, context=None)
 
     assert not caplog.messages
