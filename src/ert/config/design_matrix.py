@@ -28,7 +28,7 @@ class DesignMatrix:
     design_sheet: str
     default_sheet: str
     design_matrix_df: Optional[pd.DataFrame] = None
-    parameter_configuration: Optional[list[ParameterConfig]] = None
+    parameter_configuration: Optional[dict[str, ParameterConfig]] = None
 
     @classmethod
     def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
@@ -97,7 +97,7 @@ class DesignMatrix:
 
         # ignoring errors here is deprecated in pandas, should find another solution
         # design_matrix_sheet = design_matrix_sheet.apply(pd.to_numeric, errors="ignore")
-        parameter_configuration = {}
+        parameter_configuration: dict[str, ParameterConfig] = {}
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
             transform_function_definitions.append(
