@@ -105,7 +105,7 @@ class ErtMainWindow(QMainWindow):
             "Show Results", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
-        self.results_button.setMenu(QMenu())
+        self.run_dialog_counter = 0
 
         self.vbox_layout.addStretch()
         self.central_layout.addWidget(self.side_frame)
@@ -126,6 +126,13 @@ class ErtMainWindow(QMainWindow):
             self.central_layout.addWidget(self._plot_window)
             self.central_panels_map["Create plot"] = self._plot_window
 
+        if index_name == "Simulation status":
+            # select the only available simulation
+            for k, v in self.central_panels_map.items():
+                if isinstance(v, RunDialog):
+                    index_name = k
+                    break
+
         for i, widget in self.central_panels_map.items():
             widget.setVisible(i == index_name)
 
@@ -135,16 +142,30 @@ class ErtMainWindow(QMainWindow):
             widget.setVisible(False)
 
         run_dialog.setParent(self)
-        self.central_layout.addWidget(run_dialog)
-        self.results_button.setEnabled(True)
-        date_time = datetime.datetime.utcnow().strftime("%Y-%d-%m %H:%M:%S")
+        date_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%d-%m %H:%M:%S")
         self.central_panels_map[date_time] = run_dialog
-        act = self.results_button.menu()
+        self.run_dialog_counter += 1
+        self.central_layout.addWidget(run_dialog)
 
-        if act:
-            act.addAction(date_time)
-            act.setProperty("index", date_time)
-            act.triggered.connect(self.select_central_widget)
+        def add_sim_run_option(datetime: str) -> None:
+            menu = self.results_button.menu()
+            if menu:
+                act = menu.addAction(datetime)
+                act.setProperty("index", datetime)
+                act.triggered.connect(self.select_central_widget)
+
+        if self.run_dialog_counter == 2:
+            # swap from button to menu selection
+            self.results_button.clicked.disconnect(self.select_central_widget)
+            self.results_button.setMenu(QMenu())
+
+            for prev_date_time, widget in self.central_panels_map.items():
+                if isinstance(widget, RunDialog):
+                    add_sim_run_option(prev_date_time)
+        elif self.run_dialog_counter > 2:
+            add_sim_run_option(date_time)
+
+        self.results_button.setEnabled(True)
 
     def post_init(self) -> None:
         experiment_panel = ExperimentPanel(
