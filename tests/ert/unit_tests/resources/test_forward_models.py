@@ -18,11 +18,11 @@ def file_exist_and_is_executable(file_path):
 
 def test_validate_scripts():
     fm_path = (
-        Path(importlib.util.find_spec("ert").origin).parent / "resources/forward-models"
+        Path(importlib.util.find_spec("ert").origin).parent / "resources/forward_models"
     )
     for fm_dir in os.listdir(fm_path):
         fm_dir = os.path.join(fm_path, fm_dir)
-        # get all sub-folder in forward-models
+        # get all sub-folder in forward_models
         if os.path.isdir(fm_dir):
             files = os.listdir(fm_dir)
             for fn in files:
