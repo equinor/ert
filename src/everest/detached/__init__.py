@@ -192,7 +192,7 @@ def wait_for_server(
 
     # If number of retries reached and server is not running - throw exception
     if not server_is_running(config):
-        raise Exception("Failed to start server within configured timeout.")
+        raise RuntimeError("Failed to start server within configured timeout.")
 
 
 def get_sim_status(config: EverestConfig):
