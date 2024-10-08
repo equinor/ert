@@ -26,26 +26,6 @@ def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:
     return {os.path.basename(path): path for path in all_files}
 
 
-def _get_file_content_if_exists(file_name: str, default: str = "") -> str:
-    if os.path.isfile(file_name):
-        with open(file_name, encoding="utf-8") as fh:
-            return fh.read()
-    return default
-
-
-def _get_job_category(job_name: str) -> str:
-    if "FILE" in job_name or "DIR" in job_name or "SYMLINK" in job_name:
-        return "utility.file_system"
-
-    if job_name in {"ECLIPSE100", "ECLIPSE300", "FLOW"}:
-        return "simulators.reservoir"
-
-    if job_name == "TEMPLATE_RENDER":
-        return "utility.templating"
-
-    return "other"
-
-
 @ert.plugin(name="ert")
 def installable_workflow_jobs() -> Dict[str, str]:
     directories = [
