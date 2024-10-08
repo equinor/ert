@@ -708,3 +708,48 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 
         with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
             run_dialog.close()
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "design_matrix_entry",
+    (True, False),
+)
+def test_that_design_matrix_show_parameters_button_is_visible(
+    design_matrix_entry, qtbot: QtBot, storage
+):
+    xls_filename = "design_matrix.xls"
+    with open(f"{xls_filename}", "w", encoding="utf-8"):
+        pass
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+        if design_matrix_entry:
+            f.write(
+                f"\nDESIGN_MATRIX {xls_filename} DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultValues"
+            )
+
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        experiment_panel = gui.findChild(ExperimentPanel)
+        assert isinstance(experiment_panel, ExperimentPanel)
+
+        simulation_mode_combo = experiment_panel.findChild(QComboBox)
+        assert isinstance(simulation_mode_combo, QComboBox)
+
+        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        show_dm_parameters = simulation_settings.findChild(
+            QPushButton, "show-dm-parameters"
+        )
+        if design_matrix_entry:
+            assert isinstance(show_dm_parameters, QPushButton)
+        else:
+            assert show_dm_parameters is None
