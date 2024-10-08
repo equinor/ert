@@ -2,8 +2,9 @@ from dataclasses import dataclass
 
 from qtpy import QtCore
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QLabel
+from qtpy.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
 
+from ert.config import AnalysisConfig, DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -11,13 +12,11 @@ from ert.gui.ertwidgets import (
     StringBox,
     TextModel,
 )
+from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import RangeStringArgument
-from ert.validation.proper_name_argument import (
-    ExperimentValidation,
-    ProperNameArgument,
-)
+from ert.validation.proper_name_argument import ExperimentValidation, ProperNameArgument
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -31,7 +30,13 @@ class Arguments:
 
 
 class EnsembleExperimentPanel(ExperimentConfigPanel):
-    def __init__(self, ensemble_size: int, run_path: str, notifier: ErtNotifier):
+    def __init__(
+        self,
+        analysis_config: AnalysisConfig,
+        ensemble_size: int,
+        run_path: str,
+        notifier: ErtNotifier,
+    ):
         self.notifier = notifier
         super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
@@ -78,6 +83,21 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        design_matrix = analysis_config.design_matrix
+        if design_matrix is not None:
+            show_dm_param_button = QPushButton("Show parameters")
+            show_dm_param_button.setObjectName("show-dm-parameters")
+            show_dm_param_button.setMinimumWidth(50)
+
+            button_layout = QHBoxLayout()
+            button_layout.addWidget(show_dm_param_button)
+            button_layout.addStretch()  # Add stretch to push the button to the left
+
+            layout.addRow("Design Matrix", button_layout)
+            show_dm_param_button.clicked.connect(
+                lambda: self.on_show_dm_params_clicked(design_matrix)
+            )
+
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
@@ -91,6 +111,25 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
+
+    def on_show_dm_params_clicked(self, design_matrix: DesignMatrix) -> None:
+        assert design_matrix is not None
+
+        if design_matrix.design_matrix_df is None:
+            design_matrix.read_design_matrix()
+
+        if (
+            design_matrix.design_matrix_df is not None
+            and not design_matrix.design_matrix_df.empty
+        ):
+            viewer = DesignMatrixPanel(
+                design_matrix.design_matrix_df,
+                design_matrix.xls_filename.name,
+            )
+            viewer.setMinimumHeight(500)
+            viewer.setMinimumWidth(1000)
+            viewer.adjustSize()
+            viewer.exec_()
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
