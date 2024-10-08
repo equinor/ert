@@ -19,12 +19,12 @@ from ._import_from_location import import_from_location
 
 ecl_config = import_from_location(
     "ecl_config",
-    SOURCE_DIR / "src/ert/resources/forward-models/res/script/ecl_config.py",
+    SOURCE_DIR / "src/ert/resources/forward_models/res/script/ecl_config.py",
 )
 
 ecl_run = import_from_location(
     "ecl_run",
-    SOURCE_DIR / "src/ert/resources/forward-models/res/script/ecl_run.py",
+    SOURCE_DIR / "src/ert/resources/forward_models/res/script/ecl_run.py",
 )
 
 

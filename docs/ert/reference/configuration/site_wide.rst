@@ -27,5 +27,5 @@ properties of the cluster. This could be an example site config file: ::
    WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 
    JOB_SCRIPT ../../bin/job_dispatch.py
-   INSTALL_JOB_DIRECTORY forward-models/res
-   INSTALL_JOB_DIRECTORY forward-models/shell
+   INSTALL_JOB_DIRECTORY forward_models/res
+   INSTALL_JOB_DIRECTORY forward_models/shell

@@ -16,7 +16,7 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/resources/forward-models/res/script
+# import ecl_config.py and ecl_run from ert/resources/forward_models/res/script
 # package-data path which. These are kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
@@ -25,13 +25,13 @@ from ._import_from_location import import_from_location
 ecl_config = import_from_location(
     "ecl_config",
     os.path.join(
-        SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_config.py"
+        SOURCE_DIR, "src/ert/resources/forward_models/res/script/ecl_config.py"
     ),
 )
 
 ecl_run = import_from_location(
     "ecl_run",
-    os.path.join(SOURCE_DIR, "src/ert/resources/forward-models/res/script/ecl_run.py"),
+    os.path.join(SOURCE_DIR, "src/ert/resources/forward_models/res/script/ecl_run.py"),
 )
 
 

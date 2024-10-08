@@ -11,7 +11,7 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import template_render.py from ert/forward-models/templating/script
+# import template_render.py from ert/forward_models/templating/script
 # package-data path which. These are kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
@@ -21,7 +21,7 @@ template_render = import_from_location(
     "template_render",
     os.path.join(
         SOURCE_DIR,
-        "src/ert/resources/forward-models/templating/script/template_render.py",
+        "src/ert/resources/forward_models/templating/script/template_render.py",
     ),
 )
 
@@ -221,7 +221,7 @@ def test_template_executable():
     )
     template_render_exec = str(
         Path(importlib.util.find_spec("ert").origin).parent
-        / "resources/forward-models/templating/script/template_render.py"
+        / "resources/forward_models/templating/script/template_render.py"
     )
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)

@@ -207,7 +207,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward-models/res/script/ecl100.py"
+                        / "../../../resources/forward_models/res/script/ecl100.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -265,7 +265,7 @@ class Eclipse300(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward-models/res/script/ecl300.py"
+                        / "../../../resources/forward_models/res/script/ecl300.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -317,7 +317,7 @@ class Flow(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward-models/res/script/flow.py"
+                        / "../../../resources/forward_models/res/script/flow.py"
                     ).resolve()
                 ),
                 "<ECLBASE>",
@@ -521,7 +521,7 @@ class TemplateRender(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward-models/templating/script/template_render.py"
+                        / "../../../resources/forward_models/templating/script/template_render.py"
                     ).resolve()
                 ),
                 "-i",
