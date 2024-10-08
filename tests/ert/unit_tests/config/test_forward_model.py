@@ -694,7 +694,6 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
         },
         "exec_env": {},
         "default_mapping": {},
-        "help_text": "",
         "private_args": SubstitutionList(
             {
                 "<arg1>": "hello",

@@ -145,7 +145,6 @@ class ForwardModelStep:
         private_args: A dictionary of user-provided keyword arguments.
             For example, if the user provides <A>=2, the dictionary will contain
             { "A": "2" }
-        help_text: Some meaningless old code we don't really need, not used anywhere
     """
 
     name: str
@@ -166,7 +165,6 @@ class ForwardModelStep:
     exec_env: dict[str, Union[int, str]] = field(default_factory=dict)
     default_mapping: dict[str, Union[int, str]] = field(default_factory=dict)
     private_args: SubstitutionList = field(default_factory=SubstitutionList)
-    help_text: str = ""
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
@@ -254,7 +252,6 @@ class ForwardModelStepPlugin(ForwardModelStep):
             exec_env=exec_env,
             default_mapping=default_mapping,
             private_args=SubstitutionList(),
-            help_text="",
         )
 
     @staticmethod
