@@ -15,6 +15,9 @@ class DesignMatrixPanel(QDialog):
         self.model = self.create_model(design_matrix_df)
         self.table_view.setModel(self.model)
 
+        self.table_view.resizeColumnsToContents()
+        self.table_view.resizeRowsToContents()
+
         # Layout to hold the table view
         layout = QVBoxLayout()
         layout.addWidget(self.table_view)
