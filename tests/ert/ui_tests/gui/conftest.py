@@ -249,7 +249,7 @@ def run_experiment_fixture(request):
             # The Run dialog opens, click show details and wait until done appears
             # then click it
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+            qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=200000)
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
             # Assert that the number of boxes in the detailed view is
