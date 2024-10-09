@@ -6,7 +6,7 @@ from functools import partial
 from everest.api import EverestDataAPI
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, everserver_status
-from everest.plugins.hook_manager import EverestPluginManager
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 
 def _build_args_parser():
