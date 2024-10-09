@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import sys
-import webbrowser
-import warnings
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, Tuple
 
