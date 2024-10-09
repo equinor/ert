@@ -9,14 +9,13 @@ import sys
 import time
 from argparse import ArgumentParser
 from collections import namedtuple
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from pathlib import Path
 from random import random
 from typing import List
 
 import resfo
 from ecl_config import EclConfig, EclrunConfig, Simulator
-from packaging import version
 
 
 def ecl_output_has_license_error(ecl_output: str):
@@ -43,35 +42,6 @@ class EclError(RuntimeError):
                     ):
                         return True
         return False
-
-
-def await_process_tee(process, *out_files) -> int:
-    """Wait for process to finish, "tee"-ing the subprocess' stdout into all the
-    given file objects.
-
-    NB: We aren't checking if `os.write` succeeds. It succeeds if its return
-    value matches `len(bytes_)`. In other cases we might want to do something
-    smart, such as retry or raise an error. At the time of writing it is
-    uncertain what we should do, and it is assumed that data loss is acceptable.
-
-    """
-    out_fds = [f.fileno() for f in out_files]
-    process_fd = process.stdout.fileno()
-
-    while True:
-        while True:
-            bytes_ = os.read(process_fd, 4096)
-            if bytes_ == b"":  # check EOF
-                break
-            for fd in out_fds:
-                os.write(fd, bytes_)
-
-        # Check if process terminated
-        if process.poll() is not None:
-            break
-    process.stdout.close()
-
-    return process.returncode
 
 
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
@@ -368,24 +338,10 @@ class EclRun:
                 self.base_name,
             ]
 
-    def _get_log_name(self, eclrun_config=None):
-        # Eclipse version >= 2019.3 should log to a .OUT file
-        # and not the legacy .LOG file.
-        eclipse_version = (
-            self.sim.version if eclrun_config is None else eclrun_config.version
-        )
-
-        logname_extension = "OUT"
-        with suppress(version.InvalidVersion):
-            if version.parse(eclipse_version) < version.parse("2019.3"):
-                logname_extension = "LOG"
-        return f"{self.base_name}.{logname_extension}"
-
     def execEclipse(self, eclrun_config=None) -> int:
         use_eclrun = eclrun_config is not None
-        log_name = self._get_log_name(eclrun_config=eclrun_config)
 
-        with pushd(self.run_path), open(log_name, "wb") as log_file:
+        with pushd(self.run_path):
             if not os.path.exists(self.data_file):
                 raise IOError(f"Can not find data_file:{self.data_file}")
             if not os.access(self.data_file, os.R_OK):
@@ -398,13 +354,11 @@ class EclRun:
             )
             env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
-            # await_process_tee() ensures the process is terminated.
-            process = subprocess.Popen(
+            return subprocess.run(
                 command,
                 env=env,
-                stdout=subprocess.PIPE,
-            )
-            return await_process_tee(process, sys.stdout, log_file)
+                check=False,
+            ).returncode
 
     LICENSE_FAILURE_RETRY_INITIAL_SLEEP = 90
     LICENSE_RETRY_STAGGER_FACTOR = 60

@@ -117,15 +117,7 @@ def test_eclrun_will_prepend_path_and_get_env_vars_from_ecl100config(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 @pytest.mark.requires_eclipse
-@pytest.mark.parametrize(
-    "version, expected_suffix",
-    [
-        ("2019.1", "LOG"),
-        # Eclipse100 changed the suffix for logfile from 2019.3
-        ("2019.3", "OUT"),
-    ],
-)
-def test_ecl100_binary_can_produce_output(source_root, version, expected_suffix):
+def test_ecl100_binary_can_produce_output(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
@@ -133,14 +125,13 @@ def test_ecl100_binary_can_produce_output(source_root, version, expected_suffix)
     econfig = ecl_config.Ecl100Config()
 
     erun = ecl_run.EclRun("SPE1.DATA", None)
-    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, version))
+    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
 
     ok_path = Path(erun.runPath()) / f"{erun.baseName()}.OK"
-    log_or_out_path = Path(erun.runPath()) / f"{erun.baseName()}.{expected_suffix}"
+    prt_path = Path(erun.runPath()) / f"{erun.baseName()}.PRT"
 
-    assert os.path.isfile(ok_path)
-    assert log_or_out_path.exists()
-    assert log_or_out_path.stat().st_size > 0
+    assert ok_path.exists()
+    assert prt_path.stat().st_size > 0
 
     assert len(erun.parseErrors()) == 0
 
@@ -242,7 +233,7 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     econfig = ecl_config.Ecl100Config()
     ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2019.3"])
 
-    assert Path("SPE1_PARALLEL.OUT").stat().st_size > 0, "Eclipse did not run at all"
+    assert Path("SPE1_PARALLEL.PRT").stat().st_size > 0, "Eclipse did not run at all"
     assert Path("SPE1_PARALLEL.MSG").exists(), "No output from MPI process 1"
     assert Path("SPE1_PARALLEL.2.MSG").exists(), "No output from MPI process 2"
     assert not Path(
