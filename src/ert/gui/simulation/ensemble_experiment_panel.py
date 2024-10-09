@@ -85,6 +85,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
         dm_param_button = QPushButton("Show parameters")
+        dm_param_button.setObjectName("show-dm-parameters")
         dm_param_button.setMinimumWidth(50)
 
         button_layout = QHBoxLayout()
