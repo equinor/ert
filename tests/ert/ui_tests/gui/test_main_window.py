@@ -568,8 +568,8 @@ def test_that_the_manage_experiments_tool_can_be_used(
     qtbot.mouseClick(initialize_button, Qt.LeftButton)
 
 
-def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
-    gui = opened_main_window
+def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly):
+    gui = opened_main_window_poly
 
     sim_mode = get_child(gui, QWidget, name="experiment_type")
     qtbot.keyClick(sim_mode, Qt.Key_Down)
@@ -598,9 +598,9 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window):
 
 
 def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
-    opened_main_window_clean, qtbot
+    opened_main_window_poly, qtbot
 ):
-    gui = opened_main_window_clean
+    gui = opened_main_window_poly
 
     manage_tool = gui.tools["Manage experiments"]
     manage_tool.trigger()
@@ -656,9 +656,9 @@ def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot)
 
 
 def test_that_a_failing_job_shows_error_message_with_context(
-    opened_main_window_clean, qtbot
+    opened_main_window_poly, qtbot
 ):
-    gui = opened_main_window_clean
+    gui = opened_main_window_poly
 
     # break poly eval script so realz fail
     with open("poly_eval.py", "w", encoding="utf-8") as f:

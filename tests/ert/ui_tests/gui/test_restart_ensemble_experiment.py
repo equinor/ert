@@ -14,11 +14,11 @@ from ert.gui.simulation.view import RealizationWidget
 from .conftest import wait_for_child
 
 
-def test_restart_failed_realizations(opened_main_window_clean, qtbot):
+def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     """This runs an ensemble experiment with some failing realizations, and then
     restarts two times, checking that only the failed realizations are started.
     """
-    gui = opened_main_window_clean
+    gui = opened_main_window_poly
 
     def write_poly_eval(failing_reals: Set[int]):
         with open("poly_eval.py", "w", encoding="utf-8") as f:
