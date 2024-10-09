@@ -140,20 +140,11 @@ def _get_observations_and_responses(
     ensemble: Ensemble,
     selected_observations: Iterable[str],
     iens_active_index: npt.NDArray[np.int_],
-) -> Tuple[
-    npt.NDArray[np.float64],
-    npt.NDArray[np.float64],
-    npt.NDArray[np.float64],
-    npt.NDArray[np.str_],
-    npt.NDArray[np.str_],
-]:
+) -> polars.DataFrame:
     """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
-    filtered_responses = []
-    observation_keys = []
-    observation_values = []
-    observation_errors = []
-    indexes = []
     observations_by_type = ensemble.experiment.observations
+
+    df = polars.DataFrame()
     for (
         response_type,
         response_cls,
@@ -197,38 +188,31 @@ def _get_observations_and_responses(
                 on=["response_key", *response_cls.primary_key],
             )
 
-        joined = joined.sort(by="observation_key")
+        joined = (
+            joined.with_columns(
+                polars.concat_str(response_cls.primary_key, separator=", ").alias(
+                    "__tmp_index_key__"  # Avoid potential collisions w/ primary key
+                )
+            )
+            .drop(response_cls.primary_key)
+            .rename({"__tmp_index_key__": "index"})
+        )
 
-        index_1d = joined.with_columns(
-            polars.concat_str(response_cls.primary_key, separator=", ").alias("index")
-        )["index"].to_numpy()
+        first_columns = [
+            "response_key",
+            "index",
+            "observation_key",
+            "observations",
+            "std",
+        ]
+        joined = joined.select(
+            first_columns + [c for c in joined.columns if c not in first_columns]
+        )
 
-        obs_keys_1d = joined["observation_key"].to_numpy()
-        obs_values_1d = joined["observations"].to_numpy()
-        obs_errors_1d = joined["std"].to_numpy()
-
-        # 4 columns are always there:
-        # [ response_key, observation_key, observations, std ]
-        # + one column per "primary key" column
-        num_non_response_value_columns = 4 + len(response_cls.primary_key)
-        responses = joined.select(
-            joined.columns[num_non_response_value_columns:]
-        ).to_numpy()
-
-        filtered_responses.append(responses)
-        observation_keys.append(obs_keys_1d)
-        observation_values.append(obs_values_1d)
-        observation_errors.append(obs_errors_1d)
-        indexes.append(index_1d)
+        df.vstack(joined, in_place=True)
 
     ensemble.load_responses.cache_clear()
-    return (
-        np.concatenate(filtered_responses),
-        np.concatenate(observation_values),
-        np.concatenate(observation_errors),
-        np.concatenate(observation_keys),
-        np.concatenate(indexes),
-    )
+    return df
 
 
 def _expand_wildcards(
@@ -270,11 +254,24 @@ def _load_observations_and_responses(
         List[ObservationAndResponseSnapshot],
     ],
 ]:
-    S, observations, errors, obs_keys, indexes = _get_observations_and_responses(
+    # cols: response_key, index, observation_key, observations, std, *[1, ...nreals]
+    observations_and_responses = _get_observations_and_responses(
         ensemble,
         selected_observations,
         iens_active_index,
     )
+
+    S = observations_and_responses.select(
+        observations_and_responses.columns[5:]
+    ).to_numpy()
+    observations = (
+        observations_and_responses.select("observations").to_numpy().reshape((-1,))
+    )
+    errors = observations_and_responses.select("std").to_numpy().reshape((-1,))
+    obs_keys = (
+        observations_and_responses.select("observation_key").to_numpy().reshape((-1,))
+    )
+    indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
 
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for

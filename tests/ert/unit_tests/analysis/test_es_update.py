@@ -586,11 +586,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
 
 
 def _mock_load_observations_and_responses(
-    S,
-    observations,
-    errors,
-    obs_keys,
-    indexes,
+    observations_and_responses,
     alpha,
     std_cutoff,
     global_std_scaling,
@@ -605,15 +601,15 @@ def _mock_load_observations_and_responses(
     with patch(
         "ert.analysis._es_update._get_observations_and_responses"
     ) as mock_obs_n_responses:
-        mock_obs_n_responses.return_value = (S, observations, errors, obs_keys, indexes)
+        mock_obs_n_responses.return_value = observations_and_responses
 
         return _load_observations_and_responses(
             ensemble=ensemble,
             alpha=alpha,
             std_cutoff=std_cutoff,
             global_std_scaling=global_std_scaling,
-            iens_active_index=np.array([True] * len(observations)),
-            selected_observations=obs_keys,
+            iens_active_index=np.array([True] * len(observations_and_responses)),
+            selected_observations=observations_and_responses.select("observation_key"),
             auto_scale_observations=auto_scale_observations,
             progress_callback=progress_callback,
         )
@@ -627,11 +623,19 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
             np.array([1, 1]),
         )
 
-        S = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
-        observations = np.array([2, 4, 3, 3])
-        errors = np.array([1, 2, 1, 1])
-        obs_keys = np.array(["obs1_1", "obs1_2", "obs2", "obs2"])
-        indexes = np.array(["rs00", "rs0", "rs0", "rs1"])
+        observations_and_responses = polars.DataFrame(
+            {
+                "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+                "index": ["rs00", "rs0", "rs0", "rs1"],
+                "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+                "observations": polars.Series([2, 4, 3, 3], dtype=polars.Float32),
+                "std": polars.Series([1, 2, 1, 1], dtype=polars.Float32),
+                "1": polars.Series([1, 4, 7, 8], dtype=polars.Float32),
+                "2": polars.Series([2, 5, 8, 11], dtype=polars.Float32),
+                "3": polars.Series([3, 6, 9, 12], dtype=polars.Float32),
+            }
+        )
+
         alpha = 1
         std_cutoff = 0.05
         global_std_scaling = 1
@@ -640,11 +644,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
         _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
-            S=S,
-            observations=observations,
-            errors=errors,
-            obs_keys=obs_keys,
-            indexes=indexes,
+            observations_and_responses,
             alpha=alpha,
             std_cutoff=std_cutoff,
             global_std_scaling=global_std_scaling,
@@ -655,11 +655,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         _, (_, scaled_errors_without_autoscale, _) = (
             _mock_load_observations_and_responses(
-                S=S,
-                observations=observations,
-                errors=errors,
-                obs_keys=obs_keys,
-                indexes=indexes,
+                observations_and_responses,
                 alpha=alpha,
                 std_cutoff=std_cutoff,
                 global_std_scaling=global_std_scaling,
