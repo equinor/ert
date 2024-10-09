@@ -85,11 +85,11 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
-            dm_param_button = QPushButton("Show DM parameters")
+            dm_param_button = QPushButton("Show parameters")
             dm_param_button.clicked.connect(
                 lambda: self.on_dm_params_clicked(design_matrix)
             )
-            layout.addRow("Show DM parameters", dm_param_button)
+            layout.addRow("Design Matrix", dm_param_button)
 
         self.setLayout(layout)
 
@@ -109,7 +109,6 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         if design_matrix is not None:
             design_matrix.read_design_matrix()
             df_sample = design_matrix.design_matrix_df
-            # df_sample = pd.DataFrame({"Column1": [1, 2, 3], "Column2": ["A", "B", "C"]})
             if df_sample is not None and not df_sample.empty:
                 viewer = DesignMatrixPanel(df_sample)
                 viewer.exec_()
