@@ -1,10 +1,14 @@
+from typing import Optional
+
 import pandas as pd
 from qtpy.QtGui import QStandardItem, QStandardItemModel
-from qtpy.QtWidgets import QDialog, QTableView, QVBoxLayout
+from qtpy.QtWidgets import QDialog, QTableView, QVBoxLayout, QWidget
 
 
 class DesignMatrixPanel(QDialog):
-    def __init__(self, design_matrix_df: pd.DataFrame, parent=None):
+    def __init__(
+        self, design_matrix_df: pd.DataFrame, parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent)
 
         self.setWindowTitle("Design matrix parameters viewer")
