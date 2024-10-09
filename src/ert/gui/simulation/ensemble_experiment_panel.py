@@ -116,10 +116,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
     def on_dm_params_clicked(self, design_matrix: DesignMatrix) -> None:
         if design_matrix is not None:
-            design_matrix.read_design_matrix()
-            df_sample = design_matrix.design_matrix_df
-            if df_sample is not None and not df_sample.empty:
-                viewer = DesignMatrixPanel(df_sample)
+            if design_matrix.design_matrix_df is None:
+                design_matrix.read_design_matrix()
+            if (
+                design_matrix.design_matrix_df is not None
+                and not design_matrix.design_matrix_df.empty
+            ):
+                viewer = DesignMatrixPanel(design_matrix.design_matrix_df)
                 viewer.setMinimumHeight(500)
                 viewer.setMinimumWidth(1000)
                 viewer.adjustSize()
