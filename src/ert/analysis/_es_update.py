@@ -177,7 +177,6 @@ def _get_observations_and_responses(
             aggregate_function="mean",
         )
 
-        # Note2reviewer:
         # We need to either assume that if there is a time column
         # we will approx-join that, or we could specify in response configs
         # that there is a column that requires an approx "asof" join.
