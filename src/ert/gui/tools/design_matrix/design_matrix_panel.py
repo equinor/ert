@@ -27,9 +27,7 @@ class DesignMatrixPanel(QDialog):
         model = QStandardItemModel()
 
         if isinstance(design_matrix_df.columns, pd.MultiIndex):
-            header_labels = [
-                " | ".join(map(str, col)) for col in design_matrix_df.columns
-            ]
+            header_labels = [str(col[-1]) for col in design_matrix_df.columns]
         else:
             header_labels = design_matrix_df.columns.astype(str).tolist()
 
