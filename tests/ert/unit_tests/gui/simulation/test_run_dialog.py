@@ -624,7 +624,7 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
 
         copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
         assert copy_debug_info_button
@@ -667,20 +667,20 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
             1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
         )
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        fm_step_overview = run_dialog._fm_step_overview
-        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
 
+        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
+
+        fm_step_overview = run_dialog._fm_step_overview
+        qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=10000)
         realization_widget = run_dialog.findChild(RealizationWidget)
 
         click_pos = realization_widget._real_view.rectForIndex(
             realization_widget._real_list_model.index(0, 0)
         ).center()
 
-        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
+        with qtbot.waitSignal(realization_widget.itemClicked, timeout=10000):
             qtbot.mouseClick(
                 realization_widget._real_view.viewport(),
                 Qt.LeftButton,
@@ -695,16 +695,13 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         assert (
             fm_step_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
         )
-        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) == None
-
-        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline() == True
-        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) == None
+        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) is None
+        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline()
+        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) is None
 
         click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
-
         qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
+        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=10000)
 
-        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
-
-        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
+        with qtbot.waitSignal(run_dialog.finished, timeout=10000):
             run_dialog.close()
