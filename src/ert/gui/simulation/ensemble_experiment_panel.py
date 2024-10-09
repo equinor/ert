@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from qtpy import QtCore
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QLabel, QPushButton
+from qtpy.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
 
 from ert.config import AnalysisConfig, DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
@@ -84,12 +84,20 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout.addRow("Active realizations", self._active_realizations_field)
 
         design_matrix = analysis_config.design_matrix
+        dm_param_button = QPushButton("Show parameters")
+        dm_param_button.setMinimumWidth(50)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(dm_param_button)
+        button_layout.addStretch()  # Add stretch to push the button to the left
+
+        layout.addRow("Design Matrix", button_layout)
         if design_matrix is not None:
-            dm_param_button = QPushButton("Show parameters")
             dm_param_button.clicked.connect(
                 lambda: self.on_dm_params_clicked(design_matrix)
             )
-            layout.addRow("Design Matrix", dm_param_button)
+        else:
+            dm_param_button.setDisabled(True)
 
         self.setLayout(layout)
 
