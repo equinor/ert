@@ -13,12 +13,17 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from importlib import metadata
+import os
+import sys
+
+sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
 
 project = "Everest"
 copyright = "2024, Equinor & TNO"
 author = "Equinor & TNO"
+
 
 
 try:
@@ -48,6 +53,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinxarg.ext",
+    "everest_jobs",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
