@@ -3,7 +3,6 @@ import glob
 import os
 import os.path
 import re
-import socket
 import subprocess
 import sys
 import time
@@ -57,96 +56,6 @@ slave_run_paths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
 slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"
 
 
-def make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS):
-    host_numcpu_list = LSB_MCPU_HOSTS.split()
-    host_list = []
-    for index in range(len(host_numcpu_list) // 2):
-        machine = host_numcpu_list[2 * index]
-        host_numcpu = int(host_numcpu_list[2 * index + 1])
-        for _ in range(host_numcpu):
-            host_list.append(machine)
-    return host_list
-
-
-def _expand_SLURM_range(rs):
-    if "-" in rs:
-        tmp = rs.split("-")
-        return range(int(tmp[0]), int(tmp[1]) + 1)
-    else:
-        return [int(rs)]
-
-
-def _expand_SLURM_node(node_string):
-    match_object = re.match(r"(?P<base>[^[]+)\[(?P<range>[-0-9,]+)\]", node_string)
-    if match_object:
-        node_list = []
-        base = match_object.groupdict()["base"]
-        range_string = match_object.groupdict()["range"]
-        for rs in range_string.split(","):
-            for num in _expand_SLURM_range(rs):
-                node_list.append(f"{base}{num}")
-        return node_list
-    else:
-        return [node_string]
-
-
-def _expand_SLURM_task_count(task_count_string):
-    match_object = re.match(r"(?P<count>\d+)(\(x(?P<mult>\d+)\))?", task_count_string)
-    if match_object:
-        match_dict = match_object.groupdict()
-        print(match_dict)
-        count = int(match_dict["count"])
-        mult_string = match_dict["mult"]
-        mult = 1 if mult_string is None else int(mult_string)
-
-        return [count] * mult
-    else:
-        raise ValueError(f"Failed to parse SLURM_TASKS_PER_NODE: {task_count_string}")
-
-
-# The list of available machines/nodes and how many tasks each node should get
-# is available in the slurm environment variables SLURM_JOB_NODELIST and
-# SLURM_TASKS_PER_NODE. These string variables are in an incredibly compact
-# notation, and there are some hoops to expand them. The short description is:
-#
-#  1. They represent flat lists of hostnames and the number of cpu's on that
-#     host respectively.
-#
-#  2. The outer structure is a ',' separated lis.
-#
-#  3. The items in SLURM_JOB_NODELIST have a compact notation
-#     base-[n1-n2,n3-n4] which is expanded to the nodelist: [base-n1,
-#     base-n1+1, base-n1+2, ... , base-n4-1, base-n4]
-#
-#  4. The SLURM_TASK_PER_NODE items has the compact notation 3(x4) which
-#     implies that four consecutive nodes (from the expanded
-#     SLURM_JOB_NODELIST) should have three CPUs each.
-#
-# For further details see the sbatch manual page.
-
-
-def make_SLURM_machine_list(SLURM_JOB_NODELIST, SLURM_TASKS_PER_NODE):
-    # We split on ',' - but not on ',' which is inside a [...]
-    split_re = ",(?![^[]*\\])"
-    nodelist = []
-    for node_string in re.split(split_re, SLURM_JOB_NODELIST):
-        nodelist += _expand_SLURM_node(node_string)
-
-    task_count_list = []
-    for task_count_string in SLURM_TASKS_PER_NODE.split(","):
-        task_count_list += _expand_SLURM_task_count(task_count_string)
-
-    host_list = []
-    for node, count in zip(nodelist, task_count_list):
-        host_list += [node] * count
-
-    return host_list
-
-
-def make_LSB_machine_list(LSB_HOSTS):
-    return LSB_HOSTS.split()
-
-
 @contextmanager
 def pushd(run_path):
     starting_directory = os.getcwd()
@@ -187,7 +96,6 @@ class EclRun:
 
       1. Set up redirection of the stdxxx file descriptors.
       2. Set the necessary environment variables.
-      3. [MPI]: Create machine_file listing the nodes which should be used.
       4. fork+exec to actually run the Eclipse binary.
       5. Parse the output .PRT / .ECLEND file to check for errors.
 
@@ -262,55 +170,6 @@ class EclRun:
         my_env.update(self.sim.env.items())
         return my_env
 
-    def initMPI(self):
-        # If the environment variable LSB_MCPU_HOSTS is set we assume the job is
-        # running on LSF - otherwise we assume it is running on the current host.
-        #
-        # If the LSB_MCPU_HOSTS variable is indeed set it will be a string like this:
-        #
-        #       host1 num_cpu1 host2 num_cpu2 ...
-        #
-        # i.e. an alternating list of hostname & number of
-        # cpu. Alternatively/in addition the environment variable
-        # LSB_HOSTS can be used. This variable is simply:
-        #
-        #       host1  host1  host2  host3
-
-        LSB_MCPU_HOSTS = os.getenv("LSB_MCPU_HOSTS")
-        LSB_HOSTS = os.getenv("LSB_HOSTS")
-
-        if LSB_MCPU_HOSTS or LSB_HOSTS:
-            LSB_MCPU_machine_list = make_LSB_MCPU_machine_list(LSB_MCPU_HOSTS)
-            LSB_machine_list = make_LSB_machine_list(LSB_HOSTS)
-
-            if len(LSB_MCPU_machine_list) == self.num_cpu:
-                machine_list = LSB_MCPU_machine_list
-            elif len(LSB_machine_list) == self.num_cpu:
-                machine_list = LSB_machine_list
-            else:
-                raise EclError(
-                    "LSF / MPI problems. "
-                    f"Asked for:{self.num_cpu} cpu. "
-                    f'LSB_MCPU_HOSTS: "{LSB_MCPU_HOSTS}"  LSB_HOSTS: "{LSB_HOSTS}"'
-                )
-        elif os.getenv("SLURM_JOB_NODELIST"):
-            machine_list = make_SLURM_machine_list(
-                os.getenv("SLURM_JOB_NODELIST"), os.getenv("SLURM_TASKS_PER_NODE")
-            )
-            if len(machine_list) != self.num_cpu:
-                raise EclError(
-                    f"SLURM / MPI problems - asked for {self.num_cpu} - "
-                    f"got {len(machine_list)} nodes"
-                )
-        else:
-            localhost = socket.gethostname()
-            machine_list = [localhost] * self.num_cpu
-
-        self.machine_file = f"{self.base_name}.mpi"
-        with open(self.machine_file, "w", encoding="utf-8") as filehandle:
-            for host in machine_list:
-                filehandle.write(f"{host}\n")
-
     def _get_run_command(self, eclrun_config: EclrunConfig):
         summary_conversion = "yes" if self.summary_conversion else "no"
         return [
@@ -322,21 +181,6 @@ class EclRun:
             "--summary-conversion",
             summary_conversion,
         ]
-
-    def _get_legacy_run_command(self):
-        if self.num_cpu == 1:
-            return [self.sim.executable, self.base_name]
-        else:
-            self.initMPI()
-            return [
-                self.sim.mpirun,
-                "-machinefile",
-                self.machine_file,
-                "-np",
-                str(self.num_cpu),
-                self.sim.executable,
-                self.base_name,
-            ]
 
     def execEclipse(self, eclrun_config=None) -> int:
         use_eclrun = eclrun_config is not None
@@ -350,7 +194,7 @@ class EclRun:
             command = (
                 self._get_run_command(eclrun_config)
                 if use_eclrun
-                else self._get_legacy_run_command()
+                else [self.sim.executable, self.base_name]
             )
             env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
 
