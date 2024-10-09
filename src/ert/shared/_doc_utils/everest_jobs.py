@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, ClassVar, Dict, List, Union
+from typing import Any,  ClassVar, Dict, List,  Union
 
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
@@ -10,10 +10,11 @@ from ert.config.forward_model_step import ForwardModelStepDocumentation
 from ert.plugins import ErtPluginManager, JobDoc
 from ert.shared._doc_utils.forward_model_documentation import _ForwardModelDocumentation
 
-from . import _create_section_with_title, _parse_string_list
+
+from . import _create_section_with_title
 
 
-class _ErtDocumentation(SphinxDirective):
+class _EverestDocumentation(SphinxDirective):
     """
     This is an abstract class that should never be used directly. A class should be set
     up that inherits from this class. The child class must implement a run function.
@@ -58,7 +59,7 @@ class _ErtDocumentation(SphinxDirective):
 
             category = docs.get(
                 "category",
-                _ErtDocumentation._CATEGORY_DEFAULT,
+                _EverestDocumentation._CATEGORY_DEFAULT,
             )
 
             split_categories = category.split(".")
@@ -75,82 +76,33 @@ class _ErtDocumentation(SphinxDirective):
                     category=category,
                     job_source=docs.get(
                         "source_package",
-                        _ErtDocumentation._SOURCE_PACKAGE_DEFAULT,
+                        _EverestDocumentation._SOURCE_PACKAGE_DEFAULT,
                     ),
                     description=docs.get(
                         "description",
-                        _ErtDocumentation._DESCRIPTION_DEFAULT,
+                        _EverestDocumentation._DESCRIPTION_DEFAULT,
                     ),
                     job_config_file=docs.get(
                         "config_file",
-                        _ErtDocumentation._CONFIG_FILE_DEFAULT,
+                        _EverestDocumentation._CONFIG_FILE_DEFAULT,
                     ),
                     examples=docs.get(
                         "examples",
-                        _ErtDocumentation._EXAMPLES_DEFAULT,
+                        _EverestDocumentation._EXAMPLES_DEFAULT,
                     ),
-                    parser=docs.get("parser", _ErtDocumentation._PARSER_DEFAULT),
+                    parser=docs.get("parser", _EverestDocumentation._PARSER_DEFAULT),
                 )
             )
 
         return {k: dict(v) for k, v in categories.items()}
-
-    def _create_forward_model_section_node(
-        self, section_id: str, title: str
-    ) -> nodes.section:
-        node = _create_section_with_title(section_id=section_id, title=title)
-        _parse_string_list(self.content, node, self.state)
-        return node
-
-    def _generate_job_documentation(
-        self,
-        jobs: Union[
-            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
-        ],
-        section_id: str,
-        title: str,
-    ) -> List[nodes.section]:
-        job_categories = _ErtDocumentation._divide_into_categories(jobs)
-
-        main_node = self._create_forward_model_section_node(section_id, title)
-
-        for category_index, category in enumerate(sorted(job_categories.keys())):
-            category_section_node = _create_section_with_title(
-                section_id=category + "-category", title=category.capitalize()
-            )
-            sub_jobs_map = job_categories[category]
-            for sub_i, sub in enumerate(sorted(sub_jobs_map.keys())):
-                sub_section_node = _create_section_with_title(
-                    section_id=category + "-" + sub + "-subcategory",
-                    title=sub.capitalize(),
-                )
-
-                for job in sub_jobs_map[sub]:
-                    job_section_node = job.create_node(self.state)
-                    sub_section_node.append(job_section_node)
-
-                # A section is not allowed to end with a transition,
-                # so we don't add after the last sub-category
-                if sub_i < len(sub_jobs_map) - 1:
-                    sub_section_node.append(nodes.transition())
-
-                category_section_node.append(sub_section_node)
-
-            main_node.append(category_section_node)
-
-            # A section is not allowed to end with a transition,
-            # so we don't add after the last category
-            if category_index < len(job_categories) - 1:
-                category_section_node.append(nodes.transition())
-        return [main_node]
-
+    
     def _generate_job_documentation_without_title(
         self,
         jobs: Union[
             Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
         ],
     ) -> List[nodes.section]:
-        job_categories = _ErtDocumentation._divide_into_categories(jobs)
+        job_categories = _EverestDocumentation._divide_into_categories(jobs)
         node_list = []
 
         for category_index, category in enumerate(sorted(job_categories.keys())):
@@ -184,7 +136,8 @@ class _ErtDocumentation(SphinxDirective):
         return node_list
 
 
-class ErtForwardModelDocumentation(_ErtDocumentation):
+
+class EverestForwardModelDocumentation(_EverestDocumentation):
     pm = ErtPluginManager()
     _JOBS: ClassVar[dict[str, Any]] = {
         **pm.get_documentation_for_jobs(),
@@ -193,19 +146,7 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
 
     def run(self) -> List[nodes.section]:
         return self._generate_job_documentation_without_title(
-            ErtForwardModelDocumentation._JOBS,
+            EverestForwardModelDocumentation._JOBS,
         )
 
 
-class ErtWorkflowDocumentation(_ErtDocumentation):
-    pm = ErtPluginManager()
-    _JOBS = pm.get_documentation_for_workflows()
-    _TITLE = "Workflow jobs"
-    _SECTION_ID = "ert-workflow-jobs"
-
-    def run(self) -> List[nodes.section]:
-        section_id = ErtWorkflowDocumentation._SECTION_ID
-        title = ErtWorkflowDocumentation._TITLE
-        return self._generate_job_documentation(
-            ErtWorkflowDocumentation._JOBS, section_id, title
-        )
