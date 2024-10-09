@@ -596,7 +596,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
         run_dialog.close()
 
 
