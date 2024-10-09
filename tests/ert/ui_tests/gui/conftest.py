@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
-from typing import Generator, List, Tuple, Type, TypeVar
+from typing import Iterator, List, Tuple, Type, TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -38,13 +38,8 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
 )
 
 
-@pytest.fixture
-def opened_main_window(
-    source_root, tmp_path, monkeypatch
-) -> Generator[ErtMainWindow, None, None]:
-    monkeypatch.chdir(tmp_path)
-    _new_poly_example(source_root, tmp_path)
-    with _open_main_window(tmp_path / "poly.ert") as (
+def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
+    with _open_main_window(config_path) as (
         gui,
         _,
         config,
@@ -52,6 +47,15 @@ def opened_main_window(
         project=os.path.abspath(config.ens_path),
     ):
         yield gui
+
+
+@pytest.fixture
+def opened_main_window_poly(
+    source_root, tmp_path, monkeypatch
+) -> Iterator[ErtMainWindow]:
+    monkeypatch.chdir(tmp_path)
+    _new_poly_example(source_root, tmp_path)
+    yield from open_gui_with_config(tmp_path / "poly.ert")
 
 
 def _new_poly_example(source_root, destination, num_realizations: int = 20):
@@ -74,7 +78,7 @@ def _new_poly_example(source_root, destination, num_realizations: int = 20):
 @contextmanager
 def _open_main_window(
     path,
-) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
+) -> Iterator[Tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
     with ErtPluginContext():
@@ -88,43 +92,10 @@ def _open_main_window(
 
 
 @pytest.fixture
-def opened_main_window_clean(source_root, tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    _new_poly_example(source_root, tmp_path)
-    with _open_main_window(tmp_path / "poly.ert") as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
-    ):
-        yield gui
-
-
-@pytest.fixture
 def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path, 2)
-    with _open_main_window(tmp_path / "poly.ert") as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
-    ):
-        yield gui
-
-
-@pytest.fixture
-def opened_main_window_snake_oil(snake_oil_case_storage):
-    with _open_main_window(Path("./snake_oil.ert")) as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
-    ):
-        yield gui
+    yield from open_gui_with_config(tmp_path / "poly.ert")
 
 
 @pytest.fixture(scope="module")
@@ -237,14 +208,7 @@ def _ensemble_experiment_has_run(
         run_experiment, source_root, tmp_path_factory, failing
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path / "poly.ert") as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
-    ):
-        yield gui
+    yield from open_gui_with_config(tmp_path / "poly.ert")
 
 
 @pytest.fixture(name="run_experiment", scope="module")
