@@ -76,7 +76,7 @@ class RealNodeData:
     max_memory_usage: Optional[int] = None
     exec_hosts: Optional[str] = None
     stderr: Optional[str] = None
-    callback_status_message: Optional[str] = None
+    message: Optional[str] = None
 
 
 @dataclass

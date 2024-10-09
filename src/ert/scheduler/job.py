@@ -66,7 +66,7 @@ class Job:
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self._aborted = False
         self._scheduler: Scheduler = scheduler
-        self._callback_status_msg: str = ""
+        self._message: str = ""
         self._requested_max_submit: Optional[int] = None
         self._start_time: Optional[float] = None
         self._end_time: Optional[float] = None
@@ -217,10 +217,10 @@ class Job:
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(self.real.run_arg)
-        if self._callback_status_msg:
-            self._callback_status_msg = status_msg
+        if self._message:
+            self._message = status_msg
         else:
-            self._callback_status_msg += f"\nstatus from done callback: {status_msg}"
+            self._message += f"\nstatus from done callback: {status_msg}"
 
         if callback_status == LoadStatus.LOAD_SUCCESSFUL:
             await self._send(JobState.COMPLETED)
@@ -234,7 +234,7 @@ class Job:
         error_msg = (
             f"Realization: {self.real.run_arg.iens} "
             f"failed after reaching max submit ({self._requested_max_submit}):"
-            f"\n\t{self._callback_status_msg}"
+            f"\n\t{self._message}"
         )
 
         if msg := self.driver._job_error_message_by_iens.get(self.iens, ""):
@@ -268,7 +268,7 @@ class Job:
         }
         self.state = state
         if state == JobState.FAILED:
-            event_dict["callback_status_message"] = self._callback_status_msg
+            event_dict["message"] = self._message
             await self._handle_failure()
 
         elif state == JobState.ABORTED:
