@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
 from ert.scheduler import JobState
 from ert.simulator import BatchContext, BatchSimulator
 
@@ -33,6 +33,51 @@ def _wait_for_completion(ctx: BatchContext):
 @pytest.fixture
 def batch_sim_example(setup_case):
     return setup_case("batch_sim", "batch_sim.ert")
+
+
+# The batch simulator was recently refactored. It now requires an ERT config
+# object that has been generated in the derived Simulator class. The resulting
+# ERT config object includes features that cannot be specified in an ERT
+# configuration file. This is acceptable since the batch simulator is only used
+# by Everest and slated to be replaced in the near future with newer ERT
+# functionality. However, the tests in this file assume that the batch simulator
+# can be configured independently from an Everest configuration. To make the
+# tests work, the batch simulator class is patched here to inject the missing
+# functionality.
+class PatchedBatchSimulator(BatchSimulator):
+    def __init__(self, ert_config, controls, results, callback=None):
+        super().__init__(ert_config, set(controls), results, callback)
+        ens_config = ert_config.ensemble_config
+        for control_name, variables in controls.items():
+            ens_config.addNode(
+                ExtParamConfig(
+                    name=control_name,
+                    input_keys=variables,
+                    output_file=control_name + ".json",
+                )
+            )
+
+        if "gen_data" not in ens_config:
+            ens_config.addNode(
+                GenDataConfig(
+                    keys=results,
+                    input_files=[f"{k}" for k in results],
+                    report_steps_list=[None for _ in results],
+                )
+            )
+        else:
+            existing_gendata = ens_config.response_configs["gen_data"]
+            existing_keys = existing_gendata.keys
+            assert isinstance(existing_gendata, GenDataConfig)
+
+            for key in results:
+                if key not in existing_keys:
+                    existing_gendata.keys.append(key)
+                    existing_gendata.input_files.append(f"{key}")
+                    existing_gendata.report_steps_list.append(None)
+
+
+BatchSimulator = PatchedBatchSimulator
 
 
 def test_that_simulator_raises_error_when_missing_ertconfig():

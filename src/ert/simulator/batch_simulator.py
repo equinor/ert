@@ -1,10 +1,20 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 
-from ert.config import ErtConfig, ExtParamConfig, GenDataConfig
+from ert.config import ErtConfig, ExtParamConfig
 
 from .batch_simulator_context import BatchContext
 
@@ -16,8 +26,8 @@ class BatchSimulator:
     def __init__(
         self,
         ert_config: ErtConfig,
-        controls: Dict[str, List[str]],
-        results: List[str],
+        controls: Iterable[str],
+        results: Iterable[str],
         callback: Optional[Callable[[BatchContext], None]] = None,
     ):
         """Will create simulator which can be used to run multiple simulations.
@@ -88,38 +98,9 @@ class BatchSimulator:
             raise ValueError("The first argument must be valid ErtConfig instance")
 
         self.ert_config = ert_config
-        self.control_keys = set(controls.keys())
+        self.control_keys = set(controls)
         self.result_keys = set(results)
         self.callback = callback
-
-        ens_config = self.ert_config.ensemble_config
-        for control_name, variables in controls.items():
-            ens_config.addNode(
-                ExtParamConfig(
-                    name=control_name,
-                    input_keys=variables,
-                    output_file=control_name + ".json",
-                )
-            )
-
-        if "gen_data" not in ens_config:
-            ens_config.addNode(
-                GenDataConfig(
-                    keys=results,
-                    input_files=[f"{k}" for k in results],
-                    report_steps_list=[None for _ in results],
-                )
-            )
-        else:
-            existing_gendata = ens_config.response_configs["gen_data"]
-            existing_keys = existing_gendata.keys
-            assert isinstance(existing_gendata, GenDataConfig)
-
-            for key in results:
-                if key not in existing_keys:
-                    existing_gendata.keys.append(key)
-                    existing_gendata.input_files.append(f"{key}")
-                    existing_gendata.report_steps_list.append(None)
 
     def _setup_sim(
         self,
@@ -143,7 +124,7 @@ class BatchSimulator:
                         f"these suffixes: {missingsuffixes}"
                     )
                 for suffix in assignment:
-                    if suffix not in suffixes:  # type: ignore[comparison-overlap]
+                    if suffix not in suffixes:
                         raise KeyError(
                             f"Key {key} has suffixes {suffixes}. "
                             f"Can't find the requested suffix {suffix}"

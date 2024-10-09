@@ -2,7 +2,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from itertools import count
-from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 from numpy import float64
@@ -10,69 +10,64 @@ from numpy._typing import NDArray
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
-from ert.config import ErtConfig, HookRuntime
+from ert.config import ErtConfig, ExtParamConfig, HookRuntime
 from ert.storage import open_storage
 from everest.config import EverestConfig
-from everest.config.control_variable_config import (
-    ControlVariableConfig,
-    ControlVariableGuessListConfig,
-)
 from everest.simulator.everest_to_ert import everest_to_ert_config
 
 
 class Simulator(BatchSimulator):
     """Everest simulator: BatchSimulator"""
 
-    def __init__(self, ever_config: EverestConfig, callback=None):
-        self._ert_config = ErtConfig.with_plugins().from_dict(
-            config_dict=everest_to_ert_config(
-                ever_config, site_config=ErtConfig.read_site_config()
-            )
+    def __init__(self, ever_config: EverestConfig, callback=None) -> None:
+        config_dict = everest_to_ert_config(
+            ever_config, site_config=ErtConfig.read_site_config()
         )
-        controls_def = self._get_controls_def(ever_config)
-        results_def = self._get_results_def(ever_config)
+        ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
+
+        # Inject ExtParam nodes. This is needed because EXT_PARAM is not an ERT
+        # configuration key, but only a placeholder for the control definitions.
+        ens_config = ert_config.ensemble_config
+        for control_name, variables in config_dict["EXT_PARAM"].items():
+            ens_config.addNode(
+                ExtParamConfig(
+                    name=control_name,
+                    input_keys=variables,
+                    output_file=control_name + ".json",
+                )
+            )
 
         super(Simulator, self).__init__(
-            self._ert_config, controls_def, results_def, callback=callback
+            ert_config,
+            self._get_controls(ever_config),
+            self._get_results(ever_config),
+            callback=callback,
         )
 
+        self._function_aliases = self._get_aliases(ever_config)
         self._experiment_id = None
         self._batch = 0
         self._cache: Optional[_SimulatorCache] = None
         if ever_config.simulator is not None and ever_config.simulator.enable_cache:
             self._cache = _SimulatorCache()
 
-    @staticmethod
-    def _get_variables(
-        variables: Union[
-            List[ControlVariableConfig], List[ControlVariableGuessListConfig]
-        ],
-    ) -> Union[List[str], Dict[str, List[str]]]:
-        if (
-            isinstance(variables[0], ControlVariableConfig)
-            and getattr(variables[0], "index", None) is None
-        ):
-            return [var.name for var in variables]
-        result: DefaultDict[str, list] = defaultdict(list)
-        for variable in variables:
-            if isinstance(variable, ControlVariableGuessListConfig):
-                result[variable.name].extend(
-                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
-                )
-            else:
-                result[variable.name].append(str(variable.index))  # type: ignore
-        return dict(result)  # { name : [ index ]
-
-    def _get_controls_def(
-        self, ever_config: EverestConfig
-    ) -> Dict[str, Union[List[str], Dict[str, List[str]]]]:
+    def _get_controls(self, ever_config: EverestConfig) -> List[str]:
         controls = ever_config.controls or []
-        return {
-            control.name: self._get_variables(control.variables) for control in controls
-        }
+        return [control.name for control in controls]
 
-    def _get_results_def(self, ever_config: EverestConfig):
-        self._function_aliases = {
+    def _get_results(self, ever_config: EverestConfig) -> List[str]:
+        objectives_names = [
+            objective.name
+            for objective in ever_config.objective_functions
+            if objective.alias is None
+        ]
+        constraint_names = [
+            constraint.name for constraint in (ever_config.output_constraints or [])
+        ]
+        return objectives_names + constraint_names
+
+    def _get_aliases(self, ever_config: EverestConfig) -> Dict[str, str]:
+        aliases = {
             objective.name: objective.alias
             for objective in ever_config.objective_functions
             if objective.alias is not None
@@ -83,19 +78,9 @@ class Simulator(BatchSimulator):
                 constraint.upper_bound is not None
                 and constraint.lower_bound is not None
             ):
-                self._function_aliases[f"{constraint.name}:lower"] = constraint.name
-                self._function_aliases[f"{constraint.name}:upper"] = constraint.name
-
-        objectives_names = [
-            objective.name
-            for objective in ever_config.objective_functions
-            if objective.name not in self._function_aliases
-        ]
-
-        constraint_names = [
-            constraint.name for constraint in (ever_config.output_constraints or [])
-        ]
-        return objectives_names + constraint_names
+                aliases[f"{constraint.name}:lower"] = constraint.name
+                aliases[f"{constraint.name}:upper"] = constraint.name
+        return aliases
 
     def __call__(
         self, control_values: NDArray[np.float64], metadata: EvaluatorContext
@@ -133,7 +118,7 @@ class Simulator(BatchSimulator):
                     self._add_control(controls, control_name, control_value)
                 case_data.append((real_id, controls))
 
-        with open_storage(self._ert_config.ens_path, "w") as storage:
+        with open_storage(self.ert_config.ens_path, "w") as storage:
             if self._experiment_id is None:
                 experiment = storage.create_experiment(
                     name=f"EnOpt@{datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",

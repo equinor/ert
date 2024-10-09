@@ -29,9 +29,7 @@ class ExtParamConfig(ParameterConfig):
     If a list of strings is given, the order is preserved.
     """
 
-    input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]] = field(
-        default_factory=list
-    )
+    input_keys: Union[List[str], Dict[str, List[str]]] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
@@ -136,16 +134,14 @@ class ExtParamConfig(ParameterConfig):
         """
         if isinstance(self.input_keys, dict) and isinstance(key, tuple):
             key, suffix = key
-            return (
-                key in self.input_keys and suffix in self.input_keys[key]  # type: ignore[comparison-overlap]
-            )
+            return key in self.input_keys and suffix in self.input_keys[key]
         else:
             return key in self.input_keys
 
     def __repr__(self) -> str:
         return f"ExtParamConfig(keys={self.input_keys})"
 
-    def __getitem__(self, index: str) -> List[Tuple[str, str]]:
+    def __getitem__(self, index: str) -> List[str]:
         """Retrieve an item from the configuration
 
         If @index is a string, assumes its a key and retrieves the suffixes
