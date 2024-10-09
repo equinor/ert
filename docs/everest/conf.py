@@ -12,7 +12,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import os
+import sys
 from importlib import metadata
+
+sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
 
@@ -48,6 +52,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinxarg.ext",
+    "everest_jobs",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

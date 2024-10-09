@@ -6,7 +6,7 @@ import pytest
 
 from everest.plugins import hook_impl as everest_implementation
 from everest.plugins import hookimpl
-from everest.plugins.hook_manager import EverestPluginManager
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.plugins.plugin_response import plugin_response
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 
