@@ -2,6 +2,7 @@ import json
 import os
 import os.path
 import stat
+import textwrap
 
 import pytest
 
@@ -45,8 +46,8 @@ JSON_STRING = """
 """
 
 
-def create_jobs_json(job_list):
-    return {"jobList": job_list}
+def create_jobs_json(fm_step_list):
+    return {"jobList": fm_step_list}
 
 
 @pytest.fixture(autouse=True)
@@ -78,39 +79,40 @@ def test_missing_joblist_json():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_output_rename():
-    job = {
-        "name": "TEST_JOB",
+    fm_step = {
+        "name": "TEST_FMSTEP",
         "executable": "mkdir",
         "stdout": "out",
         "stderr": "err",
     }
-    joblist = [job, job, job, job, job]
+    fm_step_list = [fm_step, fm_step, fm_step, fm_step, fm_step]
 
-    jobm = ForwardModelRunner(create_jobs_json(joblist))
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
-    for status in enumerate(jobm.run([])):
+    for status in enumerate(fmr.run([])):
         if isinstance(status, Start):
+            assert status.job is not None
             assert status.job.std_err == f"err.{status.job.index}"
             assert status.job.std_out == f"out.{status.job.index}"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_multiple_ok():
-    joblist = []
+    fm_step_list = []
     dir_list = ["1", "2", "3", "4", "5"]
-    for job_index in dir_list:
-        job = {
+    for fm_step_index in dir_list:
+        fm_step = {
             "name": "MKDIR",
             "executable": "mkdir",
-            "stdout": f"mkdir_out.{job_index}",
-            "stderr": f"mkdir_err.{job_index}",
-            "argList": ["-p", "-v", job_index],
+            "stdout": f"mkdir_out.{fm_step_index}",
+            "stderr": f"mkdir_err.{fm_step_index}",
+            "argList": ["-p", "-v", fm_step_index],
         }
-        joblist.append(job)
+        fm_step_list.append(fm_step)
 
-    jobm = ForwardModelRunner(create_jobs_json(joblist))
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
-    statuses = [s for s in list(jobm.run([])) if isinstance(s, Exited)]
+    statuses = [s for s in list(fmr.run([])) if isinstance(s, Exited)]
 
     assert len(statuses) == 5
     for status in statuses:
@@ -124,37 +126,37 @@ def test_run_multiple_ok():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_when_forward_model_contains_multiple_jobs_just_one_checksum_status_is_given():
-    joblist = []
+def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given():
+    fm_step_list = []
     file_list = ["1", "2", "3", "4", "5"]
     manifest = {}
-    for job_index in file_list:
-        manifest[f"file_{job_index}"] = job_index
-        job = {
+    for fm_step_index in file_list:
+        manifest[f"file_{fm_step_index}"] = fm_step_index
+        fm_step = {
             "name": "TOUCH",
             "executable": "touch",
-            "stdout": f"touch_out.{job_index}",
-            "stderr": f"touch_err.{job_index}",
-            "argList": [job_index],
+            "stdout": f"touch_out.{fm_step_index}",
+            "stderr": f"touch_err.{fm_step_index}",
+            "argList": [fm_step_index],
         }
-        joblist.append(job)
+        fm_step_list.append(fm_step)
     with open("manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f)
 
-    jobm = ForwardModelRunner(create_jobs_json(joblist))
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
-    statuses = [s for s in list(jobm.run([])) if isinstance(s, Checksum)]
+    statuses = [s for s in list(fmr.run([])) if isinstance(s, Checksum)]
     assert len(statuses) == 1
     assert len(statuses[0].data) == 5
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error():
-    joblist = []
+    fm_step_list = []
     file_name = "test"
     manifest = {"file_1": f"{file_name}"}
 
-    joblist.append(
+    fm_step_list.append(
         {
             "name": "TOUCH",
             "executable": "touch",
@@ -166,9 +168,9 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
     with open("manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f)
 
-    jobm = ForwardModelRunner(create_jobs_json(joblist))
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
-    checksum_msg = [s for s in list(jobm.run([])) if isinstance(s, Checksum)]
+    checksum_msg = [s for s in list(fmr.run([])) if isinstance(s, Checksum)]
     assert len(checksum_msg) == 1
     info = checksum_msg[0].data["file_1"]
     assert "md5sum" not in info
@@ -181,9 +183,9 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_multiple_fail_only_runs_one():
-    joblist = []
+    fm_step_list = []
     for index in range(1, 6):
-        job = {
+        fm_step = {
             "name": "exit",
             "executable": "/bin/sh",
             "stdout": "exit_out",
@@ -194,11 +196,11 @@ def test_run_multiple_fail_only_runs_one():
                 f'echo "failed with {index}" 1>&2 ; exit {index}',
             ],
         }
-        joblist.append(job)
+        fm_step_list.append(fm_step)
 
-    jobm = ForwardModelRunner(create_jobs_json(joblist))
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
-    statuses = [s for s in list(jobm.run([])) if isinstance(s, Exited)]
+    statuses = [s for s in list(fmr.run([])) if isinstance(s, Exited)]
 
     assert len(statuses) == 1
     for i, status in enumerate(statuses):
@@ -284,15 +286,18 @@ assert os.environ["TEST_ENV"] == "123"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_default_env_variables_available_inside_job_context():
+def test_default_env_variables_available_inside_fm_step_context():
     with open("run_me.py", "w", encoding="utf-8") as f:
         f.write(
-            """#!/usr/bin/env python\n
-import os
-assert os.environ["_ERT_ITERATION_NUMBER"] == "0"
-assert os.environ["_ERT_REALIZATION_NUMBER"] == "0"
-assert os.environ["_ERT_RUNPATH"] == "./"
-            """
+            textwrap.dedent(
+                """\
+                #!/usr/bin/env python
+                import os
+                assert os.environ["_ERT_ITERATION_NUMBER"] == "0"
+                assert os.environ["_ERT_REALIZATION_NUMBER"] == "0"
+                assert os.environ["_ERT_RUNPATH"] == "./"
+                """
+            )
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
