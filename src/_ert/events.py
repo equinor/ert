@@ -127,7 +127,7 @@ class RealizationSuccess(RealizationBaseEvent):
 
 class RealizationFailed(RealizationBaseEvent):
     event_type: Id.REALIZATION_FAILURE_TYPE = Id.REALIZATION_FAILURE
-    callback_status_message: Union[str, None] = None  # Only used for JobState.FAILED
+    message: Union[str, None] = None  # Only used for JobState.FAILED
 
 
 class RealizationUnknown(RealizationBaseEvent):

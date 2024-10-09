@@ -177,8 +177,8 @@ class SnapshotModel(QAbstractItemModel):
                 if real_id in metadata["real_status_colors"]:
                     data.real_status_color = metadata["real_status_colors"][real_id]
                 reals_changed.append(real_node.row())
-                if real.get("callback_status_message"):
-                    data.callback_status_message = real["callback_status_message"]
+                if real.get("message"):
+                    data.message = real["message"]
 
             fm_steps_changed_by_real: Dict[str, List[int]] = defaultdict(list)
             for (real_id, fm_step_id), fm_step in fm_steps.items():
@@ -249,7 +249,7 @@ class SnapshotModel(QAbstractItemModel):
                     real_status_color=metadata.get(
                         "real_status_colors", defaultdict(None)
                     )[real_id],
-                    callback_status_message=real.get("callback_status_message"),
+                    message=real.get("message"),
                 ),
             )
             snapshot_tree.add_child(real_node)
@@ -386,7 +386,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == MemoryUsageRole:
             return node.data.max_memory_usage
         if role == CallbackStatusMessageRole:
-            return node.data.callback_status_message
+            return node.data.message
 
         return QVariant()
 

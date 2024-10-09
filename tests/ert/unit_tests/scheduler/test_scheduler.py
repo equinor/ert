@@ -693,7 +693,7 @@ def test_scheduler_create_openpbs_driver():
     assert driver._project_code == queue_config.queue_options.project_code
 
 
-async def test_callback_status_message_present_in_event_on_load_failure(
+async def test_message_present_in_event_on_load_failure(
     realization, mock_driver, monkeypatch
 ):
     expected_error = "foo bar error"
@@ -716,4 +716,4 @@ async def test_callback_status_message_present_in_event_on_load_failure(
     while not sch._events.empty():
         event = await sch._events.get()
 
-    assert expected_error in event.callback_status_message
+    assert expected_error in event.message

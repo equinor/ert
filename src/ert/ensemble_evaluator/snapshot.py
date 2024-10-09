@@ -253,7 +253,7 @@ class EnsembleSnapshot:
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         exec_hosts: Optional[str] = None,
-        callback_status_message: Optional[str] = None,
+        message: Optional[str] = None,
     ) -> "EnsembleSnapshot":
         self._realization_snapshots[real_id].update(
             _filter_nones(
@@ -262,7 +262,7 @@ class EnsembleSnapshot:
                     start_time=start_time,
                     end_time=end_time,
                     exec_hosts=exec_hosts,
-                    callback_status_message=callback_status_message,
+                    message=message,
                 )
             )
         )
@@ -282,7 +282,7 @@ class EnsembleSnapshot:
             start_time = None
             end_time = None
             exec_hosts = event.exec_hosts
-            callback_status_message = None
+            message = None
 
             if e_type is RealizationRunning:
                 start_time = convert_iso8601_to_datetime(timestamp)
@@ -293,14 +293,14 @@ class EnsembleSnapshot:
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
             if type(event) is RealizationFailed:
-                callback_status_message = event.callback_status_message
+                message = event.message
             self.update_realization(
                 event.real,
                 status,
                 start_time,
                 end_time,
                 exec_hosts,
-                callback_status_message,
+                message,
             )
 
             if e_type is RealizationTimeout:
@@ -403,7 +403,7 @@ class RealizationSnapshot(TypedDict, total=False):
     end_time: Optional[datetime]
     exec_hosts: Optional[str]
     fm_steps: Dict[str, FMStepSnapshot]
-    callback_status_message: Optional[str]
+    message: Optional[str]
 
 
 def _realization_dict_to_realization_snapshot(
@@ -415,7 +415,7 @@ def _realization_dict_to_realization_snapshot(
         start_time=source.get("start_time"),
         end_time=source.get("end_time"),
         exec_hosts=source.get("exec_hosts"),
-        callback_status_message=source.get("callback_status_message"),
+        message=source.get("message"),
         fm_steps=source.get("fm_steps", {}),
     )
     return _filter_nones(realization)
