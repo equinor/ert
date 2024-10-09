@@ -261,6 +261,10 @@ def _load_observations_and_responses(
         iens_active_index,
     )
 
+    observations_and_responses = observations_and_responses.sort(
+        by=["observation_key", "index"]
+    )
+
     S = observations_and_responses.select(
         observations_and_responses.columns[5:]
     ).to_numpy()
