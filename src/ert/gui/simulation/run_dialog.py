@@ -170,6 +170,7 @@ class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
     progress_update_event = Signal(dict, int)
+    finished = Signal()
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -298,7 +299,7 @@ class RunDialog(QFrame):
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumSize(self._minimum_width, self._minimum_height)
-        # self.finished.connect(self._on_finished)
+        self.finished.connect(self._on_finished)
 
         self._restart = False
 
@@ -349,7 +350,7 @@ class RunDialog(QFrame):
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if not self._notifier.is_simulation_running:
-            pass
+            self.finished.emit()
             # self.accept()
         elif self.killJobs() != QMessageBox.Yes and a0 is not None:
             a0.ignore()
@@ -403,7 +404,7 @@ class RunDialog(QFrame):
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
             self._on_finished()
-            self.finished.emit(-1)
+            self.finished.emit()
         return kill_job
 
     @Slot(bool, str)
@@ -437,6 +438,7 @@ class RunDialog(QFrame):
     def _on_event(self, event: object) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.msg)
+            self.finished.emit()
             self._ticker.stop()
             self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
