@@ -60,9 +60,9 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
         gui = _setup_main_window(storage_config, args_mock, log_handler, storage)
         qtbot.addWidget(gui)
 
-        plot_tool = gui.tools["Create plot"]
-        plot_tool.trigger()
-
+        button_plot_tool = gui.findChild(QPushButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         central_tab = plot_window._central_tab
 
