@@ -263,9 +263,9 @@ class ErtMainWindow(QMainWindow):
         self._workflows_tool.setParent(self)
         tools_menu.addAction(self._workflows_tool.getAction())
 
-        self._load_results_tool = LoadResultsTool(self.facade, self.notifier)
-        self._load_results_tool.setParent(self)
-        tools_menu.addAction(self._load_results_tool.getAction())
+        self.load_results_tool = LoadResultsTool(self.facade, self.notifier)
+        self.load_results_tool.setParent(self)
+        tools_menu.addAction(self.load_results_tool.getAction())
 
     def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
         if closeEvent is not None:
