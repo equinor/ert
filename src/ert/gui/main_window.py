@@ -117,24 +117,25 @@ class ErtMainWindow(QMainWindow):
         self.__add_tools_menu()
         self.__add_help_menu()
 
-    def select_central_widget(self):
+    def select_central_widget(self) -> None:
         actor = self.sender()
-        index_name = actor.property("index")
+        if actor:
+            index_name = actor.property("index")
 
-        if index_name == "Create plot" and not self._plot_window:
-            self._plot_window = PlotWindow(self.config_file, self)
-            self.central_layout.addWidget(self._plot_window)
-            self.central_panels_map["Create plot"] = self._plot_window
+            if index_name == "Create plot" and not self._plot_window:
+                self._plot_window = PlotWindow(self.config_file, self)
+                self.central_layout.addWidget(self._plot_window)
+                self.central_panels_map["Create plot"] = self._plot_window
 
-        if index_name == "Simulation status":
-            # select the only available simulation
-            for k, v in self.central_panels_map.items():
-                if isinstance(v, RunDialog):
-                    index_name = k
-                    break
+            if index_name == "Simulation status":
+                # select the only available simulation
+                for k, v in self.central_panels_map.items():
+                    if isinstance(v, RunDialog):
+                        index_name = k
+                        break
 
-        for i, widget in self.central_panels_map.items():
-            widget.setVisible(i == index_name)
+            for i, widget in self.central_panels_map.items():
+                widget.setVisible(i == index_name)
 
     @Slot(object)
     def slot_add_widget(self, run_dialog: RunDialog) -> None:
@@ -151,8 +152,9 @@ class ErtMainWindow(QMainWindow):
             menu = self.results_button.menu()
             if menu:
                 act = menu.addAction(datetime)
-                act.setProperty("index", datetime)
-                act.triggered.connect(self.select_central_widget)
+                if act:
+                    act.setProperty("index", datetime)
+                    act.triggered.connect(self.select_central_widget)
 
         if self.run_dialog_counter == 2:
             # swap from button to menu selection
@@ -187,7 +189,9 @@ class ErtMainWindow(QMainWindow):
         self.plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
         if self.plugins_tool:
             self.plugins_tool.setParent(self)
-            self.menuBar().addMenu(self.plugins_tool.get_menu())
+            menubar = self.menuBar()
+            if menubar:
+                menubar.addMenu(self.plugins_tool.get_menu())
 
         self._manage_experiments_panel = ManageExperimentsPanel(
             self.ert_config,
@@ -202,7 +206,7 @@ class ErtMainWindow(QMainWindow):
     def _add_sidebar_button(self, name: str, icon: QIcon) -> QPushButton:
         button = QPushButton(self.side_frame)
         button.setFixedSize(60, 60)
-        button.setCursor(QCursor(Qt.PointingHandCursor))
+        button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         button.setStyleSheet(BUTTON_STYLE_SHEET)
         pad = 30
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
@@ -227,7 +231,7 @@ class ErtMainWindow(QMainWindow):
             help_link_item = help_menu.addAction(menu_label)
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
+            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))  # type: ignore
 
         show_about = help_menu.addAction("About")
         assert show_about is not None
