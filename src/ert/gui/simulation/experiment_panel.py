@@ -142,8 +142,9 @@ class ExperimentPanel(QWidget):
             SingleTestRunPanel(run_path, notifier),
             True,
         )
+        analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
-            EnsembleExperimentPanel(ensemble_size, run_path, notifier),
+            EnsembleExperimentPanel(analysis_config, ensemble_size, run_path, notifier),
             True,
         )
         self.addExperimentConfigPanel(
@@ -154,7 +155,7 @@ class ExperimentPanel(QWidget):
         experiment_type_valid = bool(
             config.ensemble_config.parameter_configs and config.observations
         )
-        analysis_config = config.analysis_config
+
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
                 analysis_config, run_path, notifier, ensemble_size

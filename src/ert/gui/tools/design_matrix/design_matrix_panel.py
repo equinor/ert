@@ -24,7 +24,15 @@ class DesignMatrixPanel(QDialog):
     def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
         # Create a model
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(design_matrix_df.columns.astype(str).tolist())
+
+        if isinstance(design_matrix_df.columns, pd.MultiIndex):
+            header_labels = [
+                " | ".join(map(str, col)) for col in design_matrix_df.columns
+            ]
+        else:
+            header_labels = design_matrix_df.columns.astype(str).tolist()
+
+        model.setHorizontalHeaderLabels(header_labels)
 
         # Populate the model with data
         for index, _ in design_matrix_df.iterrows():
