@@ -122,6 +122,20 @@ class ErtMainWindow(QMainWindow):
         if actor:
             index_name = actor.property("index")
 
+            if index_name == "Manage experiments":
+                if self._manage_experiments_panel:
+                    self._manage_experiments_panel.close()
+                self._manage_experiments_panel = ManageExperimentsPanel(
+                    self.ert_config,
+                    self.notifier,
+                    self.ert_config.model_config.num_realizations,
+                )
+
+                self.central_panels_map["Manage experiments"] = (
+                    self._manage_experiments_panel
+                )
+                self.central_layout.addWidget(self._manage_experiments_panel)
+
             if index_name == "Create plot" and not self._plot_window:
                 self._plot_window = PlotWindow(self.config_file, self)
                 self.central_layout.addWidget(self._plot_window)
@@ -193,16 +207,6 @@ class ErtMainWindow(QMainWindow):
             if menubar:
                 menubar.addMenu(self.plugins_tool.get_menu())
 
-        self._manage_experiments_panel = ManageExperimentsPanel(
-            self.ert_config,
-            self.notifier,
-            self.ert_config.model_config.num_realizations,
-        )
-
-        self.central_panels_map["Manage experiments"] = self._manage_experiments_panel
-        self._manage_experiments_panel.hide()
-        self.central_layout.addWidget(self._manage_experiments_panel)
-
     def _add_sidebar_button(self, name: str, icon: QIcon) -> QPushButton:
         button = QPushButton(self.side_frame)
         button.setFixedSize(60, 60)
@@ -213,6 +217,8 @@ class ErtMainWindow(QMainWindow):
         button.setIconSize(icon_size)
         button.setIcon(icon)
         button.setToolTip(name)
+        objname = name.replace(" ", "_")
+        button.setObjectName(f"button_{objname}")
         self.vbox_layout.addWidget(button)
 
         button.clicked.connect(self.select_central_widget)
