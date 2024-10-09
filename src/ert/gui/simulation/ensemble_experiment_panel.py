@@ -111,6 +111,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             df_sample = design_matrix.design_matrix_df
             if df_sample is not None and not df_sample.empty:
                 viewer = DesignMatrixPanel(df_sample)
+                viewer.setMinimumHeight(500)
+                viewer.setMinimumWidth(1000)
+                viewer.adjustSize()
                 viewer.exec_()
 
     @Slot(ExperimentConfigPanel)

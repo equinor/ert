@@ -21,6 +21,7 @@ class DesignMatrixPanel(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(self.table_view)
         self.setLayout(layout)
+        self.adjustSize()
 
     @staticmethod
     def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
