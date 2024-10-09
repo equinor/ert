@@ -95,7 +95,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
-    def on_dm_params_clicked(self):
+    def on_dm_params_clicked(self) -> None:
         df_sample = pd.DataFrame({"Column1": [1, 2, 3], "Column2": ["A", "B", "C"]})
         viewer = DesignMatrixPanel(df_sample)
         viewer.exec_()

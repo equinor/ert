@@ -21,7 +21,7 @@ class DesignMatrixPanel(QDialog):
         self.setLayout(layout)
 
     @staticmethod
-    def create_model(design_matrix_df: pd.DataFrame):
+    def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
         # Create a model
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(design_matrix_df.columns.astype(str).tolist())
