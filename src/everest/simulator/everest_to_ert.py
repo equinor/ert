@@ -3,10 +3,14 @@ import itertools
 import json
 import logging
 import os
-from typing import Union
+from typing import DefaultDict, Dict, List, Union
 
 import everest
 from everest.config import EverestConfig
+from everest.config.control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -455,6 +459,51 @@ def _extract_seed(ever_config: EverestConfig, ert_config):
         ert_config["RANDOM_SEED"] = random_seed
 
 
+def _extract_controls(ever_config: EverestConfig, ert_config):
+    def _get_variables(
+        variables: Union[
+            List[ControlVariableConfig], List[ControlVariableGuessListConfig]
+        ],
+    ) -> Union[List[str], Dict[str, List[str]]]:
+        if (
+            isinstance(variables[0], ControlVariableConfig)
+            and getattr(variables[0], "index", None) is None
+        ):
+            return [var.name for var in variables]
+        result: DefaultDict[str, list] = collections.defaultdict(list)
+        for variable in variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                result[variable.name].extend(
+                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                )
+            else:
+                result[variable.name].append(str(variable.index))  # type: ignore
+        return dict(result)
+
+    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
+    # configuration key. When initializing an ERT config object, it is ignored.
+    # It is used by the Simulator object to inject ExtParamConfig nodes.
+    controls = ever_config.controls or []
+    ert_config["EXT_PARAM"] = {
+        control.name: _get_variables(control.variables) for control in controls
+    }
+
+
+def _extract_results(ever_config: EverestConfig, ert_config):
+    objectives_names = [
+        objective.name
+        for objective in ever_config.objective_functions
+        if objective.alias is None
+    ]
+    constraint_names = [
+        constraint.name for constraint in (ever_config.output_constraints or [])
+    ]
+    gen_data = ert_config.get("GEN_DATA", [])
+    for name in objectives_names + constraint_names:
+        gen_data.append((name, f"RESULT_FILE:{name}"))
+    ert_config["GEN_DATA"] = gen_data
+
+
 def everest_to_ert_config(ever_config: EverestConfig, site_config=None):
     """
     Takes as input an Everest configuration, the site-config and converts them
@@ -475,5 +524,7 @@ def everest_to_ert_config(ever_config: EverestConfig, site_config=None):
     _extract_model(ever_config, ert_config)
     _extract_queue_system(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
+    _extract_controls(ever_config, ert_config)
+    _extract_results(ever_config, ert_config)
 
     return ert_config
