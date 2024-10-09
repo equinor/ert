@@ -58,7 +58,7 @@ class ForwardModelStepJSON(TypedDict):
         environment: Dictionary of environment variables to inject into the
             environment of the forward model step run
         exec_env: Dictionary of environment variables to inject into the execution
-            environment of RMS
+            environment of the forward model step.
         max_running_minutes: Maximum runtime in minutes. If the forward model step
             takes longer than this, the job is requested to be cancelled.
     """
@@ -139,7 +139,7 @@ class ForwardModelStep:
         environment: Dictionary representing environment variables to inject into the
             environment of the forward model step run
         exec_env: Dictionary of environment variables to inject into the execution
-            environment of RMS
+            environment of the forward model step.
         default_mapping: Default values for optional arguments provided by the user.
             For example { "A": "default_A" }
         private_args: A dictionary of user-provided keyword arguments.
