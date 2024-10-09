@@ -1,6 +1,4 @@
-from ert.shared._doc_utils.everest_jobs import (
-    EverestForwardModelDocumentation,
-)
+from ert.shared._doc_utils.everest_jobs import EverestForwardModelDocumentation
 
 
 def setup(app):

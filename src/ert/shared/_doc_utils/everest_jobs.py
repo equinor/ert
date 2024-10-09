@@ -8,6 +8,9 @@ from sphinx.util.docutils import SphinxDirective
 
 from ert.config.forward_model_step import ForwardModelStepDocumentation
 from ert.plugins import ErtPluginManager, JobDoc
+
+from everest.plugins.everest_plugin_manager import EverestPluginManager
+
 from ert.shared._doc_utils.forward_model_documentation import _ForwardModelDocumentation
 
 
@@ -138,7 +141,7 @@ class _EverestDocumentation(SphinxDirective):
 
 
 class EverestForwardModelDocumentation(_EverestDocumentation):
-    pm = ErtPluginManager()
+    pm = EverestPluginManager()
     _JOBS: ClassVar[dict[str, Any]] = {
         **pm.get_documentation_for_jobs(),
         **pm.get_documentation_for_forward_model_steps(),
