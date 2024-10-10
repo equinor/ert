@@ -155,7 +155,7 @@ def pushd(run_path):
     os.chdir(starting_directory)
 
 
-def _find_unsmry(case: str) -> str:
+def find_unsmry(basepath: Path) -> Path:
     def _is_unsmry(base: str, path: str) -> bool:
         if "." not in path:
             return False
@@ -165,15 +165,57 @@ def _find_unsmry(case: str) -> str:
             "funsmry",
         ]
 
-    dir, base = os.path.split(case)
-    candidates = list(filter(lambda x: _is_unsmry(base, x), os.listdir(dir or ".")))
+    dir = basepath.parent
+    base = basepath.name
+    candidates: List[str] = list(
+        filter(lambda x: _is_unsmry(base, x), os.listdir(dir or "."))
+    )
     if not candidates:
-        raise ValueError(f"Could not find any unsmry matching case path {case}")
+        raise ValueError(f"Could not find any unsmry matching case path {basepath}")
     if len(candidates) > 1:
         raise ValueError(
-            f"Ambiguous reference to unsmry in {case}, could be any of {candidates}"
+            f"Ambiguous reference to unsmry in {basepath}, could be any of {candidates}"
         )
-    return os.path.join(dir, candidates[0])
+    return Path(dir) / candidates[0]
+
+
+def await_completed_unsmry_file(
+    smry_path: Path, max_wait: float = 15, poll_interval: float = 1.0
+) -> float:
+    """This function will wait until the provided smry file does not grow in size
+    during one poll interval.
+
+    Such a wait is sometimes needed when different MPI hosts write data to a shared
+    disk system.
+
+    If the file does not exist or is completely unreadable to resfo, this function
+    will timeout to max_wait. If NOSIM is included, this will happen.
+
+    Size is defined in terms of readable data elementes through resfo.
+
+    This function will always wait for at least one poll interval, the polling
+    interval is specified in seconds.
+
+    The return value is the waited time (in seconds)"""
+    start_time = datetime.datetime.now()
+    prev_len = 0
+    while (datetime.datetime.now() - start_time).total_seconds() < max_wait:
+        try:
+            resfo_sum = [r.read_keyword() for r in resfo.lazy_read(smry_path)]
+        except Exception:
+            time.sleep(poll_interval)
+            continue
+
+        current_len = len(resfo_sum)
+        if prev_len == current_len:
+            # smry file is regarded complete
+            break
+        else:
+            prev_len = max(prev_len, current_len)
+
+        time.sleep(poll_interval)
+
+    return (datetime.datetime.now() - start_time).total_seconds()
 
 
 class EclRun:
@@ -408,43 +450,12 @@ class EclRun:
                 else:
                     raise err from None
             if self.num_cpu > 1:
-                self.summary_block()
+                await_completed_unsmry_file(
+                    find_unsmry(Path(self.run_path) / self.base_name)
+                )
 
             with open(OK_file, "w", encoding="utf-8") as f:
                 f.write("ECLIPSE simulation OK")
-
-    def summary_block(self):
-        case = os.path.join(self.run_path, self.base_name)
-        start_time = datetime.datetime.now()
-        prev_len = 0
-        while True:
-            dt = datetime.datetime.now() - start_time
-            if dt.total_seconds() > 15:
-                # We have not got a stable summary file after 15 seconds of
-                # waiting, this either implies that something is completely
-                # broken or this is a NOSIM simulation. Due the possibility of
-                # NOSIM solution we just return here without signalling an
-                # error.
-                return None
-
-            time.sleep(1)
-
-            try:
-                ecl_sum = [
-                    r.read_keyword() for r in resfo.lazy_read(_find_unsmry(case))
-                ]
-            except Exception:
-                continue
-
-            this_len = len(ecl_sum)
-            if prev_len == 0:
-                prev_len = this_len
-                continue
-
-            if prev_len == this_len:
-                break
-
-        return ecl_sum
 
     def assertECLEND(self):
         tail_length = 5000
