@@ -1,9 +1,14 @@
+import datetime
+
 import numpy as np
 from ropt.plan import OptimizationPlanRunner
 
+from ert.config import ErtConfig, ExtParamConfig
+from ert.storage import open_storage
 from everest.config import EverestConfig, SimulatorConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import Simulator
+from everest.simulator.everest_to_ert import everest_to_ert_config
 
 CONFIG_FILE = "config_advanced_scipy.yml"
 
@@ -24,34 +29,59 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
     config.simulator = SimulatorConfig(enable_cache=True)
 
     ropt_config = everest2ropt(config)
-    simulator = Simulator(config)
 
-    # Run once, populating the cache of the simulator:
-    variables1 = (
-        OptimizationPlanRunner(
-            enopt_config=ropt_config,
-            evaluator=simulator,
-            seed=config.environment.random_seed,
-        )
-        .run()
-        .variables
+    config_dict = everest_to_ert_config(
+        config, site_config=ErtConfig.read_site_config()
     )
-    assert variables1 is not None
-    assert np.allclose(variables1, [0.1, 0, 0.4], atol=0.02)
-    assert n_evals > 0
+    ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
 
-    # Run again with the same simulator:
-    n_evals = 0
-    variables2 = (
-        OptimizationPlanRunner(
-            enopt_config=ropt_config,
-            evaluator=simulator,
-            seed=config.environment.random_seed,
+    # Inject ExtParam nodes. This is needed because EXT_PARAM is not an ERT
+    # configuration key, but only a placeholder for the control definitions.
+    ens_config = ert_config.ensemble_config
+    for control_name, variables in config_dict["EXT_PARAM"].items():
+        ens_config.addNode(
+            ExtParamConfig(
+                name=control_name,
+                input_keys=variables,
+                output_file=control_name + ".json",
+            )
         )
-        .run()
-        .variables
-    )
-    assert variables2 is not None
-    assert n_evals == 0
 
-    assert np.array_equal(variables1, variables2)
+    with open_storage(ert_config.ens_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            parameters=ert_config.ensemble_config.parameter_configuration,
+            responses=ert_config.ensemble_config.response_configuration,
+        )
+
+        simulator = Simulator(config, ert_config, storage, experiment)
+
+        # Run once, populating the cache of the simulator:
+        variables1 = (
+            OptimizationPlanRunner(
+                enopt_config=ropt_config,
+                evaluator=simulator,
+                seed=config.environment.random_seed,
+            )
+            .run()
+            .variables
+        )
+        assert variables1 is not None
+        assert np.allclose(variables1, [0.1, 0, 0.4], atol=0.02)
+        assert n_evals > 0
+
+        # Run again with the same simulator:
+        n_evals = 0
+        variables2 = (
+            OptimizationPlanRunner(
+                enopt_config=ropt_config,
+                evaluator=simulator,
+                seed=config.environment.random_seed,
+            )
+            .run()
+            .variables
+        )
+        assert variables2 is not None
+        assert n_evals == 0
+
+        assert np.array_equal(variables1, variables2)
