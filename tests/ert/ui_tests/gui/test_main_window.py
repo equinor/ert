@@ -39,7 +39,9 @@ from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.file.file_dialog import FileDialog
-from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments import (
+    ManageExperimentsPanel,
+)
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
@@ -456,11 +458,10 @@ def test_that_the_manage_experiments_tool_can_be_used(
 ):
     gui = esmda_has_run
 
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QPushButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the tab
     experiments_panel.setCurrentIndex(0)
@@ -543,11 +544,10 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 ):
     gui = opened_main_window_poly
 
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QPushButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the create new ensembles tab
     experiments_panel.setCurrentIndex(0)
