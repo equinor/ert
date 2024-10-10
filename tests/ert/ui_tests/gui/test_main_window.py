@@ -669,7 +669,10 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        gui.tools["Create plot"].trigger()
+
+        button_plot_tool = gui.findChild(QPushButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         ensemble_plot_names = get_child(
