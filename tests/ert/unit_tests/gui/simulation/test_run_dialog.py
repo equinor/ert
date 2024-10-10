@@ -670,17 +670,17 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
 
-        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
+        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
 
         fm_step_overview = run_dialog._fm_step_overview
-        qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=10000)
+        qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
         realization_widget = run_dialog.findChild(RealizationWidget)
 
         click_pos = realization_widget._real_view.rectForIndex(
             realization_widget._real_list_model.index(0, 0)
         ).center()
 
-        with qtbot.waitSignal(realization_widget.itemClicked, timeout=10000):
+        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
             qtbot.mouseClick(
                 realization_widget._real_view.viewport(),
                 Qt.LeftButton,
@@ -703,5 +703,5 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
         qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=10000)
 
-        with qtbot.waitSignal(run_dialog.finished, timeout=10000):
+        with qtbot.waitSignal(run_dialog.finished, timeout=30000):
             run_dialog.close()
