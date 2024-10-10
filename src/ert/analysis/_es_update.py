@@ -66,6 +66,8 @@ T = TypeVar("T")
 
 
 class TimedIterator(Generic[T]):
+    SEND_FREQUENCY = 1.0  # seconds
+
     def __init__(
         self, iterable: Sequence[T], callback: Callable[[AnalysisEvent], None]
     ) -> None:
@@ -73,6 +75,7 @@ class TimedIterator(Generic[T]):
         self._iterable = iterable
         self._callback = callback
         self._index = 0
+        self._last_send_time = 0.0
 
     def __iter__(self) -> Self:
         return self
@@ -88,11 +91,14 @@ class TimedIterator(Generic[T]):
             estimated_remaining_time = (elapsed_time / (self._index)) * (
                 len(self._iterable) - self._index
             )
-            self._callback(
-                AnalysisTimeEvent(
-                    remaining_time=estimated_remaining_time, elapsed_time=elapsed_time
+            if elapsed_time - self._last_send_time > self.SEND_FREQUENCY:
+                self._callback(
+                    AnalysisTimeEvent(
+                        remaining_time=estimated_remaining_time,
+                        elapsed_time=elapsed_time,
+                    )
                 )
-            )
+                self._last_send_time = elapsed_time
 
         self._index += 1
         return result
