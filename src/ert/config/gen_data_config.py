@@ -108,11 +108,11 @@ class GenDataConfig(ResponseConfig):
         )
 
     def read_from_file(self, run_path: str, _: int) -> polars.DataFrame:
-        def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
-            if not filename.exists():
-                raise ValueError(f"Missing output file: {filename}")
-            data = np.loadtxt(_run_path / filename, ndmin=1)
-            active_information_file = _run_path / (str(filename) + "_active")
+        def _read_file(file_path: Path, report_step: int) -> polars.DataFrame:
+            if not file_path.exists():
+                raise ValueError(f"Missing output file: {file_path}")
+            data = np.loadtxt(file_path, ndmin=1)
+            active_information_file = _run_path / (file_path.name + "_active")
             if active_information_file.exists():
                 active_list = np.loadtxt(active_information_file)
                 data[active_list == 0] = np.nan

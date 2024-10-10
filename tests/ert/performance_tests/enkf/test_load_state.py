@@ -15,7 +15,7 @@ def test_load_from_context(benchmark, template_config):
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
         loaded_reals = benchmark(
-            facade.load_from_forward_model, load_into, realisations, 0
+            facade.load_from_forward_model, load_into, realisations
         )
         assert loaded_reals == expected_reals
 
@@ -30,6 +30,6 @@ def test_load_from_fs(benchmark, template_config):
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
         loaded_reals = benchmark(
-            facade.load_from_forward_model, load_from, realisations, 0
+            facade.load_from_forward_model, load_from, realisations
         )
         assert loaded_reals == expected_reals

@@ -76,9 +76,7 @@ def create_responses(config_file, prior_ensemble, response_times):
         run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
     os.chdir(cwd)
     facade = LibresFacade.from_config_file(config_file)
-    facade.load_from_forward_model(
-        prior_ensemble, [True] * facade.get_ensemble_size(), 0
-    )
+    facade.load_from_forward_model(prior_ensemble, [True] * facade.get_ensemble_size())
 
 
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
