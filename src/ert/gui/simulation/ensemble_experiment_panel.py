@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from qtpy import QtCore
 from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
+from qtpy.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton
 
 from ert.config import AnalysisConfig, DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
@@ -88,7 +88,10 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         dm_param_button.setObjectName("show-dm-parameters")
         dm_param_button.setMinimumWidth(50)
 
+        use_dm_checkbox = QCheckBox("Use Design Matrix")
+
         button_layout = QHBoxLayout()
+        button_layout.addWidget(use_dm_checkbox)
         button_layout.addWidget(dm_param_button)
         button_layout.addStretch()  # Add stretch to push the button to the left
 
@@ -97,8 +100,14 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             dm_param_button.clicked.connect(
                 lambda: self.on_dm_params_clicked(design_matrix)
             )
+            use_dm_checkbox.stateChanged.connect(
+                lambda: self.on_use_dm_checkbox_toggled(
+                    use_dm_checkbox.checkState(), design_matrix
+                )
+            )
         else:
             dm_param_button.setDisabled(True)
+            use_dm_checkbox.setDisabled(True)
 
         self.setLayout(layout)
 
@@ -127,6 +136,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
                 viewer.setMinimumWidth(1000)
                 viewer.adjustSize()
                 viewer.exec_()
+
+    def on_use_dm_checkbox_toggled(self, state: int, design_matrix: DesignMatrix):
+        if state == QtCore.Qt.CheckState.Checked:
+            if design_matrix.design_matrix_df is None:
+                design_matrix.read_design_matrix()
+            print(design_matrix.design_matrix_df.head())
+            print("VALIDATION GOES HERE")
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
