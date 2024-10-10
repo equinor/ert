@@ -55,14 +55,14 @@ def test_missing_runpath_has_isolated_failures(
     monkeypatch.chdir(tmp_path)
     write_config(tmp_path, "LOCAL")
 
-    def handle_message_box(run_dialog):
+    def handle_message_box(dialog):
         def inner():
             qtbot.waitUntil(
-                lambda: run_dialog.fail_msg_box is not None,
+                lambda: dialog.fail_msg_box is not None,
                 timeout=20000,
             )
 
-            message_box = run_dialog.fail_msg_box
+            message_box = dialog.fail_msg_box
             assert message_box is not None
             assert message_box.label_text.text() == "ERT experiment failed!"
             message_box.accept()
@@ -76,7 +76,10 @@ def test_missing_runpath_has_isolated_failures(
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
 
             QTimer.singleShot(100, handle_message_box(run_dialog))
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+            qtbot.waitUntil(
+                lambda dialog=run_dialog: not dialog.done_button.isHidden(),
+                timeout=200000,
+            )
             assert (
                 "9/10"
                 in run_dialog._progress_widget.findChild(
