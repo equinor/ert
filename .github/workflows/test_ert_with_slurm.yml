@@ -32,7 +32,7 @@ jobs:
 
     - name: Install and setup slurm
       run: |
-        set -e
+        set +e
 
         sudo apt install slurmd slurmctld -y
 
@@ -57,7 +57,8 @@ jobs:
 
         # Show partition and node information configured:
         sinfo
-
+        systemctl status slurmctld.service
+        journalctl -xeu slurmctld.service
     - name: Verify slurm cluster works
       # Timeout is set low to catch a misconfigured cluster where srun will hang.
       timeout-minutes: 1
