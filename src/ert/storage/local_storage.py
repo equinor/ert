@@ -148,6 +148,14 @@ class LocalStorage(BaseMode):
         self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
+    def load_experiment(self, uuid: UUID) -> LocalExperiment:
+        if uuid not in self._experiments:
+            self._experiments[uuid] = LocalExperiment(
+                self, self._experiment_path(uuid), self.mode
+            )
+
+        return self._experiments[uuid]
+
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """
         Retrieves an experiment by UUID.

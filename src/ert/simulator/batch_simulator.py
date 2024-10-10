@@ -26,6 +26,7 @@ class BatchSimulator:
     def __init__(
         self,
         ert_config: ErtConfig,
+        experiment: Experiment,
         controls: Iterable[str],
         results: Iterable[str],
         callback: Optional[Callable[[BatchContext], None]] = None,
@@ -98,6 +99,7 @@ class BatchSimulator:
             raise ValueError("The first argument must be valid ErtConfig instance")
 
         self.ert_config = ert_config
+        self.experiment = experiment
         self.control_keys = set(controls)
         self.result_keys = set(results)
         self.callback = callback
@@ -162,7 +164,6 @@ class BatchSimulator:
         self,
         case_name: str,
         case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]],
-        experiment: Experiment,
     ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
@@ -221,7 +222,7 @@ class BatchSimulator:
         time, so when you have called the 'start' method you need to let that
         batch complete before you start a new batch.
         """
-        ensemble = experiment.create_ensemble(
+        ensemble = self.experiment.create_ensemble(
             name=case_name,
             ensemble_size=self.ert_config.model_config.num_realizations,
         )
