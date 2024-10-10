@@ -78,11 +78,11 @@ start_tests () {
     return_code_5=$?
 
     run_everest_tests
-    return_code_5=$?
+    return_code_6=$?
     set -e
 
     # We error if one or more returncodes are nonzero
-    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4 $return_code_5; do
+    for code in $return_code_0 $return_code_1 $return_code_2 $return_code_3 $return_code_4 $return_code_5 $return_code_6; do
         if [ "$code" -ne 0 ]; then
             echo "One or more tests failed."
             return 1
