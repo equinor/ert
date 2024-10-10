@@ -1,8 +1,6 @@
 import os
 import os.path
 
-from ert.plugins import ErtPluginManager
-
 from .run_cli import run_cli_with_pm
 
 
@@ -37,9 +35,7 @@ FORWARD_MODEL MOVE_DIRECTORY(<FROM>=mydir3, <TO>=mydir4/mydir3)
         with open("file.txt", "w", encoding="utf-8") as file_h:
             file_h.write("something")
 
-        run_cli_with_pm(
-            ["test_run", "--disable-monitor", ert_config_fname], ErtPluginManager()
-        )
+        run_cli_with_pm(["test_run", "--disable-monitor", ert_config_fname])
 
         with open("realization-0/iter-0/moved.txt", encoding="utf-8") as output_file:
             assert output_file.read() == "something"

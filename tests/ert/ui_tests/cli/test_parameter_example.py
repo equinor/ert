@@ -18,7 +18,6 @@ from resdata.resfile import ResdataKW
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
-from ert.plugins import ErtPluginManager
 from tests.ert.unit_tests.config.egrid_generator import egrids
 from tests.ert.unit_tests.config.summary_generator import summaries
 
@@ -400,10 +399,7 @@ def test_parameter_example(
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
 
-        run_cli_with_pm(
-            [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitor", "config.ert"],
-            ErtPluginManager(),
-        )
+        run_cli_with_pm([ENSEMBLE_EXPERIMENT_MODE, "--disable-monitor", "config.ert"])
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")
