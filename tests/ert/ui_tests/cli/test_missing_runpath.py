@@ -7,7 +7,7 @@ import pytest
 
 from ert.cli.main import ErtCliError
 
-from .run_cli import run_cli
+from .run_cli import run_cli_with_pm
 
 config_contents = """\
 QUEUE_SYSTEM {queue_system}
@@ -55,7 +55,9 @@ def test_missing_runpath_has_isolated_failures(tmp_path, monkeypatch):
             ErtCliError,
             match=r"active realizations \(9\) is less than .* MIN_REALIZATIONS\(10\)",
         ):
-            run_cli("ensemble_experiment", "config.ert", "--disable-monitoring")
+            run_cli_with_pm(
+                ["ensemble_experiment", "config.ert", "--disable-monitoring"]
+            )
     finally:
         with suppress(FileNotFoundError):
             (tmp_path / "simulations/realization-0/iter-0").chmod(0x777)
@@ -95,4 +97,4 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
         match=r"(?s)active realizations \(9\) is less than .* MIN_REALIZATIONS\(10\).*"
         r"Driver reported: Could not create submit script: Don't like realization-1",
     ), patch_raising_named_temporary_file(queue_system.lower()):
-        run_cli("ensemble_experiment", "config.ert", "--disable-monitoring")
+        run_cli_with_pm(["ensemble_experiment", "config.ert", "--disable-monitoring"])
