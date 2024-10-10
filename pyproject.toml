@@ -49,6 +49,7 @@ dependencies = [
     "matplotlib",
     "netCDF4",
     "numpy<2",
+    "openpyxl",  # extra dependency for pandas (excel)
     "orjson",
     "packaging",
     "pandas",
