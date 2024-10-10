@@ -309,10 +309,10 @@ without ignoring errors
         )
 
 
-class Flow(ForwardModelStepPlugin):
+class LegacyFlow(ForwardModelStepPlugin):
     def __init__(self) -> None:
         super().__init__(
-            name="FLOW",
+            name="FLOW_LEGACY",
             command=[
                 str(
                     (
@@ -336,6 +336,53 @@ class Flow(ForwardModelStepPlugin):
 
     @staticmethod
     def documentation() -> Optional[ForwardModelStepDocumentation]:
+        return ForwardModelStepDocumentation(
+            category="simulators.reservoir",
+            examples="""
+.. code-block:: bash
+
+    FORWARD_MODEL FLOW(<ECLBASE>, <OPTS>="--ignore-errors")
+
+The :code:`OPTS` argument is optional and can be removed, thus running flow
+without ignoring errors.
+
+ERT will be able to run with flow only if OPM FLOW simulator is installed and available
+in the user $PATH environment varaible.
+
+Currently ERT does not support changing the default options for the flow simulator.
+
+""",
+            description="""Forward model for OPM Flow simulator""",
+        )
+
+
+class Flow(ForwardModelStepPlugin):
+    def __init__(self) -> None:
+        super().__init__(
+            name="FLOW",
+            command=[
+                str(
+                    (
+                        Path(__file__)
+                        / "../../../resources/forward_models/res/script/flowrun.py"
+                    ).resolve()
+                ),
+                "-v",
+                "<VERSION>",
+                "--np",
+                "<NUM_CPU>",
+                "<ECLBASE>",
+                "<OPTS>",
+            ],
+            default_mapping={
+                "<VERSION>": "default",
+                "<NUM_CPU>": 1,
+                "<OPTS>": "",
+            },
+        )
+
+    @staticmethod
+    def documentation() -> ForwardModelStepDocumentation:
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
@@ -585,6 +632,7 @@ _UpperCaseFMSteps: List[Type[ForwardModelStepPlugin]] = [
     DeleteFile,
     Eclipse100,
     Eclipse300,
+    LegacyFlow,
     Flow,
     MakeDirectory,
     MakeSymlink,
