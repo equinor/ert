@@ -2,7 +2,18 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from itertools import count
-from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
+from uuid import UUID
 
 import numpy as np
 from numpy import float64
@@ -11,7 +22,7 @@ from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
 from ert.config import ErtConfig, HookRuntime
-from ert.storage import open_storage
+from ert.storage import Storage, open_storage
 from everest.config import EverestConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
@@ -41,6 +52,21 @@ class Simulator(BatchSimulator):
         self._cache: Optional[_SimulatorCache] = None
         if ever_config.simulator is not None and ever_config.simulator.enable_cache:
             self._cache = _SimulatorCache()
+
+        self._on_storage_initialized_callbacks = []
+
+    def _invoke_storage_initialized_callbacks(
+        self, write_storage: Storage, experiment_id: UUID
+    ):
+        for cb in self._on_storage_initialized_callbacks:
+            cb(storage=write_storage, experiment_id=experiment_id)
+
+    def on_storage_initialized(self, callback: Callable[[Storage, UUID], None]):
+        self._on_storage_initialized_callbacks.append(callback)
+
+    @property
+    def experiment_id(self) -> Optional[UUID]:
+        return self._experiment_id
 
     @staticmethod
     def _get_variables(
@@ -142,6 +168,7 @@ class Simulator(BatchSimulator):
                 )
 
                 self._experiment_id = experiment.id
+                self._invoke_storage_initialized_callbacks(storage, experiment.id)
             else:
                 experiment = storage.get_experiment(self._experiment_id)
 
