@@ -289,8 +289,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle().startswith("ERT - poly.ert")
-        run_workflow_button = gui.tools["Run workflow"]
-        assert not run_workflow_button.isEnabled()
+        assert not gui.workflows_tool.getAction().isEnabled()
 
 
 @pytest.mark.usefixtures("set_site_config")
@@ -315,8 +314,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle().startswith("ERT - config.ert")
-        run_workflow_button = gui.tools["Run workflow"]
-        assert run_workflow_button.isEnabled()
+        assert gui.workflows_tool.getAction().isEnabled()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
