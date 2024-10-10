@@ -109,7 +109,7 @@ def data_for_key(
             "summary", tuple(ensemble.get_realization_list_with_responses("summary"))
         )
         summary_keys = summary_data["response_key"].unique().to_list()
-    except (ValueError, KeyError):
+    except (ValueError, KeyError, polars.exceptions.ColumnNotFoundError):
         summary_data = polars.DataFrame()
         summary_keys = []
 

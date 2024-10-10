@@ -18,11 +18,16 @@ DEFAULT_SECURITY = Depends(security)
 
 
 def get_storage() -> Storage:
-    global _storage
+    global _storage  # noqa
     if _storage is None:
-        try:
-            return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
-        except RuntimeError as err:
-            raise InternalServerError(f"{err!s}") from err
+        _storage = update_storage()
     _storage.refresh()
     return _storage
+
+
+def update_storage() -> Storage:
+    global _storage
+    try:
+        return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+    except RuntimeError as err:
+        raise InternalServerError(f"{err!s}") from err
