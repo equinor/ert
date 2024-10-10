@@ -74,7 +74,6 @@ class ProgressWidget(QFrame):
     def repaint_components(self) -> None:
         if self._realization_count > 0:
             full_width = self.width()
-            self.stop_waiting_progress_bar()
 
             for state, label in self._progress_label_map.items():
                 label.setVisible(True)
@@ -90,9 +89,16 @@ class ProgressWidget(QFrame):
     def stop_waiting_progress_bar(self) -> None:
         self._waiting_progress_bar.setVisible(False)
 
+    def start_waiting_progress_bar(self) -> None:
+        self._waiting_progress_bar.setVisible(True)
+
     def update_progress(self, status: dict[str, int], realization_count: int) -> None:
         self._status = status
         self._realization_count = realization_count
+        if status.get("Finished", 0) < self._realization_count:
+            self.start_waiting_progress_bar()
+        else:
+            self.stop_waiting_progress_bar()
         self.repaint_components()
 
     def resizeEvent(self, a0: Any, event: Any = None) -> None:
