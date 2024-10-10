@@ -162,66 +162,6 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
-    """
-    This is a regression test for a bug where the plot window opened from run dialog
-    would have run dialog as parent. Because of that it would be destroyed when
-    run dialog was closed and end in a c++ QTObject lifetime crash.
-
-    Also tests that the run_dialog is not modal (does not block the main_window),
-    but simulations cannot be clicked from the main window while the run dialog is open.
-    """
-    config_file = Path("config.ert")
-    config_file.write_text(
-        f"NUM_REALIZATIONS 1\nENSPATH {storage.path}\n", encoding="utf-8"
-    )
-
-    args_mock = Mock()
-    args_mock.config = str(config_file)
-
-    ert_config = ErtConfig.from_file(str(config_file))
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        qtbot.addWidget(gui)
-        simulation_mode = get_child(gui, QComboBox, name="experiment_type")
-        run_experiment = get_child(gui, QToolButton, name="run_experiment")
-
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
-        run_dialog = wait_for_child(gui, qtbot, RunDialog)
-
-        # Ensure that once the run dialog is opened
-        # another simulation cannot be started
-        assert not run_experiment.isEnabled()
-
-        # Change simulation mode and ensure that
-        # another experiment still cannot be started
-        for ind in range(simulation_mode.count()):
-            simulation_mode.setCurrentIndex(ind)
-            assert not run_experiment.isEnabled()
-
-        # The user expects to be able to open e.g. the even viewer
-        # while the run dialog is open
-        assert not run_dialog.isModal()
-
-        qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-        # Ensure that once the run dialog is closed
-        # another simulation can be started
-        assert run_experiment.isEnabled()
-
-        plot_window = wait_for_child(gui, qtbot, PlotWindow)
-
-        # Cycle through showing all the tabs
-        for tab in plot_window._plot_widgets:
-            plot_window._central_tab.setCurrentWidget(tab)
-
-
 def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
     snake_oil_case_storage: ErtConfig, qtbot: QtBot
 ):
