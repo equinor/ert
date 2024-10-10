@@ -41,7 +41,7 @@ class AnalysisConfig:
     ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
-    design_matrix_args: Optional[DesignMatrix] = None
+    design_matrix: Optional[DesignMatrix] = None
 
     @no_type_check
     @classmethod
@@ -194,7 +194,7 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_module=es_settings,
             ies_module=ies_settings,
-            design_matrix_args=DesignMatrix.from_config_list(design_matrix_config_list)
+            design_matrix=DesignMatrix.from_config_list(design_matrix_config_list)
             if design_matrix_config_list is not None
             else None,
         )
