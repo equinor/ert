@@ -317,15 +317,13 @@ class ExperimentPanel(QWidget):
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
         self.run_button.setEnabled(False)
         dialog.run_experiment()
-        # dialog.show()
-        # self.hide()
 
         def exit_handler() -> None:
             self.run_button.setEnabled(True)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 
-        # dialog.finished.connect(exit_handler)
+        dialog.finished.connect(exit_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
