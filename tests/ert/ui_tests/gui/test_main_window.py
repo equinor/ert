@@ -387,11 +387,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
     button_plot_tool = gui.findChild(QPushButton, "button_Create_plot")
     assert button_plot_tool
     qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
-
-    # Then the plot window opens
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
-    data_types = get_child(plot_window, DataTypeKeysWidget)
 
+    data_types = get_child(plot_window, DataTypeKeysWidget)
     case_selection = get_child(
         plot_window, EnsembleSelectListWidget, "ensemble_selector"
     )
