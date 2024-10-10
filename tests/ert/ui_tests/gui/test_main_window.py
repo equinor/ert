@@ -384,8 +384,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
     ]
 
     # Click on Create plot after esmda has run
-    plot_tool = gui.tools["Create plot"]
-    plot_tool.trigger()
+    button_plot_tool = gui.findChild(QPushButton, "button_Create_plot")
+    assert button_plot_tool
+    qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
 
     # Then the plot window opens
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
