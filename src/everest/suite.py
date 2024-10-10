@@ -19,10 +19,12 @@ from ropt.plan import OptimizationPlanRunner
 from seba_sqlite import SqliteStorage
 
 from ert.resources import all_shell_script_fm_steps
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator import Simulator
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST, SIMULATOR_END, SIMULATOR_START, SIMULATOR_UPDATE
 from everest.util import makedirs_if_needed
 
@@ -388,39 +390,53 @@ class _EverestWorkflow(object):
         of this method will probably lead to a crash
         """
         assert self._monitor_thread is None
+        ert_config = everest_to_ert_config(self._config)
 
-        # Initialize the Everest simulator:
-        simulator = Simulator(self.config, callback=self._simulation_callback)
+        with open_storage(ert_config.ens_path, mode="w") as storage:
+            # Initialize the Everest simulator:
+            experiment = storage.create_experiment(
+                name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+                parameters=ert_config.ensemble_config.parameter_configuration,
+                responses=ert_config.ensemble_config.response_configuration,
+            )
 
-        # Initialize the ropt optimizer:
-        optimizer = self._configure_optimizer(simulator)
+            simulator = Simulator(
+                self.config,
+                ert_config,
+                storage,
+                experiment,
+                callback=self._simulation_callback,
+            )
 
-        # Before each batch evaluation we check if we should abort:
-        optimizer.add_observer(
-            EventType.START_EVALUATION,
-            partial(self._ropt_callback, optimizer=optimizer, simulator=simulator),
-        )
+            # Initialize the ropt optimizer:
+            optimizer = self._configure_optimizer(simulator)
 
-        # The SqliteStorage object is used to store optimization results from
-        # Seba in an sqlite database. It reacts directly to events emitted by
-        # Seba and is not called by Everest directly. The stored results are
-        # accessed by Everest via separate SebaSnapshot objects.
-        # This mechanism is outdated and not supported by the ropt package. It
-        # is retained for now via the seba_sqlite package.
-        seba_storage = SqliteStorage(optimizer, self.config.optimization_output_dir)
+            # Before each batch evaluation we check if we should abort:
+            optimizer.add_observer(
+                EventType.START_EVALUATION,
+                partial(self._ropt_callback, optimizer=optimizer, simulator=simulator),
+            )
 
-        # Run the optimization:
-        exit_code = optimizer.run().exit_code
+            # The SqliteStorage object is used to store optimization results from
+            # Seba in an sqlite database. It reacts directly to events emitted by
+            # Seba and is not called by Everest directly. The stored results are
+            # accessed by Everest via separate SebaSnapshot objects.
+            # This mechanism is outdated and not supported by the ropt package. It
+            # is retained for now via the seba_sqlite package.
+            seba_storage = SqliteStorage(optimizer, self.config.optimization_output_dir)
 
-        # Extract the best result from the storage.
-        self._result = seba_storage.get_optimal_result()
+            # Run the optimization:
+            exit_code = optimizer.run().exit_code
 
-        if self._monitor_thread is not None:
-            self._monitor_thread.stop()
-            self._monitor_thread.join()
-            self._monitor_thread = None
+            # Extract the best result from the storage.
+            self._result = seba_storage.get_optimal_result()
 
-        return "max_batch_num_reached" if self._max_batch_num_reached else exit_code
+            if self._monitor_thread is not None:
+                self._monitor_thread.stop()
+                self._monitor_thread.join()
+                self._monitor_thread = None
+
+            return "max_batch_num_reached" if self._max_batch_num_reached else exit_code
 
     @property
     def result(self):
