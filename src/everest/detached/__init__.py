@@ -77,6 +77,7 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         file_path=os.path.join(log_dir, "simulations.log"),
         log_level=logging.INFO,
     )
+    print("Configured loggers")
 
     global _server  # noqa: PLW0603
     global _context  # noqa: PLW0603
@@ -385,6 +386,7 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
         ],
         "name": "PARTITION",
     },
+    "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
 }
 
 
@@ -451,7 +453,7 @@ def _generate_queue_options(
 
 
 def _find_res_queue_system(config: EverestConfig):
-    queue_system_simulator: Literal["lsf", "local", "slurm"] = "local"
+    queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
     if config.simulator is not None:
         queue_system_simulator = config.simulator.queue_system or queue_system_simulator
 

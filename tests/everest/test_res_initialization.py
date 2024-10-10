@@ -6,6 +6,7 @@ import pytest
 
 import everest
 from ert.config import ErtConfig
+from ert.scheduler import create_driver
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
@@ -247,6 +248,52 @@ def test_snake_everest_to_ert_slurm(copy_test_data_to_tmp):
             ever_config_dict, site_config=ErtConfig.read_site_config()
         )
     )
+
+
+@tmpdir(relpath("test_data"))
+def test_snake_everest_to_ert_torque():
+    snake_torque_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_torque.yml")
+
+    ever_config_dict = EverestConfig.load_file(snake_torque_config_path)
+    ert_config_dict = everest_to_ert_config(ever_config_dict)
+
+    assert ert_config_dict["QUEUE_SYSTEM"] == "TORQUE"
+
+    expected_queue_option_tuples = {
+        ("TORQUE", "QSUB_CMD", "qsub"),
+        ("TORQUE", "QSTAT_CMD", "qstat"),
+        ("TORQUE", "QDEL_CMD", "qdel"),
+        ("TORQUE", "QUEUE", "normal"),
+        ("TORQUE", "MEMORY_PER_JOB", "100mb"),
+        ("TORQUE", "KEEP_QSUB_OUTPUT", 1),
+        ("TORQUE", "SUBMIT_SLEEP", 0.5),
+        ("TORQUE", "PROJECT_CODE", "snake_oil_pc"),
+    }
+
+    assert set(ert_config_dict["QUEUE_OPTION"]) == expected_queue_option_tuples
+
+    ert_config = ErtConfig.with_plugins().from_dict(
+        config_dict=everest_to_ert_config(
+            ever_config_dict, site_config=ErtConfig.read_site_config()
+        )
+    )
+
+    qc = ert_config.queue_config
+    qo = qc.queue_options
+    assert qc.queue_system == "TORQUE"
+    assert {k: v for k, v in qo.driver_options.items() if v is not None} == {
+        "project_code": "snake_oil_pc",
+        "qsub_cmd": "qsub",
+        "qstat_cmd": "qstat",
+        "qdel_cmd": "qdel",
+        "memory_per_job": "100mb",
+        "num_cpus_per_node": 1,
+        "num_nodes": 1,
+        "keep_qsub_output": True,
+        "queue_name": "normal",
+    }
+
+    driver = create_driver(ert_config.queue_config)
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})

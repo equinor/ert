@@ -7,6 +7,8 @@ import signal
 import threading
 from functools import partial
 
+import debugpy
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -81,7 +83,9 @@ def _build_args_parser():
 
 
 def _run_everest(options, ert_config, storage):
+    print("Entering site config env thingy")
     with PluginSiteConfigEnv():
+        print("_run_everest(options, ert_config, storage):")
         context = start_server(options.config, ert_config, storage)
         print("Waiting for server ...")
         wait_for_server(options.config, timeout=600, context=context)
@@ -91,8 +95,14 @@ def _run_everest(options, ert_config, storage):
 
 
 def run_everest(options):
+    print(f"run_everest({options})")
+
+    debugpy.listen(("localhost", 5678))  # Port can be any free port
+    print("Waiting for debugger to attach...")
+    debugpy.wait_for_client()  # Pause execution and wait for the debugger to connect
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
+    print(f"server_state = {everserver_status(options.config)}")
 
     if server_is_running(options.config):
         config_file = options.config.config_file
@@ -105,10 +115,10 @@ def run_everest(options):
         )
     elif server_state["status"] == ServerStatus.never_run or options.new_run:
         config_dict = options.config.to_dict()
-        logger.info("Running everest with config info\n {}".format(config_dict))
+        print("Running everest with config info\n {}".format(config_dict))
         for fm_job in options.config.forward_model or []:
             job_name = fm_job.split()[0]
-            logger.info("Everest forward model contains job {}".format(job_name))
+            print("Everest forward model contains job {}".format(job_name))
 
         with PluginSiteConfigEnv():
             ert_config = ErtConfig.with_plugins().from_dict(
@@ -123,6 +133,7 @@ def run_everest(options):
             _run_everest(options, ert_config, storage)
 
         server_state = everserver_status(options.config)
+        print(f"server_state = {everserver_status(options.config)}")
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
             logger.error("Everest run failed with: {}".format(server_state_info))
