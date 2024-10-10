@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.cli.main import ErtCliError
+from ert.plugins import ErtPluginContext
 
 from .run_cli import run_cli_with_pm
 
@@ -96,5 +97,10 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
         ErtCliError,
         match=r"(?s)active realizations \(9\) is less than .* MIN_REALIZATIONS\(10\).*"
         r"Driver reported: Could not create submit script: Don't like realization-1",
-    ), patch_raising_named_temporary_file(queue_system.lower()):
-        run_cli_with_pm(["ensemble_experiment", "config.ert", "--disable-monitoring"])
+    ), patch_raising_named_temporary_file(
+        queue_system.lower()
+    ), ErtPluginContext() as context:
+        run_cli_with_pm(
+            ["ensemble_experiment", "config.ert", "--disable-monitoring"],
+            pm=context.plugin_manager,
+        )
