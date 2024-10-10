@@ -265,9 +265,9 @@ class ErtMainWindow(QMainWindow):
         self.export_tool.setParent(self)
         tools_menu.addAction(self.export_tool.getAction())
 
-        self._workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
-        self._workflows_tool.setParent(self)
-        tools_menu.addAction(self._workflows_tool.getAction())
+        self.workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
+        self.workflows_tool.setParent(self)
+        tools_menu.addAction(self.workflows_tool.getAction())
 
         self.load_results_tool = LoadResultsTool(self.facade, self.notifier)
         self.load_results_tool.setParent(self)
