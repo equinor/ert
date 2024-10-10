@@ -1,4 +1,5 @@
 from functools import partial
+from typing import List, cast
 
 from .deprecation_info import DeprecationInfo
 
@@ -221,5 +222,12 @@ deprecated_keywords_list = [
         message="MEMORY_PER_CPU as QUEUE_OPTION to SLURM is deprecated and will be removed in "
         "the future. Use REALIZATION_MEMORY instead.",
         check=lambda line: "MEMORY_PER_CPU" in line,
+    ),
+    DeprecationInfo(
+        keyword="QUEUE_OPTION",
+        message="Memory requirements in LSF should now be set using REALIZATION_MEMORY and not"
+        " through the LSF_RESOURCE option.",
+        check=lambda line: "LSF_RESOURCE" in line
+        and "mem=" in cast(List[str], line)[-1],
     ),
 ]
