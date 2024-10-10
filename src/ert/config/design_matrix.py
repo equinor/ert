@@ -41,6 +41,12 @@ class DesignMatrix:
             errors.append(
                 ErrorInfo("Missing required DEFAULT_SHEET").set_context(config_list)
             )
+        if design_sheet is not None and design_sheet == default_sheet:
+            errors.append(
+                ErrorInfo(
+                    "DESIGN_SHEET and DEFAULT_SHEET can not point to the same sheet."
+                ).set_context(config_list)
+            )
         if errors:
             raise ConfigValidationError.from_collected(errors)
         assert design_sheet is not None
