@@ -13,7 +13,7 @@ jobs:
   test-ert-on-slurm:
     name: Run ert tests
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
