@@ -651,7 +651,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
     QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
