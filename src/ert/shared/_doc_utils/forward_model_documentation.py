@@ -1,15 +1,11 @@
-
 from __future__ import annotations
 
 from argparse import ArgumentParser
-from typing import Any, Callable,  Optional
-
+from typing import Any, Callable, Optional
 
 from docutils import nodes
 
-
 from . import _create_section_with_title, _parse_raw_rst
-
 
 
 class _ForwardModelDocumentation:

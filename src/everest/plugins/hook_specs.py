@@ -108,15 +108,7 @@ def add_log_handle_to_root():
     :rtype: logging.Handler
     """
 
-@hookspec
-def installable_jobs():
-    """
-    
-    """
 
 @hookspec
-def installable_forward_model_steps():
-    """
-    
-    """
-
+def get_forward_model_documentations():
+    """ """
