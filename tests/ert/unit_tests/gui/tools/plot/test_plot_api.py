@@ -1,10 +1,37 @@
+import gc
+from datetime import datetime
+from textwrap import dedent
+from urllib.parse import quote
+
 import httpx
 import pandas as pd
+import polars
 import pytest
 from pandas.testing import assert_frame_equal
+from starlette.testclient import TestClient
 
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.config import SummaryConfig
+from ert.dark_storage import enkf
+from ert.dark_storage.app import app
+from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
+from ert.services import StorageService
+from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
+
+
+@pytest.fixture(autouse=True)
+def use_testclient(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setattr(StorageService, "session", lambda: client)
+
+    def test_escape(s: str) -> str:
+        """
+        Workaround for issue with TestClient:
+        https://github.com/encode/starlette/issues/1060
+        """
+        return quote(quote(quote(s, safe="")))
+
+    PlotApi.escape = test_escape
 
 
 def test_key_def_structure(api):
@@ -146,3 +173,66 @@ def test_plot_api_request_errors(api):
 
     with pytest.raises(httpx.RequestError):
         api.data_for_key(ensemble.id, "should_not_be_there")
+
+
+def test_plot_api_handles_urlescape(tmp_path, monkeypatch):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        api = PlotApi()
+        key = "WBHP:46/3-7S"
+        date = datetime(year=2024, month=10, day=4)
+        experiment = storage.create_experiment(
+            parameters=[],
+            responses=[
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=[key],
+                )
+            ],
+            observations={
+                "summary": polars.DataFrame(
+                    {
+                        "response_key": key,
+                        "observation_key": "sumobs",
+                        "time": polars.Series([date]).dt.cast_time_unit("ms"),
+                        "observations": polars.Series([1.0], dtype=polars.Float32),
+                        "std": polars.Series([1.0], dtype=polars.Float32),
+                    }
+                )
+            },
+        )
+        ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
+        assert api.data_for_key(str(ensemble.id), key).empty
+        df = polars.DataFrame(
+            {
+                "response_key": [key],
+                "time": [polars.Series([date]).dt.cast_time_unit("ms")],
+                "values": [polars.Series([1.0], dtype=polars.Float32)],
+            }
+        )
+        df = df.explode("values", "time")
+        ensemble.save_response(
+            "summary",
+            df,
+            0,
+        )
+        assert api.data_for_key(str(ensemble.id), key).to_csv() == dedent(
+            """\
+            Realization,2024-10-04
+            0,1.0
+            """
+        )
+        assert api.observations_for_key([str(ensemble.id)], key).to_csv() == dedent(
+            """\
+            ,0
+            STD,1.0
+            OBS,1.0
+            key_index,2024-10-04 00:00:00
+            """
+        )
+        if enkf._storage is not None:
+            enkf._storage.close()
+        enkf._storage = None
+        gc.collect()
