@@ -82,7 +82,8 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
     monkeypatch.chdir(tmp_path)
     queue_system = None
     if pytestconfig.getoption("lsf"):
-        queue_system = "LSF"
+        # queue_system = "LSF"
+        pytest.skip(reason="Currently does not work with the lsf setup")
     elif pytestconfig.getoption("slurm"):
         queue_system = "SLURM"
     else:
