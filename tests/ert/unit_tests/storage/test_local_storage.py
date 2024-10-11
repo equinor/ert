@@ -14,7 +14,7 @@ import numpy as np
 import polars
 import pytest
 import xarray as xr
-from hypothesis import assume, given
+from hypothesis import assume, given, note
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
@@ -545,7 +545,7 @@ class Experiment:
     ensembles: Dict[UUID, Ensemble] = field(default_factory=dict)
     parameters: List[ParameterConfig] = field(default_factory=list)
     responses: List[ResponseConfig] = field(default_factory=list)
-    observations: Dict[str, xr.Dataset] = field(default_factory=dict)
+    observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
 class StatefulStorageTest(RuleBasedStateMachine):
@@ -579,6 +579,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         super().__init__()
         self.tmpdir = tempfile.mkdtemp(prefix="StatefulStorageTest")
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
+        note(f"storage path is: {self.storage.path}")
         self.model: Dict[UUID, Experiment] = {}
         assert list(self.storage.ensembles) == []
 
@@ -816,7 +817,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
         if (
             list(prior.response_values.keys())
             == [r.name for r in model_experiment.responses]
-            and not iens in prior.failure_messages
+            and iens not in prior.failure_messages
+            and prior_ensemble.get_ensemble_state()[iens]
+            != RealizationStorageState.PARENT_FAILURE
         ):
             state[iens] = RealizationStorageState.UNDEFINED
         assert ensemble.get_ensemble_state() == state
