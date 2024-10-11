@@ -7,10 +7,11 @@ import httpx
 import pandas as pd
 import polars
 import pytest
+import xarray as xr
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
-from ert.config import SummaryConfig
+from ert.config import GenKwConfig, SummaryConfig
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
@@ -230,6 +231,52 @@ def test_plot_api_handles_urlescape(tmp_path, monkeypatch):
             STD,1.0
             OBS,1.0
             key_index,2024-10-04 00:00:00
+            """
+        )
+        if enkf._storage is not None:
+            enkf._storage.close()
+        enkf._storage = None
+        gc.collect()
+
+
+def test_plot_api_handles_empty_gen_kw(tmp_path, monkeypatch):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        api = PlotApi()
+        key = "gen_kw"
+        name = "<poro>"
+        experiment = storage.create_experiment(
+            parameters=[
+                GenKwConfig(
+                    name=key,
+                    forward_init=False,
+                    update=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=[],
+                ),
+            ],
+            responses=[],
+            observations={},
+        )
+        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+        assert api.data_for_key(str(ensemble.id), key).empty
+        ensemble.save_parameters(
+            key,
+            1,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": [name],
+                }
+            ),
+        )
+        assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
+            """\
+            Realization,0
+            1,1.0
             """
         )
         if enkf._storage is not None:
