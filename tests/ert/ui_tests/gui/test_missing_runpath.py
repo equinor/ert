@@ -83,6 +83,7 @@ def test_missing_runpath_has_isolated_failures(
                     QLabel, name="progress_label_text_Finished"
                 ).text()
             )
+            assert not run_dialog._progress_widget._waiting_progress_bar.isVisible()
             assert (
                 "1/10"
                 in run_dialog._progress_widget.findChild(
