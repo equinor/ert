@@ -519,7 +519,7 @@ class LocalEnsemble(BaseMode):
             )
 
             return sorted(summary_data["response_key"].unique().to_list())
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, polars.ColumnNotFoundError):
             return []
 
     def _load_single_dataset(
