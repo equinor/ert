@@ -112,12 +112,10 @@ class DesignMatrix:
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error:\n{error_msg}")
 
-        defaults = DesignMatrix._read_defaultssheet(
-            self.xls_filename, self.default_sheet
+        defaults_to_use = DesignMatrix._read_defaultssheet(
+            self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
         )
-        for k, v in defaults.items():
-            if k not in design_matrix_df.columns:
-                design_matrix_df[k] = v
+        design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
         parameter_configuration: Dict[str, ParameterConfig] = {}
         transform_function_definitions: List[TransformFunctionDefinition] = []
@@ -200,11 +198,14 @@ class DesignMatrix:
 
     @staticmethod
     def _read_defaultssheet(
-        xls_filename: Union[Path, str], defaults_sheetname: str
+        xls_filename: Union[Path, str],
+        defaults_sheetname: str,
+        existing_parameters: List[str],
     ) -> Dict[str, Union[str, float]]:
         """
         Construct a dict of keys and values to be used as defaults from the
-        first two columns in a spreadsheet.
+        first two columns in a spreadsheet. Only returns the keys that are
+        different from the exisiting parameters.
 
         Returns a dict of default values
 
@@ -230,7 +231,11 @@ class DesignMatrix:
         if not default_df[0].is_unique:
             raise ValueError("Default sheet contains duplicate parameter names")
 
-        return {row[0]: convert_to_numeric(row[1]) for _, row in default_df.iterrows()}
+        return {
+            row[0]: convert_to_numeric(row[1])
+            for _, row in default_df.iterrows()
+            if row[0] not in existing_parameters
+        }
 
 
 def convert_to_numeric(x: str) -> Union[str, float]:
