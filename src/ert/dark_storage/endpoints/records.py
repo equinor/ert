@@ -1,5 +1,6 @@
 import io
 from typing import Any, Dict, List, Mapping, Union
+from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -34,6 +35,7 @@ async def get_record_observations(
     ensemble_id: UUID,
     response_name: str,
 ) -> List[js.ObservationOut]:
+    response_name = unquote(response_name)
     ensemble = storage.get_ensemble(ensemble_id)
     obs_keys = get_observation_keys_for_response(ensemble, response_name)
     obss = get_observations_for_obs_keys(ensemble, obs_keys)
@@ -74,6 +76,7 @@ async def get_ensemble_record(
     ensemble_id: UUID,
     accept: Annotated[Union[str, None], Header()] = None,
 ) -> Any:
+    name = unquote(name)
     dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
@@ -153,6 +156,7 @@ def get_ensemble_responses(
 def get_std_dev(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
 ) -> Response:
+    key = unquote(key)
     ensemble = storage.get_ensemble(ensemble_id)
     try:
         da = ensemble.calculate_std_dev_for_parameter(key)["values"]

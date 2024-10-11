@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, NamedTuple, Optional
+from urllib.parse import quote
 
 import httpx
 import numpy as np
@@ -41,6 +42,10 @@ class PlotApi:
     def __init__(self) -> None:
         self._all_ensembles: Optional[List[EnsembleObject]] = None
         self._timeout = 120
+
+    @staticmethod
+    def escape(s: str) -> str:
+        return quote(quote(s, safe=""))
 
     def _get_ensemble_by_id(self, id: str) -> Optional[EnsembleObject]:
         for ensemble in self.get_all_ensembles():
@@ -163,7 +168,7 @@ class PlotApi:
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{ensemble.id}/records/{key}",
+                f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}",
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
             )
@@ -196,7 +201,7 @@ class PlotApi:
 
             with StorageService.session() as client:
                 response = client.get(
-                    f"/ensembles/{ensemble.id}/records/{key}/observations",
+                    f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/observations",
                     timeout=self._timeout,
                 )
                 self._check_response(response)
@@ -261,7 +266,7 @@ class PlotApi:
 
         with StorageService.session() as client:
             response = client.get(
-                f"/ensembles/{ensemble.id}/records/{key}/std_dev",
+                f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/std_dev",
                 params={"z": z},
                 timeout=self._timeout,
             )
