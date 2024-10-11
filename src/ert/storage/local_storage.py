@@ -593,7 +593,7 @@ class LocalStorage(BaseMode):
         """
         self._swap_path.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
-            dataframe.write_parquet(f)
+            dataframe.write_parquet(f.name)
             os.rename(f.name, filename)
 
 
