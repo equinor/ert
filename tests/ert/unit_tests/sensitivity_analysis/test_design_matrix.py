@@ -183,3 +183,30 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     with pytest.raises(ValueError, match=error_msg):
         design_matrix.read_design_matrix()
+
+
+def test_default_values_used(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    design_matrix_df = pd.DataFrame(
+        {
+            "REAL": [0, 1, 2, 3],
+            "a": [1, 2, 3, 4],
+            "b": [0, 2, 0, 1],
+            "c": ["low", "high", "medium", "low"],
+        }
+    )
+    default_sheet_df = pd.DataFrame([["one", 1], ["b", 4], ["d", "case_name"]])
+    with pd.ExcelWriter(design_path) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultValues", header=False
+        )
+    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+    design_matrix.read_design_matrix()
+    df = design_matrix.design_matrix_df
+    np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "one"], np.array([1, 1, 1, 1]))
+    np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0, 1]))
+    np.testing.assert_equal(
+        df[DESIGN_MATRIX_GROUP, "d"],
+        np.array(["case_name", "case_name", "case_name", "case_name"]),
+    )
