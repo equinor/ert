@@ -234,6 +234,7 @@ class EclrunConfig:
     """
 
     def __init__(self, config: EclConfig, version: str):
+        self.binary = "eclrun"
         self.simulator_name: str = config.simulator_name
         self.run_env: Optional[Dict[str, str]] = self._get_run_env(
             config.get_eclrun_env()
@@ -263,7 +264,7 @@ class EclrunConfig:
         try:
             return (
                 subprocess.check_output(
-                    ["eclrun", "--report-versions", self.simulator_name],
+                    [self.binary, "--report-versions", self.simulator_name],
                     env=self.run_env,
                 )
                 .decode("utf-8")
@@ -278,3 +279,12 @@ class EclrunConfig:
             return False
 
         return self.version in self._get_available_eclrun_versions()
+
+
+class FlowrunConfig(EclrunConfig):
+    def __init__(self, config: FlowConfig, version: str) -> None:
+        super().__init__(config, version)
+        self.binary = "flowrun"
+
+    def can_use_flowrun(self) -> bool:
+        return super().can_use_eclrun()
