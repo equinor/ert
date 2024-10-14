@@ -504,7 +504,7 @@ def _extract_results(ever_config: EverestConfig, ert_config):
     ert_config["GEN_DATA"] = gen_data
 
 
-def everest_to_ert_config(ever_config: EverestConfig, site_config=None):
+def everest_to_ert_config_dict(ever_config: EverestConfig, site_config=None):
     """
     Takes as input an Everest configuration, the site-config and converts them
     to a corresponding ert configuration.

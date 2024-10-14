@@ -13,14 +13,14 @@ from ert import BatchSimulator, WorkflowRunner
 from ert.config import ErtConfig, ExtParamConfig, HookRuntime
 from ert.storage import open_storage
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 
 
 class Simulator(BatchSimulator):
     """Everest simulator: BatchSimulator"""
 
     def __init__(self, ever_config: EverestConfig, callback=None) -> None:
-        config_dict = everest_to_ert_config(
+        config_dict = everest_to_ert_config_dict(
             ever_config, site_config=ErtConfig.read_site_config()
         )
         ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)

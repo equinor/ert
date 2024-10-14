@@ -9,7 +9,7 @@ from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.detached import generate_everserver_ert_config, start_server
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     DETACHED_NODE_DIR,
@@ -29,7 +29,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(
     workflow.start_optimization()
 
     batches = os.listdir(config.simulation_dir)
-    ert_config = ErtConfig.with_plugins().from_dict(everest_to_ert_config(config))
+    ert_config = ErtConfig.with_plugins().from_dict(everest_to_ert_config_dict(config))
     enspath = ert_config.ens_path
 
     with open_storage(enspath, mode="r") as storage:

@@ -14,7 +14,7 @@ from everest import MetaDataColumnNames as MDCN
 from everest import export
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 from everest.util import version_info
 
 
@@ -156,7 +156,7 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     ever_config.install_templates = None
 
     # prepare the ErtConfig object
-    ert_config_dict = everest_to_ert_config(
+    ert_config_dict = everest_to_ert_config_dict(
         ever_config, site_config=ErtConfig.read_site_config()
     )
     ert_config = ErtConfig.with_plugins().from_dict(config_dict=ert_config_dict)
