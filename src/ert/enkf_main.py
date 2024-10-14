@@ -9,19 +9,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import orjson
+import xarray as xr
 from numpy.random import SeedSequence
 
-from .config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from .config import ErtConfig
     from .storage import Ensemble
 
@@ -146,6 +143,24 @@ def _seed_sequence(seed: Optional[int]) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
+
+
+def save_design_matrix_to_ensemble(
+    design_matrix_df: pd.DataFrame,
+    ensemble: Ensemble,
+    active_realizations: Iterable[int],
+) -> None:
+    assert not design_matrix_df.empty
+    for realization_nr in active_realizations:
+        row = design_matrix_df.loc[realization_nr]["DESIGN_MATRIX"]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.values)),
+                "transformed_values": ("names", list(row.values)),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters("DESIGN_MATRIX", realization_nr, ds)
 
 
 def sample_prior(
