@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
+import pandas as pd
+import xarray as xr
 from numpy.random import SeedSequence
 
 from ert.config.ert_config import forward_model_data_to_json
@@ -17,13 +19,8 @@ from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions, substitute_runpath_name
 
-from .config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
+from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
@@ -53,7 +50,10 @@ def _value_export_txt(
     with path.open("w") as f:
         for key, param_map in values.items():
             for param, value in param_map.items():
-                print(f"{key}:{param} {value:g}", file=f)
+                if isinstance(value, (int | float)):
+                    print(f"{key}:{param} {value:g}", file=f)
+                else:
+                    print(f"{key}:{param} {value}", file=f)
 
 
 def _value_export_json(
@@ -154,6 +154,29 @@ def _seed_sequence(seed: int | None) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
+
+
+def save_design_matrix_to_ensemble(
+    design_matrix_df: pd.DataFrame,
+    ensemble: Ensemble,
+    active_realizations: Iterable[int],
+    design_group_name: str = DESIGN_MATRIX_GROUP,
+) -> None:
+    assert not design_matrix_df.empty
+    for realization_nr in active_realizations:
+        row = design_matrix_df.loc[realization_nr][DESIGN_MATRIX_GROUP]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.values)),
+                "transformed_values": ("names", list(row.values)),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters(
+            design_group_name,
+            realization_nr,
+            ds,
+        )
 
 
 def sample_prior(
