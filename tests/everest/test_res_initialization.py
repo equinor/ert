@@ -134,16 +134,6 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
         elif queue_system == ConfigKeys.SLURM:
             return slurm_queue_system()
 
-    def make_ext_param():
-        return {
-            "group": [
-                "W1",
-                "W2",
-                "W3",
-                "W4",
-            ],
-        }
-
     def make_gen_data():
         return [
             (
@@ -171,7 +161,6 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
             os.path.realpath("snake_oil/everest/model"),
             "everest_output/simulation_results",
         ),
-        "EXT_PARAM": make_ext_param(),
         "GEN_DATA": make_gen_data(),
     }
     ert_config.update(make_queue_system(queue_system))
@@ -227,26 +216,6 @@ def build_tutorial_dict(config_dir, output_dir):
             os.path.realpath("mocked_test_case"),
             "everest_output/simulation_results",
         ),
-        "EXT_PARAM": {
-            "group": [
-                "w00",
-                "w01",
-                "w02",
-                "w03",
-                "w04",
-                "w05",
-                "w06",
-                "w07",
-                "w08",
-                "w09",
-                "w10",
-                "w11",
-                "w12",
-                "w13",
-                "w14",
-                "w15",
-            ],
-        },
         "GEN_DATA": [
             (
                 "npv_function",
