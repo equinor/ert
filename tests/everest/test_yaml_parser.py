@@ -7,7 +7,7 @@ from ruamel.yaml import YAML
 import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config_dict
+from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import MockParser, relpath, skipif_no_everest_models
 
 # snake_oil_folder = relpath("test_data", "snake_oil")
@@ -26,7 +26,7 @@ def test_default_seed(copy_test_data_to_tmp, monkeypatch):
     random_seed = config.environment.random_seed
     assert isinstance(random_seed, int)
     # Res
-    ert_config = everest_to_ert_config_dict(config)
+    ert_config = _everest_to_ert_config_dict(config)
     assert random_seed == ert_config["RANDOM_SEED"]
 
 

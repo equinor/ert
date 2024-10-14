@@ -2,7 +2,7 @@ import pytest
 
 import everest
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config_dict
+from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 
 CONFIG_FILE = "config_minimal.yml"
 
@@ -18,7 +18,7 @@ def test_seed(copy_math_func_test_data_to_tmp):
     assert random_seed == ever_workflow.config.environment.random_seed
 
     # Res
-    ert_config = everest_to_ert_config_dict(config)
+    ert_config = _everest_to_ert_config_dict(config)
     assert random_seed == ert_config["RANDOM_SEED"]
 
 

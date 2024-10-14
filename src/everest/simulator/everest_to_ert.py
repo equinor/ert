@@ -476,7 +476,7 @@ def _extract_results(ever_config: EverestConfig, ert_config):
     ert_config["GEN_DATA"] = gen_data
 
 
-def everest_to_ert_config_dict(
+def _everest_to_ert_config_dict(
     ever_config: EverestConfig, site_config=None
 ) -> ConfigDict:
     """
@@ -504,7 +504,7 @@ def everest_to_ert_config_dict(
 
 
 def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
-    config_dict = everest_to_ert_config_dict(
+    config_dict = _everest_to_ert_config_dict(
         ever_config, site_config=ErtConfig.read_site_config()
     )
 

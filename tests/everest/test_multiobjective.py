@@ -4,7 +4,7 @@ from ropt.config.enopt import EnOptConfig
 from ert.config import ErtConfig
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.simulator.everest_to_ert import everest_to_ert_config_dict
+from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from everest.suite import _EverestWorkflow
 from tests.everest.test_config_validation import has_error
 
@@ -70,7 +70,7 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
 
 def test_multi_objectives2res(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
-    res = everest_to_ert_config_dict(config, site_config=ErtConfig.read_site_config())
+    res = _everest_to_ert_config_dict(config, site_config=ErtConfig.read_site_config())
     ErtConfig.with_plugins().from_dict(config_dict=res)
 
 
