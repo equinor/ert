@@ -14,9 +14,7 @@ from ._option_dict import option_dict
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
-    from ert.config import (
-        ParameterConfig,
-    )
+    from ert.config import ParameterConfig
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -28,10 +26,17 @@ class DesignMatrix:
     default_sheet: str
 
     def __post_init__(self) -> None:
-        self.num_realizations: int | None = None
-        self.active_realizations: list[bool] | None = None
-        self.design_matrix_df: pd.DataFrame | None = None
-        self.parameter_configuration: dict[str, ParameterConfig] | None = None
+        try:
+            (
+                self.active_realizations,
+                self.design_matrix_df,
+                self.parameter_configuration,
+            ) = self.read_design_matrix()
+        except (ValueError, AttributeError) as exc:
+            raise ConfigValidationError.with_context(
+                f"Error reading design matrix {self.xls_filename}: {exc}",
+                str(self.xls_filename),
+            ) from exc
 
     @classmethod
     def from_config_list(cls, config_list: list[str]) -> DesignMatrix:
@@ -73,9 +78,60 @@ class DesignMatrix:
             default_sheet=default_sheet,
         )
 
+    def merge_with_existing_parameters(
+        self, existing_parameters: list[ParameterConfig]
+    ) -> tuple[list[ParameterConfig], ParameterConfig | None]:
+        """
+        This method merges the design matrix parameters with the existing parameters and
+        returns the new list of existing parameters, wherein we drop GEN_KW group having a full overlap with the design matrix group.
+        GEN_KW group that was dropped will acquire a new name from the design matrix group.
+        Additionally, the ParameterConfig which is the design matrix group is returned separately.
+
+        Args:
+            existing_parameters (List[ParameterConfig]): List of existing parameters
+
+        Raises:
+            ConfigValidationError: If there is a partial overlap between the design matrix group and any existing GEN_KW group
+
+        Returns:
+            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters and the dedicated design matrix group
+        """
+
+        new_param_config: list[ParameterConfig] = []
+
+        design_parameter_group = self.parameter_configuration[DESIGN_MATRIX_GROUP]
+        design_keys = []
+        if isinstance(design_parameter_group, GenKwConfig):
+            design_keys = [e.name for e in design_parameter_group.transform_functions]
+
+        design_group_added = False
+        for parameter_group in existing_parameters:
+            if not isinstance(parameter_group, GenKwConfig):
+                new_param_config += [parameter_group]
+                continue
+            existing_keys = [e.name for e in parameter_group.transform_functions]
+            if set(existing_keys) == set(design_keys):
+                if design_group_added:
+                    raise ConfigValidationError(
+                        "Multiple overlapping groups with design matrix found in existing parameters!\n"
+                        f"{design_parameter_group.name} and {parameter_group.name}"
+                    )
+
+                design_parameter_group.name = parameter_group.name
+                design_group_added = True
+            elif set(design_keys) & set(existing_keys):
+                raise ConfigValidationError(
+                    "Overlapping parameter names found in design matrix!\n"
+                    f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
+                    "\nThey need to much exactly or not at all."
+                )
+            else:
+                new_param_config += [parameter_group]
+        return new_param_config, design_parameter_group
+
     def read_design_matrix(
         self,
-    ) -> None:
+    ) -> tuple[list[bool], pd.DataFrame, dict[str, ParameterConfig]]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
@@ -139,11 +195,11 @@ class DesignMatrix:
             [[DESIGN_MATRIX_GROUP], design_matrix_df.columns]
         )
         reals = design_matrix_df.index.tolist()
-        self.num_realizations = len(reals)
-        self.active_realizations = [x in reals for x in range(max(reals) + 1)]
-
-        self.design_matrix_df = design_matrix_df
-        self.parameter_configuration = parameter_configuration
+        return (
+            [x in reals for x in range(max(reals) + 1)],
+            design_matrix_df,
+            parameter_configuration,
+        )
 
     @staticmethod
     def _read_excel(

@@ -1,6 +1,7 @@
 from textwrap import dedent
 
 import hypothesis.strategies as st
+import pandas as pd
 import pytest
 from hypothesis import given
 
@@ -15,22 +16,33 @@ from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
 def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
-    with open(tmp_path / "my_design_matrix.xlsx", "w", encoding="utf-8"):
-        pass
+    with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
+        )
+        default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="my_sheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
     monkeypatch.chdir(tmp_path)
     assert ErtConfig.from_file_contents(
         dedent(
             """
-                NUM_REALIZATIONS 10
-                MIN_REALIZATIONS 10
+                NUM_REALIZATIONS 3
+                MIN_REALIZATIONS 3
                 ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
                 DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet DEFAULT_SHEET:my_default_sheet
                 """
         )
     ).analysis_config == AnalysisConfig.from_dict(
         {
-            ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.MIN_REALIZATIONS: "10",
+            ConfigKeys.NUM_REALIZATIONS: 3,
+            ConfigKeys.MIN_REALIZATIONS: "3",
             ConfigKeys.ANALYSIS_SET_VAR: [
                 ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
             ],
