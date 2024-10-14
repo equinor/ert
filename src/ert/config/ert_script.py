@@ -121,7 +121,7 @@ class ErtScript:
             arg_type = argument_types[index] if index < len(argument_types) else str
 
             if arg_value is not None:
-                arguments.append(arg_type(arg_value))  # type: ignore
+                arguments.append(arg_type(arg_value))
             else:
                 arguments.append(None)
         fixtures["workflow_args"] = arguments
