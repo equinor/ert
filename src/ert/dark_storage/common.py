@@ -129,7 +129,7 @@ def data_for_key(
         dataframe.index.name = "Realization"
 
         data = dataframe.sort_index(axis=1)
-        if data.empty:
+        if data.empty or key not in data:
             return pd.DataFrame()
         data = data[key].to_frame().dropna()
         data.columns = pd.Index([0])
