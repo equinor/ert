@@ -14,7 +14,7 @@ import requests
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 
-from ert import BatchContext, BatchSimulator
+from ert import BatchContext, BatchSimulator, JobState
 from ert.config import ErtConfig, QueueSystem
 from everest.config import EverestConfig
 from everest.config_keys import ConfigKeys as CK
@@ -180,11 +180,30 @@ def wait_for_server(
                 )
             # Job queueing may fail:
             if context is not None and context.has_job_failed(0):
-                path = context.job_progress(0).steps[0].std_err_file
-                for err in extract_errors_from_file(path):
-                    update_everserver_status(config, ServerStatus.failed, message=err)
-                    logging.error(err)
-                raise SystemExit("Failed to start Everest server.")
+                job_progress = context.job_progress(0)
+
+                if job_progress is not None:
+                    path = context.job_progress(0).steps[0].std_err_file
+                    for err in extract_errors_from_file(path):
+                        update_everserver_status(
+                            config, ServerStatus.failed, message=err
+                        )
+                        logging.error(err)
+                    raise SystemExit("Failed to start Everest server.")
+                else:
+                    try:
+                        state = context.get_job_state(0)
+
+                        if state == JobState.WAITING:
+                            # Job did fail, but is now in WAITING
+                            logging.error("wait_for_server, job failing -> waiting")
+                    except IndexError as e:
+                        # Job is no longer registered in scheduler
+                        logging.error(
+                            f"wait_for_server, job removed from scheduler\n{e}"
+                        )
+                        raise SystemExit("Failed to start Everest server.") from e
+
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
             if server_is_running(config):
