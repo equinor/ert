@@ -47,4 +47,3 @@ body:
         - label: lsf queue
         - label: slurm queue
         - label: openPBS queue
-        - label: used flag `--enable-scheduler`
