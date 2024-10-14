@@ -176,149 +176,141 @@ def test_plot_api_request_errors(api):
         api.data_for_key(ensemble.id, "should_not_be_there")
 
 
-def test_plot_api_handles_urlescape(tmp_path, monkeypatch):
+@pytest.fixture
+def api_and_storage(monkeypatch, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
         api = PlotApi()
-        key = "WBHP:46/3-7S"
-        date = datetime(year=2024, month=10, day=4)
-        experiment = storage.create_experiment(
-            parameters=[],
-            responses=[
-                SummaryConfig(
-                    name="summary",
-                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                    keys=[key],
-                )
-            ],
-            observations={
-                "summary": polars.DataFrame(
-                    {
-                        "response_key": key,
-                        "observation_key": "sumobs",
-                        "time": polars.Series([date]).dt.cast_time_unit("ms"),
-                        "observations": polars.Series([1.0], dtype=polars.Float32),
-                        "std": polars.Series([1.0], dtype=polars.Float32),
-                    }
-                )
-            },
-        )
-        ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
-        assert api.data_for_key(str(ensemble.id), key).empty
-        df = polars.DataFrame(
+        yield api, storage
+    if enkf._storage is not None:
+        enkf._storage.close()
+    enkf._storage = None
+    gc.collect()
+
+
+def test_plot_api_handles_urlescape(api_and_storage):
+    api, storage = api_and_storage
+    key = "WBHP:46/3-7S"
+    date = datetime(year=2024, month=10, day=4)
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                keys=[key],
+            )
+        ],
+        observations={
+            "summary": polars.DataFrame(
+                {
+                    "response_key": key,
+                    "observation_key": "sumobs",
+                    "time": polars.Series([date]).dt.cast_time_unit("ms"),
+                    "observations": polars.Series([1.0], dtype=polars.Float32),
+                    "std": polars.Series([1.0], dtype=polars.Float32),
+                }
+            )
+        },
+    )
+    ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
+    assert api.data_for_key(str(ensemble.id), key).empty
+    df = polars.DataFrame(
+        {
+            "response_key": [key],
+            "time": [polars.Series([date]).dt.cast_time_unit("ms")],
+            "values": [polars.Series([1.0], dtype=polars.Float32)],
+        }
+    )
+    df = df.explode("values", "time")
+    ensemble.save_response(
+        "summary",
+        df,
+        0,
+    )
+    assert api.data_for_key(str(ensemble.id), key).to_csv() == dedent(
+        """\
+        Realization,2024-10-04
+        0,1.0
+        """
+    )
+    assert api.observations_for_key([str(ensemble.id)], key).to_csv() == dedent(
+        """\
+        ,0
+        STD,1.0
+        OBS,1.0
+        key_index,2024-10-04 00:00:00
+        """
+    )
+
+
+def test_plot_api_handles_empty_gen_kw(api_and_storage):
+    api, storage = api_and_storage
+    key = "gen_kw"
+    name = "<poro>"
+    experiment = storage.create_experiment(
+        parameters=[
+            GenKwConfig(
+                name=key,
+                forward_init=False,
+                update=False,
+                template_file=None,
+                output_file=None,
+                transform_function_definitions=[],
+            ),
+        ],
+        responses=[],
+        observations={},
+    )
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+    assert api.data_for_key(str(ensemble.id), key).empty
+    ensemble.save_parameters(
+        key,
+        1,
+        xr.Dataset(
             {
-                "response_key": [key],
-                "time": [polars.Series([date]).dt.cast_time_unit("ms")],
-                "values": [polars.Series([1.0], dtype=polars.Float32)],
+                "values": ("names", [1.0]),
+                "transformed_values": ("names", [1.0]),
+                "names": [name],
             }
-        )
-        df = df.explode("values", "time")
-        ensemble.save_response(
-            "summary",
-            df,
-            0,
-        )
-        assert api.data_for_key(str(ensemble.id), key).to_csv() == dedent(
-            """\
-            Realization,2024-10-04
-            0,1.0
-            """
-        )
-        assert api.observations_for_key([str(ensemble.id)], key).to_csv() == dedent(
-            """\
-            ,0
-            STD,1.0
-            OBS,1.0
-            key_index,2024-10-04 00:00:00
-            """
-        )
-        if enkf._storage is not None:
-            enkf._storage.close()
-        enkf._storage = None
-        gc.collect()
+        ),
+    )
+    assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
+        """\
+        Realization,0
+        1,1.0
+        """
+    )
 
 
-def test_plot_api_handles_empty_gen_kw(tmp_path, monkeypatch):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
-        api = PlotApi()
-        key = "gen_kw"
-        name = "<poro>"
-        experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name=key,
-                    forward_init=False,
-                    update=False,
-                    template_file=None,
-                    output_file=None,
-                    transform_function_definitions=[],
-                ),
-            ],
-            responses=[],
-            observations={},
-        )
-        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-        assert api.data_for_key(str(ensemble.id), key).empty
-        ensemble.save_parameters(
-            key,
-            1,
-            xr.Dataset(
-                {
-                    "values": ("names", [1.0]),
-                    "transformed_values": ("names", [1.0]),
-                    "names": [name],
-                }
+def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
+    api, storage = api_and_storage
+    experiment = storage.create_experiment(
+        parameters=[
+            GenKwConfig(
+                name="gen_kw",
+                forward_init=False,
+                update=False,
+                template_file=None,
+                output_file=None,
+                transform_function_definitions=[],
             ),
-        )
-        assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
-            """\
-            Realization,0
-            1,1.0
-            """
-        )
-        if enkf._storage is not None:
-            enkf._storage.close()
-        enkf._storage = None
-        gc.collect()
-
-
-def test_plot_api_handles_non_existant_gen_kw(tmp_path, monkeypatch):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
-        api = PlotApi()
-        experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="gen_kw",
-                    forward_init=False,
-                    update=False,
-                    template_file=None,
-                    output_file=None,
-                    transform_function_definitions=[],
-                ),
-            ],
-            responses=[],
-            observations={},
-        )
-        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-        ensemble.save_parameters(
-            "gen_kw",
-            1,
-            xr.Dataset(
-                {
-                    "values": ("names", [1.0]),
-                    "transformed_values": ("names", [1.0]),
-                    "names": ["key"],
-                }
-            ),
-        )
-        assert api.data_for_key(str(ensemble.id), "gen_kw").empty
-        assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
-        if enkf._storage is not None:
-            enkf._storage.close()
-        enkf._storage = None
-        gc.collect()
+        ],
+        responses=[],
+        observations={},
+    )
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+    ensemble.save_parameters(
+        "gen_kw",
+        1,
+        xr.Dataset(
+            {
+                "values": ("names", [1.0]),
+                "transformed_values": ("names", [1.0]),
+                "names": ["key"],
+            }
+        ),
+    )
+    assert api.data_for_key(str(ensemble.id), "gen_kw").empty
+    assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
