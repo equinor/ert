@@ -178,7 +178,6 @@ markers = [
     "integration_test",
     "simulation_test",
     "ui_test",
-    "redundant_test",
     "fails_on_macos_github_workflow", # Tests marked fail due to gui-related issues
 ]
 log_cli = "false"
