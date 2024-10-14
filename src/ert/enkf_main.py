@@ -19,6 +19,8 @@ from typing import (
 )
 
 import orjson
+import pandas as pd
+import xarray as xr
 from numpy.random import SeedSequence
 
 from ert.config.ert_config import forward_model_data_to_json
@@ -26,13 +28,8 @@ from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions
 
-from .config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
+from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
@@ -160,6 +157,29 @@ def _seed_sequence(seed: Optional[int]) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
+
+
+def save_design_matrix_to_ensemble(
+    design_matrix_df: pd.DataFrame,
+    ensemble: Ensemble,
+    active_realizations: Iterable[int],
+    design_group_name: str = DESIGN_MATRIX_GROUP,
+) -> None:
+    assert not design_matrix_df.empty
+    for realization_nr in active_realizations:
+        row = design_matrix_df.loc[realization_nr][DESIGN_MATRIX_GROUP]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.values)),
+                "transformed_values": ("names", list(row.values)),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters(
+            design_group_name,
+            realization_nr,
+            ds,
+        )
 
 
 def sample_prior(

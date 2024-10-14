@@ -2,6 +2,7 @@ import os
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
 
+import pandas as pd
 import pytest
 from pytestqt.qtbot import QtBot
 from qtpy import QtWidgets
@@ -705,15 +706,26 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 def test_that_design_matrix_show_parameters_button_is_visible(
     design_matrix_entry, qtbot: QtBot, storage
 ):
-    xls_filename = "design_matrix.xls"
-    with open(f"{xls_filename}", "w", encoding="utf-8"):
-        pass
+    xls_filename = "design_matrix.xlsx"
+    design_matrix_df = pd.DataFrame(
+        {
+            "REAL": list(range(3)),
+            "a": [0, 1, 2],
+        }
+    )
+    default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
+    with pd.ExcelWriter(xls_filename) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
+        )
+
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
         if design_matrix_entry:
             f.write(
-                f"\nDESIGN_MATRIX {xls_filename} DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultValues"
+                f"\nDESIGN_MATRIX {xls_filename} DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet"
             )
 
     args_mock = Mock()
