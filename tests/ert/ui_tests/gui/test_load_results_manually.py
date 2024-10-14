@@ -1,7 +1,7 @@
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QPushButton
 
-from ert.gui.ertwidgets import ClosableDialog, StringBox
+from ert.gui.ertwidgets import ClosableDialog, StringBox, TextBox
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.tools.load_results import LoadResultsPanel
 
@@ -25,6 +25,11 @@ def test_validation(ensemble_experiment_has_run_no_failure, qtbot):
 
         load_button = get_child(panel.parent(), QPushButton, name="Load")
 
+        run_path_edit = get_child(panel, TextBox, name="run_path_edit_lrm")
+        assert run_path_edit.isEnabled()
+        valid_text = run_path_edit.get_text
+        assert "<IENS>" in valid_text
+
         active_realizations = get_child(
             panel, StringBox, name="active_realizations_lrm"
         )
@@ -37,12 +42,9 @@ def test_validation(ensemble_experiment_has_run_no_failure, qtbot):
         active_realizations.setText(default_value_active_reals)
         assert load_button.isEnabled()
 
-        iterations_field = get_child(panel, StringBox, name="iterations_field_lrm")
-        default_value_iteration = iterations_field.get_text
-        iterations_field.setText("-10")
-
+        run_path_edit.setText(valid_text.replace("<IENS>", "<IES>"))
         assert not load_button.isEnabled()
-        iterations_field.setText(default_value_iteration)
+        run_path_edit.setText(valid_text)
         assert load_button.isEnabled()
 
         dialog.close()
