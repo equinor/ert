@@ -1,10 +1,26 @@
+import gc
+from textwrap import dedent
+
 import httpx
 import pandas as pd
 import pytest
+import xarray as xr
 from pandas.testing import assert_frame_equal
+from starlette.testclient import TestClient
 
-from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
+from ert.config import GenKwConfig
+from ert.dark_storage import enkf
+from ert.dark_storage.app import app
+from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
+from ert.services import StorageService
+from ert.storage import open_storage
 from tests.unit_tests.gui.tools.plot.conftest import MockResponse
+
+
+@pytest.fixture(autouse=True)
+def use_testclient(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.setattr(StorageService, "session", lambda: client)
 
 
 def test_key_def_structure(api):
@@ -146,3 +162,88 @@ def test_plot_api_request_errors(api):
 
     with pytest.raises(httpx.RequestError):
         api.data_for_key(ensemble.id, "should_not_be_there")
+
+
+def test_plot_api_handles_empty_gen_kw(tmp_path, monkeypatch):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        api = PlotApi()
+        key = "gen_kw"
+        name = "<poro>"
+        experiment = storage.create_experiment(
+            parameters=[
+                GenKwConfig(
+                    name=key,
+                    forward_init=False,
+                    update=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=[],
+                ),
+            ],
+            responses=[],
+            observations={},
+        )
+        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+        assert api.data_for_key(str(ensemble.id), key).empty
+        ensemble.save_parameters(
+            key,
+            1,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": [name],
+                }
+            ),
+        )
+        assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
+            """\
+            Realization,0
+            1,1.0
+            """
+        )
+        if enkf._storage is not None:
+            enkf._storage.close()
+        enkf._storage = None
+        gc.collect()
+
+
+def test_plot_api_handles_non_existant_gen_kw(tmp_path, monkeypatch):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        api = PlotApi()
+        experiment = storage.create_experiment(
+            parameters=[
+                GenKwConfig(
+                    name="gen_kw",
+                    forward_init=False,
+                    update=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=[],
+                ),
+            ],
+            responses=[],
+            observations={},
+        )
+        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+        ensemble.save_parameters(
+            "gen_kw",
+            1,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": ["key"],
+                }
+            ),
+        )
+        assert api.data_for_key(str(ensemble.id), "gen_kw").empty
+        assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
+        if enkf._storage is not None:
+            enkf._storage.close()
+        enkf._storage = None
+        gc.collect()
