@@ -121,6 +121,9 @@ def data_for_key(
             .to_pandas()
         )
         df = df.set_index(["Date", "Realization"])
+        # This performs the same aggragation by mean of duplicate values
+        # as in ert/analysis/_es_update.py
+        df = df.groupby(["Date", "Realization"]).mean()
         data = df.unstack(level="Date")
         data.columns = data.columns.droplevel(0)
         try:
