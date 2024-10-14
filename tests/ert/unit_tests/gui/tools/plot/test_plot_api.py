@@ -283,3 +283,42 @@ def test_plot_api_handles_empty_gen_kw(tmp_path, monkeypatch):
             enkf._storage.close()
         enkf._storage = None
         gc.collect()
+
+
+def test_plot_api_handles_non_existant_gen_kw(tmp_path, monkeypatch):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        api = PlotApi()
+        experiment = storage.create_experiment(
+            parameters=[
+                GenKwConfig(
+                    name="gen_kw",
+                    forward_init=False,
+                    update=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=[],
+                ),
+            ],
+            responses=[],
+            observations={},
+        )
+        ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+        ensemble.save_parameters(
+            "gen_kw",
+            1,
+            xr.Dataset(
+                {
+                    "values": ("names", [1.0]),
+                    "transformed_values": ("names", [1.0]),
+                    "names": ["key"],
+                }
+            ),
+        )
+        assert api.data_for_key(str(ensemble.id), "gen_kw").empty
+        assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
+        if enkf._storage is not None:
+            enkf._storage.close()
+        enkf._storage = None
+        gc.collect()
