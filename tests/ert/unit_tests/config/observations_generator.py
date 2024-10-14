@@ -152,7 +152,7 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
 
 
 positive_floats = st.floats(
-    min_value=0.1, max_value=1e25, allow_nan=False, allow_infinity=False
+    min_value=0.1, max_value=1e9, allow_nan=False, allow_infinity=False
 )
 time_types = st.sampled_from(["date", "days", "restart", "hours"])
 
@@ -164,14 +164,6 @@ def summary_observations(
     kws = {
         "name": draw(names),
         "key": draw(summary_keys),
-        "error": draw(
-            st.floats(
-                min_value=std_cutoff,
-                max_value=std_cutoff * 1.1,
-                allow_nan=False,
-                allow_infinity=False,
-            )
-        ),
         "error_min": draw(
             st.floats(
                 min_value=std_cutoff,
@@ -181,10 +173,34 @@ def summary_observations(
             )
         ),
         "error_mode": draw(st.sampled_from(ErrorMode)),
-        "value": draw(positive_floats),
     }
-
-    assume(kws["error_mode"] == ErrorMode.ABS or kws["error"] < 2)
+    if kws["error_mode"] == ErrorMode.ABS:
+        kws["error"] = draw(
+            st.floats(
+                min_value=std_cutoff,
+                max_value=std_cutoff * 1.1,
+                allow_nan=False,
+                allow_infinity=False,
+            )
+        )
+        kws["value"] = draw(positive_floats)
+    else:
+        kws["error"] = draw(
+            st.floats(
+                min_value=0.1,
+                max_value=2.0,
+                allow_nan=False,
+                allow_infinity=False,
+            )
+        )
+        kws["value"] = draw(
+            st.floats(
+                min_value=(std_cutoff / kws["error"]),
+                max_value=(std_cutoff / kws["error"]) * 1.1,
+                allow_nan=False,
+                allow_infinity=False,
+            )
+        )
 
     time_type = draw(time_types)
     if time_type == "date":
