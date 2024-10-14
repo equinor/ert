@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import orjson
+import xarray as xr
 from numpy.random import SeedSequence
 
 from .config import (
+    DesignMatrix,
     ExtParamConfig,
     Field,
     GenKwConfig,
@@ -146,6 +148,26 @@ def _seed_sequence(seed: Optional[int]) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
+
+
+def load_prior(
+    ensemble: Ensemble, active_realizations: Iterable[int], design_matrix: DesignMatrix
+) -> None:
+    assert design_matrix.parameter_configuration is not None
+    assert (
+        design_matrix.design_matrix_df is not None
+        and not design_matrix.design_matrix_df.empty
+    )
+    for realization_nr in active_realizations:
+        row = design_matrix.design_matrix_df.loc[realization_nr]["DESIGN_MATRIX"]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.values)),
+                "transformed_values": ("names", list(row.values)),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters("DESIGN_MATRIX", realization_nr, ds)
 
 
 def sample_prior(

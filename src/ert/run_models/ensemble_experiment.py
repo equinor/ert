@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
-from ert.enkf_main import sample_prior
+from ert.enkf_main import load_prior, sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
 
@@ -61,7 +61,35 @@ class EnsembleExperiment(BaseRunModel):
         restart: bool = False,
     ) -> None:
         self.log_at_startup()
-        if not restart:
+        # If design matrix is present, we substitute the experiment parameters
+        # with those in the design matrix
+        if self.ert_config.analysis_config.design_matrix is not None:
+            if (
+                self.ert_config.analysis_config.design_matrix.parameter_configuration
+                is None
+            ):
+                self.ert_config.analysis_config.design_matrix.read_design_matrix()
+            assert (
+                self.ert_config.analysis_config.design_matrix.parameter_configuration
+                is not None
+            )
+            parameters_config = [
+                self.ert_config.analysis_config.design_matrix.parameter_configuration[
+                    "DESIGN_MATRIX"
+                ]
+            ]
+            self.experiment = self._storage.create_experiment(
+                name=self.experiment_name,
+                parameters=parameters_config,
+                observations=self.ert_config.observations,
+                responses=self.ert_config.ensemble_config.response_configuration,
+            )
+            self.ensemble = self._storage.create_ensemble(
+                self.experiment,
+                name=self.ensemble_name,
+                ensemble_size=self.ensemble_size,
+            )
+        elif not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -87,11 +115,18 @@ class EnsembleExperiment(BaseRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=self.ensemble,
         )
-        sample_prior(
-            self.ensemble,
-            np.where(self.active_realizations)[0],
-            random_seed=self.random_seed,
-        )
+        if self.ert_config.analysis_config.design_matrix is not None:
+            load_prior(
+                self.ensemble,
+                np.where(self.active_realizations)[0],
+                self.ert_config.analysis_config.design_matrix,
+            )
+        else:
+            sample_prior(
+                self.ensemble,
+                np.where(self.active_realizations)[0],
+                random_seed=self.random_seed,
+            )
 
         self._evaluate_and_postprocess(
             run_args,
