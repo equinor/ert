@@ -9,6 +9,7 @@ from typing import ClassVar, Dict, List
 import colorama
 from colorama import Fore
 
+from ert.resources import all_shell_script_fm_steps
 from ert.simulator.batch_simulator_context import Status
 from everest.config import EverestConfig
 from everest.detached import (
@@ -20,7 +21,6 @@ from everest.detached import (
     start_monitor,
 )
 from everest.export import export
-from everest.jobs import shell_commands
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST
 
@@ -269,7 +269,11 @@ class _DetachedMonitor:
     def _filter_jobs(self, progress):
         if not self._show_all_jobs:
             progress = [
-                [job for job in progress_list if job["name"] not in shell_commands]
+                [
+                    job
+                    for job in progress_list
+                    if job["name"] not in all_shell_script_fm_steps
+                ]
                 for progress_list in progress
             ]
         return progress

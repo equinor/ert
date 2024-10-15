@@ -18,7 +18,7 @@ from ropt.enums import EventType
 from ropt.plan import OptimizationPlanRunner
 from seba_sqlite import SqliteStorage
 
-import everest
+from ert.resources import all_shell_script_fm_steps
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.plugins.site_config_env import PluginSiteConfigEnv
@@ -217,7 +217,7 @@ class _MonitorThread(threading.Thread):
                 for fms in progress_queue.steps:
                     if (
                         not self._display_all_jobs
-                        and fms.name in everest.jobs.shell_commands
+                        and fms.name in all_shell_script_fm_steps
                     ):
                         continue
                     realization = extract(fms.std_out_file, "geo_realization")

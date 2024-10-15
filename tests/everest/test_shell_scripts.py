@@ -1,5 +1,5 @@
+from ert.resources import all_shell_script_fm_steps
 from everest.config.everest_config import EverestConfig, get_system_installed_jobs
-from everest.jobs import shell_commands
 from tests.everest.utils import relpath
 
 
@@ -7,7 +7,7 @@ def test_everest_shell_commands_list():
     # Check list of defined shell commands are part of the list of ert
     # installed system jobs
     system_installed_jobs = get_system_installed_jobs()
-    for command_name in shell_commands:
+    for command_name in all_shell_script_fm_steps:
         assert command_name in system_installed_jobs
 
 

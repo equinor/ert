@@ -50,17 +50,3 @@ def fetch_script(script_name):
 
 
 _inject_scripts()
-
-# Note: Must be kept in sync with shell scripts on ERT-side
-# (which is also not expected to change frequently/drastically)
-shell_commands = (
-    "careful_copy_file",
-    "copy_directory",
-    "copy_file",
-    "delete_directory",
-    "delete_file",
-    "make_directory",
-    "make_symlink",
-    "move_file",
-    "symlink",
-)
