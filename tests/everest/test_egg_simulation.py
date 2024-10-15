@@ -678,7 +678,7 @@ def test_init_egg_model(copy_egg_test_data_to_tmp):
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @skipif_no_simulator
-@pytest.mark.simulation_test
+@pytest.mark.requires_eclipse
 def test_run_egg_model(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
@@ -802,7 +802,7 @@ def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @skipif_no_simulator
-@pytest.mark.simulation_test
+@pytest.mark.requires_eclipse
 @pytest.mark.timeout(0)
 def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     # shutil.copytree(relpath(ROOT), tmp_path, dirs_exist_ok=True)

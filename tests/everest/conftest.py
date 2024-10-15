@@ -1,13 +1,21 @@
 import os
 import shutil
+import sys
 from copy import deepcopy
 from pathlib import Path
 from typing import Callable, Dict, Iterator, Optional, Union
 
 import pytest
+from qtpy.QtCore import QDir
+from qtpy.QtWidgets import QApplication
 
 from everest.config.control_config import ControlConfig
 from tests.everest.utils import relpath
+
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
 
 
 @pytest.fixture(scope="session")
@@ -123,3 +131,26 @@ def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
 @pytest.fixture
 def change_to_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def _qt_excepthook(monkeypatch):
+    """Hook into Python's unhandled exception handler and quit Qt if it's
+    running. This will prevent a stall in the event that a Python exception
+    occurs inside a Qt slot.
+
+    """
+    next_excepthook = sys.excepthook
+
+    def excepthook(cls, exc, tb):
+        if app := QApplication.instance():
+            app.quit()
+        next_excepthook(cls, exc, tb)
+
+    monkeypatch.setattr(sys, "excepthook", excepthook)
+
+
+@pytest.fixture
+def _qt_add_search_paths(qapp):
+    "Ensure that icons and such are found by the tests"
+    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))

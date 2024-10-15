@@ -462,7 +462,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     assert set(sum_keys[0]) == set(res_conf["SUMMARY"][0])
 
 
-@pytest.mark.simulation_test
+@pytest.mark.requires_eclipse
 def test_install_data(copy_test_data_to_tmp):
     """
     TODO: When default jobs are handled in Everest this test should not
