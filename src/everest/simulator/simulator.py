@@ -10,7 +10,7 @@ from numpy._typing import NDArray
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
-from ert.config import ErtConfig, ExtParamConfig, HookRuntime
+from ert.config import HookRuntime
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
@@ -20,22 +20,7 @@ class Simulator(BatchSimulator):
     """Everest simulator: BatchSimulator"""
 
     def __init__(self, ever_config: EverestConfig, callback=None) -> None:
-        config_dict = everest_to_ert_config(
-            ever_config, site_config=ErtConfig.read_site_config()
-        )
-        ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
-
-        # Inject ExtParam nodes. This is needed because EXT_PARAM is not an ERT
-        # configuration key, but only a placeholder for the control definitions.
-        ens_config = ert_config.ensemble_config
-        for control_name, variables in config_dict["EXT_PARAM"].items():
-            ens_config.addNode(
-                ExtParamConfig(
-                    name=control_name,
-                    input_keys=variables,
-                    output_file=control_name + ".json",
-                )
-            )
+        ert_config = everest_to_ert_config(ever_config)
 
         super(Simulator, self).__init__(
             ert_config,

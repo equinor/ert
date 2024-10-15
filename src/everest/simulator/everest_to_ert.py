@@ -6,6 +6,8 @@ import os
 from typing import DefaultDict, Dict, List, Union
 
 import everest
+from ert.config import ErtConfig, ExtParamConfig
+from ert.config.parsing import ConfigDict
 from everest.config import EverestConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
@@ -459,7 +461,56 @@ def _extract_seed(ever_config: EverestConfig, ert_config):
         ert_config["RANDOM_SEED"] = random_seed
 
 
-def _extract_controls(ever_config: EverestConfig, ert_config):
+def _extract_results(ever_config: EverestConfig, ert_config):
+    objectives_names = [
+        objective.name
+        for objective in ever_config.objective_functions
+        if objective.alias is None
+    ]
+    constraint_names = [
+        constraint.name for constraint in (ever_config.output_constraints or [])
+    ]
+    gen_data = ert_config.get("GEN_DATA", [])
+    for name in objectives_names + constraint_names:
+        gen_data.append((name, f"RESULT_FILE:{name}"))
+    ert_config["GEN_DATA"] = gen_data
+
+
+def _everest_to_ert_config_dict(
+    ever_config: EverestConfig, site_config=None
+) -> ConfigDict:
+    """
+    Takes as input an Everest configuration, the site-config and converts them
+    to a corresponding ert configuration.
+    """
+    ert_config = site_config if site_config is not None else {}
+
+    config_dir = ever_config.config_directory
+    ert_config["DEFINE"] = [("<CONFIG_PATH>", config_dir)]
+
+    # Extract simulator and simulation related configs
+    _extract_simulator(ever_config, ert_config)
+    _extract_forward_model(ever_config, ert_config)
+    _extract_environment(ever_config, ert_config)
+    _extract_jobs(ever_config, ert_config, config_dir)
+    _extract_workflow_jobs(ever_config, ert_config, config_dir)
+    _extract_workflows(ever_config, ert_config, config_dir)
+    _extract_model(ever_config, ert_config)
+    _extract_queue_system(ever_config, ert_config)
+    _extract_seed(ever_config, ert_config)
+    _extract_results(ever_config, ert_config)
+
+    return ert_config
+
+
+def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
+    config_dict = _everest_to_ert_config_dict(
+        ever_config, site_config=ErtConfig.read_site_config()
+    )
+
+    ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
+    ens_config = ert_config.ensemble_config
+
     def _get_variables(
         variables: Union[
             List[ControlVariableConfig], List[ControlVariableGuessListConfig]
@@ -483,48 +534,13 @@ def _extract_controls(ever_config: EverestConfig, ert_config):
     # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
     # configuration key. When initializing an ERT config object, it is ignored.
     # It is used by the Simulator object to inject ExtParamConfig nodes.
-    controls = ever_config.controls or []
-    ert_config["EXT_PARAM"] = {
-        control.name: _get_variables(control.variables) for control in controls
-    }
-
-
-def _extract_results(ever_config: EverestConfig, ert_config):
-    objectives_names = [
-        objective.name
-        for objective in ever_config.objective_functions
-        if objective.alias is None
-    ]
-    constraint_names = [
-        constraint.name for constraint in (ever_config.output_constraints or [])
-    ]
-    gen_data = ert_config.get("GEN_DATA", [])
-    for name in objectives_names + constraint_names:
-        gen_data.append((name, f"RESULT_FILE:{name}"))
-    ert_config["GEN_DATA"] = gen_data
-
-
-def everest_to_ert_config(ever_config: EverestConfig, site_config=None):
-    """
-    Takes as input an Everest configuration, the site-config and converts them
-    to a corresponding ert configuration.
-    """
-    ert_config = site_config if site_config is not None else {}
-
-    config_dir = ever_config.config_directory
-    ert_config["DEFINE"] = [("<CONFIG_PATH>", config_dir)]
-
-    # Extract simulator and simulation related configs
-    _extract_simulator(ever_config, ert_config)
-    _extract_forward_model(ever_config, ert_config)
-    _extract_environment(ever_config, ert_config)
-    _extract_jobs(ever_config, ert_config, config_dir)
-    _extract_workflow_jobs(ever_config, ert_config, config_dir)
-    _extract_workflows(ever_config, ert_config, config_dir)
-    _extract_model(ever_config, ert_config)
-    _extract_queue_system(ever_config, ert_config)
-    _extract_seed(ever_config, ert_config)
-    _extract_controls(ever_config, ert_config)
-    _extract_results(ever_config, ert_config)
+    for control in ever_config.controls or []:
+        ens_config.addNode(
+            ExtParamConfig(
+                name=control.name,
+                input_keys=_get_variables(control.variables),
+                output_file=control.name + ".json",
+            )
+        )
 
     return ert_config
