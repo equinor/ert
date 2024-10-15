@@ -393,18 +393,10 @@ class _EverestWorkflow(object):
         ert_config = everest_to_ert_config(self._config)
 
         with open_storage(ert_config.ens_path, mode="w") as storage:
-            # Initialize the Everest simulator:
-            experiment = storage.create_experiment(
-                name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-                parameters=ert_config.ensemble_config.parameter_configuration,
-                responses=ert_config.ensemble_config.response_configuration,
-            )
-
             simulator = Simulator(
                 self.config,
                 ert_config,
                 storage,
-                experiment,
                 callback=self._simulation_callback,
             )
 

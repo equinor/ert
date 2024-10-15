@@ -1,3 +1,4 @@
+import datetime
 import time
 from collections import defaultdict
 from itertools import count
@@ -10,7 +11,7 @@ from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
 from ert.config import ErtConfig, HookRuntime
-from ert.storage import Experiment, Storage
+from ert.storage import Storage
 from everest.config import EverestConfig
 
 
@@ -22,9 +23,14 @@ class Simulator(BatchSimulator):
         ever_config: EverestConfig,
         ert_config: ErtConfig,
         storage: Storage,
-        experiment: Experiment,
         callback=None,
     ) -> None:
+        experiment = storage.create_experiment(
+            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            parameters=ert_config.ensemble_config.parameter_configuration,
+            responses=ert_config.ensemble_config.response_configuration,
+        )
+
         super(Simulator, self).__init__(
             ert_config,
             experiment,
