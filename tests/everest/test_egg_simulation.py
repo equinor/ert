@@ -558,22 +558,6 @@ def _generate_exp_ert_config(config_path, output_dir):
         "RANDOM_SEED": 123456,
         "SUMMARY": SUM_KEYS,
         "GEN_DATA": [("rf", "RESULT_FILE:rf")],
-        "EXT_PARAM": {
-            "well_rate": {
-                "PROD1": ["1"],
-                "PROD2": ["1"],
-                "PROD3": ["1"],
-                "PROD4": ["1"],
-                "INJECT1": ["1"],
-                "INJECT2": ["1"],
-                "INJECT3": ["1"],
-                "INJECT4": ["1"],
-                "INJECT5": ["1"],
-                "INJECT6": ["1"],
-                "INJECT7": ["1"],
-                "INJECT8": ["1"],
-            },
-        },
     }
 
 
