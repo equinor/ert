@@ -5,6 +5,7 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
+from ert.resources import all_shell_script_fm_steps
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
@@ -15,7 +16,6 @@ from everest.detached import (
     everserver_status,
     update_everserver_status,
 )
-from everest.jobs import shell_commands
 from everest.simulator import JOB_SUCCESS
 from ieverest.bin.ieverest_script import ieverest_entry
 from tests.everest.utils import capture_streams
@@ -43,7 +43,7 @@ def query_server_mock(cert, auth, endpoint):
             "simulation": 0,
         }
 
-    shell_cmd_jobs = [build_job(name=command) for command in shell_commands]
+    shell_cmd_jobs = [build_job(name=command) for command in all_shell_script_fm_steps]
     all_jobs = [
         *shell_cmd_jobs,
         build_job(name="make_pancakes"),
@@ -315,7 +315,7 @@ def test_everest_entry_show_all_jobs(
     # of forward model jobs
     with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
-    for cmd in shell_commands:
+    for cmd in all_shell_script_fm_steps:
         assert cmd in out.getvalue()
 
 
@@ -350,7 +350,7 @@ def test_everest_entry_no_show_all_jobs(
     # in the list of forward model jobs
     with capture_streams() as (out, _):
         everest_entry([CONFIG_FILE_MINIMAL])
-    for cmd in shell_commands:
+    for cmd in all_shell_script_fm_steps:
         assert cmd not in out.getvalue()
 
     # Check the other jobs are still there
@@ -386,7 +386,7 @@ def test_monitor_entry_show_all_jobs(
 
     with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
-    for cmd in shell_commands:
+    for cmd in all_shell_script_fm_steps:
         assert cmd in out.getvalue()
 
 
@@ -417,7 +417,7 @@ def test_monitor_entry_no_show_all_jobs(
     # in the list of forward model jobs
     with capture_streams() as (out, _):
         monitor_entry([CONFIG_FILE_MINIMAL])
-    for cmd in shell_commands:
+    for cmd in all_shell_script_fm_steps:
         assert cmd not in out.getvalue()
 
     # Check the other jobs are still there
