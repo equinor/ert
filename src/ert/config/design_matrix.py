@@ -109,10 +109,10 @@ class DesignMatrix:
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error:\n{error_msg}")
 
-        usable_defaults = DesignMatrix._read_defaultssheet(
+        defaults_to_use = DesignMatrix._read_defaultssheet(
             self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
         )
-        design_matrix_df = design_matrix_df.assign(**usable_defaults)
+        design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
         parameter_configuration: Dict[str, ParameterConfig] = {}
         transform_function_definitions: List[TransformFunctionDefinition] = []
@@ -206,7 +206,7 @@ class DesignMatrix:
         first two columns in a spreadsheet. Only returns the keys that are
         different from the exisiting parameters.
 
-        Returns a dict of usable default values
+        Returns a dict of default values
 
         :raises: ValueError if defaults sheet is non-empty but non-parsable
         """
