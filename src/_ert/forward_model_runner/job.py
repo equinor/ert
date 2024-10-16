@@ -264,7 +264,9 @@ class Job:
                 f"Forward model step {self.job_data.get('name')} "
                 "was killed due to out-of-memory. "
                 "Max memory usage recorded by Ert for the "
-                f"realization was {max_memory_usage//1024//1024} MB"
+                f"realization was {max_memory_usage//1024//1024} MB. "
+                "Please add REALIZATION_MEMORY to your ert config together "
+                "with a suitable memory amount to avoid this."
             )
         return exited_message.with_error(
             f"Process exited with status code {exited_message.exit_code}"
