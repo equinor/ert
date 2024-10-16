@@ -18,3 +18,11 @@ def installable_forward_model_steps() -> (
     :return: List of forward model step plugins in the form of subclasses of the
         ForwardModelStepPlugin class
     """
+
+
+@no_type_check
+@hook_specification
+def forward_model_paths() -> PluginResponse[List[str]]:
+    """
+    :return: List of paths that can be used by forward model steps to locate executables
+    """
