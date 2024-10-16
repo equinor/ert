@@ -107,3 +107,8 @@ def add_log_handle_to_root():
     :return: A log handle that will be added to the root logger
     :rtype: logging.Handler
     """
+
+
+@hookspec
+def get_forward_model_documentations():
+    """ """
