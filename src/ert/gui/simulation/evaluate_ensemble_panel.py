@@ -14,7 +14,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.validation import RangeStringArgument
+from ert.validation import EnsembleRealizationsArgument
 
 
 @dataclass
@@ -47,9 +47,10 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
             "config/simulation/active_realizations",
         )
-        self._active_realizations_field.setValidator(
-            RangeStringArgument(ensemble_size),
+        self._realizations_validator = EnsembleRealizationsArgument(
+            self._ensemble_selector.selected_ensemble, max_value=ensemble_size
         )
+        self._active_realizations_field.setValidator(self._realizations_validator)
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -68,7 +69,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
-            and bool(self._active_realizations_field.text())
+            and self._active_realizations_field.isValid()
         )
 
     def get_experiment_arguments(self) -> Arguments:
@@ -80,7 +81,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
+        self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
+            self._realizations_validator.set_ensemble(ensemble)
             parameters = ensemble.get_realization_mask_with_parameters()
             missing_responses = ~ensemble.get_realization_mask_with_responses()
             failures = ~ensemble.get_realization_mask_without_failure()

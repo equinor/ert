@@ -17,7 +17,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
-from ert.validation import ProperNameFormatArgument, RangeStringArgument
+from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
 
 
 @dataclass
@@ -72,13 +72,12 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
             "config/simulation/active_realizations",
         )
-        self._active_realizations_field.setValidator(
-            RangeStringArgument(ensemble_size),
+        self._realizations_validator = EnsembleRealizationsArgument(
+            self._ensemble_selector.selected_ensemble, max_value=ensemble_size
         )
+        self._active_realizations_field.setValidator(self._realizations_validator)
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
-
-        self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
@@ -88,12 +87,13 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             self.simulationConfigurationChanged
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self.setLayout(layout)
 
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
-            and bool(self._active_realizations_field.text())
+            and self._active_realizations_field.isValid()
         )
 
     def get_experiment_arguments(self) -> Arguments:
@@ -106,7 +106,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
+        self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
+            self._realizations_validator.set_ensemble(ensemble)
             parameters = ensemble.get_realization_mask_with_parameters()
             responses = ensemble.get_realization_mask_with_responses()
             mask = np.logical_and(parameters, responses)
