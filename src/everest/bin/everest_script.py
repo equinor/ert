@@ -7,6 +7,8 @@ import signal
 import threading
 from functools import partial
 
+import debugpy
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -91,6 +93,13 @@ def _run_everest(options, ert_config, storage):
 
 
 def run_everest(options):
+    debugpy.listen(
+        ("localhost", 5678)
+    )  # Replace 'localhost' with the server's IP if remote
+
+    print("Waiting for debugger to attach...")
+    debugpy.wait_for_client()  # This pauses the execution until a debugger is attached
+
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
 
