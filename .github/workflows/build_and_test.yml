@@ -69,6 +69,18 @@ jobs:
       python-version: ${{ matrix.python-version }}
     secrets: inherit
 
+  test-ert-with-flow:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ '3.11', '3.12' ]
+    uses: ./.github/workflows/test_ert_with_flow.yml
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+    secrets: inherit
+
   test-mac-ert:
     if: github.ref_type != 'tag' # when not tag
     strategy:
