@@ -74,7 +74,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
 
     # The Run dialog opens, wait until restart appears and the tab is ready
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: not run_dialog.restart_button.isHidden(), timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # Assert that the number of boxes in the detailed view is
@@ -108,7 +108,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     write_poly_eval(failing_reals=failing_reals_second_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: not run_dialog.restart_button.isHidden(), timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # We expect to have the same amount of realizations in list_model
@@ -139,7 +139,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     write_poly_eval(failing_reals=failing_reals_third_try)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # We expect to have the same amount of realizations in list_model
@@ -151,5 +151,3 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     assert (
         list_model.rowCount() == experiment_panel.config.model_config.num_realizations
     )
-
-    qtbot.mouseClick(run_dialog.done_button, Qt.MouseButton.LeftButton)

@@ -1,7 +1,7 @@
 import stat
 from contextlib import suppress
 
-from qtpy.QtCore import Qt, QTimer
+from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import (
     QLabel,
 )
@@ -77,7 +77,7 @@ def test_missing_runpath_has_isolated_failures(
 
             QTimer.singleShot(100, handle_message_box(run_dialog))
             qtbot.waitUntil(
-                lambda dialog=run_dialog: not dialog.done_button.isHidden(),
+                lambda dialog=run_dialog: dialog.is_simulation_done() == True,
                 timeout=200000,
             )
             assert (
@@ -92,7 +92,6 @@ def test_missing_runpath_has_isolated_failures(
                     QLabel, name="progress_label_text_Failed"
                 ).text()
             )
-            qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
     finally:
         with suppress(FileNotFoundError):
             (tmp_path / "simulations/realization-0/iter-0").chmod(0x777)
