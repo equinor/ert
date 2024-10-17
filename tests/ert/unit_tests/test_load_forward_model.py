@@ -78,6 +78,8 @@ def test_load_forward_model(snake_oil_default_storage):
         default = experiment.get_ensemble_by_name("default_0")
 
         loaded = facade.load_from_forward_model(default, realizations, 0)
+        default.combine_responses()
+
         assert loaded == 1
         assert default.get_realization_mask_with_responses()[
             realisation_number
@@ -142,6 +144,8 @@ def test_load_forward_model_summary(
     facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model(prior_ensemble, [True], 0)
+        prior_ensemble.combine_responses()
+
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
     if expected_log_message:
@@ -167,6 +171,7 @@ def test_load_forward_model_gen_data(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.combine_responses()
     df = prior_ensemble.load_responses("gen_data", (0,))
     filter_cond = polars.col("report_step").eq(0), polars.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
@@ -189,6 +194,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.combine_responses()
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     assert df["values"].to_list() == [1.0]
 
@@ -210,6 +216,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
     facade = LibresFacade(config)
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.combine_responses()
     response = prior_ensemble.load_responses("RESPONSE", (0,))
     assert np.isnan(response[0]["values"].to_list())
     assert len(response) == 1
@@ -248,6 +255,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
 
     facade = LibresFacade.from_config_file("config.ert")
     facade.load_from_forward_model(prior_ensemble, [True], 0)
+    prior_ensemble.combine_responses()
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(polars.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
@@ -270,5 +278,6 @@ def test_that_the_states_are_set_correctly():
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
     facade.load_from_forward_model(new_ensemble, realizations, 0)
+    new_ensemble.combine_responses()
     assert not new_ensemble.is_initalized()
     assert new_ensemble.has_data()

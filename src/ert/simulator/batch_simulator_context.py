@@ -242,6 +242,7 @@ class BatchContext:
                 "Simulations are still running - need to wait before getting results"
             )
 
+        self.get_ensemble().combine_responses()
         res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         for sim_id in range(len(self)):
             if self.get_job_state(iens=sim_id) != JobState.COMPLETED:

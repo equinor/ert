@@ -722,6 +722,8 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ),
             iens,
         )
+
+    prior.combine_responses()
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -785,6 +787,8 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.combine_responses()
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -879,6 +883,8 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.combine_responses()
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
