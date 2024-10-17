@@ -12,18 +12,13 @@ import orjson
 import xarray as xr
 from numpy.random import SeedSequence
 
-from .config import (
-    DesignMatrix,
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from .config import ErtConfig
     from .storage import Ensemble
 
@@ -150,16 +145,14 @@ def _seed_sequence(seed: Optional[int]) -> int:
     return int_seed
 
 
-def load_prior(
-    ensemble: Ensemble, active_realizations: Iterable[int], design_matrix: DesignMatrix
+def save_design_matrix_to_ensemble(
+    design_matrix_df: pd.DataFrame,
+    ensemble: Ensemble,
+    active_realizations: Iterable[int],
 ) -> None:
-    assert design_matrix.parameter_configuration is not None
-    assert (
-        design_matrix.design_matrix_df is not None
-        and not design_matrix.design_matrix_df.empty
-    )
+    assert not design_matrix_df.empty
     for realization_nr in active_realizations:
-        row = design_matrix.design_matrix_df.loc[realization_nr]["DESIGN_MATRIX"]
+        row = design_matrix_df.loc[realization_nr]["DESIGN_MATRIX"]
         ds = xr.Dataset(
             {
                 "values": ("names", list(row.values)),
