@@ -8,7 +8,6 @@ from typing import Optional
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
     QCloseEvent,
-    QKeyEvent,
     QMouseEvent,
     QMovie,
     QTextCursor,
@@ -548,12 +547,6 @@ class RunDialog(QFrame):
         self.flag_simulation_done = True
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
-
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
-        if a0 is not None and a0.key() == Qt.Key.Key_F1:
-            self.produce_clipboard_debug_info.emit()
-        else:
-            QFrame.keyPressEvent(self, a0)
 
 
 # Cannot use a non-static method here as
