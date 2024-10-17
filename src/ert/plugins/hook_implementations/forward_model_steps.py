@@ -5,8 +5,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List, Literal, Optional, Type
 
-import yaml
-
 from ert import (
     ForwardModelStepDocumentation,
     ForwardModelStepJSON,
@@ -629,32 +627,20 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
 
 
 def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
-    if shutil.which("eclrun") is None:
-        return []
     pm = ErtPluginManager()
-    ecl_config_path = (
-        pm.get_ecl100_config_path()
-        if simulator == "eclipse"
-        else pm.get_ecl300_config_path()
+    eclrun_abspath = shutil.which(
+        "eclrun",
+        path=os.pathsep.join(
+            pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
+        ),
     )
-
-    if not ecl_config_path:
+    if eclrun_abspath is None:
         return []
-    eclrun_env = {"PATH": os.getenv("PATH", "")}
-
-    with open(ecl_config_path, encoding="utf-8") as f:
-        try:
-            config = yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Failed parse: {ecl_config_path} as yaml") from e
-    ecl_install_path = config.get("eclrun_env", {}).get("PATH", "")
-    eclrun_env["PATH"] = eclrun_env["PATH"] + os.pathsep + ecl_install_path
 
     try:
         return (
             subprocess.check_output(
-                ["eclrun", "--report-versions", simulator],
-                env=eclrun_env,
+                [eclrun_abspath, "--report-versions", simulator],
             )
             .decode("utf-8")
             .strip()
