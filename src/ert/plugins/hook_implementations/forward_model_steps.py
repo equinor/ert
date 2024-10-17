@@ -205,15 +205,15 @@ class Eclipse100(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/ecl100.py"
+                        / "../../../resources/forward_models/res/script/run_eclrun.py"
                     ).resolve()
                 ),
-                "<ECLBASE>",
-                "-v",
+                "eclipse",
                 "<VERSION>",
+                "<ECLBASE>",
                 "-n",
                 "<NUM_CPU>",
-                "<OPTS>",
+                # "<OPTS>",
             ],
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": ""},
         )
@@ -263,12 +263,12 @@ class Eclipse300(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/ecl300.py"
+                        / "../../../resources/forward_models/res/script/run_eclrun.py"
                     ).resolve()
                 ),
-                "<ECLBASE>",
-                "-v",
+                "e300",
                 "<VERSION>",
+                "<ECLBASE>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
