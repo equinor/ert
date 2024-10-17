@@ -48,5 +48,4 @@ def test_validation(ensemble_experiment_has_run_no_failure, qtbot):
         dialog.close()
 
     QTimer.singleShot(1000, handle_load_results_dialog)
-    load_results_tool = gui.tools["Load results manually"]
-    load_results_tool.trigger()
+    gui.load_results_tool.trigger()

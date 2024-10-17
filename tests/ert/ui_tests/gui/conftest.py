@@ -14,7 +14,14 @@ from unittest.mock import MagicMock, Mock
 import pytest
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QComboBox, QMessageBox, QPushButton, QWidget
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QMessageBox,
+    QPushButton,
+    QToolButton,
+    QWidget,
+)
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog
@@ -25,9 +32,7 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
-from ert.gui.tools.manage_experiments.manage_experiments_tool import (
-    ManageExperimentsTool,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
@@ -249,7 +254,9 @@ def run_experiment_fixture(request):
             # The Run dialog opens, click show details and wait until done appears
             # then click it
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
-            qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+            qtbot.waitUntil(
+                lambda: not run_dialog.done_button.isHidden(), timeout=200000
+            )
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
             # Assert that the number of boxes in the detailed view is
@@ -338,18 +345,16 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
         dialog.close()
 
     QTimer.singleShot(1000, handle_load_results_dialog)
-    load_results_tool = gui.tools["Load results manually"]
-    load_results_tool.trigger()
+    gui.load_results_tool.trigger()
 
 
 def add_experiment_manually(
     qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
 ):
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = gui.findChild(ManageExperimentsPanel)
 
     # Open the create new experiment tab
     experiments_panel.setCurrentIndex(0)

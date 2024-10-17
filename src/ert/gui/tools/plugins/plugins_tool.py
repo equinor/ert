@@ -34,18 +34,20 @@ class PluginsTool(Tool):
 
         self.__plugins = {}
 
-        menu = QMenu()
+        self.menu = QMenu("&Plugins")
         for plugin in plugin_handler:
             plugin_runner = PluginRunner(plugin, ert_config, notifier.storage)
             plugin_runner.setPluginFinishedCallback(self.trigger)
 
             self.__plugins[plugin] = plugin_runner
-            plugin_action = menu.addAction(plugin.getName())
+            plugin_action = self.menu.addAction(plugin.getName())
             assert plugin_action is not None
+            plugin_action.setIcon(QIcon("img:widgets.svg"))
             plugin_action.setToolTip(plugin.getDescription())
             plugin_action.triggered.connect(plugin_runner.run)
 
-        self.getAction().setMenu(menu)
+    def get_menu(self) -> QMenu:
+        return self.menu
 
     def trigger(self) -> None:
         self.notifier.emitErtChange()  # plugin may have added new cases.

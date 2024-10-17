@@ -50,8 +50,8 @@ def export_data(gui, qtbot, ensemble_select):
 
     QTimer.singleShot(500, handle_export_dialog)
     QTimer.singleShot(3000, handle_finished_box)
+    gui.export_tool.trigger()
 
-    gui.tools["Export data"].trigger()
     assert file_name == export_path
     qtbot.waitUntil(lambda: os.path.exists(file_name))
 
@@ -101,7 +101,7 @@ def run_experiment_via_gui(gui, qtbot):
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 

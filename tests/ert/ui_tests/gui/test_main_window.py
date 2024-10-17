@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
-from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QAction,
@@ -16,7 +15,6 @@ from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QMenuBar,
-    QMessageBox,
     QPushButton,
     QToolButton,
     QTreeView,
@@ -34,12 +32,12 @@ from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.view import RealizationWidget
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
-from ert.gui.tools.file.file_dialog import FileDialog
-from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments import (
+    ManageExperimentsPanel,
+)
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
@@ -55,7 +53,6 @@ from ert.run_models import (
     SingleTestRun,
 )
 from ert.services import StorageService
-from ert.storage import open_storage
 
 from .conftest import (
     add_experiment_manually,
@@ -162,158 +159,6 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_run_dialog_can_be_closed_after_used_to_open_plots(qtbot, storage):
-    """
-    This is a regression test for a bug where the plot window opened from run dialog
-    would have run dialog as parent. Because of that it would be destroyed when
-    run dialog was closed and end in a c++ QTObject lifetime crash.
-
-    Also tests that the run_dialog is not modal (does not block the main_window),
-    but simulations cannot be clicked from the main window while the run dialog is open.
-    """
-    config_file = Path("config.ert")
-    config_file.write_text(
-        f"NUM_REALIZATIONS 1\nENSPATH {storage.path}\n", encoding="utf-8"
-    )
-
-    args_mock = Mock()
-    args_mock.config = str(config_file)
-
-    ert_config = ErtConfig.from_file(str(config_file))
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        qtbot.addWidget(gui)
-        simulation_mode = get_child(gui, QComboBox, name="experiment_type")
-        run_experiment = get_child(gui, QToolButton, name="run_experiment")
-
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
-        run_dialog = wait_for_child(gui, qtbot, RunDialog)
-
-        # Ensure that once the run dialog is opened
-        # another simulation cannot be started
-        assert not run_experiment.isEnabled()
-
-        # Change simulation mode and ensure that
-        # another experiment still cannot be started
-        for ind in range(simulation_mode.count()):
-            simulation_mode.setCurrentIndex(ind)
-            assert not run_experiment.isEnabled()
-
-        # The user expects to be able to open e.g. the even viewer
-        # while the run dialog is open
-        assert not run_dialog.isModal()
-
-        qtbot.mouseClick(run_dialog.plot_button, Qt.LeftButton)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-        # Ensure that once the run dialog is closed
-        # another simulation can be started
-        assert run_experiment.isEnabled()
-
-        plot_window = wait_for_child(gui, qtbot, PlotWindow)
-
-        # Cycle through showing all the tabs
-        for tab in plot_window._plot_widgets:
-            plot_window._central_tab.setCurrentWidget(tab)
-
-
-def test_that_run_dialog_can_be_closed_while_file_plot_is_open(
-    snake_oil_case_storage: ErtConfig, qtbot: QtBot
-):
-    """
-    This is a regression test for a crash happening when
-    closing the RunDialog with a file open.
-    """
-
-    snake_oil_case = snake_oil_case_storage
-    args_mock = Mock()
-    args_mock.config = "snake_oil.ert"
-
-    def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
-        mb = gui.findChild(QMessageBox, "RUN_PATH_ERROR_BOX")
-
-        if mb is not None:
-            assert mb
-            assert isinstance(mb, QMessageBox)
-            # Continue without deleting the runpath
-            qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
-
-    def handle_run_path_dialog(
-        gui: ErtMainWindow,
-        qtbot: QtBot,
-        delete_run_path: bool = True,
-        expect_error: bool = False,
-    ):
-        mb = gui.findChild(QMessageBox, "RUN_PATH_WARNING_BOX")
-
-        if mb is not None:
-            assert mb
-            assert isinstance(mb, QMessageBox)
-
-            if delete_run_path:
-                qtbot.mouseClick(mb.checkBox(), Qt.LeftButton)
-
-            qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
-            if expect_error:
-                QTimer.singleShot(
-                    1000, lambda: handle_run_path_error_dialog(gui, qtbot)
-                )
-
-    with StorageService.init_service(
-        project=os.path.abspath(snake_oil_case.ens_path),
-    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
-        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
-        experiment_panel = gui.findChild(ExperimentPanel)
-
-        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
-        assert run_experiment
-        assert isinstance(run_experiment, QToolButton)
-
-        QTimer.singleShot(
-            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
-        )
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
-        run_dialog = wait_for_child(gui, qtbot, RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        fm_step_overview = run_dialog._fm_step_overview
-
-        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
-
-        realization_widget = run_dialog.findChild(RealizationWidget)
-
-        click_pos = realization_widget._real_view.rectForIndex(
-            realization_widget._real_list_model.index(0, 0)
-        ).center()
-
-        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
-            qtbot.mouseClick(
-                realization_widget._real_view.viewport(),
-                Qt.LeftButton,
-                pos=click_pos,
-            )
-
-        click_pos = fm_step_overview.visualRect(
-            fm_step_overview.model().index(0, 4)
-        ).center()
-        qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
-
-        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
-
-        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
-            run_dialog.close()  # Close the run dialog by pressing 'x' close button
-
-        # Ensure that once the run dialog is closed
-        # another simulation can be started
-        assert run_experiment.isEnabled()
-
-
 @pytest.mark.usefixtures("set_site_config")
 def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     """
@@ -347,8 +192,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle().startswith("ERT - poly.ert")
-        run_workflow_button = gui.tools["Run workflow"]
-        assert not run_workflow_button.isEnabled()
+        assert not gui.workflows_tool.getAction().isEnabled()
 
 
 @pytest.mark.usefixtures("set_site_config")
@@ -373,8 +217,7 @@ def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert gui.windowTitle().startswith("ERT - config.ert")
-        run_workflow_button = gui.tools["Run workflow"]
-        assert run_workflow_button.isEnabled()
+        assert gui.workflows_tool.getAction().isEnabled()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -444,13 +287,12 @@ def test_that_the_plot_window_contains_the_expected_elements(
     ]
 
     # Click on Create plot after esmda has run
-    plot_tool = gui.tools["Create plot"]
-    plot_tool.trigger()
-
-    # Then the plot window opens
+    button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+    assert button_plot_tool
+    qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
-    data_types = get_child(plot_window, DataTypeKeysWidget)
 
+    data_types = get_child(plot_window, DataTypeKeysWidget)
     case_selection = get_child(
         plot_window, EnsembleSelectListWidget, "ensemble_selector"
     )
@@ -515,11 +357,10 @@ def test_that_the_manage_experiments_tool_can_be_used(
 ):
     gui = esmda_has_run
 
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the tab
     experiments_panel.setCurrentIndex(0)
@@ -602,11 +443,10 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 ):
     gui = opened_main_window_poly
 
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the create new ensembles tab
     experiments_panel.setCurrentIndex(0)
@@ -714,7 +554,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
     QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
@@ -732,7 +572,10 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
-        gui.tools["Create plot"].trigger()
+
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         ensemble_plot_names = get_child(

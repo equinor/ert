@@ -34,6 +34,7 @@ from ert.shared.status.utils import (
     get_ert_memory_usage,
 )
 
+from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
@@ -61,6 +62,7 @@ def create_md_table(kv: Dict[str, str], output: str) -> str:
 
 class ExperimentPanel(QWidget):
     experiment_type_changed = Signal(ExperimentConfigPanel)
+    experiment_started = Signal(object)
 
     def __init__(
         self,
@@ -86,12 +88,10 @@ class ExperimentPanel(QWidget):
         )
 
         experiment_type_layout = QHBoxLayout()
-        experiment_type_layout.addSpacing(10)
+        experiment_type_layout.setContentsMargins(0, 0, 0, 0)
         experiment_type_layout.addWidget(
             self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
-
-        experiment_type_layout.addSpacing(20)
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
@@ -127,9 +127,8 @@ class ExperimentPanel(QWidget):
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
 
-        layout.addSpacing(5)
+        layout.setContentsMargins(0, 0, 10, 10)
         layout.addLayout(experiment_type_layout)
-        layout.addSpacing(10)
 
         self._experiment_stack = QStackedWidget()
         self._experiment_stack.setLineWidth(1)
@@ -176,6 +175,10 @@ class ExperimentPanel(QWidget):
             ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
             experiment_type_valid,
         )
+
+        self.configuration_summary = SummaryPanel(config)
+        layout.addWidget(self.configuration_summary)
+
         self.setLayout(layout)
 
     def addExperimentConfigPanel(
@@ -311,11 +314,10 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
+        self.experiment_started.emit(dialog)
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
-
         self.run_button.setEnabled(False)
         dialog.run_experiment()
-        dialog.show()
 
         def exit_handler() -> None:
             self.run_button.setEnabled(True)
