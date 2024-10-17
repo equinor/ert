@@ -133,6 +133,9 @@ def plotHistogram(
                     ),
                 )
             else:
+                if minimum is not None and maximum is not None and minimum == maximum:
+                    minimum -= 0.1
+                    maximum += 0.1
                 config.addLegendItem(
                     ensemble.name,
                     _plotHistogram(
