@@ -149,26 +149,24 @@ class DesignMatrix:
     def _read_excel(
         file_name: Union[Path, str],
         sheet_name: str,
-        usecols: Optional[Union[int, List[int]]] = None,
+        usecols: Optional[List[int]] = None,
         header: Optional[int] = 0,
         skiprows: Optional[int] = None,
         dtype: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Make dataframe from excel file
-        :return: Dataframe
-        :raises: OsError if file not found
-        :raises: ValueError if file not loaded correctly
+        Reads an Excel file into a DataFrame, with options to filter columns and rows,
+        and automatically drops columns that contain only NaN values.
         """
-        dframe: pd.DataFrame = pd.read_excel(
-            file_name,
-            sheet_name,
+        df = pd.read_excel(
+            io=file_name,
+            sheet_name=sheet_name,
             usecols=usecols,
             header=header,
             skiprows=skiprows,
             dtype=dtype,
         )
-        return dframe.dropna(axis=1, how="all")
+        return df.dropna(axis=1, how="all")
 
     @staticmethod
     def _validate_design_matrix(design_matrix: pd.DataFrame) -> List[str]:
