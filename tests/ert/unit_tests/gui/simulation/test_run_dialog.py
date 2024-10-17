@@ -101,7 +101,7 @@ def test_run_dialog_polls_run_model_for_runtime(
         lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
     )
     event_queue.put(EndEvent(failed=False, msg=""))
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden())
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
     run_dialog.close()
 
 
@@ -148,7 +148,7 @@ def test_large_snapshot(
         lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
     qtbot.waitUntil(
-        lambda: not run_dialog.done_button.isHidden(), timeout=timeout_per_iter
+        lambda: run_dialog.is_simulation_done() == True, timeout=timeout_per_iter
     )
 
 
@@ -354,7 +354,7 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
 
 @pytest.mark.parametrize(
@@ -436,7 +436,7 @@ def test_run_dialog_memory_usage_showing(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -529,7 +529,7 @@ def test_run_dialog_fm_label_show_correct_info(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -586,7 +586,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
-        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
         run_dialog.close()
 
 
@@ -614,7 +614,7 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
 
         copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
         assert copy_debug_info_button
@@ -625,7 +625,6 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
 
         for keyword in ["Single realization test-run", "Local", r"minimal\_config.ert"]:
             assert keyword in clipboard_text
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
 @pytest.mark.integration_test
@@ -660,7 +659,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
 
-        qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
 
         fm_step_overview = run_dialog._fm_step_overview
         qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
