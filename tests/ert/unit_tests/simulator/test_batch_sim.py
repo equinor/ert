@@ -45,45 +45,58 @@ def batch_sim_example(setup_case):
 # tests work, the batch simulator class is patched here to inject the missing
 # functionality.
 class PatchedBatchSimulator(BatchSimulator):
-    def __init__(self, ert_config, controls, results, callback=None):
-        super().__init__(ert_config, set(controls), results, callback)
-        ens_config = ert_config.ensemble_config
-        for control_name, variables in controls.items():
-            ens_config.addNode(
-                ExtParamConfig(
-                    name=control_name,
-                    input_keys=variables,
-                    output_file=control_name + ".json",
+    def __init__(self, ert_config, storage, controls, results, callback=None):
+        try:
+            ens_config = ert_config.ensemble_config
+            for control_name, variables in controls.items():
+                ens_config.addNode(
+                    ExtParamConfig(
+                        name=control_name,
+                        input_keys=variables,
+                        output_file=control_name + ".json",
+                    )
                 )
-            )
 
-        if "gen_data" not in ens_config:
-            ens_config.addNode(
-                GenDataConfig(
-                    keys=results,
-                    input_files=[f"{k}" for k in results],
-                    report_steps_list=[None for _ in results],
+            if "gen_data" not in ens_config:
+                ens_config.addNode(
+                    GenDataConfig(
+                        keys=results,
+                        input_files=[f"{k}" for k in results],
+                        report_steps_list=[None for _ in results],
+                    )
                 )
-            )
-        else:
-            existing_gendata = ens_config.response_configs["gen_data"]
-            existing_keys = existing_gendata.keys
-            assert isinstance(existing_gendata, GenDataConfig)
+            else:
+                existing_gendata = ens_config.response_configs["gen_data"]
+                existing_keys = existing_gendata.keys
+                assert isinstance(existing_gendata, GenDataConfig)
 
-            for key in results:
-                if key not in existing_keys:
-                    existing_gendata.keys.append(key)
-                    existing_gendata.input_files.append(f"{key}")
-                    existing_gendata.report_steps_list.append(None)
+                for key in results:
+                    if key not in existing_keys:
+                        existing_gendata.keys.append(key)
+                        existing_gendata.input_files.append(f"{key}")
+                        existing_gendata.report_steps_list.append(None)
+
+            experiment = storage.create_experiment(
+                name="EnOptCase",
+                parameters=ens_config.parameter_configuration,
+                responses=ens_config.response_configuration,
+            )
+            super().__init__(ert_config, experiment, set(controls), results, callback)
+        except Exception as e:
+            if isinstance(e, (TypeError, ValueError)):
+                raise e
+            else:
+                super().__init__(ert_config, None, set(controls), results, callback)
 
 
 BatchSimulator = PatchedBatchSimulator
 
 
-def test_that_simulator_raises_error_when_missing_ertconfig():
+def test_that_simulator_raises_error_when_missing_ertconfig(storage):
     with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
         _ = BatchSimulator(
             "ARG",
+            storage,
             {
                 "WELL_ORDER": ["W1", "W2", "W3"],
                 "WELL_ON_OFF": ["W1", "W2", "W3"],
@@ -92,15 +105,20 @@ def test_that_simulator_raises_error_when_missing_ertconfig():
         )
 
 
-def test_that_batch_simulator_gives_good_message_on_duplicate_keys(minimum_case):
+def test_that_batch_simulator_gives_good_message_on_duplicate_keys(
+    minimum_case, storage
+):
     with pytest.raises(ValueError, match="Duplicate keys"):
-        _ = BatchSimulator(minimum_case, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"])
+        _ = BatchSimulator(
+            minimum_case, storage, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
+        )
 
 
 @pytest.fixture
-def batch_simulator(batch_sim_example):
+def batch_simulator(batch_sim_example, storage):
     return BatchSimulator(
         batch_sim_example,
+        storage,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
@@ -187,14 +205,8 @@ def batch_simulator(batch_sim_example):
 def test_that_starting_with_invalid_key_raises_key_error(
     batch_simulator, _input, match, storage
 ):
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=batch_simulator.ert_config.ensemble_config.parameter_configuration,
-        responses=batch_simulator.ert_config.ensemble_config.response_configuration,
-    )
-
     with pytest.raises(KeyError, match=match):
-        batch_simulator.start("case", _input, experiment)
+        batch_simulator.start("case", _input)
 
 
 @pytest.mark.integration_test
@@ -217,13 +229,7 @@ def test_batch_simulation(batch_simulator, storage):
         ),
     ]
 
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=batch_simulator.ert_config.ensemble_config.parameter_configuration,
-        responses=batch_simulator.ert_config.ensemble_config.response_configuration,
-    )
-
-    ctx = batch_simulator.start("case", case_data, experiment)
+    ctx = batch_simulator.start("case", case_data)
     assert len(case_data) == len(ctx.mask)
 
     # Asking for results before it is complete.
@@ -277,11 +283,12 @@ def test_batch_simulation(batch_simulator, storage):
     ),
 )
 def test_that_batch_simulation_handles_invalid_suffixes_at_init(
-    batch_sim_example, suffix, error
+    batch_sim_example, suffix, error, storage
 ):
     with pytest.raises(error):
         _ = BatchSimulator(
             batch_sim_example,
+            storage,
             {
                 "WELL_ORDER": {"W1": ["a"], "W3": suffix},
             },
@@ -329,6 +336,7 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
 ):
     rsim = BatchSimulator(
         batch_sim_example,
+        storage,
         {
             "WELL_ORDER": {
                 "W1": ["a", "b"],
@@ -338,14 +346,8 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
         ["ORDER"],
     )
 
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=batch_sim_example.ensemble_config.parameter_configuration,
-        responses=batch_sim_example.ensemble_config.response_configuration,
-    )
-
     with pytest.raises(KeyError, match=match):
-        rsim.start("case", inp, experiment)
+        rsim.start("case", inp)
 
 
 @pytest.mark.integration_test
@@ -355,6 +357,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
     monitor = MockMonitor()
     rsim = BatchSimulator(
         ert_config,
+        storage,
         {
             "WELL_ORDER": {
                 "W1": ["a", "b"],
@@ -392,13 +395,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
         ),
     ]
 
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-    )
-
-    ctx = rsim.start("case", case_data, experiment)
+    ctx = rsim.start("case", case_data)
     assert len(case_data) == len(ctx)
     _wait_for_completion(ctx)
 
@@ -443,6 +440,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
 
     rsim = BatchSimulator(
         ert_config,
+        storage,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
         ["ORDER", "ON_OFF"],
     )
@@ -465,14 +463,8 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
         ),
     ]
 
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-    )
-
     # Starting a simulation which should actually run through.
-    ctx = rsim.start(case_name, case_data, experiment)
+    ctx = rsim.start(case_name, case_data)
 
     ctx.stop()
     status = ctx.status
@@ -522,7 +514,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
         "WELL_ON_OFF": ("W1", "W2", "W3"),
     }
     results = ("ORDER", "ON_OFF")
-    rsim = BatchSimulator(ert_config, external_parameters, results)
+    rsim = BatchSimulator(ert_config, storage, external_parameters, results)
 
     ensembles = [
         (
@@ -535,13 +527,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
         for idx in range(10)
     ]
 
-    experiment = storage.create_experiment(
-        name="EnOptCase",
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-    )
-
-    batch_ctx = rsim.start("case_name", ensembles, experiment)
+    batch_ctx = rsim.start("case_name", ensembles)
     while batch_ctx.running():
         assertContextStatusOddFailures(batch_ctx)
         time.sleep(1)

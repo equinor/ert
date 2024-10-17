@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from ert.plugins import ErtPluginContext
-from tests.ert.unit_tests.all.plugins import dummy_plugins
+from tests.ert.unit_tests.plugins import dummy_plugins
 
 env_vars = [
     "ECL100_SITE_CONFIG",

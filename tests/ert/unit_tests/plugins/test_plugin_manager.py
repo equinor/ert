@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import ert.plugins.hook_implementations
 from ert.plugins import ErtPluginManager
-from tests.ert.unit_tests.all.plugins import dummy_plugins
-from tests.ert.unit_tests.all.plugins.dummy_plugins import (
+from tests.ert.unit_tests.plugins import dummy_plugins
+from tests.ert.unit_tests.plugins.dummy_plugins import (
     DummyFMStep,
 )
 

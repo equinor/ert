@@ -1,6 +1,6 @@
+import datetime
 import time
 from collections import defaultdict
-from datetime import datetime
 from itertools import count
 from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple
 
@@ -10,20 +10,30 @@ from numpy._typing import NDArray
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
-from ert.config import HookRuntime
-from ert.storage import open_storage
+from ert.config import ErtConfig, HookRuntime
+from ert.storage import Storage
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config
 
 
 class Simulator(BatchSimulator):
     """Everest simulator: BatchSimulator"""
 
-    def __init__(self, ever_config: EverestConfig, callback=None) -> None:
-        ert_config = everest_to_ert_config(ever_config)
+    def __init__(
+        self,
+        ever_config: EverestConfig,
+        ert_config: ErtConfig,
+        storage: Storage,
+        callback=None,
+    ) -> None:
+        experiment = storage.create_experiment(
+            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            parameters=ert_config.ensemble_config.parameter_configuration,
+            responses=ert_config.ensemble_config.response_configuration,
+        )
 
         super(Simulator, self).__init__(
             ert_config,
+            experiment,
             self._get_controls(ever_config),
             self._get_results(ever_config),
             callback=callback,
@@ -35,6 +45,8 @@ class Simulator(BatchSimulator):
         self._cache: Optional[_SimulatorCache] = None
         if ever_config.simulator is not None and ever_config.simulator.enable_cache:
             self._cache = _SimulatorCache()
+
+        self.storage = storage
 
     def _get_controls(self, ever_config: EverestConfig) -> List[str]:
         controls = ever_config.controls or []
@@ -103,33 +115,19 @@ class Simulator(BatchSimulator):
                     self._add_control(controls, control_name, control_value)
                 case_data.append((real_id, controls))
 
-        with open_storage(self.ert_config.ens_path, "w") as storage:
-            if self._experiment_id is None:
-                experiment = storage.create_experiment(
-                    name=f"EnOpt@{datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-                    parameters=self.ert_config.ensemble_config.parameter_configuration,
-                    responses=self.ert_config.ensemble_config.response_configuration,
-                )
+        sim_context = self.start(f"batch_{self._batch}", case_data)
 
-                self._experiment_id = experiment.id
-            else:
-                experiment = storage.get_experiment(self._experiment_id)
+        while sim_context.running():
+            time.sleep(0.2)
+        results = sim_context.results()
 
-            sim_context = self.start(f"batch_{self._batch}", case_data, experiment)
-
-            while sim_context.running():
-                time.sleep(0.2)
-            results = sim_context.results()
-
-            # Pre-simulation workflows are run by sim_context, but
-            # post-stimulation workflows are not, do it here:
-            ensemble = sim_context.get_ensemble()
-            for workflow in self.ert_config.hooked_workflows[
-                HookRuntime.POST_SIMULATION
-            ]:
-                WorkflowRunner(
-                    workflow, storage, ensemble, ert_config=self.ert_config
-                ).run_blocking()
+        # Pre-simulation workflows are run by sim_context, but
+        # post-stimulation workflows are not, do it here:
+        ensemble = sim_context.get_ensemble()
+        for workflow in self.ert_config.hooked_workflows[HookRuntime.POST_SIMULATION]:
+            WorkflowRunner(
+                workflow, self.storage, ensemble, ert_config=self.ert_config
+            ).run_blocking()
 
         for fnc_name, alias in self._function_aliases.items():
             for result in results:
