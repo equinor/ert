@@ -191,7 +191,15 @@ def create_forward_model_json(
                 for arg in fm_step.arglist
             ],
             "environment": substituter.filter_env_dict(
-                dict(env_pr_fm_step.get(fm_step.name, {}), **fm_step.environment)
+                dict(
+                    **{
+                        key: value
+                        for key, value in env_pr_fm_step.get(fm_step.name, {}).items()
+                        # Plugin settings can not override anything:
+                        if key not in env_vars and key not in fm_step.environment
+                    },
+                    **fm_step.environment,
+                )
             ),
             "max_running_minutes": fm_step.max_running_minutes,
         }
@@ -733,10 +741,15 @@ class ErtConfig:
         cls,
         installed_steps: dict[str, ForwardModelStep],
         substitutions: Substitutions,
-        config_dict,
+        config_dict: dict,
     ) -> list[ForwardModelStep]:
         errors = []
         fm_steps = []
+
+        env_vars = {}
+        for key, val in config_dict.get("SETENV", []):
+            env_vars[key] = val
+
         for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(fm_step_description) > 1:
                 unsubstituted_step_name, args = fm_step_description
@@ -790,9 +803,14 @@ class ErtConfig:
                         context=substitutions,
                         forward_model_steps=[fm_step],
                         skip_pre_experiment_validation=True,
+                        env_vars=env_vars,
                     )
-                    job_json = substituted_json["jobList"][0]
-                    fm_step.validate_pre_experiment(job_json)
+                    fm_json_for_validation = dict(substituted_json["jobList"][0])
+                    fm_json_for_validation["environment"] = {
+                        **substituted_json["global_environment"],
+                        **fm_json_for_validation["environment"],
+                    }
+                    fm_step.validate_pre_experiment(fm_json_for_validation)
                 except ForwardModelStepValidationError as err:
                     errors.append(
                         ConfigValidationError.with_context(

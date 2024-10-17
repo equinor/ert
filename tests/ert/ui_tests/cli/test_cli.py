@@ -3,6 +3,7 @@ import fileinput
 import json
 import logging
 import os
+import stat
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -965,6 +966,51 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
             "0-4",
         )
     assert len([msg for msg in caplog.messages if expected_msg in msg]) == 1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_a_custom_eclrun_can_be_activated_through_setenv():
+    """Mock an eclrun binary that will output the list of valid versions and also
+    mock Eclipse100 output"""
+    Path("bin").mkdir()
+    eclrun = Path("bin") / "eclrun"
+    eclrun.write_text(
+        dedent(
+            """
+            #!/bin/sh
+            if [ "$2" = "--report-versions" ]; then
+                echo "I_AM_VERSION_2044"
+            else
+                # Mock Eclipse100 output
+                touch FOO.UNSMRY
+                echo "Errors 0" > FOO.PRT
+                echo "Bugs 0" >> FOO.PRT
+            fi
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    os.chmod(eclrun, os.stat(eclrun).st_mode | stat.S_IEXEC)
+
+    Path("FOO.DATA").touch()
+    config_file = Path("config.ert")
+    config_file.write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            DATA_FILE FOO.DATA
+            ECLBASE FOO
+            SETENV ECLRUN_PATH {eclrun.parent.absolute()}
+            FORWARD_MODEL ECLIPSE100(<VERSION>=I_AM_VERSION_2044)
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+    run_cli(
+        TEST_RUN_MODE,
+        str(config_file),
+        "--disable-monitor",
+    )
 
 
 def run_sim(start_date):

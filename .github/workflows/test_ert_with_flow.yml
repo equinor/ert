@@ -1,0 +1,64 @@
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+      python-version:
+        type: string
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  test-ert-with-flow:
+    name: Run ert tests
+    timeout-minutes: 20
+    runs-on: ${{ inputs.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      id: setup_python
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+
+    - name: Install ert and everest
+      run: |
+        uv pip install ".[everest,dev]"
+        uv pip install git+https://github.com/equinor/everest-models
+
+    - name: Install flow
+      run: |
+        set -e
+        sudo apt install software-properties-common
+        sudo apt-add-repository ppa:opm/ppa
+        sudo apt update
+        sudo apt install mpi-default-bin
+        sudo apt install libopm-simulators-bin python3-opm-common
+
+        which flow
+        flow --version
+
+    - name: Run integration tests towards OPM flow without flowrun
+      run: |
+        set -e
+        pytest tests/ert/unit_tests/resources/test_run_flow_simulator.py
+
+    - name: Run Ert on an example configuration with flow
+      run: |
+        pushd test-data/ert/flow_example
+        perl -p -i -e 's/NUM_REALIZATIONS\s*12/NUM_REALIZATIONS 2/g' flow.ert
+        ert ensemble_experiment flow.ert
+        popd
+
+    - name: Run Everest on an example configuration with flow
+      run: |
+        set +e
+        pushd test-data/everest/egg/everest/model
+        everest lint config_flow.yml
+        everest run config_flow.yml
+        popd
