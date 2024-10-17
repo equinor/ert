@@ -17,17 +17,11 @@ from everest.bin.utils import export_to_csv, export_with_progress
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames, export, filter_data, validate_export
 from everest.suite import (
-    SIMULATOR_END,
-    SIMULATOR_START,
-    SIMULATOR_UPDATE,
     start_optimization,
 )
 
 __author__ = "Equinor ASA and TNO"
 __all__ = [
-    "SIMULATOR_END",
-    "SIMULATOR_START",
-    "SIMULATOR_UPDATE",
     "ConfigKeys",
     "MetaDataColumnNames",
     "detached",
