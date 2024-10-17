@@ -193,9 +193,6 @@ class RunDialog(QFrame):
         self._notifier = notifier
         self.fail_msg_box: Optional[ErtMessageBox] = None
 
-        self._minimum_width = 1200
-        self._minimum_height = 600
-
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
@@ -240,8 +237,7 @@ class RunDialog(QFrame):
         spin_movie.start()
 
         self.processing_animation = QLabel()
-        self.processing_animation.setMaximumSize(QSize(size, size))
-        self.processing_animation.setMinimumSize(QSize(size, size))
+        self.processing_animation.setFixedSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
 
         button_layout = QHBoxLayout()
@@ -292,7 +288,7 @@ class RunDialog(QFrame):
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
-        self.setMinimumSize(self._minimum_width, self._minimum_height)
+        self.setMinimumSize(1200, 600)
         self.finished.connect(self._on_finished)
 
         self._restart = False
