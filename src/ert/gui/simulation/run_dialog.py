@@ -540,9 +540,6 @@ class RunDialog(QFrame):
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)
 
-    def get_runtime(self) -> int:
-        return self._run_model.get_runtime()
-
     def _on_finished(self) -> None:
         self.flag_simulation_done = True
         for file_dialog in self.findChildren(FileDialog):
