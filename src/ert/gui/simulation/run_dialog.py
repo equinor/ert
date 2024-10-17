@@ -7,7 +7,6 @@ from typing import Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
-    QCloseEvent,
     QMouseEvent,
     QMovie,
     QTextCursor,
@@ -346,12 +345,6 @@ class RunDialog(QFrame):
         if exec_hosts and exec_hosts != "-":
             text += f", assigned to host: {exec_hosts}"
         self._fm_step_label.setText(text)
-
-    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
-        if not self._notifier.is_simulation_running:
-            self.finished.emit()
-        elif self.killJobs() != QMessageBox.Yes and a0 is not None:
-            a0.ignore()
 
     def run_experiment(self, restart: bool = False) -> None:
         self._restart = restart
