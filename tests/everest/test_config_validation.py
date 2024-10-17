@@ -140,11 +140,13 @@ def test_that_invalid_queue_system_errors():
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(simulator={"queue_system": "docal"})
 
-    assert has_error(e.value, match="Input should be 'lsf', 'local' or 'slurm'")
-
+    assert has_error(
+        e.value, match="Input should be 'lsf', 'local', 'slurm' or 'torque'"
+    )
     EverestConfig.with_defaults(simulator={"queue_system": "local"})
     EverestConfig.with_defaults(simulator={"queue_system": "lsf"})
     EverestConfig.with_defaults(simulator={"queue_system": "slurm"})
+    EverestConfig.with_defaults(simulator={"queue_system": "torque"})
 
 
 @pytest.mark.parametrize(
