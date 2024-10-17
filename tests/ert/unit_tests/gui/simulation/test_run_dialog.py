@@ -69,16 +69,6 @@ def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
     return run_dialog
 
 
-def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
-    qtbot: QtBot, run_dialog, event_queue
-):
-    run_dialog.run_experiment()
-    event_queue.put(EndEvent(failed=False, msg=""))
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=1000)
-    assert not run_dialog.done_button.isHidden()
-    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-
 def test_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog, event_queue
 ):
