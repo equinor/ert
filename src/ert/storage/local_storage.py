@@ -305,6 +305,9 @@ class LocalStorage(BaseMode):
         self._save_index()
         self._release_lock()
 
+        for ens in self._ensembles.values():
+            ens.combine_responses()
+
     def _release_lock(self) -> None:
         if self._lock.is_locked:
             self._lock.release()

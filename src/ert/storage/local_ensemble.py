@@ -904,3 +904,6 @@ class LocalEnsemble(BaseMode):
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.response_configuration
         }
+
+    def combine_responses(self) -> None:
+        pass
