@@ -5,6 +5,7 @@ import numpy as np
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QComboBox,
+    QToolButton,
     QTreeView,
     QWidget,
 )
@@ -14,7 +15,7 @@ from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.manual_update_panel import ManualUpdatePanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.tools.manage_experiments import ManageExperimentsTool
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.run_models.manual_update import ManualUpdate
@@ -44,16 +45,14 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
     # The Run dialog opens, wait until done appears, then click done
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
     qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
-    # Open the manage experiments dialog
-    manage_tool = gui.tools["Manage experiments"]
-    manage_tool.trigger()
-
-    assert isinstance(manage_tool, ManageExperimentsTool)
-    experiments_panel = manage_tool._manage_experiments_panel
+    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    experiments_panel = gui.findChild(ManageExperimentsPanel)
     assert experiments_panel
 
     # In the "create new case" tab, it should now contain "iter-1"
