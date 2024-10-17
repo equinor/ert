@@ -254,32 +254,34 @@ class BatchSimulatorRunModel(BaseRunModel):
         self,
         random_seed: Optional[int],
         config: ErtConfig,
+        ropt_config: Dict[str, Any],
         everest_config: EverestConfig,
-        storage: Storage,
-        status_queue: SimpleQueue[StatusEvents],
-        simulation_callback: Callable,
-        optimization_callback: Callable,
+        simulation_callback: SimulationCallback,
+        optimization_callback: OptimizerCallback,
         display_all_jobs: bool = True,
     ):
+        self.ropt_config = ropt_config
         self.everest_config = everest_config
         self.support_restart = False
-        self.experiment_name = (
-            f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}"
-        )
 
         self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
         self._monitor_thread: Optional[_MonitorThread] = None
-        self._fm_errors: Dict[str, Dict[str, Any]] = {}
+        self._fm_errors: Dict[int, Dict[str, Any]] = {}
         self._simulation_delete_run_path = (
             False
             if everest_config.simulator is None
             else (everest_config.simulator.delete_run_path or False)
         )
         self._display_all_jobs = display_all_jobs
-        self._result: Optional[Any] = None
-        self._exit_code: Optional[OptimizerExitCode] = None
+        self._result: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None
+        self._exit_code: Optional[
+            Literal["max_batch_num_reached"] | OptimizerExitCode
+        ] = None
         self._max_batch_num_reached = False
+
+        storage = open_storage(config.ens_path, mode="w")
+        status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
 
         super().__init__(
             config,
@@ -296,8 +298,7 @@ class BatchSimulatorRunModel(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
-        assert self._monitor_thread is None
-
+        self.log_at_startup()
         simulator = Simulator(
             self.everest_config,
             self.ert_config,
@@ -311,7 +312,9 @@ class BatchSimulatorRunModel(BaseRunModel):
         # Before each batch evaluation we check if we should abort:
         optimizer.add_observer(
             EventType.START_EVALUATION,
-            partial(self._ropt_callback, optimizer=optimizer, simulator=simulator),
+            functools.partial(
+                self._ropt_callback, optimizer=optimizer, simulator=simulator
+            ),
         )
 
         # The SqliteStorage object is used to store optimization results from
@@ -320,22 +323,26 @@ class BatchSimulatorRunModel(BaseRunModel):
         # accessed by Everest via separate SebaSnapshot objects.
         # This mechanism is outdated and not supported by the ropt package. It
         # is retained for now via the seba_sqlite package.
-        seba_storage = SqliteStorage(
+        seba_storage = SqliteStorage(  # type: ignore
             optimizer, self.everest_config.optimization_output_dir
         )
 
         # Run the optimization:
-        exit_code = optimizer.run().exit_code
+        optimizer_exit_code = optimizer.run().exit_code
 
         # Extract the best result from the storage.
-        self._result = seba_storage.get_optimal_result()
+        self._result = seba_storage.get_optimal_result()  # type: ignore
 
         if self._monitor_thread is not None:
             self._monitor_thread.stop()
             self._monitor_thread.join()
             self._monitor_thread = None
 
-        return "max_batch_num_reached" if self._max_batch_num_reached else exit_code
+        self._exit_code = (
+            "max_batch_num_reached"
+            if self._max_batch_num_reached
+            else optimizer_exit_code
+        )
 
     def _handle_errors(self, batch, simulation, realization, fm_name, error_path):
         fm_id = "b_{}_r_{}_s_{}_{}".format(batch, realization, simulation, fm_name)

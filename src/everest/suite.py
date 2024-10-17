@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import json
 import logging
-import queue
 import random
 from typing import Any, Dict
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models import StatusEvents
 from ert.run_models.batch_simulator_run_model import BatchSimulatorRunModel
-from ert.storage import open_storage
 from everest.config import EverestConfig
+from everest.optimizer.everest2ropt import everest2ropt
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
@@ -111,34 +109,29 @@ class _EverestWorkflow(object):
         This method is not thread safe. Multiple overlapping executions
         of this method will probably lead to a crash
         """
-        assert self._monitor_thread is None
-
         ert_config = everest_to_ert_config(self.config)
-        with open_storage(ert_config.ens_path, mode="w") as storage:
-            status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+        ropt_config = everest2ropt(self.config)
+        run_model = BatchSimulatorRunModel(
+            random_seed=ert_config.random_seed,
+            config=ert_config,
+            ropt_config=ropt_config,
+            everest_config=self.config,
+            simulation_callback=self._sim_callback,
+            optimization_callback=self._opt_callback,
+        )
 
-            run_model = BatchSimulatorRunModel(
-                random_seed=ert_config.random_seed,
-                config=ert_config,
-                everest_config=self.config,
-                storage=storage,
-                status_queue=status_queue,
-                simulation_callback=self._sim_callback,
-                optimization_callback=self._opt_callback,
-            )
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=range(49152, 51819)
+            if ert_config.queue_config.queue_system == QueueSystem.LOCAL
+            else None
+        )
 
-            evaluator_server_config = EvaluatorServerConfig(
-                custom_port_range=range(49152, 51819)
-                if ert_config.queue_config.queue_system == QueueSystem.LOCAL
-                else None
-            )
+        run_model.run_experiment(evaluator_server_config)
 
-            to_return_value = run_model.run_experiment(evaluator_server_config)
+        # Extract the best result from the storage.
+        self._result = run_model._result
 
-            # Extract the best result from the storage.
-            self._result = run_model._result
-
-            return to_return_value
+        return run_model._exit_code
 
     @property
     def result(self):
