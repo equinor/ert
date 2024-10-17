@@ -1,8 +1,0 @@
-# This is an example configuration file for the local ecl300 installation, see
-# the ecl100_config.yml file for more extensive documentation.
-
-eclrun_env:
-  SLBSLS_LICENSE_FILE: something@yourcompany.com
-  ECLPATH: /path/to/ecl
-  PATH: /path/to/ecl/macros
-  LSB_JOBID: null
