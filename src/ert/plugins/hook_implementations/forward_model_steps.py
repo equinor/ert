@@ -1,11 +1,8 @@
 import os
-import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
 from typing import List, Literal, Optional, Type
-
-import yaml
 
 from ert import (
     ForwardModelStepDocumentation,
@@ -207,12 +204,12 @@ class Eclipse100(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/ecl100.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
-                "<ECLBASE>",
-                "-v",
+                "eclipse",
                 "<VERSION>",
+                "<ECLBASE>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
@@ -265,12 +262,12 @@ class Eclipse300(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/ecl300.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
-                "<ECLBASE>",
-                "-v",
+                "e300",
                 "<VERSION>",
+                "<ECLBASE>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
@@ -317,11 +314,11 @@ class Flow(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/flow.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
+                "flow",
                 "<ECLBASE>",
-                "-v",
                 "<VERSION>",
                 "-n",
                 "<NUM_CPU>",
@@ -629,31 +626,17 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
 
 
 def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
-    if shutil.which("eclrun") is None:
-        return []
     pm = ErtPluginManager()
-    ecl_config_path = (
-        pm.get_ecl100_config_path()
-        if simulator == "eclipse"
-        else pm.get_ecl300_config_path()
+    eclrun_env = os.environ.copy()
+    eclrun_env["PATH"] = os.pathsep.join(
+        pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
     )
-
-    if not ecl_config_path:
-        return []
-    eclrun_env = {"PATH": os.getenv("PATH", "")}
-
-    with open(ecl_config_path, encoding="utf-8") as f:
-        try:
-            config = yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Failed parse: {ecl_config_path} as yaml") from e
-    ecl_install_path = config.get("eclrun_env", {}).get("PATH", "")
-    eclrun_env["PATH"] = eclrun_env["PATH"] + os.pathsep + ecl_install_path
-
     try:
         return (
             subprocess.check_output(
-                ["eclrun", "--report-versions", simulator],
+                # It is not sufficient to just give the correct path to eclrun, its PATH must include its location
+                # for versions to be displayed. Ensure this is covered in tests.
+                ["eclrun", simulator, "--report-versions"],
                 env=eclrun_env,
             )
             .decode("utf-8")
