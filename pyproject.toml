@@ -176,7 +176,6 @@ markers = [
     "slow",
     "everest_models_test",
     "integration_test",
-    "simulation_test",
     "ui_test",
     "fails_on_macos_github_workflow", # Tests marked fail due to gui-related issues
 ]
