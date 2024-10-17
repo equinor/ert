@@ -67,8 +67,6 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
     gui = open_gui
     run_experiment(EnsembleExperiment, gui)
 
-    workflow_tool = gui.tools["Run workflow"]
-
     def handle_run_workflow_tool():
         dialog = wait_for_child(gui, qtbot, ClosableDialog)
         workflow_widget = get_child(dialog, RunWorkflowWidget)
@@ -82,6 +80,6 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
         qtbot.mouseClick(workflow_widget.run_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_run_workflow_tool)
-    workflow_tool.trigger()
+    gui.workflows_tool.trigger()
 
     assert os.path.isfile(".ert_runpath_list")

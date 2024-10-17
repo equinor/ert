@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QCheckBox
+from qtpy.QtWidgets import QCheckBox, QToolButton
 
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
@@ -60,9 +60,9 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
         gui = _setup_main_window(storage_config, args_mock, log_handler, storage)
         qtbot.addWidget(gui)
 
-        plot_tool = gui.tools["Create plot"]
-        plot_tool.trigger()
-
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         central_tab = plot_window._central_tab
 
@@ -142,9 +142,9 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
 
-        plot_tool = gui.tools["Create plot"]
-        plot_tool.trigger()
-
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         key_list = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget
