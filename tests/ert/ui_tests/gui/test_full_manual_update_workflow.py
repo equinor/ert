@@ -45,9 +45,8 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
     # The Run dialog opens, wait until done appears, then click done
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=10000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments

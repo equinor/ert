@@ -228,8 +228,6 @@ class RunDialog(QFrame):
         self.memory_usage = QLabel("")
 
         self.kill_button = QPushButton("Terminate experiment")
-        self.done_button = QPushButton("Done")
-        self.done_button.setHidden(True)
         self.restart_button = QPushButton("Rerun failed")
         self.restart_button.setHidden(True)
         self.copy_debug_info_button = QPushButton("Debug Info")
@@ -256,7 +254,6 @@ class RunDialog(QFrame):
         button_layout.addStretch()
         button_layout.addWidget(self.copy_debug_info_button)
         button_layout.addWidget(self.kill_button)
-        button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
 
         button_widget_container = QWidget()
@@ -294,7 +291,6 @@ class RunDialog(QFrame):
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)  # type: ignore
-        self.done_button.clicked.connect(self.hide)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
@@ -302,6 +298,10 @@ class RunDialog(QFrame):
         self.finished.connect(self._on_finished)
 
         self._restart = False
+        self.flag_simulation_done = False
+
+    def is_simulation_done(self) -> bool:
+        return self.flag_simulation_done
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
@@ -351,12 +351,12 @@ class RunDialog(QFrame):
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
         if not self._notifier.is_simulation_running:
             self.finished.emit()
-            # self.accept()
         elif self.killJobs() != QMessageBox.Yes and a0 is not None:
             a0.ignore()
 
     def run_experiment(self, restart: bool = False) -> None:
         self._restart = restart
+        self.flag_simulation_done = False
         if restart is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
@@ -403,7 +403,6 @@ class RunDialog(QFrame):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
-            self._on_finished()
             self.finished.emit()
         return kill_job
 
@@ -440,7 +439,6 @@ class RunDialog(QFrame):
             self.simulation_done.emit(event.failed, event.msg)
             self.finished.emit()
             self._ticker.stop()
-            self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 if self._restart:
@@ -541,13 +539,13 @@ class RunDialog(QFrame):
         if result == QMessageBox.Ok:
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
-            self.done_button.setVisible(False)
             self.run_experiment(restart=True)
 
     def get_runtime(self) -> int:
         return self._run_model.get_runtime()
 
     def _on_finished(self) -> None:
+        self.flag_simulation_done = True
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
 
