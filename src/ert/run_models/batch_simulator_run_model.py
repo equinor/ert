@@ -2,42 +2,48 @@ from __future__ import annotations
 
 import copy
 import datetime
+import functools
 import logging
 import os
+import queue
 import re
 import shutil
 import threading
 import time
-from functools import partial
 from pathlib import Path
-from queue import SimpleQueue
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     List,
+    Literal,
     Optional,
+    Protocol,
+    Type,
     TypedDict,
 )
 
+import seba_sqlite.sqlite_storage
 from ropt.enums import EventType, OptimizerExitCode
+from ropt.optimization import Event
 from ropt.plan import OptimizationPlanRunner
 from seba_sqlite import SqliteStorage
 
 from ert.config import ErtConfig
-from ert.storage import Storage
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.storage import open_storage
 from everest.config import EverestConfig
-from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import Simulator
 from everest.strings import EVEREST, SIMULATOR_END, SIMULATOR_START, SIMULATOR_UPDATE
 
-from ..ensemble_evaluator import EvaluatorServerConfig
 from ..resources import all_shell_script_fm_steps
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.simulator.batch_simulator_context import BatchContext, Status
+
 
 # A number of settings for the table reporters:
 RESULT_COLUMNS = {
@@ -109,6 +115,23 @@ class JobProgress(TypedDict):
     simulation: str
 
 
+class MonitorThreadErrorCallback(Protocol):
+    def __call__(
+        self,
+        batch: int,
+        simulation: Any,
+        realization: str,
+        fm_name: str,
+        error_path: str,
+    ) -> None: ...
+
+
+class SimulationCallback(Protocol):
+    def __call__(
+        self, simulation_status: SimulationStatus | None, event: str
+    ) -> str | None: ...
+
+
 class _MonitorThread(threading.Thread):
     """Invoke a callback when a sim context status changes.
     This thread will run as long as the given context is running.
@@ -124,16 +147,18 @@ class _MonitorThread(threading.Thread):
     def __init__(
         self,
         context: BatchContext,
-        callback: Optional[Callable[[SimulationStatus], Any]] = None,
-        error_callback=None,
-        delete_run_path=False,
-        display_all_jobs=False,
-    ):
+        callback: Optional[SimulationCallback] = None,
+        error_callback: Optional[MonitorThreadErrorCallback] = None,
+        delete_run_path: Optional[bool] = False,
+        display_all_jobs: Optional[bool] = False,
+    ) -> None:
         super(_MonitorThread, self).__init__()
 
         # temporarily living simulation context
-        self._context = context
-        self._callback = callback if callback is not None else lambda *_, **__: None
+        self._context: Optional[BatchContext] = context
+        self._callback: SimulationCallback = (
+            callback if callback is not None else lambda simulation_status, event: None
+        )
         self._delete_run_path = delete_run_path
         self._display_all_jobs = display_all_jobs
         self._shutdown_flag = False  # used to gracefully shut down this thread
@@ -147,7 +172,13 @@ class _MonitorThread(threading.Thread):
                     path_to_delete = self._context.run_path(context_index)
                     if os.path.isdir(path_to_delete):
 
-                        def onerror(_, path, sys_info):
+                        def onerror(
+                            _: Callable[..., Any],
+                            path: str,
+                            sys_info: tuple[
+                                Type[BaseException], BaseException, TracebackType
+                            ],
+                        ) -> None:
                             logging.getLogger(EVEREST).debug(
                                 "Failed to remove {}, {}".format(path, sys_info)
                             )
@@ -159,20 +190,21 @@ class _MonitorThread(threading.Thread):
         self._shutdown_flag = True
 
     @property
-    def _batch_number(self):
+    def _batch_number(self) -> int:
         """
         Return the current batch number from context.
         """
         # Get the string name of current case
+        assert self._context is not None
         batch_n_sim_string = self._context.get_ensemble().name
 
         search = re.search(r"batch_([0-9]+)", batch_n_sim_string)
-        return search.groups()[-1] if search is not None else "N/A"
+        return int(search.groups()[-1]) if search is not None else -1
 
     def _simulation_status(self) -> SimulationStatus:
         assert self._context is not None
 
-        def extract(path_str, key):
+        def extract(path_str: str, key: str) -> str:
             regex = r"/{}_(\d+)/".format(key)
             found = next(re.finditer(regex, path_str), None)
             return found.group(1) if found is not None else "unknown"
@@ -207,8 +239,9 @@ class _MonitorThread(threading.Thread):
                         }
                     )
                     if fms.error is not None:
+                        assert self._error_callback is not None
                         self._error_callback(
-                            batch_number,
+                            int(batch_number),
                             simulation,
                             realization,
                             fms.name,
@@ -218,10 +251,10 @@ class _MonitorThread(threading.Thread):
         return {
             "status": copy.deepcopy(self._context.status),
             "progress": jobs_progress,
-            "batch_number": batch_number,
+            "batch_number": int(batch_number),
         }
 
-    def run(self):
+    def run(self) -> None:
         if self._context is None:
             self._cleanup()
             return
@@ -243,10 +276,15 @@ class _MonitorThread(threading.Thread):
         finally:
             self._cleanup()
 
-    def stop(self):
+    def stop(self) -> None:
         if self._context is not None:
             self._context.stop()
+
         self._shutdown_flag = True
+
+
+class OptimizerCallback(Protocol):
+    def __call__(self) -> str | None: ...
 
 
 class BatchSimulatorRunModel(BaseRunModel):
@@ -344,7 +382,14 @@ class BatchSimulatorRunModel(BaseRunModel):
             else optimizer_exit_code
         )
 
-    def _handle_errors(self, batch, simulation, realization, fm_name, error_path):
+    def _handle_errors(
+        self,
+        batch: int,
+        simulation: Any,
+        realization: str,
+        fm_name: str,
+        error_path: str,
+    ) -> None:
         fm_id = "b_{}_r_{}_s_{}_{}".format(batch, realization, simulation, fm_name)
         logger = logging.getLogger("forward_models")
         with open(error_path, "r", encoding="utf-8") as errors:
@@ -364,9 +409,8 @@ class BatchSimulatorRunModel(BaseRunModel):
             error_id = self._fm_errors[error_hash]["error_id"]
             logger.error(err_msg.format(error_id, ""))
 
-    def _simulation_callback(self, *args, **_):
+    def _simulation_callback(self, ctx: BatchContext | None) -> None:
         logging.getLogger(EVEREST).debug("Simulation callback called")
-        ctx = args[0]
         if ctx is None:
             return
         if self._monitor_thread is not None:
@@ -381,12 +425,18 @@ class BatchSimulatorRunModel(BaseRunModel):
         )
         self._monitor_thread.start()
 
-    def _ropt_callback(self, event, optimizer, simulator):
+    def _ropt_callback(
+        self, _: Event, optimizer: OptimizationPlanRunner, simulator: Simulator
+    ) -> None:
         logging.getLogger(EVEREST).debug("Optimization callback called")
 
-        if self.everest_config.optimization.max_batch_num is not None and (
-            simulator.number_of_evaluated_batches
-            >= self.everest_config.optimization.max_batch_num
+        if (
+            self.everest_config.optimization is not None
+            and self.everest_config.optimization.max_batch_num is not None
+            and (
+                simulator.number_of_evaluated_batches
+                >= self.everest_config.optimization.max_batch_num
+            )
         ):
             self._max_batch_num_reached = True
             logging.getLogger(EVEREST).info("Maximum number of batches reached")
@@ -399,8 +449,12 @@ class BatchSimulatorRunModel(BaseRunModel):
             optimizer.abort_optimization()
 
     def _configure_optimizer(self, simulator: Simulator) -> OptimizationPlanRunner:
+        assert (
+            self.everest_config.environment is not None
+            and self.everest_config.environment is not None
+        )
         optimizer = OptimizationPlanRunner(
-            enopt_config=everest2ropt(self.everest_config),
+            enopt_config=self.ropt_config,
             evaluator=simulator,
             seed=self.everest_config.environment.random_seed,
         )
