@@ -5,7 +5,6 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import patch
 
 import pytest
 from hypothesis import given, settings
@@ -24,23 +23,6 @@ from ert.config.parsing import SchemaItemType
 from ert.substitutions import Substitutions
 
 from .config_dict_generator import config_generators
-
-
-@pytest.fixture()
-def mock_eclrun():
-    with open("eclrun", "w", encoding="utf-8") as f:
-        f.write("""#!/usr/bin/env python\n\nprint("4 2 8")""")
-    os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
-    old_path = os.environ["PATH"]
-    eclrun_path = shutil.which("eclrun")
-    if eclrun_path is None:
-        os.environ["PATH"] = old_path + os.pathsep + os.getcwd()
-    else:
-        os.environ["PATH"] = old_path.replace(
-            str(Path(eclrun_path).parent), os.getcwd()
-        )
-    yield
-    os.environ["PATH"] = old_path
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -575,83 +557,69 @@ def test_that_forward_model_with_different_token_kinds_are_added():
     ] == [("job", 0), ("job", 1)]
 
 
-@pytest.mark.parametrize("eclipse_v", ["100", "300"])
-def test_that_eclipse_jobs_require_version_field(eclipse_v):
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
     with pytest.raises(
         ConfigValidationError,
-        match=f".*Forward model step ECLIPSE{eclipse_v} must be given a VERSION argument.*",
+        match=f".*Forward model step {eclipse_v} must be given a VERSION argument.*",
     ):
         _ = ErtConfig.with_plugins().from_file_contents(
             f"""
             NUM_REALIZATIONS  1
-            FORWARD_MODEL ECLIPSE{eclipse_v}
+            FORWARD_MODEL {eclipse_v}
             """
         )
 
 
-@pytest.mark.parametrize("eclipse_v", ["100", "300"])
+@pytest.mark.skipif(shutil.which("eclrun") is None, reason="eclrun is not in $PATH")
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
-    ecl100_config_file_name = "ecl100_config.yml"
-    ecl300_config_file_name = "ecl300_config.yml"
-
-    ecl100_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
-    ecl300_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
-    ert_config_contents = (
-        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
-    )
-
-    # Write config file
+def test_that_eclipse_fm_step_check_version_availability(eclipse_v):
     config_file_name = "test.ert"
-    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
-    # Write ecl100_config file
-    Path(ecl100_config_file_name).write_text(ecl100_config_content, encoding="utf-8")
-    # Write ecl300_config file
-    Path(ecl300_config_file_name).write_text(ecl300_config_content, encoding="utf-8")
-    with patch(
-        "ert.plugins.hook_implementations.forward_model_steps.ErtPluginManager"
-    ) as mock:
-        instance = mock.return_value
-        instance.get_ecl100_config_path.return_value = ecl100_config_file_name
-        instance.get_ecl300_config_path.return_value = ecl300_config_file_name
-        with pytest.raises(
-            ConfigValidationError,
-            match=rf".*Unavailable ECLIPSE{eclipse_v} version 1 current supported versions \['4', '2', '8'\].*",
-        ):
-            _ = ErtConfig.with_plugins().from_file(config_file_name)
+    Path(config_file_name).write_text(
+        f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=dummy)\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf".*Unavailable {eclipse_v} version dummy. Available versions: \[\'20.*",
+    ):
+        ErtConfig.with_plugins().from_file(config_file_name)
 
 
-@pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
-@pytest.mark.parametrize("eclipse_v", ["100", "300"])
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
+    eclrun_bin = Path("bin/eclrun")
+    eclrun_bin.parent.mkdir()
+    eclrun_bin.write_text("#!/bin/sh\necho 2036.1 2036.2 2037.1", encoding="utf-8")
+    eclrun_bin.chmod(eclrun_bin.stat().st_mode | stat.S_IEXEC)
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            SETENV ECLRUN_PATH {eclrun_bin.absolute().parent}
+            FORWARD_MODEL {eclipse_v}(<VERSION>=2034.1)"""
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf".*Unavailable {eclipse_v} version 2034.1. Available versions: \[\'2036.1.*",
+    ):
+        ErtConfig.with_plugins().from_file(config_file_name)
+
+
+@pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is present")
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
     eclipse_v,
 ):
     _ = ErtConfig.with_plugins().from_file_contents(
-        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
+        f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=1)\n"
     )
-
-
-@pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
-@pytest.mark.parametrize("eclipse_v", ["100", "300"])
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_no_error_thrown_when_checking_eclipse_version_and_no_ecl_config_defined(
-    eclipse_v, mock_eclrun
-):
-    ert_config_contents = (
-        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
-    )
-
-    # Write config file
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(ert_config_contents, encoding="utf-8")
-    with patch(
-        "ert.plugins.hook_implementations.forward_model_steps.ErtPluginManager"
-    ) as mock:
-        instance = mock.return_value
-        instance.get_ecl100_config_path.return_value = None
-        instance.get_ecl300_config_path.return_value = None
-        _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):
@@ -900,7 +868,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 ):
     (tmp_path / "test.ert").write_text(
         """
-        NUM_REALIZATIONS  1
+        NUM_REALIZATIONS 1
         FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
         FORWARD_MODEL FM2
         """
