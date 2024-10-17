@@ -3,9 +3,7 @@ from .ecl_config import (
     ecl300_config_path,
     flow_config_path,
 )
-from .forward_model_steps import (
-    installable_forward_model_steps,
-)
+from .forward_model_steps import forward_model_paths, installable_forward_model_steps
 from .help_resources import help_links
 from .jobs import (
     installable_jobs,
@@ -21,6 +19,7 @@ __all__ = [
     "ecl100_config_path",
     "ecl300_config_path",
     "flow_config_path",
+    "forward_model_paths",
     "help_links",
     "installable_forward_model_steps",
     "installable_jobs",
