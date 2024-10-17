@@ -3,6 +3,7 @@ import glob
 import os
 import os.path
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -15,7 +16,9 @@ from random import random
 from typing import List
 
 import resfo
-from ecl_config import EclConfig, EclrunConfig, Simulator
+from ecl_config import EclConfig
+
+from ert.plugins import plugin_manager
 
 
 def ecl_output_has_license_error(ecl_output: str):
@@ -227,10 +230,7 @@ class EclRun:
 
     The main method is the runEclipse() method which will:
 
-      1. Set up redirection of the stdxxx file descriptors.
-      2. Set the necessary environment variables.
-      3. [MPI]: Create machine_file listing the nodes which should be used.
-      4. fork+exec to actually run the Eclipse binary.
+      4. Run the system provided eclrun binary
       5. Parse the output .PRT / .ECLEND file to check for errors.
 
     If the simulation fails the runEclipse() method will raise an exception.
@@ -255,12 +255,20 @@ class EclRun:
     def __init__(
         self,
         ecl_case: str,
-        sim: Simulator,
         num_cpu: int = 1,
         check_status: bool = True,
         summary_conversion: bool = False,
     ):
-        self.sim = sim
+        pm = plugin_manager.ErtPluginManager()
+        self.eclrun_abspath = shutil.which(
+            "eclrun",
+            path=os.pathsep.join(
+                pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
+            ),
+        )
+        if self.eclrun_abspath is None:
+            raise RuntimeError("eclrun not installed")
+
         self.check_status = check_status
         self.num_cpu = int(num_cpu)
         self.summary_conversion = summary_conversion
@@ -298,11 +306,6 @@ class EclRun:
 
     def numCpu(self):
         return self.num_cpu
-
-    def _get_legacy_run_env(self):
-        my_env = os.environ.copy()
-        my_env.update(self.sim.env.items())
-        return my_env
 
     def initMPI(self):
         # If the environment variable LSB_MCPU_HOSTS is set we assume the job is
@@ -353,10 +356,11 @@ class EclRun:
             for host in machine_list:
                 filehandle.write(f"{host}\n")
 
-    def _get_run_command(self, eclrun_config: EclrunConfig):
+    def _get_run_command(self):
+        assert self.eclrun_abspath is not None
         summary_conversion = "yes" if self.summary_conversion else "no"
         return [
-            "eclrun",
+            self.eclrun_abspath,
             "-v",
             eclrun_config.version,
             eclrun_config.simulator_name,
@@ -365,40 +369,15 @@ class EclRun:
             summary_conversion,
         ]
 
-    def _get_legacy_run_command(self):
-        if self.num_cpu == 1:
-            return [self.sim.executable, self.base_name]
-        else:
-            self.initMPI()
-            return [
-                self.sim.mpirun,
-                "-machinefile",
-                self.machine_file,
-                "-np",
-                str(self.num_cpu),
-                self.sim.executable,
-                self.base_name,
-            ]
-
-    def execEclipse(self, eclrun_config=None) -> int:
-        use_eclrun = eclrun_config is not None
-
+    def _run_eclrun_binary(self) -> int:
         with pushd(self.run_path):
             if not os.path.exists(self.data_file):
                 raise IOError(f"Can not find data_file:{self.data_file}")
             if not os.access(self.data_file, os.R_OK):
                 raise OSError(f"Can not read data file:{self.data_file}")
 
-            command = (
-                self._get_run_command(eclrun_config)
-                if use_eclrun
-                else self._get_legacy_run_command()
-            )
-            env = eclrun_config.run_env if use_eclrun else self._get_legacy_run_env()
-
             return subprocess.run(
-                command,
-                env=env,
+                self._get_run_command(),
                 check=False,
             ).returncode
 
@@ -406,13 +385,13 @@ class EclRun:
     LICENSE_RETRY_STAGGER_FACTOR = 60
     LICENSE_RETRY_BACKOFF_EXPONENT = 3
 
-    def runEclipse(self, eclrun_config=None, retries_left=3, backoff_sleep=None):
+    def runEclipse(self, retries_left=3, backoff_sleep=None):
         backoff_sleep = (
             self.LICENSE_FAILURE_RETRY_INITIAL_SLEEP
             if backoff_sleep is None
             else backoff_sleep
         )
-        return_code = self.execEclipse(eclrun_config=eclrun_config)
+        return_code = self._run_eclrun_binary()
 
         OK_file = os.path.join(self.run_path, f"{self.base_name}.OK")
         if not self.check_status:
@@ -420,11 +399,7 @@ class EclRun:
                 f.write("ECLIPSE simulation complete - NOT checked for errors.")
         else:
             if return_code != 0:
-                command = (
-                    self._get_run_command(eclrun_config)
-                    if self.sim is None
-                    else self._get_legacy_run_command()
-                )
+                command = self._get_run_command()
                 raise subprocess.CalledProcessError(return_code, command)
 
             try:
@@ -440,7 +415,6 @@ class EclRun:
                     )
                     time.sleep(time_to_wait)
                     self.runEclipse(
-                        eclrun_config,
                         retries_left=retries_left - 1,
                         backoff_sleep=int(
                             backoff_sleep * self.LICENSE_RETRY_BACKOFF_EXPONENT
@@ -548,30 +522,13 @@ def run(config: EclConfig, argv):
     options = parser.parse_args(argv)
 
     try:
-        eclrun_config = EclrunConfig(config, options.version)
-        if eclrun_config.can_use_eclrun():
-            run = EclRun(
-                options.ecl_case,
-                None,
-                num_cpu=options.num_cpu,
-                check_status=not options.ignore_errors,
-                summary_conversion=options.summary_conversion,
-            )
-            run.runEclipse(eclrun_config=eclrun_config)
-        else:
-            if options.num_cpu > 1:
-                sim = config.mpi_sim(version=options.version)
-            else:
-                sim = config.sim(version=options.version)
-
-            run = EclRun(
-                options.ecl_case,
-                sim,
-                num_cpu=options.num_cpu,
-                check_status=not options.ignore_errors,
-                summary_conversion=options.summary_conversion,
-            )
-            run.runEclipse()
+        run = EclRun(
+            options.ecl_case,
+            num_cpu=options.num_cpu,
+            check_status=not options.ignore_errors,
+            summary_conversion=options.summary_conversion,
+        )
+        run.runEclipse()
     except EclError as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
