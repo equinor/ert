@@ -188,7 +188,7 @@ class RunEclrun:
     LICENSE_RETRY_STAGGER_FACTOR = 60
     LICENSE_RETRY_BACKOFF_EXPONENT = 3
 
-    def runEclipse(self, retries_left=3, backoff_sleep=None):
+    def runEclipse(self, retries_left=3, backoff_sleep=None) -> None:
         # This function calls itself recursively in case of license failures
         backoff_sleep = (
             self.LICENSE_FAILURE_RETRY_INITIAL_SLEEP
@@ -319,7 +319,7 @@ def tail_textfile(file_path: Path, num_chars: int) -> str:
         return file.read()[-num_chars:]
 
 
-def run_eclrun():
+def run_eclrun(args: List[str]):
     parser = ArgumentParser()
     parser.add_argument("simulator", type=str, choices=["eclipse", "e300"])
     parser.add_argument("version", type=str)
@@ -332,7 +332,7 @@ def run_eclrun():
         "--summary-conversion", dest="summary_conversion", action="store_true"
     )
 
-    options = parser.parse_args()
+    options = parser.parse_args(args)
 
     try:
         RunEclrun(
@@ -349,4 +349,5 @@ def run_eclrun():
 
 
 if __name__ == "__main__":
-    run_eclrun()
+    non_empty_args = [arg for arg in sys.argv if arg != ""]
+    run_eclrun(non_empty_args[1:])

@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
@@ -213,7 +212,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 "<ECLBASE>",
                 "-n",
                 "<NUM_CPU>",
-                # "<OPTS>",
+                "<OPTS>",
             ],
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": ""},
         )
@@ -628,19 +627,17 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
 
 def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
     pm = ErtPluginManager()
-    eclrun_abspath = shutil.which(
-        "eclrun",
-        path=os.pathsep.join(
-            pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
-        ),
+    eclrun_env = os.environ.copy()
+    eclrun_env["PATH"] = os.pathsep.join(
+        pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
     )
-    if eclrun_abspath is None:
-        return []
-
     try:
         return (
             subprocess.check_output(
-                [eclrun_abspath, "--report-versions", simulator],
+                # It is not sufficient to just give the correct path to eclrun, its PATH must include its location
+                # for versions to be displayed. Ensure this is covered in tests.
+                ["eclrun", simulator, "--report-versions"],
+                env=eclrun_env,
             )
             .decode("utf-8")
             .strip()
