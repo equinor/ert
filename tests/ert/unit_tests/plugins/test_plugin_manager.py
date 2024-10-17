@@ -60,6 +60,16 @@ def test_with_plugins():
     ]
 
 
+def test_plugin_with_removed_hook_is_pass():
+    class LegacyPlugin:
+        @plugin(name="dummy2")
+        def legacy_hook_that_is_now_removed():
+            return "my name is legacy"
+
+    # no error, no effect.
+    ErtPluginManager(plugins=[LegacyPlugin])
+
+
 def test_lifo_path_order_for_forward_model_paths():
     class OtherPlugin:
         @plugin(name="dummy2")
