@@ -97,11 +97,6 @@ simulator:
   queue_system: local
   cores: 3
 
-install_jobs:
-  -
-    name: myflow
-    source: r{{ configpath }}/jobs/flow
-
 install_data:
   -
     source: r{{ configpath }}/../../eclipse/include/realizations/realization-r{{ realization }}/eclipse
@@ -116,5 +111,5 @@ forward_model:
   - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
   - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
   - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
-  - myflow              r{{ eclbase }} --enable-tuning
+  - flow              r{{ eclbase }} --enable-tuning=true
   - rf                -s r{{ eclbase }} -o rf

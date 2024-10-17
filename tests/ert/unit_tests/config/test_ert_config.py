@@ -916,12 +916,17 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
+def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
         "get_forward_model_configuration",
         MagicMock(
-            return_value={"SOME_STEP": {"FOO": "bar_from_plugin", "_ERT_RUNPATH": "0"}}
+            return_value={
+                "SOME_STEP": {
+                    "FOO": "bar_from_plugin",
+                    "STEP_LOCAL_VAR": "com_from_plugin",
+                }
+            }
         ),
     )
     Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
@@ -945,8 +950,8 @@ def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
         run_id=None,
     )
     assert step_json["global_environment"]["FOO"] == "bar_from_setenv"
-    assert step_json["jobList"][0]["environment"]["FOO"] == "bar_from_plugin"
-    # It is up to forward_model_runner to define behaviour here
+    assert "FOO" not in step_json["jobList"][0]["environment"]
+    assert step_json["jobList"][0]["environment"]["STEP_LOCAL_VAR"] == "com_from_plugin"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
