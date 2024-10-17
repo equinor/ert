@@ -6,14 +6,16 @@ import pytest
 
 import everest
 from ert.config import ErtConfig
-from ert.scheduler import create_driver
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.well_config import WellConfig
 from everest.config.workflow_config import WorkflowConfig
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
+from everest.simulator.everest_to_ert import (
+    _everest_to_ert_config_dict,
+    everest_to_ert_config,
+)
 from everest.util.forward_models import collect_forward_models
 from tests.everest.utils import (
     everest_default_jobs,
@@ -265,12 +267,11 @@ def test_snake_everest_to_ert_slurm(copy_test_data_to_tmp):
     )
 
 
-@tmpdir(relpath("test_data"))
-def test_snake_everest_to_ert_torque():
+def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
     snake_torque_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_torque.yml")
 
-    ever_config_dict = EverestConfig.load_file(snake_torque_config_path)
-    ert_config_dict = everest_to_ert_config(ever_config_dict)
+    ever_config = EverestConfig.load_file(snake_torque_config_path)
+    ert_config_dict = _everest_to_ert_config_dict(ever_config)
 
     assert ert_config_dict["QUEUE_SYSTEM"] == "TORQUE"
 
@@ -287,11 +288,7 @@ def test_snake_everest_to_ert_torque():
 
     assert set(ert_config_dict["QUEUE_OPTION"]) == expected_queue_option_tuples
 
-    ert_config = ErtConfig.with_plugins().from_dict(
-        config_dict=everest_to_ert_config(
-            ever_config_dict, site_config=ErtConfig.read_site_config()
-        )
-    )
+    ert_config = everest_to_ert_config(ever_config)
 
     qc = ert_config.queue_config
     qo = qc.queue_options
@@ -307,8 +304,6 @@ def test_snake_everest_to_ert_torque():
         "keep_qsub_output": True,
         "queue_name": "normal",
     }
-
-    driver = create_driver(ert_config.queue_config)
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
