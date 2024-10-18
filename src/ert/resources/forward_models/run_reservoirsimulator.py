@@ -195,7 +195,7 @@ class RunReservoirSimulator:
             "--version",
             self.version,
             self.data_file,
-            "-np",
+            "--np",
             str(self.num_cpu),
         ]
 
