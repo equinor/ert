@@ -655,6 +655,14 @@ class LocalEnsemble(BaseMode):
             response_type = self.experiment.response_key_to_response_type[key]
             select_key = True
 
+        response_file = f"{response_type}.parquet"
+
+        if os.path.exists(self.mount_point / response_file):
+            df = polars.read_parquet(self.mount_point / response_file)
+            if select_key:
+                df = df.filter(polars.col("response_key") == key)
+            return df
+
         loaded = []
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
@@ -906,5 +914,30 @@ class LocalEnsemble(BaseMode):
             for e in self.experiment.response_configuration
         }
 
-    def combine_responses(self) -> None:
-        pass
+    def combine_responses(self, response_type: Optional[str] = None) -> None:
+        if response_type is None:
+            for response_type in self.experiment.response_configuration:
+                self.combine_responses(response_type)
+
+            return None
+
+        if response_type not in self.experiment.response_configuration:
+            # 2do make test for this
+            raise KeyError(
+                f"Trying to combine responses for unknown response type {response_type}"
+            )
+
+        for (
+            response_type,
+            response_config,
+        ) in self.experiment.response_configuration.items():
+            response_file = f"{response_type}.parquet"
+
+            reals_with_response = self.get_realization_list_with_responses(
+                response_type
+            )
+            combined = self.load_responses(response_type, tuple(reals_with_response))
+            combined.write_parquet(self.mount_point / response_file)
+
+            for real in reals_with_response:
+                os.remove(self._realization_dir(real) / response_file)
