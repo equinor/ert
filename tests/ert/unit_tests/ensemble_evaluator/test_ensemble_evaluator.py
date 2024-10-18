@@ -351,7 +351,9 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     evaluator_to_use,
 ):
     evaluator = evaluator_to_use
+    evaluator._batching_interval = 10
 
+    evaluator._max_batch_size = 4
     conn_info = evaluator._config.get_connection_info()
     async with Monitor(conn_info) as monitor:
         events = monitor.track()
@@ -378,7 +380,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             max_retries=1,
             timeout_multiplier=1,
         ) as dispatch2:
-            # first dispatch endpoint client informs that job 0 is running
+            # first dispatch endpoint client informs that real 0 fm 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
                 real="0",
@@ -386,7 +388,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 current_memory_usage=1000,
             )
             await dispatch1._send(event_to_json(event))
-            # second dispatch endpoint client informs that job 0 is running
+            # second dispatch endpoint client informs that real 1 fm 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
                 real="1",
@@ -394,7 +396,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 current_memory_usage=1000,
             )
             await dispatch2._send(event_to_json(event))
-            # second dispatch endpoint client informs that job 0 is done
+            # second dispatch endpoint client informs that real 1 fm 0 is done
             event = ForwardModelStepSuccess(
                 ensemble=evaluator.ensemble.id_,
                 real="1",
@@ -402,7 +404,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 current_memory_usage=1000,
             )
             await dispatch2._send(event_to_json(event))
-            # second dispatch endpoint client informs that job 1 is failed
+            # second dispatch endpoint client informs that real 1 fm 1 is failed
             event = ForwardModelStepFailure(
                 ensemble=evaluator.ensemble.id_,
                 real="1",
@@ -422,7 +424,6 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             assert (
                 snapshot.get_fm_step("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
             )
-
         # a second monitor connects
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
