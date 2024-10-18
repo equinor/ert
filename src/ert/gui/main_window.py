@@ -112,9 +112,10 @@ class ErtMainWindow(QMainWindow):
             for widget in self.central_panels_map.values():
                 widget.setVisible(False)
 
-            if index_name == "Manage experiments":
-                if self._manage_experiments_panel:
-                    self._manage_experiments_panel.close()
+            if (
+                index_name == "Manage experiments"
+                and not self._manage_experiments_panel
+            ):
                 self._manage_experiments_panel = ManageExperimentsPanel(
                     self.ert_config,
                     self.notifier,
