@@ -36,13 +36,16 @@ from ert.plugins import ErtPluginManager
 
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0);
-    padding-top: 5px;
-    padding-bottom: 10px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0);
+        padding-top: 5px;
+        padding-bottom: 10px;
     }
     QToolButton:hover {
-       background-color: rgba(50, 50, 50, 90);
+        background-color: rgba(50, 50, 50, 90);
+    }
+    QToolButton::menu-indicator {
+        right: 10px; bottom: 5px;
     }
 """
 
@@ -167,6 +170,7 @@ class ErtMainWindow(QMainWindow):
             # swap from button to menu selection
             self.results_button.clicked.disconnect(self.select_central_widget)
             self.results_button.setMenu(QMenu())
+            self.results_button.setPopupMode(QToolButton.InstantPopup)
 
             for prev_date_time, widget in self.central_panels_map.items():
                 if isinstance(widget, RunDialog):
