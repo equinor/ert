@@ -673,7 +673,7 @@ def test_validation_of_experiment_names_in_run_models(
         assert not run_experiment.isEnabled()
 
 
-def test_that_simulation_status_button_adds_menu_on_second_run(
+def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     opened_main_window_poly, qtbot
 ):
     gui = opened_main_window_poly
@@ -720,12 +720,15 @@ def test_that_simulation_status_button_adds_menu_on_second_run(
     assert button_simulation_status.menu() is None
 
     find_and_click_button("button_Start_simulation", True, True)
-    QTimer.singleShot(
-        1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
-    )
+    QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
 
     # verify menu available
-    button_simulation_status = gui.findChild(QToolButton, "button_Simulation_status")
-    assert button_simulation_status.menu() is not None
+    assert len(button_simulation_status.menu().actions()) == 2
+
+    find_and_click_button("button_Start_simulation", True, True)
+    QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
+    run_experiment()
+    wait_for_simulation_completed()
+    assert len(button_simulation_status.menu().actions()) == 3
