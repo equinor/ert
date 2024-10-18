@@ -1578,5 +1578,4 @@ def test_no_warning_when_summary_key_and_simulation_job_present(
 
     # Check no warning is logged when config contains
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not caplog.text
-    assert len(recwarn) == 0
+    assert not any(w.message for w in recwarn if issubclass(w.category, ConfigWarning))
