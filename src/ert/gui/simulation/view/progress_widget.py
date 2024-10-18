@@ -28,6 +28,9 @@ class ProgressWidget(QFrame):
         self._waiting_progress_bar = QProgressBar(self)
         self._waiting_progress_bar.setRange(0, 0)
         self._waiting_progress_bar.setFixedHeight(30)
+        waiting_progress_bar_size_policy = self._waiting_progress_bar.sizePolicy()
+        waiting_progress_bar_size_policy.setRetainSizeWhenHidden(True)
+        self._waiting_progress_bar.setSizePolicy(waiting_progress_bar_size_policy)
         self._vertical_layout.addWidget(self._waiting_progress_bar)
 
         self._progress_frame = QFrame(self)
@@ -52,6 +55,9 @@ class ProgressWidget(QFrame):
 
         for state, color in REAL_STATE_TO_COLOR.items():
             label = QLabel(self)
+            label_size_policy = label.sizePolicy()
+            label_size_policy.setRetainSizeWhenHidden(True)
+            label.setSizePolicy(label_size_policy)
             label.setVisible(False)
             label.setObjectName(f"progress_{state}")
             label.setStyleSheet(f"background-color : {QColor(*color).name()}")
