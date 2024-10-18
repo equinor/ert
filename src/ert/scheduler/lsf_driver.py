@@ -414,7 +414,7 @@ class LsfDriver(Driver):
                 return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
             )
             await asyncio.create_subprocess_shell(
-                f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
+                f"nohup sh -c 'sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}' &",
                 start_new_session=True,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
