@@ -70,3 +70,39 @@ def test_histogram(plot_context: PlotContext, ensemble_to_data_map):
         {},
     )
     return figure
+
+
+def test_histogram_for_same_params():
+    context = Mock(spec=PlotContext)
+    context.log_scale = False
+    context.ensembles.return_value = [
+        EnsembleObject("ensemble_1", "id", False, "experiment_1")
+    ]
+    title = "Histogram with same values"
+    context.plotConfig.return_value = PlotConfig(title=title)
+    data_map = dict.fromkeys(
+        context.ensembles(), pd.DataFrame([[0], [0], [0], [0], [0]])
+    )
+    figure = Figure()
+    # mocked_thread_start = Mock()
+    # monkeypatch.setattr(
+    # ert.gui.tools.plot.plottery.plots.histogram,
+    # "_plotHistogram",
+    # mocked_thread_start,
+    # )
+    HistogramPlot().plot(
+        figure,
+        context,
+        data_map,
+        pd.DataFrame(),
+        {},
+    )
+    # mock_plot_histogram.assert_called_once_with(
+    # Mock.ANY,
+    # Mock.ANY,
+    # Mock.ANY,
+    # Mock.ANY,
+    # Mock.ANY,
+    # "expected_param1",
+    # "expected_param2",
+    # )
