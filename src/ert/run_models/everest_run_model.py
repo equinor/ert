@@ -35,6 +35,7 @@ from ert.config import ErtConfig
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import open_storage
 from everest.config import EverestConfig
+from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import Simulator
 from everest.strings import EVEREST, SIMULATOR_END, SIMULATOR_START, SIMULATOR_UPDATE
 
@@ -287,18 +288,17 @@ class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
 
 
-class BatchSimulatorRunModel(BaseRunModel):
+class EverestRunModel(BaseRunModel):
     def __init__(
         self,
         random_seed: Optional[int],
         config: ErtConfig,
-        ropt_config: Dict[str, Any],
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback,
         optimization_callback: OptimizerCallback,
         display_all_jobs: bool = True,
     ):
-        self.ropt_config = ropt_config
+        self.ropt_config = everest2ropt(everest_config)
         self.everest_config = everest_config
         self.support_restart = False
 

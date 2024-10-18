@@ -3,13 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import random
-from typing import Any, Dict
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.batch_simulator_run_model import BatchSimulatorRunModel
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from everest.optimizer.everest2ropt import everest2ropt
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
@@ -83,22 +81,10 @@ class _EverestWorkflow(object):
         self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
 
-        self._monitor_thread = None  # Thread for monitoring simulator activity
-
         self._config = _add_defaults(config)
 
         makedirs_if_needed(self.config.log_dir)
         makedirs_if_needed(self.config.optimization_output_dir)
-
-        self._simulation_delete_run_path = (
-            False
-            if config.simulator is None
-            else (config.simulator.delete_run_path or False)
-        )
-
-        self._display_all_jobs = display_all_jobs
-        self._fm_errors: Dict[str, Dict[str, Any]] = {}
-        self._max_batch_num_reached = False
 
     def start_optimization(self):
         """Run an optimization with the current settings.
@@ -110,11 +96,9 @@ class _EverestWorkflow(object):
         of this method will probably lead to a crash
         """
         ert_config = everest_to_ert_config(self.config)
-        ropt_config = everest2ropt(self.config)
-        run_model = BatchSimulatorRunModel(
+        run_model = EverestRunModel(
             random_seed=ert_config.random_seed,
             config=ert_config,
-            ropt_config=ropt_config,
             everest_config=self.config,
             simulation_callback=self._sim_callback,
             optimization_callback=self._opt_callback,
