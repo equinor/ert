@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
@@ -80,7 +80,10 @@ class EnsembleSmoother(UpdateRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
+        self.set_env_key("_ERT_ITERATION", "0")
+        self.set_env_key("_IS_FINAL_ITERATION", "True")
 
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
@@ -105,6 +108,7 @@ class EnsembleSmoother(UpdateRunModel):
             posterior,
             evaluator_server_config,
         )
+        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, prior)
 
     @classmethod
     def name(cls) -> str:

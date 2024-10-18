@@ -7,7 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
@@ -97,6 +97,14 @@ class MultipleDataAssimilation(UpdateRunModel):
                         f"Experiment misconfigured, got starting iteration: {self.start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
+
+                self.set_env_key("_ERT_ITERATION", str(self.start_iteration))
+                self.set_env_key(
+                    "_IS_FINAL_ITERATION",
+                    "True"
+                    if (self.start_iteration == self._total_iterations - 1)
+                    else "False",
+                )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
                     f"Prior ensemble with ID: {id} does not exists"
@@ -124,6 +132,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 np.array(self.active_realizations, dtype=bool),
                 ensemble=prior,
             )
+
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
             sample_prior(
                 prior,
                 np.where(self.active_realizations)[0],
@@ -154,6 +164,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 evaluator_server_config,
             )
             prior = posterior
+
+        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, prior)
 
     @staticmethod
     def parse_weights(weights: str) -> List[float]:
