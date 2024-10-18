@@ -1,9 +1,8 @@
-import sys
 from unittest.mock import Mock
 
 import pytest
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QCheckBox
+from qtpy.QtWidgets import QCheckBox, QToolButton
 
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
@@ -60,9 +59,9 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
         gui = _setup_main_window(storage_config, args_mock, log_handler, storage)
         qtbot.addWidget(gui)
 
-        plot_tool = gui.tools["Create plot"]
-        plot_tool.trigger()
-
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         central_tab = plot_window._central_tab
 
@@ -119,9 +118,6 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
 # The tolerance is chosen by guess, in one bug we observed a
 # mismatch of 58 which would fail the test by being above 10.0
 @pytest.mark.mpl_image_compare(tolerance=10.0)
-@pytest.mark.skipif(
-    sys.platform.startswith("darwin"), reason="Get different size image on mac"
-)
 def test_that_all_snake_oil_visualisations_matches_snapshot(plot_figure):
     return plot_figure
 
@@ -142,9 +138,9 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
         gui.notifier.set_storage(storage)
         qtbot.addWidget(gui)
 
-        plot_tool = gui.tools["Create plot"]
-        plot_tool.trigger()
-
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         key_list = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget

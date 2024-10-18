@@ -69,23 +69,13 @@ def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
     return run_dialog
 
 
-def test_that_done_button_is_not_hidden_when_the_end_event_is_given(
-    qtbot: QtBot, run_dialog, event_queue
-):
-    run_dialog.run_experiment()
-    event_queue.put(EndEvent(failed=False, msg=""))
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=1000)
-    assert not run_dialog.done_button.isHidden()
-    qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
-
-
 def test_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog, event_queue
 ):
     run_dialog.run_experiment()
     event_queue.put(EndEvent(failed=False, msg=""))
 
-    with qtbot.waitSignal(run_dialog.finished, timeout=30000):
+    with qtbot.waitSignal(run_dialog.finished, timeout=10000):
 
         def handle_dialog():
             confirm_terminate_dialog = wait_for_child(
@@ -111,7 +101,7 @@ def test_run_dialog_polls_run_model_for_runtime(
         lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
     )
     event_queue.put(EndEvent(failed=False, msg=""))
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden())
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
     run_dialog.close()
 
 
@@ -158,7 +148,7 @@ def test_large_snapshot(
         lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
     qtbot.waitUntil(
-        lambda: not run_dialog.done_button.isHidden(), timeout=timeout_per_iter
+        lambda: run_dialog.is_simulation_done() == True, timeout=timeout_per_iter
     )
 
 
@@ -364,7 +354,7 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
 
 @pytest.mark.parametrize(
@@ -446,7 +436,7 @@ def test_run_dialog_memory_usage_showing(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -539,7 +529,7 @@ def test_run_dialog_fm_label_show_correct_info(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: not run_dialog.done_button.isHidden(), timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -596,7 +586,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=200000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
         run_dialog.close()
 
 
@@ -624,7 +614,7 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
 
         copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
         assert copy_debug_info_button
@@ -635,7 +625,6 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
 
         for keyword in ["Single realization test-run", "Local", r"minimal\_config.ert"]:
             assert keyword in clipboard_text
-        qtbot.mouseClick(run_dialog.done_button, Qt.LeftButton)
 
 
 @pytest.mark.integration_test
@@ -667,13 +656,13 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
             1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
         )
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
-
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(run_dialog.done_button.isVisible, timeout=100000)
-        fm_step_overview = run_dialog._fm_step_overview
-        qtbot.waitUntil(fm_step_overview.isVisible, timeout=20000)
 
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
+
+        fm_step_overview = run_dialog._fm_step_overview
+        qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
         realization_widget = run_dialog.findChild(RealizationWidget)
 
         click_pos = realization_widget._real_view.rectForIndex(
@@ -695,19 +684,15 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         assert (
             fm_step_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
         )
-        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) == None
-
-        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline() == True
-        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) == None
+        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) is None
+        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline()
+        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) is None
 
         click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
-
         qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
-
-        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=30000)
-
-        with qtbot.waitSignal(run_dialog.accepted, timeout=30000):
-            run_dialog.close()
+        file_dialog = run_dialog.findChild(FileDialog)
+        qtbot.waitUntil(file_dialog.isVisible, timeout=10000)
+        file_dialog.close()
 
 
 @pytest.mark.integration_test
