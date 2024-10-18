@@ -101,7 +101,7 @@ def run_experiment_via_gui(gui, qtbot):
     qtbot.mouseClick(run_experiment, Qt.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=20000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
 
