@@ -54,9 +54,11 @@ from ert.run_models import (
 )
 from ert.services import StorageService
 
+from ...unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 from .conftest import (
     add_experiment_manually,
     get_child,
+    get_children,
     load_results_manually,
     wait_for_child,
 )
@@ -669,3 +671,61 @@ def test_validation_of_experiment_names_in_run_models(
 
         experiment_field.setText("ensemble_experiment")
         assert not run_experiment.isEnabled()
+
+
+def test_that_simulation_status_button_adds_menu_on_second_run(
+    opened_main_window_poly, qtbot
+):
+    gui = opened_main_window_poly
+
+    def find_and_click_button(
+        button_name: str, should_click: bool, expected_enabled_state: bool
+    ):
+        button = gui.findChild(QToolButton, button_name)
+        assert button
+        assert button.isEnabled() == expected_enabled_state
+        if should_click:
+            qtbot.mouseClick(button, Qt.LeftButton)
+
+    def run_experiment():
+        run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+        qtbot.wait_until(lambda: not run_experiment_panel.isHidden(), timeout=5000)
+        assert run_experiment_panel.run_button.isEnabled()
+        qtbot.mouseClick(run_experiment_panel.run_button, Qt.LeftButton)
+
+    def wait_for_simulation_completed():
+        run_dialogs = get_children(gui, RunDialog)
+        dialog = run_dialogs[-1]
+        qtbot.wait_until(lambda: not dialog.isHidden(), timeout=5000)
+        qtbot.wait_until(lambda: dialog.is_simulation_done() == True, timeout=15000)
+
+    # not clickable since no simulations started yet
+    find_and_click_button("button_Simulation_status", False, False)
+    find_and_click_button("button_Start_simulation", True, True)
+
+    run_experiment()
+    wait_for_simulation_completed()
+
+    # just toggle to see if next button yields intended change
+    find_and_click_button("button_Start_simulation", True, True)
+    experiments_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+    qtbot.wait_until(lambda: not experiments_panel.isHidden(), timeout=5000)
+
+    find_and_click_button("button_Simulation_status", True, True)
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
+    qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
+
+    # verify no drop menu
+    button_simulation_status = gui.findChild(QToolButton, "button_Simulation_status")
+    assert button_simulation_status.menu() is None
+
+    find_and_click_button("button_Start_simulation", True, True)
+    QTimer.singleShot(
+        1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+    )
+    run_experiment()
+    wait_for_simulation_completed()
+
+    # verify menu available
+    button_simulation_status = gui.findChild(QToolButton, "button_Simulation_status")
+    assert button_simulation_status.menu() is not None
