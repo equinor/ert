@@ -518,7 +518,7 @@ class TemplateRender(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/templating/script/template_render.py"
+                        / "../../../resources/forward_models/template_render.py"
                     ).resolve()
                 ),
                 "-i",
