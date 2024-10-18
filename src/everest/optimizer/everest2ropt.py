@@ -502,7 +502,7 @@ def _parse_environment(ever_config: EverestConfig, ropt_config):
     )
 
 
-def everest2ropt(ever_config: EverestConfig):
+def everest2ropt(ever_config: EverestConfig) -> Dict[str, Any]:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of

@@ -19,7 +19,7 @@ from dns import resolver, reversename
 from flask import Flask, Response, jsonify, request
 from ropt.enums import OptimizerExitCode
 
-from everest import export_to_csv, start_optimization, validate_export
+from everest import export_to_csv, validate_export
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
 from everest.simulator import JOB_FAILURE
@@ -30,6 +30,7 @@ from everest.strings import (
     SIM_PROGRESS_ENDPOINT,
     STOP_ENDPOINT,
 )
+from everest.suite import start_optimization
 from everest.util import configure_logger, makedirs_if_needed, version_info
 
 
