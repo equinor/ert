@@ -83,7 +83,7 @@ def test_cpu_seconds_can_detect_multiprocess():
         },
         0,
     )
-    job.MEMORY_POLL_PERIOD = 0.1
+    job.MEMORY_POLL_PERIOD = 0.05
     cpu_seconds = 0.0
     for status in job.run():
         if isinstance(status, Running):
