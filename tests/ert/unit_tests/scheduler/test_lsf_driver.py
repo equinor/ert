@@ -1127,6 +1127,10 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     ).keys() == {"job_id"}
 
 
+class FlakySSHException(BaseException):
+    pass
+
+
 @pytest.mark.integration_test
 async def test_submit_to_named_queue(tmp_path, caplog, job_name):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
@@ -1162,6 +1166,7 @@ async def test_submit_with_resource_requirement_with_bsub_capture():
     assert "hname" not in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.flaky(reruns=5, only_rerun=["FlakySSHException"])
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_num_cpu(pytestconfig, job_name):
@@ -1182,6 +1187,9 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
+    if process.returncode == FLAKY_SSH_RETURNCODE:
+        raise FlakySSHException()
+
     stdout_no_whitespaces = re.sub(r"\s+", "", stdout.decode())
     matches = re.search(r".*([0-9]+)ProcessorsRequested.*", stdout_no_whitespaces)
     assert matches and matches[1] == str(
@@ -1198,6 +1206,7 @@ async def test_submit_with_num_cpu_with_bsub_capture():
     assert "-n 4" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.flaky(reruns=5, only_rerun=["FlakySSHException"])
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_realization_memory(pytestconfig, job_name):
@@ -1225,6 +1234,8 @@ async def test_submit_with_realization_memory(pytestconfig, job_name):
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, _ = await process.communicate()
+    if process.returncode == FLAKY_SSH_RETURNCODE:
+        raise FlakySSHException()
     assert "rusage[mem=1]" in stdout.decode(encoding="utf-8")
 
     assert Path("test").read_text(encoding="utf-8") == "test\n"
