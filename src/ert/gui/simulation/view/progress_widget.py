@@ -18,7 +18,7 @@ from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 class ProgressWidget(QFrame):
     def __init__(self) -> None:
         QWidget.__init__(self)
-        self.setFixedHeight(60)
+        self.setFixedHeight(70)
 
         self._vertical_layout = QVBoxLayout(self)
         self._vertical_layout.setContentsMargins(0, 0, 0, 0)
