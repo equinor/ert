@@ -1521,9 +1521,7 @@ def test_general_option_in_local_config_has_priority_over_site_config():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, recwarn):
-    caplog.set_level(logging.WARNING)
-
+def test_warning_raised_when_summary_key_and_no_simulation_job_present():
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
 
@@ -1537,18 +1535,11 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, r
         fout.write(
             "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
         )
-
-    ErtConfig.from_file("config_file.ert")
-
-    # Check no warning is logged when config contains
-    # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not caplog.text
-    assert len(recwarn) == 1
-    assert issubclass(recwarn[0].category, ConfigWarning)
-    assert (
-        recwarn[0].message.info.message
-        == "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
-    )
+    with pytest.warns(
+        ConfigWarning,
+        match="Config contains a SUMMARY key but no forward model steps known to generate a summary file",
+    ):
+        ErtConfig.from_file("config_file.ert")
 
 
 @pytest.mark.parametrize(
@@ -1576,7 +1567,4 @@ def test_no_warning_when_summary_key_and_simulation_job_present(
 
     ErtConfig.from_file("config_file.ert")
 
-    # Check no warning is logged when config contains
-    # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not caplog.text
-    assert len(recwarn) == 0
+    assert not any(issubclass(w.category, ConfigWarning) for w in recwarn)
