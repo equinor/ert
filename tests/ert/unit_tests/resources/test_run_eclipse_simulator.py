@@ -15,21 +15,16 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/resources/forward_models/res/script
+# import ecl_config.py and ecl_run from ert/resources/forward_models
 # package-data path which. These are kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
 
 
-run_eclrun = import_from_location(
-    "run_eclrun",
-    SOURCE_DIR / "src/ert/resources/forward_models/res/script/run_eclrun.py",
+run_reservoirsimulator = import_from_location(
+    "run_reservoirsimulator",
+    SOURCE_DIR / "src/ert/resources/forward_models/run_reservoirsimulator.py",
 )
-
-
-# Todo: move to flow test
-# def find_version(output):
-#    return re.search(r"flow\s*([\d.]+)", output).group(1)
 
 
 @pytest.mark.integration_test
@@ -42,8 +37,10 @@ def test_ecl100_binary_can_produce_output(source_root):
         "SPE1.DATA",
     )
 
-    erun = run_eclrun.RunEclrun("eclipse", "2019.3", "SPE1.DATA")
-    erun.runEclipse()
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "2019.3", "SPE1.DATA"
+    )
+    erun.runEclipseX00()
 
     ok_path = Path("SPE1.OK")
     prt_path = Path("SPE1.PRT")
@@ -67,7 +64,7 @@ def test_runeclrun_argparse_api(source_root):
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    run_eclrun.run_eclrun(["eclipse", "2019.3", "SPE1.DATA"])
+    run_reservoirsimulator.run_reservoirsimulator(["eclipse", "2019.3", "SPE1.DATA"])
 
     assert Path("SPE1.OK").exists()
 
@@ -81,16 +78,20 @@ def test_eclrun_will_raise_on_deck_errors(source_root):
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
-    erun = run_eclrun.RunEclrun("eclipse", "2019.3", "SPE1_ERROR")
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "2019.3", "SPE1_ERROR"
+    )
     with pytest.raises(Exception, match="ERROR"):
-        erun.runEclipse()
+        erun.runEclipseX00()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir")
 def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
-    erun = run_eclrun.RunEclrun("eclipse", "dummy_version", "mocked_anyway.DATA")
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummy_version", "mocked_anyway.DATA"
+    )
     return_value_with_code = mock.MagicMock()
     return_value_with_code.returncode = 1
     monkeypatch.setattr(
@@ -101,7 +102,7 @@ def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
         subprocess.CalledProcessError,
         match=r"Command .*eclrun.* non-zero exit status (1|255)\.$",
     ):
-        erun.runEclipse()
+        erun.runEclipseX00()
 
 
 @pytest.mark.integration_test
@@ -112,7 +113,9 @@ def test_deck_errors_can_be_ignored(source_root):
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
-    run_eclrun.run_eclrun(["eclipse", "2019.3", "SPE1.DATA", "--ignore-errors"])
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1.DATA", "--ignore-errors"]
+    )
 
 
 @pytest.mark.integration_test
@@ -123,7 +126,9 @@ def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    run_eclrun.run_eclrun(["eclipse", "2019.3", "SPE1.DATA", "--summary-conversion"])
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1.DATA", "--summary-conversion"]
+    )
     assert Path("SPE1.h5").exists()
 
 
@@ -138,7 +143,9 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     assert re.findall(
         r"PARALLEL\s+2", Path("SPE1_PARALLEL.DATA").read_text(encoding="utf-8")
     ), "Test requires a deck needing 2 CPUs"
-    run_eclrun.run_eclrun(["eclipse", "2019.3", "SPE1_PARALLEL.DATA"])
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1_PARALLEL.DATA"]
+    )
 
     assert Path("SPE1_PARALLEL.PRT").stat().st_size > 0, "Eclipse did not run at all"
     assert Path("SPE1_PARALLEL.MSG").exists(), "No output from MPI process 1"
@@ -151,7 +158,7 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
     assert (
         # Expected wait time is 0.3
-        run_eclrun.await_completed_unsmry_file(
+        run_reservoirsimulator.await_completed_unsmry_file(
             "SPE1.UNSMRY", max_wait=0.3, poll_interval=0.1
         )
         > 0.3
@@ -164,7 +171,7 @@ def test_await_completed_summary_file_will_return_asap():
     assert (
         0.01
         # Expected wait time is the poll_interval
-        < run_eclrun.await_completed_unsmry_file(
+        < run_reservoirsimulator.await_completed_unsmry_file(
             "FOO.UNSMRY", max_wait=0.5, poll_interval=0.1
         )
         < 0.4
@@ -195,7 +202,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
     assert (
         0.5
         # Minimal wait time is around 0.55
-        < run_eclrun.await_completed_unsmry_file(
+        < run_reservoirsimulator.await_completed_unsmry_file(
             "FOO.UNSMRY", max_wait=4, poll_interval=0.21
         )
         < 2
@@ -226,8 +233,10 @@ def test_ecl100_license_error_is_caught():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "FOO.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -253,8 +262,10 @@ def test_ecl100_crash_is_not_mistaken_as_license_trouble():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "FOO.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -288,8 +299,10 @@ def test_ecl300_license_error_is_caught():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("e300", "dummyversion", "FOO.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "e300", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -320,8 +333,10 @@ def test_ecl300_crash_is_not_mistaken_as_license_trouble():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("e300", "dummyversion", "FOO.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "e300", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -380,8 +395,10 @@ def test_license_error_in_slave_is_caught():
     Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
     Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -429,8 +446,10 @@ def test_crash_in_slave_is_not_mistaken_as_license():
     Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
     Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -453,8 +472,10 @@ def test_too_few_parsed_error_messages_gives_warning():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "ECLCASE.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" in str(exception_info.value)
 
@@ -483,8 +504,10 @@ def test_tail_of_prt_file_is_included_when_error_count_inconsistency():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "ECLCASE.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "this_should_be_included" in str(exception_info.value)
     assert "this_should_not_be_included" not in str(exception_info.value)
@@ -508,8 +531,10 @@ def test_correct_number_of_parsed_error_messages_gives_no_warning():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "ECLCASE.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" not in str(
         exception_info.value
@@ -539,8 +564,10 @@ def test_slave_started_message_are_not_counted_as_errors():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = run_eclrun.RunEclrun("eclipse", "dummyversion", "ECLCASE.DATA")
-    with pytest.raises(run_eclrun.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" not in str(
         exception_info.value

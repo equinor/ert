@@ -119,20 +119,18 @@ def await_completed_unsmry_file(
     return (datetime.datetime.now() - start_time).total_seconds()
 
 
-class RunEclrun:
-    """Wrapper class to run system installed `eclrun`.
+class RunReservoirSimulator:
+    """Wrapper class to run system installed `eclrun` or `flowrun`.
 
-    Assumes eclrun is in PATH.
-
-    Will initiate a limited numbrer of reruns if license errors are detected, also
-    in coupled simulations.
+    Will initiate a limited number of reruns if license errors are detected, also
+    in coupled simulations (not relevant for Flow)
 
     PRT/ECLEND files are checked for errors, and exceptions will be raised.
     """
 
     def __init__(
         self,
-        simulator: Literal["eclipse", "e300"],
+        simulator: Literal["flow", "eclipse", "e300"],
         version: str,
         ecl_case: str,  # consider Path
         num_cpu: int = 1,
@@ -146,10 +144,16 @@ class RunEclrun:
         self.check_status: bool = check_status
         self.summary_conversion: bool = summary_conversion
 
-        _eclrun_abspath: Optional[str] = shutil.which("eclrun")
-        if _eclrun_abspath is None:
-            raise RuntimeError("eclrun not installed")
-        self.eclrun_abspath: str = _eclrun_abspath
+        _runner_abspath: Optional[str] = None
+        if simulator in ["eclipse", "e300"]:
+            _runner_abspath: Optional[str] = shutil.which("eclrun")
+            if _runner_abspath is None:
+                raise RuntimeError("eclrun not installed")
+        else:
+            _runner_abspath: Optional[str] = shutil.which("flowrun")
+            if _runner_abspath is None:
+                raise RuntimeError("flowrun not installed")
+        self.runner_abspath: str = _runner_abspath
 
         # Decipher ecl_case
         ext: str = Path(ecl_case).suffix
@@ -172,30 +176,58 @@ class RunEclrun:
         return self.run_path / (self.base_name + ".PRT")
 
     @property
-    def run_command(self) -> List[str]:
+    def eclrun_command(self) -> List[str]:
         return [
-            self.eclrun_abspath,
+            self.runner_abspath,
             self.simulator,
             "--version",
             self.version,
-            f"{self.base_name}.DATA",
+            self.data_file,
             "--summary-conversion",
             "yes" if self.summary_conversion else "no",
             # "-np", self.num_cpu  # eclrun detects automatically
         ]
 
+    @property
+    def flowrun_command(self) -> List[str]:
+        return [
+            self.runner_abspath,
+            "--version",
+            self.version,
+            self.data_file,
+            "-np",
+            str(self.num_cpu),
+        ]
+
+    def runFlow(self) -> None:
+        return_code = subprocess.run(self.flowrun_command, check=False).returncode
+        OK_file = self.run_path / f"{self.base_name}.OK"
+        if not self.check_status:
+            OK_file.write_text(
+                "FLOW simulation complete - NOT checked for errors.",
+                encoding="utf-8",
+            )
+        else:
+            if return_code != 0:
+                raise subprocess.CalledProcessError(return_code, self.flowrun_command)
+            self.assertECLEND()
+            if self.num_cpu > 1:
+                await_completed_unsmry_file(find_unsmry(self.run_path / self.base_name))
+
+            OK_file.write_text("FLOW simulation OK", encoding="utf-8")
+
     LICENSE_FAILURE_RETRY_INITIAL_SLEEP = 90
     LICENSE_RETRY_STAGGER_FACTOR = 60
     LICENSE_RETRY_BACKOFF_EXPONENT = 3
 
-    def runEclipse(self, retries_left=3, backoff_sleep=None) -> None:
+    def runEclipseX00(self, retries_left=3, backoff_sleep=None) -> None:
         # This function calls itself recursively in case of license failures
         backoff_sleep = (
             self.LICENSE_FAILURE_RETRY_INITIAL_SLEEP
             if backoff_sleep is None
             else backoff_sleep
         )
-        return_code = subprocess.run(self.run_command, check=False).returncode
+        return_code = subprocess.run(self.eclrun_command, check=False).returncode
 
         OK_file = self.run_path / f"{self.base_name}.OK"
         if not self.check_status:
@@ -205,7 +237,7 @@ class RunEclrun:
             )
         else:
             if return_code != 0:
-                raise subprocess.CalledProcessError(return_code, self.run_command)
+                raise subprocess.CalledProcessError(return_code, self.eclrun_command)
             try:
                 self.assertECLEND()
             except EclError as err:
@@ -218,7 +250,7 @@ class RunEclrun:
                         f"retrying in {time_to_wait} seconds\n"
                     )
                     time.sleep(time_to_wait)
-                    self.runEclipse(
+                    self.runEclipseX00(
                         retries_left=retries_left - 1,
                         backoff_sleep=int(
                             backoff_sleep * self.LICENSE_RETRY_BACKOFF_EXPONENT
@@ -319,9 +351,9 @@ def tail_textfile(file_path: Path, num_chars: int) -> str:
         return file.read()[-num_chars:]
 
 
-def run_eclrun(args: List[str]):
+def run_reservoirsimulator(args: List[str]):
     parser = ArgumentParser()
-    parser.add_argument("simulator", type=str, choices=["eclipse", "e300"])
+    parser.add_argument("simulator", type=str, choices=["flow", "eclipse", "e300"])
     parser.add_argument("version", type=str)
     parser.add_argument("ecl_case", type=str)
     parser.add_argument("-n", "--num-cpu", dest="num_cpu", type=int, default=1)
@@ -334,20 +366,34 @@ def run_eclrun(args: List[str]):
 
     options = parser.parse_args(args)
 
+    if options.summary_conversion and options.simulator == "flow":
+        # or is this the esmry option to flow?
+        raise RuntimeError("--summary-conversion is not available with simulator flow")
+
     try:
-        RunEclrun(
-            options.simulator,
-            options.version,
-            options.ecl_case,
-            num_cpu=options.num_cpu,
-            check_status=not options.ignore_errors,
-            summary_conversion=options.summary_conversion,
-        ).runEclipse()
+        if options.simulator in ["eclipse", "e300"]:
+            RunReservoirSimulator(
+                options.simulator,
+                options.version,
+                options.ecl_case,
+                num_cpu=options.num_cpu,
+                check_status=not options.ignore_errors,
+                summary_conversion=options.summary_conversion,
+            ).runEclipseX00()
+        else:
+            RunReservoirSimulator(
+                "flow",
+                options.version,
+                options.ecl_case,
+                num_cpu=options.num_cpu,
+                check_status=not options.ignore_errors,
+            ).runFlow()
+
     except EclError as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
 
 
 if __name__ == "__main__":
-    non_empty_args = [arg for arg in sys.argv if arg != ""]
-    run_eclrun(non_empty_args[1:])
+    non_empty_args = list(filter(None, sys.argv))
+    run_reservoirsimulator(non_empty_args[1:])
