@@ -204,7 +204,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/run_eclrun.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
                 "eclipse",
@@ -262,7 +262,7 @@ class Eclipse300(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/run_eclrun.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
                 "e300",
@@ -314,11 +314,11 @@ class Flow(ForwardModelStepPlugin):
                 str(
                     (
                         Path(__file__)
-                        / "../../../resources/forward_models/res/script/flow.py"
+                        / "../../../resources/forward_models/run_reservoirsimulator.py"
                     ).resolve()
                 ),
+                "flow",
                 "<ECLBASE>",
-                "-v",
                 "<VERSION>",
                 "-n",
                 "<NUM_CPU>",

@@ -12,14 +12,14 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/forward-models/res/script
-# package-data path which. These are kept out of the ert package to avoid the
-# overhead of importing ert. This is necessary as these may be invoked as a
-# subprocess on each realization.
+# import ecl_config.py and ecl_run from ert/forward-models package-data path
+# which. These are kept out of the ert package to avoid the overhead of
+# importing ert. This is necessary as these may be invoked as a subprocess on
+# each realization.
 
 flow_run = import_from_location(
     "run_flowrun",
-    SOURCE_DIR / "src/ert/resources/forward_models/res/script/run_flowrun.py",
+    SOURCE_DIR / "src/ert/resources/forward_models/run_reservoirsimulator.py",
 )
 
 
