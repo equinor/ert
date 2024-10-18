@@ -690,10 +690,9 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 
         click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
         qtbot.mouseClick(fm_step_overview.viewport(), Qt.LeftButton, pos=click_pos)
-        qtbot.waitUntil(run_dialog.findChild(FileDialog).isVisible, timeout=10000)
-
-        with qtbot.waitSignal(run_dialog.finished, timeout=30000):
-            run_dialog.close()
+        file_dialog = run_dialog.findChild(FileDialog)
+        qtbot.waitUntil(file_dialog.isVisible, timeout=10000)
+        file_dialog.close()
 
 
 @pytest.mark.integration_test
