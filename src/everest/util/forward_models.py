@@ -3,7 +3,7 @@ from typing import List, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from everest.plugins.hook_manager import EverestPluginManager
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 pm = EverestPluginManager()
 T = TypeVar("T", bound=BaseModel)

@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 
-from everest.plugins.hook_manager import EverestPluginManager
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 
 class PluginSiteConfigEnv:

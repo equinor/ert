@@ -58,3 +58,8 @@ def get_forward_models_schemas():
 @hookimpl
 def installable_workflow_jobs():
     return None
+
+
+@hookimpl
+def get_forward_model_documentations():
+    return None
