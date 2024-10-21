@@ -629,7 +629,11 @@ class BaseRunModel(ABC):
             "realization-%d/iter-%d/"
             "realization-%d/"
         """
-        return any(Path(run_path).exists() for run_path in self.paths)
+        for run_path in self.paths:
+            if Path(run_path).exists():
+                self.pre_existing_path = run_path
+                return True
+        return False
 
     def get_number_of_existing_runpaths(self) -> int:
         realization_set = {Path(run_path).parent for run_path in self.paths}

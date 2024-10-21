@@ -275,10 +275,16 @@ class Scheduler:
         # this lock is to assure that no more than 1 task
         # does internalization at a time
         forward_model_ok_lock = asyncio.Lock()
+        verify_checksum_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
             if job.state != JobState.ABORTED:
                 self._job_tasks[iens] = asyncio.create_task(
-                    job.run(sem, forward_model_ok_lock, self._max_submit),
+                    job.run(
+                        sem,
+                        forward_model_ok_lock,
+                        verify_checksum_lock,
+                        self._max_submit,
+                    ),
                     name=f"job-{iens}_task",
                 )
             else:
