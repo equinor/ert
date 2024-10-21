@@ -152,9 +152,9 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        experiment_type_valid = bool(
-            config.ensemble_config.parameter_configs and config.observations
-        )
+        experiment_type_valid = any(
+            p.update for p in config.ensemble_config.parameter_configs.values()
+        ) and bool(config.observations)
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
@@ -202,7 +202,9 @@ class ExperimentPanel(QWidget):
             sim_item = model.item(item_count)
             assert sim_item is not None
             sim_item.setEnabled(False)
-            sim_item.setToolTip("Both observations and parameters must be defined")
+            sim_item.setToolTip(
+                "Both observations and parameters must be defined.\nThere must be parameters to update."
+            )
             style = self.style()
             assert style is not None
             sim_item.setIcon(
