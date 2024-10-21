@@ -155,7 +155,7 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
             os.path.realpath("snake_oil/everest/model"),
             "everest_output/.res_runpath_list",
         ),
-        "NUM_REALIZATIONS": 10000,
+        "NUM_REALIZATIONS": 1,
         "MAX_RUNTIME": 3600,
         "ECLBASE": "eclipse/ECL",
         "INSTALL_JOB": install_jobs(),
@@ -174,7 +174,7 @@ def build_tutorial_dict(config_dir, output_dir):
     # Expected config extracted from unittest.mocked_test_case.yml
     return {
         "DEFINE": [("<CONFIG_PATH>", config_dir)],
-        "NUM_REALIZATIONS": 10000,
+        "NUM_REALIZATIONS": 2,
         "MAX_RUNTIME": 3600,
         "ECLBASE": "eclipse/ECL",
         "RUNPATH": os.path.join(

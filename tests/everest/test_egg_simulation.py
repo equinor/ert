@@ -20,6 +20,7 @@ from tests.everest.utils import (
 )
 
 CONFIG_FILE = "everest/model/config.yml"
+NUM_REALIZATIONS = 3  # tied to the specified config.yml defined in CONFIG_FILE
 SUM_KEYS_NO_OPM = [
     "YEAR",
     "YEARSTCPU",
@@ -470,7 +471,7 @@ def _generate_exp_ert_config(config_path, output_dir):
         "INSTALL_JOB": everest_default_jobs(output_dir),
         "QUEUE_OPTION": [(QueueSystem.LOCAL, "MAX_RUNNING", 3)],
         "QUEUE_SYSTEM": QueueSystem.LOCAL,
-        "NUM_REALIZATIONS": 10000,
+        "NUM_REALIZATIONS": NUM_REALIZATIONS,
         "RUNPATH": os.path.join(
             output_dir,
             "egg_simulations/<CASE_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",

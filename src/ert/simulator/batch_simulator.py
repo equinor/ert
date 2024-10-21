@@ -224,7 +224,7 @@ class BatchSimulator:
         """
         ensemble = self.experiment.create_ensemble(
             name=case_name,
-            ensemble_size=self.ert_config.model_config.num_realizations,
+            ensemble_size=len(case_data),
         )
         for sim_id, (geo_id, controls) in enumerate(case_data):
             assert isinstance(geo_id, int)
