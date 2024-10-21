@@ -155,6 +155,7 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     ).exists(), "There should not be 3 MPI processes"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
     assert (
         # Expected wait time is 0.3
