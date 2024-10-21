@@ -152,9 +152,6 @@ def _inject_simulation_defaults(ert_config, ever_config: EverestConfig):
         if key not in ert_config:
             ert_config[key] = value
 
-    # Until dynamically configurable in res
-    inject_default("NUM_REALIZATIONS", 10000)
-
     inject_default(
         "ECLBASE",
         (ever_config.definitions if ever_config.definitions is not None else {}).get(
@@ -451,6 +448,12 @@ def _extract_forward_model(ever_config: EverestConfig, ert_config):
 
 def _extract_model(ever_config: EverestConfig, ert_config):
     _extract_summary_keys(ever_config, ert_config)
+
+    if "NUM_REALIZATIONS" not in ert_config:
+        if ever_config.model.realizations is not None:
+            ert_config["NUM_REALIZATIONS"] = len(ever_config.model.realizations)
+        else:
+            ert_config["NUM_REALIZATIONS"] = 1
 
 
 def _extract_seed(ever_config: EverestConfig, ert_config):
