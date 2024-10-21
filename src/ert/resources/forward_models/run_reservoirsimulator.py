@@ -144,6 +144,8 @@ class RunReservoirSimulator:
         self.check_status: bool = check_status
         self.summary_conversion: bool = summary_conversion
 
+        self.bypass_flowrun: bool = False
+
         _runner_abspath: Optional[str] = None
         if simulator in ["eclipse", "e300"]:
             _runner_abspath: Optional[str] = shutil.which("eclrun")
@@ -152,7 +154,10 @@ class RunReservoirSimulator:
         else:
             _runner_abspath: Optional[str] = shutil.which("flowrun")
             if _runner_abspath is None:
-                raise RuntimeError("flowrun not installed")
+                _runner_abspath = shutil.which("flow")
+                self.bypass_flowrun = True
+                if _runner_abspath is None:
+                    raise RuntimeError("flowrun or flow not installed")
         self.runner_abspath: str = _runner_abspath
 
         # Decipher ecl_case
@@ -190,6 +195,11 @@ class RunReservoirSimulator:
 
     @property
     def flowrun_command(self) -> List[str]:
+        if self.bypass_flowrun:
+            return [
+                self.runner_abspath,
+                self.data_file,
+            ]
         return [
             self.runner_abspath,
             "--version",
