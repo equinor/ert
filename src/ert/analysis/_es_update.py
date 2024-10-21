@@ -150,7 +150,7 @@ def _get_observations_and_responses(
     """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
     observations_by_type = ensemble.experiment.observations
 
-    df = polars.DataFrame()
+    dfs = []
     for (
         response_type,
         response_cls,
@@ -215,10 +215,10 @@ def _get_observations_and_responses(
             first_columns + [c for c in joined.columns if c not in first_columns]
         )
 
-        df.vstack(joined, in_place=True)
+        dfs.append(joined)
 
     ensemble.load_responses.cache_clear()
-    return df
+    return polars.concat(dfs)
 
 
 def _expand_wildcards(
