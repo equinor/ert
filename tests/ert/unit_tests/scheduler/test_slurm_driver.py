@@ -13,6 +13,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from ert.scheduler import SlurmDriver
+from ert.scheduler.slurm_driver import _seconds_to_slurm_time_format
 from tests.ert.utils import poll
 
 from .conftest import mock_bin
@@ -173,13 +174,49 @@ async def test_project_code_is_set(project_code):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
-@given(max_runtime=st.integers(min_value=1))
-async def test_max_runtime_is_set(max_runtime):
-    driver = SlurmDriver(max_runtime=str(max_runtime))
+@given(max_runtime=st.floats(min_value=1, max_value=999999999))
+async def test_max_runtime_is_properly_formatted(max_runtime):
+    # According to https://slurm.schedmd.com/sbatch.html we accept the formats
+    # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
+    # "days-hours:minutes" and "days-hours:minutes:seconds".
+    driver = SlurmDriver(max_runtime=max_runtime)
     await driver.submit(0, "sleep", name="myjobname")
-    assert f"--time={max_runtime}" in Path("captured_sbatch_args").read_text(
-        encoding="utf-8"
+    cmd_args = Path("captured_sbatch_args").read_text(encoding="utf-8").split()
+    time_argument = next(
+        arg.split("=")[1] for arg in cmd_args if arg.startswith("--time")
     )
+    if "-" in time_argument:
+        int(time_argument.split("-")[0])
+        hhmmss = time_argument.split("-")[1]
+    else:
+        hhmmss = time_argument
+    hh, mm, ss = map(int, hhmmss.split(":"))
+    assert 0 <= hh < 24
+    assert 0 <= mm < 60
+    assert 0 <= ss < 60
+
+
+@pytest.mark.usefixtures("capturing_sbatch")
+@pytest.mark.parametrize("float_seconds", [0.0, 0.1, 0.99])
+async def test_driver_will_ignore_max_runtime_less_than_1_seconds(float_seconds):
+    driver = SlurmDriver(max_runtime=float_seconds)
+    await driver.submit(0, "sleep", name="skip_low_max_runtime")
+    assert "--time" not in Path("captured_sbatch_args").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "seconds, expected_format",
+    [
+        (1, "0:00:01"),
+        (1.9, "0:00:01"),
+        (61, "0:01:01"),
+        (60 * 60, "1:00:00"),
+        (24 * 60 * 60 - 1, "23:59:59"),
+        (24 * 60 * 60, "1-0:00:00"),
+    ],
+)
+async def test_max_runtime_formatting_samples(seconds, expected_format):
+    assert _seconds_to_slurm_time_format(seconds) == expected_format
 
 
 @pytest.mark.integration_test

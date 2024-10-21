@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import itertools
 import logging
 import shlex
@@ -154,8 +155,10 @@ class SlurmDriver(Driver):
             sbatch_with_args.append(f"--nodelist={self._include_hosts}")
         if self._exclude_hosts:
             sbatch_with_args.append(f"--exclude={self._exclude_hosts}")
-        if self._max_runtime:
-            sbatch_with_args.append(f"--time={self._max_runtime}")
+        if self._max_runtime and int(self._max_runtime):
+            sbatch_with_args.append(
+                f"--time={_seconds_to_slurm_time_format(self._max_runtime)}"
+            )
         if self._memory_per_cpu:
             sbatch_with_args.append(f"--mem-per-cpu={self._memory_per_cpu}")
         if self._queue_name:
@@ -428,6 +431,16 @@ def _parse_squeue_output(output: str) -> Iterator[Tuple[str, SqueueInfo]]:
         if line:
             id, status = line.split()
             yield id, SqueueInfo(JobStatus[status])
+
+
+def _seconds_to_slurm_time_format(seconds: float) -> str:
+    days = datetime.timedelta(seconds=int(seconds)).days
+    hhmmss = str(
+        datetime.timedelta(seconds=int(seconds)) - datetime.timedelta(days=days)
+    )
+    if days:
+        return f"{days}-{hhmmss}"
+    return hhmmss
 
 
 def _parse_scontrol_output(output: str) -> ScontrolInfo:
