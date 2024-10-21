@@ -144,11 +144,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ensemble=prior,
         )
 
+        self.set_env_key("_ERT_ITERATION", "0")
+        self.set_env_key(
+            "_IS_FINAL_ITERATION",
+            "False",
+        )
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, prior)
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
+
         self._evaluate_and_postprocess(
             prior_args,
             prior,
@@ -157,6 +164,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
         for prior_iter in range(self._total_iterations):
+            self.set_env_key("_ERT_ITERATION", str(prior_iter + 1))
+            self.set_env_key(
+                "_IS_FINAL_ITERATION",
+                "True" if (prior_iter == self._total_iterations - 1) else "False",
+            )
             self.send_event(
                 RunModelUpdateBeginEvent(iteration=prior_iter, run_id=prior.id)
             )
@@ -218,6 +230,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     )
                 )
             prior = posterior
+
+        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, prior)
 
     @classmethod
     def name(cls) -> str:

@@ -537,6 +537,74 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
         run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
 
 
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_post_experiment_hook_works(
+    monkeypatch,
+):
+    monkeypatch.setattr(_ert.threading, "_can_raise", False)
+
+    # The executable
+    with open("dump_final_ensemble_id.sh", "w", encoding="utf-8") as f:
+        f.write(
+            dedent("""#!/bin/bash
+                echo $_IS_FINAL_ITERATION> final_ensemble_info.txt
+        """)
+        )
+    os.chmod("dump_final_ensemble_id.sh", 0o755)
+
+    # The workflow job
+    with open("DUMP_FINAL_ENSEMBLE_ID", "w", encoding="utf-8") as s:
+        s.write("""
+               INTERNAL False
+               EXECUTABLE dump_final_ensemble_info.sh
+           """)
+
+    # The workflow
+    with open("POST_EXPERIMENT_DUMP.WF", "w", encoding="utf-8") as s:
+        s.write("""dump_final_ensemble_id""")
+
+    # The executable
+    with open("dump_first_ensemble_id.sh", "w", encoding="utf-8") as f:
+        f.write(
+            dedent("""#!/bin/bash
+                echo $_ERT_ITERATION > first_ensemble_id.txt
+        """)
+        )
+    os.chmod("dump_first_ensemble_id.sh", 0o755)
+
+    # The workflow job
+    with open("DUMP_FIRST_ENSEMBLE_ID", "w", encoding="utf-8") as s:
+        s.write("""
+               INTERNAL False
+               EXECUTABLE dump_first_ensemble_id.sh
+           """)
+
+    # The workflow
+    with open("PRE_EXPERIMENT_DUMP.WF", "w", encoding="utf-8") as s:
+        s.write("""dump_first_ensemble_id""")
+
+    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                    NUM_REALIZATIONS 2
+
+                    LOAD_WORKFLOW_JOB DUMP_FINAL_ENSEMBLE_ID dump_final_ensemble_id
+                    LOAD_WORKFLOW POST_EXPERIMENT_DUMP.WF POST_EXPERIMENT_DUMP
+                    HOOK_WORKFLOW POST_EXPERIMENT_DUMP POST_EXPERIMENT
+
+                    LOAD_WORKFLOW_JOB DUMP_FIRST_ENSEMBLE_ID dump_first_ensemble_id
+                    LOAD_WORKFLOW PRE_EXPERIMENT_DUMP.WF PRE_EXPERIMENT_DUMP
+                    HOOK_WORKFLOW PRE_EXPERIMENT_DUMP PRE_EXPERIMENT
+                """
+            )
+        )
+
+    run_cli(ITERATIVE_ENSEMBLE_SMOOTHER_MODE, "--disable-monitor", "poly.ert")
+
+    # ...2do assert correct contents in files
+
+
 @pytest.fixture(name="mock_cli_run")
 def fixture_mock_cli_run(monkeypatch):
     end_event = Mock()

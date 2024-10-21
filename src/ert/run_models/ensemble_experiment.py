@@ -14,7 +14,7 @@ from ..run_arg import create_run_arguments
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig, QueueConfig
+    from ert.config import ErtConfig, HookRuntime, QueueConfig
 
 
 logger = logging.getLogger(__name__)
@@ -81,23 +81,27 @@ class EnsembleExperiment(BaseRunModel):
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self.ensemble.id))
+        self.set_env_key("_ERT_ITERATION", "0")
+        self.set_env_key("_IS_FINAL_ITERATION", "False")
 
         run_args = create_run_arguments(
             self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=self.ensemble,
         )
+
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
-
         self._evaluate_and_postprocess(
             run_args,
             self.ensemble,
             evaluator_server_config,
         )
+        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, self.ensemble)
 
     @classmethod
     def name(cls) -> str:
