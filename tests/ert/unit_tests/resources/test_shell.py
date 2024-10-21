@@ -27,17 +27,11 @@ class Shell:
     """
 
     def __init__(self, source_root):
-        self.script_dir = os.path.join(
-            source_root,
-            "src",
-            "ert",
-            "resources",
-            "shell_scripts",
-        )
+        self.script_dir = source_root / "src" / "ert" / "resources" / "shell_scripts"
 
     def _call_script(self, name, args):
         return subprocess.run(
-            [sys.executable, os.path.join(self.script_dir, name), *args],
+            [sys.executable, str(self.script_dir / name), *args],
             check=False,
             capture_output=True,
         )
@@ -484,7 +478,7 @@ def minimal_case(tmpdir):
         yield
 
 
-def test_shell_script_jobs_availability(minimal_case):
+def test_shell_script_fmstep_availability(minimal_case):
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
     fm_shell_jobs = {}
     for fm_step in ert_config.installed_forward_model_steps.values():
@@ -500,7 +494,7 @@ def test_shell_script_jobs_availability(minimal_case):
     assert fm_shell_jobs == wf_shell_jobs
 
 
-def test_shell_script_jobs_names(minimal_case):
+def test_shell_script_fmstep_names(minimal_case):
     shell_job_names = [
         "DELETE_FILE",
         "DELETE_DIRECTORY",
