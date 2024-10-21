@@ -52,7 +52,6 @@ class EnsembleConfig:
     response_configs: Dict[str, ResponseConfig] = field(default_factory=dict)
     parameter_configs: Dict[str, ParameterConfig] = field(default_factory=dict)
     refcase: Optional[Refcase] = None
-    eclbase: Optional[str] = None
 
     def __post_init__(self) -> None:
         self._check_for_duplicate_names(
@@ -121,9 +120,6 @@ class EnsembleConfig:
                 response_configs.append(instance)
 
         refcase = Refcase.from_config_dict(config_dict)
-        eclbase = config_dict.get("ECLBASE")
-        if eclbase is not None:
-            eclbase = eclbase.replace("%d", "<IENS>")
 
         return cls(
             grid_file=grid_file_path,
@@ -131,7 +127,6 @@ class EnsembleConfig:
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs
             },
-            eclbase=eclbase,
             refcase=refcase,
         )
 

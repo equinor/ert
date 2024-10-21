@@ -178,7 +178,7 @@ class BaseRunModel(ABC):
             runpath_format=config.model_config.runpath_format_string,
             filename=str(config.runpath_file),
             substitution_list=self.substitution_list,
-            eclbase=config.ensemble_config.eclbase,
+            eclbase=config.model_config.eclbase_format_string,
         )
         self._iter_snapshot: Dict[int, EnsembleSnapshot] = {}
         self._status_queue = status_queue
