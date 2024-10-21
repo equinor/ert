@@ -124,6 +124,25 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
+    def get_forward_model_paths(self) -> List[str]:
+        response: List[PluginResponse[List[str]]] = self.hook.forward_model_paths()
+        if response == []:
+            return []
+
+        paths = []
+        for res in response:
+            if not isinstance(res.data, List):
+                raise TypeError(
+                    f"{res.plugin_metadata.plugin_name} did not provide list[str]"
+                )
+            for element in res.data:
+                if not isinstance(element, str):
+                    raise TypeError(
+                        f"{res.plugin_metadata.plugin_name} gave a list of nonstrings"
+                    )
+            paths.extend(res.data)
+        return paths
+
     def get_ecl100_config_path(self) -> Optional[str]:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl100_config_path, config_name="ecl100"
