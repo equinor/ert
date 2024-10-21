@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 import polars
+from polars.exceptions import ColumnNotFoundError
 
 
 class _Index(BaseModel):
@@ -519,7 +520,7 @@ class LocalEnsemble(BaseMode):
             )
 
             return sorted(summary_data["response_key"].unique().to_list())
-        except (ValueError, KeyError, polars.ColumnNotFoundError):
+        except (ValueError, KeyError, ColumnNotFoundError):
             return []
 
     def _load_single_dataset(
