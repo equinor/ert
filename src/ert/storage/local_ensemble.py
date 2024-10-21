@@ -661,6 +661,10 @@ class LocalEnsemble(BaseMode):
             df = polars.read_parquet(self.mount_point / response_file)
             if select_key:
                 df = df.filter(polars.col("response_key") == key)
+
+            if set(realizations) != {range(self.ensemble_size)}:
+                df = df.filter(polars.col("realization").is_in(realizations))
+
             return df
 
         loaded = []
@@ -916,8 +920,8 @@ class LocalEnsemble(BaseMode):
 
     def combine_responses(self, response_type: Optional[str] = None) -> None:
         if response_type is None:
-            for response_type in self.experiment.response_configuration:
-                self.combine_responses(response_type)
+            for _response_type in self.experiment.response_configuration:
+                self.combine_responses(_response_type)
 
             return None
 
@@ -927,17 +931,47 @@ class LocalEnsemble(BaseMode):
                 f"Trying to combine responses for unknown response type {response_type}"
             )
 
-        for (
-            response_type,
-            response_config,
-        ) in self.experiment.response_configuration.items():
+        for _response_type in self.experiment.response_configuration:
             response_file = f"{response_type}.parquet"
 
             reals_with_response = self.get_realization_list_with_responses(
                 response_type
             )
-            combined = self.load_responses(response_type, tuple(reals_with_response))
+
+            if not os.path.exists(self.mount_point / response_file):
+                combined = self.load_responses(
+                    response_type, tuple(reals_with_response)
+                )
+            else:
+                # Some files may be newer
+                combined = polars.read_parquet(self.mount_point / response_file)
+
+                to_write = []
+                for real in range(self.ensemble_size):
+                    if (self._realization_dir(real) / response_file).exists():
+                        response_df = polars.read_parquet(
+                            self._realization_dir(real) / response_file
+                        )
+                        to_write.append(response_df)
+
+                if len(to_write) == 0:
+                    continue
+
+                df_to_write = polars.concat(to_write)
+                joined = combined.join(
+                    df_to_write, how="left", on=combined.columns[:-1], suffix="_new"
+                )
+
+                updated = joined.with_columns(
+                    polars.col("values_new")
+                    .fill_null(polars.col("values"))
+                    .alias("values")
+                ).select(combined.columns)
+
+                combined = updated
+
             combined.write_parquet(self.mount_point / response_file)
 
             for real in reals_with_response:
-                os.remove(self._realization_dir(real) / response_file)
+                if os.path.exists(self._realization_dir(real) / response_file):
+                    os.remove(self._realization_dir(real) / response_file)
