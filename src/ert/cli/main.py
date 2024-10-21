@@ -65,15 +65,22 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
             f"'OBS_CONFIG observation_file.txt'."
         )
 
-    if not ert_config.ensemble_config.parameter_configs and args.mode in [
+    if args.mode in [
         ENSEMBLE_SMOOTHER_MODE,
         ES_MDA_MODE,
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     ]:
-        raise ErtCliError(
-            f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"
-            f"Please add to file {args.config}"
-        )
+        if not ert_config.ensemble_config.parameter_configs:
+            raise ErtCliError(
+                f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"
+                f"Please add to file {args.config}"
+            )
+        if not any(
+            p.update for p in ert_config.ensemble_config.parameter_configs.values()
+        ):
+            raise ErtCliError(
+                f"All parameters are set to UPDATE:FALSE in {args.config}"
+            )
 
     storage = open_storage(ert_config.ens_path, "w")
 
