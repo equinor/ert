@@ -144,6 +144,7 @@ class Job:
         self,
         sem: asyncio.BoundedSemaphore,
         forward_model_ok_lock: asyncio.Lock,
+        checksum_lock: asyncio.Lock,
         max_submit: int = 1,
     ) -> None:
         self._requested_max_submit = max_submit
@@ -154,9 +155,9 @@ class Job:
                 break
 
             if self.returncode.result() == 0:
+                if self._scheduler._manifest_queue is not None:
+                    await self._verify_checksum(checksum_lock)
                 async with forward_model_ok_lock:
-                    if self._scheduler._manifest_queue is not None:
-                        await self._verify_checksum()
                     await self._handle_finished_forward_model()
                 break
 
@@ -184,7 +185,9 @@ class Job:
         )
         self.returncode.cancel()
 
-    async def _verify_checksum(self, timeout: int = 120) -> None:
+    async def _verify_checksum(
+        self, checksum_lock: asyncio.Lock, timeout: int = 120
+    ) -> None:
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:
@@ -213,20 +216,22 @@ class Job:
             timeout -= 1
             logger.debug("Waiting for disk synchronization")
             await asyncio.sleep(1)
-
-        for info in valid_checksums:
-            file_path = Path(info["path"])
-            expected_md5sum = info.get("md5sum")
-            if file_path.exists() and expected_md5sum:
-                actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
-                if expected_md5sum == actual_md5sum:
-                    logger.debug(f"File {file_path} checksum successful.")
+        async with checksum_lock:
+            for info in valid_checksums:
+                file_path = Path(info["path"])
+                expected_md5sum = info.get("md5sum")
+                if file_path.exists() and expected_md5sum:
+                    actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
+                    if expected_md5sum == actual_md5sum:
+                        logger.debug(f"File {file_path} checksum successful.")
+                    else:
+                        logger.warning(
+                            f"File {file_path} checksum verification failed."
+                        )
+                elif file_path.exists() and expected_md5sum is None:
+                    logger.warning(f"Checksum not received for file {file_path}")
                 else:
-                    logger.warning(f"File {file_path} checksum verification failed.")
-            elif file_path.exists() and expected_md5sum is None:
-                logger.warning(f"Checksum not received for file {file_path}")
-            else:
-                logger.error(f"Disk synchronization failed for {file_path}")
+                    logger.error(f"Disk synchronization failed for {file_path}")
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(self.real.run_arg)
