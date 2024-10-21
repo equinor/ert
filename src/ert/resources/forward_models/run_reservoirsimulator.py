@@ -155,9 +155,14 @@ class RunReservoirSimulator:
             _runner_abspath: Optional[str] = shutil.which("flowrun")
             if _runner_abspath is None:
                 _runner_abspath = shutil.which("flow")
-                self.bypass_flowrun = True
                 if _runner_abspath is None:
                     raise RuntimeError("flowrun or flow not installed")
+                else:
+                    if self.num_cpu > 1:
+                        raise RuntimeError(
+                            "MPI runs not supported without a flowrun wrapper"
+                        )
+                    self.bypass_flowrun = True
         self.runner_abspath: str = _runner_abspath
 
         # Decipher ecl_case
