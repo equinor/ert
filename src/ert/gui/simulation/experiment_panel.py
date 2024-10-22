@@ -127,7 +127,7 @@ class ExperimentPanel(QWidget):
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
 
-        layout.setContentsMargins(0, 0, 10, 10)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.addLayout(experiment_type_layout)
 
         self._experiment_stack = QStackedWidget()
