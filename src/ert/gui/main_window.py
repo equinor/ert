@@ -161,10 +161,15 @@ class ErtMainWindow(QMainWindow):
         def add_sim_run_option(datetime: str) -> None:
             menu = self.results_button.menu()
             if menu:
-                act = menu.addAction(datetime)
-                if act:
-                    act.setProperty("index", datetime)
-                    act.triggered.connect(self.select_central_widget)
+                action_list = menu.actions()
+                act = QAction(text=datetime, parent=menu)
+                act.setProperty("index", datetime)
+                act.triggered.connect(self.select_central_widget)
+
+                if action_list:
+                    menu.insertAction(action_list[0], act)
+                else:
+                    menu.addAction(act)
 
         if self.run_dialog_counter == 2:
             # swap from button to menu selection
