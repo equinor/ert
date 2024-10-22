@@ -21,6 +21,7 @@ class ResponseConfig(ABC):
     name: str
     input_files: List[str] = dataclasses.field(default_factory=list)
     keys: List[str] = dataclasses.field(default_factory=list)
+    has_finalized_keys: bool = False
 
     @abstractmethod
     def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:

@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 import polars
-from polars.exceptions import ColumnNotFoundError
 
 
 class _Index(BaseModel):
@@ -311,10 +310,21 @@ class LocalEnsemble(BaseMode):
         if key:
             return _has_response(key)
 
-        return all(
-            _has_response(response)
-            for response in self.experiment.response_configuration
+        is_expecting_any_responses = any(
+            bool(config.keys)
+            for config in self.experiment.response_configuration.values()
         )
+
+        if not is_expecting_any_responses:
+            return True
+
+        non_empty_response_configs = [
+            response
+            for response, config in self.experiment.response_configuration.items()
+            if bool(config.keys)
+        ]
+
+        return all(_has_response(response) for response in non_empty_response_configs)
 
     def is_initalized(self) -> List[int]:
         """
@@ -502,27 +512,6 @@ class LocalEnsemble(BaseMode):
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
-    def get_summary_keyset(self) -> List[str]:
-        """
-        Find the first folder with summary data then load the
-        summary keys from this.
-
-        Returns
-        -------
-        keys : list of str
-            List of summary keys.
-        """
-
-        try:
-            summary_data = self.load_responses(
-                "summary",
-                tuple(self.get_realization_list_with_responses("summary")),
-            )
-
-            return sorted(summary_data["response_key"].unique().to_list())
-        except (ValueError, KeyError, ColumnNotFoundError):
-            return []
-
     def _load_single_dataset(
         self,
         group: str,
@@ -696,8 +685,6 @@ class LocalEnsemble(BaseMode):
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = self.get_summary_keyset()
-
         try:
             df_pl = self.load_responses("summary", tuple(realizations))
 
@@ -715,6 +702,7 @@ class LocalEnsemble(BaseMode):
         )
 
         if keys:
+            summary_keys = self.experiment.response_type_to_response_keys["summary"]
             summary_keys = sorted(
                 [key for key in keys if key in summary_keys]
             )  # ignore keys that doesn't exist
@@ -876,6 +864,10 @@ class LocalEnsemble(BaseMode):
         self._storage._to_parquet_transaction(
             output_path / f"{response_type}.parquet", data
         )
+
+        if not self.experiment._has_finalized_response_keys(response_type):
+            response_keys = data["response_key"].unique().to_list()
+            self.experiment._update_response_keys(response_type, response_keys)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
