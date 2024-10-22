@@ -74,7 +74,11 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
             f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"
             f"Please add to file {args.config}"
         )
-
+    if not (
+        True
+        in [p.update for p in ert_config.ensemble_config.parameter_configs.values()]
+    ):
+        ErtCliError(f"All parameters are set to UPDATE:FALSE in {args.config}")
     storage = open_storage(ert_config.ens_path, "w")
 
     if args.mode == WORKFLOW_MODE:
