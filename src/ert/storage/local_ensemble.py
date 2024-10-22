@@ -301,19 +301,28 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
 
-        def _has_response(_key: str) -> bool:
-            if _key in self.experiment.response_key_to_response_type:
-                _response_type = self.experiment.response_key_to_response_type[_key]
-                return (path / f"{_response_type}.parquet").exists()
+        # Note: potential performance bottleneck,
+        # should be improved greatly by having statemap.
+        # Should also be faster due to lru cache on load_responses
+        def _has_response(_response_type: str) -> bool:
+            if (path / f"{_response_type}.parquet").exists():
+                return True
 
-            return (path / f"{_key}.parquet").exists()
+            if (self.mount_point / f"{_response_type}.parquet").exists():
+                return (
+                    realization
+                    in self.load_responses(
+                        _response_type, tuple(range(self.ensemble_size))
+                    )["realization"]
+                )
 
         if key:
-            return _has_response(key)
+            response_type = self.experiment.response_key_to_response_type.get(key, key)
+            return _has_response(response_type)
 
         return all(
-            _has_response(response)
-            for response in self.experiment.response_configuration
+            _has_response(response_type)
+            for response_type in self.experiment.response_configuration
         )
 
     def is_initalized(self) -> List[int]:
