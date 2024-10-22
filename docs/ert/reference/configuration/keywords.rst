@@ -936,7 +936,7 @@ To achieve this:
         -- Permeability must be sampled from the geomodel/simulation grid zone into the ERTBOX grid
         -- and exported to /some/path/filename. Note that the name of the property in the input file
         -- in INIT_FILES must be the same as the ID.
-        FIELD  perm_zone_A  PARAMETER  perm_zone_A.roff  INIT_FILES:/some/path/perm_zone_A.roff  INIT_TRANSFORM:LOG  OUTPUT_TRANSFORM:EXP  MIN:-5.5  MAX:5.5  FORWARD_INIT:True
+        FIELD  perm_zone_A  PARAMETER  perm_zone_A.roff  INIT_FILES:/some/path/perm_zone_A.roff  INIT_TRANSFORM:LOG  OUTPUT_TRANSFORM:EXP  MIN:0  MAX:5000  FORWARD_INIT:True
 
 
 GEN_DATA
