@@ -152,11 +152,12 @@ class GenDataConfig(ResponseConfig):
                     except ValueError as err:
                         errors.append(str(err))
 
-            ds_all_report_steps = polars.concat(datasets_per_report_step)
-            ds_all_report_steps.insert_column(
-                0, polars.Series("response_key", [name] * len(ds_all_report_steps))
-            )
-            datasets_per_name.append(ds_all_report_steps)
+            if len(datasets_per_report_step) > 0:
+                ds_all_report_steps = polars.concat(datasets_per_report_step)
+                ds_all_report_steps.insert_column(
+                    0, polars.Series("response_key", [name] * len(ds_all_report_steps))
+                )
+                datasets_per_name.append(ds_all_report_steps)
 
         if errors:
             raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
