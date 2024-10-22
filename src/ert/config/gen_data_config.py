@@ -22,6 +22,7 @@ class GenDataConfig(ResponseConfig):
     report_steps_list: List[Optional[List[int]]] = dataclasses.field(
         default_factory=list
     )
+    has_finalized_keys: bool = True
 
     def __post_init__(self) -> None:
         if len(self.report_steps_list) == 0:

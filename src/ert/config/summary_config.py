@@ -23,6 +23,7 @@ import polars
 class SummaryConfig(ResponseConfig):
     name: str = "summary"
     refcase: Union[Set[datetime], List[str], None] = None
+    has_finalized_keys = False
 
     def __post_init__(self) -> None:
         if isinstance(self.refcase, list):

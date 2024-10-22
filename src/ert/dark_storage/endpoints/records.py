@@ -12,13 +12,14 @@ from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
     data_for_key,
     ensemble_parameters,
-    gen_data_keys,
+    gen_data_display_keys,
     get_observation_keys_for_response,
     get_observations_for_obs_keys,
     response_key_to_displayed_key,
 )
 from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
+from ert.storage.realization_storage_state import RealizationStorageState
 
 router = APIRouter(tags=["record"])
 
@@ -133,7 +134,15 @@ def get_ensemble_responses(
             )
             response_names_with_observations.update(set(obs_with_responses))
 
-    for name in ensemble.get_summary_keyset():
+    has_responses = any(
+        s == RealizationStorageState.HAS_DATA for s in ensemble.get_ensemble_state()
+    )
+
+    for name in (
+        ensemble.experiment.response_type_to_response_keys.get("summary", [])
+        if has_responses
+        else []
+    ):
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
@@ -141,7 +150,7 @@ def get_ensemble_responses(
             has_observations=name in response_names_with_observations,
         )
 
-    for name in gen_data_keys(ensemble):
+    for name in gen_data_display_keys(ensemble) if has_responses else []:
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
