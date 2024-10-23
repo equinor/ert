@@ -12,23 +12,26 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import numpy as np
 import pytest
 
-from _ert.forward_model_runner.job import Job, _get_processtree_data
+from _ert.forward_model_runner.forward_model_step import (
+    ForwardModelStep,
+    _get_processtree_data,
+)
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
 
 
-@patch("_ert.forward_model_runner.job.check_executable")
-@patch("_ert.forward_model_runner.job.Popen")
-@patch("_ert.forward_model_runner.job.Process")
+@patch("_ert.forward_model_runner.forward_model_step.check_executable")
+@patch("_ert.forward_model_runner.forward_model_step.Popen")
+@patch("_ert.forward_model_runner.forward_model_step.Process")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_process_failing(mock_process, mock_popen, mock_check_executable):
-    job = Job({}, 0)
+    fmstep = ForwardModelStep({}, 0)
     mock_check_executable.return_value = ""
     type(mock_process.return_value.memory_info.return_value).rss = PropertyMock(
         return_value=10
     )
     mock_process.return_value.wait.return_value = 9
 
-    run = job.run()
+    run = fmstep.run()
 
     assert isinstance(next(run), Start), "run did not yield Start message"
     assert isinstance(next(run), Running), "run did not yield Running message"
@@ -44,7 +47,7 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_cpu_seconds_can_detect_multiprocess():
-    """Run a job that sets of two simultaneous processes that
+    """Run a fm step that sets of two simultaneous processes that
     each run for 1 second. We should be able to detect the total
     cpu seconds consumed to be roughly 2 seconds.
 
@@ -77,15 +80,15 @@ def test_cpu_seconds_can_detect_multiprocess():
         )
     executable = os.path.realpath(scriptname)
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "executable": executable,
         },
         0,
     )
-    job.MEMORY_POLL_PERIOD = 0.05
+    fmstep.MEMORY_POLL_PERIOD = 0.05
     cpu_seconds = 0.0
-    for status in job.run():
+    for status in fmstep.run():
         if isinstance(status, Running):
             cpu_seconds = max(cpu_seconds, status.memory_status.cpu_seconds)
     assert 1.4 < cpu_seconds < 2.2
@@ -118,16 +121,16 @@ def test_memory_usage_counts_grandchildren():
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     def max_memory_per_subprocess_layer(layers: int) -> int:
-        job = Job(
+        fmstep = ForwardModelStep(
             {
                 "executable": executable,
                 "argList": [str(layers), str(int(1e6))],
             },
             0,
         )
-        job.MEMORY_POLL_PERIOD = 0.01
+        fmstep.MEMORY_POLL_PERIOD = 0.01
         max_seen = 0
-        for status in job.run():
+        for status in fmstep.run():
             if isinstance(status, Running):
                 max_seen = max(max_seen, status.memory_status.max_rss)
         return max_seen
@@ -165,7 +168,7 @@ def test_memory_profile_in_running_events():
     executable = os.path.realpath(scriptname)
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    fm_step = Job(
+    fm_step = ForwardModelStep(
         {
             "executable": executable,
             "argList": [""],
@@ -258,7 +261,7 @@ def test_oom_score_is_max_over_processtree():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_fails_using_exit_bash_builtin():
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "name": "exit 1",
             "executable": "/bin/sh",
@@ -269,7 +272,7 @@ def test_run_fails_using_exit_bash_builtin():
         0,
     )
 
-    statuses = list(job.run())
+    statuses = list(fmstep.run())
 
     assert len(statuses) == 3, "Wrong statuses count"
     assert statuses[2].exit_code == 1, "Exited status wrong exit_code"
@@ -281,7 +284,7 @@ def test_run_fails_using_exit_bash_builtin():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_defined_executable_but_missing():
     executable = os.path.join(os.getcwd(), "this/is/not/a/file")
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_FOUND",
             "executable": executable,
@@ -291,7 +294,7 @@ def test_run_with_defined_executable_but_missing():
         0,
     )
 
-    start_message = next(job.run())
+    start_message = next(fmstep.run())
     assert isinstance(start_message, Start)
     assert "this/is/not/a/file is not a file" in start_message.error_message
 
@@ -304,7 +307,7 @@ def test_run_with_empty_executable():
     st = os.stat(empty_executable)
     os.chmod(empty_executable, st.st_mode | stat.S_IEXEC)
 
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_EXECUTABLE",
             "executable": empty_executable,
@@ -313,7 +316,7 @@ def test_run_with_empty_executable():
         },
         0,
     )
-    run_status = list(job.run())
+    run_status = list(fmstep.run())
     assert len(run_status) == 2
     start_msg, exit_msg = run_status
     assert isinstance(start_msg, Start)
@@ -328,7 +331,7 @@ def test_run_with_defined_executable_no_exec_bit():
     with open(non_executable, "a", encoding="utf-8"):
         pass
 
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "name": "TEST_EXECUTABLE_NOT_EXECUTABLE",
             "executable": non_executable,
@@ -337,30 +340,30 @@ def test_run_with_defined_executable_no_exec_bit():
         },
         0,
     )
-    start_message = next(job.run())
+    start_message = next(fmstep.run())
     assert isinstance(start_message, Start)
     assert "foo is not an executable" in start_message.error_message
 
 
-def test_init_job_no_std():
-    job = Job(
+def test_init_fmstep_no_std():
+    fmstep = ForwardModelStep(
         {},
         0,
     )
-    assert job.std_err is None
-    assert job.std_out is None
+    assert fmstep.std_err is None
+    assert fmstep.std_out is None
 
 
-def test_init_job_with_std():
-    job = Job(
+def test_init_fmstep_with_std():
+    fmstep = ForwardModelStep(
         {
             "stdout": "exit_out",
             "stderr": "exit_err",
         },
         0,
     )
-    assert job.std_err == "exit_err"
-    assert job.std_out == "exit_out"
+    assert fmstep.std_err == "exit_err"
+    assert fmstep.std_out == "exit_out"
 
 
 def test_makedirs(monkeypatch, tmp_path):
@@ -369,7 +372,7 @@ def test_makedirs(monkeypatch, tmp_path):
     they don't exist
     """
     monkeypatch.chdir(tmp_path)
-    job = Job(
+    fmstep = ForwardModelStep(
         {
             "executable": "true",
             "stdout": "a/file",
@@ -377,7 +380,7 @@ def test_makedirs(monkeypatch, tmp_path):
         },
         0,
     )
-    for _ in job.run():
+    for _ in fmstep.run():
         pass
     assert (tmp_path / "a/file").is_file()
     assert (tmp_path / "b/c/file").is_file()
