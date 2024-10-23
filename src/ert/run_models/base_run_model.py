@@ -561,6 +561,7 @@ class BaseRunModel(ABC):
         if not (await self.run_monitor(ee_config, ensemble.iteration)):
             return []
 
+        ensemble.combine_responses()
         logger.debug("observed that model was finished, waiting tasks completion...")
         # The model has finished, we indicate this by sending a DONE
         logger.debug("tasks complete")

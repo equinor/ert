@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache
+from functools import lru_cache, reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
@@ -301,19 +301,28 @@ class LocalEnsemble(BaseMode):
             return True
         path = self._realization_dir(realization)
 
-        def _has_response(_key: str) -> bool:
-            if _key in self.experiment.response_key_to_response_type:
-                _response_type = self.experiment.response_key_to_response_type[_key]
-                return (path / f"{_response_type}.parquet").exists()
+        # Note: potential performance bottleneck,
+        # should be improved greatly by having statemap.
+        # Should also be faster due to lru cache on load_responses
+        def _has_response(_response_type: str) -> bool:
+            if (path / f"{_response_type}.parquet").exists():
+                return realization in self.load_responses(response_type)["realization"]
 
-            return (path / f"{_key}.parquet").exists()
+            if (self.mount_point / f"{_response_type}.parquet").exists():
+                return (
+                    realization
+                    in self.load_responses(
+                        _response_type, tuple(range(self.ensemble_size))
+                    )["realization"]
+                )
 
         if key:
-            return _has_response(key)
+            response_type = self.experiment.response_key_to_response_type.get(key, key)
+            return _has_response(response_type)
 
         return all(
-            _has_response(response)
-            for response in self.experiment.response_configuration
+            _has_response(response_type)
+            for response_type in self.experiment.response_configuration
         )
 
     def is_initalized(self) -> List[int]:
@@ -350,6 +359,33 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with responses
         """
+
+        # First check for combined
+        realizations_with_responses_combined = {
+            response: set(
+                polars.read_parquet(self._path / f"{response}.parquet")[
+                    "realization"
+                ].unique()
+            )
+            if (self._path / f"{response}.parquet").exists()
+            else {}
+            for response in self.experiment.response_configuration
+        }
+
+        reals_with_all_responses_from_combined = reduce(
+            set.intersection, realizations_with_responses_combined.values()
+        )
+
+        realizations_missing_responses = reals_with_all_responses_from_combined - set(
+            range(self.ensemble_size)
+        )
+
+        if not realizations_missing_responses:
+            return list(reals_with_all_responses_from_combined)
+
+        # If not combined, fallback to checking individual folders
+        # We assume that there is no state where a combine was invoked before
+        # all responses were saved
         return [
             i
             for i in range(self.ensemble_size)
@@ -655,6 +691,18 @@ class LocalEnsemble(BaseMode):
             response_type = self.experiment.response_key_to_response_type[key]
             select_key = True
 
+        response_file = f"{response_type}.parquet"
+
+        if os.path.exists(self.mount_point / response_file):
+            df = polars.read_parquet(self.mount_point / response_file)
+            if select_key:
+                df = df.filter(polars.col("response_key") == key)
+
+            if set(realizations) != {range(self.ensemble_size)}:
+                df = df.filter(polars.col("realization").is_in(realizations))
+
+            return df
+
         loaded = []
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
@@ -905,3 +953,61 @@ class LocalEnsemble(BaseMode):
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.response_configuration
         }
+
+    def combine_responses(self, response_type: Optional[str] = None) -> None:
+        if response_type is None:
+            for _response_type in self.experiment.response_configuration:
+                self.combine_responses(_response_type)
+
+            return None
+
+        if response_type not in self.experiment.response_configuration:
+            # 2do make test for this
+            raise KeyError(
+                f"Trying to combine responses for unknown response type {response_type}"
+            )
+
+        for _response_type in self.experiment.response_configuration:
+            response_file = f"{response_type}.parquet"
+
+            reals_with_response = self.get_realization_list_with_responses(
+                response_type
+            )
+
+            if not os.path.exists(self.mount_point / response_file):
+                combined = self.load_responses(
+                    response_type, tuple(reals_with_response)
+                )
+            else:
+                # Some files may be newer
+                combined = polars.read_parquet(self.mount_point / response_file)
+
+                to_write = []
+                for real in range(self.ensemble_size):
+                    if (self._realization_dir(real) / response_file).exists():
+                        response_df = polars.read_parquet(
+                            self._realization_dir(real) / response_file
+                        )
+                        to_write.append(response_df)
+
+                if len(to_write) == 0:
+                    continue
+
+                df_to_write = polars.concat(to_write)
+                joined = combined.join(
+                    df_to_write, how="left", on=combined.columns[:-1], suffix="_new"
+                )
+
+                updated = joined.with_columns(
+                    polars.col("values_new")
+                    .fill_null(polars.col("values"))
+                    .alias("values")
+                ).select(combined.columns)
+
+                combined = updated
+
+            combined.write_parquet(self.mount_point / response_file)
+
+            for real in reals_with_response:
+                if os.path.exists(self._realization_dir(real) / response_file):
+                    os.remove(self._realization_dir(real) / response_file)
