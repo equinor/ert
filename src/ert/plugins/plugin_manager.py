@@ -124,6 +124,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
+    def get_forward_model_paths(self) -> List[str]:
         response: List[PluginResponse[List[str]]] = self.hook.forward_model_paths()
         if response == []:
             return []
