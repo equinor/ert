@@ -81,15 +81,13 @@ class ErtMainWindow(QMainWindow):
         self.side_frame.setLayout(self.vbox_layout)
 
         self.central_panels_map: Dict[str, QWidget] = {}
-
+        self._experiment_panel: Optional[ExperimentPanel] = None
+        self._plot_window: Optional[PlotWindow] = None
+        self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
         self._add_sidebar_button(
             "Start simulation", QIcon("img:play_circle_outlined.svg")
         )
-
-        self._plot_window: Optional[PlotWindow] = None
         self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
-
-        self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
             "Simulation status", QIcon("img:in_progress.svg")
@@ -154,16 +152,18 @@ class ErtMainWindow(QMainWindow):
         date_time = datetime.datetime.now(datetime.timezone.utc).strftime(
             "%Y-%d-%m %H:%M:%S"
         )
-        self.central_panels_map[date_time] = run_dialog
+        experiment_type = run_dialog._run_model.name()
+        simulation_id = experiment_type + " : " + date_time
+        self.central_panels_map[simulation_id] = run_dialog
         self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)
 
-        def add_sim_run_option(datetime: str) -> None:
+        def add_sim_run_option(simulation_id: str) -> None:
             menu = self.results_button.menu()
             if menu:
                 action_list = menu.actions()
-                act = QAction(text=datetime, parent=menu)
-                act.setProperty("index", datetime)
+                act = QAction(text=simulation_id, parent=menu)
+                act.setProperty("index", simulation_id)
                 act.triggered.connect(self.select_central_widget)
 
                 if action_list:
@@ -193,7 +193,8 @@ class ErtMainWindow(QMainWindow):
             self.facade.get_ensemble_size(),
         )
         self.central_layout.addWidget(experiment_panel)
-        self.central_panels_map["Start simulation"] = experiment_panel
+        self._experiment_panel = experiment_panel
+        self.central_panels_map["Start simulation"] = self._experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
