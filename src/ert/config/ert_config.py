@@ -651,13 +651,13 @@ class ErtConfig:
         itr: int = 0,
         context_env: Optional[Dict[str, str]] = None,
     ):
-        if context_env is not None:
-            self.env_vars.update(context_env)
+        if context_env is None:
+            context_env = {}
         return self._create_forward_model_json(
             context=self.substitution_list,
             forward_model_steps=self.forward_model_steps,
             user_config_file=self.user_config_file,
-            env_vars=self.env_vars,
+            env_vars={**self.env_vars, **context_env},
             run_id=run_id,
             iens=iens,
             itr=itr,
