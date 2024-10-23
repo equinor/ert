@@ -358,7 +358,7 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     Path("config.ert").write_text(config_text, encoding="utf-8")
 
     ert_config = ErtConfig.from_file("config.ert")
-    assert int(ert_config.substitution_list["<NUM_CPU>"]) == expected_cpus
+    assert int(ert_config.substitutions["<NUM_CPU>"]) == expected_cpus
 
 
 @pytest.mark.filterwarnings(
@@ -417,14 +417,14 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
     jobname_fmt = "SNAKE_OIL_%d"
-    global_substitutions = ert_config.substitution_list
+    global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
     run_paths = Runpaths(
         jobname_format=jobname_fmt,
         runpath_format=runpath_fmt,
         filename=str("a_file_name"),
-        substitution_list=global_substitutions,
+        substitutions=global_substitutions,
     )
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
     run_args = create_run_arguments(
@@ -508,7 +508,7 @@ def _create_runpath(ert_config: ErtConfig, storage: Storage) -> None:
         jobname_format=ert_config.model_config.jobname_format_string,
         runpath_format=ert_config.model_config.runpath_format_string,
         filename=str(ert_config.runpath_file),
-        substitution_list=ert_config.substitution_list,
+        substitutions=ert_config.substitutions,
     )
     create_run_path(
         create_run_arguments(run_paths, [True] * ensemble.ensemble_size, ensemble),
@@ -654,7 +654,7 @@ def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
         "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
         "magic-real-<IENS>/magic-iter-<ITER>"
     )
-    global_substitutions = ert_config.substitution_list
+    global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
@@ -662,7 +662,7 @@ def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
         jobname_format="SNAKE_OIL_%d",
         runpath_format=runpath_fmt,
         filename="a_file_name",
-        substitution_list=global_substitutions,
+        substitutions=global_substitutions,
     )
 
     sample_prior(prior_ensemble, range(num_realizations))

@@ -35,7 +35,7 @@ def create_runpath(
         jobname_format=ert_config.model_config.jobname_format_string,
         runpath_format=ert_config.model_config.runpath_format_string,
         filename=str(ert_config.runpath_file),
-        substitution_list=ert_config.substitution_list,
+        substitutions=ert_config.substitutions,
     )
     run_args = create_run_arguments(runpaths, active_mask, ensemble)
 

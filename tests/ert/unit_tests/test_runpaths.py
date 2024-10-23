@@ -1,7 +1,7 @@
 import pytest
 
 from ert.runpaths import Runpaths
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 
 @pytest.mark.parametrize(
@@ -53,7 +53,7 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     runpath_file = tmp_path / "runpath_file"
 
     assert not runpath_file.exists()
-    context = SubstitutionList()
+    context = Substitutions()
     runpaths = Runpaths(
         job_format,
         runpath_format,
@@ -68,7 +68,7 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
 def test_runpath_file_writer_substitution(tmp_path):
     runpath_file = tmp_path / "runpath_file"
 
-    context = SubstitutionList()
+    context = Substitutions()
     context["<casename>"] = "my_case"
     runpaths = Runpaths(
         "<casename>_job",
@@ -88,7 +88,7 @@ def test_runpath_file_writer_substitution(tmp_path):
 def test_runpath_file_writes_eclbase_when_present(tmp_path):
     runpath_file = tmp_path / "runpath_file"
 
-    context = SubstitutionList()
+    context = Substitutions()
     context["<casename>"] = "my_case"
     runpaths = Runpaths(
         "<casename>_job",

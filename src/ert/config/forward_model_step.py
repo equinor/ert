@@ -14,7 +14,7 @@ from typing import (
 from typing_extensions import NotRequired, Unpack
 
 from ert.config.parsing.config_errors import ConfigWarning
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 from .parsing import (
     SchemaItemType,
@@ -164,7 +164,7 @@ class ForwardModelStep:
     environment: dict[str, Union[int, str]] = field(default_factory=dict)
     exec_env: dict[str, Union[int, str]] = field(default_factory=dict)
     default_mapping: dict[str, Union[int, str]] = field(default_factory=dict)
-    private_args: SubstitutionList = field(default_factory=SubstitutionList)
+    private_args: Substitutions = field(default_factory=Substitutions)
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
@@ -251,7 +251,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
             environment=environment,
             exec_env=exec_env,
             default_mapping=default_mapping,
-            private_args=SubstitutionList(),
+            private_args=Substitutions(),
         )
 
     @staticmethod

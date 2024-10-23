@@ -190,14 +190,14 @@ def create_run_path(
     if context_env is None:
         context_env = {}
     t = time.perf_counter()
-    substitution_list = ert_config.substitution_list
+    substitutions = ert_config.substitutions
     runpaths.set_ert_ensemble(ensemble.name)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
             for source_file, target_file in ert_config.ert_templates:
-                target_file = substitution_list.substitute_real_iter(
+                target_file = substitutions.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
                 )
                 try:
@@ -207,7 +207,7 @@ def create_run_path(
                         f"Unsupported non UTF-8 character found in file: {source_file}"
                     ) from e
 
-                result = substitution_list.substitute_real_iter(
+                result = substitutions.substitute_real_iter(
                     file_content,
                     run_arg.iens,
                     ensemble.iteration,
