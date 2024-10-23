@@ -7,6 +7,7 @@ import resfo
 from hypothesis import given
 from resdata.summary import Summary, SummaryVarType
 
+from ert.config import InvalidResponseFile
 from ert.config._read_summary import make_summary_key, read_summary
 from ert.summary_key_type import SummaryKeyType
 
@@ -279,7 +280,7 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
             return start_date + timedelta(days=offset)
         if unit == "HOURS":
             return start_date + timedelta(hours=offset)
-        raise ValueError(f"Unknown time unit {unit}")
+        raise InvalidResponseFile(f"Unknown time unit {unit}")
 
     assert all(
         abs(actual - expected) <= timedelta(minutes=15)
@@ -332,7 +333,7 @@ def test_that_incorrect_summary_files_raises_informative_errors(
     (tmp_path / "test.UNSMRY").write_bytes(smry_contents)
     (tmp_path / "test.SMSPEC").write_bytes(spec_contents)
 
-    with pytest.raises(ValueError, match=error_message):
+    with pytest.raises(InvalidResponseFile, match=error_message):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
@@ -340,7 +341,7 @@ def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
     resfo.write(tmp_path / "test.SMSPEC", [("KEYWORDS", resfo.MESS)])
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
-    with pytest.raises(ValueError, match="has incorrect type MESS"):
+    with pytest.raises(InvalidResponseFile, match="has incorrect type MESS"):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
@@ -351,7 +352,7 @@ def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
-    with pytest.raises(ValueError, match="Got empty summary keyword"):
+    with pytest.raises(InvalidResponseFile, match="Got empty summary keyword"):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
@@ -368,7 +369,7 @@ def test_missing_names_keywords_in_summary_files_raises_informative_errors(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="Found block keyword in summary specification without dimens keyword",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -388,7 +389,7 @@ def test_unknown_date_unit_in_summary_files_raises_informative_errors(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="Unknown date unit .* ANNUAL",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -407,7 +408,7 @@ def test_missing_units_in_summary_files_raises_an_informative_error(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="Keyword units",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -427,7 +428,7 @@ def test_missing_date_units_in_summary_files_raises_an_informative_error(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="Unit missing for TIME",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -447,7 +448,7 @@ def test_missing_time_keyword_in_summary_files_raises_an_informative_error(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="KEYWORDS did not contain TIME",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -466,7 +467,7 @@ def test_missing_keywords_in_smspec_raises_informative_error(
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        InvalidResponseFile,
         match="Keywords missing",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
@@ -481,7 +482,7 @@ def test_that_ambiguous_case_restart_raises_an_informative_error(
     (tmp_path / "test.Smspec").write_bytes(b"")
 
     with pytest.raises(
-        ValueError,
+        FileNotFoundError,
         match="Ambiguous reference to unified summary",
     ):
         read_summary(str(tmp_path / "test"), ["*"])

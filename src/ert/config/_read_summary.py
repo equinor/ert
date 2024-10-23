@@ -25,6 +25,8 @@ from pydantic import PositiveInt
 
 from ert.summary_key_type import SummaryKeyType
 
+from .response_config import InvalidResponseFile
+
 
 def _cell_index(
     array_index: int, nx: PositiveInt, ny: PositiveInt
@@ -44,7 +46,7 @@ def _check_if_missing(
     keyword_name: str, missing_key: str, *test_vars: Optional[T]
 ) -> List[T]:
     if any(v is None for v in test_vars):
-        raise ValueError(
+        raise InvalidResponseFile(
             f"Found {keyword_name} keyword in summary "
             f"specification without {missing_key} keyword"
         )
@@ -62,7 +64,13 @@ def make_summary_key(
     lj: Optional[int] = None,
     lk: Optional[int] = None,
 ) -> Optional[str]:
-    sum_type = SummaryKeyType.from_keyword(keyword)
+    try:
+        sum_type = SummaryKeyType.from_keyword(keyword)
+    except Exception as err:
+        raise InvalidResponseFile(
+            f"Could not read summary keyword '{keyword}': {err}"
+        ) from err
+
     if sum_type in [
         SummaryKeyType.FIELD,
         SummaryKeyType.OTHER,
@@ -111,7 +119,7 @@ def make_summary_key(
     if sum_type == SummaryKeyType.NETWORK:
         (name,) = _check_if_missing("network", "WGNAMES", name)
         return f"{keyword}:{name}"
-    raise ValueError(f"Unexpected keyword type: {sum_type}")
+    raise InvalidResponseFile(f"Unexpected keyword type: {sum_type}")
 
 
 class DateUnit(Enum):
@@ -123,7 +131,7 @@ class DateUnit(Enum):
             return timedelta(hours=val)
         if self == DateUnit.DAYS:
             return timedelta(days=val)
-        raise ValueError(f"Unknown date unit {val}")
+        raise InvalidResponseFile(f"Unknown date unit {val}")
 
 
 def _is_base_with_extension(base: str, path: str, exts: List[str]) -> bool:
@@ -159,9 +167,9 @@ def _find_file_matching(
     dir, base = os.path.split(case)
     candidates = list(filter(lambda x: predicate(base, x), os.listdir(dir or ".")))
     if not candidates:
-        raise ValueError(f"Could not find any {kind} matching case path {case}")
+        raise FileNotFoundError(f"Could not find any {kind} matching case path {case}")
     if len(candidates) > 1:
-        raise ValueError(
+        raise FileNotFoundError(
             f"Ambiguous reference to {kind} in {case}, could be any of {candidates}"
         )
     return os.path.join(dir, candidates[0])
@@ -188,7 +196,9 @@ def read_summary(
             summary, start_date, date_units, indices, date_index
         )
     except resfo.ResfoParsingError as err:
-        raise ValueError(f"Failed to read summary file {filepath}: {err}") from err
+        raise InvalidResponseFile(
+            f"Failed to read summary file {filepath}: {err}"
+        ) from err
     return (start_date, keys, time_map, fetched)
 
 
@@ -202,7 +212,7 @@ def _check_vals(
     kw: str, spec: str, vals: Union[npt.NDArray[Any], resfo.MESS]
 ) -> npt.NDArray[Any]:
     if vals is resfo.MESS or isinstance(vals, resfo.MESS):
-        raise ValueError(f"{kw.strip()} in {spec} has incorrect type MESS")
+        raise InvalidResponseFile(f"{kw.strip()} in {spec} has incorrect type MESS")
     return vals
 
 
@@ -304,7 +314,7 @@ def _read_spec(
                         # microsecond=self.micro_seconds % 10**6,
                     )
                 except Exception as err:
-                    raise ValueError(
+                    raise InvalidResponseFile(
                         f"SMSPEC {spec} contains invalid STARTDAT: {err}"
                     ) from err
     keywords = arrays["KEYWORDS"]
@@ -315,9 +325,9 @@ def _read_spec(
     lgr_names = arrays["LGRS    "]
 
     if date is None:
-        raise ValueError(f"Keyword startdat missing in {spec}")
+        raise InvalidResponseFile(f"Keyword startdat missing in {spec}")
     if keywords is None:
-        raise ValueError(f"Keywords missing in {spec}")
+        raise InvalidResponseFile(f"Keywords missing in {spec}")
     if n is None:
         n = len(keywords)
 
@@ -371,17 +381,17 @@ def _read_spec(
 
     units = arrays["UNITS   "]
     if units is None:
-        raise ValueError(f"Keyword units missing in {spec}")
+        raise InvalidResponseFile(f"Keyword units missing in {spec}")
     if date_index is None:
-        raise ValueError(f"KEYWORDS did not contain TIME in {spec}")
+        raise InvalidResponseFile(f"KEYWORDS did not contain TIME in {spec}")
     if date_index >= len(units):
-        raise ValueError(f"Unit missing for TIME in {spec}")
+        raise InvalidResponseFile(f"Unit missing for TIME in {spec}")
 
     unit_key = _key2str(units[date_index])
     try:
         date_unit = DateUnit[unit_key]
     except KeyError:
-        raise ValueError(f"Unknown date unit in {spec}: {unit_key}") from None
+        raise InvalidResponseFile(f"Unknown date unit in {spec}: {unit_key}") from None
 
     return (
         date_index,
