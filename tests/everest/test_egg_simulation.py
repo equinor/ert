@@ -5,6 +5,7 @@ import pytest
 
 import everest
 from ert.config import ErtConfig, QueueSystem
+from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
@@ -462,25 +463,25 @@ SUM_KEYS = [
 
 
 def sort_res_summary(ert_config):
-    ert_config["SUMMARY"][0] = sorted(ert_config["SUMMARY"][0])
+    ert_config[ErtConfigKeys.SUMMARY][0] = sorted(ert_config[ErtConfigKeys.SUMMARY][0])
 
 
 def _generate_exp_ert_config(config_path, output_dir):
     return {
-        "DEFINE": [("<CONFIG_PATH>", config_path)],
-        "INSTALL_JOB": everest_default_jobs(output_dir),
-        "QUEUE_OPTION": [(QueueSystem.LOCAL, "MAX_RUNNING", 3)],
-        "QUEUE_SYSTEM": QueueSystem.LOCAL,
-        "NUM_REALIZATIONS": NUM_REALIZATIONS,
-        "RUNPATH": os.path.join(
+        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", config_path)],
+        ErtConfigKeys.INSTALL_JOB: everest_default_jobs(output_dir),
+        ErtConfigKeys.QUEUE_OPTION: [(QueueSystem.LOCAL, "MAX_RUNNING", 3)],
+        ErtConfigKeys.QUEUE_SYSTEM: QueueSystem.LOCAL,
+        ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
+        ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,
             "egg_simulations/<CASE_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",
         ),
-        "RUNPATH_FILE": os.path.join(
+        ErtConfigKeys.RUNPATH_FILE: os.path.join(
             os.path.realpath("everest/model"),
             "everest_output/.res_runpath_list",
         ),
-        "SIMULATION_JOB": [
+        ErtConfigKeys.SIMULATION_JOB: [
             (
                 "copy_directory",
                 f"{config_path}/../../eclipse/include/"
@@ -551,14 +552,14 @@ def _generate_exp_ert_config(config_path, output_dir):
             ),
             ("rf", "-s", "eclipse/model/EGG", "-o", "rf"),
         ],
-        "ENSPATH": os.path.join(
+        ErtConfigKeys.ENSPATH: os.path.join(
             os.path.realpath("everest/model"),
             "everest_output/simulation_results",
         ),
-        "ECLBASE": "eclipse/model/EGG",
-        "RANDOM_SEED": 123456,
-        "SUMMARY": SUM_KEYS,
-        "GEN_DATA": [("rf", "RESULT_FILE:rf")],
+        ErtConfigKeys.ECLBASE: "eclipse/model/EGG",
+        ErtConfigKeys.RANDOM_SEED: 123456,
+        ErtConfigKeys.SUMMARY: SUM_KEYS,
+        ErtConfigKeys.GEN_DATA: [("rf", "RESULT_FILE:rf")],
     }
 
 
@@ -589,7 +590,7 @@ def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
     exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    exp_ert_config["SUMMARY"][0] = SUM_KEYS_NO_OPM
+    exp_ert_config[ErtConfigKeys.SUMMARY][0] = SUM_KEYS_NO_OPM
     sort_res_summary(exp_ert_config)
     sort_res_summary(ert_config)
     assert exp_ert_config == ert_config
@@ -612,8 +613,8 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
     exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    exp_ert_config["SUMMARY"][0] = filter(
-        lambda key: not key.startswith("G"), exp_ert_config["SUMMARY"][0]
+    exp_ert_config[ErtConfigKeys.SUMMARY][0] = filter(
+        lambda key: not key.startswith("G"), exp_ert_config[ErtConfigKeys.SUMMARY][0]
     )
     sort_res_summary(exp_ert_config)
     sort_res_summary(ert_config)
@@ -651,11 +652,11 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
     exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    exp_ert_config["SUMMARY"] = [
+    exp_ert_config[ErtConfigKeys.SUMMARY] = [
         list(
             filter(
                 lambda key: not key.startswith("G"),
-                exp_ert_config["SUMMARY"][0],
+                exp_ert_config[ErtConfigKeys.SUMMARY][0],
             )
         )
         + extra_sum_keys

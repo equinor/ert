@@ -8,6 +8,7 @@ from typing import DefaultDict, Dict, List, Union
 import everest
 from ert.config import ErtConfig, ExtParamConfig
 from ert.config.parsing import ConfigDict
+from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest.config import EverestConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
@@ -121,7 +122,7 @@ def _extract_summary_keys(ever_config: EverestConfig, ert_config):
         + user_specified_keys
     )
     all_keys = list(set(all_keys))
-    ert_config["SUMMARY"] = [all_keys]
+    ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
 
 
 def _extract_environment(ever_config: EverestConfig, ert_config):
@@ -137,9 +138,9 @@ def _extract_environment(ever_config: EverestConfig, ert_config):
     default_runpath_file = os.path.join(ever_config.output_dir, ".res_runpath_list")
     default_ens_path = os.path.join(ever_config.output_dir, STORAGE_DIR)
 
-    ert_config["RUNPATH"] = simulation_path
-    ert_config["ENSPATH"] = default_ens_path
-    ert_config["RUNPATH_FILE"] = default_runpath_file
+    ert_config[ErtConfigKeys.RUNPATH] = simulation_path
+    ert_config[ErtConfigKeys.ENSPATH] = default_ens_path
+    ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
 
 
 def _inject_simulation_defaults(ert_config, ever_config: EverestConfig):
@@ -170,17 +171,17 @@ def _extract_simulator(ever_config: EverestConfig, ert_config):
     # Resubmit number (number of submission retries)
     resubmit = ever_simulation.resubmit_limit
     if resubmit is not None:
-        ert_config["MAX_SUBMIT"] = resubmit + 1
+        ert_config[ErtConfigKeys.MAX_SUBMIT] = resubmit + 1
 
     # Maximum number of seconds (MAX_RUNTIME) a forward model is allowed to run
     max_runtime = ever_simulation.max_runtime
     if max_runtime is not None:
-        ert_config["MAX_RUNTIME"] = max_runtime or 0
+        ert_config[ErtConfigKeys.MAX_RUNTIME] = max_runtime or 0
 
     # Number of cores reserved on queue nodes (NUM_CPU)
     num_fm_cpu = ever_simulation.cores_per_node
     if num_fm_cpu is not None:
-        ert_config["NUM_CPU"] = num_fm_cpu
+        ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
     _inject_simulation_defaults(ert_config, ever_config)
 
@@ -236,7 +237,7 @@ def _extract_jobs(ever_config, ert_config, path):
                 }
             )
 
-    res_jobs = ert_config.get("INSTALL_JOB", [])
+    res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
         new_job = (
             job[ConfigKeys.NAME],
@@ -244,13 +245,13 @@ def _extract_jobs(ever_config, ert_config, path):
         )
         res_jobs.append(new_job)
 
-    ert_config["INSTALL_JOB"] = res_jobs
+    ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
 
 
 def _extract_workflow_jobs(ever_config, ert_config, path):
     workflow_jobs = [_job_to_dict(j) for j in (ever_config.install_workflow_jobs or [])]
 
-    res_jobs = ert_config.get("LOAD_WORKFLOW_JOB", [])
+    res_jobs = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW_JOB, [])
     for job in workflow_jobs:
         new_job = (
             os.path.join(path, job[ConfigKeys.SOURCE]),
@@ -259,7 +260,7 @@ def _extract_workflow_jobs(ever_config, ert_config, path):
         res_jobs.append(new_job)
 
     if res_jobs:
-        ert_config["LOAD_WORKFLOW_JOB"] = res_jobs
+        ert_config[ErtConfigKeys.LOAD_WORKFLOW_JOB] = res_jobs
 
 
 def _extract_workflows(ever_config, ert_config, path):
@@ -268,8 +269,8 @@ def _extract_workflows(ever_config, ert_config, path):
         "post_simulation": "POST_SIMULATION",
     }
 
-    res_workflows = ert_config.get("LOAD_WORKFLOW", [])
-    res_hooks = ert_config.get("HOOK_WORKFLOW", [])
+    res_workflows = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW, [])
+    res_hooks = ert_config.get(ErtConfigKeys.HOOK_WORKFLOW, [])
 
     for ever_trigger, res_trigger in trigger2res.items():
         jobs = getattr(ever_config.workflows, ever_trigger, None)
@@ -281,8 +282,8 @@ def _extract_workflows(ever_config, ert_config, path):
             res_hooks.append((ever_trigger, res_trigger))
 
     if res_workflows:
-        ert_config["LOAD_WORKFLOW"] = res_workflows
-        ert_config["HOOK_WORKFLOW"] = res_hooks
+        ert_config[ErtConfigKeys.LOAD_WORKFLOW] = res_workflows
+        ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
 
 
 def _internal_data_files(ever_config: EverestConfig):
@@ -438,22 +439,24 @@ def _extract_forward_model(ever_config: EverestConfig, ert_config):
     forward_model += ever_config.forward_model or []
     forward_model = _insert_strip_dates_job(ever_config, forward_model)
 
-    sim_job = ert_config.get("SIMULATION_JOB", [])
+    sim_job = ert_config.get(ErtConfigKeys.SIMULATION_JOB, [])
     for job in forward_model:
         tmp = job.split()
         sim_job.append(tuple(tmp))
 
-    ert_config["SIMULATION_JOB"] = sim_job
+    ert_config[ErtConfigKeys.SIMULATION_JOB] = sim_job
 
 
 def _extract_model(ever_config: EverestConfig, ert_config):
     _extract_summary_keys(ever_config, ert_config)
 
-    if "NUM_REALIZATIONS" not in ert_config:
+    if ErtConfigKeys.NUM_REALIZATIONS not in ert_config:
         if ever_config.model.realizations is not None:
-            ert_config["NUM_REALIZATIONS"] = len(ever_config.model.realizations)
+            ert_config[ErtConfigKeys.NUM_REALIZATIONS] = len(
+                ever_config.model.realizations
+            )
         else:
-            ert_config["NUM_REALIZATIONS"] = 1
+            ert_config[ErtConfigKeys.NUM_REALIZATIONS] = 1
 
 
 def _extract_seed(ever_config: EverestConfig, ert_config):
@@ -461,7 +464,7 @@ def _extract_seed(ever_config: EverestConfig, ert_config):
     random_seed = ever_config.environment.random_seed
 
     if random_seed:
-        ert_config["RANDOM_SEED"] = random_seed
+        ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
 
 
 def _extract_results(ever_config: EverestConfig, ert_config):
@@ -473,10 +476,10 @@ def _extract_results(ever_config: EverestConfig, ert_config):
     constraint_names = [
         constraint.name for constraint in (ever_config.output_constraints or [])
     ]
-    gen_data = ert_config.get("GEN_DATA", [])
+    gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
     for name in objectives_names + constraint_names:
         gen_data.append((name, f"RESULT_FILE:{name}"))
-    ert_config["GEN_DATA"] = gen_data
+    ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
 
 def _everest_to_ert_config_dict(
@@ -489,7 +492,7 @@ def _everest_to_ert_config_dict(
     ert_config = site_config if site_config is not None else {}
 
     config_dir = ever_config.config_directory
-    ert_config["DEFINE"] = [("<CONFIG_PATH>", config_dir)]
+    ert_config[ErtConfigKeys.DEFINE] = [("<CONFIG_PATH>", config_dir)]
 
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)

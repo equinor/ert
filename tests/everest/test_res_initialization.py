@@ -6,6 +6,7 @@ import pytest
 
 import everest
 from ert.config import ErtConfig
+from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
@@ -95,8 +96,8 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
 
     def local_queue_system():
         return {
-            "QUEUE_SYSTEM": "LOCAL",
-            "QUEUE_OPTION": [
+            ErtConfigKeys.QUEUE_SYSTEM: "LOCAL",
+            ErtConfigKeys.QUEUE_OPTION: [
                 ("LOCAL", "MAX_RUNNING", 8),
             ],
         }
@@ -106,8 +107,8 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
     # in everest_to_ert_config.
     def slurm_queue_system():
         return {
-            "QUEUE_SYSTEM": "SLURM",
-            "QUEUE_OPTION": [
+            ErtConfigKeys.QUEUE_SYSTEM: "SLURM",
+            ErtConfigKeys.QUEUE_OPTION: [
                 (
                     "SLURM",
                     "PARTITION",
@@ -146,25 +147,25 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
         ]
 
     ert_config = {
-        "DEFINE": [("<CONFIG_PATH>", os.path.abspath(SNAKE_CONFIG_DIR))],
-        "RUNPATH": os.path.join(
+        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", os.path.abspath(SNAKE_CONFIG_DIR))],
+        ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,
             "simulations/<CASE_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",
         ),
-        "RUNPATH_FILE": os.path.join(
+        ErtConfigKeys.RUNPATH_FILE: os.path.join(
             os.path.realpath("snake_oil/everest/model"),
             "everest_output/.res_runpath_list",
         ),
-        "NUM_REALIZATIONS": 1,
-        "MAX_RUNTIME": 3600,
-        "ECLBASE": "eclipse/ECL",
-        "INSTALL_JOB": install_jobs(),
-        "SIMULATION_JOB": simulation_jobs(),
-        "ENSPATH": os.path.join(
+        ErtConfigKeys.NUM_REALIZATIONS: 1,
+        ErtConfigKeys.MAX_RUNTIME: 3600,
+        ErtConfigKeys.ECLBASE: "eclipse/ECL",
+        ErtConfigKeys.INSTALL_JOB: install_jobs(),
+        ErtConfigKeys.SIMULATION_JOB: simulation_jobs(),
+        ErtConfigKeys.ENSPATH: os.path.join(
             os.path.realpath("snake_oil/everest/model"),
             "everest_output/simulation_results",
         ),
-        "GEN_DATA": make_gen_data(),
+        ErtConfigKeys.GEN_DATA: make_gen_data(),
     }
     ert_config.update(make_queue_system(queue_system))
     return ert_config
@@ -173,29 +174,29 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
 def build_tutorial_dict(config_dir, output_dir):
     # Expected config extracted from unittest.mocked_test_case.yml
     return {
-        "DEFINE": [("<CONFIG_PATH>", config_dir)],
-        "NUM_REALIZATIONS": 2,
-        "MAX_RUNTIME": 3600,
-        "ECLBASE": "eclipse/ECL",
-        "RUNPATH": os.path.join(
+        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", config_dir)],
+        ErtConfigKeys.NUM_REALIZATIONS: 2,
+        ErtConfigKeys.MAX_RUNTIME: 3600,
+        ErtConfigKeys.ECLBASE: "eclipse/ECL",
+        ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,
             "simulations_{}".format(os.environ.get("USER")),
             "<CASE_NAME>",
             "geo_realization_<GEO_ID>",
             "simulation_<IENS>",
         ),
-        "RUNPATH_FILE": os.path.join(
+        ErtConfigKeys.RUNPATH_FILE: os.path.join(
             os.path.realpath("mocked_test_case"),
             "everest_output/.res_runpath_list",
         ),
-        "RANDOM_SEED": 999,
-        "INSTALL_JOB": [
+        ErtConfigKeys.RANDOM_SEED: 999,
+        ErtConfigKeys.INSTALL_JOB: [
             ("well_order", os.path.join(config_dir, "jobs/WELL_ORDER_MOCK")),
             ("res_mock", os.path.join(config_dir, "jobs/RES_MOCK")),
             ("npv_function", os.path.join(config_dir, "jobs/NPV_FUNCTION_MOCK")),
             *everest_default_jobs(output_dir),
         ],
-        "SIMULATION_JOB": [
+        ErtConfigKeys.SIMULATION_JOB: [
             (
                 "copy_file",
                 os.path.realpath(
@@ -213,13 +214,13 @@ def build_tutorial_dict(config_dir, output_dir):
             ("npv_function", "MOCKED_TEST_CASE", "npv_function"),
         ],
         # Defaulted
-        "QUEUE_SYSTEM": "LOCAL",
-        "QUEUE_OPTION": [("LOCAL", "MAX_RUNNING", 8)],
-        "ENSPATH": os.path.join(
+        ErtConfigKeys.QUEUE_SYSTEM: "LOCAL",
+        ErtConfigKeys.QUEUE_OPTION: [("LOCAL", "MAX_RUNNING", 8)],
+        ErtConfigKeys.ENSPATH: os.path.join(
             os.path.realpath("mocked_test_case"),
             "everest_output/simulation_results",
         ),
-        "GEN_DATA": [
+        ErtConfigKeys.GEN_DATA: [
             (
                 "npv_function",
                 "RESULT_FILE:npv_function",
@@ -273,7 +274,7 @@ def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
     ever_config = EverestConfig.load_file(snake_torque_config_path)
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
 
-    assert ert_config_dict["QUEUE_SYSTEM"] == "TORQUE"
+    assert ert_config_dict[ErtConfigKeys.QUEUE_SYSTEM] == "TORQUE"
 
     expected_queue_option_tuples = {
         ("TORQUE", "QSUB_CMD", "qsub"),
@@ -286,7 +287,9 @@ def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
         ("TORQUE", "PROJECT_CODE", "snake_oil_pc"),
     }
 
-    assert set(ert_config_dict["QUEUE_OPTION"]) == expected_queue_option_tuples
+    assert (
+        set(ert_config_dict[ErtConfigKeys.QUEUE_OPTION]) == expected_queue_option_tuples
+    )
 
     ert_config = everest_to_ert_config(ever_config)
 
@@ -344,12 +347,14 @@ def test_combined_wells_everest_to_ert(copy_test_data_to_tmp):
 
     # Check whether dummy name is in the summary keys
     fakename_in_strings = [
-        "fakename" in string for string in ert_config_dict["SUMMARY"][0]
+        "fakename" in string for string in ert_config_dict[ErtConfigKeys.SUMMARY][0]
     ]
     assert any(fakename_in_strings)
 
     # Check whether data file specific well is in the summary keys
-    inj_in_strings = ["INJ" in string for string in ert_config_dict["SUMMARY"][0]]
+    inj_in_strings = [
+        "INJ" in string for string in ert_config_dict[ErtConfigKeys.SUMMARY][0]
+    ]
     assert any(inj_in_strings)
 
 
@@ -361,7 +366,7 @@ def test_lsf_queue_system(copy_test_data_to_tmp):
 
     ert_config = _everest_to_ert_config_dict(ever_config)
 
-    queue_system = ert_config["QUEUE_SYSTEM"]
+    queue_system = ert_config[ErtConfigKeys.QUEUE_SYSTEM]
     assert queue_system == "LSF"
 
 
@@ -373,7 +378,7 @@ def test_queue_configuration(copy_test_data_to_tmp):
 
     ert_config = _everest_to_ert_config_dict(ever_config)
 
-    assert ert_config["MAX_SUBMIT"] == 17 + 1
+    assert ert_config[ErtConfigKeys.MAX_SUBMIT] == 17 + 1
 
     expected_options = [
         ("LSF", "MAX_RUNNING", 3),
@@ -382,7 +387,7 @@ def test_queue_configuration(copy_test_data_to_tmp):
         ("LSF", "LSF_RESOURCE", "span = 1 && select[x86 and GNU/Linux]"),
     ]
 
-    options = ert_config["QUEUE_OPTION"]
+    options = ert_config[ErtConfigKeys.QUEUE_OPTION]
     assert options == expected_options
 
 
@@ -437,7 +442,7 @@ def test_install_data_no_init(copy_test_data_to_tmp):
         )
 
         config_dir = ever_config.config_directory
-        tutorial_dict["SIMULATION_JOB"].insert(
+        tutorial_dict[ErtConfigKeys.SIMULATION_JOB].insert(
             0,
             (cmd, os.path.join(config_dir, source), target),
         )
@@ -473,7 +478,7 @@ def test_summary_default(copy_egg_test_data_to_tmp):
         sum_keys += [f"{key}:{name}" for key, name in itertools.product(keys, names)]
 
     res_conf = _everest_to_ert_config_dict(everconf)
-    assert set(sum_keys) == set(res_conf["SUMMARY"][0])
+    assert set(sum_keys) == set(res_conf[ErtConfigKeys.SUMMARY][0])
 
 
 @pytest.mark.integration_test
@@ -501,7 +506,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     sum_keys = [list(set(sum_keys))]
     res_conf = _everest_to_ert_config_dict(everconf)
 
-    assert set(sum_keys[0]) == set(res_conf["SUMMARY"][0])
+    assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0])
 
 
 @pytest.mark.requires_eclipse
@@ -541,7 +546,7 @@ def test_install_data(copy_test_data_to_tmp):
             os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
         )
         config_dir = ever_config.config_directory
-        tutorial_dict["SIMULATION_JOB"].insert(
+        tutorial_dict[ErtConfigKeys.SIMULATION_JOB].insert(
             0,
             (cmd, os.path.join(config_dir, source), target),
         )
@@ -580,7 +585,7 @@ def test_forward_model_job_insertion(copy_test_data_to_tmp):
     # Transform to res dict
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
 
-    jobs = ert_config_dict["INSTALL_JOB"]
+    jobs = ert_config_dict[ErtConfigKeys.INSTALL_JOB]
     for job in collect_forward_models():
         res_job = (job["name"], job["path"])
         assert res_job in jobs
@@ -591,7 +596,7 @@ def test_workflow_job(copy_test_data_to_tmp):
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    jobs = ert_config_dict.get("LOAD_WORKFLOW_JOB")
+    jobs = ert_config_dict.get(ErtConfigKeys.LOAD_WORKFLOW_JOB)
     assert jobs is not None
     assert jobs[0] == (
         os.path.join(ever_config.config_directory, workflow_jobs[0]["source"]),
@@ -607,12 +612,12 @@ def test_workflows(copy_test_data_to_tmp):
         {"pre_simulation": ["test -i in -o out"]}
     )
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    workflows = ert_config_dict.get("LOAD_WORKFLOW")
+    workflows = ert_config_dict.get(ErtConfigKeys.LOAD_WORKFLOW)
     assert workflows is not None
     name = os.path.join(ever_config.config_directory, ".pre_simulation.workflow")
     assert os.path.exists(name)
     assert workflows[0] == (name, "pre_simulation")
-    hooks = ert_config_dict.get("HOOK_WORKFLOW")
+    hooks = ert_config_dict.get(ErtConfigKeys.HOOK_WORKFLOW)
     assert hooks is not None
     assert hooks[0] == ("pre_simulation", "PRE_SIMULATION")
 
@@ -628,7 +633,9 @@ def test_user_config_jobs_precedence(copy_test_data_to_tmp):
     # Transform to res dict
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
 
-    job = [job for job in ert_config_dict["INSTALL_JOB"] if job[0] == first_job]
+    job = [
+        job for job in ert_config_dict[ErtConfigKeys.INSTALL_JOB] if job[0] == first_job
+    ]
     assert len(job) == 1
     assert job[0][1] == os.path.join(config_dir, "expected_source")
 
@@ -639,10 +646,10 @@ def test_user_config_num_cpu(copy_test_data_to_tmp):
 
     # Transform to res dict
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    assert "NUM_CPU" not in ert_config_dict
+    assert ErtConfigKeys.NUM_CPU not in ert_config_dict
 
     ever_config.simulator.cores_per_node = 2
     # Transform to res dict
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    assert "NUM_CPU" in ert_config_dict
-    assert ert_config_dict["NUM_CPU"] == 2
+    assert ErtConfigKeys.NUM_CPU in ert_config_dict
+    assert ert_config_dict[ErtConfigKeys.NUM_CPU] == 2
