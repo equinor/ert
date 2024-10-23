@@ -19,7 +19,7 @@ import pytest
 
 import _ert.forward_model_runner.cli
 from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
-from _ert.forward_model_runner.job import killed_by_oom
+from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
 from _ert.threading import ErtThread

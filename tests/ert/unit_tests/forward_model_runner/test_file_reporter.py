@@ -3,7 +3,7 @@ import os.path
 
 import pytest
 
-from _ert.forward_model_runner.job import Job
+from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import File
 from _ert.forward_model_runner.reporting.message import (
     Exited,
@@ -24,24 +24,26 @@ def reporter():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_init_message_argument(reporter):
     r = reporter
-    job1 = Job({"name": "job1", "stdout": "/stdout", "stderr": "/stderr"}, 0)
+    fmstep1 = ForwardModelStep(
+        {"name": "fmstep1", "stdout": "/stdout", "stderr": "/stderr"}, 0
+    )
 
-    r.report(Init([job1], 1, 19))
+    r.report(Init([fmstep1], 1, 19))
 
     with open(STATUS_file, "r", encoding="utf-8") as f:
         assert "Current host" in f.readline(), "STATUS file missing expected value"
     with open(STATUS_json, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
-        assert '"name": "job1"' in content, "status.json missing job1"
+        assert '"name": "fmstep1"' in content, "status.json missing fmstep1"
         assert '"status": "Waiting"' in content, "status.json missing Waiting status"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_start_message_argument(reporter):
     msg = Start(
-        Job(
+        ForwardModelStep(
             {
-                "name": "job1",
+                "name": "fmstep1",
                 "stdout": "/stdout.0",
                 "stderr": "/stderr.0",
                 "argList": ["--foo", "1", "--bar", "2"],
@@ -55,7 +57,7 @@ def test_report_with_successful_start_message_argument(reporter):
     reporter.report(msg)
 
     with open(STATUS_file, "r", encoding="utf-8") as f:
-        assert "job1" in f.readline(), "STATUS file missing job1"
+        assert "fmstep1" in f.readline(), "STATUS file missing fmstep1"
     with open(LOG_file, "r", encoding="utf-8") as f:
         assert (
             "Calling: /bin/sh --foo 1 --bar 2" in f.readline()
@@ -69,7 +71,7 @@ def test_report_with_successful_start_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_start_message_argument(reporter):
-    msg = Start(Job({"name": "job1"}, 0)).with_error("massive_failure")
+    msg = Start(ForwardModelStep({"name": "fmstep1"}, 0)).with_error("massive_failure")
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
     reporter.report(msg)
@@ -86,12 +88,12 @@ def test_report_with_failed_start_message_argument(reporter):
         ), "status.json missing error message"
     assert (
         reporter.status_dict["jobs"][0]["end_time"] is not None
-    ), "end_time not set for job1"
+    ), "end_time not set for fmstep1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_exit_message_argument(reporter):
-    msg = Exited(Job({"name": "job1"}, 0), 0)
+    msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 0)
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
     reporter.report(msg)
@@ -103,7 +105,9 @@ def test_report_with_successful_exit_message_argument(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_exit_message_argument(reporter):
-    msg = Exited(Job({"name": "job1"}, 0), 1).with_error("massive_failure")
+    msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 1).with_error(
+        "massive_failure"
+    )
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
     reporter.report(msg)
@@ -112,7 +116,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert "EXIT: 1/massive_failure" in f.readline()
     with open(ERROR_file, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
-        assert "<job>job1</job>" in content, "ERROR file missing job"
+        assert "<job>fmstep1</job>" in content, "ERROR file missing job"
         assert (
             "<reason>massive_failure</reason>" in content
         ), "ERROR file missing reason"
@@ -131,7 +135,7 @@ def test_report_with_failed_exit_message_argument(reporter):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_running_message_argument(reporter):
     msg = Running(
-        Job({"name": "job1"}, 0),
+        ForwardModelStep({"name": "fmstep1"}, 0),
         ProcessTreeStatus(max_rss=100, rss=10, cpu_seconds=1.1),
     )
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
@@ -170,7 +174,8 @@ def test_dump_error_file_with_stderr(reporter):
         stderr.write("E_MASSIVE_FAILURE\n")
 
     reporter._dump_error_file(
-        Job({"name": "job1", "stderr": "stderr.out.0"}, 0), "massive_failure"
+        ForwardModelStep({"name": "fmstep1", "stderr": "stderr.out.0"}, 0),
+        "massive_failure",
     )
 
     with open(ERROR_file, "r", encoding="utf-8") as f:
@@ -199,8 +204,8 @@ def test_status_file_is_correct(reporter):
     such.
     See https://github.com/equinor/libres/issues/764
     """
-    j_1 = Job({"name": "j_1", "executable": "", "argList": []}, 0)
-    j_2 = Job({"name": "j_2", "executable": "", "argList": []}, 0)
+    j_1 = ForwardModelStep({"name": "j_1", "executable": "", "argList": []}, 0)
+    j_2 = ForwardModelStep({"name": "j_2", "executable": "", "argList": []}, 0)
     init = Init([j_1, j_2], 1, 1)
     start_j_1 = Start(j_1)
     exited_j_1 = Exited(j_1, 0)

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, Literal, Optional, TypedDict
 import psutil
 
 if TYPE_CHECKING:
-    from _ert.forward_model_runner.job import Job
+    from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 
     class _ChecksumDictBase(TypedDict):
         type: Literal["file"]
@@ -71,7 +71,7 @@ class _MetaMessage(type):
 class Message(metaclass=_MetaMessage):
     def __init__(self, job=None):
         self.timestamp = dt.now()
-        self.job: Optional[Job] = job
+        self.job: Optional[ForwardModelStep] = job
         self.error_message: Optional[str] = None
 
     def __repr__(self):
@@ -116,19 +116,19 @@ class Finish(Message):
 
 
 class Start(Message):
-    def __init__(self, job: "Job"):
-        super().__init__(job)
+    def __init__(self, fm_step: "ForwardModelStep"):
+        super().__init__(fm_step)
 
 
 class Running(Message):
-    def __init__(self, job: "Job", memory_status: ProcessTreeStatus):
-        super().__init__(job)
+    def __init__(self, fm_step: "ForwardModelStep", memory_status: ProcessTreeStatus):
+        super().__init__(fm_step)
         self.memory_status = memory_status
 
 
 class Exited(Message):
-    def __init__(self, job, exit_code: int):
-        super().__init__(job)
+    def __init__(self, fm_step, exit_code: int):
+        super().__init__(fm_step)
         self.exit_code = exit_code
 
 

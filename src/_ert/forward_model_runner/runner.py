@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import List
 
-from _ert.forward_model_runner.job import Job
+from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
 
 
@@ -21,9 +21,9 @@ class ForwardModelRunner:
         if self.simulation_id is not None:
             os.environ["ERT_RUN_ID"] = self.simulation_id
 
-        self.jobs: List[Job] = []
+        self.jobs: List[ForwardModelStep] = []
         for index, job_data in enumerate(job_data_list):
-            self.jobs.append(Job(job_data, index))
+            self.jobs.append(ForwardModelStep(job_data, index))
 
         self._set_environment()
 

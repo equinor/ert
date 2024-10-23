@@ -76,7 +76,7 @@ def killed_by_oom(pids: Sequence[int]) -> bool:
     return False
 
 
-class Job:
+class ForwardModelStep:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
 
     def __init__(
