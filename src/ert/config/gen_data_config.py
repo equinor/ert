@@ -11,7 +11,7 @@ from ert.validation import rangestring_to_list
 
 from ._option_dict import option_dict
 from .parsing import ConfigValidationError, ErrorInfo
-from .response_config import ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig
 
 
 @dataclass
@@ -71,12 +71,16 @@ class GenDataConfig(ResponseConfig):
 
     def read_from_file(self, run_path: str, _: int) -> xr.Dataset:
         def _read_file(filename: Path, report_step: int) -> xr.Dataset:
-            if not filename.exists():
-                raise ValueError(f"Missing output file: {filename}")
-            data = np.loadtxt(_run_path / filename, ndmin=1)
+            try:
+                data = np.loadtxt(_run_path / filename, ndmin=1)
+            except ValueError as err:
+                raise InvalidResponseFile(str(err)) from err
             active_information_file = _run_path / (str(filename) + "_active")
             if active_information_file.exists():
-                active_list = np.loadtxt(active_information_file)
+                try:
+                    active_list = np.loadtxt(active_information_file)
+                except ValueError as err:
+                    raise InvalidResponseFile(str(err)) from err
                 data[active_list == 0] = np.nan
             return xr.Dataset(
                 {"values": (["report_step", "index"], [data])},
@@ -93,15 +97,25 @@ class GenDataConfig(ResponseConfig):
         if self.report_steps is None:
             try:
                 datasets.append(_read_file(_run_path / filename_fmt, 0))
-            except ValueError as err:
-                errors.append(str(err))
+            except (InvalidResponseFile, FileNotFoundError) as err:
+                errors.append(err)
         else:
             for report_step in self.report_steps:
                 filename = filename_fmt % report_step  # noqa
                 try:
                     datasets.append(_read_file(_run_path / filename, report_step))
-                except ValueError as err:
-                    errors.append(str(err))
+                except (InvalidResponseFile, FileNotFoundError) as err:
+                    errors.append(err)
         if errors:
-            raise ValueError(f"Error reading GEN_DATA: {self.name}, errors: {errors}")
+            if all(isinstance(err, FileNotFoundError) for err in errors):
+                raise FileNotFoundError(
+                    "Could not find one or more files/directories while reading GEN_DATA"
+                    f" {self.name}: {','.join([str(err) for err in errors])}"
+                )
+            else:
+                raise InvalidResponseFile(
+                    "Error reading GEN_DATA "
+                    f"{self.name}, errors: {','.join([str(err) for err in errors])}"
+                )
+
         return xr.combine_nested(datasets, concat_dim="report_step")

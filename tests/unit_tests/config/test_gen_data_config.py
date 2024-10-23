@@ -1,8 +1,13 @@
+import os
+from contextlib import suppress
+from pathlib import Path
 from typing import List
 
+import hypothesis.strategies as st
 import pytest
+from hypothesis import given
 
-from ert.config import ConfigValidationError, GenDataConfig
+from ert.config import ConfigValidationError, GenDataConfig, InvalidResponseFile
 
 
 @pytest.mark.parametrize(
@@ -73,3 +78,57 @@ def test_malformed_or_missing_gen_data_result_file(result_file, error_message):
             GenDataConfig.from_config_list(config_line.split())
     else:
         GenDataConfig.from_config_list(config_line.split())
+
+
+def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
+    (tmp_path / "poly.out").write_text("""
+        4.910405046410615,4.910405046410615
+        6.562317389289953,6.562317389289953
+        9.599763191512997,9.599763191512997
+        14.022742453079745,14.022742453079745
+        19.831255173990197,19.831255173990197
+        27.025301354244355,27.025301354244355
+        35.604880993842215,35.604880993842215
+        45.56999409278378,45.56999409278378
+        56.92064065106905,56.92064065106905
+        69.65682066869802,69.65682066869802
+    """)
+
+    config = GenDataConfig(
+        name="gen_data",
+        input_file="poly.out",
+    )
+    with pytest.raises(
+        InvalidResponseFile,
+        match="Error reading GEN_DATA.*could not convert string.*4.910405046410615,4.910405046410615.*to float64",
+    ):
+        config.read_from_file(tmp_path, 0)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@given(st.binary())
+def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(contents):
+    Path("./output").write_bytes(contents)
+    with suppress(InvalidResponseFile):
+        GenDataConfig(
+            name="gen_data",
+            input_file="output",
+        ).read_from_file(os.getcwd(), 0)
+
+
+def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):
+    with pytest.raises(FileNotFoundError, match="DOES_NOT_EXIST not found"):
+        GenDataConfig(
+            name="gen_data",
+            input_file="DOES_NOT_EXIST",
+        ).read_from_file(tmpdir, 0)
+
+
+def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_directory(
+    tmp_path,
+):
+    with pytest.raises(FileNotFoundError, match="DOES_NOT_EXIST not found"):
+        GenDataConfig(
+            name="gen_data",
+            input_file="DOES_NOT_EXIST",
+        ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 0)

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Set, Union
 import xarray as xr
 
 from ._read_summary import read_summary
-from .response_config import ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig
 
 if TYPE_CHECKING:
     from typing import List
@@ -37,7 +37,7 @@ class SummaryConfig(ResponseConfig):
             # https://github.com/equinor/ert/issues/6974
             # There is a bug with storing empty responses so we have
             # to raise an error in that case
-            raise ValueError(
+            raise InvalidResponseFile(
                 f"Did not find any summary values matching {self.keys} in {filename}"
             )
         ds = xr.Dataset(

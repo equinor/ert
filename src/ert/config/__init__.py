@@ -31,7 +31,7 @@ from .parsing import (
     WarningInfo,
 )
 from .queue_config import QueueConfig
-from .response_config import ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -66,6 +66,7 @@ __all__ = [
     "GenKwConfig",
     "HookRuntime",
     "IESSettings",
+    "InvalidResponseFile",
     "ModelConfig",
     "ParameterConfig",
     "PriorDict",

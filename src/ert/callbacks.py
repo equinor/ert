@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Iterable
 
-from ert.config import ParameterConfig, ResponseConfig
+from ert.config import InvalidResponseFile, ParameterConfig, ResponseConfig
 from ert.run_arg import RunArg
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -55,6 +55,12 @@ async def _write_responses_to_storage(
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.name}")
             ds = config.read_from_file(run_arg.runpath, run_arg.iens)
+            try:
+                ds = config.read_from_file(run_arg.runpath, run_arg.iens)
+            except (FileNotFoundError, InvalidResponseFile) as err:
+                errors.append(str(err))
+                logger.warning(f"Failed to write: {run_arg.iens}: {err}")
+                continue
             await asyncio.sleep(0)
             logger.debug(
                 f"Loaded {config.name}",
@@ -67,8 +73,14 @@ async def _write_responses_to_storage(
                 f"Saved {config.name} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
-        except ValueError as err:
+        except Exception as err:
             errors.append(str(err))
+            logger.exception(
+                f"Unexpected exception while writing response to storage {run_arg.iens}",
+                exc_info=err,
+            )
+            continue
+
     if errors:
         return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
     return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -95,7 +107,10 @@ async def forward_model_ok(
             )
 
     except Exception as err:
-        logging.exception(f"Failed to load results for realization {run_arg.iens}")
+        logger.exception(
+            f"Failed to load results for realization {run_arg.iens}",
+            exc_info=err,
+        )
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Failed to load results for realization "
