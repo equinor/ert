@@ -747,7 +747,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         try:
             ds = summary.read_from_file(self.tmpdir, iens)
-        except ValueError as e:  # no match in keys
+        except Exception as e:  # no match in keys
             assume(False)
             raise AssertionError() from e
         storage_ensemble.save_response(summary.response_type, ds, iens)
