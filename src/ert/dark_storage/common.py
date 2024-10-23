@@ -1,4 +1,5 @@
 import contextlib
+import logging
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from uuid import UUID
 
@@ -10,6 +11,8 @@ import xarray as xr
 from ert.config import GenDataConfig, GenKwConfig
 from ert.config.field import Field
 from ert.storage import Ensemble, Experiment, Storage
+
+logger = logging.getLogger(__name__)
 
 response_key_to_displayed_key: Dict[str, Callable[[Tuple[Any, ...]], str]] = {
     "summary": lambda t: t[0],
@@ -153,7 +156,7 @@ def data_for_key(
                 realizations = np.where(mask)[0]
                 data = ensemble.load_responses(response_key, tuple(realizations))
             except ValueError as err:
-                print(f"Could not load response {key}: {err}")
+                logger.info(f"Dark storage could not load response {key}: {err}")
                 return pd.DataFrame()
 
             try:
