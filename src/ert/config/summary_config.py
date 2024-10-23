@@ -11,7 +11,7 @@ from ._read_summary import read_summary
 from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError
-from .response_config import ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ class SummaryConfig(ResponseConfig):
             # https://github.com/equinor/ert/issues/6974
             # There is a bug with storing empty responses so we have
             # to raise an error in that case
-            raise ValueError(
+            raise InvalidResponseFile(
                 f"Did not find any summary values matching {self.keys} in {filename}"
             )
         ds = xr.Dataset(
