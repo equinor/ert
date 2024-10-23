@@ -28,7 +28,7 @@ class ExportDialog(CustomDialog):
         description = "The CSV export requires some information before it starts:"
         super().__init__("export", description, parent)
 
-        subs_list = ert_config.substitution_list
+        subs_list = ert_config.substitutions
         default_csv_output_path = subs_list.get("<CSV_OUTPUT_PATH>", "output.csv")
         self.output_path_model = PathModel(default_csv_output_path)
         output_path_chooser = PathChooser(self.output_path_model)

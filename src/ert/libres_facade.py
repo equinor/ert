@@ -140,7 +140,7 @@ class LibresFacade:
                 jobname_format=self.config.model_config.jobname_format_string,
                 runpath_format=self.config.model_config.runpath_format_string,
                 filename=str(self.config.runpath_file),
-                substitution_list=self.config.substitution_list,
+                substitutions=self.config.substitutions,
                 eclbase=self.config.model_config.eclbase_format_string,
             ),
             realisations,

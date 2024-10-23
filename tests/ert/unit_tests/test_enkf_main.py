@@ -30,7 +30,7 @@ def test_create_run_args(prior_ensemble, config_dict, run_paths):
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = config.substitution_list
+    substitutions = config.substitutions
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "name<IENS>"
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
@@ -51,7 +51,7 @@ def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
         f"name{i}" for i in range(ensemble_size)
     ]
 
-    substitutions = config.substitution_list
+    substitutions = config.substitutions
     assert "<RUNPATH>" in substitutions
     assert substitutions.get("<ECL_BASE>") == "base<IENS>"
     assert substitutions.get("<ECLBASE>") == "base<IENS>"
@@ -110,6 +110,6 @@ def test_ert_context():
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         fout.write("NUM_REALIZATIONS 1\nDEFINE <MY_PATH> <CONFIG_PATH>")
     ert_config = ErtConfig.from_file("config_file.ert")
-    context = ert_config.substitution_list
+    context = ert_config.substitutions
     my_path = context["<MY_PATH>"]
     assert my_path == os.getcwd()

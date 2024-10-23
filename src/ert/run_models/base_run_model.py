@@ -171,13 +171,13 @@ class BaseRunModel(ABC):
         self._context_env: Dict[str, str] = {}
         self.random_seed: int = _seed_sequence(random_seed)
         self.rng = np.random.default_rng(self.random_seed)
-        self.substitution_list = config.substitution_list
+        self.substitutions = config.substitutions
 
         self.run_paths = Runpaths(
             jobname_format=config.model_config.jobname_format_string,
             runpath_format=config.model_config.runpath_format_string,
             filename=str(config.runpath_file),
-            substitution_list=self.substitution_list,
+            substitutions=self.substitutions,
             eclbase=config.model_config.eclbase_format_string,
         )
         self._iter_snapshot: Dict[int, EnsembleSnapshot] = {}
@@ -198,7 +198,7 @@ class BaseRunModel(ABC):
             "ert_config",
             "rng",
             "run_paths",
-            "substitution_list",
+            "substitutions",
         ]
         settings_dict = {
             key: value

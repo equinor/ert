@@ -128,7 +128,7 @@ class BatchContext:
             driver, max_running=self.ert_config.queue_config.max_running
         )
         # fill in the missing geo_id data
-        global_substitutions = self.ert_config.substitution_list
+        global_substitutions = self.ert_config.substitutions
         global_substitutions["<CASE_NAME>"] = _slug(self.ensemble.name)
         for sim_id, (geo_id, _) in enumerate(self.case_data):
             if self.mask[sim_id]:
@@ -138,7 +138,7 @@ class BatchContext:
             jobname_format=ert_config.model_config.jobname_format_string,
             runpath_format=ert_config.model_config.runpath_format_string,
             filename=str(ert_config.runpath_file),
-            substitution_list=global_substitutions,
+            substitutions=global_substitutions,
             eclbase=ert_config.model_config.eclbase_format_string,
         )
         self.run_args = create_run_arguments(

@@ -61,7 +61,7 @@ def test_init(minimum_case):
 
     assert ert_config.config_path == os.getcwd()
 
-    assert ert_config.substitution_list["<CONFIG_PATH>"] == os.getcwd()
+    assert ert_config.substitutions["<CONFIG_PATH>"] == os.getcwd()
 
 
 def test_runpath_file(monkeypatch, tmp_path):
@@ -425,7 +425,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.substitution_list["<RUNPATH_FILE>"] == os.path.abspath(
+    assert ert_config.substitutions["<RUNPATH_FILE>"] == os.path.abspath(
         ErtConfig.DEFAULT_RUNPATH_FILE
     )
 
@@ -944,8 +944,8 @@ def test_that_define_statements_with_more_than_one_argument():
             """
         )
     )
-    assert ert_config.substitution_list.get("<TEST1>") == "111 222 333"
-    assert ert_config.substitution_list.get("<TEST2>") == "111 222 333 444 555"
+    assert ert_config.substitutions.get("<TEST1>") == "111 222 333"
+    assert ert_config.substitutions.get("<TEST2>") == "111 222 333 444 555"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -982,7 +982,7 @@ def test_that_define_string_quotes_are_removed():
             """
         )
     )
-    assert ert_Config.substitution_list.get("<A>") == "A"
+    assert ert_Config.substitutions.get("<A>") == "A"
 
 
 @pytest.mark.usefixtures("use_tmpdir")

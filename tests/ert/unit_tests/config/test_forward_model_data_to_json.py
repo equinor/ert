@@ -14,12 +14,12 @@ from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import _forward_model_step_from_config_file
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 
 @pytest.fixture()
 def context():
-    return SubstitutionList({"<RUNPATH>": "./"})
+    return Substitutions({"<RUNPATH>": "./"})
 
 
 @pytest.fixture
@@ -294,7 +294,7 @@ def test_config_path_and_file(context):
 
     steps_json = ErtConfig(
         forward_model_steps=set_up_forward_model([]),
-        substitution_list=context,
+        substitutions=context,
         user_config_file="path_to_config_file/config.ert",
     ).forward_model_data_to_json(
         run_id,
@@ -311,7 +311,7 @@ def test_no_steps(context):
 
     data = ErtConfig(
         forward_model_steps=set_up_forward_model([]),
-        substitution_list=context,
+        substitutions=context,
         user_config_file="path_to_config_file/config.ert",
     ).forward_model_data_to_json(
         run_id,
@@ -327,7 +327,7 @@ def test_one_step(fm_step_list, context):
 
         data = ErtConfig(
             forward_model_steps=set_up_forward_model([step]),
-            substitution_list=context,
+            substitutions=context,
         ).forward_model_data_to_json(run_id)
         verify_json_dump(fm_step_list, data, [i], run_id)
 
@@ -336,7 +336,7 @@ def run_all(fm_steplist, context):
     run_id = "run_all"
     data = ErtConfig(
         forward_model_steps=set_up_forward_model(fm_steplist),
-        substitution_list=context,
+        substitutions=context,
     ).forward_model_data_to_json(run_id)
 
     verify_json_dump(fm_steplist, data, range(len(fm_steplist)), run_id)
@@ -371,7 +371,7 @@ def test_status_file(fm_step_list, context):
         json.dump(
             ErtConfig(
                 forward_model_steps=set_up_forward_model(fm_step_list),
-                substitution_list=context,
+                substitutions=context,
             ).forward_model_data_to_json(run_id),
             fp,
         )
@@ -410,7 +410,7 @@ def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
     run_id = "test_no_jobs_id"
 
     data = ErtConfig(
-        forward_model_steps=forward_model_list, substitution_list=context
+        forward_model_steps=forward_model_list, substitutions=context
     ).forward_model_data_to_json(run_id)
 
     assert "Environment variable ENV_VAR skipped due to" in caplog.text

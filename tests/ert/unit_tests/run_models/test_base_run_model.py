@@ -9,7 +9,7 @@ import pytest
 from ert.config import ErtConfig, ModelConfig
 from ert.run_models import BaseRunModel
 from ert.storage import Storage
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 
 @pytest.fixture(autouse=True)
@@ -90,10 +90,10 @@ def test_check_if_runpath_exists(
     expected: bool,
 ):
     model_config = ModelConfig(runpath_format_string=run_path)
-    subs_list = SubstitutionList()
+    subs_list = Substitutions()
     config = MagicMock()
     config.model_config = model_config
-    config.substitution_list = subs_list
+    config.substitutions = subs_list
 
     brm = BaseRunModel(
         config,
@@ -122,10 +122,10 @@ def test_get_number_of_existing_runpaths(
 ):
     run_path = "out/realization-%d/iter-%d"
     model_config = ModelConfig(runpath_format_string=run_path)
-    subs_list = SubstitutionList()
+    subs_list = Substitutions()
     config = MagicMock()
     config.model_config = model_config
-    config.substitution_list = subs_list
+    config.substitutions = subs_list
 
     brm = BaseRunModel(
         config=config,
@@ -163,10 +163,10 @@ def test_delete_run_path(run_path_format, active_realizations):
     share_path = Path("share")
     os.makedirs(share_path)
     model_config = ModelConfig(runpath_format_string=run_path_format)
-    subs_list = SubstitutionList({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
+    subs_list = Substitutions({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
     config = MagicMock()
     config.model_config = model_config
-    config.substitution_list = subs_list
+    config.substitutions = subs_list
 
     brm = BaseRunModel(
         config, MagicMock(), MagicMock(), MagicMock(), active_realizations

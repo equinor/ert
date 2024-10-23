@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given, strategies
 
 from ert.config import ConfigValidationError, Workflow, WorkflowJob
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 from ert.workflow_runner import WorkflowRunner
 
 from .workflow_common import WorkflowCommon
@@ -50,7 +50,7 @@ def test_workflow_run():
 
     dump_job = WorkflowJob.from_file("dump_job", name="DUMP")
 
-    context = SubstitutionList()
+    context = Substitutions()
     context["<PARAM>"] = "text"
 
     workflow = Workflow.from_file("dump_workflow", context, {"DUMP": dump_job})
@@ -87,7 +87,7 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
 def test_that_substitution_happens_in_workflow():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("JOB <A> <B>\n")
-    substlist = SubstitutionList()
+    substlist = Substitutions()
     substlist["<A>"] = "a"
     substlist["<B>"] = "b"
     job = WorkflowJob(

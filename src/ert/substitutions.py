@@ -20,7 +20,7 @@ else:
     from collections import UserDict as _UserDict
 
 
-class SubstitutionList(_UserDict):
+class Substitutions(_UserDict):
     def substitute(
         self,
         to_substitute: str,
@@ -71,13 +71,13 @@ class SubstitutionList(_UserDict):
         )
 
     def __repr__(self) -> str:
-        return f"<SubstitutionList({self._concise_representation()})>"
+        return f"<Substitutions({self._concise_representation()})>"
 
     def __str__(self) -> str:
-        return f"SubstitutionList({self._concise_representation()})"
+        return f"Substitutions({self._concise_representation()})"
 
 
-def _replace_strings(subst_list: SubstitutionList, string: str) -> Optional[str]:
+def _replace_strings(subst_list: Substitutions, string: str) -> Optional[str]:
     start = 0
     parts = []
     for match in _PATTERN.finditer(string):

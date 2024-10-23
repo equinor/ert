@@ -5,7 +5,7 @@ import pytest
 
 from ert import WorkflowRunner
 from ert.config import Workflow, WorkflowJob
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -18,9 +18,7 @@ def test_workflow_thread_cancel_ert_script():
 
     wait_job = WorkflowJob.from_file("wait_job", name="WAIT")
 
-    workflow = Workflow.from_file(
-        "wait_workflow", SubstitutionList(), {"WAIT": wait_job}
-    )
+    workflow = Workflow.from_file("wait_workflow", Substitutions(), {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -58,9 +56,7 @@ def test_workflow_thread_cancel_external():
         name="WAIT",
         config_file="wait_job",
     )
-    workflow = Workflow.from_file(
-        "wait_workflow", SubstitutionList(), {"WAIT": wait_job}
-    )
+    workflow = Workflow.from_file("wait_workflow", Substitutions(), {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -90,9 +86,7 @@ def test_workflow_failed_job():
         name="DUMP",
         config_file="dump_job",
     )
-    workflow = Workflow.from_file(
-        "dump_workflow", SubstitutionList(), {"DUMP": dump_job}
-    )
+    workflow = Workflow.from_file("dump_workflow", Substitutions(), {"DUMP": dump_job})
     assert len(workflow) == 2
 
     workflow_runner = WorkflowRunner(workflow)
@@ -119,7 +113,7 @@ def test_workflow_success():
     )
     workflow = Workflow.from_file(
         "fast_wait_workflow",
-        SubstitutionList(),
+        Substitutions(),
         {"WAIT": wait_job, "EXTERNAL_WAIT": external_job},
     )
 
@@ -155,7 +149,7 @@ def test_workflow_stops_with_stopping_job():
 
     workflow = Workflow.from_file(
         src_file="dump_failing_workflow",
-        context=SubstitutionList(),
+        context=Substitutions(),
         job_dict={"DUMP": job_failing_dump},
     )
 
@@ -170,7 +164,7 @@ def test_workflow_stops_with_stopping_job():
     assert not job_successful_dump.stop_on_fail
     workflow = Workflow.from_file(
         src_file="dump_failing_workflow",
-        context=SubstitutionList(),
+        context=Substitutions(),
         job_dict={"DUMP": job_successful_dump},
     )
 

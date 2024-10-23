@@ -39,7 +39,7 @@ class ExportRunpathJob(ErtScript):
             jobname_format=ert_config.model_config.jobname_format_string,
             runpath_format=ert_config.model_config.runpath_format_string,
             filename=str(ert_config.runpath_file),
-            substitution_list=ert_config.substitution_list,
+            substitutions=ert_config.substitutions,
             eclbase=ert_config.model_config.eclbase_format_string,
         )
         run_paths.write_runpath_list(

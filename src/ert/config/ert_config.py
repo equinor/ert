@@ -27,7 +27,7 @@ from pydantic import ValidationError as PydanticValidationError
 from typing_extensions import Self
 
 from ert.plugins import ErtPluginManager
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
@@ -89,7 +89,7 @@ class ErtConfig:
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
 
-    substitution_list: SubstitutionList = field(default_factory=SubstitutionList)
+    substitutions: Substitutions = field(default_factory=Substitutions)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: Dict[str, str] = field(default_factory=dict)
@@ -233,13 +233,13 @@ class ErtConfig:
 
     @classmethod
     def from_dict(cls, config_dict) -> Self:
-        substitution_list = _substitution_list_from_dict(config_dict)
+        substitutions = _substitutions_from_dict(config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
         )
-        substitution_list["<RUNPATH_FILE>"] = runpath_file
-        config_dir = substitution_list.get("<CONFIG_PATH>", "")
-        config_file = substitution_list.get("<CONFIG_FILE>", "no_config")
+        substitutions["<RUNPATH_FILE>"] = runpath_file
+        config_dir = substitutions.get("<CONFIG_PATH>", "")
+        config_file = substitutions.get("<CONFIG_FILE>", "no_config")
         config_file_path = path.join(config_dir, config_file)
 
         errors = cls._validate_dict(config_dict, config_file)
@@ -257,9 +257,9 @@ class ErtConfig:
             model_config = ModelConfig.from_dict(config_dict)
             runpath = model_config.runpath_format_string
             eclbase = model_config.eclbase_format_string
-            substitution_list["<RUNPATH>"] = runpath
-            substitution_list["<ECL_BASE>"] = eclbase
-            substitution_list["<ECLBASE>"] = eclbase
+            substitutions["<RUNPATH>"] = runpath
+            substitutions["<ECL_BASE>"] = eclbase
+            substitutions["<ECLBASE>"] = eclbase
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:
@@ -270,7 +270,7 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
-                config_dict, substitution_list
+                config_dict, substitutions
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -340,7 +340,7 @@ class ErtConfig:
             env_vars[key] = val
 
         return cls(
-            substitution_list=substitution_list,
+            substitutions=substitutions,
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
@@ -355,7 +355,7 @@ class ErtConfig:
             installed_forward_model_steps=installed_forward_model_steps,
             forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                 installed_forward_model_steps,
-                substitution_list,
+                substitutions,
                 config_dict,
             ),
             model_config=model_config,
@@ -551,7 +551,7 @@ class ErtConfig:
     def _create_list_of_forward_model_steps_to_run(
         cls,
         installed_steps: Dict[str, ForwardModelStep],
-        substitution_list: SubstitutionList,
+        substitutions: Substitutions,
         config_dict,
     ) -> List[ForwardModelStep]:
         errors = []
@@ -562,7 +562,7 @@ class ErtConfig:
             else:
                 unsubstituted_step_name = fm_step_description[0]
                 args = []
-            fm_step_name = substitution_list.substitute(unsubstituted_step_name)
+            fm_step_name = substitutions.substitute(unsubstituted_step_name)
             try:
                 fm_step = copy.deepcopy(installed_steps[fm_step_name])
 
@@ -577,7 +577,7 @@ class ErtConfig:
                     )
                 )
                 continue
-            fm_step.private_args = SubstitutionList()
+            fm_step.private_args = Substitutions()
             for key, val in args:
                 fm_step.private_args[key] = val
 
@@ -617,7 +617,7 @@ class ErtConfig:
                 try:
                     substituted_json = cls._create_forward_model_json(
                         run_id=None,
-                        context=substitution_list,
+                        context=substitutions,
                         forward_model_steps=[fm_step],
                         skip_pre_experiment_validation=True,
                     )
@@ -654,7 +654,7 @@ class ErtConfig:
         if context_env is not None:
             self.env_vars.update(context_env)
         return self._create_forward_model_json(
-            context=self.substitution_list,
+            context=self.substitutions,
             forward_model_steps=self.forward_model_steps,
             user_config_file=self.user_config_file,
             env_vars=self.env_vars,
@@ -666,7 +666,7 @@ class ErtConfig:
     @classmethod
     def _create_forward_model_json(
         cls,
-        context: SubstitutionList,
+        context: Substitutions,
         forward_model_steps: List[ForwardModelStep],
         run_id: Optional[str],
         iens: int = 0,
@@ -688,7 +688,7 @@ class ErtConfig:
                     f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
                     "reconstructed, with defines applied during parsing"
                 )
-                self.copy_private_args = SubstitutionList()
+                self.copy_private_args = Substitutions()
                 for key, val in fm_step.private_args.items():
                     self.copy_private_args[key] = context.substitute_real_iter(
                         val, iens, itr
@@ -805,7 +805,7 @@ class ErtConfig:
     def _workflows_from_dict(
         cls,
         content_dict,
-        substitution_list,
+        substitutions,
     ):
         workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
         workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
@@ -875,7 +875,7 @@ class ErtConfig:
                 existed = filename in workflows
                 workflow = Workflow.from_file(
                     work[0],
-                    substitution_list,
+                    substitutions,
                     workflow_jobs,
                 )
                 for job, args in workflow:
@@ -967,7 +967,7 @@ class ErtConfig:
 
     @property
     def preferred_num_cpu(self) -> int:
-        return int(self.substitution_list.get(f"<{ConfigKeys.NUM_CPU}>", 1))
+        return int(self.substitutions.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
     def _create_observations(
         self,
@@ -1057,8 +1057,8 @@ def _get_files_in_directory(job_path, errors):
     return files
 
 
-def _substitution_list_from_dict(config_dict) -> SubstitutionList:
-    subst_list = SubstitutionList()
+def _substitutions_from_dict(config_dict) -> Substitutions:
+    subst_list = Substitutions()
 
     for key, val in config_dict.get("DEFINE", []):
         subst_list[key] = val

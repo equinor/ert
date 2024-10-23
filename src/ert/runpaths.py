@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
-from ert.substitution_list import SubstitutionList
+from ert.substitutions import Substitutions
 
 
 class Runpaths:
@@ -33,22 +33,22 @@ class Runpaths:
         jobname_format: str,
         runpath_format: str,
         filename: Union[str, Path] = ".ert_runpath_list",
-        substitution_list: Optional[SubstitutionList] = None,
+        substitutions: Optional[Substitutions] = None,
         eclbase: Optional[str] = None,
     ):
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
-        self._substitution_list = substitution_list or SubstitutionList()
+        self._substitutions = substitutions or Substitutions()
         self._eclbase = eclbase
 
     def set_ert_ensemble(self, ensemble_name: str) -> None:
-        self._substitution_list["<ERT-CASE>"] = ensemble_name
-        self._substitution_list["<ERTCASE>"] = ensemble_name
+        self._substitutions["<ERT-CASE>"] = ensemble_name
+        self._substitutions["<ERTCASE>"] = ensemble_name
 
     def get_paths(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [
-            self._substitution_list.substitute_real_iter(
+            self._substitutions.substitute_real_iter(
                 self._runpath_format, realization, iteration
             )
             for realization in realizations
@@ -56,7 +56,7 @@ class Runpaths:
 
     def get_jobnames(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [
-            self._substitution_list.substitute_real_iter(
+            self._substitutions.substitute_real_iter(
                 self._jobname_format, realization, iteration
             )
             for realization in realizations
@@ -90,12 +90,12 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name_or_eclbase = self._substitution_list.substitute_real_iter(
+                    job_name_or_eclbase = self._substitutions.substitute_real_iter(
                         self._eclbase if self._eclbase else self._jobname_format,
                         realization,
                         iteration,
                     )
-                    runpath = self._substitution_list.substitute_real_iter(
+                    runpath = self._substitutions.substitute_real_iter(
                         self._runpath_format, realization, iteration
                     )
 

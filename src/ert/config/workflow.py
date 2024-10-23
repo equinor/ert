@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 
 if TYPE_CHECKING:
-    from ert.substitution_list import SubstitutionList
+    from ert.substitutions import Substitutions
 
     from .workflow_job import WorkflowJob
 
@@ -89,7 +89,7 @@ class Workflow:
     def from_file(
         cls,
         src_file: str,
-        context: Optional[SubstitutionList],
+        context: Optional[Substitutions],
         job_dict: Dict[str, WorkflowJob],
     ) -> "Workflow":
         if not os.path.exists(src_file):
