@@ -299,21 +299,39 @@ class LocalEnsemble(BaseMode):
 
         if not self.experiment.response_configuration:
             return True
-        path = self._realization_dir(realization)
+
+        responses_for_all_reals: Dict[str, polars.DataFrame] = {}
+
+        _response_types = (
+            [self.experiment.response_key_to_response_type.get(key, key)]
+            if key
+            else list(self.experiment.response_configuration)
+        )
+
+        for response_type in _response_types:
+            responses_for_all_reals[response_type] = self.load_responses(
+                response_type, tuple(range(self.ensemble_size))
+            )
 
         # Note: potential performance bottleneck,
         # should be improved greatly by having statemap.
-        # Should also be faster due to lru cache on load_responses
-        def _has_response(_response_type: str) -> bool:
-            if (path / f"{_response_type}.parquet").exists():
-                return True
+        # This currently also relies on LRU cache on load_responses
+        # If it is removed, we should try to hold these datasets
+        # especially when we loop over all reals and invoke this function
+        if key and key not in responses_for_all_reals:
 
-            if (self.mount_point / f"{_response_type}.parquet").exists():
+            def _has_response(_response_type: str) -> bool:
                 return (
                     realization
-                    in self.load_responses(
-                        _response_type, tuple(range(self.ensemble_size))
-                    )["realization"]
+                    in responses_for_all_reals[_response_type]["realization"]
+                    and key in responses_for_all_reals[_response_type]["response_key"]
+                )
+        else:
+
+            def _has_response(_response_type: str) -> bool:
+                return (
+                    realization
+                    in responses_for_all_reals[_response_type]["realization"]
                 )
 
         if key:
@@ -970,25 +988,26 @@ class LocalEnsemble(BaseMode):
         for _response_type in self.experiment.response_configuration:
             response_file = f"{response_type}.parquet"
 
-            reals_with_response = self.get_realization_list_with_responses(
-                response_type
-            )
+            reals_with_new_response = [
+                real
+                for real in range(self.ensemble_size)
+                if (self._realization_dir(real) / response_file).exists()
+            ]
 
             if not os.path.exists(self.mount_point / response_file):
                 combined = self.load_responses(
-                    response_type, tuple(reals_with_response)
+                    response_type, tuple(reals_with_new_response)
                 )
             else:
                 # Some files may be newer
                 combined = polars.read_parquet(self.mount_point / response_file)
 
                 to_write = []
-                for real in range(self.ensemble_size):
-                    if (self._realization_dir(real) / response_file).exists():
-                        response_df = polars.read_parquet(
-                            self._realization_dir(real) / response_file
-                        )
-                        to_write.append(response_df)
+                for real in reals_with_new_response:
+                    response_df = polars.read_parquet(
+                        self._realization_dir(real) / response_file
+                    )
+                    to_write.append(response_df)
 
                 if len(to_write) == 0:
                     continue
@@ -1008,6 +1027,6 @@ class LocalEnsemble(BaseMode):
 
             combined.write_parquet(self.mount_point / response_file)
 
-            for real in reals_with_response:
+            for real in reals_with_new_response:
                 if os.path.exists(self._realization_dir(real) / response_file):
                     os.remove(self._realization_dir(real) / response_file)
