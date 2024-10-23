@@ -108,6 +108,49 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
             ensemble.save_response("RESPONSE", empty_data, 0)
 
 
+def test_that_saving_response_updates_configs(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])]
+        )
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        summary_df = polars.DataFrame(
+            {
+                "response_key": ["FOPR", "FOPT:OP1", " FOPR:OP3", "FLAP", "F*"],
+                "time": polars.Series(
+                    [datetime(2000, 1, i) for i in range(1, 6)]
+                ).dt.cast_time_unit("ms"),
+                "values": polars.Series(
+                    [0.0, 1.0, 2.0, 3.0, 4.0], dtype=polars.Float32
+                ),
+            }
+        )
+
+        mapping_before = experiment.response_key_to_response_type
+        smry_config_before = experiment.response_configuration["summary"]
+
+        ensemble.save_response("summary", summary_df, 0)
+
+        mapping_after = experiment.response_key_to_response_type
+        smry_config_after = experiment.response_configuration["summary"]
+
+        assert set(mapping_before) == {"FOPR"}
+        assert set(smry_config_before.keys) == {"*", "FOPR"}
+
+        assert set(mapping_after) == {"FOPR", "FOPT:OP1", " FOPR:OP3", "FLAP", "F*"}
+        assert set(smry_config_after.keys) == {
+            "*",
+            "FOPR",
+            "FOPT:OP1",
+            " FOPR:OP3",
+            "FLAP",
+            "F*",
+        }
+
+
 def test_that_saving_empty_parameters_fails_nicely(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
@@ -753,6 +796,16 @@ class StatefulStorageTest(RuleBasedStateMachine):
         storage_ensemble.save_response(summary.response_type, ds, iens)
 
         model_ensemble.response_values[summary.name] = ds
+
+        model_experiment = self.model[storage_experiment.id]
+        response_keys = set(ds["response_key"].unique())
+
+        model_smry_config = next(
+            config for config in model_experiment.responses if config.name == "summary"
+        )
+        model_smry_config.keys = sorted(
+            set(model_smry_config.keys).union(response_keys)
+        )
 
     @rule(model_ensemble=ensembles)
     def get_responses(self, model_ensemble: Ensemble):
