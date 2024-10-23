@@ -4,7 +4,7 @@ import contextlib
 import logging
 import os
 from datetime import datetime
-from functools import lru_cache
+from functools import lru_cache, reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from uuid import UUID
@@ -359,6 +359,33 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with responses
         """
+
+        # First check for combined
+        realizations_with_responses_combined = {
+            response: set(
+                polars.read_parquet(self._path / f"{response}.parquet")[
+                    "realization"
+                ].unique()
+            )
+            if (self._path / f"{response}.parquet").exists()
+            else {}
+            for response in self.experiment.response_configuration
+        }
+
+        reals_with_all_responses_from_combined = reduce(
+            set.intersection, realizations_with_responses_combined.values()
+        )
+
+        realizations_missing_responses = reals_with_all_responses_from_combined - set(
+            range(self.ensemble_size)
+        )
+
+        if not realizations_missing_responses:
+            return list(reals_with_all_responses_from_combined)
+
+        # If not combined, fallback to checking individual folders
+        # We assume that there is no state where a combine was invoked before
+        # all responses were saved
         return [
             i
             for i in range(self.ensemble_size)
