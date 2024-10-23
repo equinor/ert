@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
+from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR, REALIZATION_STATE_FAILED
 
 
 class ProgressWidget(QFrame):
@@ -78,6 +78,7 @@ class ProgressWidget(QFrame):
             self._horizontal_legend_layout.addWidget(label)
 
     def repaint_components(self) -> None:
+        self._update_waiting_progress_bar()
         if self._realization_count > 0:
             full_width = self.width()
 
@@ -95,17 +96,31 @@ class ProgressWidget(QFrame):
     def stop_waiting_progress_bar(self) -> None:
         self._waiting_progress_bar.setVisible(False)
 
-    def start_waiting_progress_bar(self) -> None:
-        self._waiting_progress_bar.setVisible(True)
-
     def update_progress(self, status: dict[str, int], realization_count: int) -> None:
         self._status = status
         self._realization_count = realization_count
-        if status.get("Finished", 0) < self._realization_count:
-            self.start_waiting_progress_bar()
-        else:
-            self.stop_waiting_progress_bar()
         self.repaint_components()
+
+    def _update_waiting_progress_bar(self) -> None:
+        self._waiting_progress_bar.setVisible(
+            self._status.get("Finished", 0) + self._status.get("Failed", 0)
+            < self._realization_count
+        )
+
+    def set_ensemble_failed(self) -> None:
+        self._reset_progress_labels()
+
+        failed_label = self._progress_label_map[REALIZATION_STATE_FAILED]
+        failed_label.setFixedWidth(self.width())
+        failed_label.setVisible(True)
+        self.stop_waiting_progress_bar()
+
+    def set_ensemble_running(self) -> None:
+        self._reset_progress_labels()
+
+    def _reset_progress_labels(self) -> None:
+        for label in self._progress_label_map.values():
+            label.setVisible(False)
 
     def resizeEvent(self, a0: Any, event: Any = None) -> None:
         self.repaint_components()
