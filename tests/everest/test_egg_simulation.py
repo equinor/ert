@@ -6,12 +6,17 @@ import pytest
 import everest
 from ert.config import ErtConfig, QueueSystem
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames
 from everest.plugins.site_config_env import PluginSiteConfigEnv
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
+from everest.simulator.everest_to_ert import (
+    _everest_to_ert_config_dict,
+    everest_to_ert_config,
+)
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
@@ -462,6 +467,25 @@ SUM_KEYS = [
 ]
 
 
+def _run_optimization(ever_config: EverestConfig, simulation_callback) -> None:
+    ert_config = everest_to_ert_config(ever_config)
+    run_model = EverestRunModel(
+        random_seed=ert_config.random_seed,
+        config=ert_config,
+        everest_config=ever_config,
+        simulation_callback=simulation_callback,
+        optimization_callback=None,
+    )
+
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=range(49152, 51819)
+        if ert_config.queue_config.queue_system == QueueSystem.LOCAL
+        else None
+    )
+
+    run_model.run_experiment(evaluator_server_config)
+
+
 def sort_res_summary(ert_config):
     ert_config[ErtConfigKeys.SUMMARY][0] = sorted(ert_config[ErtConfigKeys.SUMMARY][0])
 
@@ -693,12 +717,8 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    workflow = everest.suite._EverestWorkflow(
-        config=config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
-    assert workflow is not None
     with PluginSiteConfigEnv():
-        workflow.start_optimization()
+        _run_optimization(config, simulation_callback=cbtracker.sweetcallbackofmine())
 
     assert cbtracker.called
     # TODO: The comparison is currently disabled because we know it would
@@ -819,12 +839,10 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    workflow = everest.suite._EverestWorkflow(
-        config=config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
-    assert workflow is not None
     with PluginSiteConfigEnv():
-        workflow.start_optimization()
+        _run_optimization(
+            ever_config=config, simulation_callback=cbtracker.sweetcallbackofmine()
+        )
 
     assert cbtracker.called
 
