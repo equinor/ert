@@ -30,7 +30,7 @@ from typing import (
 from .driver import SIGNAL_OFFSET, Driver
 from .event import Event, FinishedEvent, StartedEvent
 
-_POLL_PERIOD = 2.0  # seconds
+_POLL_PERIOD = 4.0  # seconds
 LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
 """Return code we use when lsf reports failed jobs"""
 
@@ -263,8 +263,8 @@ class LsfDriver(Driver):
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
-        self._sleep_time_between_cmd_retries = 3
-        self._bsub_retries = 10
+        self._sleep_time_between_cmd_retries = 6
+        self._bsub_retries = 20
 
         self._poll_period = _POLL_PERIOD
 
