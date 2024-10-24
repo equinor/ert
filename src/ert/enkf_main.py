@@ -9,19 +9,17 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import orjson
+import xarray as xr
 from numpy.random import SeedSequence
 
-from .config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
+from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from .config import ErtConfig
     from .storage import Ensemble
 
@@ -148,6 +146,24 @@ def _seed_sequence(seed: Optional[int]) -> int:
     return int_seed
 
 
+def save_design_matrix_to_ensemble(
+    design_matrix_df: pd.DataFrame,
+    ensemble: Ensemble,
+    active_realizations: Iterable[int],
+) -> None:
+    assert not design_matrix_df.empty
+    for realization_nr in active_realizations:
+        row = design_matrix_df.loc[realization_nr][DESIGN_MATRIX_GROUP]
+        ds = xr.Dataset(
+            {
+                "values": ("names", list(row.values)),
+                "transformed_values": ("names", list(row.values)),
+                "names": list(row.keys()),
+            }
+        )
+        ensemble.save_parameters(DESIGN_MATRIX_GROUP, realization_nr, ds)
+
+
 def sample_prior(
     ensemble: Ensemble,
     active_realizations: Iterable[int],
@@ -158,7 +174,8 @@ def sample_prior(
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
     are used without FORWARD_INIT we load files and store them. If FORWARD_INIT
     is set the state is set to INITIALIZED, but no parameters are saved to storage
-    until after the forward model has completed.
+    until after the forward model has completed. If parameters come from the DESIGN_MATRIX_GROUP
+    they are handled separately via save_design_matrix_to_ensemble.
     """
     random_seed = _seed_sequence(random_seed)
     t = time.perf_counter()
@@ -167,7 +184,11 @@ def sample_prior(
         parameters = list(parameter_configs.keys())
     for parameter in parameters:
         config_node = parameter_configs[parameter]
-        if config_node.forward_init:
+        if (
+            config_node.forward_init
+            or config_node.name == DESIGN_MATRIX_GROUP
+            or config_node.disabled
+        ):
             continue
         for realization_nr in active_realizations:
             ds = config_node.sample_or_load(

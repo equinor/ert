@@ -51,6 +51,7 @@ class ParameterConfig(ABC):
     name: str
     forward_init: bool
     update: bool
+    disabled: bool
 
     def sample_or_load(
         self,

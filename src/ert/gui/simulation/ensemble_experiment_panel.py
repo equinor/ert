@@ -15,7 +15,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
-from ert.validation import RangeStringArgument
+from ert.validation import ActiveRange, RangeStringArgument
 from ert.validation.proper_name_argument import ExperimentValidation, ProperNameArgument
 
 from .experiment_config_panel import ExperimentConfigPanel
@@ -85,6 +85,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
+            if design_matrix.design_matrix_df is None:
+                design_matrix.read_design_matrix()
+
+            if design_matrix.active_realizations:
+                self._active_realizations_field.setText(
+                    ActiveRange(design_matrix.active_realizations).rangestring
+                )
             show_dm_param_button = QPushButton("Show parameters")
             show_dm_param_button.setObjectName("show-dm-parameters")
             show_dm_param_button.setMinimumWidth(50)

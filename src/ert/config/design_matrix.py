@@ -11,15 +11,10 @@ from pandas.api.types import is_integer_dtype
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 from ._option_dict import option_dict
-from .parsing import (
-    ConfigValidationError,
-    ErrorInfo,
-)
+from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
-    from ert.config import (
-        ParameterConfig,
-    )
+    from ert.config import ParameterConfig
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -73,6 +68,20 @@ class DesignMatrix:
             design_sheet=design_sheet,
             default_sheet=default_sheet,
         )
+
+    def merge_with_existing_parameters(
+        self, existing_parameters: Dict[str, ParameterConfig]
+    ) -> Dict[str, ParameterConfig]:
+        design_keys = self.parameter_configuration[DESIGN_MATRIX_GROUP].getKeyWords()
+        for parameter_group_name, genkw_group in existing_parameters.items():
+            existing_keys = genkw_group.getKeyWords()
+            if set(design_keys).issubset(set(existing_keys)):
+                self.parameter_configuration[parameter_group_name] = (
+                    self.parameter_configuration[DESIGN_MATRIX_GROUP]
+                )
+                genkw_group.disabled = True
+            elif set(design_keys) & set(existing_keys):
+                raise ConfigValidationError("overlapping parameter names")
 
     def read_design_matrix(
         self,

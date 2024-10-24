@@ -74,6 +74,7 @@ class GenKwConfig(ParameterConfig):
     forward_init_file: Optional[str] = None
 
     def __post_init__(self) -> None:
+        self.disabled = False
         self.transform_functions: List[TransformFunction] = []
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
