@@ -115,6 +115,9 @@ class MeasuredData:
                 ),
             )
 
+            if responses_for_type.is_empty():
+                continue
+
             # Note that if there are duplicate entries for one
             # response at one index, they are aggregated together
             # with "mean" by default
@@ -150,6 +153,24 @@ class MeasuredData:
 
             if not joined.is_empty():
                 dfs.append(joined)
+
+        if not dfs:
+            pddf = (
+                polars.DataFrame(
+                    {
+                        "observation_key": [],
+                        "key_index": [],
+                        "OBS": [],
+                        "STD": [],
+                        **{str(i): [] for i in range(ensemble.ensemble_size)},
+                    }
+                )
+                .to_pandas()
+                .rename(columns={str(k): int(k) for k in range(ensemble.ensemble_size)})
+                .set_index(["observation_key", "key_index"])
+                .transpose()
+            )
+            return pddf
 
         df = polars.concat(dfs)
         df = df.rename(
