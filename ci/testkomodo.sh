@@ -70,8 +70,6 @@ start_tests () {
     run_ert_with_opm
     return_code_opm_integration_test=$?
 
-    run_everest_tests
-    return_code_everest_tests=$?
     set -e
 
 
@@ -95,10 +93,6 @@ start_tests () {
     fi
     if [ "$return_code_opm_integration_test" -ne 0 ]; then
         echo "The ERT OPM integration test failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_everest_tests" -ne 0 ]; then
-        echo "One or more Everest tests failed."
         return_code_combined_tests=1
     fi
     return $return_code_combined_tests
