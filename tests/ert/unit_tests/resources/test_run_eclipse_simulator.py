@@ -1,11 +1,7 @@
-import inspect
-import json
 import os
 import re
 import shutil
-import stat
 import subprocess
-import textwrap
 import threading
 import time
 from pathlib import Path
@@ -14,218 +10,131 @@ from unittest import mock
 import numpy as np
 import pytest
 import resfo
-import yaml
 
 from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/resources/forward_models/res/script
+# import ecl_config.py and ecl_run from ert/resources/forward_models
 # package-data path which. These are kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
 
 
-ecl_config = import_from_location(
-    "ecl_config",
-    os.path.join(
-        SOURCE_DIR, "src/ert/resources/forward_models/res/script/ecl_config.py"
-    ),
+run_reservoirsimulator = import_from_location(
+    "run_reservoirsimulator",
+    SOURCE_DIR / "src/ert/resources/forward_models/run_reservoirsimulator.py",
 )
-
-ecl_run = import_from_location(
-    "ecl_run",
-    os.path.join(SOURCE_DIR, "src/ert/resources/forward_models/res/script/ecl_run.py"),
-)
-
-
-def find_version(output):
-    return re.search(r"flow\s*([\d.]+)", output).group(1)
-
-
-@pytest.fixture
-def eclrun_conf():
-    return {
-        "eclrun_env": {
-            "SLBSLS_LICENSE_FILE": "7321@eclipse-lic-no.statoil.no",
-            "ECLPATH": "/prog/res/ecl/grid",
-            "PATH": "/prog/res/ecl/grid/macros",
-            "F_UFMTENDIAN": "big",
-            "LSB_JOBID": None,
-        }
-    }
-
-
-@pytest.fixture
-def init_eclrun_config(tmp_path, monkeypatch, eclrun_conf):
-    with open(tmp_path / "ecl100_config.yml", "w", encoding="utf-8") as f:
-        f.write(yaml.dump(eclrun_conf))
-    monkeypatch.setenv("ECL100_SITE_CONFIG", "ecl100_config.yml")
-
-
-def test_get_version_raise():
-    econfig = ecl_config.Ecl100Config()
-    class_file = inspect.getfile(ecl_config.Ecl100Config)
-    class_dir = os.path.dirname(os.path.abspath(class_file))
-    msg = os.path.join(class_dir, "ecl100_config.yml")
-    with pytest.raises(ValueError, match=msg):
-        econfig._get_version(None)
-
-
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_eclrun_will_prepend_path_and_get_env_vars_from_ecl100config(
-    eclrun_conf,
-):
-    # GIVEN a mocked eclrun that only dumps it env variables
-    Path("eclrun").write_text(
-        textwrap.dedent(
-            """\
-                #!/usr/bin/env python
-                import os
-                import json
-                with open("env.json", "w") as f:
-                    json.dump(dict(os.environ), f)
-                """
-        ),
-        encoding="utf-8",
-    )
-    os.chmod("eclrun", os.stat("eclrun").st_mode | stat.S_IEXEC)
-    Path("DUMMY.DATA").write_text("", encoding="utf-8")
-    econfig = ecl_config.Ecl100Config()
-    eclrun_config = ecl_config.EclrunConfig(econfig, "dummyversion")
-    erun = ecl_run.EclRun("DUMMY", None, check_status=False)
-    with mock.patch.object(
-        erun, "_get_run_command", mock.MagicMock(return_value="./eclrun")
-    ):
-        # WHEN eclrun is run
-        erun.runEclipse(eclrun_config=eclrun_config)
-
-    # THEN the env provided to eclrun is the same
-    # as the env from ecl_config, but PATH has been
-    # prepended with the value from ecl_config
-    with open("env.json", encoding="utf-8") as f:
-        run_env = json.load(f)
-
-    expected_eclrun_env = eclrun_conf["eclrun_env"]
-    for key, value in expected_eclrun_env.items():
-        if value is None:
-            assert key not in run_env
-            continue  # Typically LSB_JOBID
-
-        if key == "PATH":
-            assert run_env[key].startswith(value)
-        else:
-            assert value == run_env[key]
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.requires_eclipse
 def test_ecl100_binary_can_produce_output(source_root):
+    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    econfig = ecl_config.Ecl100Config()
 
-    erun = ecl_run.EclRun("SPE1.DATA", None)
-    erun.runEclipse(eclrun_config=ecl_config.EclrunConfig(econfig, "2019.3"))
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "2019.3", "SPE1.DATA"
+    )
+    erun.runEclipseX00()
 
-    ok_path = Path(erun.runPath()) / f"{erun.baseName()}.OK"
-    prt_path = Path(erun.runPath()) / f"{erun.baseName()}.PRT"
+    ok_path = Path("SPE1.OK")
+    prt_path = Path("SPE1.PRT")
 
     assert ok_path.exists()
     assert prt_path.stat().st_size > 0
 
     assert len(erun.parseErrors()) == 0
 
+    assert not Path("SPE1.h5").exists(), "HDF conversion should not be run by default"
+
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_forward_model_cmd_line_api_works(source_root):
-    # ecl_run.run() is the forward model wrapper around ecl_run.runEclipse()
+@pytest.mark.usefixtures("use_tmpdir")
+def test_runeclrun_argparse_api(source_root):
+    # Todo: avoid actually running Eclipse here, use a mock
+    # Also test the other command line options.
+    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    ecl_run.run(ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3"])
+    run_reservoirsimulator.run_reservoirsimulator(["eclipse", "2019.3", "SPE1.DATA"])
+
     assert Path("SPE1.OK").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_eclrun_will_raise_on_deck_errors(source_root):
+    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
-    econfig = ecl_config.Ecl100Config()
-    eclrun_config = ecl_config.EclrunConfig(econfig, "2019.3")
-    erun = ecl_run.EclRun("SPE1_ERROR", None)
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "2019.3", "SPE1_ERROR"
+    )
     with pytest.raises(Exception, match="ERROR"):
-        erun.runEclipse(eclrun_config=eclrun_config)
+        erun.runEclipseX00()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_failed_run_nonzero_returncode(monkeypatch):
-    Path("FOO.DATA").write_text("", encoding="utf-8")
-    econfig = ecl_config.Ecl100Config()
-    eclrun_config = ecl_config.EclrunConfig(econfig, "2021.3")
-    erun = ecl_run.EclRun("FOO.DATA", None)
-    monkeypatch.setattr("ecl_run.EclRun.execEclipse", mock.MagicMock(return_value=1))
+@pytest.mark.usefixtures("use_tmpdir")
+def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummy_version", "mocked_anyway.DATA"
+    )
+    return_value_with_code = mock.MagicMock()
+    return_value_with_code.returncode = 1
+    monkeypatch.setattr(
+        "subprocess.run", mock.MagicMock(return_value=return_value_with_code)
+    )
     with pytest.raises(
         # The return code 1 is sometimes translated to 255.
         subprocess.CalledProcessError,
         match=r"Command .*eclrun.* non-zero exit status (1|255)\.$",
     ):
-        erun.runEclipse(eclrun_config=eclrun_config)
+        erun.runEclipseX00()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_deck_errors_can_be_ignored(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
     )
-    econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1_ERROR", "--version=2019.3", "--ignore-errors"])
-
-
-@pytest.mark.integration_test
-@pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
-def test_no_hdf5_output_by_default_with_ecl100(source_root):
-    shutil.copy(
-        source_root / "test-data/ert/eclipse/SPE1.DATA",
-        "SPE1.DATA",
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1.DATA", "--ignore-errors"]
     )
-    econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3"])
-    assert not Path("SPE1.h5").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
     )
-    econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1.DATA", "--summary-conversion"]
+    )
     assert Path("SPE1.h5").exists()
 
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+@pytest.mark.usefixtures("use_tmpdir")
 def test_mpi_run_is_managed_by_system_tool(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_PARALLEL.DATA",
@@ -234,8 +143,9 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     assert re.findall(
         r"PARALLEL\s+2", Path("SPE1_PARALLEL.DATA").read_text(encoding="utf-8")
     ), "Test requires a deck needing 2 CPUs"
-    econfig = ecl_config.Ecl100Config()
-    ecl_run.run(econfig, ["SPE1_PARALLEL.DATA", "--version=2019.3"])
+    run_reservoirsimulator.run_reservoirsimulator(
+        ["eclipse", "2019.3", "SPE1_PARALLEL.DATA"]
+    )
 
     assert Path("SPE1_PARALLEL.PRT").stat().st_size > 0, "Eclipse did not run at all"
     assert Path("SPE1_PARALLEL.MSG").exists(), "No output from MPI process 1"
@@ -245,10 +155,11 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     ).exists(), "There should not be 3 MPI processes"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
     assert (
         # Expected wait time is 0.3
-        ecl_run.await_completed_unsmry_file(
+        run_reservoirsimulator.await_completed_unsmry_file(
             "SPE1.UNSMRY", max_wait=0.3, poll_interval=0.1
         )
         > 0.3
@@ -261,7 +172,7 @@ def test_await_completed_summary_file_will_return_asap():
     assert (
         0.01
         # Expected wait time is the poll_interval
-        < ecl_run.await_completed_unsmry_file(
+        < run_reservoirsimulator.await_completed_unsmry_file(
             "FOO.UNSMRY", max_wait=0.5, poll_interval=0.1
         )
         < 0.4
@@ -292,7 +203,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
     assert (
         0.5
         # Minimal wait time is around 0.55
-        < ecl_run.await_completed_unsmry_file(
+        < run_reservoirsimulator.await_completed_unsmry_file(
             "FOO.UNSMRY", max_wait=4, poll_interval=0.21
         )
         < 2
@@ -323,8 +234,10 @@ def test_ecl100_license_error_is_caught():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -350,8 +263,10 @@ def test_ecl100_crash_is_not_mistaken_as_license_trouble():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -385,8 +300,10 @@ def test_ecl300_license_error_is_caught():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "e300", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -417,8 +334,10 @@ def test_ecl300_crash_is_not_mistaken_as_license_trouble():
     Path("FOO.ECLEND").write_text(eclend, encoding="utf-8")
     Path("FOO.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("FOO.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "e300", "dummyversion", "FOO.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -477,8 +396,10 @@ def test_license_error_in_slave_is_caught():
     Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
     Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("EIGHTCELLS_MASTER.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert exception_info.value.failed_due_to_license_problems()
 
@@ -526,8 +447,10 @@ def test_crash_in_slave_is_not_mistaken_as_license():
     Path("slave2/EIGHTCELLS_SLAVE.PRT").write_text(slave_prt_error, encoding="utf-8")
     Path("EIGHTCELLS_MASTER.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("EIGHTCELLS_MASTER.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "EIGHTCELLS_MASTER.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert not exception_info.value.failed_due_to_license_problems()
 
@@ -550,8 +473,10 @@ def test_too_few_parsed_error_messages_gives_warning():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" in str(exception_info.value)
 
@@ -580,8 +505,10 @@ def test_tail_of_prt_file_is_included_when_error_count_inconsistency():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "this_should_be_included" in str(exception_info.value)
     assert "this_should_not_be_included" not in str(exception_info.value)
@@ -605,8 +532,10 @@ def test_correct_number_of_parsed_error_messages_gives_no_warning():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" not in str(
         exception_info.value
@@ -636,8 +565,10 @@ def test_slave_started_message_are_not_counted_as_errors():
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
 
-    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
-    with pytest.raises(ecl_run.EclError) as exception_info:
+    run = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "dummyversion", "ECLCASE.DATA"
+    )
+    with pytest.raises(run_reservoirsimulator.EclError) as exception_info:
         run.assertECLEND()
     assert "Warning, mismatch between stated Error count" not in str(
         exception_info.value

@@ -2,7 +2,10 @@ import logging
 import tempfile
 from unittest.mock import Mock
 
+import pytest
+
 import ert.plugins.hook_implementations
+from ert import plugin
 from ert.plugins import ErtPluginManager
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import (
@@ -13,6 +16,7 @@ from tests.ert.unit_tests.plugins.dummy_plugins import (
 def test_no_plugins():
     pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
+    assert pm.get_forward_model_paths() == []
     assert pm.get_flow_config_path() is None
     assert pm.get_ecl100_config_path() is None
     assert pm.get_ecl300_config_path() is None
@@ -35,6 +39,7 @@ def test_with_plugins():
         "test": "test",
         "test2": "test",
     }
+    assert pm.get_forward_model_paths() == ["/foo/bin", "/bar/bin"]
     assert pm.get_flow_config_path() == "/dummy/path/flow_config.yml"
     assert pm.get_ecl100_config_path() == "/dummy/path/ecl100_config.yml"
     assert pm.get_ecl300_config_path() == "/dummy/path/ecl300_config.yml"
@@ -53,6 +58,69 @@ def test_with_plugins():
         "JOB_SCRIPT job_dispatch_dummy.py",
         "QUEUE_OPTION LOCAL MAX_RUNNING 2",
     ]
+
+
+def test_plugin_with_removed_hook_is_pass():
+    class LegacyPlugin:
+        @plugin(name="dummy2")
+        def legacy_hook_that_is_now_removed():
+            return "my name is legacy"
+
+    # no error, no effect.
+    ErtPluginManager(plugins=[LegacyPlugin])
+
+
+def test_lifo_path_order_for_forward_model_paths():
+    class OtherPlugin:
+        @plugin(name="dummy2")
+        def forward_model_paths():
+            return ["firstinpath", "secondinpath"]
+
+    assert ErtPluginManager(
+        plugins=[dummy_plugins, OtherPlugin]
+    ).get_forward_model_paths() == [
+        "firstinpath",
+        "secondinpath",
+        "/foo/bin",
+        "/bar/bin",
+    ]
+    assert ErtPluginManager(
+        plugins=[OtherPlugin, dummy_plugins]
+    ).get_forward_model_paths() == [
+        "/foo/bin",
+        "/bar/bin",
+        "firstinpath",
+        "secondinpath",
+    ]
+
+
+def test_path_plugin_returning_empty_pathlist():
+    class OtherPlugin:
+        @plugin(name="dummy2")
+        def forward_model_paths():
+            return []
+
+    assert ErtPluginManager(plugins=[OtherPlugin]).get_forward_model_paths() == []
+
+
+def test_path_plugin_returning_nonstrings():
+    class OtherPlugin:
+        @plugin(name="dummy2")
+        def forward_model_paths():
+            return [0]
+
+    with pytest.raises(TypeError, match="str"):
+        ErtPluginManager(plugins=[OtherPlugin]).get_forward_model_paths()
+
+
+def test_path_plugin_returning_nonlist():
+    class OtherPlugin:
+        @plugin(name="dummy2")
+        def forward_model_paths():
+            return "firstinpath"
+
+    with pytest.raises(TypeError, match="list"):
+        ErtPluginManager(plugins=[dummy_plugins, OtherPlugin]).get_forward_model_paths()
 
 
 def test_job_documentation():
