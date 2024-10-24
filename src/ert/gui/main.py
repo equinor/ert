@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import sys
-import webbrowser
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, Tuple
 
@@ -14,7 +13,7 @@ else:
 
 from collections import Counter
 
-from qtpy.QtCore import QDir, Qt
+from qtpy.QtCore import QDir
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QWidget
 
@@ -24,19 +23,10 @@ from ert.config import (
     capture_validation,
 )
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.simulation import ExperimentPanel
 from ert.gui.tools.event_viewer import (
-    EventViewerTool,
     GUILogHandler,
     add_gui_log_handler,
 )
-from ert.gui.tools.export import ExportTool
-from ert.gui.tools.load_results import LoadResultsTool
-from ert.gui.tools.manage_experiments import ManageExperimentsTool
-from ert.gui.tools.plot import PlotTool
-from ert.gui.tools.plugins import PluginHandler, PluginsTool
-from ert.gui.tools.workflows import WorkflowsTool
-from ert.libres_facade import LibresFacade
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
@@ -44,7 +34,6 @@ from ert.storage import ErtStorageException, Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
 from .suggestor import Suggestor
-from .summarypanel import SummaryPanel
 
 
 def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
@@ -167,59 +156,16 @@ def _start_initial_gui_window(
         )
 
 
-def _clicked_help_button(menu_label: str, link: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.info(f"Pressed help button {menu_label}")
-    webbrowser.open(link)
-
-
-def _clicked_about_button(about_dialog: QWidget) -> None:
-    logger = logging.getLogger(__name__)
-    logger.info("Pressed help button About")
-    about_dialog.show()
-
-
 def _setup_main_window(
-    config: ErtConfig,
+    ert_config: ErtConfig,
     args: Namespace,
     log_handler: GUILogHandler,
     storage: Storage,
     plugin_manager: Optional[ErtPluginManager] = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
-    facade = LibresFacade(config)
-    config_file = args.config
-    window = ErtMainWindow(config_file, plugin_manager)
+    window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)
     window.notifier.set_storage(storage)
-    window.setWidget(
-        ExperimentPanel(
-            config, window.notifier, config_file, facade.get_ensemble_size()
-        )
-    )
-
-    plugin_handler = PluginHandler(
-        window.notifier,
-        [wfj for wfj in config.workflow_jobs.values() if wfj.is_plugin()],
-        window,
-    )
-
-    window.addDock(
-        "Configuration summary",
-        SummaryPanel(config),
-        area=Qt.DockWidgetArea.BottomDockWidgetArea,
-    )
-    window.addTool(PlotTool(config_file, window))
-    window.addTool(ExportTool(config, window.notifier))
-    window.addTool(WorkflowsTool(config, window.notifier))
-    window.addTool(
-        ManageExperimentsTool(
-            config, window.notifier, config.model_config.num_realizations
-        )
-    )
-    window.addTool(PluginsTool(plugin_handler, window.notifier, config))
-    window.addTool(LoadResultsTool(facade, window.notifier))
-    event_viewer = EventViewerTool(log_handler, config_file)
-    window.addTool(event_viewer)
-    window.close_signal.connect(event_viewer.close_wnd)
+    window.post_init()
     window.adjustSize()
     return window
