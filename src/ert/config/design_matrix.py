@@ -77,6 +77,9 @@ class DesignMatrix:
     def read_design_matrix(
         self,
     ) -> None:
+        # Read the parameter names (first row) as strings to prevent pandas from modifying them.
+        # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
+        # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
         param_names = (
             pd.read_excel(
                 self.xls_filename,
