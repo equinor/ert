@@ -165,14 +165,7 @@ class RunReservoirSimulator:
                     self.bypass_flowrun = True
         self.runner_abspath: str = _runner_abspath
 
-        # Decipher ecl_case
-        ext: str = Path(ecl_case).suffix
-        if ext in [".data", ".DATA"]:
-            data_file = ecl_case
-        elif ecl_case.islower():
-            data_file = ecl_case + ".data"
-        else:
-            data_file = ecl_case + ".DATA"
+        data_file = ecl_case_to_data_file(ecl_case)
 
         if not Path(data_file).exists:
             raise IOError(f"No such file: {data_file}")
@@ -407,6 +400,16 @@ def run_reservoirsimulator(args: List[str]):
     except EclError as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
+
+
+def ecl_case_to_data_file(ecl_case: str) -> str:
+    ext: str = Path(ecl_case).suffix
+    if ext in [".data", ".DATA"]:
+        return ecl_case
+    elif ecl_case.islower():
+        return ecl_case + ".data"
+    else:
+        return ecl_case + ".DATA"
 
 
 if __name__ == "__main__":
