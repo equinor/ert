@@ -23,15 +23,14 @@ def check_status(*args, **kwargs):
     assert status["status"] == kwargs["status"]
 
 
-def fail_optimization(
-    config, simulation_callback, optimization_callback, from_ropt=False
-):
+def fail_optimization(self, from_ropt=False):
     # Patch start_optimization to raise a failed optimization callback. Also
     # call the provided simulation callback, which has access to the shared_data
     # variable in the eversever main function. Patch that callback to modify
     # shared_data (see set_shared_status() below).
-    simulation_callback(None, None)
+    self._sim_callback(None, None)
     if from_ropt:
+        self._exit_code = OptimizerExitCode.TOO_FEW_REALIZATIONS
         return OptimizerExitCode.TOO_FEW_REALIZATIONS
 
     raise Exception("Failed optimization")
@@ -109,8 +108,11 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
 )
 @patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
-    "everest.detached.jobs.everserver.start_optimization",
-    side_effect=partial(check_status, status=ServerStatus.running),
+    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
+    autospec=True,
+    side_effect=lambda self, evaluator_server_config, restart=False: check_status(
+        self.everest_config, status=ServerStatus.running
+    ),
 )
 @patch("everest.detached.jobs.everserver.validate_export", return_value=([], False))
 @patch(
@@ -143,8 +145,11 @@ def test_everserver_status_running_complete(
 @patch("everest.detached.jobs.everserver._write_hostfile")
 @patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
-    "everest.detached.jobs.everserver.start_optimization",
-    side_effect=partial(fail_optimization, from_ropt=True),
+    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
+    autospec=True,
+    side_effect=lambda self, evaluator_server_config, restart=False: fail_optimization(
+        self, from_ropt=True
+    ),
 )
 @patch(
     "everest.detached.jobs.everserver._sim_monitor",
@@ -190,8 +195,11 @@ def test_everserver_status_failed_job(
 @patch("everest.detached.jobs.everserver._write_hostfile")
 @patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
-    "everest.detached.jobs.everserver.start_optimization",
-    side_effect=fail_optimization,
+    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
+    autospec=True,
+    side_effect=lambda self, evaluator_server_config, restart=False: fail_optimization(
+        self, from_ropt=False
+    ),
 )
 @patch(
     "everest.detached.jobs.everserver._sim_monitor",

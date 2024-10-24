@@ -6,6 +6,8 @@ from typing import Callable, Dict, Iterator, Optional, Union
 
 import pytest
 
+from ert.config import QueueSystem
+from ert.ensemble_evaluator import EvaluatorServerConfig
 from everest.config.control_config import ControlConfig
 from tests.everest.utils import relpath
 
@@ -123,3 +125,15 @@ def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
 @pytest.fixture
 def change_to_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def evaluator_server_config_generator():
+    def create_evaluator_server_config(run_model):
+        return EvaluatorServerConfig(
+            custom_port_range=range(49152, 51819)
+            if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL
+            else None
+        )
+
+    return create_evaluator_server_config

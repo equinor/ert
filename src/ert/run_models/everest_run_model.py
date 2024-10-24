@@ -3,9 +3,11 @@ from __future__ import annotations
 import copy
 import datetime
 import functools
+import json
 import logging
 import os
 import queue
+import random
 import re
 import shutil
 import threading
@@ -37,6 +39,7 @@ from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import Simulator
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST, SIMULATOR_END, SIMULATOR_START, SIMULATOR_UPDATE
 
 from ..resources import all_shell_script_fm_steps
@@ -298,6 +301,11 @@ class EverestRunModel(BaseRunModel):
         optimization_callback: OptimizerCallback,
         display_all_jobs: bool = True,
     ):
+        everest_config = self._add_defaults(everest_config)
+
+        Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
+        Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
+
         self.ropt_config = everest2ropt(everest_config)
         self.everest_config = everest_config
         self.support_restart = False
@@ -332,6 +340,57 @@ class EverestRunModel(BaseRunModel):
         )
 
         self.num_retries_per_iter = 0  # OK?
+
+    @staticmethod
+    def _add_defaults(config: EverestConfig) -> EverestConfig:
+        """This function exists as a temporary mechanism to default configurations that
+        needs to be global in the sense that they should carry over both to ropt and ERT.
+        When the proper mechanism for this is implemented this code
+        should die.
+
+        """
+        defaulted_config = config.copy()
+        assert defaulted_config.environment is not None
+
+        random_seed = defaulted_config.environment.random_seed
+        if random_seed is None:
+            random_seed = random.randint(1, 2**30)
+
+        defaulted_config.environment.random_seed = random_seed
+
+        logging.getLogger(EVEREST).info("Using random seed: %d", random_seed)
+        logging.getLogger(EVEREST).info(
+            "To deterministically reproduce this experiment, "
+            "add the above random seed to your configuration file."
+        )
+
+        return defaulted_config
+
+    @classmethod
+    def create(
+        cls,
+        ever_config: EverestConfig,
+        simulation_callback: Optional[SimulationCallback] = None,
+        optimization_callback: Optional[OptimizerCallback] = None,
+        random_seed: Optional[int] = None,
+    ) -> EverestRunModel:
+        def default_simulation_callback(
+            simulation_status: SimulationStatus | None, event: str
+        ) -> str | None:
+            return None
+
+        def default_optimization_callback() -> str | None:
+            return None
+
+        ert_config = everest_to_ert_config(cls._add_defaults(ever_config))
+        return cls(
+            random_seed=random_seed,
+            config=ert_config,
+            everest_config=ever_config,
+            simulation_callback=simulation_callback or default_simulation_callback,
+            optimization_callback=optimization_callback
+            or default_optimization_callback,
+        )
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
@@ -500,3 +559,17 @@ class EverestRunModel(BaseRunModel):
     @classmethod
     def description(cls) -> str:
         return "Run batches "
+
+    @property
+    def exit_code(
+        self,
+    ) -> Optional[Literal["max_batch_num_reached"] | OptimizerExitCode]:
+        return self._exit_code
+
+    @property
+    def result(self) -> Optional[seba_sqlite.sqlite_storage.OptimalResult]:
+        return self._result
+
+    def __repr__(self) -> str:
+        config_json = json.dumps(self.everest_config, sort_keys=True, indent=2)
+        return f"EverestRunModel(config={config_json})"

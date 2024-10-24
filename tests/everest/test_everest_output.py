@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.config import ErtConfig
+from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.detached import generate_everserver_ert_config, start_server
@@ -15,18 +16,17 @@ from everest.strings import (
     DETACHED_NODE_DIR,
     OPTIMIZATION_OUTPUT_DIR,
 )
-from everest.suite import _EverestWorkflow
 from everest.util import makedirs_if_needed
 
 
 def test_that_one_experiment_creates_one_ensemble_per_batch(
-    copy_math_func_test_data_to_tmp,
+    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
     config = EverestConfig.load_file("config_minimal.yml")
-    workflow = _EverestWorkflow(config)
-    assert workflow is not None
 
-    workflow.start_optimization()
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = evaluator_server_config_generator(run_model)
+    run_model.run_experiment(evaluator_server_config)
 
     batches = os.listdir(config.simulation_dir)
     ert_config = ErtConfig.with_plugins().from_dict(_everest_to_ert_config_dict(config))
@@ -58,7 +58,8 @@ def test_everest_output(start_mock, copy_mocked_test_data_to_tmp):
     def useless_cb(*args, **kwargs):
         pass
 
-    _EverestWorkflow(config, optimization_callback=useless_cb)
+    EverestRunModel.create(config, optimization_callback=useless_cb)
+
     # Check the output folder is created when stating the optimization
     # in everest workflow
     assert DEFAULT_OUTPUT_DIR not in initial_folders

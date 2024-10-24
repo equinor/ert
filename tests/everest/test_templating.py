@@ -6,6 +6,7 @@ import pytest
 from ruamel.yaml import YAML
 
 import everest
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
 TMPL_CONFIG_FILE = "config.yml"
@@ -125,10 +126,13 @@ def test_render_executable(copy_template_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_install_template(copy_template_test_data_to_tmp):
+def test_install_template(
+    copy_template_test_data_to_tmp, evaluator_server_config_generator
+):
     config = EverestConfig.load_file(TMPL_CONFIG_FILE)
-    workflow = everest.suite._EverestWorkflow(config)
-    workflow.start_optimization()
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = evaluator_server_config_generator(run_model)
+    run_model.run_experiment(evaluator_server_config)
 
 
 def test_well_order_template(change_to_tmpdir):
@@ -164,7 +168,9 @@ def test_well_order_template(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
-def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp):
+def test_user_specified_data_n_template(
+    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
+):
     """
     Ensure that a user specifying a data resource and an installed_template
     with "extra_data", the results of that template will be passed to the
@@ -212,10 +218,9 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp):
 
     config = EverestConfig.with_defaults(**updated_config_dict)
 
-    workflow = everest.suite._EverestWorkflow(config)
-    assert workflow is not None
-
-    workflow.start_optimization()
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = evaluator_server_config_generator(run_model)
+    run_model.run_experiment(evaluator_server_config)
 
     # The data should have been loaded and passed through template to file.
     expected_file = os.path.join(
