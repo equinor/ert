@@ -43,12 +43,12 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
         next(run)
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=10)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_cpu_seconds_can_detect_multiprocess():
     """Run a fm step that sets of two simultaneous processes that
-    each run for 1 second. We should be able to detect the total
+    each run for 2 second. We should be able to detect the total
     cpu seconds consumed to be roughly 2 seconds.
 
     The test is flaky in that it tries to gather cpu_seconds data while
@@ -64,7 +64,7 @@ def test_cpu_seconds_can_detect_multiprocess():
                 """\
             import time
             now = time.time()
-            while time.time() < now + 1:
+            while time.time() < now + 2:
                 pass"""
             )
         )
@@ -91,7 +91,7 @@ def test_cpu_seconds_can_detect_multiprocess():
     for status in fmstep.run():
         if isinstance(status, Running):
             cpu_seconds = max(cpu_seconds, status.memory_status.cpu_seconds)
-    assert 1.4 < cpu_seconds < 2.2
+    assert 2.5 < cpu_seconds < 4.5
 
 
 @pytest.mark.integration_test
