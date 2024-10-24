@@ -19,6 +19,9 @@ from dns import resolver, reversename
 from flask import Flask, Response, jsonify, request
 from ropt.enums import OptimizerExitCode
 
+from ert.config import QueueSystem
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.everest_run_model import EverestRunModel
 from everest import export_to_csv, validate_export
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
@@ -30,7 +33,6 @@ from everest.strings import (
     SIM_PROGRESS_ENDPOINT,
     STOP_ENDPOINT,
 )
-from everest.suite import start_optimization
 from everest.util import configure_logger, makedirs_if_needed, version_info
 
 
@@ -269,12 +271,22 @@ def main():
 
     try:
         update_everserver_status(config, ServerStatus.running)
-        exit_code = start_optimization(
+
+        run_model = EverestRunModel.create(
             config,
             simulation_callback=partial(_sim_monitor, shared_data=shared_data),
             optimization_callback=partial(_opt_monitor, shared_data=shared_data),
         )
-        status, message = _get_optimization_status(exit_code, shared_data)
+
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=range(49152, 51819)
+            if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL
+            else None
+        )
+
+        run_model.run_experiment(evaluator_server_config)
+
+        status, message = _get_optimization_status(run_model.exit_code, shared_data)
         if status != ServerStatus.completed:
             update_everserver_status(config, status, message)
             return

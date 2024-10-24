@@ -2,8 +2,8 @@ import os
 
 import pytest
 
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from everest.suite import _EverestWorkflow
 
 NO_PROJECT_RES = (
     os.environ.get("NO_PROJECT_RES", False),
@@ -14,18 +14,19 @@ NO_PROJECT_RES = (
 @pytest.mark.skipif(NO_PROJECT_RES[0], reason=NO_PROJECT_RES[1])
 def test_init_no_project_res(copy_egg_test_data_to_tmp):
     config_file = os.path.join("everest", "model", "config.yml")
-    config_dict = EverestConfig.load_file(config_file)
-    _EverestWorkflow(config_dict)
+    config = EverestConfig.load_file(config_file)
+    EverestRunModel.create(config)
 
 
 def test_init(copy_mocked_test_data_to_tmp):
     config_file = os.path.join("mocked_test_case.yml")
-    config_dict = EverestConfig.load_file(config_file)
-    _EverestWorkflow(config_dict)
+    config = EverestConfig.load_file(config_file)
+    EverestRunModel.create(config)
 
 
 def test_no_config_init():
     with pytest.raises(AttributeError):
-        _EverestWorkflow(None)  # type: ignore
+        EverestRunModel.create(None)
+
     with pytest.raises(AttributeError):
-        _EverestWorkflow("Frozen bananas")  # type: ignore
+        EverestRunModel.create("Frozen bananas")
