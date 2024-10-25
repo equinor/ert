@@ -6,6 +6,8 @@ import pytest
 import everest
 from ert.config import ErtConfig, QueueSystem
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
@@ -693,12 +695,12 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    workflow = everest.suite._EverestWorkflow(
-        config=config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
-    assert workflow is not None
     with PluginSiteConfigEnv():
-        workflow.start_optimization()
+        run_model = EverestRunModel.create(
+            config, simulation_callback=cbtracker.sweetcallbackofmine
+        )
+        evaluator_server_config = EvaluatorServerConfig()
+        run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
     # TODO: The comparison is currently disabled because we know it would
@@ -819,12 +821,12 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    workflow = everest.suite._EverestWorkflow(
-        config=config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
-    assert workflow is not None
     with PluginSiteConfigEnv():
-        workflow.start_optimization()
+        run_model = EverestRunModel.create(
+            config, simulation_callback=cbtracker.sweetcallbackofmine
+        )
+        evaluator_server_config = EvaluatorServerConfig()
+        run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
 
