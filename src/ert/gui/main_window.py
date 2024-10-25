@@ -126,7 +126,9 @@ class ErtMainWindow(QMainWindow):
                 )
                 self.central_layout.addWidget(self._manage_experiments_panel)
 
-            if index_name == "Create plot" and not self._plot_window:
+            if index_name == "Create plot":
+                if self._plot_window:
+                    self._plot_window.close()
                 self._plot_window = PlotWindow(self.config_file, self)
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
