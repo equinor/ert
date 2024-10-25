@@ -115,6 +115,11 @@ class MeasuredData:
                 ),
             )
 
+            if responses_for_type.is_empty():
+                raise ResponseError(
+                    f"No response loaded for observation type: {response_type}"
+                )
+
             # Note that if there are duplicate entries for one
             # response at one index, they are aggregated together
             # with "mean" by default
