@@ -3,9 +3,11 @@ import logging
 import tempfile
 from unittest.mock import Mock
 
+import pytest
 from opentelemetry.sdk.trace import TracerProvider
 
 import ert.plugins.hook_implementations
+from ert import plugin
 from ert.plugins import ErtPluginManager
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import (
@@ -19,6 +21,7 @@ def test_no_plugins():
     assert pm.get_flow_config_path() is None
     assert pm.get_ecl100_config_path() is None
     assert pm.get_ecl300_config_path() is None
+    assert pm.get_forward_model_configuration() == {}
 
     assert len(pm.forward_model_steps) > 0
     assert len(pm._get_config_workflow_jobs()) > 0
@@ -41,6 +44,7 @@ def test_with_plugins():
     assert pm.get_flow_config_path() == "/dummy/path/flow_config.yml"
     assert pm.get_ecl100_config_path() == "/dummy/path/ecl100_config.yml"
     assert pm.get_ecl300_config_path() == "/dummy/path/ecl300_config.yml"
+    assert pm.get_forward_model_configuration() == {"FLOW": {"mpipath": "/foo"}}
 
     assert pm.get_installable_jobs()["job1"] == "/dummy/path/job1"
     assert pm.get_installable_jobs()["job2"] == "/dummy/path/job2"
@@ -56,6 +60,143 @@ def test_with_plugins():
         "JOB_SCRIPT job_dispatch_dummy.py",
         "QUEUE_OPTION LOCAL MAX_RUNNING 2",
     ]
+
+
+def test_fm_config_with_empty_config():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {}
+
+    assert (
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {}
+    )
+
+
+def test_fm_config_with_empty_config_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {}}
+
+    assert (
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {}
+    )
+
+
+def test_fm_config_merges_data_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"com": 3}}
+
+    class OtherPlugin:
+        @plugin(name="bar")
+        def forward_model_configuration():
+            return {"foo": {"bar": 2}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo": {"com": 3, "bar": 2}}
+
+
+def test_fm_config_multiple_steps():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": 3}}
+
+    class OtherPlugin:
+        @plugin(name="bar")
+        def forward_model_configuration():
+            return {"foo200": {"bar": 2}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo100": {"com": 3}, "foo200": {"bar": 2}}
+
+
+def test_fm_config_conflicting_config():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": "from_someplugin"}}
+
+    class OtherPlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {"com": "from_otherplugin"}}
+
+    with pytest.raises(RuntimeError, match="Duplicate configuration"):
+        ErtPluginManager(
+            plugins=[SomePlugin, OtherPlugin]
+        ).get_forward_model_configuration()
+
+
+def test_fm_config_with_repeated_keys_different_fm_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo1": {"bar": "1"}}
+
+    class OtherPlugin:
+        @plugin(name="foo2")
+        def forward_model_configuration():
+            return {"foo2": {"bar": "2"}}
+
+    assert ErtPluginManager(
+        plugins=[SomePlugin, OtherPlugin]
+    ).get_forward_model_configuration() == {"foo1": {"bar": "1"}, "foo2": {"bar": "2"}}
+
+
+def test_fm_config_with_repeated_keys_with_different_case():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"bar": "lower", "BAR": "higher"}}
+
+    with pytest.raises(RuntimeError, match="Duplicate configuration"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_type():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return 1
+
+    with pytest.raises(TypeError, match="foo did not return a dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_steptype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {1: {"bar": "1"}}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_subtype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": 1}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
+
+
+def test_fm_config_with_wrong_keytype():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo100": {1: "bar"}}
+
+    with pytest.raises(TypeError, match="foo did not provide dict"):
+        ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
 
 
 def test_job_documentation():

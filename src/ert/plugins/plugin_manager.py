@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import logging
 import os
 import shutil
@@ -139,6 +140,47 @@ class ErtPluginManager(pluggy.PluginManager):
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.flow_config_path, config_name="flow"
         )
+
+    def get_forward_model_configuration(self) -> Dict[str, Dict[str, Any]]:
+        response: List[PluginResponse[Dict[str, str]]] = (
+            self.hook.forward_model_configuration()
+        )
+        if response == []:
+            return {}
+
+        fm_configs: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
+        for res in response:
+            if not isinstance(res.data, dict):
+                raise TypeError(
+                    f"{res.plugin_metadata.plugin_name} did not return a dict"
+                )
+
+            for fmstep_name, fmstep_config in res.data.items():
+                if not isinstance(fmstep_name, str) or not isinstance(
+                    fmstep_config, dict
+                ):
+                    raise TypeError(
+                        f"{res.plugin_metadata.plugin_name} did not "
+                        "provide dict[str, dict[str, Any]]"
+                    )
+                for key, value in fmstep_config.items():
+                    if not isinstance(key, str):
+                        raise TypeError(
+                            f"{res.plugin_metadata.plugin_name} did not "
+                            f"provide dict[str, dict[str, Any]], got {key} "
+                            "which was not a string."
+                        )
+                    if key.lower() in [
+                        existing.lower() for existing in fm_configs[fmstep_name]
+                    ]:
+                        raise RuntimeError(
+                            "Duplicate configuration or fm_step "
+                            f"{fmstep_name} for key {key} when parsing plugin "
+                            f"{res.plugin_metadata.plugin_name}, it is already "
+                            "registered by another plugin."
+                        )
+                    fm_configs[fmstep_name][key] = value
+        return fm_configs
 
     def _site_config_lines(self) -> List[str]:
         try:

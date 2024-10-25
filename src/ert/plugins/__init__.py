@@ -27,6 +27,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "installable_workflow_jobs",
                     "help_links",
                     "installable_forward_model_steps",
+                    "forward_model_configuration",
                     "ecl100_config_path",
                     "ecl300_config_path",
                     "flow_config_path",

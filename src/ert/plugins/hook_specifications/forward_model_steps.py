@@ -18,3 +18,11 @@ def installable_forward_model_steps() -> (
     :return: List of forward model step plugins in the form of subclasses of the
         ForwardModelStepPlugin class
     """
+
+
+@no_type_check
+@hook_specification
+def forward_model_configuration() -> PluginResponse[List[Type[ForwardModelStepPlugin]]]:
+    """
+    :return: List of configurations to be merged to be provided to forward model steps.
+    """
