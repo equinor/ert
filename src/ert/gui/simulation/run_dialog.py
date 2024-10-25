@@ -7,8 +7,6 @@ from typing import Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
-    QCloseEvent,
-    QKeyEvent,
     QMouseEvent,
     QMovie,
     QTextCursor,
@@ -53,7 +51,6 @@ from ert.gui.model.snapshot import (
     SnapshotModel,
 )
 from ert.gui.tools.file import FileDialog
-from ert.gui.tools.plot import PlotTool
 from ert.run_models import (
     BaseRunModel,
     RunModelStatusEvent,
@@ -167,9 +164,11 @@ class FMStepOverview(QTableView):
         return super().mouseMoveEvent(event)
 
 
-class RunDialog(QDialog):
+class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
+    progress_update_event = Signal(dict, int)
+    finished = Signal()
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -181,7 +180,7 @@ class RunDialog(QDialog):
         parent: Optional[QWidget] = None,
         output_path: Optional[Path] = None,
     ):
-        QDialog.__init__(self, parent)
+        QFrame.__init__(self, parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -193,9 +192,6 @@ class RunDialog(QDialog):
         self._event_queue = event_queue
         self._notifier = notifier
         self.fail_msg_box: Optional[ErtMessageBox] = None
-
-        self._minimum_width = 1200
-        self._minimum_height = 800
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -226,14 +222,7 @@ class RunDialog(QDialog):
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
 
-        self.plot_tool = PlotTool(config_file, self.parent())  # type: ignore
-        self.plot_button = QPushButton(self.plot_tool.getName())
-        self.plot_button.clicked.connect(self.plot_tool.trigger)
-        self.plot_button.setEnabled(True)
-
         self.kill_button = QPushButton("Terminate experiment")
-        self.done_button = QPushButton("Done")
-        self.done_button.setHidden(True)
         self.restart_button = QPushButton("Rerun failed")
         self.restart_button.setHidden(True)
         self.copy_debug_info_button = QPushButton("Debug Info")
@@ -248,8 +237,7 @@ class RunDialog(QDialog):
         spin_movie.start()
 
         self.processing_animation = QLabel()
-        self.processing_animation.setMaximumSize(QSize(size, size))
-        self.processing_animation.setMinimumSize(QSize(size, size))
+        self.processing_animation.setFixedSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
 
         button_layout = QHBoxLayout()
@@ -259,9 +247,7 @@ class RunDialog(QDialog):
         button_layout.addWidget(self.memory_usage)
         button_layout.addStretch()
         button_layout.addWidget(self.copy_debug_info_button)
-        button_layout.addWidget(self.plot_button)
         button_layout.addWidget(self.kill_button)
-        button_layout.addWidget(self.done_button)
         button_layout.addWidget(self.restart_button)
 
         button_widget_container = QWidget()
@@ -299,14 +285,17 @@ class RunDialog(QDialog):
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)  # type: ignore
-        self.done_button.clicked.connect(self.accept)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
-        self.setMinimumSize(self._minimum_width, self._minimum_height)
+        self.setMinimumSize(1200, 600)
         self.finished.connect(self._on_finished)
 
         self._restart = False
+        self.flag_simulation_done = False
+
+    def is_simulation_done(self) -> bool:
+        return self.flag_simulation_done
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
@@ -353,15 +342,10 @@ class RunDialog(QDialog):
             text += f", assigned to host: {exec_hosts}"
         self._fm_step_label.setText(text)
 
-    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
-        if not self._notifier.is_simulation_running:
-            self.accept()
-        elif self.killJobs() != QMessageBox.Yes and a0 is not None:
-            a0.ignore()
-
     def run_experiment(self, restart: bool = False) -> None:
         self._restart = restart
         self._progress_widget.set_ensemble_running()
+        self.flag_simulation_done = False
         if restart is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
@@ -408,8 +392,7 @@ class RunDialog(QDialog):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
-            self._on_finished()
-            self.finished.emit(-1)
+            self.finished.emit()
         return kill_job
 
     @Slot(bool, str)
@@ -444,8 +427,8 @@ class RunDialog(QDialog):
     def _on_event(self, event: object) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.msg)
+            self.finished.emit()
             self._ticker.stop()
-            self.done_button.setHidden(False)
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
                 if self._restart:
@@ -460,6 +443,7 @@ class RunDialog(QDialog):
             self._progress_widget.update_progress(
                 event.status_count, event.realization_count
             )
+            self.progress_update_event.emit(event.status_count, event.realization_count)
         elif isinstance(event, SnapshotUpdateEvent):
             if event.snapshot is not None:
                 self._snapshot_model._update_snapshot(
@@ -469,6 +453,7 @@ class RunDialog(QDialog):
                 event.status_count, event.realization_count
             )
             self.update_total_progress(event.progress, event.iteration_label)
+            self.progress_update_event.emit(event.status_count, event.realization_count)
         elif isinstance(event, RunModelUpdateBeginEvent):
             iteration = event.iteration
             widget = UpdateWidget(iteration)
@@ -544,25 +529,12 @@ class RunDialog(QDialog):
         if result == QMessageBox.Ok:
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
-            self.done_button.setVisible(False)
             self.run_experiment(restart=True)
 
-    def get_runtime(self) -> int:
-        return self._run_model.get_runtime()
-
     def _on_finished(self) -> None:
+        self.flag_simulation_done = True
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
-
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
-        # QDialog on escape will close without prompting
-        # so call self.close() instead
-        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
-            self.close()
-        elif a0 is not None and a0.key() == Qt.Key.Key_F1:
-            self.produce_clipboard_debug_info.emit()
-        else:
-            QDialog.keyPressEvent(self, a0)
 
 
 # Cannot use a non-static method here as

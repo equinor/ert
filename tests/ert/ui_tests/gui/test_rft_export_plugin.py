@@ -108,8 +108,8 @@ def test_rft_csv_export_plugin_exports_rft_data(
             drop_constant.setChecked(True)
             qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
 
-        plugin_tool = gui.tools["Plugins"]
-        plugin_actions = plugin_tool.getAction().menu().actions()
+        plugin_tool = gui.plugins_tool
+        plugin_actions = plugin_tool.menu.actions()
         rft_plugin = next(
             a for a in plugin_actions if a.text() == "GEN_DATA RFT CSV Export"
         )

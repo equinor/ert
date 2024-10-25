@@ -64,15 +64,16 @@ class SummaryPanel(QFrame):
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)
 
-        widget = QWidget()
+        widget = QWidget(self)
         self._layout = QHBoxLayout()
         widget.setLayout(self._layout)
 
-        scroll = QScrollArea()
+        scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
         scroll.setWidget(widget)
 
         layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(scroll)
 
         self.setLayout(layout)
