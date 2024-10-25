@@ -176,6 +176,18 @@ def test_that_storage_matches(
             "observations",
         )
 
+        gen_data = ensemble.load_responses(
+            "gen_data", tuple(range(ensemble.ensemble_size))
+        )
+        snapshot.assert_match(
+            gen_data.to_dataframe(
+                dim_order=["realization", "name", "index", "report_step"]
+            )
+            .transform(np.sort)
+            .to_csv(),
+            "gen_data",
+        )
+
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_shared")
