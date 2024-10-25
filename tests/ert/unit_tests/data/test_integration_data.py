@@ -1,13 +1,16 @@
+import os
 import pathlib
 from datetime import datetime
 
 import numpy as np
+import polars
 import pytest
 
 from ert.config import ErtConfig
 from ert.data import MeasuredData
-from ert.data._measured_data import ObservationError
+from ert.data._measured_data import ObservationError, ResponseError
 from ert.libres_facade import LibresFacade
+from ert.storage import open_storage
 
 
 @pytest.fixture()
@@ -152,3 +155,23 @@ def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data
     obs_keys = experiment.observation_keys
     measured_data = create_measured_data(obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
+
+
+def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
+    with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
+        experiment = storage.get_experiment_by_name("ensemble-experiment")
+        ensemble = experiment.get_ensemble_by_name("default_0")
+
+        for real in range(ensemble.ensemble_size):
+            # .save_responses() does not allow for saving directly with an empty ds
+            ds_path = ensemble._realization_dir(real) / "summary.parquet"
+            smry_df = polars.read_parquet(ds_path)
+            os.remove(ds_path)
+            smry_df.clear().write_parquet(ds_path)
+
+        ensemble.load_responses.cache_clear()
+
+        with pytest.raises(
+            ResponseError, match="No response loaded for observation type: summary"
+        ):
+            MeasuredData(ensemble, ["FOPR"])
