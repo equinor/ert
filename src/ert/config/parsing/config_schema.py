@@ -295,6 +295,7 @@ def init_site_config_schema() -> ConfigSchemaDict:
     for item in [
         positive_int_keyword(ConfigKeys.MAX_SUBMIT),
         positive_int_keyword(ConfigKeys.NUM_CPU),
+        string_keyword(ConfigKeys.REALIZATION_MEMORY),
         queue_system_keyword(True),
         queue_option_keyword(),
         job_script_keyword(),
