@@ -84,9 +84,7 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: Optional[ExperimentPanel] = None
         self._plot_window: Optional[PlotWindow] = None
         self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
-        self._add_sidebar_button(
-            "Start simulation", QIcon("img:play_circle_outlined.svg")
-        )
+        self._add_sidebar_button("Start simulation", QIcon("img:library_add.svg"))
         self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
