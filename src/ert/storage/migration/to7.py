@@ -98,9 +98,7 @@ def _migrate_response_datasets(path: Path) -> None:
             responses_obj is not None
         ), f"Failed to load responses.json @ {responses_file}"
 
-        gendata_keys = {
-            k for k, v in responses_obj.items() if v["_ert_kind"] == "GenDataConfig"
-        }
+        gendata_keys = responses_obj.get("gen_data", {}).get("keys", [])
 
         for ens in ensembles:
             with open(ens / "index.json", encoding="utf-8") as f:
@@ -255,7 +253,7 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
 
 
 def migrate(path: Path) -> None:
-    _migrate_response_datasets(path)
     _migrate_response_configs(path)
+    _migrate_response_datasets(path)
     _migrate_responses_from_netcdf_to_parquet(path)
     _migrate_observations_to_grouped_parquet(path)

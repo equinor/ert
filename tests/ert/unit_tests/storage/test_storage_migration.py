@@ -184,6 +184,17 @@ def test_that_storage_matches(
             "observations",
         )
 
+        gen_data = ensemble.load_responses(
+            "gen_data", tuple(range(ensemble.ensemble_size))
+        )
+        snapshot.assert_match(
+            gen_data.sort(["realization", "response_key", "report_step", "index"])
+            .to_pandas()
+            .set_index(["realization", "response_key", "report_step", "index"])
+            .to_csv(),
+            "gen_data",
+        )
+
         assert ensemble.get_summary_keyset() == ["FOPR"]
 
 
