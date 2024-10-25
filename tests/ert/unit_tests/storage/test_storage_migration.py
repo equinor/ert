@@ -184,6 +184,11 @@ def test_that_storage_matches(
             "observations",
         )
 
+        try:
+            ensemble.load_responses("gen_data", tuple(range(ensemble.ensemble_size)))
+        except KeyError as e:
+            raise AssertionError("Failed to migrate gen data") from e
+
         assert ensemble.get_summary_keyset() == ["FOPR"]
 
 
