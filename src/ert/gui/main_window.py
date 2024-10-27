@@ -181,7 +181,7 @@ class ErtMainWindow(QMainWindow):
                 if isinstance(widget, RunDialog):
                     add_sim_run_option(prev_date_time)
         elif self.run_dialog_counter > 2:
-            add_sim_run_option(date_time)
+            add_sim_run_option(simulation_id)
 
         self.results_button.setEnabled(True)
 

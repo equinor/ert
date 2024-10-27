@@ -732,3 +732,5 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     run_experiment()
     wait_for_simulation_completed()
     assert len(button_simulation_status.menu().actions()) == 3
+    for choice in button_simulation_status.menu().actions():
+        assert "Single realization test-run" in choice.text()
