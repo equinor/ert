@@ -87,8 +87,7 @@ def _value_export_json(
 def _generate_parameter_files(
     parameter_configs: Iterable[ParameterConfig],
     export_base_name: str,
-    run_path: Path,
-    iens: int,
+    runarg: RunArg,
     fs: Ensemble,
     iteration: int,
 ) -> None:
@@ -113,13 +112,13 @@ def _generate_parameter_files(
         # model has completed.
         if node.forward_init and iteration == 0:
             continue
-        export_values = node.write_to_runpath(Path(run_path), iens, fs)
+        export_values = node.write_to_runpath(runarg.file_in_runpath, runarg.iens, fs)
         if export_values:
             exports.update(export_values)
         continue
 
-    _value_export_txt(run_path, export_base_name, exports)
-    _value_export_json(run_path, export_base_name, exports)
+    _value_export_txt(Path(runarg.runpath), export_base_name, exports)
+    _value_export_json(Path(runarg.runpath), export_base_name, exports)
 
 
 def _manifest_to_json(
@@ -238,8 +237,7 @@ def create_run_path(
             _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
                 model_config.gen_kw_export_name,
-                run_path,
-                run_arg.iens,
+                run_arg,
                 ensemble,
                 ensemble.iteration,
             )

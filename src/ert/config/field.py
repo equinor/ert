@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union, overload
 
 import numpy as np
 import xarray as xr
@@ -138,7 +138,9 @@ class Field(ParameterConfig):
 
         return np.size(self.mask) - np.count_nonzero(self.mask)
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+    def read_from_runpath(
+        self, file_in_runpath: Callable[[str], str], real_nr: int
+    ) -> xr.Dataset:
         t = time.perf_counter()
         file_name = self.forward_init_file
         if "%d" in file_name:
@@ -149,7 +151,7 @@ class Field(ParameterConfig):
                     ["x", "y", "z"],
                     field_transform(
                         read_field(
-                            run_path / file_name,
+                            file_in_runpath(file_name),
                             self.name,
                             self.mask,
                             Shape(self.nx, self.ny, self.nz),
@@ -163,10 +165,10 @@ class Field(ParameterConfig):
         return ds
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self, file_in_runpath: Callable[[str], str], real_nr: int, ensemble: Ensemble
     ) -> None:
         t = time.perf_counter()
-        file_out = run_path.joinpath(self.output_file)
+        file_out = file_in_runpath(str(self.output_file))
         if os.path.islink(file_out):
             os.unlink(file_out)
 

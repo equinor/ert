@@ -599,7 +599,7 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
             None,
             [],
             str(tmp_path / "forward_init_%d"),
-        ).read_from_runpath(tmp_path, 1)
+        ).read_from_runpath(lambda f: str(tmp_path / f), 1)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

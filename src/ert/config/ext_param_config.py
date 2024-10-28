@@ -3,7 +3,16 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    MutableMapping,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import xarray as xr
@@ -65,13 +74,15 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+    def read_from_runpath(
+        self, file_in_runpath: Callable[[str], str], real_nr: int
+    ) -> xr.Dataset:
         raise NotImplementedError()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self, file_in_runpath: Callable[[str], str], real_nr: int, ensemble: Ensemble
     ) -> None:
-        file_path = run_path / self.output_file
+        file_path = Path(file_in_runpath(self.output_file))
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List
 
 import numpy as np
 import xarray as xr
@@ -97,11 +97,13 @@ class SurfaceConfig(ParameterConfig):
     def __len__(self) -> int:
         return self.ncol * self.nrow
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+    def read_from_runpath(
+        self, file_in_runpath: Callable[[str], str], real_nr: int
+    ) -> xr.Dataset:
         file_name = self.forward_init_file
         if "%d" in file_name:
             file_name = file_name % real_nr  # noqa
-        file_path = run_path / file_name
+        file_path = Path(file_in_runpath(file_name))
         if not file_path.exists():
             raise ValueError(
                 "Failed to initialize parameter "
@@ -121,7 +123,7 @@ class SurfaceConfig(ParameterConfig):
         return da.to_dataset()
 
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self, file_in_runpath: Callable[[str], str], real_nr: int, ensemble: Ensemble
     ) -> None:
         data = ensemble.load_parameters(self.name, real_nr)["values"]
 
@@ -137,7 +139,7 @@ class SurfaceConfig(ParameterConfig):
             values=data.values,
         )
 
-        file_path = run_path / self.output_file
+        file_path = Path(file_in_runpath(str(self.output_file)))
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
 
@@ -158,9 +160,8 @@ class SurfaceConfig(ParameterConfig):
         )
         ensemble.save_parameters(group, realization, ds)
 
-    @staticmethod
     def load_parameters(
-        ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)

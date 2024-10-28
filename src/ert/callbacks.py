@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from pathlib import Path
 from typing import Iterable
 
 from ert.config import InvalidResponseFile, ParameterConfig, ResponseConfig
@@ -26,7 +25,7 @@ async def _read_parameters(
         try:
             start_time = time.perf_counter()
             logger.debug(f"Starting to load parameter: {config.name}")
-            ds = config.read_from_runpath(Path(run_arg.runpath), run_arg.iens)
+            ds = config.read_from_runpath(run_arg.file_in_runpath, run_arg.iens)
             await asyncio.sleep(0)
             logger.debug(
                 f"Loaded {config.name}",

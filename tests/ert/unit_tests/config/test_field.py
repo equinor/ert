@@ -30,10 +30,11 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
     assert permx_field.input_transformation is None
     assert permx_field.output_transformation is None
 
+    def file_in_runpath(filename: str):
+        return f"export/with/path/{real}/" + filename
+
     for real in active_realizations:
-        permx_field.write_to_runpath(
-            Path(f"export/with/path/{real}"), real, prior_ensemble
-        )
+        permx_field.write_to_runpath(file_in_runpath, real, prior_ensemble)
         assert read_field(
             f"export/with/path/{real}/permx.grdecl",
             "PERMX",
@@ -50,9 +51,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
         with pytest.raises(
             KeyError, match=f"No dataset 'PERMX' in storage for realization {real}"
         ):
-            permx_field.write_to_runpath(
-                Path(f"export/with/path/{real}"), real, prior_ensemble
-            )
+            permx_field.write_to_runpath(file_in_runpath, real, prior_ensemble)
         assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
 
 

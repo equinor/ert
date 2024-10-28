@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import xarray as xr
@@ -58,7 +58,7 @@ class ParameterConfig(ABC):
         random_seed: int,
         ensemble_size: int,
     ) -> xr.Dataset:
-        return self.read_from_runpath(Path(), real_nr)
+        return self.read_from_runpath(lambda x: x, real_nr)
 
     @abstractmethod
     def __len__(self) -> int:
@@ -66,23 +66,31 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def read_from_runpath(
-        self,
-        run_path: Path,
-        real_nr: int,
+        self, file_in_runpath: Callable[[str], str], real_nr: int
     ) -> xr.Dataset:
         """
         This function is responsible for converting the parameter
         from the forward model to the internal ert format
+        Args:
+            file_in_runpath: Function for converting a relative path to have
+                cwd in the runpath, e.g. "CASE.UNSMRY" ->
+                "/scratch/realization-0/iter-0/CASE.UNSMRY"
+
         """
 
     @abstractmethod
     def write_to_runpath(
-        self, run_path: Path, real_nr: int, ensemble: Ensemble
+        self, file_in_runpath: Callable[[str], str], real_nr: int, ensemble: Ensemble
     ) -> Optional[Dict[str, Dict[str, float]]]:
         """
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model
         expects
+        Args:
+            file_in_runpath: Function for converting a relative path to have
+                cwd in the runpath, e.g. "CASE.UNSMRY" ->
+                "/scratch/realization-0/iter-0/CASE.UNSMRY"
+
         """
 
     @abstractmethod
