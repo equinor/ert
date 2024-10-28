@@ -65,7 +65,7 @@ class LoadResultsPanel(QWidget):
 
     def readCurrentRunPath(self) -> str:
         current_ensemble = self._notifier.current_ensemble_name
-        run_path = self._facade.run_path
+        run_path = self._facade.resolved_run_path
         run_path = run_path.replace("<ERTCASE>", current_ensemble)
         run_path = run_path.replace("<ERT-CASE>", current_ensemble)
         return run_path
@@ -103,3 +103,7 @@ class LoadResultsPanel(QWidget):
             msg = ErtMessageBox("No realizations loaded", "\n".join(messages))
             msg.exec_()
         return loaded
+
+    def refresh(self) -> None:
+        self._run_path_text.setText(self.readCurrentRunPath())
+        self._run_path_text.refresh()

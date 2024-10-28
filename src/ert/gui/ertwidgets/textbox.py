@@ -108,3 +108,6 @@ class TextBox(QTextEdit):
 
     def enable_validation(self, enabled: bool) -> None:
         self._enable_validation = enabled
+
+    def refresh(self) -> None:
+        self.validateString()
