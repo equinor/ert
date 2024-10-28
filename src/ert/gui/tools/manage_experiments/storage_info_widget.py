@@ -298,10 +298,8 @@ class _EnsembleWidget(QWidget):
             self._state_text_edit.clear()
             html = "<table>"
             assert self._ensemble is not None
-            for state_index, value in enumerate(self._ensemble.get_ensemble_state()):
-                html += (
-                    f"<tr><td width=30>{state_index:d}.</td><td>{value.name}</td></tr>"
-                )
+            for state_index, state in enumerate(self._ensemble.get_ensemble_state()):
+                html += f"<tr><td width=30>{state_index:d}.</td><td>{', '.join([s.name for s in state])}</td></tr>"
             html += "</table>"
             self._state_text_edit.setHtml(html)
 
@@ -402,18 +400,20 @@ class _RealizationWidget(QWidget):
 
     @Slot(RealizationStorageState)
     def setRealization(self, ensemble: Ensemble, realization: int) -> None:
-        state = ensemble.get_ensemble_state()[realization]
-        self._state_label.setText(f"Realization state: {state.name}")
+        realization_state = ensemble.get_ensemble_state()[realization]
+        self._state_label.setText(
+            f"Realization state: {', '.join(sorted([s.name for s in realization_state]))}"
+        )
 
         html = "<table>"
-        for name, state in ensemble.get_response_state(realization).items():
-            html += f"<tr><td>{name} - {state.name}</td></tr>"
+        for name, _response_state in ensemble.get_response_state(realization).items():
+            html += f"<tr><td>{name} - {_response_state.name}</td></tr>"
         html += "</table>"
         self._response_text_edit.setHtml(html)
 
         html = "<table>"
-        for name, state in ensemble.get_parameter_state(realization).items():
-            html += f"<tr><td>{name} - {state.name}</td></tr>"
+        for name, _param_state in ensemble.get_parameter_state(realization).items():
+            html += f"<tr><td>{name} - {_param_state.name}</td></tr>"
         html += "</table>"
         self._parameter_text_edit.setHtml(html)
 
