@@ -75,7 +75,7 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
     run_dialog.run_experiment()
     event_queue.put(EndEvent(failed=False, msg=""))
 
-    with qtbot.waitSignal(run_dialog.finished, timeout=10000):
+    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
 
         def handle_dialog():
             confirm_terminate_dialog = wait_for_child(

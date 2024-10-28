@@ -168,7 +168,6 @@ class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     produce_clipboard_debug_info = Signal()
     progress_update_event = Signal(dict, int)
-    finished = Signal()
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -289,8 +288,6 @@ class RunDialog(QFrame):
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumSize(1200, 600)
-        self.finished.connect(self._on_finished)
-
         self._restart = False
         self.flag_simulation_done = False
 
@@ -391,7 +388,7 @@ class RunDialog(QFrame):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
-            self.finished.emit()
+            self.simulation_done.emit(True, "")
         return kill_job
 
     @Slot(bool, str)
@@ -401,6 +398,7 @@ class RunDialog(QFrame):
         self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
         self._notifier.set_is_simulation_running(False)
+        self.flag_simulation_done = True
         if failed:
             self.update_total_progress(1.0, "Failed")
 
@@ -411,6 +409,8 @@ class RunDialog(QFrame):
             self.fail_msg_box.show()
         else:
             self.update_total_progress(1.0, "Experiment completed.")
+        for file_dialog in self.findChildren(FileDialog):
+            file_dialog.close()
 
     @Slot()
     def _on_ticker(self) -> None:
@@ -428,7 +428,6 @@ class RunDialog(QFrame):
     def _on_event(self, event: object) -> None:
         if isinstance(event, EndEvent):
             self.simulation_done.emit(event.failed, event.msg)
-            self.finished.emit()
             self._ticker.stop()
         elif isinstance(event, FullSnapshotEvent):
             if event.snapshot is not None:
@@ -531,11 +530,6 @@ class RunDialog(QFrame):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)
-
-    def _on_finished(self) -> None:
-        self.flag_simulation_done = True
-        for file_dialog in self.findChildren(FileDialog):
-            file_dialog.close()
 
 
 # Cannot use a non-static method here as
