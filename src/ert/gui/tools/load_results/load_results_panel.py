@@ -8,7 +8,6 @@ from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     EnsembleSelector,
     ErtMessageBox,
-    MultiLineStringBox,
     QApplication,
     StringBox,
     TextBox,
