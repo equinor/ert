@@ -81,6 +81,7 @@ class ProgressWidget(QFrame):
         self._update_waiting_progress_bar()
         if self._realization_count > 0:
             full_width = self.width()
+            self.stop_waiting_progress_bar()
 
             for state, label in self._progress_label_map.items():
                 label.setVisible(True)
