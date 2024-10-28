@@ -420,6 +420,11 @@ class LocalEnsemble(BaseMode):
             )
         return None
 
+    def refresh_ensemble_state(self) -> None:
+        self.get_ensemble_state.cache_clear()
+        self.get_ensemble_state()
+
+    @lru_cache  # noqa: B019
     def get_ensemble_state(self) -> List[Set[RealizationStorageState]]:
         """
         Retrieve the state of each realization within ensemble.
