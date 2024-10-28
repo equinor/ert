@@ -2,7 +2,7 @@ import dataclasses
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 import polars
@@ -107,13 +107,15 @@ class GenDataConfig(ResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, _: int) -> polars.DataFrame:
+    def read_from_file(
+        self, file_in_runpath: Callable[[str], str] = lambda x: x
+    ) -> polars.DataFrame:
         def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
             try:
-                data = np.loadtxt(_run_path / filename, ndmin=1)
+                data = np.loadtxt(filename, ndmin=1)
             except ValueError as err:
                 raise InvalidResponseFile(str(err)) from err
-            active_information_file = _run_path / (str(filename) + "_active")
+            active_information_file = Path(str(filename) + "_active")
             if active_information_file.exists():
                 try:
                     active_list = np.loadtxt(active_information_file)
@@ -132,7 +134,6 @@ class GenDataConfig(ResponseConfig):
 
         errors = []
 
-        _run_path = Path(run_path)
         datasets_per_name = []
 
         for name, input_file, report_steps in zip(
@@ -140,19 +141,16 @@ class GenDataConfig(ResponseConfig):
         ):
             datasets_per_report_step = []
             if report_steps is None:
+                path = Path(file_in_runpath(input_file))
                 try:
-                    datasets_per_report_step.append(
-                        _read_file(_run_path / input_file, 0)
-                    )
+                    datasets_per_report_step.append(_read_file(path, 0))
                 except (InvalidResponseFile, FileNotFoundError) as err:
                     errors.append(err)
             else:
                 for report_step in report_steps:
-                    filename = input_file % report_step
+                    path = Path(file_in_runpath(input_file % report_step))
                     try:
-                        datasets_per_report_step.append(
-                            _read_file(_run_path / filename, report_step)
-                        )
+                        datasets_per_report_step.append(_read_file(path, report_step))
                     except (InvalidResponseFile, FileNotFoundError) as err:
                         errors.append(err)
 

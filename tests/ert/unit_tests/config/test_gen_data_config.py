@@ -90,7 +90,7 @@ def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
         InvalidResponseFile,
         match="Error reading GEN_DATA.*could not convert string.*4.910405046410615,4.910405046410615.*to float64",
     ):
-        config.read_from_file(tmp_path, 0)
+        config.read_from_file(lambda x: tmp_path / x)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -103,7 +103,7 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(con
             keys=["something"],
             report_steps_list=[None],
             input_files=["output"],
-        ).read_from_file(os.getcwd(), 0)
+        ).read_from_file(lambda x: os.getcwd() + "/" + x)
 
 
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):
@@ -113,7 +113,7 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmp
             keys=["something"],
             report_steps_list=[None],
             input_files=["DOES_NOT_EXIST"],
-        ).read_from_file(tmpdir, 0)
+        ).read_from_file(lambda x: tmpdir + "/" + x)
 
 
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_directory(
@@ -125,4 +125,4 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
             keys=["something"],
             report_steps_list=[None],
             input_files=["DOES_NOT_EXIST"],
-        ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 0)
+        ).read_from_file(lambda x: str(tmp_path / "NOT_A_DIRECTORY" / x))

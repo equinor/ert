@@ -55,7 +55,7 @@ async def _write_responses_to_storage(
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.response_type}")
             try:
-                ds = config.read_from_file(run_arg.runpath, run_arg.iens)
+                ds = config.read_from_file(run_arg.file_in_runpath)
             except (FileNotFoundError, InvalidResponseFile) as err:
                 errors.append(str(err))
                 logger.warning(f"Failed to write: {run_arg.iens}: {err}")

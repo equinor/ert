@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
@@ -53,6 +54,16 @@ class Runpaths:
             )
             for realization in realizations
         ]
+
+    def runpath_file(self, filename: str, realization: int, iteration: int) -> str:
+        """Given a filename and realization/iter, return the corresponding name
+        of that file in the runpath
+        """
+        if not os.path.isabs(filename):
+            filename = os.path.join(self._runpath_format, filename)
+        return self._substitutions.substitute_real_iter(
+            filename, realization, iteration
+        )
 
     def get_jobnames(self, realizations: Iterable[int], iteration: int) -> List[str]:
         return [

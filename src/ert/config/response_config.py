@@ -1,6 +1,6 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import polars
 from typing_extensions import Self
@@ -23,8 +23,13 @@ class ResponseConfig(ABC):
     keys: List[str] = dataclasses.field(default_factory=list)
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:
+    def read_from_file(self, file_in_runpath: Callable[[str], str]) -> polars.DataFrame:
         """Reads the data for the response from run_path.
+
+        Args:
+            file_in_runpath: Function for converting a relative path to have
+                cwd in the runpath, e.g. "CASE.UNSMRY" ->
+                "/scratch/realization-0/iter-0/CASE.UNSMRY"
 
         Raises:
             FileNotFoundError: when one of the input_files for the

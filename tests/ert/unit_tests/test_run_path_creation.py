@@ -639,7 +639,7 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, prior_ensemble, storage
 
 
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
+def test_create_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
     ert_config = snake_oil_case
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
@@ -695,4 +695,6 @@ def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
         assert manifest_path.exists()
         with open(manifest_path, encoding="utf-8") as f:
             manifest = orjson.loads(f.read())
-            assert set(manifest.values()) == expected_manifest_values
+            assert set(manifest.values()) == {
+                run_path + "/" + f for f in expected_manifest_values
+            }

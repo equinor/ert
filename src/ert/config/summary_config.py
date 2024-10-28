@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional, Set, Union, no_type_check
+from typing import TYPE_CHECKING, Any, Callable, Optional, Set, Union, no_type_check
 
 from ._read_summary import read_summary
 from .ensemble_config import Refcase
@@ -36,9 +36,11 @@ class SummaryConfig(ResponseConfig):
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
-    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:
-        filename = self.input_files[0].replace("<IENS>", str(iens))
-        _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
+    def read_from_file(
+        self, file_in_runpath: Callable[[str], str] = lambda x: x
+    ) -> polars.DataFrame:
+        filename = file_in_runpath(self.input_files[0])
+        _, keys, time_map, data = read_summary(filename, self.keys)
         if len(data) == 0 or len(keys) == 0:
             # https://github.com/equinor/ert/issues/6974
             # There is a bug with storing empty responses so we have

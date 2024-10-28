@@ -746,7 +746,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         iens = 0
 
         try:
-            ds = summary.read_from_file(self.tmpdir, iens)
+            ds = summary.read_from_file(lambda x: self.tmpdir + "/" + x)
         except Exception as e:  # no match in keys
             assume(False)
             raise AssertionError() from e
