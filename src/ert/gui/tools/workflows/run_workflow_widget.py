@@ -125,7 +125,6 @@ class RunWorkflowWidget(QWidget):
             workflow,
             storage=self.storage,
             ensemble=self.source_ensemble_selector.currentData(),
-            ert_config=self.config,
         )
         self._workflow_runner.run()
 

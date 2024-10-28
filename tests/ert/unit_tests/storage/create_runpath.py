@@ -45,10 +45,15 @@ def create_runpath(
         random_seed=random_seed,
     )
     create_run_path(
-        run_args,
-        ensemble,
-        ert_config,
-        runpaths,
+        run_args=run_args,
+        ensemble=ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=runpaths,
     )
     return ert_config.ensemble_config, ensemble
 

@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from typing_extensions import Self
 
-from ert.config import ErtConfig, ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.config.ert_config import ErtConfig
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Storage

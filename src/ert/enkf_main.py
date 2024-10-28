@@ -6,10 +6,25 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import orjson
 from numpy.random import SeedSequence
+
+from ert.config.ert_config import forward_model_data_to_json
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
+from ert.substitutions import Substitutions
 
 from .config import (
     ExtParamConfig,
@@ -22,7 +37,6 @@ from .run_arg import RunArg
 from .runpaths import Runpaths
 
 if TYPE_CHECKING:
-    from .config import ErtConfig
     from .storage import Ensemble
 
 logger = logging.getLogger(__name__)
@@ -183,20 +197,24 @@ def sample_prior(
 def create_run_path(
     run_args: List[RunArg],
     ensemble: Ensemble,
-    ert_config: ErtConfig,
+    user_config_file: str,
+    env_vars: Dict[str, str],
+    forward_model_steps: List[ForwardModelStep],
+    substitutions: Substitutions,
+    templates: List[Tuple[str, str]],
+    model_config: ModelConfig,
     runpaths: Runpaths,
     context_env: Optional[Dict[str, str]] = None,
 ) -> None:
     if context_env is None:
         context_env = {}
     t = time.perf_counter()
-    substitutions = ert_config.substitutions
     runpaths.set_ert_ensemble(ensemble.name)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
-            for source_file, target_file in ert_config.ert_templates:
+            for source_file, target_file in templates:
                 target_file = substitutions.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
                 )
@@ -220,7 +238,6 @@ def create_run_path(
                     )
                 target.write_text(result)
 
-            model_config = ert_config.model_config
             _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
                 model_config.gen_kw_export_name,
@@ -232,8 +249,16 @@ def create_run_path(
 
             path = run_path / "jobs.json"
             _backup_if_existing(path)
-            forward_model_output = ert_config.forward_model_data_to_json(
-                run_arg.run_id, run_arg.iens, ensemble.iteration, context_env
+
+            forward_model_output = forward_model_data_to_json(
+                substitutions=substitutions,
+                forward_model_steps=forward_model_steps,
+                user_config_file=user_config_file,
+                env_vars=env_vars,
+                run_id=run_arg.run_id,
+                iens=run_arg.iens,
+                itr=ensemble.iteration,
+                context_env=context_env,
             )
             with open(run_path / "jobs.json", mode="wb") as fptr:
                 fptr.write(

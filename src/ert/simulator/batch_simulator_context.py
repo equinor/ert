@@ -14,10 +14,16 @@ import numpy as np
 
 from _ert.threading import ErtThread
 from ert.config import HookRuntime
+from ert.config.analysis_config import AnalysisConfig
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
+from ert.config.queue_config import QueueConfig
+from ert.config.workflow import Workflow
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Realization
 from ert.runpaths import Runpaths
 from ert.scheduler import JobState, Scheduler, create_driver
+from ert.substitutions import Substitutions
 from ert.workflow_runner import WorkflowRunner
 
 from ..run_arg import RunArg, create_run_arguments
@@ -28,7 +34,6 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from ert.config import ErtConfig
     from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
@@ -71,20 +76,28 @@ def _slug(entity: str) -> str:
 
 
 def _run_forward_model(
-    ert_config: "ErtConfig",
+    prefered_num_cpu: int,
+    queue_config: QueueConfig,
+    analysis_config: AnalysisConfig,
     scheduler: Scheduler,
     run_args: List[RunArg],
 ) -> None:
     # run simplestep
-    asyncio.run(_submit_and_run_jobqueue(ert_config, scheduler, run_args))
+    asyncio.run(
+        _submit_and_run_jobqueue(
+            prefered_num_cpu, queue_config, analysis_config, scheduler, run_args
+        )
+    )
 
 
 async def _submit_and_run_jobqueue(
-    ert_config: "ErtConfig",
+    preferred_num_cpu: int,
+    queue_config: QueueConfig,
+    analysis_config: AnalysisConfig,
     scheduler: Scheduler,
     run_args: List[RunArg],
 ) -> None:
-    max_runtime: Optional[int] = ert_config.analysis_config.max_runtime
+    max_runtime: Optional[int] = analysis_config.max_runtime
     if max_runtime == 0:
         max_runtime = None
     for run_arg in run_args:
@@ -96,15 +109,15 @@ async def _submit_and_run_jobqueue(
             active=True,
             max_runtime=max_runtime,
             run_arg=run_arg,
-            num_cpu=ert_config.preferred_num_cpu,
-            job_script=ert_config.queue_config.job_script,
-            realization_memory=ert_config.queue_config.realization_memory,
+            num_cpu=preferred_num_cpu,
+            job_script=queue_config.job_script,
+            realization_memory=queue_config.realization_memory,
         )
         scheduler.set_realization(realization)
 
     required_realizations = 0
-    if ert_config.queue_config.stop_long_running:
-        required_realizations = ert_config.analysis_config.minimum_required_realizations
+    if queue_config.stop_long_running:
+        required_realizations = analysis_config.minimum_required_realizations
     with contextlib.suppress(asyncio.CancelledError):
         await scheduler.execute(required_realizations)
 
@@ -112,7 +125,17 @@ async def _submit_and_run_jobqueue(
 @dataclass
 class BatchContext:
     result_keys: "Iterable[str]"
-    ert_config: "ErtConfig"
+    preferred_num_cpu: int
+    queue_config: QueueConfig
+    model_config: ModelConfig
+    analysis_config: AnalysisConfig
+    hooked_workflows: Dict[HookRuntime, List[Workflow]]
+    substitutions: Substitutions
+    templates: List[Tuple[str, str]]
+    user_config_file: str
+    env_vars: Dict[str, str]
+    forward_model_steps: List[ForwardModelStep]
+    runpath_file: str
     ensemble: Ensemble
     mask: npt.NDArray[np.bool_]
     itr: int
@@ -122,24 +145,21 @@ class BatchContext:
         """
         Handle which can be used to query status and results for batch simulation.
         """
-        ert_config = self.ert_config
-        driver = create_driver(ert_config.queue_config)
-        self._scheduler = Scheduler(
-            driver, max_running=self.ert_config.queue_config.max_running
-        )
+        driver = create_driver(self.queue_config)
+        self._scheduler = Scheduler(driver, max_running=self.queue_config.max_running)
+
         # fill in the missing geo_id data
-        global_substitutions = self.ert_config.substitutions
-        global_substitutions["<CASE_NAME>"] = _slug(self.ensemble.name)
+        self.substitutions["<CASE_NAME>"] = _slug(self.ensemble.name)
         for sim_id, (geo_id, _) in enumerate(self.case_data):
             if self.mask[sim_id]:
-                global_substitutions[f"<GEO_ID_{sim_id}_{self.itr}>"] = str(geo_id)
+                self.substitutions[f"<GEO_ID_{sim_id}_{self.itr}>"] = str(geo_id)
 
         run_paths = Runpaths(
-            jobname_format=ert_config.model_config.jobname_format_string,
-            runpath_format=ert_config.model_config.runpath_format_string,
-            filename=str(ert_config.runpath_file),
-            substitutions=global_substitutions,
-            eclbase=ert_config.model_config.eclbase_format_string,
+            jobname_format=self.model_config.jobname_format_string,
+            runpath_format=self.model_config.runpath_format_string,
+            filename=str(self.runpath_file),
+            substitutions=self.substitutions,
+            eclbase=self.model_config.eclbase_format_string,
         )
         self.run_args = create_run_arguments(
             run_paths,
@@ -152,13 +172,18 @@ class BatchContext:
             "_ERT_SIMULATION_MODE": "batch_simulation",
         }
         create_run_path(
-            self.run_args,
-            self.ensemble,
-            ert_config,
-            run_paths,
-            context_env,
+            run_args=self.run_args,
+            ensemble=self.ensemble,
+            user_config_file=self.user_config_file,
+            env_vars=self.env_vars,
+            forward_model_steps=self.forward_model_steps,
+            substitutions=self.substitutions,
+            templates=self.templates,
+            model_config=self.model_config,
+            runpaths=run_paths,
+            context_env=context_env,
         )
-        for workflow in ert_config.hooked_workflows[HookRuntime.PRE_SIMULATION]:
+        for workflow in self.hooked_workflows[HookRuntime.PRE_SIMULATION]:
             WorkflowRunner(workflow, None, self.ensemble).run_blocking()
         self._sim_thread = self._run_simulations_simple_step()
 
@@ -176,7 +201,11 @@ class BatchContext:
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = ErtThread(
             target=lambda: _run_forward_model(
-                self.ert_config, self._scheduler, self.run_args
+                prefered_num_cpu=self.preferred_num_cpu,
+                queue_config=self.queue_config,
+                analysis_config=self.analysis_config,
+                scheduler=self._scheduler,
+                run_args=self.run_args,
             )
         )
         sim_thread.start()

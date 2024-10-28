@@ -75,13 +75,18 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
         [True] * prior_ensemble.ensemble_size,
         prior_ensemble,
     )
-    config = snake_oil_field_example
+
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
     create_run_path(
-        run_args,
-        prior_ensemble,
-        config,
-        runpaths,
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=runpaths,
     )
 
     # replace field file with symlink
@@ -94,10 +99,15 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
 
     # recreate directory structure
     create_run_path(
-        run_args,
-        prior_ensemble,
-        config,
-        runpaths,
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=runpaths,
     )
 
     # ensure field symlink is replaced by file

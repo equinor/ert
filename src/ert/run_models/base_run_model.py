@@ -662,9 +662,7 @@ class BaseRunModel(ABC):
         self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
-            WorkflowRunner(
-                workflow, storage, ensemble, ert_config=self.ert_config
-            ).run_blocking()
+            WorkflowRunner(workflow, storage, ensemble).run_blocking()
 
     def _evaluate_and_postprocess(
         self,
@@ -673,11 +671,16 @@ class BaseRunModel(ABC):
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
         create_run_path(
-            run_args,
-            ensemble,
-            self.ert_config,
-            self.run_paths,
-            self._context_env,
+            run_args=run_args,
+            ensemble=ensemble,
+            user_config_file=self.ert_config.user_config_file,
+            env_vars=self.ert_config.env_vars,
+            forward_model_steps=self.ert_config.forward_model_steps,
+            substitutions=self.ert_config.substitutions,
+            templates=self.ert_config.ert_templates,
+            model_config=self.ert_config.model_config,
+            runpaths=self.run_paths,
+            context_env=self._context_env,
         )
 
         self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)

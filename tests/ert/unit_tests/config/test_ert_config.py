@@ -13,7 +13,10 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
-from ert.config.ert_config import site_config_location
+from ert.config.ert_config import (
+    forward_model_data_to_json,
+    site_config_location,
+)
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -1265,8 +1268,17 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
 
     with caplog.at_level(logging.INFO):
-        ert_conf = ErtConfig.from_file("config_file.ert")
-        ert_conf.forward_model_data_to_json("0", "0", 0)
+        ert_config = ErtConfig.from_file("config_file.ert")
+        forward_model_data_to_json(
+            substitutions=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="0",
+            iens="0",
+            itr=0,
+        )
+
     assert (
         "Private arg '<VAR3>':'5' chosen over global '55' in forward model step step_name"
         in caplog.text

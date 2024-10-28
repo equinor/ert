@@ -99,7 +99,24 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         responses=[],
     )
 
-    _server = BatchSimulator(ert_config, experiment, {}, [])
+    _server = BatchSimulator(
+        experiment=experiment,
+        perferred_num_cpu=ert_config.preferred_num_cpu,
+        runpath_file=str(ert_config.runpath_file),
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        parameter_configurations=ert_config.ensemble_config.parameter_configs,
+        queue_config=ert_config.queue_config,
+        model_config=ert_config.model_config,
+        analysis_config=ert_config.analysis_config,
+        hooked_workflows=ert_config.hooked_workflows,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        controls={},
+        results=[],
+    )
+
     _context = _server.start("dispatch_server", [(0, {})])
 
     return _context
