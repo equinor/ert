@@ -93,6 +93,7 @@ class ExperimentPanel(QWidget):
             self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
 
+        self._simulation_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
@@ -316,15 +317,17 @@ class ExperimentPanel(QWidget):
         )
         self.experiment_started.emit(dialog)
         dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
-        self.run_button.setEnabled(False)
+        self._simulation_done = False
+        self.run_button.setEnabled(self._simulation_done)
         dialog.run_experiment()
 
-        def exit_handler() -> None:
-            self.run_button.setEnabled(True)
+        def simulation_done_handler() -> None:
+            self._simulation_done = True
+            self.run_button.setEnabled(self._simulation_done)
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 
-        dialog.finished.connect(exit_handler)
+        dialog.simulation_done.connect(simulation_done_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
@@ -336,14 +339,8 @@ class ExperimentPanel(QWidget):
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
-        widgets = QApplication.topLevelWidgets()
-        is_run_dialog_open = False
-        for w in widgets:
-            if isinstance(w, RunDialog) and w.isVisible():
-                is_run_dialog_open = True
-                break
         self.run_button.setEnabled(
-            not is_run_dialog_open and widget.isConfigurationValid()
+            self._simulation_done and widget.isConfigurationValid()
         )
 
     def populate_clipboard_debug_info(self) -> None:
