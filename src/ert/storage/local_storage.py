@@ -148,6 +148,9 @@ class LocalStorage(BaseMode):
         self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
+        for ens in self._ensembles.values():
+            ens.refresh_ensemble_state()
+
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """
         Retrieves an experiment by UUID.

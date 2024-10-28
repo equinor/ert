@@ -574,6 +574,8 @@ class BaseRunModel(ABC):
             self._end_queue.get()
             return []
         await evaluator_task
+        ensemble.refresh_ensemble_state()
+
         return evaluator_task.result()
 
     # This function needs to be there for the sake of testing that expects sync ee run

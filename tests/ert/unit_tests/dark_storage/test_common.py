@@ -98,5 +98,6 @@ def test_data_for_key_returns_empty_gen_data_config(tmp_path):
             ),
             0,
         )
+        ensemble.refresh_ensemble_state()
         data = data_for_key(ensemble, "response@0")
         assert not data.empty
