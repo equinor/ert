@@ -73,12 +73,6 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, A
     return param_list
 
 
-def get_response_names(ensemble: Ensemble) -> List[str]:
-    result = ensemble.get_summary_keyset()
-    result.extend(sorted(gen_data_keys(ensemble), key=lambda k: k.lower()))
-    return result
-
-
 def gen_data_keys(ensemble: Ensemble) -> Iterator[str]:
     gen_data_config = ensemble.experiment.response_configuration.get("gen_data")
 
