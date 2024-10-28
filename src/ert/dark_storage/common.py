@@ -1,5 +1,5 @@
 import contextlib
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from uuid import UUID
 
 import numpy as np
@@ -283,20 +283,3 @@ def get_observation_keys_for_response(
             return filtered["observation_key"].unique().to_list()
 
     return []
-
-
-def _prepare_x_axis(
-    x_axis: Sequence[Union[int, float, str, pd.Timestamp]],
-) -> List[str]:
-    """Converts the elements of x_axis of an observation to a string suitable
-    for json. If the elements are timestamps, convert to ISO-8601 format.
-
-    >>> _prepare_x_axis([1, 2, 3, 4])
-    ['1', '2', '3', '4']
-    >>> _prepare_x_axis([pd.Timestamp(x, unit="d") for x in range(3)])
-    ['1970-01-01T00:00:00', '1970-01-02T00:00:00', '1970-01-03T00:00:00']
-    """
-    if isinstance(x_axis[0], pd.Timestamp):
-        return [pd.Timestamp(x).isoformat() for x in x_axis]
-
-    return [str(x) for x in x_axis]
