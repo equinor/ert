@@ -72,7 +72,7 @@ start_tests () {
     # Run ert scheduler tests on the actual cluster (defined by $_ERT_TESTS_QUEUE_SYSTEM)
     basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
     pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" unit_tests/scheduler
-    return_code_ert_sheduler_tests=$?
+    return_code_ert_scheduler_tests=$?
     rm -rf "$basetemp" || true
 
     popd
@@ -99,7 +99,7 @@ start_tests () {
         echo "One or more ERT memory consumption tests failed."
         return_code_combined_tests=1
     fi
-    if [ "$return_code_ert_sheduler_tests" -ne 0 ]; then
+    if [ "$return_code_ert_scheduler_tests" -ne 0 ]; then
         echo "One or more ERT scheduler tests failed."
         return_code_combined_tests=1
     fi
