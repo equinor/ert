@@ -66,6 +66,48 @@ def test_malformed_or_missing_gen_data_result_file(result_file, error_message):
         GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
 
 
+@pytest.mark.parametrize(
+    "report_step_arg, error_message",
+    [
+        pytest.param(
+            "H",
+            "must be a valid range string",
+            id="Invalid REPORT_STEPS argument",
+        ),
+        pytest.param(
+            "H,1-3",
+            "must be a valid range string",
+            id="Invalid REPORT_STEPS argument",
+        ),
+        pytest.param(
+            "invalid-range-argument",
+            "must be a valid range string",
+            id="Invalid REPORT_STEPS argument",
+        ),
+        pytest.param(
+            "1-2,5-8",
+            None,
+            id="This should not fail",
+        ),
+        pytest.param(
+            "1",
+            None,
+            id="This should not fail",
+        ),
+    ],
+)
+def test_malformed_report_step_argument(report_step_arg, error_message):
+    config_line = f"POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:{report_step_arg}"
+    if error_message:
+        with pytest.raises(
+            ConfigValidationError,
+            match=error_message,
+        ):
+            GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
+    else:
+        GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
+
+
 def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
     (tmp_path / "poly.out").write_text("""
         4.910405046410615,4.910405046410615
