@@ -157,7 +157,10 @@ async def load_realization(
             )
 
     except Exception as err:
-        logger.exception(f"Failed to load results for realization {realization}")
+        logger.exception(
+            f"Failed to load results for realization {realization}",
+            exc_info=err,
+        )
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
             "Failed to load results for realization "
