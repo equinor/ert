@@ -14,7 +14,15 @@ from typing import (
 
 import numpy as np
 
-from ert.config import ErtConfig, ExtParamConfig
+from ert.config import ExtParamConfig
+from ert.config.analysis_config import AnalysisConfig
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
+from ert.config.parameter_config import ParameterConfig
+from ert.config.parsing.hook_runtime import HookRuntime
+from ert.config.queue_config import QueueConfig
+from ert.config.workflow import Workflow
+from ert.substitutions import Substitutions
 
 from .batch_simulator_context import BatchContext
 
@@ -25,7 +33,18 @@ if TYPE_CHECKING:
 class BatchSimulator:
     def __init__(
         self,
-        ert_config: ErtConfig,
+        perferred_num_cpu: int,
+        runpath_file: str,
+        user_config_file: str,
+        env_vars: Dict[str, str],
+        forward_model_steps: List[ForwardModelStep],
+        parameter_configurations: Dict[str, ParameterConfig],
+        queue_config: QueueConfig,
+        model_config: ModelConfig,
+        analysis_config: AnalysisConfig,
+        hooked_workflows: Dict[HookRuntime, List[Workflow]],
+        substitutions: Substitutions,
+        templates: List[Tuple[str, str]],
         experiment: Experiment,
         controls: Iterable[str],
         results: Iterable[str],
@@ -95,10 +114,18 @@ class BatchSimulator:
                  ....
 
         """
-        if not isinstance(ert_config, ErtConfig):
-            raise ValueError("The first argument must be valid ErtConfig instance")
-
-        self.ert_config = ert_config
+        self.preferred_num_cpu = perferred_num_cpu
+        self.user_config_file = user_config_file
+        self.env_vars = env_vars
+        self.forward_model_steps = forward_model_steps
+        self.runpath_file = runpath_file
+        self.queue_config = queue_config
+        self.model_config = model_config
+        self.analysis_config = analysis_config
+        self.hooked_workflows = hooked_workflows
+        self.substitutions = substitutions
+        self.templates = templates
+        self.parameter_configurations = parameter_configurations
         self.experiment = experiment
         self.control_keys = set(controls)
         self.result_keys = set(results)
@@ -143,7 +170,10 @@ class BatchSimulator:
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ext_config = self.ert_config.ensemble_config[control_name]
+            ext_config = self.parameter_configurations[control_name]
+
+            # fix this
+
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
@@ -233,7 +263,22 @@ class BatchSimulator:
         itr = 0
         mask = np.full(len(case_data), True, dtype=bool)
         sim_context = BatchContext(
-            self.result_keys, self.ert_config, ensemble, mask, itr, case_data
+            result_keys=self.result_keys,
+            ensemble=ensemble,
+            preferred_num_cpu=self.preferred_num_cpu,
+            user_config_file=self.user_config_file,
+            env_vars=self.env_vars,
+            forward_model_steps=self.forward_model_steps,
+            runpath_file=self.runpath_file,
+            queue_config=self.queue_config,
+            model_config=self.model_config,
+            analysis_config=self.analysis_config,
+            hooked_workflows=self.hooked_workflows,
+            substitutions=self.substitutions,
+            templates=self.templates,
+            mask=mask,
+            itr=itr,
+            case_data=case_data,
         )
 
         if self.callback:

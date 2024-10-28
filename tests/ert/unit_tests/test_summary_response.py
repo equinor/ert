@@ -40,10 +40,15 @@ def test_load_summary_response_restart_not_zero(
         )
 
         create_run_path(
-            run_args(ert_config, ensemble),
-            ensemble,
-            ert_config,
-            run_paths(ert_config),
+            run_args=run_args(ert_config, ensemble),
+            ensemble=ensemble,
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            substitutions=ert_config.substitutions,
+            templates=ert_config.ert_templates,
+            model_config=ert_config.model_config,
+            runpaths=run_paths(ert_config),
         )
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")

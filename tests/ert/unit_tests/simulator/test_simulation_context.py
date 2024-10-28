@@ -35,8 +35,44 @@ def test_simulation_context(
     )
 
     case_data = [(geo_id, {}) for geo_id in range(size)]
-    even_ctx = BatchContext([], ert_config, even_half, even_mask, 0, case_data)
-    odd_ctx = BatchContext([], ert_config, odd_half, odd_mask, 0, case_data)
+
+    even_ctx = BatchContext(
+        result_keys=[],
+        preferred_num_cpu=ert_config.preferred_num_cpu,
+        queue_config=ert_config.queue_config,
+        model_config=ert_config.model_config,
+        analysis_config=ert_config.analysis_config,
+        hooked_workflows=ert_config.hooked_workflows,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        runpath_file=ert_config.runpath_file,
+        ensemble=even_half,
+        mask=even_mask,
+        itr=0,
+        case_data=case_data,
+    )
+
+    odd_ctx = BatchContext(
+        result_keys=[],
+        preferred_num_cpu=ert_config.preferred_num_cpu,
+        queue_config=ert_config.queue_config,
+        model_config=ert_config.model_config,
+        analysis_config=ert_config.analysis_config,
+        hooked_workflows=ert_config.hooked_workflows,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        runpath_file=ert_config.runpath_file,
+        ensemble=odd_half,
+        mask=odd_mask,
+        itr=0,
+        case_data=case_data,
+    )
 
     for iens in range(size):
         if iens % 2 == 0:

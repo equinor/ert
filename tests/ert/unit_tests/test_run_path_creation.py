@@ -46,10 +46,15 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
     )
     os.symlink("start.txt", run_path / "result.txt")
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (run_path / "result.txt").read_text(
         encoding="utf-8"
@@ -83,10 +88,15 @@ def test_run_template_replace_in_file_with_custom_define(
     ert_config = ErtConfig.from_file("config.ert")
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (
         Path(run_arg[0].runpath) / "result.txt"
@@ -125,10 +135,15 @@ def test_run_template_replace_in_file(
     ert_config = ErtConfig.from_file("config.ert")
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (Path(run_arg[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
@@ -163,10 +178,15 @@ def test_run_template_replace_in_ecl(
     ert_config = ErtConfig.from_file("config.ert")
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (
         Path(run_arg[0].runpath) / expected_file
@@ -210,10 +230,15 @@ def test_run_template_replace_in_ecl_data_file(
     ert_config = ErtConfig.from_file("config.ert")
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (Path(run_arg[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
@@ -245,10 +270,15 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(
         match="Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
     ):
         create_run_path(
-            run_args(ert_config, prior_ensemble),
-            prior_ensemble,
-            ert_config,
-            run_paths(ert_config),
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            templates=ert_config.ert_templates,
+            model_config=ert_config.model_config,
+            runpaths=run_paths(ert_config),
         )
 
 
@@ -274,10 +304,15 @@ def test_run_template_replace_in_file_name(prior_ensemble, run_args, run_paths):
     ert_config = ErtConfig.from_file("config.ert")
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert (
         Path(run_arg[0].runpath) / "result.txt"
@@ -385,10 +420,15 @@ def test_that_deprecated_runpath_substitution_remain_valid(
 
     run_arg = run_args(ert_config, prior_ensemble, 2)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
 
     for realization in run_arg:
@@ -433,10 +473,15 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         prior_ensemble,
     )
     create_run_path(
-        run_args,
-        prior_ensemble,
-        ert_config,
-        run_paths,
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths,
     )
 
     for run_arg in run_args:
@@ -482,10 +527,15 @@ def test_assert_export(prior_ensemble, run_args, run_paths):
     sample_prior(prior_ensemble, [0])
     run_arg = run_args(ert_config, prior_ensemble)
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert runpath_list_file.exists()
     assert runpath_list_file.name == "test_runpath_list.txt"
@@ -511,10 +561,17 @@ def _create_runpath(ert_config: ErtConfig, storage: Storage) -> None:
         substitutions=ert_config.substitutions,
     )
     create_run_path(
-        create_run_arguments(run_paths, [True] * ensemble.ensemble_size, ensemble),
-        ensemble,
-        ert_config,
-        run_paths,
+        run_args=create_run_arguments(
+            run_paths, [True] * ensemble.ensemble_size, ensemble
+        ),
+        ensemble=ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths,
     )
 
 
@@ -672,7 +729,17 @@ def test_crete_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
         prior_ensemble,
     )
 
-    create_run_path(run_args, prior_ensemble, ert_config, run_paths)
+    create_run_path(
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths,
+    )
 
     exp_runpaths = [
         runpath_fmt.replace("<ITER>", str(itr))

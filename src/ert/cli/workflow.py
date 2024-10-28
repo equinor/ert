@@ -20,7 +20,7 @@ def execute_workflow(
         msg = "Workflow {} is not in the list of available workflows"
         logger.error(msg.format(workflow_name))
         return
-    runner = WorkflowRunner(workflow, storage, ert_config=ert_config)
+    runner = WorkflowRunner(workflow=workflow, storage=storage, ert_config=ert_config)
     runner.run_blocking()
     if not all(v["completed"] for v in runner.workflowReport().values()):
         logger.error(f"Workflow {workflow_name} failed!")

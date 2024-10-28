@@ -28,10 +28,15 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
             ensemble_size=ert_config.model_config.num_realizations,
         )
         create_run_path(
-            run_args(ert_config, prior_ensemble),
-            prior_ensemble,
-            ert_config,
-            run_paths(ert_config),
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            templates=ert_config.ert_templates,
+            model_config=ert_config.model_config,
+            runpaths=run_paths(ert_config),
         )
         return ert_config, prior_ensemble
 
@@ -134,10 +139,15 @@ def test_load_forward_model_summary(
     )
 
     create_run_path(
-        run_args(ert_config, prior_ensemble),
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_args(ert_config, prior_ensemble),
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
@@ -235,10 +245,15 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
     )
 
     create_run_path(
-        run_args(ert_config, prior_ensemble),
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_args(ert_config, prior_ensemble),
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:

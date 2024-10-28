@@ -81,42 +81,40 @@ class PatchedBatchSimulator(BatchSimulator):
                 parameters=ens_config.parameter_configuration,
                 responses=ens_config.response_configuration,
             )
-            super().__init__(ert_config, experiment, set(controls), results, callback)
+            super().__init__(
+                perferred_num_cpu=ert_config.preferred_num_cpu,
+                runpath_file=ert_config.runpath_file,
+                user_config_file=ert_config.user_config_file,
+                env_vars=ert_config.env_vars,
+                forward_model_steps=ert_config.forward_model_steps,
+                parameter_configurations=ert_config.ensemble_config.parameter_configs,
+                substitutions=ert_config.substitutions,
+                queue_config=ert_config.queue_config,
+                model_config=ert_config.model_config,
+                analysis_config=ert_config.analysis_config,
+                hooked_workflows=ert_config.hooked_workflows,
+                templates=ert_config.ert_templates,
+                experiment=experiment,
+                controls=set(controls),
+                results=results,
+                callback=callback,
+            )
         except Exception as e:
-            if isinstance(e, (TypeError, ValueError)):
-                raise e
-            else:
-                super().__init__(ert_config, None, set(controls), results, callback)
-
-
-BatchSimulator = PatchedBatchSimulator
-
-
-def test_that_simulator_raises_error_when_missing_ertconfig(storage):
-    with pytest.raises(ValueError, match="The first argument must be valid ErtConfig"):
-        _ = BatchSimulator(
-            "ARG",
-            storage,
-            {
-                "WELL_ORDER": ["W1", "W2", "W3"],
-                "WELL_ON_OFF": ["W1", "W2", "W3"],
-            },
-            ["ORDER", "ON_OFF"],
-        )
+            raise e
 
 
 def test_that_batch_simulator_gives_good_message_on_duplicate_keys(
     minimum_case, storage
 ):
     with pytest.raises(ValueError, match="Duplicate keys"):
-        _ = BatchSimulator(
+        _ = PatchedBatchSimulator(
             minimum_case, storage, {"WELL_ORDER": ["W3", "W2", "W3"]}, ["ORDER"]
         )
 
 
 @pytest.fixture
 def batch_simulator(batch_sim_example, storage):
-    return BatchSimulator(
+    return PatchedBatchSimulator(
         batch_sim_example,
         storage,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
@@ -278,7 +276,7 @@ def test_that_batch_simulation_handles_invalid_suffixes_at_init(
     batch_sim_example, suffix, error, storage
 ):
     with pytest.raises(error):
-        _ = BatchSimulator(
+        _ = PatchedBatchSimulator(
             batch_sim_example,
             storage,
             {
@@ -326,7 +324,7 @@ def test_that_batch_simulation_handles_invalid_suffixes_at_init(
 def test_that_batch_simulator_handles_invalid_suffixes_at_start(
     batch_sim_example, inp, match, storage
 ):
-    rsim = BatchSimulator(
+    rsim = PatchedBatchSimulator(
         batch_sim_example,
         storage,
         {
@@ -347,7 +345,7 @@ def test_that_batch_simulator_handles_invalid_suffixes_at_start(
 def test_batch_simulation_suffixes(batch_sim_example, storage):
     ert_config = batch_sim_example
     monitor = MockMonitor()
-    rsim = BatchSimulator(
+    rsim = PatchedBatchSimulator(
         ert_config,
         storage,
         {
@@ -430,7 +428,7 @@ LOAD_WORKFLOW_JOB workflows/jobs/REALIZATION_NUMBER
 
     ert_config = ErtConfig.from_file("sleepy_time.ert")
 
-    rsim = BatchSimulator(
+    rsim = PatchedBatchSimulator(
         ert_config,
         storage,
         {"WELL_ORDER": ["W1", "W2", "W3"], "WELL_ON_OFF": ["W1", "W2", "W3"]},
@@ -506,7 +504,7 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
         "WELL_ON_OFF": ("W1", "W2", "W3"),
     }
     results = ("ORDER", "ON_OFF")
-    rsim = BatchSimulator(ert_config, storage, external_parameters, results)
+    rsim = PatchedBatchSimulator(ert_config, storage, external_parameters, results)
 
     ensembles = [
         (

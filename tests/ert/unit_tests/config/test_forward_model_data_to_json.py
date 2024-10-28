@@ -11,7 +11,10 @@ from typing import List
 import pytest
 
 from ert.config import ErtConfig, ForwardModelStep
-from ert.config.ert_config import _forward_model_step_from_config_file
+from ert.config.ert_config import (
+    _forward_model_step_from_config_file,
+    forward_model_data_to_json,
+)
 from ert.constant_filenames import JOBS_FILE
 from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitutions import Substitutions
@@ -292,12 +295,17 @@ def verify_json_dump(fm_steplist, config, selected_steps, run_id):
 def test_config_path_and_file(context):
     run_id = "test_config_path_and_file_in_jobs_json"
 
-    steps_json = ErtConfig(
+    ert_config = ErtConfig(
         forward_model_steps=set_up_forward_model([]),
         substitutions=context,
         user_config_file="path_to_config_file/config.ert",
-    ).forward_model_data_to_json(
-        run_id,
+    )
+    steps_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=run_id,
     )
     assert "config_path" in steps_json
     assert "config_file" in steps_json
@@ -309,12 +317,18 @@ def test_config_path_and_file(context):
 def test_no_steps(context):
     run_id = "test_no_jobs_id"
 
-    data = ErtConfig(
+    ert_config = ErtConfig(
         forward_model_steps=set_up_forward_model([]),
         substitutions=context,
         user_config_file="path_to_config_file/config.ert",
-    ).forward_model_data_to_json(
-        run_id,
+    )
+
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=run_id,
     )
 
     verify_json_dump([], data, [], run_id)
@@ -325,19 +339,36 @@ def test_one_step(fm_step_list, context):
     for i, step in enumerate(fm_step_list):
         run_id = "test_one_job"
 
-        data = ErtConfig(
+        ert_config = ErtConfig(
             forward_model_steps=set_up_forward_model([step]),
             substitutions=context,
-        ).forward_model_data_to_json(run_id)
+        )
+
+        data = forward_model_data_to_json(
+            substitutions=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id=run_id,
+        )
+
         verify_json_dump(fm_step_list, data, [i], run_id)
 
 
 def run_all(fm_steplist, context):
     run_id = "run_all"
-    data = ErtConfig(
+    ert_config = ErtConfig(
         forward_model_steps=set_up_forward_model(fm_steplist),
         substitutions=context,
-    ).forward_model_data_to_json(run_id)
+    )
+
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=run_id,
+    )
 
     verify_json_dump(fm_steplist, data, range(len(fm_steplist)), run_id)
 
@@ -367,12 +398,20 @@ def test_various_null_fields(fm_step_list, context):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_status_file(fm_step_list, context):
     run_id = "test_no_jobs_id"
+    ert_config = ErtConfig(
+        forward_model_steps=set_up_forward_model(fm_step_list),
+        substitutions=context,
+    )
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=run_id,
+    )
     with open(JOBS_FILE, "w", encoding="utf-8") as fp:
         json.dump(
-            ErtConfig(
-                forward_model_steps=set_up_forward_model(fm_step_list),
-                substitutions=context,
-            ).forward_model_data_to_json(run_id),
+            data,
             fp,
         )
 
@@ -409,9 +448,17 @@ def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 
-    data = ErtConfig(
+    ert_config = ErtConfig(
         forward_model_steps=forward_model_list, substitutions=context
-    ).forward_model_data_to_json(run_id)
+    )
+
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id=run_id,
+    )
 
     assert "Environment variable ENV_VAR skipped due to" in caplog.text
     assert "ENV_VAR" not in data["jobList"][0]["environment"]
@@ -562,15 +609,16 @@ def test_forward_model_job(job, forward_model, expected_args):
     ert_config = ErtConfig.from_file("config_file.ert")
 
     forward_model = ert_config.forward_model_steps
-    assert len(forward_model) == 1
-    assert (
-        ert_config.forward_model_data_to_json(
-            "",
-            0,
-            0,
-        )["jobList"][0]["argList"]
-        == expected_args
+
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
     )
+    assert len(forward_model) == 1
+    assert data["jobList"][0]["argList"] == expected_args
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -593,12 +641,14 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
         fout.write("FORWARD_MODEL job_name")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-
-    assert ert_config.forward_model_data_to_json(
-        "",
-        0,
-        0,
-    )["jobList"][0]["argList"] == [os.getcwd()]
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
+    )
+    assert data["jobList"][0]["argList"] == [os.getcwd()]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -663,12 +713,16 @@ def test_simulation_job(job, forward_model, expected_args):
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
+    )
+
     assert len(ert_config.forward_model_steps) == 1
-    fm_data = ert_config.forward_model_data_to_json(
-        "",
-        0,
-        0,
-    )["jobList"][0]
+    fm_data = data["jobList"][0]
     assert fm_data["argList"] == expected_args
 
 
@@ -694,7 +748,16 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         fout.write("FORWARD_MODEL job_name(<ARG>=B)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    fm_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
+    )
+
+    fm_data = data["jobList"][0]
+
     assert len(ert_config.forward_model_steps) == 1
     assert fm_data["argList"] == ["B"]
     assert "Private arg '<ARG>':'B' chosen over global 'A'" in caplog.text
@@ -724,8 +787,15 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
         fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
+    )
 
-    fm_data = ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]
+    fm_data = data["jobList"][0]
     assert len(ert_config.forward_model_steps) == 1
     assert fm_data["argList"] == ["A"]
     assert "Private arg '<ARG>':'<ARG>' chosen over global 'A'" not in caplog.text
@@ -768,17 +838,17 @@ def test_that_environment_variables_are_set_in_forward_model(
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
+    )
 
     forward_model_list = ert_config.forward_model_steps
     assert len(forward_model_list) == 1
-    assert (
-        ert_config.forward_model_data_to_json(
-            "",
-            0,
-            0,
-        )["jobList"][0]["argList"]
-        == expected_args
-    )
+    assert data["jobList"][0]["argList"] == expected_args
 
 
 def test_that_executables_in_path_are_not_made_realpath(tmp_path):
@@ -799,8 +869,12 @@ def test_that_executables_in_path_are_not_made_realpath(tmp_path):
     )
 
     ert_config = ErtConfig.from_file(str(config_file))
-
-    assert (
-        ert_config.forward_model_data_to_json("", 0, 0)["jobList"][0]["executable"]
-        == "echo"
+    data = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        user_config_file=ert_config.user_config_file,
+        run_id="",
     )
+
+    assert data["jobList"][0]["executable"] == "echo"

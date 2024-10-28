@@ -32,10 +32,21 @@ class Simulator(BatchSimulator):
         )
 
         super(Simulator, self).__init__(
-            ert_config,
-            experiment,
-            self._get_controls(ever_config),
-            self._get_results(ever_config),
+            experiment=experiment,
+            perferred_num_cpu=ert_config.preferred_num_cpu,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            forward_model_steps=ert_config.forward_model_steps,
+            runpath_file=str(ert_config.runpath_file),
+            parameter_configurations=ert_config.ensemble_config.parameter_configs,
+            queue_config=ert_config.queue_config,
+            model_config=ert_config.model_config,
+            analysis_config=ert_config.analysis_config,
+            hooked_workflows=ert_config.hooked_workflows,
+            substitutions=ert_config.substitutions,
+            templates=ert_config.ert_templates,
+            controls=self._get_controls(ever_config),
+            results=self._get_results(ever_config),
             callback=callback,
         )
 
@@ -124,9 +135,11 @@ class Simulator(BatchSimulator):
         # Pre-simulation workflows are run by sim_context, but
         # post-stimulation workflows are not, do it here:
         ensemble = sim_context.get_ensemble()
-        for workflow in self.ert_config.hooked_workflows[HookRuntime.POST_SIMULATION]:
+        for workflow in self.hooked_workflows[HookRuntime.POST_SIMULATION]:
             WorkflowRunner(
-                workflow, self.storage, ensemble, ert_config=self.ert_config
+                workflow,
+                self.storage,
+                ensemble,
             ).run_blocking()
 
         for fnc_name, alias in self._function_aliases.items():

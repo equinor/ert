@@ -20,10 +20,15 @@ def test_with_gen_kw(storage, run_paths, run_args):
 
     sample_prior(prior_ensemble, [0])
     create_run_path(
-        run_args(ert_config, prior_ensemble, 1),
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_args(ert_config, prior_ensemble, 1),
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
@@ -43,10 +48,15 @@ def test_without_gen_kw(prior_ensemble, run_args, run_paths):
     ert_config = ErtConfig.from_file("snake_oil.ert")
     sample_prior(prior_ensemble, [0])
     create_run_path(
-        run_args(ert_config, prior_ensemble, 1),
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_args(ert_config, prior_ensemble, 1),
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
     assert not os.path.exists(
@@ -68,17 +78,27 @@ def test_jobs_file_is_backed_up(storage, run_args, run_paths):
     run_arg = run_args(ert_config, prior_ensemble, 1)
     sample_prior(prior_ensemble, [0])
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0/jobs.json")
     create_run_path(
-        run_arg,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_arg,
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
     iter0_output_files = os.listdir("storage/snake_oil/runpath/realization-0/iter-0/")
     jobs_files = [f for f in iter0_output_files if f.startswith("jobs.json")]
