@@ -1,8 +1,17 @@
+from __future__ import annotations
+
+"""
+The following test generates different kind of parameters
+and places their configuration in the config file. Then an
+ensemble experiment is ran and we assert that each realization
+was passed the parameters correctly in the runpath.
+"""
+from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Tuple
 
 import cwrap
 import hypothesis.strategies as st
@@ -10,7 +19,7 @@ import numpy as np
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
-from pytest import MonkeyPatch
+from pytest import MonkeyPatch, TempPathFactory
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
@@ -48,12 +57,15 @@ FORWARD_MODEL COPY_FILE(<FROM>="../../../ECLBASE.SMSPEC",<TO>="ECLBASE.SMSPEC")
 
 
 class IoLibrary(Enum):
+    """Libraries that can be used to write the parameter values"""
+
     ERT = auto()
     XTGEO = auto()
     RESDATA = auto()
 
 
 def extension(format: FieldFileFormat):
+    """The file extension of a given field file format"""
     if format in ROFF_FORMATS:
         return "roff"
     return format.value
@@ -62,6 +74,10 @@ def extension(format: FieldFileFormat):
 def xtgeo_fformat(
     format: FieldFileFormat,
 ) -> Literal["roff", "roffasc", "grdecl", "bgrdecl"]:
+    """Converts the FieldFileFormat to the corresponding xtgeo 'fformat' value.
+
+    See xtgeo.GridProperty.to_file
+    """
     if format == FieldFileFormat.ROFF_BINARY:
         return "roff"
     elif format == FieldFileFormat.ROFF_ASCII:
@@ -70,6 +86,8 @@ def xtgeo_fformat(
 
 
 class IoProvider:
+    """Provides the ability to generate grid, field and surface files."""
+
     def __init__(self, data: st.DataObject):
         self.data = data
         self.field_values = {}
@@ -89,10 +107,11 @@ class IoProvider:
             label="actnum",
         )
 
-    def _choose_lib(self):
+    def _choose_lib(self) -> IoLibrary:
         return self.data.draw(st.sampled_from(IoLibrary), label="writer")
 
-    def create_grid(self, grid_name: str, grid_format: Literal["grid", "egrid"]):
+    def write_grid_file(self, grid_name: str, grid_format: Literal["grid", "egrid"]):
+        """Writes a grid file with the name '{grid_name}.{grid_format}'"""
         grid_file = grid_name + "." + grid_format
         if grid_format == "grid":
             grid = GridGenerator.create_rectangular(
@@ -122,7 +141,7 @@ class IoProvider:
         else:
             raise ValueError()
 
-    def _random_values(self, shape, name):
+    def _random_values(self, shape: Tuple[int, ...], name: str):
         return self.data.draw(
             arrays(
                 elements=st.floats(min_value=2.0, max_value=4.0, width=32),
@@ -132,9 +151,9 @@ class IoProvider:
             label=name,
         )
 
-    def create_field(
+    def write_field_file(
         self,
-        name: str,
+        field_name: str,
         file_name: str,
         fformat: FieldFileFormat,
     ) -> None:
@@ -147,13 +166,13 @@ class IoProvider:
                 ncol=self.dims[0],
                 nrow=self.dims[1],
                 nlay=self.dims[2],
-                name=name,
+                name=field_name,
                 values=values,
             )
             prop.to_file(file_name, fformat=xtgeo_fformat(fformat))
         elif lib == IoLibrary.RESDATA:
             if fformat == FieldFileFormat.GRDECL:
-                kw = ResdataKW(name, self.size, ResDataType.RD_FLOAT)
+                kw = ResdataKW(field_name, self.size, ResDataType.RD_FLOAT)
                 data = values.ravel(order="F")
                 for i in range(self.size):
                     kw[i] = data[i]
@@ -161,14 +180,14 @@ class IoProvider:
                     kw.write_grdecl(f)
             else:
                 # resdata cannot write roff
-                save_field(np.ma.masked_array(values), name, file_name, fformat)
+                save_field(np.ma.masked_array(values), field_name, file_name, fformat)
 
         elif lib == IoLibrary.ERT:
-            save_field(np.ma.masked_array(values), name, file_name, fformat)
+            save_field(np.ma.masked_array(values), field_name, file_name, fformat)
         else:
             raise ValueError()
 
-    def create_surface(self, file_name: str) -> None:
+    def write_surface_file(self, file_name: str) -> None:
         values = self._random_values((2, 5), file_name)
         self.surface_values[file_name] = values
         xtgeo.RegularSurface(
@@ -193,7 +212,22 @@ class Transform(Enum):
 
 
 @dataclass
-class FieldParameter:
+class Parameter:
+    @abstractmethod
+    def configuration(self) -> str:
+        """The contents of the config file for the parameter"""
+
+    @abstractmethod
+    def create_file(self, io_source: IoProvider, num_realizations: int):
+        """Writes the parameter files with the given IoProvider"""
+
+    @abstractmethod
+    def check(self, io_source: IoProvider, mask, num_realizations: int):
+        """Check that the files in the runpath have the correct values"""
+
+
+@dataclass
+class FieldParameter(Parameter):
     name: str
     infformat: FieldFileFormat
     outfformat: FieldFileFormat
@@ -205,10 +239,12 @@ class FieldParameter:
 
     @property
     def inext(self):
+        """The file extension of the input file"""
         return extension(self.infformat)
 
     @property
     def outext(self):
+        """The file extension of the output file"""
         return extension(self.outfformat)
 
     @property
@@ -219,7 +255,7 @@ class FieldParameter:
     def in_filename(self):
         return self.name.replace("/", "slash") + "." + self.inext
 
-    def declaration(self):
+    def configuration(self):
         decl = f"FIELD {self.name} PARAMETER {self.out_filename} "
         if self.forward_init:
             decl += f" FORWARD_INIT:True INIT_FILES:{self.out_filename} "
@@ -242,14 +278,14 @@ class FieldParameter:
 
     def create_file(self, io_source: IoProvider, num_realizations: int):
         if self.forward_init:
-            io_source.create_field(
+            io_source.write_field_file(
                 self.name,
                 f"{self.out_filename}",
                 self.outfformat,
             )
         else:
             for i in range(num_realizations):
-                io_source.create_field(
+                io_source.write_field_file(
                     self.name, str(i) + self.in_filename, self.infformat
                 )
 
@@ -305,7 +341,7 @@ def field_parameters(draw):
 
 
 @dataclass
-class SurfaceParameter:
+class SurfaceParameter(Parameter):
     name: str
     forward_init: bool
 
@@ -313,7 +349,7 @@ class SurfaceParameter:
     def filename(self):
         return self.name.replace("/", "slash") + ".irap"
 
-    def declaration(self):
+    def configuration(self):
         if self.forward_init:
             return (
                 f"SURFACE {self.name} OUTPUT_FILE:{self.filename} "
@@ -331,12 +367,12 @@ class SurfaceParameter:
             )
 
     def create_file(self, io_source: IoProvider, num_realizations: int):
-        io_source.create_surface("BASE" + self.filename)
+        io_source.write_surface_file("BASE" + self.filename)
         if self.forward_init:
-            io_source.create_surface(self.filename)
+            io_source.write_surface_file(self.filename)
         else:
             for i in range(num_realizations):
-                io_source.create_surface(str(i) + self.filename)
+                io_source.write_surface_file(str(i) + self.filename)
 
     def check(self, io_source: IoProvider, mask, num_realizations: int):
         for i in range(num_realizations):
@@ -373,8 +409,13 @@ class SurfaceParameter:
         max_size=3,
     ),
 )
-def test_parameter_example(
-    io_source, grid_format, summary, tmp_path_factory, num_realizations, parameters
+def test_that_parameters_are_placed_in_the_runpath_as_expected(
+    io_source: IoProvider,
+    grid_format: Literal["grid", "egrid"],
+    summary,
+    tmp_path_factory: TempPathFactory,
+    num_realizations: int,
+    parameters: list[Parameter],
 ):
     tmp_path = tmp_path_factory.mktemp("parameter_example")
     note(f"Running in directory {tmp_path}")
@@ -385,10 +426,10 @@ def test_parameter_example(
             grid_name=GRID_NAME,
             grid_format=grid_format,
             num_realizations=num_realizations,
-        ) + "\n".join(p.declaration() for p in parameters)
+        ) + "\n".join(p.configuration() for p in parameters)
         note(f"config file: {contents}")
         Path("config.ert").write_text(contents, encoding="utf-8")
-        io_source.create_grid(GRID_NAME, grid_format)
+        io_source.write_grid_file(GRID_NAME, grid_format)
 
         for p in parameters:
             p.create_file(io_source, num_realizations)
