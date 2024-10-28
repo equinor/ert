@@ -48,7 +48,8 @@ def test_init_prior(qtbot, storage):
         Qt.MouseButton.LeftButton,
     )
     assert (
-        RealizationStorageState.INITIALIZED in s for s in ensemble.get_ensemble_state()
+        RealizationStorageState.PARAMETERS_LOADED in s
+        for s in ensemble.get_ensemble_state()
     )
     assert ensemble.load_parameters("COEFFS")[
         "transformed_values"

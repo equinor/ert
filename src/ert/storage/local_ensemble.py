@@ -225,7 +225,7 @@ class LocalEnsemble(BaseMode):
             [
                 bool(
                     {
-                        RealizationStorageState.INITIALIZED,
+                        RealizationStorageState.PARAMETERS_LOADED,
                         RealizationStorageState.HAS_DATA,
                     }.intersection(state)
                 )
@@ -514,7 +514,7 @@ class LocalEnsemble(BaseMode):
             if _responses_exist_for_realization(realization):
                 _state.add(RealizationStorageState.HAS_DATA)
             if _parameters_exist_for_realization(realization):
-                _state.add(RealizationStorageState.INITIALIZED)
+                _state.add(RealizationStorageState.PARAMETERS_LOADED)
 
             if len(_state) == 0:
                 _state.add(RealizationStorageState.UNDEFINED)
@@ -895,7 +895,7 @@ class LocalEnsemble(BaseMode):
     ) -> Dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.INITIALIZED
+            e: RealizationStorageState.PARAMETERS_LOADED
             if (path / (_escape_filename(e) + ".nc")).exists()
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.parameter_configuration
