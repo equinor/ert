@@ -1,11 +1,13 @@
 import logging
 import os
+import shutil
 from collections import namedtuple
 from unittest.mock import patch
 
 import pytest
 import requests
 
+from ert import JobState
 from ert.config import ErtConfig, QueueSystem
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -37,6 +39,7 @@ from everest.strings import (
     SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
+from tests.everest.utils import relpath
 
 
 class MockContext:
@@ -181,6 +184,58 @@ def test_wait_for_server(
     server_status = everserver_status(config)
     assert server_status["status"] == ServerStatus.failed
     assert server_status["message"] == expected_error_msg
+
+
+@patch("everest.detached.server_is_running", return_value=False)
+@pytest.mark.usefixtures("change_to_tmpdir")
+def test_wait_for_handles_failed_job_race_condition_failed_job_to_waiting(
+    server_is_running_mock, caplog
+):
+    shutil.copytree(relpath("test_data", "detached"), ".", dirs_exist_ok=True)
+    config = EverestConfig.load_file("valid_yaml_config.yml")
+
+    class _MockContext(MockContext):
+        @staticmethod
+        def job_progress(*args):
+            return None
+
+        @staticmethod
+        def get_job_state(*args):
+            return JobState.WAITING
+
+    with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
+        wait_for_server(config, timeout=1, context=_MockContext())
+
+    assert (
+        "Race condition in wait_for_server, job did fail but is now in WAITING"
+        in caplog.messages
+    )
+
+
+@patch("everest.detached.server_is_running", return_value=False)
+@pytest.mark.usefixtures("change_to_tmpdir")
+def test_wait_for_handles_failed_job_race_condition_failed_job_removed_from_scheduler(
+    server_is_running_mock, caplog
+):
+    shutil.copytree(relpath("test_data", "detached"), ".", dirs_exist_ok=True)
+    config = EverestConfig.load_file("valid_yaml_config.yml")
+
+    class _MockContext(MockContext):
+        @staticmethod
+        def job_progress(*args):
+            return None
+
+        @staticmethod
+        def get_job_state(*args):
+            raise IndexError("Some trackback")
+
+    with caplog.at_level(logging.ERROR), pytest.raises(SystemExit):
+        wait_for_server(config, timeout=1, context=_MockContext())
+
+    assert any(
+        "Race condition in wait_for_server, failed job removed from scheduler"
+        for x in caplog.messages
+    )
 
 
 def _get_reference_config():
