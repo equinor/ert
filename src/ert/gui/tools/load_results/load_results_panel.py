@@ -15,7 +15,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.libres_facade import LibresFacade
 from ert.run_models.base_run_model import captured_logs
-from ert.validation import RangeStringArgument, StringDefinition, RunPathArgument
+from ert.validation import RangeStringArgument, StringDefinition
 
 
 class LoadResultsPanel(QWidget):
