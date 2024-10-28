@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 class TextBox(QTextEdit):
-    """StringBox shows a string. The data structure expected and sent to the
-    getter and setter is a string."""
+    """TextBox shows a multi line string. The data structure expected and sent to the
+    getter and setter is a multi line string."""
 
     def __init__(
         self,
@@ -24,11 +24,6 @@ class TextBox(QTextEdit):
         placeholder_text: str = "",
         minimum_width: int = 250,
     ):
-        """
-        :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
-        :type help_link: str
-        :type default_string: str
-        """
         QTextEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)
