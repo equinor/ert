@@ -116,7 +116,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert "EXIT: 1/massive_failure" in f.readline()
     with open(ERROR_file, "r", encoding="utf-8") as f:
         content = "".join(f.readlines())
-        assert "<job>fmstep1</job>" in content, "ERROR file missing job"
+        assert "<job>fmstep1</job>" in content, "ERROR file missing fmstep"
         assert (
             "<reason>massive_failure</reason>" in content
         ), "ERROR file missing reason"
@@ -199,7 +199,7 @@ def test_old_file_deletion(reporter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_status_file_is_correct(reporter):
-    """The STATUS file is a file to which we append data about jobs as they
+    """The STATUS file is a file to which we append data about steps as they
     are run. So this involves multiple reports, and should be tested as
     such.
     See https://github.com/equinor/libres/issues/764

@@ -29,8 +29,8 @@ from .test_event_reporter import _wait_until
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_terminate_jobs():
-    # Executes it self recursively and sleeps for 100 seconds
+def test_terminate_steps():
+    # Executes itself recursively and sleeps for 100 seconds
     with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(
             """#!/usr/bin/env python
@@ -46,7 +46,7 @@ else:
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    job_list = {
+    step_list = {
         "global_environment": {},
         "global_update_path": {},
         "jobList": [
@@ -74,7 +74,7 @@ else:
     }
 
     with open(JOBS_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(job_list))
+        f.write(json.dumps(step_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
     with open("setsid", "w", encoding="utf-8") as f:
@@ -166,7 +166,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
         f.write(
             "#!/usr/bin/env python\n"
             "import sys, os\n"
-            'filename = "job_{}.out".format(sys.argv[1])\n'
+            'filename = "step_{}.out".format(sys.argv[1])\n'
             'f = open(filename, "w", encoding="utf-8")\n'
             "f.close()\n"
         )
@@ -179,7 +179,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
         "global_update_path": {},
         "jobList": [
             {
-                "name": "job_A",
+                "name": "step_A",
                 "executable": executable,
                 "target_file": None,
                 "error_file": None,
@@ -197,7 +197,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
                 "max_arg": None,
             },
             {
-                "name": "job_B",
+                "name": "step_B",
                 "executable": executable,
                 "target_file": None,
                 "error_file": None,
@@ -215,7 +215,7 @@ def test_job_dispatch_run_subset_specified_as_parameter():
                 "max_arg": None,
             },
             {
-                "name": "job_C",
+                "name": "step_C",
                 "executable": executable,
                 "target_file": None,
                 "error_file": None,
@@ -265,16 +265,16 @@ def test_job_dispatch_run_subset_specified_as_parameter():
             sys.executable,
             job_dispatch_script,
             os.getcwd(),
-            "job_B",
-            "job_C",
+            "step_B",
+            "step_C",
         ]
     )
 
     job_dispatch_process.wait()
 
-    assert not os.path.isfile("job_A.out")
-    assert os.path.isfile("job_B.out")
-    assert os.path.isfile("job_C.out")
+    assert not os.path.isfile("step_A.out")
+    assert os.path.isfile("step_B.out")
+    assert os.path.isfile("step_C.out")
 
 
 def test_no_jobs_json_file_raises_IOError(tmp_path):
@@ -294,7 +294,7 @@ def test_missing_directory_exits(tmp_path):
         main(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
+def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
     lock = Lock()
     lock.acquire()
     monkeypatch.setattr(_ert.forward_model_runner.cli, "_wait_for_retry", lock.acquire)
