@@ -55,16 +55,24 @@ class GenDataConfig(ResponseConfig):
             options = option_dict(gen_data, 1)
             name = gen_data[0]
             res_file = options.get("RESULT_FILE")
+            report_steps_value = options.get("REPORT_STEPS", "")
 
             if res_file is None:
                 raise ConfigValidationError.with_context(
                     f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}",
                     name,
                 )
+            try:
+                _report_steps: Optional[List[int]] = rangestring_to_list(
+                    report_steps_value
+                )
+            except ValueError as e:
+                raise ConfigValidationError.with_context(
+                    f"The REPORT_STEPS setting: {report_steps_value} is invalid"
+                    ' - must be a valid range string: e.g.: "0-1, 4-6, 8"',
+                    gen_data,
+                ) from e
 
-            _report_steps: Optional[List[int]] = rangestring_to_list(
-                options.get("REPORT_STEPS", "")
-            )
             _report_steps = sorted(_report_steps) if _report_steps else None
             if os.path.isabs(res_file):
                 result_file_context = next(
