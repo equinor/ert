@@ -250,7 +250,7 @@ assert exec_env["TEST_ENV"] == "123"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_env_var_available_inside_job_context():
+def test_env_var_available_inside_step_context():
     with open("run_me.py", "w", encoding="utf-8") as f:
         f.write(
             """#!/usr/bin/env python\n

@@ -2,28 +2,29 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
 
 
 class ForwardModelRunner:
-    def __init__(self, jobs_data):
-        self.jobs_data = jobs_data
-        self.simulation_id = jobs_data.get("run_id")
-        self.experiment_id = jobs_data.get("experiment_id")
-        self.ens_id = jobs_data.get("ens_id")
-        self.real_id = jobs_data.get("real_id")
-        self.ert_pid = jobs_data.get("ert_pid")
-        self.global_environment = jobs_data.get("global_environment")
-        job_data_list = jobs_data["jobList"]
+    def __init__(self, steps_data: Dict[str, Any]):
+        self.steps_data = (
+            steps_data  # On disk, this is called jobs.json for legacy reasons
+        )
+        self.simulation_id = steps_data.get("run_id")
+        self.experiment_id = steps_data.get("experiment_id")
+        self.ens_id = steps_data.get("ens_id")
+        self.real_id = steps_data.get("real_id")
+        self.ert_pid = steps_data.get("ert_pid")
+        self.global_environment = steps_data.get("global_environment")
         if self.simulation_id is not None:
             os.environ["ERT_RUN_ID"] = self.simulation_id
 
-        self.jobs: List[ForwardModelStep] = []
-        for index, job_data in enumerate(job_data_list):
-            self.jobs.append(ForwardModelStep(job_data, index))
+        self.steps: List[ForwardModelStep] = []
+        for index, step_data in enumerate(steps_data["jobList"]):
+            self.steps.append(ForwardModelStep(step_data, index))
 
         self._set_environment()
 
@@ -48,15 +49,15 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    def run(self, names_of_jobs_to_run):
-        # if names_of_jobs_to_run, create job_queue which contains jobs that
-        # are to be run.
-        if not names_of_jobs_to_run:
-            job_queue = self.jobs
+    def run(self, names_of_steps_to_run: List[str]):
+        if not names_of_steps_to_run:
+            step_queue = self.steps
         else:
-            job_queue = [j for j in self.jobs if j.name() in names_of_jobs_to_run]
+            step_queue = [
+                step for step in self.steps if step.name() in names_of_steps_to_run
+            ]
         init_message = Init(
-            job_queue,
+            step_queue,
             self.simulation_id,
             self.ert_pid,
             self.ens_id,
@@ -64,23 +65,25 @@ class ForwardModelRunner:
             self.experiment_id,
         )
 
-        unused = set(names_of_jobs_to_run) - {j.name() for j in job_queue}
+        unused = set(names_of_steps_to_run) - {step.name() for step in step_queue}
         if unused:
             init_message.with_error(
                 f"{unused} does not exist. "
-                f"Available jobs: {[j.name() for j in self.jobs]}"
+                f"Available forward_model steps: {[step.name() for step in self.steps]}"
             )
             yield init_message
             return
         else:
             yield init_message
 
-        for job in job_queue:
-            for status_update in job.run():
+        for step in step_queue:
+            for status_update in step.run():
                 yield status_update
                 if not status_update.success():
                     yield Checksum(checksum_dict={}, run_path=os.getcwd())
-                    yield Finish().with_error("Not all jobs completed successfully.")
+                    yield Finish().with_error(
+                        "Not all forward model steps completed successfully."
+                    )
                     return
 
         checksum_dict = self._populate_checksums(self._read_manifest())
