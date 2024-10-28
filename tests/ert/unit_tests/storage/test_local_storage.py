@@ -413,7 +413,8 @@ def test_ensemble_no_parameters(storage):
         name="prior",
     )
     assert all(
-        RealizationStorageState.HAS_DATA in s for s in ensemble.get_ensemble_state()
+        RealizationStorageState.RESPONSES_LOADED in s
+        for s in ensemble.get_ensemble_state()
     )
 
 
@@ -1005,7 +1006,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
             # If expecting no responses, i.e., it has empty .keys in all response
             # configs, it will be a HAS_DATA even if no responses were ever saved
             if not is_expecting_responses:
-                assert RealizationStorageState.HAS_DATA in edited_posterior_state
+                assert (
+                    RealizationStorageState.RESPONSES_LOADED in edited_posterior_state
+                )
             else:
                 assert self.iens_to_edit not in prior.failure_messages
                 assert RealizationStorageState.UNDEFINED in edited_posterior_state
