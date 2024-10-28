@@ -12,7 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, REAL_STATE_TO_COLOR
 
 
 class ProgressWidget(QFrame):
@@ -92,6 +92,14 @@ class ProgressWidget(QFrame):
 
     def start_waiting_progress_bar(self) -> None:
         self._waiting_progress_bar.setVisible(True)
+
+    def set_all_failed(self) -> None:
+        self.stop_waiting_progress_bar()
+        full_width = self.width()
+        for state, label in self._progress_label_map.items():
+            label.setVisible(True)
+            width = full_width if state == ENSEMBLE_STATE_FAILED else 0
+            label.setFixedWidth(width)
 
     def update_progress(self, status: dict[str, int], realization_count: int) -> None:
         self._status = status

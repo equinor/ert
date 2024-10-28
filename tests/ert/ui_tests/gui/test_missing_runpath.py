@@ -6,6 +6,7 @@ from qtpy.QtWidgets import (
     QLabel,
 )
 
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.run_models import EnsembleExperiment
 
@@ -95,3 +96,52 @@ def test_missing_runpath_has_isolated_failures(
     finally:
         with suppress(FileNotFoundError):
             (tmp_path / "simulations/realization-0/iter-0").chmod(0x777)
+
+
+def test_missing_runpath_does_not_show_waiting_bar(
+    tmp_path, run_experiment, qtbot, monkeypatch
+):
+    """
+    This is a regression test for the gui showing waiting progress bar on ensemble failure
+    """
+    monkeypatch.chdir(tmp_path)
+    write_config(tmp_path, "LOCAL")
+    run_path = tmp_path / "simulations"
+    run_path.mkdir()
+    run_path.chmod(0x444)
+
+    def handle_message_box(dialog):
+        def inner():
+            qtbot.waitUntil(
+                lambda: dialog.fail_msg_box is not None,
+                timeout=20000,
+            )
+
+            message_box = dialog.fail_msg_box
+            assert message_box is not None
+            assert message_box.label_text.text() == "ERT experiment failed!"
+            message_box.accept()
+
+        return inner
+
+    try:
+        for gui in open_gui_with_config(tmp_path / "config.ert"):
+            qtbot.addWidget(gui)
+            run_experiment(EnsembleExperiment, gui, click_done=False)
+            run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
+
+            QTimer.singleShot(100, handle_message_box(run_dialog))
+            qtbot.waitUntil(
+                lambda dialog=run_dialog: dialog.is_simulation_done() == True,
+                timeout=200000,
+            )
+            assert not run_dialog._progress_widget._waiting_progress_bar.isVisible()
+            assert (
+                run_dialog._progress_widget._progress_label_map[
+                    ENSEMBLE_STATE_FAILED
+                ].width()
+                == run_dialog._progress_widget.width()
+            )
+    finally:
+        with suppress(FileNotFoundError):
+            (tmp_path / "simulations").chmod(0x777)
