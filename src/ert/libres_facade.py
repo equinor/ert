@@ -21,7 +21,7 @@ import numpy as np
 from pandas import DataFrame
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
-from ert.callbacks import load_realization
+from ert.callbacks import load_run_path_realization
 from ert.config import (
     EnkfObservationImplementationType,
     ErtConfig,
@@ -50,7 +50,7 @@ def _load_realization_from_run_path(
     realization: int,
     ensemble: Ensemble,
 ) -> Tuple[LoadResult, int]:
-    result = asyncio.run(load_realization(run_path, realization, ensemble))
+    result = asyncio.run(load_run_path_realization(run_path, realization, ensemble))
     return result, realization
 
 

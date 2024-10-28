@@ -136,7 +136,7 @@ async def forward_model_ok(
     return final_result
 
 
-async def load_realization(
+async def load_run_path_realization(
     run_path: str,
     realization: int,
     ensemble: Ensemble,
