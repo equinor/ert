@@ -403,6 +403,9 @@ class RunDialog(QFrame):
         self._notifier.set_is_simulation_running(False)
         if failed:
             self.update_total_progress(1.0, "Failed")
+
+            self._progress_widget.set_all_failed()
+
             self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
             self.fail_msg_box.setModal(True)
             self.fail_msg_box.show()
