@@ -104,10 +104,12 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        observation_list = summary.getObservations()
-        text = SummaryTemplate(f"Observations ({len(observation_list):,})")
-        for observations in observation_list:
-            text.addRow(observations)
+        observation_counts = summary.getObservations()
+        text = SummaryTemplate(
+            f"Observations ({sum(e['count'] for e in observation_counts)})"
+        )
+        for entry in observation_counts:
+            text.addRow(f"{entry['observation_key']} ({entry['count']})")
 
         self.addColumn(text.getText())
 

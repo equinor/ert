@@ -98,12 +98,12 @@ def test_snake_oil(snake_oil_case):
     assert summary.getParameters() == (["SNAKE_OIL_PARAM (10)"], 10)
 
     assert summary.getObservations() == [
-        "FOPR",
-        "WOPR_OP1_108",
-        "WOPR_OP1_144",
-        "WOPR_OP1_190",
-        "WOPR_OP1_36",
-        "WOPR_OP1_72",
-        "WOPR_OP1_9",
-        "WPR_DIFF_1",
+        {"observation_key": "FOPR", "count": 200},
+        {"observation_key": "WOPR_OP1_108", "count": 1},
+        {"observation_key": "WOPR_OP1_144", "count": 1},
+        {"observation_key": "WOPR_OP1_190", "count": 1},
+        {"observation_key": "WOPR_OP1_36", "count": 1},
+        {"observation_key": "WOPR_OP1_72", "count": 1},
+        {"observation_key": "WOPR_OP1_9", "count": 1},
+        {"observation_key": "WPR_DIFF_1", "count": 4},
     ]
