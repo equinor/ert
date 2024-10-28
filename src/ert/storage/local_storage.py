@@ -425,11 +425,11 @@ class LocalStorage(BaseMode):
         )
         if prior_ensemble:
             for realization, state in enumerate(prior_ensemble.get_ensemble_state()):
-                if state in [
+                if {
                     RealizationStorageState.LOAD_FAILURE,
                     RealizationStorageState.PARENT_FAILURE,
                     RealizationStorageState.UNDEFINED,
-                ]:
+                }.intersection(state):
                     ens.set_failure(
                         realization,
                         RealizationStorageState.PARENT_FAILURE,

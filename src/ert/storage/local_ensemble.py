@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -203,11 +203,10 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                e
-                not in [
+                not {
                     RealizationStorageState.PARENT_FAILURE,
                     RealizationStorageState.LOAD_FAILURE,
-                ]
+                }.intersection(e)
                 for e in self.get_ensemble_state()
             ]
         )
@@ -224,11 +223,12 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                state
-                in {
-                    RealizationStorageState.INITIALIZED,
-                    RealizationStorageState.HAS_DATA,
-                }
+                bool(
+                    {
+                        RealizationStorageState.INITIALIZED,
+                        RealizationStorageState.HAS_DATA,
+                    }.intersection(state)
+                )
                 for state in self.get_ensemble_state()
             ]
         )
@@ -252,7 +252,7 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                state == RealizationStorageState.HAS_DATA
+                RealizationStorageState.HAS_DATA in state
                 for state in self.get_ensemble_state()
             ]
         )
@@ -420,7 +420,7 @@ class LocalEnsemble(BaseMode):
             )
         return None
 
-    def get_ensemble_state(self) -> List[RealizationStorageState]:
+    def get_ensemble_state(self) -> List[Set[RealizationStorageState]]:
         """
         Retrieve the state of each realization within ensemble.
 
@@ -505,17 +505,21 @@ class LocalEnsemble(BaseMode):
                 _has_response(response) for response in non_empty_response_configs
             )
 
-        def _find_state(realization: int) -> RealizationStorageState:
+        def _find_state(realization: int) -> Set[RealizationStorageState]:
+            _state = set()
             if self.has_failure(realization):
                 failure = self.get_failure(realization)
                 assert failure
-                return failure.type
+                _state.add(failure.type)
             if _responses_exist_for_realization(realization):
-                return RealizationStorageState.HAS_DATA
+                _state.add(RealizationStorageState.HAS_DATA)
             if _parameters_exist_for_realization(realization):
-                return RealizationStorageState.INITIALIZED
-            else:
-                return RealizationStorageState.UNDEFINED
+                _state.add(RealizationStorageState.INITIALIZED)
+
+            if len(_state) == 0:
+                _state.add(RealizationStorageState.UNDEFINED)
+
+            return _state
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 

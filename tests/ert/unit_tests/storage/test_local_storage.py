@@ -412,7 +412,9 @@ def test_ensemble_no_parameters(storage):
         ensemble_size=2,
         name="prior",
     )
-    assert ensemble.get_ensemble_state() == [RealizationStorageState.HAS_DATA] * 2
+    assert all(
+        RealizationStorageState.HAS_DATA in s for s in ensemble.get_ensemble_state()
+    )
 
 
 def test_get_unique_experiment_name(snake_oil_storage):
@@ -658,7 +660,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     checks its return values against a simple key-value store
     (the model).
 
-    see https://hypothesis.readthedocs.io/en/latest/stateful.html
+    see https://hypothesis.readthe@docs.io/en/latest/stateful.html
 
     When the test fails, you get a printout like this:
 
@@ -950,17 +952,17 @@ class StatefulStorageTest(RuleBasedStateMachine):
         )
 
         if is_expecting_responses:
-            assert (
-                ensemble.get_ensemble_state()
-                == [RealizationStorageState.UNDEFINED] * ensemble_size
+            assert all(
+                (RealizationStorageState.UNDEFINED in s)
+                for s in ensemble.get_ensemble_state()
             )
             assert np.all(
                 np.logical_not(ensemble.get_realization_mask_with_responses())
             )
         else:
-            assert (
-                ensemble.get_ensemble_state()
-                == [RealizationStorageState.HAS_DATA] * ensemble_size
+            assert all(
+                RealizationStorageState.RESPONSES_LOADED in state
+                for state in ensemble.get_ensemble_state()
             )
             assert np.all(ensemble.get_realization_mask_with_responses())
 
@@ -988,12 +990,14 @@ class StatefulStorageTest(RuleBasedStateMachine):
         posterior_state = ensemble.get_ensemble_state()
         edited_posterior_state = posterior_state[self.iens_to_edit]
 
-        if edited_prior_state in {
-            RealizationStorageState.UNDEFINED,
-            RealizationStorageState.PARENT_FAILURE,
-            RealizationStorageState.LOAD_FAILURE,
-        }:
-            assert edited_posterior_state == RealizationStorageState.PARENT_FAILURE
+        if edited_prior_state.intersection(
+            {
+                RealizationStorageState.UNDEFINED,
+                RealizationStorageState.PARENT_FAILURE,
+                RealizationStorageState.LOAD_FAILURE,
+            }
+        ):
+            assert RealizationStorageState.PARENT_FAILURE in edited_posterior_state
         else:
             is_expecting_responses = (
                 sum(len(config.keys) for config in model_experiment.responses) > 0
@@ -1001,10 +1005,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
             # If expecting no responses, i.e., it has empty .keys in all response
             # configs, it will be a HAS_DATA even if no responses were ever saved
             if not is_expecting_responses:
-                assert edited_posterior_state == RealizationStorageState.HAS_DATA
+                assert RealizationStorageState.HAS_DATA in edited_posterior_state
             else:
                 assert self.iens_to_edit not in prior.failure_messages
-                assert edited_posterior_state == RealizationStorageState.UNDEFINED
+                assert RealizationStorageState.UNDEFINED in edited_posterior_state
 
         return model_ensemble
 

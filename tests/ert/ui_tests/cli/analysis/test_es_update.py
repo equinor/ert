@@ -231,8 +231,8 @@ def test_that_update_works_with_failed_realizations():
         posterior = experiment.get_ensemble_by_name("iter-1")
 
         assert all(
-            posterior.get_ensemble_state()[idx]
-            == RealizationStorageState.PARENT_FAILURE
+            RealizationStorageState.PARENT_FAILURE
+            in posterior.get_ensemble_state()[idx]
             for idx, v in enumerate(prior.get_ensemble_state())
-            if v == RealizationStorageState.LOAD_FAILURE
+            if RealizationStorageState.LOAD_FAILURE in v
         )

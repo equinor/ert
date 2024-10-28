@@ -87,7 +87,7 @@ class EnsembleSelector(QComboBox):
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
                 if all(
-                    e == RealizationStorageState.UNDEFINED
+                    RealizationStorageState.UNDEFINED in e
                     for e in ensemble.get_ensemble_state()
                 )
             )
