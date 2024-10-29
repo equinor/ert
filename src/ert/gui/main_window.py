@@ -41,13 +41,24 @@ BUTTON_STYLE_SHEET: str = """
         padding-top: 5px;
         padding-bottom: 10px;
     }
-    QToolButton:hover {
-        background-color: rgba(50, 50, 50, 90);
-    }
     QToolButton::menu-indicator {
         right: 10px; bottom: 5px;
     }
 """
+
+BUTTON_STYLE_SHEET_LIGHT: str = (
+    BUTTON_STYLE_SHEET
+    + """
+    QToolButton:hover {background-color: rgba(50, 50, 50, 90);}
+    """
+)
+
+BUTTON_STYLE_SHEET_DARK: str = (
+    BUTTON_STYLE_SHEET
+    + """
+    QToolButton:hover {background-color: rgba(30, 30, 30, 150);}
+    """
+)
 
 
 class ErtMainWindow(QMainWindow):
@@ -76,7 +87,12 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setLayout(self.central_layout)
         self.facade = LibresFacade(self.ert_config)
         self.side_frame = QFrame(self)
-        self.side_frame.setStyleSheet("background-color: lightgray;")
+
+        if self.is_dark_mode():
+            self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
+        else:
+            self.side_frame.setStyleSheet("background-color: lightgray;")
+
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
@@ -102,6 +118,9 @@ class ErtMainWindow(QMainWindow):
 
         self.__add_tools_menu()
         self.__add_help_menu()
+
+    def is_dark_mode(self) -> bool:
+        return self.palette().base().color().value() < 70
 
     def select_central_widget(self) -> None:
         actor = self.sender()
@@ -216,7 +235,11 @@ class ErtMainWindow(QMainWindow):
         button = QToolButton(self.side_frame)
         button.setFixedSize(85, 95)
         button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        button.setStyleSheet(BUTTON_STYLE_SHEET)
+
+        button.setStyleSheet(
+            BUTTON_STYLE_SHEET_DARK
+        ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
         button.setIconSize(icon_size)
