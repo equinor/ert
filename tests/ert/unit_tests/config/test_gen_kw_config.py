@@ -235,6 +235,7 @@ def test_gen_kw_is_log_or_not(
             user_config_file=ert_config.user_config_file,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
             templates=ert_config.ert_templates,
             model_config=ert_config.model_config,

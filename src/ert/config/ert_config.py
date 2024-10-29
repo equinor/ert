@@ -95,10 +95,13 @@ def create_forward_model_json(
     itr: int = 0,
     user_config_file: Optional[str] = "",
     env_vars: Optional[Dict[str, str]] = None,
+    env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
     skip_pre_experiment_validation: bool = False,
 ) -> Dict[str, Any]:
     if env_vars is None:
         env_vars = {}
+    if env_pr_fm_step is None:
+        env_pr_fm_step = {}
 
     class Substituter:
         def __init__(self, fm_step):
@@ -191,7 +194,9 @@ def create_forward_model_json(
                 handle_default(fm_step, substituter.substitute(arg))
                 for arg in fm_step.arglist
             ],
-            "environment": substituter.filter_env_dict(fm_step.environment),
+            "environment": substituter.filter_env_dict(
+                dict(env_pr_fm_step.get(fm_step.name, {}), **fm_step.environment)
+            ),
             "exec_env": substituter.filter_env_dict(fm_step.exec_env),
             "max_running_minutes": fm_step.max_running_minutes,
         }
@@ -226,6 +231,7 @@ def forward_model_data_to_json(
     substitutions: Substitutions,
     forward_model_steps: List[ForwardModelStep],
     env_vars: Dict[str, str],
+    env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
     user_config_file: Optional[str] = "",
     run_id: Optional[str] = None,
     iens: int = 0,
@@ -234,11 +240,14 @@ def forward_model_data_to_json(
 ):
     if context_env is None:
         context_env = {}
+    if env_pr_fm_step is None:
+        env_pr_fm_step = {}
     return create_forward_model_json(
         context=substitutions,
         forward_model_steps=forward_model_steps,
         user_config_file=user_config_file,
         env_vars={**env_vars, **context_env},
+        env_pr_fm_step=env_pr_fm_step,
         run_id=run_id,
         iens=iens,
         itr=itr,
@@ -250,6 +259,7 @@ class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
+    ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = {}
 
     substitutions: Substitutions = field(default_factory=Substitutions)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
@@ -317,6 +327,7 @@ class ErtConfig:
     @staticmethod
     def with_plugins(
         forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,
+        env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> Type["ErtConfig"]:
         if forward_model_step_classes is None:
             forward_model_step_classes = ErtPluginManager().forward_model_steps
@@ -326,10 +337,16 @@ class ErtConfig:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
 
+        if env_pr_fm_step is None:
+            env_pr_fm_step = _uppercase_subkeys_and_stringify_subvalues(
+                ErtPluginManager().get_forward_model_configuration()
+            )
+
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 Dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
+            ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = env_pr_fm_step
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
@@ -996,6 +1013,10 @@ class ErtConfig:
     def preferred_num_cpu(self) -> int:
         return int(self.substitutions.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
+    @property
+    def env_pr_fm_step(self) -> Dict[str, Dict[str, Any]]:
+        return self.ENV_PR_FM_STEP
+
     @staticmethod
     def _create_observations(
         obs_config_content: Optional[
@@ -1105,6 +1126,17 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
         subst_list[key] = val
 
     return Substitutions(subst_list)
+
+
+def _uppercase_subkeys_and_stringify_subvalues(
+    nested_dict: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, str]]:
+    fixed_dict: dict[str, dict[str, str]] = {}
+    for key, value in nested_dict.items():
+        fixed_dict[key] = {
+            subkey.upper(): str(subvalue) for subkey, subvalue in value.items()
+        }
+    return fixed_dict
 
 
 @no_type_check

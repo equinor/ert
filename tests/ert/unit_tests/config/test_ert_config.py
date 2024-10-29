@@ -8,6 +8,7 @@ import warnings
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 from hypothesis import assume, given, settings
@@ -29,6 +30,7 @@ from ert.config.parsing.context_values import (
     ContextString,
 )
 from ert.config.parsing.queue_system import QueueSystem
+from ert.plugins import ErtPluginManager
 
 from .config_dict_generator import config_generators
 
@@ -828,6 +830,232 @@ def test_that_include_statements_with_multiple_values_raises_error():
                 """
             )
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
+
+
+def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
+    )
+    Path("SOME_OTHER_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_OTHER_STEP SOME_OTHER_STEP
+            FORWARD_MODEL SOME_OTHER_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert "FOO" not in step_json["jobList"][0]["environment"]
+
+
+def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
+
+
+def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "{'a_dict_as_value': 1}"
+
+
+def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(
+            return_value={"SOME_STEP": {"FOO": "bar_from_plugin", "_ERT_RUNPATH": "0"}}
+        ),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            SETENV FOO bar_from_setenv
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert step_json["global_environment"]["FOO"] == "bar_from_setenv"
+    assert step_json["jobList"][0]["environment"]["FOO"] == "bar_from_plugin"
+    # It is up to forward_model_runner to define behaviour here
+
+
+def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"_ERT_RUNPATH": "0"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert (
+        step_json["jobList"][0]["environment"]["_ERT_RUNPATH"]
+        == "simulations/realization-0/iter-0"
+    )
+
+
+def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "<SOME_ERT_DEFINE>"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            DEFINE <SOME_ERT_DEFINE> define_works
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert step_json["jobList"][0]["environment"]["FOO"] == "define_works"
+
+
+def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
+    monkeypatch.setattr(
+        ErtPluginManager,
+        "get_forward_model_configuration",
+        MagicMock(return_value={"SOME_STEP": {"FOO": "<WILL_NOT_BE_DEFINED>"}}),
+    )
+    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            INSTALL_JOB SOME_STEP SOME_STEP
+            FORWARD_MODEL SOME_STEP()
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = forward_model_data_to_json(
+        substitutions=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+    )
+    assert "FOO" not in step_json["jobList"][0]["environment"]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

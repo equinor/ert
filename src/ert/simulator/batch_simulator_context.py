@@ -134,6 +134,7 @@ class BatchContext:
     templates: List[Tuple[str, str]]
     user_config_file: str
     env_vars: Dict[str, str]
+    env_pr_fm_step: Dict[str, Dict[str, Any]]
     forward_model_steps: List[ForwardModelStep]
     runpath_file: str
     ensemble: Ensemble
@@ -176,6 +177,7 @@ class BatchContext:
             ensemble=self.ensemble,
             user_config_file=self.user_config_file,
             env_vars=self.env_vars,
+            env_pr_fm_step=self.env_pr_fm_step,
             forward_model_steps=self.forward_model_steps,
             substitutions=self.substitutions,
             templates=self.templates,
