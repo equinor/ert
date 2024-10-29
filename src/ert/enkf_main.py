@@ -131,11 +131,10 @@ def _manifest_to_json(
             param_config,
             (ExtParamConfig, GenKwConfig, Field, SurfaceConfig),
         )
-        if param_config.forward_init and param_config.forward_init_file is not None:
+        if param_config.forward_init and ensemble.iteration == 0:
+            assert param_config.forward_init_file is not None
             file_path = param_config.forward_init_file.replace("%d", str(iens))
             manifest[param_config.name] = file_in_runpath(file_path)
-        elif param_config.output_file is not None and not param_config.forward_init:
-            manifest[param_config.name] = file_in_runpath(str(param_config.output_file))
     # Add expected response files to manifest
     for respons_config in ensemble.experiment.response_configuration.values():
         for input_file in respons_config.expected_input_files:

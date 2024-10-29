@@ -107,7 +107,7 @@ class SurfaceConfig(ParameterConfig):
         if not file_path.exists():
             raise ValueError(
                 "Failed to initialize parameter "
-                f"'{self.name}' in file {file_name}: "
+                f"'{self.name}' in file {file_path}: "
                 "File not found\n"
             )
         surface = xtgeo.surface_from_file(

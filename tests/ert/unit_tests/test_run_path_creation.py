@@ -1,16 +1,29 @@
+import asyncio
 import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import orjson
 import pytest
+import xtgeo
 
-from ert.config import ConfigValidationError, ErtConfig
+from ert.callbacks import forward_model_ok
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    Field,
+    GenKwConfig,
+    SurfaceConfig,
+)
 from ert.enkf_main import create_run_path, sample_prior
+from ert.load_status import LoadStatus
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
 from ert.storage import Storage
+from tests.ert.unit_tests.config.egrid_generator import simple_grid
+from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -638,63 +651,147 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, prior_ensemble, storage
     assert jobs_json.exists()
 
 
-@pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_create_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
-    ert_config = snake_oil_case
+def save_zeros(prior_ensemble, num_realizations, dim_size):
+    parameter_configs = prior_ensemble.experiment.parameter_configuration
+    for parameter, config_node in parameter_configs.items():
+        for realization_nr in range(num_realizations):
+            if isinstance(config_node, SurfaceConfig):
+                config_node.save_parameters(
+                    prior_ensemble, parameter, realization_nr, np.zeros(dim_size**2)
+                )
+            elif isinstance(config_node, Field):
+                config_node.save_parameters(
+                    prior_ensemble, parameter, realization_nr, np.zeros(dim_size**3)
+                )
+            elif isinstance(config_node, GenKwConfig):
+                config_node.save_parameters(
+                    prior_ensemble, parameter, realization_nr, np.zeros(1)
+                )
+            else:
+                raise ValueError(f"unexpected {config_node}")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("itr", [0, 1])
+def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr):
+    num_realizations = 2
+    dim_size = 2
+    simple_grid().to_file("GRID.EGRID")
+    Path("base.irap").write_text("", encoding="utf-8")
+    xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
+        "base.irap", fformat="irap_ascii"
+    )
+    for i in range(num_realizations):
+        xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
+            str(i) + "init.irap", fformat="irap_ascii"
+        )
+        xtgeo.GridProperty(
+            ncol=2,
+            nrow=2,
+            nlay=2,
+            name="PORO1",
+            values=np.zeros((dim_size, dim_size, dim_size)),
+        ).to_file(str(i) + "init.roff", fformat="roff")
+        Path(str(i) + "gen_init.txt").write_text("PARMA 1.0\n", encoding="utf-8")
+    Path("gen0.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
+    Path("gen1.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
+    Path("template.txt").write_text("<PARMA>", encoding="utf-8")
+
+    config = ErtConfig.from_file_contents(
+        dedent(
+            f"""\
+            NUM_REALIZATIONS {num_realizations}
+            DEFINE <ALL> -<ITER>-<IENS>-<GEO_ID>
+            DEFINE <GEO_ID_0_0> HELLO0
+            DEFINE <GEO_ID_1_0> HELLO1
+            DEFINE <GEO_ID_0_1> HELLO0
+            DEFINE <GEO_ID_1_1> HELLO1
+
+            ECLBASE CASE<ALL>
+            GRID GRID.EGRID
+            SUMMARY FOPR
+            RUNPATH simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>
+
+
+            SURFACE SURF1 OUTPUT_FILE:surf1_output<ALL>.irap BASE_SURFACE:base.irap FORWARD_INIT:True INIT_FILES:surf1_init<ALL>.irap
+            SURFACE SURF2 OUTPUT_FILE:surf2_output<ALL>.irap BASE_SURFACE:base.irap INIT_FILES:%dinit.irap
+            FIELD PORO0 PARAMETER field1<ALL>.roff INIT_FILES:field1_init<ALL>.roff FORWARD_INIT:TRUE
+            FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit.roff
+            GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init.txt
+            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt INIT_FILES:%dgen_init.txt
+            """
+        )
+    )
+
     experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
+        parameters=config.ensemble_config.parameter_configuration,
+        responses=config.ensemble_config.response_configuration,
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=25, iteration=itr
+        experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
     )
-
-    num_realizations = 25
-    runpath_fmt = (
-        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
-        "magic-real-<IENS>/magic-iter-<ITER>"
-    )
-    global_substitutions = ert_config.substitutions
-    for i in range(num_realizations):
-        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
 
     run_paths = Runpaths(
-        jobname_format="SNAKE_OIL_%d",
-        runpath_format=runpath_fmt,
-        filename="a_file_name",
-        substitutions=global_substitutions,
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
     )
 
-    sample_prior(prior_ensemble, range(num_realizations))
+    if itr == 0:
+        sample_prior(prior_ensemble, range(num_realizations))
+    else:
+        save_zeros(prior_ensemble, num_realizations, dim_size=dim_size)
+
     run_args = create_run_arguments(
         run_paths,
         [True, True],
         prior_ensemble,
     )
 
-    create_run_path(run_args, prior_ensemble, ert_config, run_paths)
+    create_run_path(run_args, prior_ensemble, config, run_paths)
 
-    exp_runpaths = [
-        runpath_fmt.replace("<ITER>", str(itr))
-        .replace("<IENS>", str(run_arg.iens))
-        .replace("<GEO_ID>", str(10 * run_arg.iens))
-        for run_arg in run_args
-        if run_arg.active
-    ]
-    exp_runpaths = list(map(os.path.realpath, exp_runpaths))
-    expected_manifest_values = {
-        "snake_oil_params.txt",
-        "snake_oil_opr_diff_199.txt",
-        "snake_oil_wpr_diff_199.txt",
-        "snake_oil_gpr_diff_199.txt",
-        "SNAKE_OIL_FIELD.UNSMRY",
-        "SNAKE_OIL_FIELD.SMSPEC",
-    }
-    for run_path in exp_runpaths:
+    for i, run_path in enumerate(run_paths.get_paths(range(num_realizations), itr)):
         manifest_path = Path(run_path) / "manifest.json"
         assert manifest_path.exists()
+        expected_files = {
+            run_path + f"/CASE-{itr}-{i}-HELLO{i}.UNSMRY",
+            run_path + f"/CASE-{itr}-{i}-HELLO{i}.SMSPEC",
+        }.union(
+            {
+                run_path + f"/field1_init-{itr}-{i}-HELLO{i}.roff",
+                run_path + f"/surf1_init-{itr}-{i}-HELLO{i}.irap",
+            }
+            if itr == 0
+            else set()
+        )
         with open(manifest_path, encoding="utf-8") as f:
             manifest = orjson.loads(f.read())
-            assert set(manifest.values()) == {
-                run_path + "/" + f for f in expected_manifest_values
-            }
+            assert set(manifest.values()) == expected_files
+
+        # write files in manifest
+        for file in expected_files:
+            if file.endswith("roff"):
+                xtgeo.GridProperty(
+                    ncol=2,
+                    nrow=2,
+                    nlay=2,
+                    name="PORO0",
+                    values=np.zeros((2, 2, 2)),
+                ).to_file(file, fformat="roff")
+            elif file.endswith("irap"):
+                xtgeo.RegularSurface(ncol=2, nrow=3, xinc=1, yinc=1).to_file(
+                    file, fformat="irap_ascii"
+                )
+            elif file.endswith("UNSMRY"):
+                simple_unsmry().to_file(file)
+            elif file.endswith("SMSPEC"):
+                simple_smspec().to_file(file)
+            else:
+                raise AssertionError()
+
+    # When files in manifest are written we expect forward_model_ok to succeed
+    for run_arg in run_args:
+        load_result = asyncio.run(forward_model_ok(run_arg))
+        assert load_result.status == LoadStatus.LOAD_SUCCESSFUL

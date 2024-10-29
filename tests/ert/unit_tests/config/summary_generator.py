@@ -524,3 +524,36 @@ def summaries(
         steps.append(SummaryStep(j, minis))
         j += 1
     return smspec, Unsmry(steps)
+
+
+def simple_unsmry():
+    return Unsmry(
+        steps=[
+            SummaryStep(
+                seqnum=0,
+                ministeps=[
+                    SummaryMiniStep(mini_step=0, params=[0.0, 5.629901e16]),
+                ],
+            )
+        ]
+    )
+
+
+def simple_smspec():
+    return Smspec(
+        nx=2,
+        ny=2,
+        nz=2,
+        restarted_from_step=0,
+        num_keywords=2,
+        restart="        ",
+        keywords=["TIME    ", "FOPR"],
+        well_names=[":+:+:+:+", "        "],
+        region_numbers=[-32676, 0],
+        units=["HOURS   ", "SM3"],
+        start_date=Date(day=1, month=1, year=2014, hour=0, minutes=0, micro_seconds=0),
+        intehead=SmspecIntehead(
+            unit=UnitSystem.METRIC,
+            simulator=Simulator.ECLIPSE_100,
+        ),
+    )
