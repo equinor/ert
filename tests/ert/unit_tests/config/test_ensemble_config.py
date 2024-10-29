@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -162,3 +163,31 @@ def test_that_empty_grid_file_raises(tmpdir):
             match="did not contain dimensions",
         ):
             _ = ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_logging_of_duplicate_gen_kw_parameter_names(caplog):
+    Path("MULTFLT1.TXT").write_text("a UNIFORM 0 1\nc UNIFORM 2 5", encoding="utf-8")
+    Path("MULTFLT2.TXT").write_text("a UNIFORM 0 1\nc UNIFORM 4 7", encoding="utf-8")
+    Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
+    config_dict = {
+        ConfigKeys.GEN_KW: [
+            [
+                "test_group1",
+                "FAULT_TEMPLATE",
+                "MULTFLT.INC",
+                "MULTFLT1.TXT",
+                "FORWARD_INIT:FALSE",
+            ],
+            [
+                "test_group2",
+                "FAULT_TEMPLATE",
+                "MULTFLT.INC",
+                "MULTFLT2.TXT",
+                "FORWARD_INIT:FALSE",
+            ],
+        ],
+    }
+    with caplog.at_level(logging.INFO):
+        EnsembleConfig.from_dict(config_dict=config_dict)
+    assert "Found duplicate GEN_KW parameter names: a(2), c(2)" in caplog.text
