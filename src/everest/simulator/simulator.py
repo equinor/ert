@@ -36,6 +36,7 @@ class Simulator(BatchSimulator):
             perferred_num_cpu=ert_config.preferred_num_cpu,
             user_config_file=ert_config.user_config_file,
             env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
             forward_model_steps=ert_config.forward_model_steps,
             runpath_file=str(ert_config.runpath_file),
             parameter_configurations=ert_config.ensemble_config.parameter_configs,

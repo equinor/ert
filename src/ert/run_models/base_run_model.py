@@ -679,6 +679,7 @@ class BaseRunModel(ABC):
             ensemble=ensemble,
             user_config_file=self.ert_config.user_config_file,
             env_vars=self.ert_config.env_vars,
+            env_pr_fm_step=self.ert_config.env_pr_fm_step,
             forward_model_steps=self.ert_config.forward_model_steps,
             substitutions=self.ert_config.substitutions,
             templates=self.ert_config.ert_templates,

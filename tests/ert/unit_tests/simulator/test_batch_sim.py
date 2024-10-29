@@ -82,6 +82,7 @@ class PatchedBatchSimulator(BatchSimulator):
                 runpath_file=ert_config.runpath_file,
                 user_config_file=ert_config.user_config_file,
                 env_vars=ert_config.env_vars,
+                env_pr_fm_step=ert_config.env_pr_fm_step,
                 forward_model_steps=ert_config.forward_model_steps,
                 parameter_configurations=ert_config.ensemble_config.parameter_configs,
                 substitutions=ert_config.substitutions,
