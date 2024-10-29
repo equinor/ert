@@ -56,6 +56,9 @@ class EnsembleConfig:
             [p.name for p in self.parameter_configs.values()],
             [key for config in self.response_configs.values() for key in config.keys],
         )
+        self._check_for_duplicate_gen_kw_param_names(
+            [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
+        )
 
         self.grid_file = _get_abs_path(self.grid_file)
 
@@ -71,6 +74,23 @@ class EnsembleConfig:
                 f" duplicate name{'s' if len(duplicate_names) > 1 else ''}:"
                 f" {','.join(duplicate_names)}",
                 duplicate_names[0],
+            )
+
+    @staticmethod
+    def _check_for_duplicate_gen_kw_param_names(gen_kw_list: list[GenKwConfig]) -> None:
+        gen_kw_param_count = Counter(
+            keyword.name for p in gen_kw_list for keyword in p.transform_functions
+        )
+        duplicate_gen_kw_names = [
+            (n, c) for n, c in gen_kw_param_count.items() if c > 1
+        ]
+
+        if duplicate_gen_kw_names:
+            duplicates_formatted = ", ".join(
+                f"{name}({count})" for name, count in duplicate_gen_kw_names
+            )
+            logger.info(
+                f"Found duplicate GEN_KW parameter names: {duplicates_formatted}"
             )
 
     @no_type_check
