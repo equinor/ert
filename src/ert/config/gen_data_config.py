@@ -68,7 +68,7 @@ class GenDataConfig(ResponseConfig):
                 )
             except ValueError as e:
                 raise ConfigValidationError.with_context(
-                    f"The REPORT_STEPS setting: {report_steps_value} is invalid"
+                    f"The REPORT_STEPS setting: {report_steps_value} for {name} is invalid"
                     ' - must be a valid range string: e.g.: "0-1, 4-6, 8"',
                     gen_data,
                 ) from e
