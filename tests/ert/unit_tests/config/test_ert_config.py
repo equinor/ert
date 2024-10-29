@@ -29,30 +29,26 @@ from ert.config.parsing.queue_system import QueueSystem
 from .config_dict_generator import config_generators
 
 
-def test_include_existing_file(tmpdir):
-    with tmpdir.as_cwd():
-        config = """
-        JOBNAME my_name%d
+@pytest.mark.usefixtures("use_tmpdir")
+def test_config_can_include_existing_file():
+    config = dedent("""
         INCLUDE include_me
         NUM_REALIZATIONS 1
-        """
-        rand_seed = 420
-        include_me_text = f"""
-        RANDOM_SEED {rand_seed}
-        """
+        """)
+    rand_seed = 420
+    include_me_text = f"RANDOM_SEED {rand_seed}\n"
 
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
+    Path("config.ert").write_text(config, encoding="utf-8")
+    Path("include_me").write_text(include_me_text, encoding="utf-8")
+    ert_config = ErtConfig.from_file("config.ert")
 
-        with open("include_me", mode="w", encoding="utf-8") as fh:
-            fh.writelines(include_me_text)
-
-        ert_config = ErtConfig.from_file("config.ert")
-        assert ert_config.random_seed == rand_seed
+    assert ert_config.random_seed == rand_seed
 
 
-def test_init(minimum_case):
-    ert_config = minimum_case
+@pytest.mark.usefixtures("use_tmpdir")
+def test_minimal_ert_configuration():
+    Path("minimal_config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
+    ert_config = ErtConfig.from_file("minimal_config.ert")
 
     assert ert_config is not None
 
@@ -64,7 +60,7 @@ def test_init(minimum_case):
     assert ert_config.substitutions["<CONFIG_PATH>"] == os.getcwd()
 
 
-def test_runpath_file(monkeypatch, tmp_path):
+def test_runpath_file_is_absolute(monkeypatch, tmp_path):
     """
     There was an issue relating to `ErtConfig.runpath_file` returning a
     relative path rather than an absolute path. This test simulates the
@@ -80,44 +76,53 @@ def test_runpath_file(monkeypatch, tmp_path):
     workdir_path.mkdir(parents=True)
     monkeypatch.chdir(workdir_path)
 
-    with config_path.open("w") as f:
-        f.writelines(
-            [
-                "DEFINE <FOO> foo\n",
-                "RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>\n",
-                # Required for this to be a valid ErtConfig
-                "NUM_REALIZATIONS 1\n",
-            ]
-        )
+    config_path.write_text(
+        dedent("""
+        DEFINE <FOO> foo
+        RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>
+        -- Required for this to be a valid ErtConfig
+        NUM_REALIZATIONS 1
+        """),
+        encoding="utf-8",
+    )
 
     config = ErtConfig.from_file(os.path.relpath(config_path, workdir_path))
     assert config.runpath_file == runpath_path
 
 
-def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_script_can_be_set_in_site_config(monkeypatch):
     """
     We use the jobscript field to inject a komodo environment onprem.
     This overwrites the value by appending to the default siteconfig.
     Need to check that the second JOB_SCRIPT is the one that gets used.
     """
-    test_site_config = tmp_path / "test_site_config.ert"
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
+    test_site_config = Path("test_site_config.ert")
+    my_script = Path("my_script").resolve()
+    my_script.write_text("", encoding="utf-8")
     st = os.stat(my_script)
     os.chmod(my_script, st.st_mode | stat.S_IEXEC)
     test_site_config.write_text(
-        f"JOB_SCRIPT job_dispatch.py\nJOB_SCRIPT {my_script}\nQUEUE_SYSTEM LOCAL\n"
+        dedent(f"""
+        JOB_SCRIPT job_dispatch.py
+        JOB_SCRIPT {my_script}
+        QUEUE_SYSTEM LOCAL
+        """),
+        encoding="utf-8",
     )
     monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
 
-    test_user_config = tmp_path / "user_config.ert"
+    test_user_config = Path("user_config.ert")
 
     test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
-        "NUM_REALIZATIONS 10\n"
+        dedent("""
+        JOBNAME Job%d
+        NUM_REALIZATIONS 1
+        """),
+        encoding="utf-8",
     )
 
-    ert_config = ErtConfig.from_file(str(test_user_config))
+    ert_config = ErtConfig.from_file(test_user_config)
 
     assert Path(ert_config.queue_config.job_script).resolve() == my_script
 
@@ -132,19 +137,22 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch, tmp_path):
         HookRuntime.POST_UPDATE,
     ],
 )
-def test_that_workflow_run_modes_can_be_selected(tmp_path, run_mode):
-    my_script = (tmp_path / "my_script").resolve()
-    my_script.write_text("")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_workflow_run_modes_can_be_selected(run_mode):
+    my_script = Path("my_script").resolve()
+    my_script.write_text("", encoding="utf-8")
     st = os.stat(my_script)
     os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_user_config = tmp_path / "user_config.ert"
+    test_user_config = Path("user_config.ert")
     test_user_config.write_text(
-        "JOBNAME  Job%d\nRUNPATH /tmp/simulations/realization-<IENS>/iter-<ITER>\n"
-        "NUM_REALIZATIONS 10\n"
-        f"LOAD_WORKFLOW {my_script} SCRIPT\n"
-        f"HOOK_WORKFLOW SCRIPT {run_mode.name}\n"
+        dedent(f"""JOBNAME Job%d
+        NUM_REALIZATIONS 10
+        LOAD_WORKFLOW {my_script} SCRIPT
+        HOOK_WORKFLOW SCRIPT {run_mode.name}
+        """),
+        encoding="utf-8",
     )
-    ert_config = ErtConfig.from_file(str(test_user_config))
+    ert_config = ErtConfig.from_file(test_user_config)
     assert len(list(ert_config.hooked_workflows[run_mode])) == 1
 
 
@@ -298,82 +306,80 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         """
     )
 
-    script_file_path = os.path.join(os.getcwd(), "script")
-    plugin_file_path = os.path.join(os.getcwd(), "plugin")
-    with open(script_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(script_file_contents)
-    with open(plugin_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(plugin_file_contents)
+    script_file_path = Path.cwd() / "script"
+    plugin_file_path = Path.cwd() / "plugin"
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
+    Path(plugin_file_path).write_text(plugin_file_contents, encoding="utf-8")
+    Path("script.py").write_text(
+        dedent(
+            """
+            from ert import ErtScript
 
-    with open("script.py", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                from ert import ErtScript
-                class Script(ErtScript):
-                    def run(self, *args):
-                        pass
-                """
-            )
-        )
-    with open("plugin.py", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                from ert.config import ErtPlugin
-                class Plugin(ErtPlugin):
-                    def run(self, *args):
-                        pass
-                """
-            )
-        )
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
-                NUM_REALIZATIONS 1
-                LOAD_WORKFLOW_JOB {plugin_file_path} plugin
-                LOAD_WORKFLOW_JOB {script_file_path} script
-                """
-            )
-        )
+            class Script(ErtScript):
+                def run(self, *args):
+                    pass
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("plugin.py").write_text(
+        dedent(
+            """
+            from ert.config import ErtPlugin
 
+            class Plugin(ErtPlugin):
+                def run(self, *args):
+                    pass
+            """
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            LOAD_WORKFLOW_JOB {plugin_file_path} plugin
+            LOAD_WORKFLOW_JOB {script_file_path} script
+            """
+        ),
+        encoding="utf-8",
+    )
     ert_config = ErtConfig.from_file("config.ert")
 
     assert ert_config.workflow_jobs["plugin"].is_plugin()
     assert not ert_config.workflow_jobs["script"].is_plugin()
 
 
-def test_data_file_with_non_utf_8_character_gives_error_message(tmpdir):
-    with tmpdir.as_cwd():
-        data_file = "data_file.DATA"
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.write(
-                """
-                NUM_REALIZATIONS 1
-                DATA_FILE data_file.DATA
-                ECLBASE data_file_<ITER>
-                """
-            )
-        with open(data_file, mode="w", encoding="utf-8") as fh:
-            fh.write(
-                dedent(
-                    """
-                        START
-                        --  DAY   MONTH  YEAR
-                        1    'JAN'  2017   /
-                    """
-                )
-            )
-        with open(data_file, "ab") as f:
-            f.write(b"\xff")
-        data_file_path = f"{tmpdir}/{data_file}"
-        with pytest.raises(
-            ConfigValidationError,
-            match="Unsupported non UTF-8 character "
-            f"'ÿ' found in file: {data_file_path!r}",
-        ), pytest.warns(match="Failed to read NUM_CPU"):
-            ErtConfig.from_file("config.ert")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_data_file_with_non_utf_8_character_gives_error_message():
+    data_file = "data_file.DATA"
+    Path("config.ert").write_text(
+        dedent("""
+            NUM_REALIZATIONS 1
+            DATA_FILE data_file.DATA
+            ECLBASE data_file_<ITER>
+            """),
+        encoding="utf-8",
+    )
+    Path(data_file).write_text(
+        dedent(
+            """
+            START
+            --  DAY   MONTH  YEAR
+            1    'JAN'  2017   /
+            """
+        ),
+        encoding="utf-8",
+    )
+    with open(data_file, "ab") as f:
+        f.write(b"\xff")
+    data_file_path = str(Path.cwd() / data_file)
+    with pytest.raises(
+        ConfigValidationError,
+        match="Unsupported non UTF-8 character "
+        f"'ÿ' found in file: {data_file_path!r}",
+    ), pytest.warns(match="Failed to read NUM_CPU"):
+        ErtConfig.from_file("config.ert")
 
 
 def test_that_double_comments_are_handled():
@@ -405,8 +411,7 @@ def test_ert_config_parses_date():
         ENSPATH <STORAGE>/ensemble
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     ert_config = ErtConfig.from_file(test_config_file_name)
 
     date_string = date.today().isoformat()
@@ -422,8 +427,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = "NUM_REALIZATIONS 1"
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.substitutions["<RUNPATH_FILE>"] == os.path.abspath(
         ErtConfig.DEFAULT_RUNPATH_FILE
