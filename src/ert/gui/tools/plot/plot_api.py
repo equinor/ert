@@ -205,29 +205,37 @@ class PlotApi:
                     timeout=self._timeout,
                 )
                 self._check_response(response)
+
+                observations = response.json()
+                observations_dfs = []
+
                 if not response.json():
                     continue
                 try:
-                    obs = response.json()[0]
+                    response.json()[0]
                 except (KeyError, IndexError, JSONDecodeError) as e:
                     raise httpx.RequestError(
                         f"Observation schema might have changed key={key},  ensemble_name={ensemble.name}, e={e}"
                     ) from e
-                try:
-                    int(obs["x_axis"][0])
-                    key_index = [int(v) for v in obs["x_axis"]]
-                except ValueError:
-                    key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
-                data_struct = {
-                    "STD": obs["errors"],
-                    "OBS": obs["values"],
-                    "key_index": key_index,
-                }
+                for obs in observations:
+                    try:
+                        int(obs["x_axis"][0])
+                        key_index = [int(v) for v in obs["x_axis"]]
+                    except ValueError:
+                        key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
-                all_observations = pd.concat(
-                    [all_observations, pd.DataFrame(data_struct)]
-                )
+                    observations_dfs.append(
+                        pd.DataFrame(
+                            {
+                                "STD": obs["errors"],
+                                "OBS": obs["values"],
+                                "key_index": key_index,
+                            }
+                        )
+                    )
+
+                all_observations = pd.concat([all_observations, *observations_dfs])
 
         return all_observations.T
 
