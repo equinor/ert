@@ -163,10 +163,7 @@ def snake_oil_case(setup_case):
 
 @pytest.fixture()
 def minimum_case(use_tmpdir):
-    with open("minimum_config", "w", encoding="utf-8") as fout:
-        fout.write(
-            "NUM_REALIZATIONS 10\nQUEUE_OPTION LOCAL MAX_RUNNING 50\nMAX_RUNTIME 42"
-        )
+    Path("minimum_config").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     return ErtConfig.from_file("minimum_config")
 
 
