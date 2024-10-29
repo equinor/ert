@@ -14,6 +14,11 @@ from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
+from opentelemetry import trace
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import SpanLimits, TracerProvider
+from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
 from _ert.threading import set_signal_handler
@@ -652,6 +657,12 @@ def main() -> None:
 
     # Have ErtThread re-raise uncaught exceptions on main thread
     set_signal_handler()
+    ThreadingInstrumentor().instrument()
+    resource = Resource(attributes={SERVICE_NAME: "ert"})
+    tracer_provider = TracerProvider(
+        resource=resource, span_limits=SpanLimits(max_events=128 * 16)
+    )
+    trace.set_tracer_provider(tracer_provider)
 
     args = ert_parser(None, sys.argv[1:])
 
@@ -677,32 +688,44 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
 
-    try:
-        with ErtPluginContext(logger=logging.getLogger()) as context:
-            logger.info(f"Running ert with {args}")
-            args.func(args, context.plugin_manager)
-    except ErtCliError as err:
-        logger.debug(str(err))
-        sys.exit(str(err))
-    except ConfigValidationError as err:
-        err_msg = err.cli_message()
-        logger.debug(err_msg)
-        sys.exit(err_msg)
-    except BaseException as err:
-        logger.exception(f'ERT crashed unexpectedly with "{err}"')
+    with trace.get_tracer("ert.main").start_as_current_span(
+        "ert.application.start"
+    ) as span:
+        try:
+            with ErtPluginContext(
+                logger=logging.getLogger(), trace_provider=tracer_provider
+            ) as context:
+                logger.info(f"Running ert with {args}")
+                args.func(args, context.plugin_manager)
+        except ErtCliError as err:
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(err)
+            logger.debug(str(err))
+            sys.exit(str(err))
+        except ConfigValidationError as err:
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(err)
+            err_msg = err.cli_message()
+            logger.debug(err_msg)
+            sys.exit(err_msg)
+        except BaseException as err:
+            span.set_status(Status(StatusCode.ERROR))
+            span.record_exception(err)
+            logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
-        logfiles = set()  # Use set to avoid duplicates...
-        for loghandler in logging.getLogger().handlers:
-            if isinstance(loghandler, logging.FileHandler):
-                logfiles.add(loghandler.baseFilename)
+            logfiles = set()  # Use set to avoid duplicates...
+            for loghandler in logging.getLogger().handlers:
+                if isinstance(loghandler, logging.FileHandler):
+                    logfiles.add(loghandler.baseFilename)
 
-        msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
-        msg += "\n   " + "\n   ".join(logfiles)
+            msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
+            msg += "\n   " + "\n   ".join(logfiles)
 
-        sys.exit(msg)
-    finally:
-        log_process_usage()
-        os.environ.pop("ERT_LOG_DIR")
+            sys.exit(msg)
+        finally:
+            log_process_usage()
+            os.environ.pop("ERT_LOG_DIR")
+            ThreadingInstrumentor().uninstrument()
 
 
 if __name__ == "__main__":
