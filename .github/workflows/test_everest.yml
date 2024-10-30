@@ -44,12 +44,12 @@ jobs:
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 -m "not ui_test and not integration_test" --dist loadgroup -sv
+        pytest tests/everest -n 4 -m "not integration_test" --dist loadgroup -sv
 
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 -m "not ui_test and not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
+        python -m pytest tests/everest -n 4 -m "not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
 
     - name: Run Integration Tests Linux
       if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
@@ -60,13 +60,6 @@ jobs:
       if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
       run: |
         python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
-
-    - name: Run UI Tests
-      if: inputs.test-type == 'ui-test'
-      env:
-        QT_QPA_PLATFORM: 'minimal'
-      run: |
-        python -m pytest tests/everest -m "ui_test"
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
