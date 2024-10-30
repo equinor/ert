@@ -1,6 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, TypedDict
 
 from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
+
+
+class ObservationCount(TypedDict):
+    observation_key: str
+    count: int
 
 
 class ErtSummary:
@@ -28,9 +33,9 @@ class ErtSummary:
                 count += len(config)
         return sorted(parameters, key=lambda k: k.lower()), count
 
-    def getObservations(self) -> List[str]:
-        keys = []
+    def getObservations(self) -> List[ObservationCount]:
+        counts: List[ObservationCount] = []
         for df in self.ert_config.observations.values():
-            keys.extend(df["observation_key"].unique().to_list())
+            counts.extend(df.group_by("observation_key").count().to_dicts())  #  type: ignore
 
-        return sorted(keys, key=lambda k: k.lower())
+        return sorted(counts, key=lambda k: k["observation_key"].lower())
