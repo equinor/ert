@@ -487,50 +487,54 @@ class BaseRunModel(ABC):
             )
 
     async def run_monitor(
-        self, ee_config: EvaluatorServerConfig, iteration: int
+        self,
+        ee_config: EvaluatorServerConfig,
+        iteration: int,
+        monitor_to_ee_queue: asyncio.Queue,
+        ee_to_monitor_queue: asyncio.Queue,
     ) -> bool:
         try:
             logger.debug("connecting to new monitor...")
-            async with Monitor(ee_config.get_connection_info()) as monitor:
-                logger.debug("connected")
-                async for event in monitor.track(heartbeat_interval=0.1):
-                    if type(event) in (
-                        EESnapshot,
-                        EESnapshotUpdate,
-                    ):
-                        event = cast(Union[EESnapshot, EESnapshotUpdate], event)
-                        await asyncio.get_running_loop().run_in_executor(
-                            None,
-                            self.send_snapshot_event,
-                            event,
-                            iteration,
-                        )
+            monitor = Monitor(
+                ee_config.get_connection_info(),
+                monitor_to_ee_queue,
+                ee_to_monitor_queue,
+            )
+            logger.debug("connected")
+            async for event in monitor.track(heartbeat_interval=0.1):
+                if type(event) in (
+                    EESnapshot,
+                    EESnapshotUpdate,
+                ):
+                    event = cast(Union[EESnapshot, EESnapshotUpdate], event)
+                    await asyncio.get_running_loop().run_in_executor(
+                        None,
+                        self.send_snapshot_event,
+                        event,
+                        iteration,
+                    )
 
-                        if event.snapshot.get(STATUS) in [
-                            ENSEMBLE_STATE_STOPPED,
-                            ENSEMBLE_STATE_FAILED,
-                        ]:
-                            logger.debug(
-                                "observed evaluation stopped event, signal done"
-                            )
-                            await monitor.signal_done()
+                    if event.snapshot.get(STATUS) in [
+                        ENSEMBLE_STATE_STOPPED,
+                        ENSEMBLE_STATE_FAILED,
+                    ]:
+                        logger.debug("observed evaluation stopped event, signal done")
+                        await monitor.signal_done()
 
-                        if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
-                            logger.debug(
-                                "observed evaluation cancelled event, exit drainer"
-                            )
-                            # Allow track() to emit an EndEvent.
-                            return False
-                    elif type(event) is EETerminated:
-                        logger.debug("got terminator event")
-
-                    if not self._end_queue.empty():
-                        logger.debug("Run model canceled - during evaluation")
-                        self._end_queue.get()
-                        await monitor.signal_cancel()
+                    if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                         logger.debug(
-                            "Run model canceled - during evaluation - cancel sent"
+                            "observed evaluation cancelled event, exit drainer"
                         )
+                        # Allow track() to emit an EndEvent.
+                        return False
+                elif type(event) is EETerminated:
+                    logger.debug("got terminator event")
+
+                if not self._end_queue.empty():
+                    logger.debug("Run model canceled - during evaluation")
+                    self._end_queue.get()
+                    await monitor.signal_cancel()
+                    logger.debug("Run model canceled - during evaluation - cancel sent")
         except BaseException as e:
             logger.exception(f"unexpected error: {e}")
             # We really don't know what happened...  shut down
@@ -551,14 +555,21 @@ class BaseRunModel(ABC):
             self._end_queue.get()
             return []
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
+
+        ee_to_monitor_queue = asyncio.Queue()
+        monitor_to_ee_queue = asyncio.Queue()
+
         evaluator = EnsembleEvaluator(
-            ee_ensemble,
-            ee_config,
+            ee_ensemble, ee_config, monitor_to_ee_queue, ee_to_monitor_queue
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-        if not (await self.run_monitor(ee_config, ensemble.iteration)):
+        if not (
+            await self.run_monitor(
+                ee_config, ensemble.iteration, monitor_to_ee_queue, ee_to_monitor_queue
+            )
+        ):
             return []
 
         logger.debug("observed that model was finished, waiting tasks completion...")

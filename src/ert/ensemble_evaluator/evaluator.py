@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import logging
 import traceback
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 from typing import (
     Any,
@@ -10,7 +10,6 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
-    Generator,
     Iterable,
     List,
     Optional,
@@ -43,8 +42,6 @@ from _ert.events import (
     ForwardModelStepChecksum,
     RealizationEvent,
     dispatch_event_from_json,
-    event_from_json,
-    event_to_json,
 )
 from ert.ensemble_evaluator import identifiers as ids
 
@@ -64,7 +61,13 @@ EVENT_HANDLER = Callable[[List[Event]], Awaitable[None]]
 
 
 class EnsembleEvaluator:
-    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
+    def __init__(
+        self,
+        ensemble: Ensemble,
+        config: EvaluatorServerConfig,
+        monitor_to_ee_queue: asyncio.Queue,
+        ee_to_monitor_queue: asyncio.Queue,
+    ):
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
@@ -74,7 +77,6 @@ class EnsembleEvaluator:
         self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: List[asyncio.Task[None]] = []
@@ -88,21 +90,15 @@ class EnsembleEvaluator:
         self._max_batch_size: int = 500
         self._batching_interval: int = 2
         self._complete_batch: asyncio.Event = asyncio.Event()
-
-    async def _publisher(self) -> None:
-        while True:
-            event = await self._events_to_send.get()
-            await asyncio.gather(
-                *[client.send(event_to_json(event)) for client in self._clients],
-                return_exceptions=True,
-            )
-            self._events_to_send.task_done()
+        self._monitor_to_ee_queue = monitor_to_ee_queue
+        self._ee_to_monitor_queue = ee_to_monitor_queue
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
             snapshot=snapshot_update_event.to_dict(), ensemble=self._ensemble.id_
         )
-        await self._events_to_send.put(event)
+        await self._ee_to_monitor_queue.put(event)
+        print(f"{self._ee_to_monitor_queue.qsize()=}")
 
     async def _process_event_buffer(self) -> None:
         while True:
@@ -206,32 +202,30 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    @contextmanager
-    def store_client(
-        self, websocket: WebSocketServerProtocol
-    ) -> Generator[None, None, None]:
-        self._clients.add(websocket)
-        yield
-        self._clients.remove(websocket)
-
-    async def handle_client(self, websocket: WebSocketServerProtocol) -> None:
-        with self.store_client(websocket):
-            current_snapshot_dict = self._ensemble.snapshot.to_dict()
-            event: Event = EESnapshot(
-                snapshot=current_snapshot_dict, ensemble=self.ensemble.id_
-            )
-            await websocket.send(event_to_json(event))
-
-            async for raw_msg in websocket:
-                event = event_from_json(raw_msg)
+    async def _handle_client(self) -> None:
+        current_snapshot_dict = self._ensemble.snapshot.to_dict()
+        event: Event = EESnapshot(
+            snapshot=current_snapshot_dict, ensemble=self.ensemble.id_
+        )
+        await self._ee_to_monitor_queue.put(event)
+        self._running = True
+        try:
+            while self._running or not self._monitor_to_ee_queue.empty():
+                event = await self._monitor_to_ee_queue.get()
+                self._monitor_to_ee_queue.task_done()
                 logger.debug(f"got message from client: {event}")
                 if type(event) is EEUserCancel:
-                    logger.debug(f"Client {websocket.remote_address} asked to cancel.")
+                    logger.debug("Client asked to cancel.")
                     self._signal_cancel()
+                    self._running = False
 
                 elif type(event) is EEUserDone:
-                    logger.debug(f"Client {websocket.remote_address} signalled done.")
+                    self._running = False
+                    logger.debug("Client signalled done.")
                     self.stop()
+
+        except asyncio.CancelledError:
+            pass
 
     @asynccontextmanager
     async def count_dispatcher(self) -> AsyncIterator[None]:
@@ -280,15 +274,13 @@ class EnsembleEvaluator:
 
     async def forward_checksum(self, event: Event) -> None:
         # clients still need to receive events via ws
-        await self._events_to_send.put(event)
+        await self._ee_to_monitor_queue.put(event)
         await self._manifest_queue.put(event)
 
     async def connection_handler(self, websocket: WebSocketServerProtocol) -> None:
         path = websocket.path
         elements = path.split("/")
-        if elements[1] == "client":
-            await self.handle_client(websocket)
-        elif elements[1] == "dispatch":
+        if elements[1] == "dispatch":
             await self.handle_dispatch(websocket)
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
@@ -334,11 +326,13 @@ class EnsembleEvaluator:
             logger.debug("Sending termination-message to clients...")
 
             await self._events.join()
+            await self._monitor_to_ee_queue.join()
             await self._complete_batch.wait()
             await self._batch_processing_queue.join()
             event = EETerminated(ensemble=self._ensemble.id_)
-            await self._events_to_send.put(event)
-            await self._events_to_send.join()
+            await self._ee_to_monitor_queue.put(event)
+            await self._ee_to_monitor_queue.join()
+        print("FINISHED")
         logger.debug("Async server exiting.")
 
     def stop(self) -> None:
@@ -371,7 +365,7 @@ class EnsembleEvaluator:
                 self._batch_events_into_buffer(), name="dispatcher_task"
             ),
             asyncio.create_task(self._process_event_buffer(), name="processing_task"),
-            asyncio.create_task(self._publisher(), name="publisher_task"),
+            asyncio.create_task(self._handle_client(), name="client_task"),
         ]
         # now we wait for the server to actually start
         await self._server_started.wait()
@@ -410,6 +404,8 @@ class EnsembleEvaluator:
                     return
                 elif task.get_name() == "ensemble_task":
                     continue
+                elif task.get_name() == "client_task":
+                    return
                 else:
                     msg = (
                         f"Something went wrong, {task.get_name()} is done prematurely!"
