@@ -305,6 +305,31 @@ def analysis_ES(
         param_ensemble_array = source_ensemble.load_parameters_numpy(
             param_group, iens_active_index
         )
+
+        # Calculate variance for each parameter
+        param_variance = np.var(param_ensemble_array, axis=1)
+        # Create mask for non-zero variance parameters
+        non_zero_variance_mask = ~np.isclose(param_variance, 0.0)
+
+        log_msg = (
+            f"Updating {np.sum(non_zero_variance_mask)} parameters "
+            f"{'with' if module.localization else 'without'} "
+            f"adaptive localization."
+        )
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+
+        log_msg = f"There are {num_obs} responses and {ensemble_size} realizations."
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+
+        log_msg = (
+            f"There are {(~non_zero_variance_mask).sum()} parameters with 0 variance "
+            f"that will not be updated."
+        )
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+
         if module.localization:
             with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
                 config_node = source_ensemble.experiment.parameter_configuration[
@@ -325,7 +350,10 @@ def analysis_ES(
                 start = time.time()
                 cross_correlations: list[npt.NDArray[np.float64]] = []
                 for param_batch_idx in batches:
-                    X_local = param_ensemble_array[param_batch_idx, :]
+                    update_idx = param_batch_idx[
+                        non_zero_variance_mask[param_batch_idx]
+                    ]
+                    X_local = param_ensemble_array[update_idx, :]
                     if isinstance(config_node, GenKwConfig):
                         correlation_batch_callback = functools.partial(
                             correlation_callback,
@@ -333,13 +361,13 @@ def analysis_ES(
                         )
                     else:
                         correlation_batch_callback = None
-                    param_ensemble_array[param_batch_idx, :] = (
+                    param_ensemble_array[update_idx, :] = (
                         smoother_adaptive_es.assimilate(
                             X=X_local,
                             Y=S,
                             D=D,
                             # The user is responsible for scaling observation covariance
-                            # (esmda usage):
+                            # (ESMDA usage)
                             alpha=1.0,
                             correlation_threshold=module.correlation_threshold,
                             cov_YY=cov_YY,
@@ -368,9 +396,9 @@ def analysis_ES(
 
         else:
             # In-place multiplication is not yet supported, therefore avoiding @=
-            param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
-                param_ensemble_array.dtype
-            )
+            param_ensemble_array[non_zero_variance_mask] = param_ensemble_array[  # noqa: PLR6104
+                non_zero_variance_mask
+            ] @ T.astype(param_ensemble_array.dtype)
 
         log_msg = f"Storing data for {param_group}.."
         logger.info(log_msg)
