@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from pathlib import Path
 from random import random
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 import resfo
 
@@ -147,13 +147,15 @@ class RunReservoirSimulator:
 
         self.bypass_flowrun: bool = False
 
-        _runner_abspath: Optional[str] = None
+        _runner_abspath: Optional[Union[str, Path]] = None
         if simulator in ["eclipse", "e300"]:
-            _runner_abspath: Optional[str] = shutil.which("eclrun")
+            _eclrun_path: str = os.environ.get("ECLRUN_PATH", "")
+            _runner_abspath = shutil.which(Path(_eclrun_path) / "eclrun")
             if _runner_abspath is None:
                 raise RuntimeError("eclrun not installed")
         else:
-            _runner_abspath: Optional[str] = shutil.which("flowrun")
+            _flowrun_path: str = os.environ.get("FLOWRUN_PATH", "")
+            _runner_abspath = shutil.which(Path(_flowrun_path) / "flowrun")
             if _runner_abspath is None:
                 _runner_abspath = shutil.which("flow")
                 if _runner_abspath is None:
@@ -164,7 +166,7 @@ class RunReservoirSimulator:
                             "MPI runs not supported without a flowrun wrapper"
                         )
                     self.bypass_flowrun = True
-        self.runner_abspath: str = _runner_abspath
+        self.runner_abspath: str = str(_runner_abspath)
 
         data_file = ecl_case_to_data_file(ecl_case)
 
