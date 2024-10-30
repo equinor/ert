@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import os.path
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional, Union
 
 from ert.runpaths import Runpaths
@@ -22,23 +21,21 @@ class RunArg:
     runpath: str
     job_name: str
     active: bool = True
-    runpaths: InitVar[Optional[Runpaths]] = None
+    runpaths: Optional[Runpaths] = None
     # Below here is legacy related to Everest
     queue_index: Optional[int] = None
 
-    def __post_init__(self, runpaths: Optional[Runpaths]) -> None:
-        self.__runpaths = runpaths
+    def __post_init__(self) -> None:
+        if self.runpaths is None:
+            self.runpaths = Runpaths(self.job_name, self.runpath)
 
     def file_in_runpath(self, filename: str) -> str:
-        if self.__runpaths is not None:
-            return self.__runpaths.runpath_file(
-                filename, realization=self.iens, iteration=self.itr
-            )
-        if not os.path.isabs(filename):
-            filename = os.path.join(self.runpath, filename)
-        filename = filename.replace("<IENS>", str(self.iens))
-        filename = filename.replace("<ITER>", str(self.itr))
-        return filename
+        assert self.runpaths is not None
+        if "%d" in filename:
+            filename = filename % self.iens  # noqa
+        return self.runpaths.runpath_file(
+            filename, realization=self.iens, iteration=self.itr
+        )
 
 
 def create_run_arguments(

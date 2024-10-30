@@ -234,10 +234,14 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
     def sample_or_load(
-        self, real_nr: int, random_seed: int, ensemble_size: int
+        self,
+        file_in_config_path: Callable[[str], str],
+        real_nr: int,
+        random_seed: int,
+        ensemble_size: int,
     ) -> xr.Dataset:
         if self.forward_init_file:
-            return self.read_from_runpath(lambda x: x, real_nr)
+            return self.read_from_runpath(file_in_config_path)
 
         _logger.info(f"Sampling parameter {self.name} for realization {real_nr}")
         keys = [e.name for e in self.transform_functions]
@@ -256,15 +260,12 @@ class GenKwConfig(ParameterConfig):
             }
         )
 
-    def read_from_runpath(
-        self, file_in_runpath: Callable[[str], str], real_nr: int
-    ) -> xr.Dataset:
+    def read_from_runpath(self, file_in_runpath: Callable[[str], str]) -> xr.Dataset:
         keys = [e.name for e in self.transform_functions]
         if not self.forward_init_file:
             raise ValueError("loading gen_kw values requires forward_init_file")
 
         parameter_value = self._values_from_file(
-            real_nr,
             file_in_runpath(self.forward_init_file),
             keys,
         )
@@ -381,10 +382,7 @@ class GenKwConfig(ParameterConfig):
         return array
 
     @staticmethod
-    def _values_from_file(
-        realization: int, name_format: str, keys: List[str]
-    ) -> npt.NDArray[np.double]:
-        file_name = name_format % realization
+    def _values_from_file(file_name: str, keys: List[str]) -> npt.NDArray[np.double]:
         df = pd.read_csv(file_name, sep=r"\s+", header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values

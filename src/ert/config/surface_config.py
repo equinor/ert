@@ -97,12 +97,8 @@ class SurfaceConfig(ParameterConfig):
     def __len__(self) -> int:
         return self.ncol * self.nrow
 
-    def read_from_runpath(
-        self, file_in_runpath: Callable[[str], str], real_nr: int
-    ) -> xr.Dataset:
+    def read_from_runpath(self, file_in_runpath: Callable[[str], str]) -> xr.Dataset:
         file_name = self.forward_init_file
-        if "%d" in file_name:
-            file_name = file_name % real_nr  # noqa
         file_path = Path(file_in_runpath(file_name))
         if not file_path.exists():
             raise ValueError(

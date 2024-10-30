@@ -74,9 +74,7 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(
-        self, file_in_runpath: Callable[[str], str], real_nr: int
-    ) -> xr.Dataset:
+    def read_from_runpath(self, file_in_runpath: Callable[[str], str]) -> xr.Dataset:
         raise NotImplementedError()
 
     def write_to_runpath(

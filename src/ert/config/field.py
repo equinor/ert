@@ -138,13 +138,9 @@ class Field(ParameterConfig):
 
         return np.size(self.mask) - np.count_nonzero(self.mask)
 
-    def read_from_runpath(
-        self, file_in_runpath: Callable[[str], str], real_nr: int
-    ) -> xr.Dataset:
+    def read_from_runpath(self, file_in_runpath: Callable[[str], str]) -> xr.Dataset:
         t = time.perf_counter()
         file_name = self.forward_init_file
-        if "%d" in file_name:
-            file_name = file_name % real_nr  # noqa
         ds = xr.Dataset(
             {
                 "values": (

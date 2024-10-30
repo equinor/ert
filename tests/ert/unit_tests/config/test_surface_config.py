@@ -37,7 +37,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         yinc=surface.yinc,
         rotation=surface.rotation,
         yflip=surface.yflip,
-        forward_init_file="input_%d",
+        forward_init_file="input_0",
         output_file=tmp_path / "output",
         base_surface_path="base_surface",
         update=True,
@@ -48,7 +48,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage
-    ds = config.read_from_runpath(lambda f: str(tmp_path / f), 0)
+    ds = config.read_from_runpath(lambda f: str(tmp_path / f))
     ensemble.save_parameters(config.name, 0, ds)
 
     # storage -> run_path

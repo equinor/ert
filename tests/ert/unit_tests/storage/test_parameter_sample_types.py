@@ -52,14 +52,14 @@ def storage(tmp_path):
             "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
-            "Failed to initialize parameter 'MY_PARAM' in file surf0.irap",
+            "Failed to initialize parameter 'MY_PARAM'",
         ),
         (
             "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap "
             "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
             True,
             0,
-            "Failed to initialize parameter 'MY_PARAM' in file surf.irap",
+            "Failed to initialize parameter 'MY_PARAM'",
         ),
     ],
 )

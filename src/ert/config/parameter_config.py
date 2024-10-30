@@ -54,20 +54,19 @@ class ParameterConfig(ABC):
 
     def sample_or_load(
         self,
+        file_in_config_path: Callable[[str], str],
         real_nr: int,
         random_seed: int,
         ensemble_size: int,
     ) -> xr.Dataset:
-        return self.read_from_runpath(lambda x: x, real_nr)
+        return self.read_from_runpath(file_in_config_path)
 
     @abstractmethod
     def __len__(self) -> int:
         """Number of parameters"""
 
     @abstractmethod
-    def read_from_runpath(
-        self, file_in_runpath: Callable[[str], str], real_nr: int
-    ) -> xr.Dataset:
+    def read_from_runpath(self, file_in_runpath: Callable[[str], str]) -> xr.Dataset:
         """
         This function is responsible for converting the parameter
         from the forward model to the internal ert format

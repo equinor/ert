@@ -177,12 +177,22 @@ def sample_prior(
     parameter_configs = ensemble.experiment.parameter_configuration
     if parameters is None:
         parameters = list(parameter_configs.keys())
+
+    def file_in_config_path(real: int) -> Callable[[str], str]:
+        def inner(filename: str) -> str:
+            if "%d" in filename:
+                filename = filename % real  # noqa
+            return filename.replace("<IENS>", str(real)).replace("<ITER>", "0")
+
+        return inner
+
     for parameter in parameters:
         config_node = parameter_configs[parameter]
         if config_node.forward_init:
             continue
         for realization_nr in active_realizations:
             ds = config_node.sample_or_load(
+                file_in_config_path(realization_nr),
                 realization_nr,
                 random_seed=random_seed,
                 ensemble_size=ensemble.ensemble_size,

@@ -683,7 +683,7 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
     )
     for i in range(num_realizations):
         xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
-            str(i) + "init.irap", fformat="irap_ascii"
+            f"{i}init{i}0.irap", fformat="irap_ascii"
         )
         xtgeo.GridProperty(
             ncol=2,
@@ -691,8 +691,8 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             nlay=2,
             name="PORO1",
             values=np.zeros((dim_size, dim_size, dim_size)),
-        ).to_file(str(i) + "init.roff", fformat="roff")
-        Path(str(i) + "gen_init.txt").write_text("PARMA 1.0\n", encoding="utf-8")
+        ).to_file(f"{i}init{i}0.roff", fformat="roff")
+        Path(f"{i}gen_init{i}0.txt").write_text("PARMA 1.0\n", encoding="utf-8")
     Path("gen0.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
     Path("gen1.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
     Path("template.txt").write_text("<PARMA>", encoding="utf-8")
@@ -707,18 +707,22 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             DEFINE <GEO_ID_0_1> HELLO0
             DEFINE <GEO_ID_1_1> HELLO1
 
+            RUNPATH simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>
+
             ECLBASE CASE<ALL>
             GRID GRID.EGRID
             SUMMARY FOPR
-            RUNPATH simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>
 
+            GEN_DATA GENDATA RESULT_FILE:gen_data<ALL>.txt
 
             SURFACE SURF1 OUTPUT_FILE:surf1_output<ALL>.irap BASE_SURFACE:base.irap FORWARD_INIT:True INIT_FILES:surf1_init<ALL>.irap
-            SURFACE SURF2 OUTPUT_FILE:surf2_output<ALL>.irap BASE_SURFACE:base.irap INIT_FILES:%dinit.irap
+            SURFACE SURF2 OUTPUT_FILE:surf2_output<ALL>.irap BASE_SURFACE:base.irap INIT_FILES:%dinit<IENS><ITER>.irap
+
             FIELD PORO0 PARAMETER field1<ALL>.roff INIT_FILES:field1_init<ALL>.roff FORWARD_INIT:TRUE
-            FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit.roff
-            GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init.txt
-            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt INIT_FILES:%dgen_init.txt
+            FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit<IENS><ITER>.roff
+
+            GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
+            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
             """
         )
     )
@@ -758,6 +762,7 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
         expected_files = {
             run_path + f"/CASE-{itr}-{i}-HELLO{i}.UNSMRY",
             run_path + f"/CASE-{itr}-{i}-HELLO{i}.SMSPEC",
+            run_path + f"/gen_data-{itr}-{i}-HELLO{i}.txt",
         }.union(
             {
                 run_path + f"/field1_init-{itr}-{i}-HELLO{i}.roff",
@@ -788,6 +793,8 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
                 simple_unsmry().to_file(file)
             elif file.endswith("SMSPEC"):
                 simple_smspec().to_file(file)
+            elif file.endswith("txt"):
+                Path(file).write_text("1.0", encoding="utf-8")
             else:
                 raise AssertionError()
 
