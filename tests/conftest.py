@@ -187,16 +187,22 @@ def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
 @pytest.fixture()
 def copy_poly_case(copy_case):
     copy_case("poly_example")
+    with open("poly.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
 
 
 @pytest.fixture()
 def copy_snake_oil_field(copy_case):
     copy_case("snake_oil_field")
+    with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
 
 
 @pytest.fixture()
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
+    with open("snake_oil.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
 
 
 @pytest.fixture(
@@ -374,7 +380,8 @@ def _run_heat_equation(source_root):
         os.path.join(source_root, "test-data", "heat_equation"), "test_data"
     )
     os.chdir("test_data")
-
+    with open("config.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
