@@ -11,16 +11,16 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 
 class Id:
-    FORWARD_MODEL_STEP_START_TYPE = Literal["forward_model_job.start"]
-    FORWARD_MODEL_STEP_RUNNING_TYPE = Literal["forward_model_job.running"]
-    FORWARD_MODEL_STEP_SUCCESS_TYPE = Literal["forward_model_job.success"]
-    FORWARD_MODEL_STEP_FAILURE_TYPE = Literal["forward_model_job.failure"]
-    FORWARD_MODEL_STEP_CHECKSUM_TYPE = Literal["forward_model_job.checksum"]
-    FORWARD_MODEL_STEP_START: Final = "forward_model_job.start"
-    FORWARD_MODEL_STEP_RUNNING: Final = "forward_model_job.running"
-    FORWARD_MODEL_STEP_SUCCESS: Final = "forward_model_job.success"
-    FORWARD_MODEL_STEP_FAILURE: Final = "forward_model_job.failure"
-    FORWARD_MODEL_STEP_CHECKSUM: Final = "forward_model_job.checksum"
+    FORWARD_MODEL_STEP_START_TYPE = Literal["forward_model_step.start"]
+    FORWARD_MODEL_STEP_RUNNING_TYPE = Literal["forward_model_step.running"]
+    FORWARD_MODEL_STEP_SUCCESS_TYPE = Literal["forward_model_step.success"]
+    FORWARD_MODEL_STEP_FAILURE_TYPE = Literal["forward_model_step.failure"]
+    FORWARD_MODEL_STEP_CHECKSUM_TYPE = Literal["forward_model_step.checksum"]
+    FORWARD_MODEL_STEP_START: Final = "forward_model_step.start"
+    FORWARD_MODEL_STEP_RUNNING: Final = "forward_model_step.running"
+    FORWARD_MODEL_STEP_SUCCESS: Final = "forward_model_step.success"
+    FORWARD_MODEL_STEP_FAILURE: Final = "forward_model_step.failure"
+    FORWARD_MODEL_STEP_CHECKSUM: Final = "forward_model_step.checksum"
 
     REALIZATION_FAILURE_TYPE = Literal["realization.failure"]
     REALIZATION_PENDING_TYPE = Literal["realization.pending"]
