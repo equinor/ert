@@ -35,7 +35,7 @@ from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
-from ert.trace import tracer, tracer_provider
+from ert.trace import trace, tracer, tracer_provider
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,
@@ -649,7 +649,9 @@ def log_process_usage() -> None:
         )
 
 
+@tracer.start_as_current_span("ert.application.start")
 def main() -> None:
+    span = trace.get_current_span()
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
 
@@ -680,43 +682,41 @@ def main() -> None:
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
+    try:
+        with ErtPluginContext(
+            logger=logging.getLogger(), trace_provider=tracer_provider
+        ) as context:
+            logger.info(f"Running ert with {args}")
+            args.func(args, context.plugin_manager)
+    except ErtCliError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        logger.debug(str(err))
+        sys.exit(str(err))
+    except ConfigValidationError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        err_msg = err.cli_message()
+        logger.debug(err_msg)
+        sys.exit(err_msg)
+    except BaseException as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
+        logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
-    with tracer.start_as_current_span("ert.application.start") as span:
-        try:
-            with ErtPluginContext(
-                logger=logging.getLogger(), trace_provider=tracer_provider
-            ) as context:
-                logger.info(f"Running ert with {args}")
-                args.func(args, context.plugin_manager)
-        except ErtCliError as err:
-            span.set_status(Status(StatusCode.ERROR))
-            span.record_exception(err)
-            logger.debug(str(err))
-            sys.exit(str(err))
-        except ConfigValidationError as err:
-            span.set_status(Status(StatusCode.ERROR))
-            span.record_exception(err)
-            err_msg = err.cli_message()
-            logger.debug(err_msg)
-            sys.exit(err_msg)
-        except BaseException as err:
-            span.set_status(Status(StatusCode.ERROR))
-            span.record_exception(err)
-            logger.exception(f'ERT crashed unexpectedly with "{err}"')
+        logfiles = set()  # Use set to avoid duplicates...
+        for loghandler in logging.getLogger().handlers:
+            if isinstance(loghandler, logging.FileHandler):
+                logfiles.add(loghandler.baseFilename)
 
-            logfiles = set()  # Use set to avoid duplicates...
-            for loghandler in logging.getLogger().handlers:
-                if isinstance(loghandler, logging.FileHandler):
-                    logfiles.add(loghandler.baseFilename)
+        msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
+        msg += "\n   " + "\n   ".join(logfiles)
 
-            msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
-            msg += "\n   " + "\n   ".join(logfiles)
-
-            sys.exit(msg)
-        finally:
-            log_process_usage()
-            os.environ.pop("ERT_LOG_DIR")
-            ThreadingInstrumentor().uninstrument()
+        sys.exit(msg)
+    finally:
+        log_process_usage()
+        os.environ.pop("ERT_LOG_DIR")
+        ThreadingInstrumentor().uninstrument()
 
 
 if __name__ == "__main__":
