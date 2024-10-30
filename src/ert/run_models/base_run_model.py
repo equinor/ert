@@ -25,7 +25,6 @@ from typing import (
 )
 
 import numpy as np
-from opentelemetry import trace
 
 from _ert.events import (
     EESnapshot,
@@ -71,6 +70,7 @@ from ert.ensemble_evaluator.state import (
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
+from ert.trace import tracer
 from ert.workflow_runner import WorkflowRunner
 
 from ..config.analysis_config import UpdateSettings
@@ -84,7 +84,6 @@ from .event import (
     RunModelUpdateEndEvent,
 )
 
-tracer = trace.get_tracer("ert.main")
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:

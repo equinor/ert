@@ -14,10 +14,7 @@ from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
-from opentelemetry import trace
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import SpanLimits, TracerProvider
 from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
@@ -38,6 +35,7 @@ from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
+from ert.trace import tracer, tracer_provider
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,
@@ -658,11 +656,6 @@ def main() -> None:
     # Have ErtThread re-raise uncaught exceptions on main thread
     set_signal_handler()
     ThreadingInstrumentor().instrument()
-    resource = Resource(attributes={SERVICE_NAME: "ert"})
-    tracer_provider = TracerProvider(
-        resource=resource, span_limits=SpanLimits(max_events=128 * 16)
-    )
-    trace.set_tracer_provider(tracer_provider)
 
     args = ert_parser(None, sys.argv[1:])
 
@@ -688,9 +681,7 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
 
-    with trace.get_tracer("ert.main").start_as_current_span(
-        "ert.application.start"
-    ) as span:
+    with tracer.start_as_current_span("ert.application.start") as span:
         try:
             with ErtPluginContext(
                 logger=logging.getLogger(), trace_provider=tracer_provider
