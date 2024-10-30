@@ -63,6 +63,8 @@ if __name__ == "__main__":
     rng = np.random.default_rng(iens)
     cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(nx, nx)
 
+    cond[nx // 2 :, :] = 1.0
+
     if iteration == 0:
         resfo.write(
             "cond.bgrdecl", [("COND    ", cond.flatten(order="F").astype(np.float32))]

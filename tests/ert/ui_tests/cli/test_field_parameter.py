@@ -296,3 +296,7 @@ if __name__ == "__main__":
             assert "nan" not in Path(
                 "simulations/realization-0/iter-1/my_param.grdecl"
             ).read_text(encoding="utf-8")
+
+
+# def test_field_parameter_update_using_heat_equation(heat_equation_storage):
+#     print("Hei")
