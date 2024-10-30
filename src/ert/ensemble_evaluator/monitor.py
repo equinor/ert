@@ -5,8 +5,8 @@ import uuid
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Final, Optional, Union
 
 from aiohttp import ClientError
-from websockets import ConnectionClosed, Headers, WebSocketClientProtocol
-from websockets.client import connect
+from websockets import ConnectionClosed, Headers
+from websockets.asyncio.client import ClientConnection, connect
 
 from _ert.events import (
     EETerminated,
@@ -36,7 +36,7 @@ class Monitor:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._event_queue: asyncio.Queue[Union[Event, EventSentinel]] = asyncio.Queue()
-        self._connection: Optional[WebSocketClientProtocol] = None
+        self._connection: Optional[ClientConnection] = None
         self._receiver_task: Optional[asyncio.Task[None]] = None
         self._connected: asyncio.Event = asyncio.Event()
         self._connection_timeout: float = 120.0
@@ -137,7 +137,7 @@ class Monitor:
         async for conn in connect(
             self._ee_con_info.client_uri,
             ssl=tls,
-            extra_headers=headers,
+            additional_headers=headers,
             max_size=2**26,
             max_queue=500,
             open_timeout=5,

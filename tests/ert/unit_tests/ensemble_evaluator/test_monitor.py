@@ -4,7 +4,7 @@ from http import HTTPStatus
 from urllib.parse import urlparse
 
 import pytest
-from websockets import server
+from websockets.asyncio import server
 from websockets.exceptions import ConnectionClosedOK
 
 from _ert.events import EEUserCancel, EEUserDone, event_from_json
@@ -15,9 +15,9 @@ from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
 async def _mock_ws(
     set_when_done: asyncio.Event, handler, ee_config: EvaluatorConnectionInfo
 ):
-    async def process_request(path, request_headers):
-        if path == "/healthcheck":
-            return HTTPStatus.OK, {}, b""
+    async def process_request(connection, request):
+        if request.path == "/healthcheck":
+            return connection.respond(HTTPStatus.OK, "")
 
     url = urlparse(ee_config.url)
     async with server.serve(

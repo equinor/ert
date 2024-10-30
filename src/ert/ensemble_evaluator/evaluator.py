@@ -22,11 +22,10 @@ from typing import (
     get_args,
 )
 
-import websockets
 from pydantic_core._pydantic_core import ValidationError
-from websockets.datastructures import Headers, HeadersLike
+from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosedError
-from websockets.server import WebSocketServerProtocol
+from websockets.http11 import Request, Response
 
 from _ert.events import (
     EESnapshot,
@@ -70,7 +69,7 @@ class EnsembleEvaluator:
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
 
-        self._clients: Set[WebSocketServerProtocol] = set()
+        self._clients: Set[ServerConnection] = set()
         self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
@@ -207,14 +206,12 @@ class EnsembleEvaluator:
         return self._ensemble
 
     @contextmanager
-    def store_client(
-        self, websocket: WebSocketServerProtocol
-    ) -> Generator[None, None, None]:
+    def store_client(self, websocket: ServerConnection) -> Generator[None, None, None]:
         self._clients.add(websocket)
         yield
         self._clients.remove(websocket)
 
-    async def handle_client(self, websocket: WebSocketServerProtocol) -> None:
+    async def handle_client(self, websocket: ServerConnection) -> None:
         with self.store_client(websocket):
             current_snapshot_dict = self._ensemble.snapshot.to_dict()
             event: Event = EESnapshot(
@@ -240,7 +237,7 @@ class EnsembleEvaluator:
         await self._dispatchers_connected.get()
         self._dispatchers_connected.task_done()
 
-    async def handle_dispatch(self, websocket: WebSocketServerProtocol) -> None:
+    async def handle_dispatch(self, websocket: ServerConnection) -> None:
         async with self.count_dispatcher():
             try:
                 async for raw_msg in websocket:
@@ -283,32 +280,34 @@ class EnsembleEvaluator:
         await self._events_to_send.put(event)
         await self._manifest_queue.put(event)
 
-    async def connection_handler(self, websocket: WebSocketServerProtocol) -> None:
-        path = websocket.path
-        elements = path.split("/")
-        if elements[1] == "client":
-            await self.handle_client(websocket)
-        elif elements[1] == "dispatch":
-            await self.handle_dispatch(websocket)
+    async def connection_handler(self, websocket: ServerConnection) -> None:
+        if websocket.request is not None:
+            path = websocket.request.path
+            elements = path.split("/")
+            if elements[1] == "client":
+                await self.handle_client(websocket)
+            elif elements[1] == "dispatch":
+                await self.handle_dispatch(websocket)
+            else:
+                logger.info(f"Connection attempt to unknown path: {path}.")
         else:
-            logger.info(f"Connection attempt to unknown path: {path}.")
+            logger.info("No request to handle.")
 
     async def process_request(
-        self, path: str, request_headers: Headers
-    ) -> Optional[Tuple[HTTPStatus, HeadersLike, bytes]]:
-        if request_headers.get("token") != self._config.token:
-            return HTTPStatus.UNAUTHORIZED, {}, b""
-        if path == "/healthcheck":
-            return HTTPStatus.OK, {}, b""
+        self, connection: ServerConnection, request: Request
+    ) -> Optional[Response]:
+        if request.headers.get("token") != self._config.token:
+            return connection.respond(HTTPStatus.UNAUTHORIZED, "")
+        if request.path == "/healthcheck":
+            return connection.respond(HTTPStatus.OK, "")
         return None
 
     async def _server(self) -> None:
-        async with websockets.serve(
+        async with serve(
             self.connection_handler,
             sock=self._config.get_socket(),
             ssl=self._config.get_server_ssl_context(),
             process_request=self.process_request,
-            max_queue=None,
             max_size=2**26,
             ping_timeout=60,
             ping_interval=60,
