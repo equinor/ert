@@ -90,48 +90,100 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_2": {"name": ".ensemble_2", "experiment_name": "experiment"},
         "/ensembles/ens_id_3": {"name": "default_0", "experiment_name": "experiment"},
         "/ensembles/ens_id_4": {"name": "default_1", "experiment_name": "experiment"},
-    }
-    observations = {
-        "/ensembles/ens_id_3/records/WOPR:OP1/observations": {
-            "name": "WOPR:OP1",
-            "errors": [0.05, 0.07],
-            "values": [0.1, 0.7],
-            "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
-        },
-        "/ensembles/ens_id_4/records/WOPR:OP1/observations": {
-            "name": "WOPR:OP1",
-            "errors": [0.05, 0.07],
-            "values": [0.1, 0.7],
-            "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
-        },
-        "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199/observations": {
-            "name": "SNAKE_OIL_WPR_DIFF",
-            "errors": [0.05, 0.07, 0.05],
-            "values": [0.1, 0.7, 0.5],
-            "x_axis": [
-                "2010-03-31T00:00:00",
-                "2010-12-26T00:00:00",
-                "2011-12-21T00:00:00",
-            ],
-        },
-        "/ensembles/ens_id_4/records/SNAKE_OIL_WPR_DIFF@199/observations": {
-            "name": "WOPR:OP1",
-            "errors": [0.05, 0.07, 0.05],
-            "values": [0.1, 0.7, 0.5],
-            "x_axis": [
-                "2010-03-31T00:00:00",
-                "2010-12-26T00:00:00",
-                "2011-12-21T00:00:00",
-            ],
-        },
-        "/ensembles/ens_id_3/records/FOPR/observations": {
-            "name": "FOPR",
-            "errors": [0.05, 0.07],
-            "values": [0.1, 0.7],
-            "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+        "/ensembles/ens_id_5": {
+            "name": "default_manyobs",
+            "experiment_name": "experiment",
         },
     }
 
+    observations = {
+        "/ensembles/ens_id_5/records/WOPR:OP1/observations": [
+            {
+                "name": "WOPR_OP1_108",
+                "errors": [0.07500000298023224],
+                "values": [0.30000001192092896],
+                "x_axis": ["2012-12-15T00:00:00"],
+            },
+            {
+                "name": "WOPR_OP1_144",
+                "errors": [0.03500000014901161],
+                "values": [0.20000000298023224],
+                "x_axis": ["2013-12-10T00:00:00"],
+            },
+            {
+                "name": "WOPR_OP1_190",
+                "errors": [0.009999999776482582],
+                "values": [0.014999999664723873],
+                "x_axis": ["2015-03-15T00:00:00"],
+            },
+            {
+                "name": "WOPR_OP1_36",
+                "errors": [0.07000000029802322],
+                "values": [0.699999988079071],
+                "x_axis": ["2010-12-26T00:00:00"],
+            },
+            {
+                "name": "WOPR_OP1_72",
+                "errors": [0.05000000074505806],
+                "values": [0.5],
+                "x_axis": ["2011-12-21T00:00:00"],
+            },
+            {
+                "name": "WOPR_OP1_9",
+                "errors": [0.05000000074505806],
+                "values": [0.10000000149011612],
+                "x_axis": ["2010-03-31T00:00:00"],
+            },
+        ],
+        "/ensembles/ens_id_3/records/WOPR:OP1/observations": [
+            {
+                "name": "WOPR:OP1",
+                "errors": [0.05, 0.07],
+                "values": [0.1, 0.7],
+                "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+            }
+        ],
+        "/ensembles/ens_id_4/records/WOPR:OP1/observations": [
+            {
+                "name": "WOPR:OP1",
+                "errors": [0.05, 0.07],
+                "values": [0.1, 0.7],
+                "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+            }
+        ],
+        "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199/observations": [
+            {
+                "name": "SNAKE_OIL_WPR_DIFF",
+                "errors": [0.05, 0.07, 0.05],
+                "values": [0.1, 0.7, 0.5],
+                "x_axis": [
+                    "2010-03-31T00:00:00",
+                    "2010-12-26T00:00:00",
+                    "2011-12-21T00:00:00",
+                ],
+            }
+        ],
+        "/ensembles/ens_id_4/records/SNAKE_OIL_WPR_DIFF@199/observations": [
+            {
+                "name": "WOPR:OP1",
+                "errors": [0.05, 0.07, 0.05],
+                "values": [0.1, 0.7, 0.5],
+                "x_axis": [
+                    "2010-03-31T00:00:00",
+                    "2010-12-26T00:00:00",
+                    "2011-12-21T00:00:00",
+                ],
+            }
+        ],
+        "/ensembles/ens_id_3/records/FOPR/observations": [
+            {
+                "name": "FOPR",
+                "errors": [0.05, 0.07],
+                "values": [0.1, 0.7],
+                "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+            }
+        ],
+    }
     parameters = {
         "/ensembles/ens_id_1/parameters": [
             {
@@ -154,6 +206,14 @@ def mocked_requests_get(*args, **kwargs):
                 "labels": [],
                 "userdata": {"data_origin": "GEN_KW"},
             },
+            {
+                "name": "I_AM_A_PARAM",
+                "dimensionality": 1,
+                "labels": [],
+                "userdata": {"data_origin": "GEN_KW"},
+            },
+        ],
+        "/ensembles/ens_id_5/parameters": [
             {
                 "name": "I_AM_A_PARAM",
                 "dimensionality": 1,
@@ -198,12 +258,21 @@ def mocked_requests_get(*args, **kwargs):
                 "has_observations": False,
             },
         },
+        "/ensembles/ens_id_5/responses": {
+            "WOPPER": {
+                "name": "WOPPER",
+                "id": "id_999",
+                "userdata": {"data_origin": "Summary"},
+                "has_observations": False,
+            },
+        },
     }
 
     ensembles = {
         "/experiments/exp_1/ensembles": [
             {"id": "ens_id_1", "userdata": {"name": "ensemble_1"}, "size": 25},
             {"id": "ens_id_3", "userdata": {"name": "default_0"}, "size": 99},
+            {"id": "ens_id_5", "userdata": {"name": "default_manyobs"}, "size": 25},
         ]
     }
 
@@ -220,7 +289,13 @@ def mocked_requests_get(*args, **kwargs):
         {
             "name": "default",
             "id": "exp_1",
-            "ensemble_ids": ["ens_id_1", "ens_id_2", "ens_id_3", "ens_id_4"],
+            "ensemble_ids": [
+                "ens_id_1",
+                "ens_id_2",
+                "ens_id_3",
+                "ens_id_4",
+                "ens_id_5",
+            ],
             "priors": {},
             "userdata": {},
         }
@@ -230,7 +305,7 @@ def mocked_requests_get(*args, **kwargs):
         return MockResponse({"userdata": ensemble[args[0]]}, 200)
     elif args[0] in observations:
         return MockResponse(
-            [observations[args[0]]],
+            observations[args[0]],
             200,
         )
     elif args[0] in ensembles:

@@ -66,7 +66,13 @@ def test_case_structure(api):
     hidden_case = [
         ensemble.name for ensemble in api.get_all_ensembles() if ensemble.hidden
     ]
-    expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
+    expected = [
+        "ensemble_1",
+        ".ensemble_2",
+        "default_0",
+        "default_1",
+        "default_manyobs",
+    ]
 
     assert ensembles == expected
     assert hidden_case == [".ensemble_2"]
@@ -246,3 +252,9 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     )
     assert api.data_for_key(str(ensemble.id), "gen_kw").empty
     assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
+
+
+def test_that_multiple_observations_are_parsed_correctly(api):
+    ensemble = next(x for x in api.get_all_ensembles() if x.id == "ens_id_5")
+    obs_data = api.observations_for_key([ensemble.id], "WOPR:OP1")
+    assert obs_data.shape == (3, 6)
