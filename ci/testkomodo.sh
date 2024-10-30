@@ -1,4 +1,4 @@
-copy_test_files () {
+copy_test_files() {
     cp -r "${CI_SOURCE_ROOT}"/tests "${CI_TEST_ROOT}"
     cp -r "${CI_SOURCE_ROOT}"/docs "${CI_TEST_ROOT}"/docs
     ln -s "${CI_SOURCE_ROOT}"/test-data "${CI_TEST_ROOT}"/test-data
@@ -12,11 +12,11 @@ copy_test_files () {
     ln -s "${CI_SOURCE_ROOT}"/pyproject.toml "${CI_TEST_ROOT}"/pyproject.toml
 }
 
-install_test_dependencies () {
+install_test_dependencies() {
     pip install ".[dev, everest]"
 }
 
-run_ert_with_opm () {
+run_ert_with_opm() {
     pushd "${CI_TEST_ROOT}"
 
     cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
@@ -25,7 +25,7 @@ run_ert_with_opm () {
     ert test_run flow.ert ||
         (
             # In case ert fails, print log files if they are there:
-            cat spe1_out/realization-0/iter-0/STATUS  || true
+            cat spe1_out/realization-0/iter-0/STATUS || true
             cat spe1_out/realization-0/iter-0/ERROR || true
             cat spe1_out/realization-0/iter-0/FLOW.stderr.0 || true
             cat spe1_out/realization-0/iter-0/FLOW.stdout.0 || true
@@ -34,14 +34,14 @@ run_ert_with_opm () {
     popd
 }
 
-run_everest_tests () {
+run_everest_tests() {
     python -m pytest tests/everest -s \
-    --ignore-glob "*test_visualization_entry*" \
-     -m "not requires_eclipse and not ui_test"
+        --ignore-glob "*test_visualization_entry*" \
+        -m "not requires_eclipse and not ui_test"
     xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m pytest tests/everest -s -m "ui_test"
 }
 
-start_tests () {
+start_tests() {
     export NO_PROXY=localhost,127.0.0.1
 
     export ECL_SKIP_SIGNAL=ON
@@ -83,7 +83,6 @@ start_tests () {
     run_everest_tests
     return_code_everest_tests=$?
     set -e
-
 
     return_code_combined_tests=0
     # We error if one or more returncodes are nonzero
