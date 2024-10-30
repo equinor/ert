@@ -206,13 +206,14 @@ class PlotApi:
                 )
                 self._check_response(response)
 
-                observations = response.json()
-                observations_dfs = []
-
-                if not response.json():
-                    continue
                 try:
-                    response.json()[0]
+                    observations = response.json()
+                    observations_dfs = []
+                    if not observations:
+                        continue
+
+                    observations[0]  # Just preserving the old logic/behavior
+                    # but this should really be revised
                 except (KeyError, IndexError, JSONDecodeError) as e:
                     raise httpx.RequestError(
                         f"Observation schema might have changed key={key},  ensemble_name={ensemble.name}, e={e}"
