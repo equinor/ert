@@ -142,6 +142,7 @@ def test_missing_runpath_does_not_show_waiting_bar(
                 ].width()
                 == run_dialog._progress_widget.width()
             )
+            run_dialog.close()
     finally:
         with suppress(FileNotFoundError):
             (tmp_path / "simulations").chmod(0x777)
