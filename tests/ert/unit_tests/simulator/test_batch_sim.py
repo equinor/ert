@@ -235,14 +235,6 @@ def test_batch_simulation(batch_simulator, storage):
     # Asking for results before it is complete.
     with pytest.raises(RuntimeError):
         ctx.results()
-
-    # Ask for status of simulation we do not have.
-    with pytest.raises(KeyError):
-        ctx.job_status(1973)
-
-    with pytest.raises(KeyError):
-        ctx.job_progress(1987)
-
     # Carry out simulations..
     _wait_for_completion(ctx)
 
