@@ -256,20 +256,6 @@ class BatchContext:
 
         return res
 
-    def job_status(self, iens: int) -> Optional["DeprecatedJobStatus"]:
-        """Will query the queue system for the status of the job."""
-        state_to_legacy = {
-            JobState.WAITING: DeprecatedJobStatus.WAITING,
-            JobState.SUBMITTING: DeprecatedJobStatus.SUBMITTED,
-            JobState.PENDING: DeprecatedJobStatus.PENDING,
-            JobState.RUNNING: DeprecatedJobStatus.RUNNING,
-            JobState.ABORTING: DeprecatedJobStatus.DO_KILL,
-            JobState.COMPLETED: DeprecatedJobStatus.SUCCESS,
-            JobState.FAILED: DeprecatedJobStatus.FAILED,
-            JobState.ABORTED: DeprecatedJobStatus.IS_KILLED,
-        }
-        return state_to_legacy[self._scheduler._jobs[iens].state]
-
     def is_job_completed(self, iens: int) -> bool:
         return self.get_job_state(iens) == JobState.COMPLETED
 
