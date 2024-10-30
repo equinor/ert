@@ -162,7 +162,7 @@ def test_memory_profile_in_running_events():
             for _ in range(10):
                 # 1 Mb allocated pr iteration
                 somelist.append(b' ' * 1024 * 1024)
-                time.sleep(0.1)"""
+                time.sleep(0.15)"""
             )
         )
     executable = os.path.realpath(scriptname)
