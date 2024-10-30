@@ -182,7 +182,7 @@ markers = [
 log_cli = "false"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-timeout = 360
+timeout = 600
 
 [tool.setuptools_scm]
 write_to = "src/ert/shared/version.py"

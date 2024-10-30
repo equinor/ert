@@ -30,7 +30,6 @@ def run_cli_ES_with_case(poly_config):
     return prior_ensemble, posterior_ensemble
 
 
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     set_adaptive_localization_1 = dedent(
@@ -60,7 +59,6 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     assert np.allclose(posterior_sample, prior_sample)
 
 
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_works_with_a_single_observation():
     """This is a regression test as ert would crash if adaptive localization
@@ -97,7 +95,6 @@ def test_that_adaptive_localization_works_with_a_single_observation():
     _, _ = run_cli_ES_with_case("poly_localization_0.ert")
 
 
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_works_with_multiple_observations(snapshot):
     with open("observations", "w", encoding="utf-8") as file:
@@ -217,7 +214,6 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
     assert set(map(tuple, records_from_pl)) == expected_records
 
 
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     """
@@ -255,7 +251,6 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
 
 
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_generalized_variance_increases_in_cutoff():
     rng = np.random.default_rng(42)
