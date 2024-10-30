@@ -26,7 +26,6 @@ from typing import (
 
 import numpy as np
 from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
 
 from _ert.events import (
     EESnapshot,
@@ -85,6 +84,7 @@ from .event import (
     RunModelUpdateEndEvent,
 )
 
+tracer = trace.get_tracer("ert.main")
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -320,90 +320,57 @@ class BaseRunModel(ABC):
             self._context_env.pop(key)
             os.environ.pop(key, None)
 
+    @tracer.start_as_current_span("ert.run_model.start")
     def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         restart: bool = False,
     ) -> None:
-        tracer = trace.get_tracer("ert.main")
-        with tracer.start_as_current_span("ert.run_model.start") as span:
-            failed = False
-            exception: Optional[Exception] = None
-            error_messages: MutableSequence[str] = []
-            try:
-                span.add_event(
-                    "log",
-                    {
-                        "log.severity": "info",
-                        "log.message": f"Starting simulation thread {self.__class__.__name__}",
-                    },
+        failed = False
+        exception: Optional[Exception] = None
+        error_messages: MutableSequence[str] = []
+        try:
+            self.start_time = int(time.time())
+            self.stop_time = None
+            with captured_logs(error_messages):
+                self._set_default_env_context()
+                self.run_experiment(
+                    evaluator_server_config=evaluator_server_config,
+                    restart=restart,
                 )
-                self.start_time = int(time.time())
-                self.stop_time = None
-                with captured_logs(error_messages):
-                    self._set_default_env_context()
-                    self.run_experiment(
-                        evaluator_server_config=evaluator_server_config,
-                        restart=restart,
+                if self._completed_realizations_mask:
+                    combined = np.logical_or(
+                        np.array(self._completed_realizations_mask),
+                        np.array(self.active_realizations),
                     )
-                    if self._completed_realizations_mask:
-                        combined = np.logical_or(
-                            np.array(self._completed_realizations_mask),
-                            np.array(self.active_realizations),
-                        )
-                        self._completed_realizations_mask = list(combined)
-                    else:
-                        self._completed_realizations_mask = copy.copy(
-                            self.active_realizations
-                        )
-            except ErtRunError as e:
-                span.set_status(Status(StatusCode.ERROR))
-                span.record_exception(e)
-                span.add_event(
-                    "log",
-                    {
-                        "log.severity": "exception",
-                        "log.message": f'Simulation ended with error "{e}"',
-                    },
-                )
-                self._completed_realizations_mask = []
-                failed = True
-                exception = e
-            except UserWarning as e:
-                span.record_exception(e)
-                span.add_event(
-                    "log",
-                    {
-                        "log.severity": "exception",
-                        "log.message": f'Simulation ended with warning "{e}"',
-                    },
-                )
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR))
-                span.record_exception(e)
-                span.add_event(
-                    "log",
-                    {
-                        "log.severity": "exception",
-                        "log.message": f'Simulation ended with error "{e}"',
-                    },
-                )
-                failed = True
-                exception = e
-            finally:
-                self._clean_env_context()
-                self.stop_time = int(time.time())
+                    self._completed_realizations_mask = list(combined)
+                else:
+                    self._completed_realizations_mask = copy.copy(
+                        self.active_realizations
+                    )
+        except ErtRunError as e:
+            self._completed_realizations_mask = []
+            failed = True
+            exception = e
+        except UserWarning:
+            pass
+        except Exception as e:
+            failed = True
+            exception = e
+        finally:
+            self._clean_env_context()
+            self.stop_time = int(time.time())
 
-                self.send_event(
-                    EndEvent(
-                        failed=failed,
-                        msg=(
-                            self.format_error(exception, error_messages)
-                            if failed
-                            else "Experiment completed."
-                        ),
-                    )
+            self.send_event(
+                EndEvent(
+                    failed=failed,
+                    msg=(
+                        self.format_error(exception, error_messages)
+                        if failed
+                        else "Experiment completed."
+                    ),
                 )
+            )
 
     @abstractmethod
     def run_experiment(
@@ -609,18 +576,17 @@ class BaseRunModel(ABC):
         return evaluator_task.result()
 
     # This function needs to be there for the sake of testing that expects sync ee run
+    @tracer.start_as_current_span("ert.run_model.run_ensemble")
     def run_ensemble_evaluator(
         self,
         run_args: List[RunArg],
         ensemble: Ensemble,
         ee_config: EvaluatorServerConfig,
     ) -> List[int]:
-        tracer = trace.get_tracer("ert.main")
-        with tracer.start_as_current_span("ert.run_model.run_ensemble"):
-            successful_realizations = asyncio.run(
-                self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
-            )
-            return successful_realizations
+        successful_realizations = asyncio.run(
+            self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
+        )
+        return successful_realizations
 
     def _build_ensemble(
         self,
