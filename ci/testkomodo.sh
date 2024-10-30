@@ -51,7 +51,7 @@ start_tests () {
     set +e
 
     # Run all ert tests except tests evaluating memory consumption and tests requiring windows manager (GUI tests)
-    pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
+    pytest --eclipse-simulator -n auto --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
     return_code_ert_main_tests=$?
 
