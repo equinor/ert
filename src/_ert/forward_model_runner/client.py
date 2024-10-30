@@ -4,7 +4,7 @@ import ssl
 from typing import Any, AnyStr, Optional, Union
 
 from typing_extensions import Self
-from websockets.client import WebSocketClientProtocol, connect
+from websockets.asyncio.client import ClientConnection, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import (
     ConnectionClosedError,
@@ -64,9 +64,9 @@ class Client:
             raise ValueError("url was None")
         self.url = url
         self.token = token
-        self._extra_headers = Headers()
+        self._additional_headers = Headers()
         if token is not None:
-            self._extra_headers["token"] = token
+            self._additional_headers["token"] = token
 
         # Mimics the behavior of the ssl argument when connection to
         # websockets. If none is specified it will deduce based on the url,
@@ -82,14 +82,14 @@ class Client:
 
         self._max_retries = max_retries
         self._timeout_multiplier = timeout_multiplier
-        self.websocket: Optional[WebSocketClientProtocol] = None
+        self.websocket: Optional[ClientConnection] = None
         self.loop = new_event_loop()
 
-    async def get_websocket(self) -> WebSocketClientProtocol:
+    async def get_websocket(self) -> ClientConnection:
         return await connect(
             self.url,
             ssl=self._ssl_context,
-            extra_headers=self._extra_headers,
+            additional_headers=self._additional_headers,
             open_timeout=self.CONNECTION_TIMEOUT,
             ping_timeout=self.CONNECTION_TIMEOUT,
             ping_interval=self.CONNECTION_TIMEOUT,
