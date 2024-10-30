@@ -54,7 +54,7 @@ dependencies = [
     "packaging",
     "pandas",
     "pluggy>=1.3.0",
-    "polars",
+    "polars==1.11.0",
     "psutil",
     "pyarrow",  # extra dependency for pandas (parquet)
     "pydantic > 2",
