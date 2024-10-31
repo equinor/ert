@@ -70,7 +70,7 @@ def _handle_keyboard_interrupt(signal, frame, after=False):
 
 
 def kill_everest(options):
-    if not server_is_running(options.config):
+    if not server_is_running(*options.config.server_context):
         print("Server is not running.")
         return
 

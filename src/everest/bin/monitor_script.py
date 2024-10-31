@@ -63,7 +63,7 @@ def monitor_everest(options):
     config: EverestConfig = options.config
     server_state = everserver_status(options.config)
 
-    if server_is_running(config):
+    if server_is_running(*config.server_context):
         run_detached_monitor(config, show_all_jobs=options.show_all_jobs)
         server_state = everserver_status(config)
         if server_state["status"] == ServerStatus.failed:
