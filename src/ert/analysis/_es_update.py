@@ -506,9 +506,8 @@ def _copy_unupdated_parameters(
 
     # Copy the non-updated parameter groups from source to target for each active realization
     for parameter_group in not_updated_parameter_groups:
-        for realization in iens_active_index:
-            ds = source_ensemble.load_parameters(parameter_group, int(realization))
-            target_ensemble.save_parameters(parameter_group, realization, ds)
+        ds = source_ensemble.load_parameters(parameter_group, iens_active_index)
+        target_ensemble.save_parameters(parameter_group, iens_active_index, ds)
 
 
 def analysis_ES(

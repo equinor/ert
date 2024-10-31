@@ -776,51 +776,54 @@ class LocalEnsemble(BaseMode):
     def save_parameters(
         self,
         group: str,
-        realization: int,
+        realization: Union[int, npt.NDArray[np.int_]],
         dataset: xr.Dataset,
     ) -> None:
         """
-        Saves the provided dataset under a parameter group and realization index
-
+        Saves the provided dataset under a parameter group and realization index(es)
         Parameters
         ----------
         group : str
             Parameter group name for saving dataset.
-
-        realization : int
-            Realization index for saving group.
-
+        realization : int or NDArray[int_]
+            Realization index(es) for saving group.
         dataset : Dataset
             Dataset to save. It must contain a variable named 'values'
             which will be used when flattening out the parameters into
-            a 1d-vector.
+            a 1d-vector. When saving multiple realizations, dataset must
+            have a 'realizations' dimension.
         """
-
         if "values" not in dataset.variables:
             raise ValueError(
-                f"Dataset for parameter group '{group}' "
-                f"must contain a 'values' variable"
+                f"Dataset for parameter group '{group}' must contain a 'values' variable"
             )
-
         if dataset["values"].size == 0:
             raise ValueError(
                 f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
-
-        if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
-            logger.warning(
-                "Dataset uses 'float64' for fields/surfaces. Use 'float32' to save memory."
-            )
-
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
-        path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
-        path.parent.mkdir(exist_ok=True)
-
-        self._storage._to_netcdf_transaction(
-            path, dataset.expand_dims(realizations=[realization])
+        # Convert to numpy array if it's an integer
+        realizations: npt.NDArray[np.int_] = (
+            np.array([realization])
+            if isinstance(realization, (int, np.integer))
+            else np.asarray(realization)
         )
+
+        if realizations.size > 1 and "realizations" not in dataset.dims:
+            raise ValueError(
+                "Dataset must have 'realizations' dimension when saving multiple realizations"
+            )
+
+        for real in realizations:
+            path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
+            path.parent.mkdir(exist_ok=True)
+            if "realizations" in dataset.dims:
+                data_to_save = dataset.sel(realizations=[real])
+            else:
+                data_to_save = dataset.expand_dims(realizations=[real])
+            self._storage._to_netcdf_transaction(path, data_to_save)
 
     @require_write
     def save_response(
