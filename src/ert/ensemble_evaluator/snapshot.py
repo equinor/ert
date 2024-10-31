@@ -335,38 +335,6 @@ class EnsembleSnapshot:
             elif e_type in {ForwardModelStepSuccess, ForwardModelStepFailure}:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
-                try:
-                    start_time = self._fm_step_snapshots[event.real, event.fm_step].get(
-                        "start_time"
-                    )
-                    cpu_seconds = self._fm_step_snapshots[
-                        event.real, event.fm_step
-                    ].get("cpu_seconds")
-                    fm_step_name = source_snapshot.reals[event.real]["fm_steps"][
-                        event.fm_step
-                    ]["name"]
-                    if start_time is not None:
-                        logger.warning(
-                            f"{event.event_type} {fm_step_name} "
-                            f"walltime={(end_time - start_time).total_seconds()} "
-                            f"cputime={cpu_seconds} "
-                            f"ensemble={event.ensemble} "
-                            f"step_index={event.fm_step} "
-                            f"real={event.real}"
-                        )
-                    else:
-                        logger.warning(
-                            f"Should log fm_step runtime, but start_time was None, "
-                            f"{event.event_type} {fm_step_name=} "
-                            f"endtime={end_time.isoformat()} "
-                            f"cputime={cpu_seconds} "
-                            f"ensemble={event.ensemble} "
-                            f"step_index={event.fm_step} "
-                            f"real={event.real}"
-                        )
-                except BaseException as e:
-                    logger.warning(f"Should log fm_step runtime, but got exception {e}")
-
                 if type(event) is ForwardModelStepFailure:
                     error = event.error_msg if event.error_msg else ""
                 else:
