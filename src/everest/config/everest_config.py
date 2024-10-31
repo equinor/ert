@@ -5,7 +5,15 @@ import shutil
 from argparse import ArgumentParser
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Literal, Optional, Protocol, no_type_check
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Literal,
+    Optional,
+    Protocol,
+    Tuple,
+    no_type_check,
+)
 
 from pydantic import (
     AfterValidator,
@@ -684,18 +692,20 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def server_info(self):
         """Load server information from the hostfile"""
         host_file_path = self.hostfile_path
+        try:
+            with open(host_file_path, "r", encoding="utf-8") as f:
+                json_string = f.read()
 
-        with open(host_file_path, "r", encoding="utf-8") as f:
-            json_string = f.read()
-
-        data = json.loads(json_string)
-        if set(data.keys()) != {"host", "port", "cert", "auth"}:
-            raise RuntimeError("Malformed hostfile")
-
-        return data
+            data = json.loads(json_string)
+            if set(data.keys()) != {"host", "port", "cert", "auth"}:
+                raise RuntimeError("Malformed hostfile")
+            return data
+        except FileNotFoundError:
+            # No host file
+            return {"host": None, "port": None, "cert": None, "auth": None}
 
     @property
-    def server_context(self):
+    def server_context(self) -> Tuple[str, str, Tuple[str, str]]:
         """Returns a tuple with
         - url of the server
         - path to the .cert file

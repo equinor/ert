@@ -94,7 +94,7 @@ def run_everest(options):
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
 
-    if server_is_running(options.config):
+    if server_is_running(*options.config.server_context):
         config_file = options.config.config_file
         print(
             "An optimization is currently running.\n"
