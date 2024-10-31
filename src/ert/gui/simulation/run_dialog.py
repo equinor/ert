@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from queue import SimpleQueue
-from typing import Optional
+from typing import Callable, Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
@@ -224,10 +224,10 @@ class RunDialog(QFrame):
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
         self.restart_button.setHidden(True)
-        self.copy_debug_info_button = QPushButton("Copy Debug Info")
-        self.copy_debug_info_button.setToolTip("Copies useful information to clipboard")
-        self.copy_debug_info_button.clicked.connect(self.produce_clipboard_debug_info)
-        self.copy_debug_info_button.setObjectName("copy_debug_info_button")
+
+        self.copy_debug_info_button = CopyDebugInfoButton(
+            on_click=self.produce_clipboard_debug_info.emit
+        )
 
         size = 20
         spin_movie = QMovie("img:loading.gif")
@@ -530,6 +530,31 @@ class RunDialog(QFrame):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)
+
+
+class CopyDebugInfoButton(QPushButton):
+    _initial_text = "Copy Debug Info"
+    _clicked_text = "Copied..."
+
+    def __init__(self, on_click: Callable[[], None]):
+        QPushButton.__init__(self, CopyDebugInfoButton._initial_text)
+        self.setToolTip("Copies useful information to clipboard")
+        self.setObjectName("copy_debug_info_button")
+        self.setFixedWidth(140)
+
+        def alternate_button_text_on_click_and_call_callback() -> None:
+            self._alternate_button_text()
+            on_click()
+            QTimer.singleShot(1000, self._alternate_button_text)
+
+        self.clicked.connect(alternate_button_text_on_click_and_call_callback)
+
+    def _alternate_button_text(self) -> None:
+        self.setText(
+            CopyDebugInfoButton._initial_text
+            if self.text() == CopyDebugInfoButton._clicked_text
+            else CopyDebugInfoButton._clicked_text
+        )
 
 
 # Cannot use a non-static method here as
