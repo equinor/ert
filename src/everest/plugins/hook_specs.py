@@ -1,4 +1,4 @@
-from typing import Sequence, Type, TypeVar
+from typing import List, Sequence, Type, TypeVar
 
 from everest.plugins import hookspec
 
@@ -103,3 +103,11 @@ def add_log_handle_to_root():
 @hookspec
 def get_forward_model_documentations():
     """ """
+
+
+@hookspec(firstresult=True)
+def custom_forward_model_outputs(forward_model_steps: List[str]):
+    """
+    Check if the given forward model steps will output to a file maching the
+    defined everest objective
+    """

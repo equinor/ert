@@ -1,15 +1,18 @@
 import os
 import pathlib
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import pytest
 from pydantic import ValidationError
 
+from ert.config import ConfigWarning
 from everest.config import EverestConfig, ModelConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
+from tests.everest.utils import skipif_no_everest_models
 
 
 def has_error(error: Union[ValidationError, List[dict]], match: str):
@@ -944,3 +947,42 @@ def test_that_non_existing_workflow_jobs_cause_error():
                 ]
             },
         )
+
+
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
+@pytest.mark.parametrize(
+    ["objective", "warning_msg"],
+    [
+        (
+            ["npv", "rf"],
+            "Warning: Forward model might not write the required output file for \\['npv'\\]",
+        ),
+        (
+            ["npv", "npv2"],
+            "Warning: Forward model might not write the required output files for \\['npv', 'npv2'\\]",
+        ),
+        (["rf"], None),
+    ],
+)
+def test_warning_forward_model_write_objectives(objective, warning_msg):
+    fm_steps = [
+        "well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json",
+        "add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json",
+        "schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch",
+        "eclipse100 TEST.DATA --version 2020.2",
+        "rf -s TEST -o rf",
+    ]
+    if warning_msg is not None:
+        with pytest.warns(ConfigWarning, match=warning_msg):
+            EverestConfig.with_defaults(
+                objective_functions=[{"name": o} for o in objective],
+                forward_model=fm_steps,
+            )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", category=ConfigWarning)
+            EverestConfig.with_defaults(
+                objective_functions=[{"name": o} for o in objective],
+                forward_model=fm_steps,
+            )

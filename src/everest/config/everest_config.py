@@ -25,7 +25,7 @@ from pydantic import (
     model_validator,
 )
 from ruamel.yaml import YAML, YAMLError
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Self
 
 from ert.config import ErtConfig
 from everest.config.control_variable_config import ControlVariableGuessListConfig
@@ -42,6 +42,9 @@ from everest.config.validation_utils import (
     validate_forward_model_configs,
 )
 from everest.jobs import script_names
+from everest.util.forward_models import (
+    check_forward_model_objective,
+)
 
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
@@ -221,7 +224,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
-    def validate_install_job_sources(self):  # pylint: disable=E0213
+    def validate_install_job_sources(self) -> Self:  # pylint: disable=E0213
         model = self.model
         config_path = self.config_path
         if not model or not config_path:
@@ -286,7 +289,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self):  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -308,7 +311,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_workflow_name_installed(self):  # pylint: disable=E0213
+    def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
         workflows = self.workflows
         if workflows is None:
             return self
@@ -344,7 +347,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return install_templates
 
     @model_validator(mode="after")
-    def validate_install_templates_are_existing_files(self):
+    def validate_install_templates_are_existing_files(self) -> Self:
         install_templates = self.install_templates
 
         if not install_templates:
@@ -374,7 +377,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_cvar_nreals_interval(self):  # pylint: disable=E0213
+    def validate_cvar_nreals_interval(self) -> Self:  # pylint: disable=E0213
         optimization = self.optimization
         if not optimization:
             return self
@@ -402,7 +405,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_install_data_source_exists(self):
+    def validate_install_data_source_exists(self) -> Self:
         install_data = self.install_data or []
         if not install_data:
             return self
@@ -417,7 +420,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_model_data_file_exists(self):  # pylint: disable=E0213
+    def validate_model_data_file_exists(self) -> Self:  # pylint: disable=E0213
         model = self.model
         if not model:
             return self
@@ -429,7 +432,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_maintained_forward_models(self):
+    def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
         model = self.model
         realizations = model.realizations if model else [0]
@@ -441,8 +444,16 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
+    def validate_maintained_forward_model_write_objectives(self) -> Self:
+        if not self.objective_functions:
+            return self
+        objectives = {objective.name for objective in self.objective_functions}
+        check_forward_model_objective(self.forward_model, objectives)
+        return self
+
+    @model_validator(mode="after")
     # pylint: disable=E0213
-    def validate_input_constraints_weight_definition(self):
+    def validate_input_constraints_weight_definition(self) -> Self:
         input_constraints = self.input_constraints
         if not input_constraints:
             return self
@@ -479,7 +490,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_variable_name_match_well_name(self):  # pylint: disable=E0213
+    def validate_variable_name_match_well_name(self) -> Self:  # pylint: disable=E0213
         controls = self.controls
         wells = self.wells
         if controls is None or wells is None:
@@ -497,7 +508,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_that_environment_sim_folder_is_writeable(self):
+    def validate_that_environment_sim_folder_is_writeable(self) -> Self:
         environment = self.environment
         config_path = self.config_path
         if environment is None or config_path is None:
