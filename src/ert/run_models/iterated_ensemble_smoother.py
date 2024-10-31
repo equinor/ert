@@ -118,7 +118,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
-    @tracer.start_as_current_span(f"ert.{__name__}.run_experiment")
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:

@@ -80,7 +80,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             minimum_required_realizations=minimum_required_realizations,
         )
 
-    @tracer.start_as_current_span(f"ert.{__name__}.run_experiment")
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
