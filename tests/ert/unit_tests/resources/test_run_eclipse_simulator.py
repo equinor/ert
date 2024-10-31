@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 import resfo
 
+from ert.plugins import ErtPluginManager
 from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
@@ -28,12 +29,22 @@ run_reservoirsimulator = import_from_location(
 )
 
 
+@pytest.fixture(name="e100_env")
+def e100_env(monkeypatch):
+    for var, value in (
+        ErtPluginManager()
+        .get_forward_model_configuration()
+        .get("ECLIPSE100", {})
+        .items()
+    ):
+        monkeypatch.setenv(var, value)
+    yield
+
+
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 @pytest.mark.requires_eclipse
 def test_ecl100_binary_can_produce_output(source_root):
-    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
-    assert os.getenv("ECLPATH") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
@@ -57,11 +68,10 @@ def test_ecl100_binary_can_produce_output(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_runeclrun_argparse_api(source_root):
     # Todo: avoid actually running Eclipse here, use a mock
     # Also test the other command line options.
-    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
         "SPE1.DATA",
@@ -73,7 +83,7 @@ def test_runeclrun_argparse_api(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_when_unsmry_is_ambiguous(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
@@ -88,7 +98,7 @@ def test_eclrun_when_unsmry_is_ambiguous(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_when_unsmry_is_ambiguous_with_mpi(source_root):
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "PARALLEL\n  2 /\n\nTITLE")
@@ -104,7 +114,7 @@ def test_eclrun_when_unsmry_is_ambiguous_with_mpi(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_ecl_run_on_parallel_deck(source_root):
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "PARALLEL\n  2 /\n\nTITLE")
@@ -117,7 +127,7 @@ def test_ecl_run_on_parallel_deck(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_on_nosim(source_root):
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "NOSIM\n\nTITLE")
@@ -129,7 +139,7 @@ def test_eclrun_on_nosim(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_on_nosim_with_existing_unsmry_file(source_root):
     """This emulates users rerunning Eclipse in an existing runpath"""
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
@@ -142,7 +152,7 @@ def test_eclrun_on_nosim_with_existing_unsmry_file(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
     minimum_duration = 15  # This is max_wait in the await function tested
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
@@ -164,7 +174,7 @@ def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_on_nosim_with_mpi_and_existing_unsmry_file(source_root):
     """This emulates users rerunning Eclipse in an existing runpath, with MPI.
 
@@ -185,9 +195,8 @@ def test_eclrun_on_nosim_with_mpi_and_existing_unsmry_file(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_eclrun_will_raise_on_deck_errors(source_root):
-    assert os.getenv("SLBSLS_LICENSE_FILE") is not None
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
         "SPE1_ERROR.DATA",
@@ -201,7 +210,7 @@ def test_eclrun_will_raise_on_deck_errors(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
     erun = run_reservoirsimulator.RunReservoirSimulator(
         "eclipse", "dummy_version", "mocked_anyway.DATA"
@@ -221,7 +230,7 @@ def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_deck_errors_can_be_ignored(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
@@ -234,7 +243,7 @@ def test_deck_errors_can_be_ignored(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1.DATA",
@@ -248,7 +257,7 @@ def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_mpi_run_is_managed_by_system_tool(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_PARALLEL.DATA",
