@@ -153,16 +153,6 @@ Everest `render`
     :prog: config_dump_entry
 
 
-===================
-Graphical interface
-===================
-
-.. argparse::
-    :module: ieverest.bin.ieverest_script
-    :func: _build_args_parser
-    :prog: ieverest_entry
-
-
 .. _ev_branch:
 
 ==============

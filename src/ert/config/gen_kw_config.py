@@ -352,9 +352,6 @@ class GenKwConfig(ParameterConfig):
                 return tf.use_log
         return False
 
-    def getKeyWords(self) -> List[str]:
-        return [tf.name for tf in self.transform_functions]
-
     def get_priors(self) -> List["PriorDict"]:
         priors: List["PriorDict"] = []
         for tf in self.transform_functions:

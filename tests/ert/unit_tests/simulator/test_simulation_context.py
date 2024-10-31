@@ -1,6 +1,6 @@
 import pytest
 
-from ert import JobState, JobStatus
+from ert import JobState
 from ert.simulator import BatchContext
 from tests.ert.utils import wait_until
 
@@ -11,7 +11,6 @@ from tests.ert.utils import wait_until
         pytest.param(
             JobState.COMPLETED, JobState.FAILED, "get_job_state", id="current"
         ),
-        pytest.param(JobStatus.SUCCESS, JobStatus.FAILED, "job_status", id="legacy"),
     ],
 )
 def test_simulation_context(

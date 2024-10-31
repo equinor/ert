@@ -161,7 +161,6 @@ platforms = ["all"]
 
 [tool.setuptools.package-data]
 everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
-ieverest = ["*.ui"]
 
 
 [tool.pytest.ini_options]
@@ -176,7 +175,6 @@ markers = [
     "slow",
     "everest_models_test",
     "integration_test",
-    "ui_test",
     "fails_on_macos_github_workflow", # Tests marked fail due to gui-related issues
 ]
 log_cli = "false"

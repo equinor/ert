@@ -63,7 +63,7 @@ jobs:
       if: inputs.test-type == 'unit-tests'
       run: |
         pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests
-        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage --ignore src/ieverest
+        pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'

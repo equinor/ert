@@ -36,9 +36,9 @@ run_ert_with_opm() {
 
 run_everest_tests() {
     python -m pytest tests/everest -s \
-        --ignore-glob "*test_visualization_entry*" \
-        -m "not requires_eclipse and not ui_test"
-    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m pytest tests/everest -s -m "ui_test"
+    --ignore-glob "*test_visualization_entry*" \
+     -m "not requires_eclipse"
+
 }
 
 start_tests() {
