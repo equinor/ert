@@ -7,7 +7,8 @@ import random
 import signal
 import socket
 import string
-import sys
+import threading
+import time
 import warnings
 from typing import Any, Dict, List, Optional, Union
 
@@ -123,30 +124,23 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         server.run(sockets=[sock])
 
 
-def terminate_on_parent_death() -> None:
-    """Quit the server when the parent does a SIGABRT or is otherwise destroyed.
-    This functionality has existed on Linux for a good while, but it isn't
-    exposed in the Python standard library. Use ctypes to hook into the
-    functionality.
+def terminate_on_parent_death(
+    stopped: threading.Event, poll_interval: float = 1.0
+) -> None:
     """
-    if sys.platform != "linux" or "ERT_COMM_FD" not in os.environ:
-        return
+    Quit the server when the parent process is no longer running.
+    """
 
-    from ctypes import CDLL, c_int, c_ulong  # noqa: PLC0415
+    def check_parent_alive() -> bool:
+        return os.getppid() != 1
 
-    lib = CDLL(None)
+    while check_parent_alive():
+        if stopped.is_set():
+            return
+        time.sleep(poll_interval)
 
-    # from <sys/prctl.h>
-    # int prctl(int option, ...)
-    prctl = lib.prctl
-    prctl.restype = c_int
-    prctl.argtypes = (c_int, c_ulong)
-
-    # from <linux/prctl.h>
-    PR_SET_PDEATHSIG = 1
-
-    # connect parent death signal to our SIGTERM
-    prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+    # Parent is no longer alive, terminate this process.
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 if __name__ == "__main__":
@@ -156,6 +150,14 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     uvicorn.config.LOGGING_CONFIG.clear()
     uvicorn.config.LOGGING_CONFIG.update(logging_conf)
-    terminate_on_parent_death()
+    _stopped = threading.Event()
+    terminate_on_parent_death_thread = threading.Thread(
+        target=terminate_on_parent_death, args=[_stopped, 1.0]
+    )
     with ErtPluginContext(logger=logging.getLogger()) as context:
-        run_server(debug=False)
+        terminate_on_parent_death_thread.start()
+        try:
+            run_server(debug=False)
+        finally:
+            _stopped.set()
+            terminate_on_parent_death_thread.join()
