@@ -225,7 +225,7 @@ class RunDialog(QFrame):
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
         self.restart_button.setHidden(True)
-        self.copy_debug_info_button = QPushButton("Debug Info")
+        self.copy_debug_info_button = QPushButton("Copy Debug Info")
         self.copy_debug_info_button.setToolTip("Copies useful information to clipboard")
         self.copy_debug_info_button.clicked.connect(self.produce_clipboard_debug_info)
         self.copy_debug_info_button.setObjectName("copy_debug_info_button")
