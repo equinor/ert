@@ -1,4 +1,7 @@
 import logging
+from io import StringIO
+
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
 from ert import ForwardModelStepPlugin, plugin
 
@@ -74,6 +77,14 @@ def add_log_handle_to_root():
     )
     fh.setFormatter(formatter)
     return fh
+
+
+span_output = StringIO()
+
+
+@plugin(name="dummy")
+def add_span_processor():
+    return BatchSpanProcessor(ConsoleSpanExporter(out=span_output))
 
 
 class DummyFMStep(ForwardModelStepPlugin):
