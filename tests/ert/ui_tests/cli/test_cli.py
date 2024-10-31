@@ -1,3 +1,4 @@
+import asyncio
 import fileinput
 import json
 import logging
@@ -13,6 +14,7 @@ import pandas as pd
 import pytest
 import websockets.exceptions
 import xtgeo
+from psutil import NoSuchProcess, Popen, Process, ZombieProcess
 from resdata.summary import Summary
 
 import _ert.threading
@@ -972,3 +974,43 @@ def test_that_connection_errors_do_not_effect_final_result(
             ENSEMBLE_EXPERIMENT_MODE,
             "poly.ert",
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+async def test_that_killed_ert_does_not_leave_storage_server_process():
+    ert_subprocess = Popen(["ert", "gui", "poly.ert"])
+    assert ert_subprocess.is_running()
+
+    async def _find_storage_process_pid() -> int:
+        while True:
+            for ert_child_process in ert_subprocess.children():
+                try:
+                    if "storage" in "".join(ert_child_process.cmdline()):
+                        return ert_child_process.pid
+                except (ZombieProcess, NoSuchProcess):
+                    pass
+            await asyncio.sleep(0.05)
+
+    storage_process_pid = await asyncio.wait_for(
+        _find_storage_process_pid(), timeout=120
+    )
+    # wait for storage server to have connected to ert
+    await asyncio.sleep(5)
+    storage_process = Process(storage_process_pid)
+
+    assert ert_subprocess.is_running()
+    assert storage_process.is_running()
+    kill_ert_subprocess = await asyncio.create_subprocess_exec(
+        "kill", "-9", f"{ert_subprocess.pid}"
+    )
+    await kill_ert_subprocess.wait()
+
+    async def _wait_for_storage_process_to_shut_down():
+        storage_server_has_shutdown = asyncio.Event()
+        while not storage_server_has_shutdown.is_set():
+            if not storage_process.is_running():
+                storage_server_has_shutdown.set()
+            await asyncio.sleep(0.1)
+
+    await asyncio.wait_for(_wait_for_storage_process_to_shut_down(), timeout=45)
+    assert not storage_process.is_running()
