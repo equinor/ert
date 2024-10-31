@@ -260,7 +260,7 @@ class EnsembleEvaluator:
                             f"closing connection to dispatcher: {ex}"
                         )
                         await websocket.close(
-                            code=1011, reason=f"failed handling {event}"
+                            code=1011, reason=f"failed handling message {raw_msg!r}"
                         )
                         return
 

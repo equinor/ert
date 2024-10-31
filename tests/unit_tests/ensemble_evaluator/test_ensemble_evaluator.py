@@ -2,10 +2,12 @@ import asyncio
 import datetime
 from functools import partial
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from websockets.server import WebSocketServerProtocol
 
 from _ert.events import (
     EESnapshot,
@@ -60,6 +62,19 @@ async def test_when_task_fails_evaluator_raises_exception(
     )
     with pytest.raises(RuntimeError, match=error_msg):
         await evaluator.run_and_get_successful_realizations()
+
+
+async def test_when_dispatch_is_given_invalid_event_the_socket_is_closed(
+    make_ee_config,
+):
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
+
+    socket = MagicMock(spec=WebSocketServerProtocol)
+    socket.__aiter__.return_value = ["invalid_json"]
+    await evaluator.handle_dispatch(socket)
+    socket.close.assert_called_once_with(
+        code=1011, reason="failed handling message 'invalid_json'"
+    )
 
 
 async def test_no_config_raises_valueerror_when_running():
