@@ -614,8 +614,9 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
-
+        assert run_dialog is not None
+        run_dialog._run_model.cancel()
+        run_dialog.simulation_done.emit(False, "")
         copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
         assert copy_debug_info_button
         assert isinstance(copy_debug_info_button, QPushButton)
