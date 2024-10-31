@@ -60,7 +60,7 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
     """
     Start an Everest server running the optimization defined in the config
     """
-    if server_is_running(config):  # better safe than sorry
+    if server_is_running(*config.server_context):  # better safe than sorry
         return
 
     log_dir = config.log_dir
@@ -181,7 +181,7 @@ def wait_for_server(
 
     Raise an exception when the timeout is reached.
     """
-    if not server_is_running(config):
+    if not server_is_running(*config.server_context):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             # Failure may occur before contact with the server is established:
@@ -225,11 +225,11 @@ def wait_for_server(
 
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if server_is_running(config):
+            if server_is_running(*config.server_context):
                 return
 
     # If number of retries reached and server is not running - throw exception
-    if not server_is_running(config):
+    if not server_is_running(*config.server_context):
         raise RuntimeError("Failed to start server within configured timeout.")
 
 
@@ -330,22 +330,21 @@ def wait_for_server_to_stop(config: EverestConfig, timeout):
 
     Raise an exception when the timeout is reached.
     """
-    if server_is_running(config):
+    if server_is_running(*config.server_context):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if not server_is_running(config):
+            if not server_is_running(*config.server_context):
                 return
 
     # If number of retries reached and server still running - throw exception
-    if server_is_running(config):
+    if server_is_running(*config.server_context):
         raise Exception("Failed to stop server within configured timeout.")
 
 
-def server_is_running(config: EverestConfig):
+def server_is_running(url: str, cert: bool, auth: Tuple[str, str]):
     try:
-        url, cert, auth = config.server_context
         response = requests.get(
             url,
             verify=cert,

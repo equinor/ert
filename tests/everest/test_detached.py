@@ -103,7 +103,7 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
             result.raise_for_status()
 
         # Test stopping server
-        assert server_is_running(everest_config)
+        assert server_is_running(*everest_config.server_context)
 
         if stop_server(everest_config):
             wait_for_server_to_stop(everest_config, 60)
@@ -115,7 +115,7 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
                 ServerStatus.stopped,
                 ServerStatus.completed,
             ]
-            assert not server_is_running(everest_config)
+            assert not server_is_running(*everest_config.server_context)
         else:
             context_stop_and_wait()
             server_status = everserver_status(everest_config)
