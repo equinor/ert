@@ -14,7 +14,7 @@ python:
 
 sphinx:
   builder: html
-  configuration: conf.py
+  configuration: docs/everest/conf.py
 
 formats:
   - pdf
