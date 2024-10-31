@@ -657,6 +657,7 @@ class BaseRunModel(ABC):
                 f"({min_realization_count})"
             )
 
+    @tracer.start_as_current_span("ert.run_model.run_workflows")
     def run_workflows(
         self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
     ) -> None:
