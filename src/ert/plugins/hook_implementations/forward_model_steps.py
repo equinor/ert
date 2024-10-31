@@ -628,8 +628,14 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
 def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
     pm = ErtPluginManager()
     eclrun_env = os.environ.copy()
+    _simulator_to_fm_stepname = {"eclipse": "ECLIPSE100", "e300": "ECLIPSE300"}
+    eclrun_path = (
+        pm.get_forward_model_configuration()
+        .get(_simulator_to_fm_stepname[simulator], {})
+        .get("ECLRUN_PATH", "")
+    )
     eclrun_env["PATH"] = os.pathsep.join(
-        pm.get_forward_model_paths() + os.getenv("PATH", "").split(os.pathsep)
+        [eclrun_path, *os.getenv("PATH", "").split(os.pathsep)]
     )
     try:
         return (
