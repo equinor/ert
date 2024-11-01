@@ -33,13 +33,15 @@ def test_field_param_update_using_heat_equation(heat_equation_storage):
         prior_covariance = np.cov(
             prior_result.values.reshape(
                 prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            )
+            ),
+            rowvar=False,
         )
         posterior_covariance = np.cov(
             posterior_result.values.reshape(
                 posterior.ensemble_size,
                 param_config.nx * param_config.ny * param_config.nz,
-            )
+            ),
+            rowvar=False,
         )
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)
