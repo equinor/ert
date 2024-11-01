@@ -5,17 +5,24 @@ import os
 import re
 import time
 import traceback
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Literal, Mapping, Optional, Tuple
+from typing import Literal, Mapping, Optional, Tuple
 
 import requests
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 
-from ert import BatchContext, BatchSimulator, JobState
-from ert.config import ErtConfig, QueueSystem
+from ert.config import QueueSystem
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
+from ert.scheduler import create_driver
+from ert.scheduler.driver import Driver, FailedSubmit
+from ert.scheduler.event import StartedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.strings import (
@@ -25,7 +32,6 @@ from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
-    SIMULATION_DIR,
     STOP_ENDPOINT,
 )
 from everest.util import configure_logger
@@ -43,19 +49,7 @@ PROXY = {"http": None, "https": None}
 # everest.log file instead
 
 
-# The Everest server is launched through ert. When running on LSF everything
-# works fine. But when running on the local queue (mainly for testing and
-# debugging) the ert causes all sorts of problems if the server or the
-# context go out of scope. So we keep them alive for now.
-# Note that, after the server is stopped (eg by a call to stop_server), the
-# context does not immediately terminate. The method _context_stop_and_wait
-# stops the context (if available) and waits until the context is terminated
-# (to be used typically in tests)
-_server = None
-_context = None
-
-
-def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
+async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
@@ -79,14 +73,6 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         log_level=logging.INFO,
     )
 
-    global _server  # noqa: PLW0603
-    global _context  # noqa: PLW0603
-    if _context and _context.running():
-        raise RuntimeError(
-            "Starting two instances of everest server "
-            "in the same process is not allowed!"
-        )
-
     try:
         save_config_path = os.path.join(config.output_dir, config.config_file)
         config.dump(save_config_path)
@@ -95,48 +81,18 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
             "Failed to save optimization config: {}".format(e)
         )
 
-    experiment = storage.create_experiment(
-        name=f"DetachedEverest@{datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-        parameters=[],
-        responses=[],
-    )
-
-    _server = BatchSimulator(
-        experiment=experiment,
-        perferred_num_cpu=ert_config.preferred_num_cpu,
-        runpath_file=str(ert_config.runpath_file),
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        forward_model_steps=ert_config.forward_model_steps,
-        parameter_configurations=ert_config.ensemble_config.parameter_configs,
-        queue_config=ert_config.queue_config,
-        model_config=ert_config.model_config,
-        analysis_config=ert_config.analysis_config,
-        hooked_workflows=ert_config.hooked_workflows,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        controls={},
-        results=[],
-    )
-
-    _context = _server.start("dispatch_server", [(0, {})])
-
-    return _context
-
-
-def context_stop_and_wait():
-    global _context  # noqa: PLW0602
-    if _context:
-        _context.stop()
-        while _context.running():
-            time.sleep(1)
-
-
-def wait_for_context():
-    global _context  # noqa: PLW0602
-    if _context and _context.running():
-        while _context.running():
-            time.sleep(1)
+    driver = create_driver(get_server_queue_options(config))
+    try:
+        args = ["--config-file", config.config_file]
+        if debug:
+            args.append("--debug")
+        await driver.submit(0, "everserver", *args)
+    except FailedSubmit as err:
+        raise ValueError(f"Failed to submit Everserver with error: {err}") from err
+    status = await driver.event_queue.get()
+    if not isinstance(status, StartedEvent):
+        raise ValueError(f"Everserver not started as expected, got status: {status}")
+    return driver
 
 
 def stop_server(config: EverestConfig, retries: int = 5):
@@ -167,9 +123,7 @@ def extract_errors_from_file(path: str):
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server(
-    config: EverestConfig, timeout: int, context: Optional[BatchContext] = None
-) -> None:
+def wait_for_server(config: EverestConfig, timeout: int) -> None:
     """
     Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
@@ -190,33 +144,6 @@ def wait_for_server(
                 raise SystemExit(
                     "Failed to start Everest with error:\n{}".format(status["message"])
                 )
-            # Job queueing may fail:
-            if context is not None and context.has_job_failed(0):
-                job_progress = context.job_progress(0)
-
-                if job_progress is not None:
-                    path = context.job_progress(0).steps[0].std_err_file
-                    for err in extract_errors_from_file(path):
-                        update_everserver_status(
-                            config, ServerStatus.failed, message=err
-                        )
-                        logging.error(err)
-                    raise SystemExit("Failed to start Everest server.")
-                else:
-                    try:
-                        state = context.get_job_state(0)
-
-                        if state == JobState.WAITING:
-                            # Job did fail, but is now in WAITING
-                            logging.error(
-                                "Race condition in wait_for_server, job did fail but is now in WAITING"
-                            )
-                    except IndexError as e:
-                        # Job is no longer registered in scheduler
-                        logging.error(
-                            f"Race condition in wait_for_server, failed job removed from scheduler\n{e}"
-                        )
-                        raise SystemExit("Failed to start Everest server.") from e
 
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
@@ -364,68 +291,6 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
 }
 
 
-def _add_simulator_defaults(
-    options,
-    config: EverestConfig,
-    queue_options: List[Tuple[str, str]],
-    queue_system: Literal["LSF", "SLURM"],
-):
-    simulator_options = (
-        config.simulator.extract_ert_queue_options(
-            queue_system=queue_system, everest_to_ert_key_tuples=queue_options
-        )
-        if config.simulator is not None
-        else []
-    )
-
-    option_names = [option[1] for option in options]
-    simulator_option_names = [option[1] for option in simulator_options]
-    options.extend(
-        simulator_options[simulator_option_names.index(res_key)]
-        for _, res_key in queue_options
-        if res_key not in option_names and res_key in simulator_option_names
-    )
-    return options
-
-
-def _generate_queue_options(
-    config: EverestConfig,
-    queue_options: List[Tuple[str, str]],
-    res_queue_name: str,  # Literal["LSF_QUEUE", "PARTITION"]?
-    queue_system: Literal["LSF", "SLURM", "TORQUE"],
-):
-    queue_name_simulator = (
-        config.simulator.name if config.simulator is not None else None
-    )
-
-    queue_name = config.server.name if config.server is not None else None
-
-    if queue_name is None:
-        queue_name = queue_name_simulator
-
-    options = (
-        config.server.extract_ert_queue_options(
-            queue_system=queue_system, everest_to_ert_key_tuples=queue_options
-        )
-        if config.server is not None
-        else [(queue_system, "MAX_RUNNING", 1)]
-    )
-
-    if queue_name:
-        options.append(
-            (
-                queue_system,
-                res_queue_name,
-                queue_name,
-            ),
-        )
-    # Inherit the include/exclude_host from the simulator config entry, if necessary.
-    # Currently this is only used by the slurm driver.
-    if queue_system == "SLURM":
-        options = _add_simulator_defaults(options, config, queue_options, queue_system)
-    return options
-
-
 def _find_res_queue_system(config: EverestConfig):
     queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
     if config.simulator is not None:
@@ -446,52 +311,30 @@ def _find_res_queue_system(config: EverestConfig):
     return QueueSystem(queue_system.upper())
 
 
-def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = False):
-    assert config.config_directory is not None
-    assert config.config_file is not None
-
-    site_config = ErtConfig.read_site_config()
-    abs_everest_config = os.path.join(config.config_directory, config.config_file)
-    detached_node_dir = ServerConfig.get_detached_node_dir(config.output_dir)
-    simulation_path = os.path.join(detached_node_dir, SIMULATION_DIR)
+def get_server_queue_options(config: EverestConfig):
     queue_system = _find_res_queue_system(config)
-    arg_list = ["--config-file", abs_everest_config]
-    if debug_mode:
-        arg_list.append("--debug")
 
-    everserver_config = {} if site_config is None else site_config
-    everserver_config.update(
-        {
-            "RUNPATH": simulation_path,
-            "JOBNAME": EVEREST_SERVER_CONFIG,
-            "NUM_REALIZATIONS": 1,
-            "MAX_SUBMIT": 1,
-            "ENSPATH": os.path.join(detached_node_dir, EVEREST_SERVER_CONFIG),
-            "RUNPATH_FILE": os.path.join(detached_node_dir, ".res_runpath_list"),
-        }
-    )
-    install_job = everserver_config.get("INSTALL_JOB", [])
-    install_job.append((EVEREST_SERVER_CONFIG, _EVERSERVER_JOB_PATH))
-    everserver_config["INSTALL_JOB"] = install_job
+    ever_queue_config = config.server if config.server is not None else config.simulator
 
-    simulation_job = everserver_config.get("SIMULATION_JOB", [])
-    simulation_job.append([EVEREST_SERVER_CONFIG, *arg_list])
-    everserver_config["SIMULATION_JOB"] = simulation_job
-
-    if queue_system in _QUEUE_SYSTEMS:
-        everserver_config["QUEUE_SYSTEM"] = queue_system
-        queue_options = _generate_queue_options(
-            config,
-            _QUEUE_SYSTEMS[queue_system]["options"],
-            _QUEUE_SYSTEMS[queue_system]["name"],
-            queue_system,
+    if queue_system == QueueSystem.LSF:
+        queue = LsfQueueOptions(
+            lsf_queue=ever_queue_config.name,
+            lsf_resource=ever_queue_config.options,
         )
-        if queue_options:
-            everserver_config.setdefault("QUEUE_OPTION", []).extend(queue_options)
+    elif queue_system == QueueSystem.SLURM:
+        queue = SlurmQueueOptions(
+            exclude_host=ever_queue_config.exclude_host,
+            include_host=ever_queue_config.include_host,
+            partition=ever_queue_config.name,
+        )
+    elif queue_system == QueueSystem.TORQUE:
+        queue = TorqueQueueOptions()
+    elif queue_system == QueueSystem.LOCAL:
+        queue = LocalQueueOptions()
     else:
-        everserver_config["QUEUE_SYSTEM"] = queue_system
-
-    return everserver_config
+        raise ValueError(f"Unknown queue system: {queue_system}")
+    queue.max_running = 1
+    return queue
 
 
 def _query_server(cert, auth, endpoint):

@@ -28,12 +28,12 @@ as RMS and Eclipse.
     """,
     )  # Corresponds to queue name
     exclude_host: Optional[str] = Field(
-        None,
+        "",
         description="""Comma separated list of nodes that should be
          excluded from the slurm run""",
     )
     include_host: Optional[str] = Field(
-        None,
+        "",
         description="""Comma separated list of nodes that
         should be included in the slurm run""",
     )

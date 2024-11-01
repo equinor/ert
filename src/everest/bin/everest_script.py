@@ -1,25 +1,21 @@
 #!/usr/bin/env python
 
 import argparse
+import asyncio
 import json
 import logging
 import signal
 import threading
 from functools import partial
 
-from ert.config import ErtConfig
-from ert.storage import open_storage
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    generate_everserver_ert_config,
     server_is_running,
     start_server,
-    wait_for_context,
     wait_for_server,
 )
-from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.util import makedirs_if_needed, version_info
 
 from .utils import (
@@ -48,7 +44,7 @@ def everest_entry(args=None):
             partial(handle_keyboard_interrupt, options=options),
         )
 
-    run_everest(options)
+    asyncio.run(run_everest(options))
 
 
 def _build_args_parser():
@@ -80,7 +76,7 @@ def _build_args_parser():
     return arg_parser
 
 
-def run_everest(options):
+async def run_everest(options):
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
 
@@ -100,22 +96,12 @@ def run_everest(options):
             job_name = fm_job.split()[0]
             logger.info("Everest forward model contains job {}".format(job_name))
 
-        with PluginSiteConfigEnv():
-            ert_config = ErtConfig.with_plugins().from_dict(
-                config_dict=generate_everserver_ert_config(
-                    options.config, options.debug
-                )
-            )
-
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
-
-        with open_storage(ert_config.ens_path, "w") as storage, PluginSiteConfigEnv():
-            context = start_server(options.config, ert_config, storage)
-            print("Waiting for server ...")
-            wait_for_server(options.config, timeout=600, context=context)
-            print("Everest server found!")
-            run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
-            wait_for_context()
+        await start_server(options.config, options.debug)
+        print("Waiting for server ...")
+        wait_for_server(options.config, timeout=600)
+        print("Everest server found!")
+        run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
 
         server_state = everserver_status(options.config)
         server_state_info = server_state["message"]

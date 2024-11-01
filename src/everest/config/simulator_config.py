@@ -36,12 +36,12 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         "needs to be deleted.",
     )
     exclude_host: Optional[str] = Field(
-        None,
+        "",
         description="""Comma separated list of nodes that should be
                  excluded from the slurm run.""",
     )
     include_host: Optional[str] = Field(
-        None,
+        "",
         description="""Comma separated list of nodes that
                 should be included in the slurm run""",
     )
