@@ -50,7 +50,7 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -n logical --maxprocesses=2 -v --benchmark-disable  --dist loadgroup tests/ui_tests/cli
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'

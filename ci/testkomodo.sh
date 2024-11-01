@@ -1,4 +1,4 @@
-copy_test_files () {
+copy_test_files() {
     cp -r ${CI_SOURCE_ROOT}/tests ${CI_TEST_ROOT}
     ln -s ${CI_SOURCE_ROOT}/test-data ${CI_TEST_ROOT}/test-data
 
@@ -11,11 +11,11 @@ copy_test_files () {
     ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
 }
 
-install_test_dependencies () {
+install_test_dependencies() {
     pip install ".[dev]"
 }
 
-run_ert_with_opm () {
+run_ert_with_opm() {
     pushd "${CI_TEST_ROOT}"
 
     cp -r "${CI_SOURCE_ROOT}/test-data/flow_example" ert_with_opm
@@ -24,7 +24,7 @@ run_ert_with_opm () {
     ert test_run flow.ert ||
         (
             # In case ert fails, print log files if they are there:
-            cat spe1_out/realization-0/iter-0/STATUS  || true
+            cat spe1_out/realization-0/iter-0/STATUS || true
             cat spe1_out/realization-0/iter-0/ERROR || true
             cat spe1_out/realization-0/iter-0/FLOW.stderr.0 || true
             cat spe1_out/realization-0/iter-0/FLOW.stdout.0 || true
@@ -33,7 +33,7 @@ run_ert_with_opm () {
     popd
 }
 
-start_tests () {
+start_tests() {
     export NO_PROXY=localhost,127.0.0.1
 
     export ECL_SKIP_SIGNAL=ON
@@ -41,7 +41,7 @@ start_tests () {
     pushd ${CI_TEST_ROOT}/tests
 
     # Run all ert tests except tests evaluating memory consumption and tests requiring windows manager (GUI tests)
-    pytest --eclipse-simulator -n logical --show-capture=stderr -v --max-worker-restart 0 \
+    pytest --eclipse-simulator -n auto --show-capture=stderr -v --max-worker-restart 0 \
         -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
     return_code_ert_main_tests=$?
 
@@ -71,7 +71,6 @@ start_tests () {
     return_code_opm_integration_test=$?
 
     set -e
-
 
     return_code_combined_tests=0
     # We error if one or more returncodes are nonzero
