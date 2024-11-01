@@ -277,6 +277,7 @@ class Scheduler:
         forward_model_ok_lock = asyncio.Lock()
         verify_checksum_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
+            await asyncio.sleep(0)
             if job.state != JobState.ABORTED:
                 self._job_tasks[iens] = asyncio.create_task(
                     job.run(
