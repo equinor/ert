@@ -80,16 +80,6 @@ def _build_args_parser():
     return arg_parser
 
 
-def _run_everest(options, ert_config, storage):
-    with PluginSiteConfigEnv():
-        context = start_server(options.config, ert_config, storage)
-        print("Waiting for server ...")
-        wait_for_server(options.config, timeout=600, context=context)
-        print("Everest server found!")
-        run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
-        wait_for_context()
-
-
 def run_everest(options):
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
@@ -119,8 +109,13 @@ def run_everest(options):
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
 
-        with open_storage(ert_config.ens_path, "w") as storage:
-            _run_everest(options, ert_config, storage)
+        with open_storage(ert_config.ens_path, "w") as storage, PluginSiteConfigEnv():
+            context = start_server(options.config, ert_config, storage)
+            print("Waiting for server ...")
+            wait_for_server(options.config, timeout=600, context=context)
+            print("Everest server found!")
+            run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
+            wait_for_context()
 
         server_state = everserver_status(options.config)
         server_state_info = server_state["message"]
