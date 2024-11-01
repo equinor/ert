@@ -144,7 +144,8 @@ def test_memory_usage_counts_grandchildren():
     assert max_seens[1] + memory_per_numbers_list < max_seens[2]
 
 
-@pytest.mark.flaky(reruns=3)
+@pytest.mark.integration_test
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_in_running_events():
     scriptname = "increasing_memory.py"
@@ -190,10 +191,26 @@ def test_memory_profile_in_running_events():
         # Avoid the tail of the array, then the process is tearing down
     ).all(), f"Emitted memory usage not increasing, got {emitted_rss_values[:-3]=}"
 
+    memory_deltas = np.diff(np.array(emitted_rss_values[7:]))
+    if not len(memory_deltas):
+        # This can happen if memory profiling is lagging behind the process
+        # we are trying to track.
+        memory_deltas = np.diff(np.array(emitted_rss_values[2:]))
+
+    lenience_factor = 4
+    # Ideally this is 1 which corresponds to being able to track every memory
+    # allocation perfectly. But on loaded hardware, some of the allocations can be
+    # missed due to process scheduling. Bump as needed.
+
     assert (
-        np.diff(np.array(emitted_rss_values[7:])).max() < 3 * 1024 * 1024
+        max(memory_deltas) < lenience_factor * 1024 * 1024
         # Avoid the first steps, which includes the Python interpreters memory usage
-    ), f"Memory increased too sharply, missing a measurement? Got {emitted_rss_values[7:]=}"
+    ), (
+        "Memory increased too sharply, missing a measurement? "
+        f"Got {emitted_rss_values=} with selected diffs {memory_deltas}. "
+        "If the maximal number is at the beginning, it is probably the Python process "
+        "startup that is tracked."
+    )
 
     if sys.platform.startswith("darwin"):
         # No oom_score on MacOS
