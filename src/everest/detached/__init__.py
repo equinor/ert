@@ -18,7 +18,6 @@ from ert import BatchContext, BatchSimulator, JobState
 from ert.config import ErtConfig, QueueSystem
 from everest.config import EverestConfig
 from everest.config_keys import ConfigKeys as CK
-from everest.simulator import JOB_FAILURE, JOB_SUCCESS, Status
 from everest.strings import (
     EVEREST,
     EVEREST_SERVER_CONFIG,
@@ -231,65 +230,6 @@ def wait_for_server(
     # If number of retries reached and server is not running - throw exception
     if not server_is_running(*config.server_context):
         raise RuntimeError("Failed to start server within configured timeout.")
-
-
-def get_sim_status(config: EverestConfig):
-    """Retrieve a seba database snapshot and return a list of simulation
-    information objects for each of the available batches in the database
-
-    Example: [{progress: [[{'start_time': u'Thu, 16 May 2019 16:53:20  UTC',
-                            'end_time': u'Thu, 16 May 2019 16:53:20  UTC',
-                            'status': JOB_SUCCESS}]],
-               'batch_number': 0,
-               'event': 'update'}, ..]
-    """
-
-    seba_snapshot = SebaSnapshot(config.optimization_output_dir)
-    snapshot = seba_snapshot.get_snapshot()
-
-    def timestamp2str(timestamp):
-        if timestamp:
-            return "{} UTC".format(
-                datetime.fromtimestamp(timestamp).strftime("%a, %d %b %Y %H:%M:%S %Z")
-            )
-        else:
-            return None
-
-    sim_progress: dict = {}
-    for sim in snapshot.simulation_data:
-        sim_metadata = {
-            "start_time": timestamp2str(sim.start_time),
-            "end_time": timestamp2str(sim.end_time),
-            "realization": sim.realization,
-            "simulation": sim.simulation,
-            "status": JOB_SUCCESS if sim.success else JOB_FAILURE,
-        }
-        if sim.batch in sim_progress:
-            sim_progress[sim.batch]["progress"].append([sim_metadata])
-        else:
-            sim_progress[sim.batch] = {
-                "progress": [[sim_metadata]],
-                "batch_number": sim.batch,
-                "event": "update",
-            }
-    for status in sim_progress.values():
-        fm_runs = len(status["progress"])
-        failed = sum(
-            fm_run[0]["status"] == JOB_FAILURE for fm_run in status["progress"]
-        )
-        status.update(
-            {
-                "status": Status(
-                    waiting=0,
-                    pending=0,
-                    running=0,
-                    failed=failed,
-                    complete=fm_runs - failed,
-                )
-            }
-        )
-
-    return list(sim_progress.values())
 
 
 def get_opt_status(output_folder):
