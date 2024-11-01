@@ -276,6 +276,7 @@ class Scheduler:
         # does internalization at a time
         forward_model_ok_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
+            await asyncio.sleep(0)
             if job.state != JobState.ABORTED:
                 self._job_tasks[iens] = asyncio.create_task(
                     job.run(sem, forward_model_ok_lock, self._max_submit),
