@@ -59,6 +59,8 @@ class Job:
     (LSF, PBS, SLURM, etc.)
     """
 
+    DEFAULT_CHECKSUM_TIMEOUT = 120
+
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
         self.state = JobState.WAITING
@@ -188,8 +190,10 @@ class Job:
         self.returncode.cancel()
 
     async def _verify_checksum(
-        self, checksum_lock: asyncio.Lock, timeout: int = 120
+        self, checksum_lock: asyncio.Lock, timeout: Optional[int] = None
     ) -> None:
+        if timeout is None:
+            timeout = self.DEFAULT_CHECKSUM_TIMEOUT
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:

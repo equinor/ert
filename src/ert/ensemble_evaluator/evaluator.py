@@ -385,8 +385,24 @@ class EnsembleEvaluator:
             )
         )
 
+    CLOSE_SERVER_TIMEOUT = 60
+
+    async def _wait_for_stopped_server(self) -> None:
+        """
+        When the ensemble is done, we wait for the server to stop
+        with a timeout.
+        """
+        try:
+            await asyncio.wait_for(
+                self._server_done.wait(), timeout=self.CLOSE_SERVER_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            print("Timeout server done")
+            self._server_done.set()
+
     async def _monitor_and_handle_tasks(self) -> None:
         pending: Iterable[asyncio.Task[None]] = self._ee_tasks
+        stop_timeout_task: Optional[asyncio.Task[None]] = None
 
         while True:
             done, pending = await asyncio.wait(
@@ -407,8 +423,13 @@ class EnsembleEvaluator:
                     )
                     raise task_exception
                 elif task.get_name() == "server_task":
+                    if stop_timeout_task:
+                        stop_timeout_task.cancel()
                     return
                 elif task.get_name() == "ensemble_task":
+                    stop_timeout_task = asyncio.create_task(
+                        self._wait_for_stopped_server()
+                    )
                     continue
                 else:
                     msg = (
