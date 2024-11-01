@@ -6,16 +6,18 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
+import websockets.exceptions
 import xtgeo
 from resdata.summary import Summary
 
 import _ert.threading
 import ert.shared
+from _ert.forward_model_runner.client import Client
 from ert import LibresFacade, ensemble_evaluator
 from ert.cli.main import ErtCliError
 from ert.config import (
@@ -24,6 +26,7 @@ from ert.config import (
     ErtConfig,
 )
 from ert.enkf_main import sample_prior
+from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -31,6 +34,7 @@ from ert.mode_definitions import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
+from ert.scheduler.job import Job
 from ert.storage import open_storage
 
 from .run_cli import run_cli
@@ -928,3 +932,26 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
         f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
         f"file {case}.SMSPEC not created by forward model!"
     ) in caplog.messages
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_connection_errors_do_not_effect_final_result(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 0)
+    monkeypatch.setattr(Client, "DEFAULT_TIMEOUT_MULTIPLIER", 0)
+    monkeypatch.setattr(Client, "CONNECTION_TIMEOUT", 1)
+    monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0)
+    monkeypatch.setattr(Job, "DEFAULT_CHECKSUM_TIMEOUT", 0)
+
+    def raise_connection_error(*args, **kwargs):
+        raise websockets.exceptions.ConnectionClosedError(None, None)
+
+    with patch(
+        "ert.ensemble_evaluator.evaluator.dispatch_event_from_json",
+        raise_connection_error,
+    ):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "poly.ert",
+        )

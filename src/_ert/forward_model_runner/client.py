@@ -27,6 +27,10 @@ class ClientConnectionClosedOK(Exception):
 
 
 class Client:
+    DEFAULT_MAX_RETRIES = 10
+    DEFAULT_TIMEOUT_MULTIPLIER = 5
+    CONNECTION_TIMEOUT = 60
+
     def __enter__(self) -> Self:
         return self
 
@@ -49,9 +53,13 @@ class Client:
         url: str,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        max_retries: int = 10,
-        timeout_multiplier: int = 5,
+        max_retries: Optional[int] = None,
+        timeout_multiplier: Optional[int] = None,
     ) -> None:
+        if max_retries is None:
+            max_retries = self.DEFAULT_MAX_RETRIES
+        if timeout_multiplier is None:
+            timeout_multiplier = self.DEFAULT_TIMEOUT_MULTIPLIER
         if url is None:
             raise ValueError("url was None")
         self.url = url
@@ -82,10 +90,10 @@ class Client:
             self.url,
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,
-            open_timeout=60,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
+            open_timeout=self.CONNECTION_TIMEOUT,
+            ping_timeout=self.CONNECTION_TIMEOUT,
+            ping_interval=self.CONNECTION_TIMEOUT,
+            close_timeout=self.CONNECTION_TIMEOUT,
         )
 
     async def _send(self, msg: AnyStr) -> None:
