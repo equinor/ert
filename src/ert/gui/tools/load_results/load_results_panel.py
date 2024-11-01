@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QFormLayout, QMessageBox, QWidget
+from qtpy.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -42,9 +42,14 @@ class LoadResultsPanel(QWidget):
         self._run_path_text.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
+        self._run_path_text.textChanged.connect(self.text_change)
 
+        self.help_iter_lbl = QLabel("<ITER> will be replace by: 0")
+        self.help_iens_lbl = QLabel("<IENS> will be replace by %")
         layout.addRow("Load data from run path: ", self._run_path_text)
         ensemble_selector = EnsembleSelector(self._notifier)
+        layout.addRow("", self.help_iens_lbl)
+        layout.addRow("", self.help_iter_lbl)
         layout.addRow("Load into ensemble:", ensemble_selector)
         self._ensemble_selector = ensemble_selector
 
@@ -54,14 +59,23 @@ class LoadResultsPanel(QWidget):
             self._active_realizations_model,  # type: ignore
             "load_results_manually/Realizations",
         )
+        self._active_realizations_field.textChanged.connect(self.text_change)
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         self._active_realizations_field.setObjectName("active_realizations_lrm")
+        self.help_iens_lbl.setText(
+            f"<IENS> will be replace by {self._active_realizations_field.get_text}"
+        )
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.panelConfigurationChanged
         )
         self.setLayout(layout)
+
+    def text_change(self) -> None:
+        active_realizations = self._active_realizations_field.get_text
+        self.help_iens_lbl.setText(f"<IENS> will be replace by {active_realizations}")
+        self.help_iter_lbl.setVisible("<ITER>" in self._run_path_text.get_text)
 
     def readCurrentRunPath(self) -> str:
         current_ensemble = self._notifier.current_ensemble_name
