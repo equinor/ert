@@ -70,6 +70,7 @@ from ert.ensemble_evaluator.state import (
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
+from ert.trace import tracer
 from ert.workflow_runner import WorkflowRunner
 
 from ..config.analysis_config import UpdateSettings
@@ -318,6 +319,7 @@ class BaseRunModel(ABC):
             self._context_env.pop(key)
             os.environ.pop(key, None)
 
+    @tracer.start_as_current_span(f"{__name__}.start_simulations_thread")
     def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -573,6 +575,7 @@ class BaseRunModel(ABC):
         return evaluator_task.result()
 
     # This function needs to be there for the sake of testing that expects sync ee run
+    @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
     def run_ensemble_evaluator(
         self,
         run_args: List[RunArg],
@@ -654,6 +657,7 @@ class BaseRunModel(ABC):
                 f"({min_realization_count})"
             )
 
+    @tracer.start_as_current_span(f"{__name__}.run_workflows")
     def run_workflows(
         self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
     ) -> None:

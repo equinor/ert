@@ -50,6 +50,9 @@ dependencies = [
     "netCDF4",
     "numpy<2",
     "openpyxl",  # extra dependency for pandas (excel)
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-instrumentation-threading",
     "orjson",
     "packaging",
     "pandas",

@@ -8,6 +8,7 @@ import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
+from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
 from . import BaseRunModel
@@ -58,6 +59,7 @@ class EvaluateEnsemble(BaseRunModel):
             random_seed=random_seed,
         )
 
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:

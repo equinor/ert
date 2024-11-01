@@ -1,6 +1,9 @@
+import json
 import logging
 import tempfile
 from unittest.mock import Mock
+
+from opentelemetry.sdk.trace import TracerProvider
 
 import ert.plugins.hook_implementations
 from ert.plugins import ErtPluginManager
@@ -113,6 +116,22 @@ def test_add_logging_handle(tmpdir):
         with open("spam.log", encoding="utf-8") as fin:
             result = fin.read()
         assert "I should write this to spam.log" in result
+
+
+def test_add_span_processor():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    tracer_provider = TracerProvider()
+    tracer = tracer_provider.get_tracer("ert.tests")
+    pm.add_span_processor_to_trace_provider(tracer_provider)
+    with tracer.start_as_current_span("span_1"):
+        print("do_something")
+        with tracer.start_as_current_span("span_2"):
+            print("do_something_else")
+    tracer_provider.force_flush()
+    span_info = "[" + dummy_plugins.span_output.getvalue().replace("}\n{", "},{") + "]"
+    span_info = json.loads(span_info)
+    span_info = {span["name"]: span for span in span_info}
+    assert span_info["span_2"]["parent_id"] == span_info["span_1"]["context"]["span_id"]
 
 
 def test_that_forward_model_step_is_registered(tmpdir):

@@ -10,6 +10,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
+from ert.trace import tracer
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import ESSettings
@@ -56,6 +57,7 @@ class EnsembleSmoother(UpdateRunModel):
 
         self.support_restart = False
 
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:

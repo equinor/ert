@@ -13,11 +13,15 @@ from .jobs import (
     job_documentation,
     legacy_ertscript_workflow,
 )
-from .logging import add_log_handle_to_root
+from .logging import (
+    add_log_handle_to_root,
+    add_span_processor,
+)
 from .site_config import site_config_lines
 
 __all__ = [
     "add_log_handle_to_root",
+    "add_span_processor",
     "ecl100_config_path",
     "ecl300_config_path",
     "flow_config_path",

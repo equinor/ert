@@ -14,6 +14,8 @@ from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
 import yaml
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
+from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
 from _ert.threading import set_signal_handler
@@ -33,6 +35,7 @@ from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
+from ert.trace import trace, tracer, tracer_provider
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,
@@ -646,12 +649,15 @@ def log_process_usage() -> None:
         )
 
 
+@tracer.start_as_current_span("ert.application.start")
 def main() -> None:
+    span = trace.get_current_span()
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
 
     # Have ErtThread re-raise uncaught exceptions on main thread
     set_signal_handler()
+    ThreadingInstrumentor().instrument()
 
     args = ert_parser(None, sys.argv[1:])
 
@@ -676,19 +682,26 @@ def main() -> None:
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
-
     try:
-        with ErtPluginContext(logger=logging.getLogger()) as context:
+        with ErtPluginContext(
+            logger=logging.getLogger(), trace_provider=tracer_provider
+        ) as context:
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)
     except ErtCliError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
         logger.debug(str(err))
         sys.exit(str(err))
     except ConfigValidationError as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
         err_msg = err.cli_message()
         logger.debug(err_msg)
         sys.exit(err_msg)
     except BaseException as err:
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(err)
         logger.exception(f'ERT crashed unexpectedly with "{err}"')
 
         logfiles = set()  # Use set to avoid duplicates...
@@ -703,6 +716,7 @@ def main() -> None:
     finally:
         log_process_usage()
         os.environ.pop("ERT_LOG_DIR")
+        ThreadingInstrumentor().uninstrument()
 
 
 if __name__ == "__main__":

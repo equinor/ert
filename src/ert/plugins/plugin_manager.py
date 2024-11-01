@@ -26,6 +26,7 @@ from typing import (
 )
 
 import pluggy
+from opentelemetry.sdk.trace import TracerProvider
 
 from .workflow_config import WorkflowConfigs
 
@@ -322,17 +323,26 @@ class ErtPluginManager(pluggy.PluginManager):
         for handle in handles:
             logger.addHandler(handle)
 
+    def add_span_processor_to_trace_provider(
+        self, trace_provider: TracerProvider
+    ) -> None:
+        span_processors = self.hook.add_span_processor()
+        for span_processor in span_processors:
+            trace_provider.add_span_processor(span_processor)
+
 
 class ErtPluginContext:
     def __init__(
         self,
         plugins: Optional[List[object]] = None,
         logger: Optional[logging.Logger] = None,
+        trace_provider: Optional[TracerProvider] = None,
     ) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir: Optional[str] = None
         self.tmp_site_config_filename: Optional[str] = None
         self._logger = logger
+        self._trace_provider = trace_provider
 
     def _create_site_config(self, tmp_dir: str) -> Optional[str]:
         site_config_content = self.plugin_manager.get_site_config_content()
@@ -348,6 +358,10 @@ class ErtPluginContext:
     def __enter__(self) -> ErtPluginContext:
         if self._logger is not None:
             self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
+        if self._trace_provider is not None:
+            self.plugin_manager.add_span_processor_to_trace_provider(
+                trace_provider=self._trace_provider
+            )
         logger.debug(str(self.plugin_manager))
         logger.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()

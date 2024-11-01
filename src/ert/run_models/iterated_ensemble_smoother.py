@@ -13,6 +13,7 @@ from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
+from ert.trace import tracer
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
@@ -117,6 +118,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             ) from e
         self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
 
+    @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
