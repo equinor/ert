@@ -6,7 +6,7 @@ import webbrowser
 from typing import Dict, List, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QCursor, QIcon
+from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
 from qtpy.QtWidgets import (
     QAction,
     QFrame,
@@ -65,11 +65,12 @@ BUTTON_STYLE_SHEET_DARK: str = (
 class SidebarToolButton(QToolButton):
     right_clicked = Signal()
 
-    def mousePressEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.RightButton:
-            self.right_clicked.emit()
-        else:
-            super().mousePressEvent(event)
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
+        if event:
+            if event.button() == Qt.MouseButton.RightButton:
+                self.right_clicked.emit()
+            else:
+                super().mousePressEvent(event)
 
 
 class ErtMainWindow(QMainWindow):

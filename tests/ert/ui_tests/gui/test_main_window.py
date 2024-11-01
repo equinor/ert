@@ -11,6 +11,7 @@ import pytest
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import (
     QAction,
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -30,6 +31,7 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.main_window import SidebarToolButton
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
@@ -590,6 +592,44 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
         ).get_checked_ensembles()
         assert len(ensemble_plot_names) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypatch):
+    monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+    ert_config = ErtConfig.from_file(config_file)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        qtbot.addWidget(gui)
+
+        button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
+        assert button_plot_tool
+
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
+        assert plot_window
+
+        def detect_external_plot_widget_open_on_right_click(plot_count: int):
+            previous_count = plot_count - 1
+            assert len(QApplication.topLevelWindows()) == previous_count
+            qtbot.mouseClick(button_plot_tool, Qt.RightButton)
+            qtbot.wait_until(
+                lambda: len(QApplication.topLevelWindows()) != previous_count,
+                timeout=5000,
+            )
+            assert len(QApplication.topLevelWindows()) == plot_count
+
+        detect_external_plot_widget_open_on_right_click(1)
+        detect_external_plot_widget_open_on_right_click(2)
+        detect_external_plot_widget_open_on_right_click(3)
+    gui.close()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
