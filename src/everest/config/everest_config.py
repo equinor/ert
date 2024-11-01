@@ -201,7 +201,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 """,
     )
     simulator: Optional[SimulatorConfig] = Field(
-        default=None, description="Simulation settings"
+        default_factory=SimulatorConfig, description="Simulation settings"
     )
     forward_model: Optional[List[str]] = Field(
         default=None, description="List of jobs to run"

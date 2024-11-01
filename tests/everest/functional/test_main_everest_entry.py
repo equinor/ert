@@ -14,9 +14,7 @@ from everest.bin.main import start_everest
 from everest.config import EverestConfig
 from everest.detached import (
     ServerStatus,
-    context_stop_and_wait,
     everserver_status,
-    wait_for_context,
 )
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
@@ -81,7 +79,6 @@ def test_everest_main_entry_bad_command():
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.fails_on_macos_github_workflow
 def test_everest_entry_run(copy_math_func_test_data_to_tmp):
-    wait_for_context()
     # Setup command line arguments
     with capture_streams():
         start_everest(["everest", "run", CONFIG_FILE_MINIMAL])
@@ -100,8 +97,6 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
 
     assert best_settings.objective_value == pytest.approx(0.0, abs=0.0005)
 
-    context_stop_and_wait()
-
     with capture_streams():
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
@@ -109,8 +104,6 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     status = everserver_status(config)
 
     assert status["status"] == ServerStatus.completed
-
-    context_stop_and_wait()
 
 
 def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
@@ -121,8 +114,6 @@ def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
     status = everserver_status(config)
 
     assert status["status"] == ServerStatus.never_run
-
-    context_stop_and_wait()
 
 
 def test_everest_main_export_entry(copy_math_func_test_data_to_tmp):

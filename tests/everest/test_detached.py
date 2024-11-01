@@ -1,16 +1,17 @@
-import logging
 import os
-import shutil
-from collections import namedtuple
 from unittest.mock import patch
 
 import pytest
 import requests
 
-from ert import JobState
-from ert.config import ErtConfig, QueueSystem
-from ert.storage import open_storage
-from everest.config import EverestConfig, ServerConfig
+from ert.config import ErtConfig
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+)
+from everest.config import EverestConfig
+from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.detached import (
@@ -18,15 +19,12 @@ from everest.detached import (
     PROXY,
     ServerStatus,
     _find_res_queue_system,
-    _generate_queue_options,
-    context_stop_and_wait,
     everserver_status,
-    generate_everserver_ert_config,
+    get_server_queue_options,
     server_is_running,
     start_server,
     stop_server,
     update_everserver_status,
-    wait_for_context,
     wait_for_server,
     wait_for_server_to_stop,
 )
@@ -38,91 +36,65 @@ from everest.strings import (
     SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
-from tests.everest.utils import relpath
-
-
-class MockContext:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def has_job_failed(*args):
-        return True
-
-    @staticmethod
-    def job_progress(*args):
-        job = namedtuple("Job", "std_err_file")
-        job.std_err_file = "error_file.0"
-        job_progress = namedtuple("JobProgres", ["jobs"])
-        job_progress.steps = [job]
-        return job_progress
 
 
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
-def test_https_requests(copy_math_func_test_data_to_tmp):
+async def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal_slow.yml")
 
     expected_server_status = ServerStatus.never_run
     assert expected_server_status == everserver_status(everest_config)["status"]
-    wait_for_context()
-    ert_config = ErtConfig.with_plugins().from_dict(
-        generate_everserver_ert_config(everest_config)
-    )
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
-    with open_storage(ert_config.ens_path, "w") as storage:
-        start_server(everest_config, ert_config, storage)
-        try:
-            wait_for_server(everest_config, 120)
-        except SystemExit as e:
-            context_stop_and_wait()
-            raise e
+    await start_server(everest_config)
+    try:
+        wait_for_server(everest_config, 120)
+    except SystemExit as e:
+        raise e
 
+    server_status = everserver_status(everest_config)
+    assert ServerStatus.running == server_status["status"]
+
+    url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
+    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+    assert result.status_code == 200  # Request has succeeded
+
+    # Test http request fail
+    url = url.replace("https", "http")
+    with pytest.raises(Exception):  # noqa B017
+        response = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+        response.raise_for_status()
+
+    # Test request with wrong password fails
+    url, cert, _ = ServerConfig.get_server_context(everest_config.output_dir)
+    usr = "admin"
+    password = "wrong_password"
+    with pytest.raises(Exception):  # noqa B017
+        result = requests.get(url, verify=cert, auth=(usr, password), proxies=PROXY)  # noqa: ASYNC210
+        result.raise_for_status()
+
+    # Test stopping server
+    assert server_is_running(
+        *ServerConfig.get_server_context(everest_config.output_dir)
+    )
+
+    if stop_server(everest_config):
+        wait_for_server_to_stop(everest_config, 60)
         server_status = everserver_status(everest_config)
-        assert ServerStatus.running == server_status["status"]
 
-        url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
-        result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)
-        assert result.status_code == 200  # Request has succeeded
-
-        # Test http request fail
-        url = url.replace("https", "http")
-        with pytest.raises(Exception):  # noqa B017
-            response = requests.get(url, verify=cert, auth=auth, proxies=PROXY)
-            response.raise_for_status()
-
-        # Test request with wrong password fails
-        url, cert, _ = ServerConfig.get_server_context(everest_config.output_dir)
-        usr = "admin"
-        password = "wrong_password"
-        with pytest.raises(Exception):  # noqa B017
-            result = requests.get(url, verify=cert, auth=(usr, password), proxies=PROXY)
-            result.raise_for_status()
-
-        # Test stopping server
-        assert server_is_running(
+        # Possible the case completed while waiting for the server to stop
+        assert server_status["status"] in [
+            ServerStatus.stopped,
+            ServerStatus.completed,
+        ]
+        assert not server_is_running(
             *ServerConfig.get_server_context(everest_config.output_dir)
         )
-
-        if stop_server(everest_config):
-            wait_for_server_to_stop(everest_config, 60)
-            context_stop_and_wait()
-            server_status = everserver_status(everest_config)
-
-            # Possible the case completed while waiting for the server to stop
-            assert server_status["status"] in [
-                ServerStatus.stopped,
-                ServerStatus.completed,
-            ]
-            assert not server_is_running(
-                *ServerConfig.get_server_context(everest_config.output_dir)
-            )
-        else:
-            context_stop_and_wait()
-            server_status = everserver_status(everest_config)
-            assert ServerStatus.stopped == server_status["status"]
+    else:
+        server_status = everserver_status(everest_config)
+        assert ServerStatus.stopped == server_status["status"]
 
 
 def test_server_status(copy_math_func_test_data_to_tmp):
@@ -162,85 +134,13 @@ def test_server_status(copy_math_func_test_data_to_tmp):
 
 
 @patch("everest.detached.server_is_running", return_value=False)
-def test_wait_for_server(
-    server_is_running_mock, caplog, copy_test_data_to_tmp, monkeypatch
-):
-    monkeypatch.chdir("detached")
-    config = EverestConfig.load_file("valid_yaml_config.yml")
+def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
+    config = EverestConfig.with_defaults()
 
-    with caplog.at_level(logging.DEBUG), pytest.raises(RuntimeError):
-        wait_for_server(config, timeout=1, context=None)
+    with pytest.raises(RuntimeError, match="Failed to start .* timeout"):
+        wait_for_server(config, timeout=1)
 
     assert not caplog.messages
-    context = MockContext()
-    with caplog.at_level(logging.DEBUG), pytest.raises(SystemExit):
-        wait_for_server(config, timeout=120, context=context)
-
-    expected_error_msg = (
-        'Error when parsing config_file:"DISTANCE3" '
-        "Keyword:ARGLIST must have at least 1 arguments.\n"
-        "Error message: ext_joblist_get_job_copy: "
-        "asked for job:distance3 which does not exist\n"
-        "Error message: Program received signal:6"
-    )
-
-    assert expected_error_msg in "\n".join(caplog.messages)
-
-    server_status = everserver_status(config)
-    assert server_status["status"] == ServerStatus.failed
-    assert server_status["message"] == expected_error_msg
-
-
-@patch("everest.detached.server_is_running", return_value=False)
-@pytest.mark.usefixtures("change_to_tmpdir")
-def test_wait_for_handles_failed_job_race_condition_failed_job_to_waiting(
-    server_is_running_mock, caplog
-):
-    shutil.copytree(relpath("test_data", "detached"), ".", dirs_exist_ok=True)
-    config = EverestConfig.load_file("valid_yaml_config.yml")
-
-    class _MockContext(MockContext):
-        @staticmethod
-        def job_progress(*args):
-            return None
-
-        @staticmethod
-        def get_job_state(*args):
-            return JobState.WAITING
-
-    with caplog.at_level(logging.ERROR), pytest.raises(RuntimeError):
-        wait_for_server(config, timeout=1, context=_MockContext())
-
-    assert (
-        "Race condition in wait_for_server, job did fail but is now in WAITING"
-        in caplog.messages
-    )
-
-
-@patch("everest.detached.server_is_running", return_value=False)
-@pytest.mark.usefixtures("change_to_tmpdir")
-def test_wait_for_handles_failed_job_race_condition_failed_job_removed_from_scheduler(
-    server_is_running_mock, caplog
-):
-    shutil.copytree(relpath("test_data", "detached"), ".", dirs_exist_ok=True)
-    config = EverestConfig.load_file("valid_yaml_config.yml")
-
-    class _MockContext(MockContext):
-        @staticmethod
-        def job_progress(*args):
-            return None
-
-        @staticmethod
-        def get_job_state(*args):
-            raise IndexError("Some trackback")
-
-    with caplog.at_level(logging.ERROR), pytest.raises(SystemExit):
-        wait_for_server(config, timeout=1, context=_MockContext())
-
-    assert any(
-        "Race condition in wait_for_server, failed job removed from scheduler"
-        for x in caplog.messages
-    )
 
 
 def _get_reference_config():
@@ -279,11 +179,10 @@ def _get_reference_config():
 
 
 def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
-    everest_config, reference = _get_reference_config()
-    ert_config = generate_everserver_ert_config(everest_config)
+    everest_config, _ = _get_reference_config()
+    queue_config = get_server_queue_options(everest_config)
 
-    assert ert_config is not None
-    assert ert_config == reference
+    assert queue_config == LocalQueueOptions(max_running=1)
 
 
 @pytest.mark.parametrize(
@@ -305,35 +204,20 @@ def test_everserver_queue_config_equal_to_run_config(
     if name is not None:
         simulator_config.update({"name": name})
     everest_config.simulator = SimulatorConfig(**simulator_config)
-    server_ert_config = generate_everserver_ert_config(everest_config)
+    server_queue_option = get_server_queue_options(everest_config)
     ert_config = _everest_to_ert_config_dict(everest_config)
 
-    server_queue_option = server_ert_config["QUEUE_OPTION"]
     run_queue_option = ert_config["QUEUE_OPTION"]
 
-    assert ert_config["QUEUE_SYSTEM"] == server_ert_config["QUEUE_SYSTEM"]
+    assert ert_config["QUEUE_SYSTEM"] == server_queue_option.name
     assert (
         next(filter(lambda x: "MAX_RUNNING" in x, reversed(run_queue_option)))[-1]
         == cores
     )
-    assert (
-        next(filter(lambda x: "MAX_RUNNING" in x, reversed(server_queue_option)))[-1]
-        == 1
-    )
+    assert server_queue_option.max_running == 1
     if name is not None:
-        assert next(filter(lambda x: name in x, run_queue_option)) == next(
-            filter(lambda x: name in x, server_queue_option)
-        )
-
-
-def test_detached_mode_config_debug(copy_math_func_test_data_to_tmp):
-    everest_config, reference = _get_reference_config()
-    ert_config = generate_everserver_ert_config(everest_config, debug_mode=True)
-
-    reference["SIMULATION_JOB"][0].append("--debug")
-
-    assert ert_config is not None
-    assert ert_config == reference
+        option = next(filter(lambda x: name in x, run_queue_option))
+        assert option[-1] == name == getattr(server_queue_option, option[1].lower())
 
 
 @pytest.mark.parametrize("queue_system", ["lsf", "slurm"])
@@ -344,9 +228,8 @@ def test_detached_mode_config_only_sim(copy_math_func_test_data_to_tmp, queue_sy
     queue_options = [(queue_system.upper(), "MAX_RUNNING", 1)]
     reference.setdefault("QUEUE_OPTION", []).extend(queue_options)
     everest_config.simulator = SimulatorConfig(**{CK.QUEUE_SYSTEM: queue_system})
-    ert_config = generate_everserver_ert_config(everest_config)
-    assert ert_config is not None
-    assert ert_config == reference
+    queue_config = get_server_queue_options(everest_config)
+    assert str(queue_config.name.name).lower() == queue_system
 
 
 def test_detached_mode_config_error(copy_math_func_test_data_to_tmp):
@@ -357,24 +240,8 @@ def test_detached_mode_config_error(copy_math_func_test_data_to_tmp):
     everest_config, _ = _get_reference_config()
 
     everest_config.server = ServerConfig(name="server", queue_system="lsf")
-    with pytest.raises(ValueError):
-        generate_everserver_ert_config(everest_config)
-
-
-def test_detached_mode_config_queue_name(copy_math_func_test_data_to_tmp):
-    everest_config, reference = _get_reference_config()
-
-    queue_name = "put_me_in_the_queue"
-    reference["QUEUE_SYSTEM"] = QueueSystem.LSF
-    queue_options = [(QueueSystem.LSF, "LSF_QUEUE", queue_name)]
-
-    reference.setdefault("QUEUE_OPTION", []).extend(queue_options)
-    everest_config.simulator = SimulatorConfig(queue_system="lsf")
-    everest_config.server = ServerConfig(queue_system="lsf", name=queue_name)
-
-    ert_config = generate_everserver_ert_config(everest_config)
-    assert ert_config is not None
-    assert ert_config == reference
+    with pytest.raises(ValueError, match="so must the everest server"):
+        get_server_queue_options(everest_config)
 
 
 @pytest.mark.parametrize(
@@ -406,100 +273,24 @@ def test_find_queue_system(config: EverestConfig, expected_result):
     assert result == expected_result
 
 
-def test_find_queue_system_error():
-    config = EverestConfig.with_defaults(**{"server": {CK.QUEUE_SYSTEM: "lsf"}})
-
-    with pytest.raises(ValueError):
-        _find_res_queue_system(config)
-
-
-@pytest.mark.parametrize("queue_options", [[], [("EVEREST_KEY", "RES_KEY")]])
-@pytest.mark.parametrize("queue_system", ["LSF", "SLURM", "SOME_NEW_QUEUE_SYSTEM"])
-def test_generate_queue_options_no_config(queue_options, queue_system):
+def test_generate_queue_options_no_config():
     config = EverestConfig.with_defaults(**{})
-    res_queue_name = "SOME_ERT_KEY"  # LSF_QUEUE_KEY for LSF
-    assert [(queue_system, "MAX_RUNNING", 1)] == _generate_queue_options(
-        config, queue_options, res_queue_name, queue_system
-    )
-
-
-@pytest.mark.parametrize("queue_options", [[], [("exclude_host", "RES_KEY")]])
-@pytest.mark.parametrize("queue_system", ["LSF", "SLURM", "SOME_NEW_QUEUE_SYSTEM"])
-def test_generate_queue_options_only_name(queue_options, queue_system):
-    config = EverestConfig.with_defaults(**{"server": {"name": "my_custom_queue_name"}})
-    res_queue_name = "SOME_ERT_KEY"  # LSF_QUEUE_KEY for LSF
-    assert _generate_queue_options(
-        config, queue_options, res_queue_name, queue_system
-    ) == [
-        (
-            queue_system,
-            res_queue_name,
-            "my_custom_queue_name",
-        ),
-    ]
-
-
-@pytest.mark.parametrize(
-    "queue_options, expected_result",
-    [
-        ([], []),
-        (
-            [("options", "RES_KEY")],
-            [
-                (
-                    "SOME_QUEUE_SYSTEM",
-                    "RES_KEY",
-                    "ever_opt_1",
-                ),
-            ],
-        ),
-    ],
-)
-def test_generate_queue_options_only_options(queue_options, expected_result):
-    config = EverestConfig.with_defaults(**{"server": {"options": "ever_opt_1"}})
-    res_queue_name = "NOT_RELEVANT_IN_THIS_CONTEXT"
-    queue_system = "SOME_QUEUE_SYSTEM"
-    assert (
-        _generate_queue_options(config, queue_options, res_queue_name, queue_system)
-        == expected_result
-    )
+    assert get_server_queue_options(config) == LocalQueueOptions(max_running=1)
 
 
 @pytest.mark.parametrize(
     "queue_options, expected_result",
     [
         (
-            [],
-            [
-                (
-                    "SLURM",
-                    "MAX_RUNNING",
-                    1,
-                )
-            ],
+            {"options": "ever_opt_1", "queue_system": "slurm"},
+            SlurmQueueOptions(max_running=1),
         ),
         (
-            [("options", "RES_KEY")],
-            [
-                (
-                    "SLURM",
-                    "MAX_RUNNING",
-                    1,
-                ),
-                (
-                    "SLURM",
-                    "RES_KEY",
-                    "ever_opt_1",
-                ),
-            ],
+            {"options": "ever_opt_1", "queue_system": "lsf"},
+            LsfQueueOptions(max_running=1, lsf_resource="ever_opt_1"),
         ),
     ],
 )
 def test_generate_queue_options_use_simulator_values(queue_options, expected_result):
-    config = EverestConfig.with_defaults(**{"simulator": {"options": "ever_opt_1"}})
-    res_queue_name = "NOT_RELEVANT_IN_THIS_CONTEXT"
-    queue_system = "SLURM"
-    assert (
-        _generate_queue_options(config, queue_options, res_queue_name, queue_system)
-        == expected_result
-    )
+    config = EverestConfig.with_defaults(**{"simulator": queue_options})
+    assert get_server_queue_options(config) == expected_result
