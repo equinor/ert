@@ -161,20 +161,22 @@ class LegacyEnsemble:
         cpu_seconds = step_snapshot.get("cpu_seconds")
         current_memory_usage = step_snapshot.get("current_memory_usage")
         if start_time is not None and event.time is not None:
-            walltime = str((event.time - start_time).total_seconds())
+            walltime = (event.time - start_time).total_seconds()
         else:
             # We get here if the Running event is in the same event batch as
             # the Success event. That means that runtime is close to zero.
-            walltime = "0"
-        logger.warning(
-            f"{event.event_type} {step_name} "
-            f"{walltime=} "
-            f"{cpu_seconds=} "
-            f"{current_memory_usage=} "
-            f"step_index={event.fm_step} "
-            f"real={event.real} "
-            f"ensemble={event.ensemble}"
-        )
+            walltime = 0
+
+        if walltime > 120:
+            logger.warning(
+                f"{event.event_type} {step_name} "
+                f"{walltime=} "
+                f"{cpu_seconds=} "
+                f"{current_memory_usage=} "
+                f"step_index={event.fm_step} "
+                f"real={event.real} "
+                f"ensemble={event.ensemble}"
+            )
 
     def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
         snapshot_mutate_event = EnsembleSnapshot()
