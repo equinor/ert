@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -38,3 +39,12 @@ class InstallDataConfig(BaseModel, extra="forbid"):  # type: ignore
         if self.target in (".", "./"):
             self.target = Path(self.source).name
         return self
+
+    @field_validator("source", mode="before")
+    @classmethod
+    def validate_source(cls, source):  # pylint: disable=E0213
+        if source is None or not os.path.isdir(source):
+            raise ValueError(f"'{source}' could not be parsed to a valid path")
+        if os.path.ismount(source):
+            raise ValueError(f"'{source} is a mount point and can't be installed'")
+        return source
