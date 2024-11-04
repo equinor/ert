@@ -3,11 +3,13 @@ import os
 from unittest.mock import patch
 
 import pytest
+from ruamel.yaml import YAML
 
 import everest
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys
+from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
@@ -556,6 +558,60 @@ def test_install_data(copy_test_data_to_tmp):
                 ever_config, site_config=ErtConfig.read_site_config()
             )
         )
+
+
+@pytest.mark.parametrize(
+    "install_data, expected_error_msg",
+    [
+        (
+            {"source": "r{{ foo }}/", "link": True, "target": "bar.json"},
+            "'/' is a mount point and can't be handled",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": "bar.json"},
+            "No such file or directory",
+        ),
+        (
+            {"source": None, "link": True, "target": "bar.json"},
+            "Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]",
+        ),
+        (
+            {"source": "", "link": "false", "target": "bar.json"},
+            " false could not be parsed to a boolean",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": 3},
+            "Input should be a valid string [type=string_type, input_value=3, input_type=int]",
+        ),
+    ],
+)
+def test_install_data_with_invalid_templates(
+    copy_mocked_test_data_to_tmp,
+    install_data,
+    expected_error_msg,
+):
+    """
+    Checks for InstallDataConfig's validations instantiating EverestConfig to also
+    check invalid template rendering (e.g 'r{{ foo }}/) that maps to '/'
+    """
+
+    config_file = "mocked_multi_batch.yml"
+
+    with open(config_file, encoding="utf-8") as f:
+        raw_config = YAML(typ="safe", pure=True).load(f)
+
+    raw_config[CK.INSTALL_DATA] = [install_data]
+
+    with open(config_file, "w", encoding="utf-8") as f:
+        yaml = YAML(typ="safe", pure=True)
+        yaml.indent = 2
+        yaml.default_flow_style = False
+        yaml.dump(raw_config, f)
+
+    with pytest.raises(ValueError) as exc_info:
+        EverestConfig.load_file(config_file)
+
+    assert expected_error_msg in str(exc_info.value)
 
 
 def test_strip_date_job_insertion(copy_test_data_to_tmp):
