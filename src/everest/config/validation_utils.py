@@ -221,6 +221,8 @@ def check_path_exists(
 
     expanded_paths = expand_geo_id_paths(str(path_source), realizations)
     for exp_path in [as_abs_path(p, str(config_dir)) for p in expanded_paths]:
+        if os.path.ismount(exp_path):
+            raise ValueError(f"'{exp_path}' is a mount point and can't be handled")
         if not os.path.exists(exp_path):
             raise ValueError(f"No such file or directory {exp_path}")
 
