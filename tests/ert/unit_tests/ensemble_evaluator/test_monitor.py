@@ -1,12 +1,15 @@
 import asyncio
 import logging
 from http import HTTPStatus
+from typing import NoReturn
 from urllib.parse import urlparse
 
 import pytest
 from websockets import server
 from websockets.exceptions import ConnectionClosedOK
 
+import ert
+import ert.ensemble_evaluator
 from _ert.events import EEUserCancel, EEUserDone, event_from_json
 from ert.ensemble_evaluator import Monitor
 from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
@@ -135,3 +138,22 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
 
     set_when_done.set()  # shuts down websocket server
     await websocket_server_task
+
+
+@pytest.mark.timeout(10)
+async def test_that_monitor_will_raise_exception_if_wait_for_evaluator_fails(
+    monkeypatch,
+):
+    async def mock_failing_wait_for_evaluator(*args, **kwargs) -> NoReturn:
+        raise ValueError()
+
+    monkeypatch.setattr(
+        ert.ensemble_evaluator.monitor,
+        "wait_for_evaluator",
+        mock_failing_wait_for_evaluator,
+    )
+    ee_con_info = EvaluatorConnectionInfo("")
+
+    with pytest.raises(ValueError):
+        async with Monitor(ee_con_info):
+            pass

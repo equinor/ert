@@ -38,16 +38,14 @@ class Monitor:
         self._event_queue: asyncio.Queue[Union[Event, EventSentinel]] = asyncio.Queue()
         self._connection: Optional[WebSocketClientProtocol] = None
         self._receiver_task: Optional[asyncio.Task[None]] = None
-        self._connected: asyncio.Event = asyncio.Event()
+        self._connected: asyncio.Future[None] = asyncio.Future()
         self._connection_timeout: float = 120.0
         self._receiver_timeout: float = 60.0
 
     async def __aenter__(self) -> "Monitor":
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await asyncio.wait_for(
-                self._connected.wait(), timeout=self._connection_timeout
-            )
+            await asyncio.wait_for(self._connected, timeout=self._connection_timeout)
         except asyncio.TimeoutError as exc:
             msg = "Couldn't establish connection with the ensemble evaluator!"
             logger.error(msg)
@@ -64,7 +62,6 @@ class Monitor:
                 self._receiver_task,
                 return_exceptions=True,
             )
-
         if self._connection:
             await self._connection.close()
 
@@ -127,13 +124,16 @@ class Monitor:
         headers = Headers()
         if self._ee_con_info.token:
             headers["token"] = self._ee_con_info.token
-
-        await wait_for_evaluator(
-            base_url=self._ee_con_info.url,
-            token=self._ee_con_info.token,
-            cert=self._ee_con_info.cert,
-            timeout=5,
-        )
+        try:
+            await wait_for_evaluator(
+                base_url=self._ee_con_info.url,
+                token=self._ee_con_info.token,
+                cert=self._ee_con_info.cert,
+                timeout=5,
+            )
+        except Exception as e:
+            self._connected.set_exception(e)
+            return
         async for conn in connect(
             self._ee_con_info.client_uri,
             ssl=tls,
@@ -147,13 +147,13 @@ class Monitor:
         ):
             try:
                 self._connection = conn
-                self._connected.set()
+                self._connected.set_result(None)
                 async for raw_msg in self._connection:
                     event = event_from_json(raw_msg)
                     await self._event_queue.put(event)
             except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
                 self._connection = None
-                self._connected.clear()
+                self._connected = asyncio.Future()
                 logger.debug(
                     f"Monitor connection to EnsembleEvaluator went down, reconnecting: {exc}"
                 )
