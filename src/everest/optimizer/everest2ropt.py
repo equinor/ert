@@ -500,6 +500,8 @@ def _parse_environment(ever_config: EverestConfig, ropt_config):
     ropt_config["optimizer"]["output_dir"] = os.path.abspath(
         ever_config.optimization_output_dir
     )
+    if ever_config.environment.random_seed is not None:
+        ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
 
 
 def everest2ropt(ever_config: EverestConfig) -> Dict[str, Any]:

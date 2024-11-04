@@ -153,8 +153,8 @@ everest = [
     "decorator",
     "resdata",
     "colorama",
-    "ropt[pandas]>=0.8,<0.9",
-    "ropt-dakota>=0.7,<0.8",
+    "ropt[pandas]>=0.9,<0.10",
+    "ropt-dakota>=0.9,<0.10",
     "seba-sqlite",
 ]
 

@@ -1,5 +1,5 @@
 import numpy as np
-from ropt.plan import OptimizationPlanRunner
+from ropt.plan import BasicOptimizer
 
 from ert.storage import open_storage
 from everest.config import EverestConfig, SimulatorConfig
@@ -33,11 +33,7 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
 
         # Run once, populating the cache of the simulator:
         variables1 = (
-            OptimizationPlanRunner(
-                enopt_config=ropt_config,
-                evaluator=simulator,
-                seed=config.environment.random_seed,
-            )
+            BasicOptimizer(enopt_config=ropt_config, evaluator=simulator)
             .run()
             .variables
         )
@@ -48,11 +44,7 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
         # Run again with the same simulator:
         n_evals = 0
         variables2 = (
-            OptimizationPlanRunner(
-                enopt_config=ropt_config,
-                evaluator=simulator,
-                seed=config.environment.random_seed,
-            )
+            BasicOptimizer(enopt_config=ropt_config, evaluator=simulator)
             .run()
             .variables
         )
