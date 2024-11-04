@@ -29,8 +29,7 @@ from typing import (
 
 import seba_sqlite.sqlite_storage
 from ropt.enums import EventType, OptimizerExitCode
-from ropt.optimization import Event
-from ropt.plan import OptimizationPlanRunner
+from ropt.plan import BasicOptimizer, Event
 from seba_sqlite import SqliteStorage
 
 from ert.config import ErtConfig
@@ -294,7 +293,6 @@ class OptimizerCallback(Protocol):
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
-        random_seed: Optional[int],
         config: ErtConfig,
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback,
@@ -335,7 +333,6 @@ class EverestRunModel(BaseRunModel):
             config.queue_config,
             status_queue,
             active_realizations=[True] * config.model_config.num_realizations,
-            random_seed=random_seed,
             minimum_required_realizations=config.model_config.num_realizations,  # OK?
         )
 
@@ -372,7 +369,6 @@ class EverestRunModel(BaseRunModel):
         ever_config: EverestConfig,
         simulation_callback: Optional[SimulationCallback] = None,
         optimization_callback: Optional[OptimizerCallback] = None,
-        random_seed: Optional[int] = None,
     ) -> EverestRunModel:
         def default_simulation_callback(
             simulation_status: SimulationStatus | None, event: str
@@ -384,7 +380,6 @@ class EverestRunModel(BaseRunModel):
 
         ert_config = everest_to_ert_config(cls._add_defaults(ever_config))
         return cls(
-            random_seed=random_seed,
             config=ert_config,
             everest_config=ever_config,
             simulation_callback=simulation_callback or default_simulation_callback,
@@ -485,7 +480,7 @@ class EverestRunModel(BaseRunModel):
         self._monitor_thread.start()
 
     def _ropt_callback(
-        self, _: Event, optimizer: OptimizationPlanRunner, simulator: Simulator
+        self, _: Event, optimizer: BasicOptimizer, simulator: Simulator
     ) -> None:
         logging.getLogger(EVEREST).debug("Optimization callback called")
 
@@ -507,50 +502,48 @@ class EverestRunModel(BaseRunModel):
             logging.getLogger(EVEREST).info("User abort requested.")
             optimizer.abort_optimization()
 
-    def _configure_optimizer(self, simulator: Simulator) -> OptimizationPlanRunner:
+    def _configure_optimizer(self, simulator: Simulator) -> BasicOptimizer:
         assert (
             self.everest_config.environment is not None
             and self.everest_config.environment is not None
         )
-        optimizer = OptimizationPlanRunner(
-            enopt_config=self.ropt_config,
-            evaluator=simulator,
-            seed=self.everest_config.environment.random_seed,
-        )
 
-        # Initialize output tables. `min_header_len` is set to ensure that all
-        # tables have the same number of header lines, simplifying code that
-        # reads them as fixed width tables. `maximize` is set because ropt
-        # reports minimization results, while everest wants maximization
-        # results, necessitating a conversion step.
         ropt_output_folder = Path(self.everest_config.optimization_output_dir)
-        optimizer.add_table(
-            columns=RESULT_COLUMNS,
-            path=ropt_output_folder / "results.txt",
-            min_header_len=MIN_HEADER_LEN,
-            maximize=True,
+
+        # Initialize the optimizer with output tables. `min_header_len` is set
+        # to ensure that all tables have the same number of header lines,
+        # simplifying code that reads them as fixed width tables. `maximize` is
+        # set because ropt reports minimization results, while everest wants
+        # maximization results, necessitating a conversion step.
+        return (
+            BasicOptimizer(enopt_config=self.ropt_config, evaluator=simulator)
+            .add_table(
+                columns=RESULT_COLUMNS,
+                path=ropt_output_folder / "results.txt",
+                min_header_len=MIN_HEADER_LEN,
+                maximize=True,
+            )
+            .add_table(
+                columns=GRADIENT_COLUMNS,
+                path=ropt_output_folder / "gradients.txt",
+                table_type="gradients",
+                min_header_len=MIN_HEADER_LEN,
+                maximize=True,
+            )
+            .add_table(
+                columns=SIMULATION_COLUMNS,
+                path=ropt_output_folder / "simulations.txt",
+                min_header_len=MIN_HEADER_LEN,
+                maximize=True,
+            )
+            .add_table(
+                columns=PERTURBATIONS_COLUMNS,
+                path=ropt_output_folder / "perturbations.txt",
+                table_type="gradients",
+                min_header_len=MIN_HEADER_LEN,
+                maximize=True,
+            )
         )
-        optimizer.add_table(
-            columns=GRADIENT_COLUMNS,
-            path=ropt_output_folder / "gradients.txt",
-            table_type="gradients",
-            min_header_len=MIN_HEADER_LEN,
-            maximize=True,
-        )
-        optimizer.add_table(
-            columns=SIMULATION_COLUMNS,
-            path=ropt_output_folder / "simulations.txt",
-            min_header_len=MIN_HEADER_LEN,
-            maximize=True,
-        )
-        optimizer.add_table(
-            columns=PERTURBATIONS_COLUMNS,
-            path=ropt_output_folder / "perturbations.txt",
-            table_type="gradients",
-            min_header_len=MIN_HEADER_LEN,
-            maximize=True,
-        )
-        return optimizer
 
     @classmethod
     def name(cls) -> str:
