@@ -194,7 +194,7 @@ async def test_submit_with_project_code():
         "FORWARD_MODEL": [("FLOW",), ("ECLIPSE",), ("RMS",)],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver: LsfDriver = create_driver(queue_config)
+    driver: LsfDriver = create_driver(queue_config.queue_options)
     await driver.submit(0, "sleep")
     assert f"-P {queue_config.queue_options.project_code}" in Path(
         "captured_bsub_args"

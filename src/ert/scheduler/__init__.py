@@ -15,21 +15,21 @@ from .scheduler import Scheduler
 from .slurm_driver import SlurmDriver
 
 if TYPE_CHECKING:
-    from ert.config.queue_config import QueueConfig
+    from ert.config.queue_config import QueueOptions
 
 
-def create_driver(config: QueueConfig) -> Driver:
-    if config.queue_system == QueueSystem.LOCAL:
-        return LocalDriver(**config.queue_options.driver_options)
-    elif config.queue_system == QueueSystem.TORQUE:
-        return OpenPBSDriver(**config.queue_options.driver_options)
-    elif config.queue_system == QueueSystem.LSF:
-        return LsfDriver(**config.queue_options.driver_options)
-    elif config.queue_system == QueueSystem.SLURM:
+def create_driver(queue_options: QueueOptions) -> Driver:
+    if queue_options.name == QueueSystem.LOCAL:
+        return LocalDriver()
+    elif queue_options.name == QueueSystem.TORQUE:
+        return OpenPBSDriver(**queue_options.driver_options)
+    elif queue_options.name == QueueSystem.LSF:
+        return LsfDriver(**queue_options.driver_options)
+    elif queue_options.name == QueueSystem.SLURM:
         return SlurmDriver(
             **dict(
                 {"user": getpwuid(getuid()).pw_name},
-                **config.queue_options.driver_options,
+                **queue_options.driver_options,
             )
         )
     else:
