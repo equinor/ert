@@ -145,7 +145,7 @@ class BatchContext:
         """
         Handle which can be used to query status and results for batch simulation.
         """
-        driver = create_driver(self.queue_config)
+        driver = create_driver(self.queue_config.queue_options)
         self._scheduler = Scheduler(driver, max_running=self.queue_config.max_running)
 
         # fill in the missing geo_id data

@@ -14,7 +14,7 @@ async def test_happy_path(
     ensemble = make_ensemble(monkeypatch, tmpdir, 1, 1)
 
     queue = Scheduler(
-        driver=create_driver(queue_config),
+        driver=create_driver(queue_config.queue_options),
         realizations=ensemble.reals,
         ens_id="ee_0",
     )

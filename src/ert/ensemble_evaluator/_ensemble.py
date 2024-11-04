@@ -272,7 +272,7 @@ class LegacyEnsemble:
             raise ValueError("no config")  # mypy
 
         try:
-            driver = create_driver(self._queue_config)
+            driver = create_driver(self._queue_config.queue_options)
             self._scheduler = Scheduler(
                 driver,
                 self.active_reals,

@@ -638,7 +638,7 @@ def test_scheduler_create_lsf_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver = create_driver(queue_config)
+    driver = create_driver(queue_config.queue_options)
     assert isinstance(driver, LsfDriver)
     assert str(driver._bsub_cmd) == bsub_cmd
     assert str(driver._bkill_cmd) == bkill_cmd
@@ -678,7 +678,7 @@ def test_scheduler_create_openpbs_driver():
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
-    driver = create_driver(queue_config)
+    driver = create_driver(queue_config.queue_options)
     assert isinstance(driver, OpenPBSDriver)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
