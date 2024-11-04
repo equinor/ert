@@ -428,6 +428,13 @@ class EverestRunModel(BaseRunModel):
             else optimizer_exit_code
         )
 
+    def check_if_runpath_exists(self) -> bool:
+        return (
+            self.everest_config.simulation_dir is not None
+            and os.path.exists(self.everest_config.simulation_dir)
+            and any(os.listdir(self.everest_config.simulation_dir))
+        )
+
     def _handle_errors(
         self,
         batch: int,
