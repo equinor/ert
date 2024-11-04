@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 
 from ert.config import InvalidResponseFile
-from ert.run_arg import RunArg
 from ert.storage import Ensemble
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -92,62 +91,22 @@ async def _write_responses_to_storage(
 
 
 async def forward_model_ok(
-    run_arg: RunArg,
+    run_path: str,
+    realization: int,
+    iter: int,
+    ensemble: Ensemble,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     try:
         # We only read parameters after the prior, after that, ERT
         # handles parameters
-        if run_arg.itr == 0:
+        if iter == 0:
             parameters_result = await _read_parameters(
-                run_arg.runpath,
-                run_arg.iens,
-                run_arg.ensemble_storage,
+                run_path,
+                realization,
+                ensemble,
             )
-
-        if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
-            response_result = await _write_responses_to_storage(
-                run_arg.runpath,
-                run_arg.iens,
-                run_arg.ensemble_storage,
-            )
-
-    except Exception as err:
-        logger.exception(
-            f"Failed to load results for realization {run_arg.iens}",
-            exc_info=err,
-        )
-        parameters_result = LoadResult(
-            LoadStatus.LOAD_FAILURE,
-            "Failed to load results for realization "
-            f"{run_arg.iens}, failed with: {err}",
-        )
-
-    final_result = parameters_result
-    if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
-        final_result = response_result
-        run_arg.ensemble_storage.set_failure(
-            run_arg.iens, RealizationStorageState.LOAD_FAILURE, final_result.message
-        )
-    elif run_arg.ensemble_storage.has_failure(run_arg.iens):
-        run_arg.ensemble_storage.unset_failure(run_arg.iens)
-
-    return final_result
-
-
-async def load_run_path_realization(
-    run_path: str,
-    realization: int,
-    ensemble: Ensemble,
-) -> LoadResult:
-    response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-    try:
-        parameters_result = await _read_parameters(
-            run_path,
-            realization,
-            ensemble,
-        )
 
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
             response_result = await _write_responses_to_storage(

@@ -11,7 +11,6 @@ from resdata.summary import Summary
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
 from ert.libres_facade import LibresFacade
-from ert.run_arg import create_run_arguments
 from ert.storage import open_storage
 
 
@@ -290,9 +289,9 @@ def test_that_the_states_are_set_correctly():
     assert new_ensemble.has_data()
 
 
-@pytest.mark.parametrize("iter", [None, 0, 1, 2, 3])
+@pytest.mark.parametrize("itr", [None, 0, 1, 2, 3])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_from_any_available_iter(storage, run_paths, run_args, iter):
+def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
@@ -308,23 +307,21 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, iter):
         ),
         name="prior",
         ensemble_size=ert_config.model_config.num_realizations,
-        iteration=iter if iter is not None else 0,
+        iteration=itr if itr is not None else 0,
     )
 
-    run_args = create_run_arguments(
-        run_paths(ert_config),
-        [True] * ert_config.model_config.num_realizations,
-        prior_ensemble,
-    )
     create_run_path(
-        run_args,
-        prior_ensemble,
-        ert_config,
-        run_paths(ert_config),
+        run_args=run_args(ert_config, prior_ensemble),
+        ensemble=prior_ensemble,
+        user_config_file=ert_config.user_config_file,
+        env_vars=ert_config.env_vars,
+        forward_model_steps=ert_config.forward_model_steps,
+        substitutions=ert_config.substitutions,
+        templates=ert_config.ert_templates,
+        model_config=ert_config.model_config,
+        runpaths=run_paths(ert_config),
     )
-    run_path = Path(
-        f"simulations/realization-0/iter-{iter if iter is not None else 0}/"
-    )
+    run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
@@ -333,7 +330,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, iter):
     facade = LibresFacade.from_config_file("config.ert")
     run_path_format = str(
         Path(
-            f"simulations/realization-<IENS>/iter-{iter if iter is not None else 0}"
+            f"simulations/realization-<IENS>/iter-{itr if itr is not None else 0}"
         ).resolve()
     )
     facade.load_from_run_path(run_path_format, prior_ensemble, [0])
