@@ -8,6 +8,7 @@ import signal
 import threading
 from functools import partial
 
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -16,7 +17,11 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
-from everest.util import makedirs_if_needed, version_info
+from everest.util import (
+    makedirs_if_needed,
+    version_info,
+    warn_user_that_runpath_is_nonempty,
+)
 
 from .utils import (
     handle_keyboard_interrupt,
@@ -43,6 +48,9 @@ def everest_entry(args=None):
             signal.SIGINT,
             partial(handle_keyboard_interrupt, options=options),
         )
+
+    if EverestRunModel.create(options.config).check_if_runpath_exists():
+        warn_user_that_runpath_is_nonempty()
 
     asyncio.run(run_everest(options))
 
