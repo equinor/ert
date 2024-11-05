@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730715133260,
+  "lastUpdate": 1730798584426,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "35415b90a37933a4d775e58de8952efec6bbef7a",
-          "message": "Fix issue where progress_widget was indeterminate on fail",
-          "timestamp": "2024-10-28T15:57:04+01:00",
-          "tree_id": "ed4dd0927c0f9585c149acf5083be679bf6cecae",
-          "url": "https://github.com/equinor/ert/commit/35415b90a37933a4d775e58de8952efec6bbef7a"
-        },
-        "date": 1730127533804,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19392976601901643,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06309643027021318",
-            "extra": "mean: 5.156505989400006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028166166099757847",
             "extra": "mean: 5.1974427682000055 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "05dfe1711c20226ee73ff22eb3794272b6b794e7",
+          "message": "Create driver from QueueOptions instead of QueueConfig",
+          "timestamp": "2024-11-05T10:21:14+01:00",
+          "tree_id": "a2240fbc1f1acd9b98b2dff2fd72c14acf3c9bc6",
+          "url": "https://github.com/equinor/ert/commit/05dfe1711c20226ee73ff22eb3794272b6b794e7"
+        },
+        "date": 1730798583967,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19657331009998202,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04104420423443821",
+            "extra": "mean: 5.0871606094000015 sec\nrounds: 5"
           }
         ]
       }
