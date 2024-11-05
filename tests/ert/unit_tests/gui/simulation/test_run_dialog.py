@@ -66,7 +66,10 @@ def notifier():
 def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
     run_dialog = RunDialog("mock.ert", run_model, event_queue, notifier)
     qtbot.addWidget(run_dialog)
-    return run_dialog
+
+    # Teardown
+    yield run_dialog
+    run_dialog.close()
 
 
 def test_terminating_experiment_shows_a_confirmation_dialog(
@@ -102,7 +105,6 @@ def test_run_dialog_polls_run_model_for_runtime(
     )
     event_queue.put(EndEvent(failed=False, msg=""))
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
-    run_dialog.close()
 
 
 def test_large_snapshot(
@@ -590,7 +592,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
-        run_dialog.close()
 
 
 @pytest.mark.integration_test
