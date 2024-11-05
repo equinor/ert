@@ -12,7 +12,7 @@ CONFIG_FILE = "config_advanced_scipy.yml"
 
 def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
     n_evals = 0
-    original_call = Simulator.__call__
+    original_call = Simulator._run_forward_model
 
     def new_call(*args):
         nonlocal n_evals
@@ -20,7 +20,7 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
         n_evals += (result.evaluation_ids >= 0).sum()
         return result
 
-    monkeypatch.setattr(Simulator, "__call__", new_call)
+    monkeypatch.setattr(Simulator, "_run_forward_model", new_call)
 
     config = EverestConfig.load_file(CONFIG_FILE)
     config.simulator = SimulatorConfig(enable_cache=True)
@@ -33,7 +33,10 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
 
         # Run once, populating the cache of the simulator:
         variables1 = (
-            BasicOptimizer(enopt_config=ropt_config, evaluator=simulator)
+            BasicOptimizer(
+                enopt_config=ropt_config,
+                evaluator=simulator.create_forward_model_evaluator_function(),
+            )
             .run()
             .variables
         )
@@ -44,7 +47,10 @@ def test_simulator_cache(monkeypatch, copy_math_func_test_data_to_tmp):
         # Run again with the same simulator:
         n_evals = 0
         variables2 = (
-            BasicOptimizer(enopt_config=ropt_config, evaluator=simulator)
+            BasicOptimizer(
+                enopt_config=ropt_config,
+                evaluator=simulator.create_forward_model_evaluator_function(),
+            )
             .run()
             .variables
         )

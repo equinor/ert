@@ -501,6 +501,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         ropt_output_folder = Path(self.everest_config.optimization_output_dir)
+        ropt_evaluator_fn = simulator.create_forward_model_evaluator_function()
 
         # Initialize the optimizer with output tables. `min_header_len` is set
         # to ensure that all tables have the same number of header lines,
@@ -508,7 +509,7 @@ class EverestRunModel(BaseRunModel):
         # set because ropt reports minimization results, while everest wants
         # maximization results, necessitating a conversion step.
         optimizer = (
-            BasicOptimizer(enopt_config=self.ropt_config, evaluator=simulator)
+            BasicOptimizer(enopt_config=self.ropt_config, evaluator=ropt_evaluator_fn)
             .add_table(
                 columns=RESULT_COLUMNS,
                 path=ropt_output_folder / "results.txt",
