@@ -77,7 +77,7 @@ To approximate the gradient the following steps are taken:
 #. A user must choose an initial assignment of the controls. For instance in :numref:`fig_enopt_objfunc` the point ``(u1 = -1, u2 = 0)`` has been chosen.
 #. Around this initial choice of ``u1`` and ``u2``, Everest will generate a set of normally (Gaussian) distributed perturbed controls which can be seen as blue dots in :numref:`fig_enopt_objfunc`.
 #. Then, the objective function value for each of these blue dots will be evaluated. These are represented as the red dots.
-#. Now we have all the information required to approximate the gradient of the objective function. An estrimate of the gradient at the initial point is determined by computing the linear regression through the red dots (green line).
+#. Now we have all the information required to approximate the gradient of the objective function. An estimate of the gradient at the initial point is determined by computing the linear regression through the red dots (green line).
 #. We use a simple line-search algorithm to take a step along the gradient direction and to find an "updated" set of controls.
 #. The entire process is repeated till convergence is observed (i.e. little/no change in the objective function).
 

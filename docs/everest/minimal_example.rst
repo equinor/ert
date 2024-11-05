@@ -201,7 +201,7 @@ everest_config.yml::
 
 **Details**
 
-``simulation_f0older``: folder path where the simulation information will be written to.
+``simulation_folder``: folder path where the simulation information will be written to.
 
 ``output_folder``: folder path where the optimization information will be written.
 
