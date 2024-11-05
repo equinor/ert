@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "poly_plugin"
+authors = [
+    { name = "Equinor ASA", email = "fg_sib-scout@equinor.com" },
+]
+description = "Example poly plugin with some extra validation"
+requires-python = ">=3.8"
+readme = "README.md"
+license = { text = "GPL-3.0" }
+classifiers = [
+    "Environment :: Plugins",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+dependencies = [
+    "ert>=11.1.0-b3",
+]
+
+
+
+[project.entry-points."console_scripts"]
+poly_create_config = "poly_plugin.scripts.poly_create_config:main_entry_point"
+poly_run_config = "poly_plugin.scripts.poly_run_config:main_entry_point"
