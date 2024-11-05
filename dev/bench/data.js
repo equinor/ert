@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730798584426,
+  "lastUpdate": 1730798771017,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "97478fa435c02f85dad9c08d2c8093ea2095ec45",
-          "message": "Rename job to step in runner\n\n(many more of these to go)",
-          "timestamp": "2024-10-29T11:48:52+01:00",
-          "tree_id": "21db265927b3d4ee87c56c5863da8229403fe914",
-          "url": "https://github.com/equinor/ert/commit/97478fa435c02f85dad9c08d2c8093ea2095ec45"
-        },
-        "date": 1730199043049,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19343216531706073,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0163780745251296",
-            "extra": "mean: 5.169771006600007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04104420423443821",
             "extra": "mean: 5.0871606094000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e310860625e56f8daad713991ef56f35ef04d400",
+          "message": "Transpose before calculating covariance in test\n\nnp.cov expects rows to be parameters and columns to be realizations",
+          "timestamp": "2024-11-05T10:24:16+01:00",
+          "tree_id": "01c0b3041f0abd978231c71184edbf4749b148c9",
+          "url": "https://github.com/equinor/ert/commit/e310860625e56f8daad713991ef56f35ef04d400"
+        },
+        "date": 1730798770057,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19046176259498293,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07114044650732476",
+            "extra": "mean: 5.250397698600011 sec\nrounds: 5"
           }
         ]
       }
