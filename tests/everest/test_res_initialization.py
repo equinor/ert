@@ -383,7 +383,6 @@ def test_queue_configuration(copy_test_data_to_tmp):
     expected_options = [
         ("LSF", "MAX_RUNNING", 3),
         ("LSF", "LSF_QUEUE", "mr"),
-        ("LSF", "LSF_SERVER", "lx-fastserver01"),
         ("LSF", "LSF_RESOURCE", "span = 1 && select[x86 and GNU/Linux]"),
     ]
 
@@ -400,7 +399,7 @@ def test_queue_config():
     assert config.simulator.resubmit_limit == 17
     assert config.simulator.cores == 3
     assert config.simulator.queue_system == "lsf"
-    assert config.simulator.server == "lx-fastserver01"
+    assert config.simulator.server is None
     opts = "span = 1 && select[x86 and GNU/Linux]"
     assert opts == config.simulator.options
 

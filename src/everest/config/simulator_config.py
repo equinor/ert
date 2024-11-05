@@ -1,6 +1,7 @@
+import warnings
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, field_validator
 
 from .has_ert_queue_options import HasErtQueueOptions
 
@@ -96,7 +97,10 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         default=None,
         description="squeue executable to be used by the slurm queue interface.",
     )
-    server: Optional[str] = Field(default=None, description="Name of LSF server to use")
+    server: Optional[str] = Field(
+        default=None,
+        description="Name of LSF server to use. This option is deprecated and no longer required",
+    )
     slurm_timeout: Optional[int] = Field(
         default=None,
         description="Timeout for cached status used by the slurm queue interface",
@@ -155,3 +159,13 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         default=None,
         description="String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.",
     )
+
+    @field_validator("server")
+    @classmethod
+    def validate_server(cls, server):  # pylint: disable=E0213
+        if server is not None and server:
+            warnings.warn(
+                "The simulator server property was deprecated and is no longer needed",
+                DeprecationWarning,
+                stacklevel=1,
+            )

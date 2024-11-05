@@ -1001,7 +1001,7 @@ Simulation settings
 **server (optional)**
     Type: *Optional[str]*
 
-    Name of LSF server to use
+    Name of LSF server to use. This option is deprecated and no longer required
 
 
 **slurm_timeout (optional)**
