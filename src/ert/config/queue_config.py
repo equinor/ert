@@ -349,7 +349,7 @@ class QueueConfig:
             selected_queue_system,
             queue_options,
             queue_options_test_run,
-            stop_long_running=stop_long_running,
+            stop_long_running=bool(stop_long_running),
         )
 
     def create_local_copy(self) -> QueueConfig:
@@ -360,7 +360,7 @@ class QueueConfig:
             QueueSystem.LOCAL,
             self.queue_options_test_run,
             self.queue_options_test_run,
-            stop_long_running=self.stop_long_running,
+            stop_long_running=bool(self.stop_long_running),
         )
 
     @property
