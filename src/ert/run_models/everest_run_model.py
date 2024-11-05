@@ -471,7 +471,7 @@ class EverestRunModel(BaseRunModel):
         )
         self._monitor_thread.start()
 
-    def _ropt_callback(
+    def _on_before_forward_model_evaluation(
         self, _: Event, optimizer: BasicOptimizer, simulator: Simulator
     ) -> None:
         logging.getLogger(EVEREST).debug("Optimization callback called")
@@ -541,7 +541,9 @@ class EverestRunModel(BaseRunModel):
         optimizer.add_observer(
             EventType.START_EVALUATION,
             functools.partial(
-                self._ropt_callback, optimizer=optimizer, simulator=simulator
+                self._on_before_forward_model_evaluation,
+                optimizer=optimizer,
+                simulator=simulator,
             ),
         )
 
