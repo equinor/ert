@@ -399,7 +399,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         # Initialize the ropt optimizer:
-        optimizer = self._configure_optimizer(simulator)
+        optimizer = self._create_optimizer(simulator)
 
         # Before each batch evaluation we check if we should abort:
         optimizer.add_observer(
@@ -502,7 +502,7 @@ class EverestRunModel(BaseRunModel):
             logging.getLogger(EVEREST).info("User abort requested.")
             optimizer.abort_optimization()
 
-    def _configure_optimizer(self, simulator: Simulator) -> BasicOptimizer:
+    def _create_optimizer(self, simulator: Simulator) -> BasicOptimizer:
         assert (
             self.everest_config.environment is not None
             and self.everest_config.environment is not None
