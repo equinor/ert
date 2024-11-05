@@ -401,14 +401,6 @@ class EverestRunModel(BaseRunModel):
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer(simulator)
 
-        # Before each batch evaluation we check if we should abort:
-        optimizer.add_observer(
-            EventType.START_EVALUATION,
-            functools.partial(
-                self._ropt_callback, optimizer=optimizer, simulator=simulator
-            ),
-        )
-
         # The SqliteStorage object is used to store optimization results from
         # Seba in an sqlite database. It reacts directly to events emitted by
         # Seba and is not called by Everest directly. The stored results are
@@ -515,7 +507,7 @@ class EverestRunModel(BaseRunModel):
         # simplifying code that reads them as fixed width tables. `maximize` is
         # set because ropt reports minimization results, while everest wants
         # maximization results, necessitating a conversion step.
-        return (
+        optimizer = (
             BasicOptimizer(enopt_config=self.ropt_config, evaluator=simulator)
             .add_table(
                 columns=RESULT_COLUMNS,
@@ -544,6 +536,16 @@ class EverestRunModel(BaseRunModel):
                 maximize=True,
             )
         )
+
+        # Before each batch evaluation we check if we should abort:
+        optimizer.add_observer(
+            EventType.START_EVALUATION,
+            functools.partial(
+                self._ropt_callback, optimizer=optimizer, simulator=simulator
+            ),
+        )
+
+        return optimizer
 
     @classmethod
     def name(cls) -> str:
