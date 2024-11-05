@@ -7,7 +7,7 @@ from typing import Any, DefaultDict, Dict, List, Mapping, Optional, Tuple
 import numpy as np
 from numpy import float64
 from numpy._typing import NDArray
-from ropt.evaluator import EvaluatorContext, EvaluatorResult
+from ropt.evaluator import Evaluator, EvaluatorContext, EvaluatorResult
 
 from ert import BatchSimulator, WorkflowRunner
 from ert.config import ErtConfig, HookRuntime
@@ -90,7 +90,18 @@ class Simulator(BatchSimulator):
                 aliases[f"{constraint.name}:upper"] = constraint.name
         return aliases
 
-    def __call__(
+    def create_forward_model_evaluator_function(
+        self,
+    ) -> Evaluator:
+        def run_forward_model(
+            control_values: NDArray[np.float64], metadata: EvaluatorContext
+        ) -> EvaluatorResult:
+            nonlocal self
+            return self._run_forward_model(control_values, metadata)
+
+        return run_forward_model
+
+    def _run_forward_model(
         self, control_values: NDArray[np.float64], metadata: EvaluatorContext
     ) -> EvaluatorResult:
         active = (
