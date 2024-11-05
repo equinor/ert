@@ -322,6 +322,10 @@ def pytest_collection_modifyitems(config, items):
         if item.get_closest_marker("requires_window_manager"):
             item.fixturenames.append("_qt_excepthook")
             item.fixturenames.append("_qt_add_search_paths")
+        if item.get_closest_marker("requires_eclipse") and not config.getoption(
+            "--eclipse-simulator"
+        ):
+            item.add_marker(pytest.mark.skip("Requires eclipse"))
 
     if config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
@@ -331,20 +335,11 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "quick_only" in item.keywords:
                 item.add_marker(skip_quick)
-            if item.get_closest_marker("requires_eclipse") and not config.getoption(
-                "--eclipse_simulator"
-            ):
-                item.add_marker(pytest.mark.skip("Requires eclipse"))
-
     else:
         skip_slow = pytest.mark.skip(reason="need --runslow option to run")
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
-            if item.get_closest_marker("requires_eclipse") and not config.getoption(
-                "--eclipse-simulator"
-            ):
-                item.add_marker(pytest.mark.skip("Requires eclipse"))
 
 
 def _run_snake_oil(source_root):
