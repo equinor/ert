@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730805703096,
+  "lastUpdate": 1730833537799,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "d329f1c446df7bb1345cafd33ee23134e552bf19",
-          "message": "Have run simulation button disabled when running",
-          "timestamp": "2024-10-29T13:42:00+01:00",
-          "tree_id": "59991235bbb691166758394ed26c7feb8a2fc7f5",
-          "url": "https://github.com/equinor/ert/commit/d329f1c446df7bb1345cafd33ee23134e552bf19"
-        },
-        "date": 1730205825532,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19379035865461405,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02587151582979508",
-            "extra": "mean: 5.160215435600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010193189508555507",
             "extra": "mean: 5.176557116400005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "4b18368cbac651d45bd0e30845686e3efd171810",
+          "message": "Remove simulation server option and add deprecation warning is present in config",
+          "timestamp": "2024-11-06T04:03:35+09:00",
+          "tree_id": "e4299ca59a7a4d9af15821a802d6ef27ff856179",
+          "url": "https://github.com/equinor/ert/commit/4b18368cbac651d45bd0e30845686e3efd171810"
+        },
+        "date": 1730833536856,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19389436321681078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06516216173492596",
+            "extra": "mean: 5.157447506000006 sec\nrounds: 5"
           }
         ]
       }
