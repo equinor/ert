@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730799781736,
+  "lastUpdate": 1730805703096,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "132ca3c741bc8f22f75d5d7cabb58a281150a3d4",
-          "message": "Brush up test_ert_config\n\nTest code should not be changed by this commit, this is only cleanup\nlike:\n* String whitespace formatting for ert config files\n* Usage of pathlib\n* Expand some test names\n* Use fixture for changing to tmp_path",
-          "timestamp": "2024-10-29T13:27:59+01:00",
-          "tree_id": "a6d300e35fdb7981f5f05bcf1eb66eae4189c259",
-          "url": "https://github.com/equinor/ert/commit/132ca3c741bc8f22f75d5d7cabb58a281150a3d4"
-        },
-        "date": 1730204987732,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19161156412727617,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022541461883642793",
-            "extra": "mean: 5.2188916914000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02300224569439814",
             "extra": "mean: 5.077686545199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "59453cf198848c74e942eb0c3a4fb34d34c54c21",
+          "message": "Fix pytest option typo (#9141)",
+          "timestamp": "2024-11-05T12:19:47+01:00",
+          "tree_id": "aa4ba7c44b9a629e2f1cc9656816b08e7a0923bf",
+          "url": "https://github.com/equinor/ert/commit/59453cf198848c74e942eb0c3a4fb34d34c54c21"
+        },
+        "date": 1730805702469,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19317858907262322,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010193189508555507",
+            "extra": "mean: 5.176557116400005 sec\nrounds: 5"
           }
         ]
       }
