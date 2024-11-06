@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730833537799,
+  "lastUpdate": 1730881164381,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "e397968a49c1d71fcd6cd6d8576bfa844265b9ab",
-          "message": "Make test fixture minimum_case really minimal",
-          "timestamp": "2024-10-29T14:25:46+01:00",
-          "tree_id": "d66b372d6ff87a46e1ea37d10b85d15cddac7ed3",
-          "url": "https://github.com/equinor/ert/commit/e397968a49c1d71fcd6cd6d8576bfa844265b9ab"
-        },
-        "date": 1730208453777,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19237271209429074,
-            "unit": "iter/sec",
-            "range": "stddev: 0.11566210336350013",
-            "extra": "mean: 5.198242459200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06516216173492596",
             "extra": "mean: 5.157447506000006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "721f3c6d24038a0a55677cd81ef169af87a81d95",
+          "message": "Make simulator fm invocation more explicit",
+          "timestamp": "2024-11-06T09:17:29+01:00",
+          "tree_id": "09af707c0a6520b44b2ee84198f5f546ebd9428d",
+          "url": "https://github.com/equinor/ert/commit/721f3c6d24038a0a55677cd81ef169af87a81d95"
+        },
+        "date": 1730881163707,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1924269346460438,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0370351370942405",
+            "extra": "mean: 5.196777685200004 sec\nrounds: 5"
           }
         ]
       }
