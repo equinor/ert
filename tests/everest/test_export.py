@@ -8,7 +8,6 @@ from everest import filter_data
 from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
-from everest.export import export, validate_export
 from tests.everest.utils import create_cached_mocked_test_case, relpath
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
@@ -74,7 +73,7 @@ def test_export_only_non_gradient_with_increased_merit(copy_math_func_test_data_
     )
 
     # Default export functionality when no export section is defined
-    df = export(config)
+    df = config.export_data()
 
     # Test that the default export functionality generated data frame
     # contains only non gradient simulations
@@ -98,7 +97,7 @@ def test_export_only_non_gradient(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_rejected=False)
 
-    df = export(config)
+    df = config.export_data()
 
     # Check if only discard rejected key is set to False in the export
     # section the export will contain only non-gradient simulations
@@ -121,7 +120,7 @@ def test_export_only_increased_merit(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False)
 
-    df = export(config)
+    df = config.export_data()
 
     # Check the export contains both gradient and non-gradient simulation
     # when discard gradient key is set to False
@@ -144,7 +143,7 @@ def test_export_all_batches(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False, discard_rejected=False)
 
-    df = export(config)
+    df = config.export_data()
 
     # Check the export contains both gradient and non-gradient simulation
     assert 1 in df["is_gradient"].values
@@ -166,7 +165,7 @@ def test_export_only_give_batches(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=True, batches=[2])
 
-    df = export(config)
+    df = config.export_data()
     # Check only simulations from given batches are present in export
     for id in df["batch"].values:
         assert id == 2
@@ -203,7 +202,7 @@ def test_export_nothing_for_empty_batch_list(copy_math_func_test_data_to_tmp):
     config.export = ExportConfig(
         discard_gradient=True, discard_rejected=True, batches=[]
     )
-    df = export(config)
+    df = config.export_data()
 
     # Check export returns empty data frame
     assert df.empty
@@ -221,7 +220,7 @@ def test_export_nothing(copy_math_func_test_data_to_tmp):
     config.export = ExportConfig(
         skip_export=True, discard_gradient=True, discard_rejected=True, batches=[3]
     )
-    df = export(config)
+    df = config.export_data()
 
     # Check export returns empty data frame
     assert df.empty
@@ -290,31 +289,51 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
             assert found
             assert expected_export_ecl == export_ecl
 
-    # Test export validator outputs no errors when the config file contains
-    # an empty export section
-    config.export = None
-    check_error(("", True), validate_export(config))
-
     # Test error when user defines an empty list for the eclipse keywords
     config.export = ExportConfig()
     config.export.keywords = []
+    errors, export_ecl = config.export.check_for_errors(
+        optimization_output_path=config.optimization_output_dir,
+        storage_path=config.storage_dir,
+        data_file_path=config.model.data_file,
+    )
     check_error(
-        ("No eclipse keywords selected for export", False), validate_export(config)
+        expected_error=("No eclipse keywords selected for export", False),
+        reported_errors=(errors, export_ecl),
     )
 
     # Test error when user defines an empty list for the eclipse keywords
     # and empty list of for batches to export
     config.export.batches = []
-    check_error(("No batches selected for export.", False), validate_export(config))
+    errors, export_ecl = config.export.check_for_errors(
+        optimization_output_path=config.optimization_output_dir,
+        storage_path=config.storage_dir,
+        data_file_path=config.model.data_file,
+    )
+    check_error(
+        expected_error=("No batches selected for export.", False),
+        reported_errors=(errors, export_ecl),
+    )
 
     # Test export validator outputs no errors when the config file contains
     # only keywords that represent a subset of already internalized keys
     config.export.keywords = ["FOPT"]
     config.export.batches = None
-    check_error(("", True), validate_export(config))
+    errors, export_ecl = config.export.check_for_errors(
+        optimization_output_path=config.optimization_output_dir,
+        storage_path=config.storage_dir,
+        data_file_path=config.model.data_file,
+    )
+    check_error(expected_error=("", True), reported_errors=(errors, export_ecl))
 
     non_int_key = "STANGE_KEY"
     config.export.keywords = [non_int_key, "FOPT"]
+    errors, export_ecl = config.export.check_for_errors(
+        optimization_output_path=config.optimization_output_dir,
+        storage_path=config.storage_dir,
+        data_file_path=config.model.data_file,
+    )
+
     check_error(
         (
             "Non-internalized ecl keys selected for export '{keys}'." "".format(
@@ -322,20 +341,25 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
             ),
             False,
         ),
-        validate_export(config),
+        (errors, export_ecl),
     )
 
     # Test that validating the export spots non-valid batches and removes
     # them from the list of batches selected for export.
     non_valid_batch = 42
     config.export = ExportConfig(batches=[0, non_valid_batch])
+    errors, export_ecl = config.export.check_for_errors(
+        optimization_output_path=config.optimization_output_dir,
+        storage_path=config.storage_dir,
+        data_file_path=config.model.data_file,
+    )
     check_error(
         (
             "Batch {} not found in optimization results. Skipping for"
             " current export".format(non_valid_batch),
             True,
         ),
-        validate_export(config),
+        (errors, export_ecl),
     )
     assert config.export.batches == [0]
 
@@ -348,7 +372,7 @@ def test_export_gradients(copy_math_func_test_data_to_tmp):
         os.path.join(config.optimization_output_dir, "seba.db"),
     )
 
-    df = export(config)
+    df = config.export_data()
 
     for function in config.objective_functions:
         for control in config.controls:

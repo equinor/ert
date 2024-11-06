@@ -13,7 +13,6 @@ from everest.bin.utils import ProgressBar
 from everest.config import EverestConfig
 from tests.everest.utils import (
     create_cached_mocked_test_case,
-    satisfy,
     satisfy_callable,
 )
 
@@ -58,7 +57,7 @@ def empty_mock(config, export_ecl=True, progress_callback=lambda _: None):
     return pd.DataFrame()
 
 
-def validate_export_mock(config):
+def validate_export_mock(**_):
     return ([], True)
 
 
@@ -67,7 +66,7 @@ def cache_dir(request, monkeypatch):
     return create_cached_mocked_test_case(request, monkeypatch)
 
 
-@patch("everest.bin.utils.export_with_progress", side_effect=export_mock)
+@patch("everest.bin.everexport_script.export_with_progress", side_effect=export_mock)
 def test_everexport_entry_run(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport with not flags"""
     # NOTE: there is probably a bug concerning output folders. Everexport
@@ -83,7 +82,7 @@ def test_everexport_entry_run(mocked_func, copy_math_func_test_data_to_tmp):
     assert df.equals(TEST_DATA)
 
 
-@patch("everest.bin.utils.export_with_progress", side_effect=empty_mock)
+@patch("everest.bin.everexport_script.export_with_progress", side_effect=empty_mock)
 def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
     """Test running everexport with no data"""
     # NOTE: When there is no data (ie, the optimization has not yet run)
@@ -103,10 +102,10 @@ def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
 
 
 @patch(
-    "everest.bin.everexport_script.validate_export",
+    "everest.config.export_config.ExportConfig.check_for_errors",
     side_effect=validate_export_mock,
 )
-@patch("everest.bin.utils.export")
+@patch("everest.config.everest_config.EverestConfig.export_data")
 @pytest.mark.fails_on_macos_github_workflow
 def test_everexport_entry_batches(
     mocked_func, validate_export_mock, copy_math_func_test_data_to_tmp
@@ -122,12 +121,11 @@ def test_everexport_entry_batches(
 
     if ProgressBar:  # different calls if ProgressBar available or not
         mocked_func.assert_called_once_with(
-            config=satisfy(check_export_batches),
             export_ecl=True,
             progress_callback=satisfy_callable(),
         )
     else:
-        mocked_func.assert_called_once_with(config=satisfy(check_export_batches))
+        mocked_func.assert_called_once()
 
 
 @patch("everest.bin.everexport_script.export_to_csv")
@@ -164,7 +162,7 @@ def test_everexport_entry_empty_export(mocked_func, copy_math_func_test_data_to_
     mocked_func.assert_called_once()
 
 
-@patch("everest.bin.utils.export")
+@patch("everest.config.everest_config.EverestConfig.export_data")
 @pytest.mark.fails_on_macos_github_workflow
 def test_everexport_entry_no_usr_def_ecl_keys(
     mocked_func, copy_mocked_test_data_to_tmp
@@ -183,22 +181,16 @@ def test_everexport_entry_no_usr_def_ecl_keys(
 
     everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
 
-    def condition(config: EverestConfig):
-        batches = config.export.batches if config.export is not None else None
-        keys = config.export.keywords if config.export is not None else None
-        return batches is None and keys is None
-
     if ProgressBar:
         mocked_func.assert_called_once_with(
-            config=satisfy(condition),
             export_ecl=True,
             progress_callback=satisfy_callable(),
         )
     else:
-        mocked_func.assert_called_once_with(config=satisfy(condition), export_ecl=True)
+        mocked_func.assert_called_once_with(export_ecl=True)
 
 
-@patch("everest.bin.utils.export")
+@patch("everest.config.everest_config.EverestConfig.export_data")
 @pytest.mark.fails_on_macos_github_workflow
 def test_everexport_entry_internalized_usr_def_ecl_keys(
     mocked_func, cache_dir, copy_mocked_test_data_to_tmp
@@ -225,23 +217,16 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(
 
     everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
 
-    def condition(config: EverestConfig):
-        batches = config.export.batches if config.export is not None else None
-        keys = config.export.keywords if config.export is not None else None
-
-        return batches is None and keys == user_def_keys
-
     if ProgressBar:
         mocked_func.assert_called_once_with(
-            config=satisfy(condition),
             export_ecl=True,
             progress_callback=satisfy_callable(),
         )
     else:
-        mocked_func.assert_called_once_with(config=satisfy(condition), export_ecl=True)
+        mocked_func.assert_called_once_with(export_ecl=True)
 
 
-@patch("everest.bin.utils.export")
+@patch("everest.config.everest_config.EverestConfig.export_data")
 @pytest.mark.fails_on_macos_github_workflow
 def test_everexport_entry_non_int_usr_def_ecl_keys(
     mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
@@ -274,23 +259,16 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(
         in "\n".join(caplog.messages)
     )
 
-    def condition(config: EverestConfig):
-        batches = config.export.batches if config.export is not None else None
-        keys = config.export.keywords if config.export is not None else None
-
-        return batches is None and keys == user_def_keys
-
     if ProgressBar:
         mocked_func.assert_called_once_with(
-            config=satisfy(condition),
             export_ecl=False,
             progress_callback=satisfy_callable(),
         )
     else:
-        mocked_func.assert_called_once_with(config=satisfy(condition), export_ecl=False)
+        mocked_func.assert_called_once_with(export_ecl=False)
 
 
-@patch("everest.bin.utils.export")
+@patch("everest.config.everest_config.EverestConfig.export_data")
 @pytest.mark.fails_on_macos_github_workflow
 def test_everexport_entry_not_available_batches(
     mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
@@ -324,16 +302,10 @@ def test_everexport_entry_not_available_batches(
         f" Skipping for current export" in "\n".join(caplog.messages)
     )
 
-    def condition(config: EverestConfig):
-        batches = config.export.batches if config.export is not None else None
-        keys = config.export.keywords if config.export is not None else None
-        return batches == [0] and keys is None
-
     if ProgressBar:
         mocked_func.assert_called_once_with(
-            config=satisfy(condition),
             export_ecl=True,
             progress_callback=satisfy_callable(),
         )
     else:
-        mocked_func.assert_called_once_with(config=satisfy(condition), export_ecl=True)
+        mocked_func.assert_called_once_with(export_ecl=True)

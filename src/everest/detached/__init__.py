@@ -86,7 +86,8 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
         )
 
     try:
-        _save_running_config(config)
+        save_config_path = os.path.join(config.output_dir, config.config_file)
+        config.dump(save_config_path)
     except (OSError, LookupError) as e:
         logging.getLogger(EVEREST).error(
             "Failed to save optimization config: {}".format(e)
@@ -119,13 +120,6 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
     _context = _server.start("dispatch_server", [(0, {})])
 
     return _context
-
-
-def _save_running_config(config: EverestConfig):
-    assert config.output_dir is not None
-    assert config.config_file is not None
-    save_config_path = os.path.join(config.output_dir, config.config_file)
-    config.dump(save_config_path)
 
 
 def context_stop_and_wait():

@@ -22,7 +22,7 @@ from ropt.enums import OptimizerExitCode
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
-from everest import export_to_csv, validate_export
+from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
 from everest.simulator import JOB_FAILURE
@@ -304,10 +304,22 @@ def main():
     try:
         # Exporting data
         update_everserver_status(config, ServerStatus.exporting_to_csv)
-        err_msgs, export_ecl = validate_export(config)
-        for msg in err_msgs:
-            logging.getLogger(EVEREST).warning(msg)
-        export_to_csv(config, export_ecl=export_ecl)
+
+        if config.export is not None:
+            err_msgs, export_ecl = config.export.check_for_errors(
+                optimization_output_path=config.optimization_output_dir,
+                storage_path=config.storage_dir,
+                data_file_path=config.model.data_file,
+            )
+            for msg in err_msgs:
+                logging.getLogger(EVEREST).warning(msg)
+        else:
+            export_ecl = True
+
+        export_to_csv(
+            data_frame=export_with_progress(config, export_ecl),
+            export_path=config.export_path,
+        )
     except:
         update_everserver_status(
             config, ServerStatus.failed, message=traceback.format_exc()

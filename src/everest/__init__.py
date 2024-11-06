@@ -15,7 +15,7 @@ except ImportError:
 from everest import detached, docs, jobs, templates, util
 from everest.bin.utils import export_to_csv, export_with_progress
 from everest.config_keys import ConfigKeys
-from everest.export import MetaDataColumnNames, export, filter_data, validate_export
+from everest.export import MetaDataColumnNames, filter_data
 
 __author__ = "Equinor ASA and TNO"
 __all__ = [
@@ -23,7 +23,6 @@ __all__ = [
     "MetaDataColumnNames",
     "detached",
     "docs",
-    "export",
     "export_to_csv",
     "export_with_progress",
     "filter_data",
@@ -31,5 +30,4 @@ __all__ = [
     "load",
     "templates",
     "util",
-    "validate_export",
 ]

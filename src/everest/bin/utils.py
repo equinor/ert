@@ -8,6 +8,7 @@ from typing import ClassVar, Dict, List
 
 import colorama
 from colorama import Fore
+from pandas import DataFrame
 
 from ert.resources import all_shell_script_fm_steps
 from ert.simulator.batch_simulator_context import Status
@@ -20,7 +21,6 @@ from everest.detached import (
     get_opt_status,
     start_monitor,
 )
-from everest.export import export
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST
 
@@ -35,24 +35,14 @@ def export_with_progress(config, export_ecl=True):
     if ProgressBar is not None:
         widgets = [Percentage(), "  ", Bar(), "  ", Timer(), "  ", AdaptiveETA()]
         with ProgressBar(max_value=1, widgets=widgets) as bar:
-            export_data = export(
-                config=config, export_ecl=export_ecl, progress_callback=bar.update
+            return config.export_data(
+                export_ecl=export_ecl, progress_callback=bar.update
             )
-    else:
-        export_data = export(config=config, export_ecl=export_ecl)
-
-    return export_data
+    return config.export_data(export_ecl=export_ecl)
 
 
-def export_to_csv(config: EverestConfig, data_frame=None, export_ecl=True):
-    if data_frame is None:
-        data_frame = export_with_progress(config, export_ecl)
-
-    export_path = config.export_path
-    output_folder = os.path.dirname(export_path)
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
+def export_to_csv(data_frame: DataFrame, export_path: str) -> None:
+    os.makedirs(os.path.dirname(export_path), exist_ok=True)
     data_frame.to_csv(export_path, sep=";", index=False)
     logging.getLogger(EVEREST).info("Data exported to {}".format(export_path))
 

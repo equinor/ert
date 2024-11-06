@@ -3,7 +3,6 @@ import os
 
 import pytest
 
-import everest
 from ert.config import ErtConfig, QueueSystem
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -715,7 +714,7 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     # self.assertAlmostEqual(result.total_objective, 0.851423, delta=0.5)
 
     # Test conversion to pandas DataFrame
-    df = everest.export(config)
+    df = config.export_data()
 
     # Check meta data export
     for meta_key in MetaDataColumnNames.get_all():
@@ -777,7 +776,7 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     # Check export filter
     config.export = ExportConfig(keywords=["*OPT*"])
 
-    filtered_df = everest.export(config)
+    filtered_df = config.export_data()
 
     exp_keywords += MetaDataColumnNames.get_all()
     columns = sorted(set(filtered_df.columns))
@@ -831,7 +830,7 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     assert cbtracker.called
 
     snapshot.assert_match(
-        everest.export(config)
+        config.export_data()
         .drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
         .round(6)
         .to_csv(),

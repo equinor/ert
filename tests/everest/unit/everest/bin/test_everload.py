@@ -11,7 +11,6 @@ from tests.everest.utils import (
 
 from ert.config import ErtConfig
 from everest import MetaDataColumnNames as MDCN
-from everest import export
 from everest.bin.everload_script import everload_entry
 from everest.config import EverestConfig
 from everest.strings import STORAGE_DIR
@@ -66,8 +65,7 @@ def test_everload_entry_run(
     """Test running everload on an optimization case"""
     config = get_config(cache_dir)
     everload_entry([CONFIG_FILE, "-s"])
-
-    df = export(config, export_ecl=False)
+    df = config.export_data(export_ecl=False)
     batch_ids = set(df[MDCN.BATCH])
     assertInternalizeCalls(batch_ids, mocked_internalize)
     assertBackup(config)
@@ -109,7 +107,7 @@ def test_everload_entry_batches(
     """Test running everload with a selection of batches"""
     config = get_config(cache_dir)
     # pick every second batch (assume there are at least 2)
-    df = export(config, export_ecl=False)
+    df = config.export_data(export_ecl=False)
     batch_ids = list(set(df[MDCN.BATCH]))
     assert len(batch_ids) > 1
     batch_ids = batch_ids[::2]
@@ -146,7 +144,7 @@ def test_everload_entry_overwrite(
     config = get_config(cache_dir)
     everload_entry([CONFIG_FILE, "-s", "--overwrite"])
 
-    df = export(config, export_ecl=False)
+    df = config.export_data(export_ecl=False)
     batch_ids = set(df[MDCN.BATCH])
     assertInternalizeCalls(batch_ids, mocked_internalize)
 
@@ -183,11 +181,11 @@ def test_everload_entry_not_silent(
         with patch("everest.bin.everload_script.input", side_effect=yes):
             everload_entry([CONFIG_FILE])
         assert len(stdout.getvalue()) > 0
-    df = export(config, export_ecl=False)
+    df = config.export_data(export_ecl=False)
     batch_ids = set(df[MDCN.BATCH])
     assertInternalizeCalls(batch_ids, mocked_internalize)
 
-    df = export(config, export_ecl=False)
+    df = config.export_data(export_ecl=False)
     batch_ids = set(df[MDCN.BATCH])
     assertInternalizeCalls(batch_ids, mocked_internalize)
     assertBackup(config)
