@@ -64,8 +64,6 @@ def flow_config_path():
 def get_forward_models():
     """
     Return a list of dicts detailing the names and paths to forward models.
-
-    Example [{"name": "job1", "path":"path1"}, {"name": "job2", "path":"path2"}]
     """
 
 

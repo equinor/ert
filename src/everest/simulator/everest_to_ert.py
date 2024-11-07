@@ -20,7 +20,6 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys
 from everest.queue_driver.queue_driver import _extract_queue_system
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
-from everest.util.forward_models import collect_forward_models
 
 
 def _get_datafiles(ever_config: EverestConfig):
@@ -209,8 +208,6 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
             f.write("EXECUTABLE %s" % script)
 
         ever_jobs.append(Job(name=default_job, source=job_spec_file))
-    for job in collect_forward_models():
-        ever_jobs.append(Job(name=job["name"], source=job["path"]))
 
     return ever_jobs
 

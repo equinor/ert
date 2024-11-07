@@ -17,7 +17,6 @@ from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     everest_to_ert_config,
 )
-from everest.util.forward_models import collect_forward_models
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
@@ -575,19 +574,6 @@ def test_strip_date_job_insertion(copy_test_data_to_tmp):
     # Transform to res dict and verify equality
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
     assert snake_dict == ert_config_dict
-
-
-def test_forward_model_job_insertion(copy_test_data_to_tmp):
-    # Load config file
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-
-    # Transform to res dict
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-    jobs = ert_config_dict[ErtConfigKeys.INSTALL_JOB]
-    for job in collect_forward_models():
-        res_job = (job["name"], job["path"])
-        assert res_job in jobs
 
 
 def test_workflow_job(copy_test_data_to_tmp):

@@ -42,7 +42,6 @@ from everest.config.validation_utils import (
     validate_forward_model_configs,
 )
 from everest.jobs import script_names
-from everest.util.forward_models import collect_forward_models
 
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
@@ -297,7 +296,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         installed_jobs_name = [job.name for job in install_jobs]
         installed_jobs_name += list(script_names)  # default jobs
         installed_jobs_name += get_system_installed_jobs()  # system jobs
-        installed_jobs_name += [job["name"] for job in collect_forward_models()]
 
         errors = []
         for fm_job in forward_model_jobs:
