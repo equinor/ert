@@ -60,13 +60,6 @@ def flow_config_path():
     """
 
 
-@hookspec
-def get_forward_models():
-    """
-    Return a list of dicts detailing the names and paths to forward models.
-    """
-
-
 @hookspec(firstresult=True)
 def lint_forward_model(job: str, args: Sequence[str]):
     """

@@ -1,4 +1,3 @@
-from itertools import chain
 from typing import List, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -7,10 +6,6 @@ from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 pm = EverestPluginManager()
 T = TypeVar("T", bound=BaseModel)
-
-
-def collect_forward_models():
-    return chain.from_iterable(pm.hook.get_forward_models())
 
 
 def collect_forward_model_schemas():
