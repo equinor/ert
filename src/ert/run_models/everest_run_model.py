@@ -9,7 +9,6 @@ import queue
 import random
 import shutil
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -30,7 +29,6 @@ from typing import (
 )
 
 import numpy as np
-import seba_sqlite.sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
@@ -49,6 +47,7 @@ from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import EverestConfig
+from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import SimulatorCache
 from everest.simulator.everest_to_ert import everest_to_ert_config
@@ -139,24 +138,6 @@ class SimulationCallback(Protocol):
 
 class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
-
-
-@dataclass
-class OptimalResult:
-    batch: int
-    controls: List[Any]
-    total_objective: float
-
-    @staticmethod
-    def from_seba_optimal_result(
-        o: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None,
-    ) -> "OptimalResult" | None:
-        if o is None:
-            return None
-
-        return OptimalResult(
-            batch=o.batch, controls=o.controls, total_objective=o.total_objective
-        )
 
 
 class EverestRunModel(BaseRunModel):
@@ -277,6 +258,16 @@ class EverestRunModel(BaseRunModel):
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
 
+        self.ever_storage = EverestStorage(
+            output_dir=Path(self.everest_config.optimization_output_dir),
+        )
+        self.ever_storage.observe_optimizer(
+            optimizer,
+            Path(self.everest_config.optimization_output_dir)
+            / "dakota"
+            / "OPT_DEFAULT.out",
+        )
+
         # The SqliteStorage object is used to store optimization results from
         # Seba in an sqlite database. It reacts directly to events emitted by
         # Seba and is not called by Everest directly. The stored results are
@@ -294,6 +285,8 @@ class EverestRunModel(BaseRunModel):
         self._result = OptimalResult.from_seba_optimal_result(
             seba_storage.get_optimal_result()  # type: ignore
         )
+        optimal_result_from_everstorage = self.ever_storage.get_optimal_result()
+        assert self._result == optimal_result_from_everstorage
 
         self._exit_code = (
             "max_batch_num_reached"
