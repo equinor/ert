@@ -590,7 +590,7 @@ def test_lint_everest_models_jobs():
 def test_overloading_everest_models_names():
     config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
     for job in collect_forward_models():
-        config["install_jobs"][2]["name"] = job["name"]
-        config["forward_model"][1] = job["name"]
+        config["install_jobs"][2]["name"] = job
+        config["forward_model"][1] = job
         errors = EverestConfig.lint_config_dict(config)
-        assert len(errors) == 0, f"Failed for job {job['name']}"
+        assert len(errors) == 0, f"Failed for job {job}"

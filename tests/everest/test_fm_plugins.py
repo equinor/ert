@@ -6,9 +6,15 @@ import pluggy
 import pytest
 from pydantic import BaseModel
 
+from ert import ForwardModelStepPlugin
+from everest.config import EverestConfig
 from everest.plugins import hook_impl, hook_specs, hookimpl
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 from everest.util.forward_models import collect_forward_models
+from tests.everest.utils import relpath
+
+SNAKE_CONFIG_PATH = relpath("test_data/snake_oil/everest/model/snake_oil.yml")
 
 
 class MockPluginManager(pluggy.PluginManager):
@@ -35,26 +41,19 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
     yield register_plugin_hooks
 
 
-def test_jobs():
-    for job in collect_forward_models():
-        assert "name" in job
-        assert "path" in job
-
-
-def test_everest_models_jobs(plugin_manager):
+def test_everest_models_jobs():
     pytest.importorskip("everest_models")
-    pm = plugin_manager()
-    assert any(
-        hook.plugin_name.startswith(EVEREST)
-        for hook in pm.hook.get_forward_models.get_hookimpls()
-    )
+    ert_config = everest_to_ert_config(EverestConfig.load_file(SNAKE_CONFIG_PATH))
+    jobs = collect_forward_models()
+    assert bool(jobs)
+    for job in jobs:
+        job_class = ert_config.installed_forward_model_steps.get(job)
+        assert job_class is not None
+        assert isinstance(job_class, ForwardModelStepPlugin)
 
 
 def test_multiple_plugins(plugin_manager):
-    _JOBS = [
-        {"name": "job1", "path": "/some/path1"},
-        {"name": "job2", "path": "/some/path2"},
-    ]
+    _JOBS = ["job1", "job2"]
 
     class Plugin1:
         @hookimpl
@@ -68,7 +67,7 @@ def test_multiple_plugins(plugin_manager):
 
     pm = plugin_manager(Plugin1(), Plugin2())
 
-    jobs = list(chain.from_iterable(pm.hook.get_forward_models()))
+    jobs = set(chain.from_iterable(pm.hook.get_forward_models()))
     for value in _JOBS:
         assert value in jobs
 
