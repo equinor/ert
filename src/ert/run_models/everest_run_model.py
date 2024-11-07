@@ -21,14 +21,13 @@ from typing import (
 )
 
 import numpy as np
-import seba_sqlite.sqlite_storage
+from seba_sqlite import SqliteStorage, sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
-from seba_sqlite import SqliteStorage
 from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
@@ -37,6 +36,7 @@ from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import EverestConfig
+from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator import SimulatorCache
 from everest.simulator.everest_to_ert import everest_to_ert_config
@@ -137,7 +137,7 @@ class OptimalResult:
 
     @staticmethod
     def from_seba_optimal_result(
-        o: seba_sqlite.sqlite_storage.OptimalResult | None = None,
+        o: sqlite_storage.OptimalResult | None = None,
     ) -> OptimalResult | None:
         if o is None:
             return None
@@ -266,6 +266,16 @@ class EverestRunModel(BaseRunModel):
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
 
+        self.ever_storage = EverestStorage(
+            output_dir=Path(self.everest_config.optimization_output_dir),
+        )
+        self.ever_storage.observe_optimizer(
+            optimizer,
+            Path(self.everest_config.optimization_output_dir)
+            / "dakota"
+            / "OPT_DEFAULT.out",
+        )
+
         # The SqliteStorage object is used to store optimization results from
         # Seba in an sqlite database. It reacts directly to events emitted by
         # Seba and is not called by Everest directly. The stored results are
@@ -283,6 +293,8 @@ class EverestRunModel(BaseRunModel):
         self._result = OptimalResult.from_seba_optimal_result(
             seba_storage.get_optimal_result()  # type: ignore
         )
+        optimal_result_from_everstorage = self.ever_storage.get_optimal_result()
+        assert self._result == optimal_result_from_everstorage
 
         self._exit_code = (
             "max_batch_num_reached"
