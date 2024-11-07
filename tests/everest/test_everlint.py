@@ -8,7 +8,6 @@ import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.util.forward_models import collect_forward_models
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
@@ -585,12 +584,3 @@ def test_lint_everest_models_jobs():
     config = EverestConfig.load_file(config_file).to_dict()
     # Check initial config file is valid
     assert len(EverestConfig.lint_config_dict(config)) == 0
-
-
-def test_overloading_everest_models_names():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    for job in collect_forward_models():
-        config["install_jobs"][2]["name"] = job
-        config["forward_model"][1] = job
-        errors = EverestConfig.lint_config_dict(config)
-        assert len(errors) == 0, f"Failed for job {job}"

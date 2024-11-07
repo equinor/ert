@@ -11,7 +11,6 @@ from everest.config import EverestConfig
 from everest.plugins import hook_impl, hook_specs, hookimpl
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
-from everest.util.forward_models import collect_forward_models
 from tests.everest.utils import relpath
 
 SNAKE_CONFIG_PATH = relpath("test_data/snake_oil/everest/model/snake_oil.yml")
@@ -42,9 +41,9 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
 
 
 def test_everest_models_jobs():
-    pytest.importorskip("everest_models")
+    everest_models = pytest.importorskip("everest_models")
     ert_config = everest_to_ert_config(EverestConfig.load_file(SNAKE_CONFIG_PATH))
-    jobs = collect_forward_models()
+    jobs = everest_models.forward_models.get_forward_models()
     assert bool(jobs)
     for job in jobs:
         job_class = ert_config.installed_forward_model_steps.get(job)
@@ -53,22 +52,22 @@ def test_everest_models_jobs():
 
 
 def test_multiple_plugins(plugin_manager):
-    _JOBS = ["job1", "job2"]
+    _SCHEMAS = [{"job1": 1}, {"job2": 2}]
 
     class Plugin1:
         @hookimpl
-        def get_forward_models(self):
-            return [_JOBS[0]]
+        def get_forward_models_schemas(self):
+            return [_SCHEMAS[0]]
 
     class Plugin2:
         @hookimpl
-        def get_forward_models(self):
-            return [_JOBS[1]]
+        def get_forward_models_schemas(self):
+            return [_SCHEMAS[1]]
 
     pm = plugin_manager(Plugin1(), Plugin2())
 
-    jobs = set(chain.from_iterable(pm.hook.get_forward_models()))
-    for value in _JOBS:
+    jobs = list(chain.from_iterable(pm.hook.get_forward_models_schemas()))
+    for value in _SCHEMAS:
         assert value in jobs
 
 
