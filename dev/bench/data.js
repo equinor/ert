@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730881164381,
+  "lastUpdate": 1731065415559,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "0aa55b414ca0e121f357a53590c0582148131813",
-          "message": "Detect dark_mode in sidepanel",
-          "timestamp": "2024-10-29T15:18:14+01:00",
-          "tree_id": "36342805c14fdd5d593bb272e3d7047deb616710",
-          "url": "https://github.com/equinor/ert/commit/0aa55b414ca0e121f357a53590c0582148131813"
-        },
-        "date": 1730211610478,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19082612671494306,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022965478674225173",
-            "extra": "mean: 5.240372569599993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0370351370942405",
             "extra": "mean: 5.196777685200004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "distinct": true,
+          "id": "0c6f980d6f782b7619826bf2f4e74b8ae5e12f1b",
+          "message": "Remove the get_forward_models hook",
+          "timestamp": "2024-11-08T12:28:23+01:00",
+          "tree_id": "4cb0b165ad455bb5073aeaf946a52ed7b8fd166f",
+          "url": "https://github.com/equinor/ert/commit/0c6f980d6f782b7619826bf2f4e74b8ae5e12f1b"
+        },
+        "date": 1731065415107,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19112839944377166,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03579840874600964",
+            "extra": "mean: 5.232084833599998 sec\nrounds: 5"
           }
         ]
       }
