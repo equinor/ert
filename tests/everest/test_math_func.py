@@ -9,6 +9,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
+from everest.export import export_data
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
@@ -48,7 +49,11 @@ def test_math_func_multiobj(
     if config.export is None:
         config.export = ExportConfig(discard_rejected=False)
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
 
     # Three points in this case are increasing the merit
@@ -135,7 +140,11 @@ def test_math_func_advanced(
     assert expected_opt == pytest.approx(run_model.result.total_objective, abs=0.001)
 
     # Test conversion to pandas DataFrame
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
 
     ok_evals_0 = ok_evals[ok_evals["realization"] == 0]
@@ -168,7 +177,11 @@ def test_math_func_advanced(
     batches_list = [0, 2]
     config.export.batches = batches_list
 
-    batch_filtered_df = config.export_data()
+    batch_filtered_df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     n_unique_batches = batch_filtered_df["batch"].nunique()
     unique_batches = np.sort(batch_filtered_df["batch"].unique()).tolist()
 

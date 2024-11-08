@@ -8,10 +8,10 @@ from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
-from everest.strings import STORAGE_DIR
 
 if TYPE_CHECKING:
     from everest.config import ExportConfig
+from everest.strings import STORAGE_DIR
 
 if sys.version_info < (3, 11):
     from enum import Enum
@@ -246,5 +246,54 @@ def load_simulation_data(
         on=[MetaDataColumnNames.BATCH, MetaDataColumnNames.SIMULATION],
         sort=False,
     )
+
+    return data
+
+
+def export_data(
+    export_config: Optional["ExportConfig"],
+    output_dir: str,
+    data_file: Optional[str],
+    export_ecl=True,
+    progress_callback=lambda _: None,
+):
+    """Export everest data into a pandas dataframe. If the config specifies
+    a data_file and @export_ecl is True, simulation data is included. When
+    exporting simulation data, only keywords matching elements in @ecl_keywords
+    are exported. Note that wildcards are allowed.
+
+    @progress_callback will be called with a number between 0 and 1 indicating
+    the fraction of batches that has been loaded.
+    """
+
+    ecl_keywords = None
+    # If user exports with a config file that has the SKIP_EXPORT
+    # set to true export nothing
+    if export_config is not None:
+        if export_config.skip_export or export_config.batches == []:
+            return pd.DataFrame([])
+
+        ecl_keywords = export_config.keywords
+    optimization_output_dir = os.path.join(
+        os.path.abspath(output_dir), "optimization_output"
+    )
+    metadata = export_metadata(export_config, optimization_output_dir)
+    if data_file is None or not export_ecl:
+        return pd.DataFrame(metadata)
+
+    data = load_simulation_data(
+        output_path=output_dir,
+        metadata=metadata,
+        progress_callback=progress_callback,
+    )
+
+    if ecl_keywords is not None:
+        keywords = tuple(ecl_keywords)
+        # NOTE: Some of these keywords are necessary to export successfully,
+        # we should not leave this to the user
+        keywords += tuple(pd.DataFrame(metadata).columns)
+        keywords += tuple(MetaDataColumnNames.get_all())
+        keywords_set = set(keywords)
+        data = filter_data(data, keywords_set)
 
     return data

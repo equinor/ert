@@ -8,6 +8,7 @@ from everest import filter_data
 from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
+from everest.export import export_data
 from tests.everest.utils import create_cached_mocked_test_case, relpath
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
@@ -73,7 +74,11 @@ def test_export_only_non_gradient_with_increased_merit(copy_math_func_test_data_
     )
 
     # Default export functionality when no export section is defined
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Test that the default export functionality generated data frame
     # contains only non gradient simulations
@@ -97,7 +102,11 @@ def test_export_only_non_gradient(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_rejected=False)
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check if only discard rejected key is set to False in the export
     # section the export will contain only non-gradient simulations
@@ -120,7 +129,11 @@ def test_export_only_increased_merit(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False)
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check the export contains both gradient and non-gradient simulation
     # when discard gradient key is set to False
@@ -143,7 +156,11 @@ def test_export_all_batches(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False, discard_rejected=False)
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check the export contains both gradient and non-gradient simulation
     assert 1 in df["is_gradient"].values
@@ -165,7 +182,11 @@ def test_export_only_give_batches(copy_math_func_test_data_to_tmp):
     # Add export section to config
     config.export = ExportConfig(discard_gradient=True, batches=[2])
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     # Check only simulations from given batches are present in export
     for id in df["batch"].values:
         assert id == 2
@@ -202,7 +223,11 @@ def test_export_nothing_for_empty_batch_list(copy_math_func_test_data_to_tmp):
     config.export = ExportConfig(
         discard_gradient=True, discard_rejected=True, batches=[]
     )
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check export returns empty data frame
     assert df.empty
@@ -220,7 +245,11 @@ def test_export_nothing(copy_math_func_test_data_to_tmp):
     config.export = ExportConfig(
         skip_export=True, discard_gradient=True, discard_rejected=True, batches=[3]
     )
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check export returns empty data frame
     assert df.empty
@@ -372,7 +401,11 @@ def test_export_gradients(copy_math_func_test_data_to_tmp):
         os.path.join(config.optimization_output_dir, "seba.db"),
     )
 
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     for function in config.objective_functions:
         for control in config.controls:

@@ -15,7 +15,6 @@ from typing import (
     no_type_check,
 )
 
-import pandas as pd
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -41,12 +40,6 @@ from everest.config.validation_utils import (
     format_errors,
     unique_items,
     validate_forward_model_configs,
-)
-from everest.export import (
-    MetaDataColumnNames,
-    export_metadata,
-    filter_data,
-    load_simulation_data,
 )
 from everest.jobs import script_names
 from everest.util.forward_models import collect_forward_models
@@ -835,44 +828,3 @@ and environment variables are exposed in the form 'os.NAME', for example:
             yaml.dump(stripped_conf, out)
 
         return None
-
-    def export_data(self, export_ecl=True, progress_callback=lambda _: None):
-        """Export everest data into a pandas dataframe. If the config specifies
-        a data_file and @export_ecl is True, simulation data is included. When
-        exporting simulation data, only keywords matching elements in @ecl_keywords
-        are exported. Note that wildcards are allowed.
-
-        @progress_callback will be called with a number between 0 and 1 indicating
-        the fraction of batches that has been loaded.
-        """
-
-        ecl_keywords = None
-        # If user exports with a config file that has the SKIP_EXPORT
-        # set to true export nothing
-        if self.export is not None:
-            if self.export.skip_export or self.export.batches == []:
-                return pd.DataFrame([])
-
-            ecl_keywords = self.export.keywords
-
-        metadata = export_metadata(self.export, self.optimization_output_dir)
-        data_file = self.model.data_file
-        if data_file is None or not export_ecl:
-            return pd.DataFrame(metadata)
-
-        data = load_simulation_data(
-            output_path=self.output_dir,
-            metadata=metadata,
-            progress_callback=progress_callback,
-        )
-
-        if ecl_keywords is not None:
-            keywords = tuple(ecl_keywords)
-            # NOTE: Some of these keywords are necessary to export successfully,
-            # we should not leave this to the user
-            keywords += tuple(pd.DataFrame(metadata).columns)
-            keywords += tuple(MetaDataColumnNames.get_all())
-            keywords_set = set(keywords)
-            data = filter_data(data, keywords_set)
-
-        return data

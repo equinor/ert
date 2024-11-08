@@ -13,6 +13,7 @@ from ert.storage import open_storage
 from everest import MetaDataColumnNames as MDCN
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
+from everest.export import export_data
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from everest.util import version_info
 
@@ -161,7 +162,12 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     ert_config = ErtConfig.with_plugins().from_dict(config_dict=ert_config_dict)
 
     # load information about batches from previous run
-    df = ever_config.export_data(export_ecl=False)
+    df = export_data(
+        export_config=ever_config.export,
+        output_dir=ever_config.output_dir,
+        data_file=ever_config.model.data_file if ever_config.model else None,
+        export_ecl=False,
+    )
     groups = df.groupby(by=MDCN.BATCH)
 
     # backup or delete the previous internal storage

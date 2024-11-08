@@ -10,7 +10,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
-from everest.export import MetaDataColumnNames
+from everest.export import MetaDataColumnNames, export_data
 from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
@@ -714,7 +714,11 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     # self.assertAlmostEqual(result.total_objective, 0.851423, delta=0.5)
 
     # Test conversion to pandas DataFrame
-    df = config.export_data()
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     # Check meta data export
     for meta_key in MetaDataColumnNames.get_all():
@@ -776,7 +780,11 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     # Check export filter
     config.export = ExportConfig(keywords=["*OPT*"])
 
-    filtered_df = config.export_data()
+    filtered_df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
 
     exp_keywords += MetaDataColumnNames.get_all()
     columns = sorted(set(filtered_df.columns))
@@ -829,9 +837,13 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
 
     assert cbtracker.called
 
+    data = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     snapshot.assert_match(
-        config.export_data()
-        .drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
+        data.drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
         .round(6)
         .to_csv(),
         "egg.csv",

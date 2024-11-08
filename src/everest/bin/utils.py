@@ -21,6 +21,7 @@ from everest.detached import (
     get_opt_status,
     start_monitor,
 )
+from everest.export import export_data
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST
 
@@ -30,15 +31,24 @@ except ImportError:
     ProgressBar = None  # type: ignore
 
 
-def export_with_progress(config, export_ecl=True):
+def export_with_progress(config: EverestConfig, export_ecl=True):
     logging.getLogger(EVEREST).info("Exporting results to csv ...")
     if ProgressBar is not None:
         widgets = [Percentage(), "  ", Bar(), "  ", Timer(), "  ", AdaptiveETA()]
         with ProgressBar(max_value=1, widgets=widgets) as bar:
-            return config.export_data(
-                export_ecl=export_ecl, progress_callback=bar.update
+            return export_data(
+                export_config=config.export,
+                output_dir=config.output_dir,
+                data_file=config.model.data_file if config.model else None,
+                export_ecl=export_ecl,
+                progress_callback=bar.update,
             )
-    return config.export_data(export_ecl=export_ecl)
+    return export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+        export_ecl=export_ecl,
+    )
 
 
 def export_to_csv(data_frame: DataFrame, export_path: str) -> None:
