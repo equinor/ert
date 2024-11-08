@@ -8,7 +8,7 @@ from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
-from everest.config import EverestConfig
+from everest.config import ExportConfig
 from everest.strings import STORAGE_DIR
 
 if sys.version_info < (3, 11):
@@ -66,35 +66,33 @@ def filter_data(data: DataFrame, keyword_filters: Set[str]):
     return data[filtered_columns]
 
 
-def _valid_batches(batches: List[int], config: EverestConfig):
-    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
+def available_batches(optimization_output_dir: str) -> Set[int]:
+    snapshot = SebaSnapshot(optimization_output_dir).get_snapshot(
         filter_out_gradient=False, batches=None
     )
-    available_batches = {data.batch for data in snapshot.simulation_data}
-    valid_batches = [batch for batch in batches if batch in available_batches]
-    return valid_batches
+    return {data.batch for data in snapshot.simulation_data}
 
 
-def _metadata(config: EverestConfig):
+def export_metadata(config: Optional[ExportConfig], optimization_output_dir: str):
     discard_gradient = True
     discard_rejected = True
     batches = None
 
-    if config.export is not None:
-        if config.export.discard_gradient is not None:
-            discard_gradient = config.export.discard_gradient
+    if config:
+        if config.discard_gradient is not None:
+            discard_gradient = config.discard_gradient
 
-        if config.export.discard_rejected is not None:
-            discard_rejected = config.export.discard_rejected
+        if config.discard_rejected is not None:
+            discard_rejected = config.discard_rejected
 
-        if config.export.batches:
+        if config.batches:
             # If user defined batches to export in the conf file, ignore previously
             # discard gradient and discard rejected flags if defined and true
             discard_rejected = False
             discard_gradient = False
-            batches = config.export.batches
+            batches = config.batches
 
-    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
+    snapshot = SebaSnapshot(optimization_output_dir).get_snapshot(
         filter_out_gradient=discard_gradient,
         batches=batches,
     )
@@ -154,12 +152,17 @@ def _metadata(config: EverestConfig):
     return metadata
 
 
-def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] = None):
+def get_internalized_keys(
+    config: ExportConfig,
+    storage_path: str,
+    optimization_output_path: str,
+    batch_ids: Optional[Set[int]] = None,
+):
     if batch_ids is None:
-        metadata = _metadata(config)
+        metadata = export_metadata(config, optimization_output_path)
         batch_ids = {data[MetaDataColumnNames.BATCH] for data in metadata}
     internal_keys: Set = set()
-    with open_storage(config.storage_dir, "r") as storage:
+    with open_storage(storage_path, "r") as storage:
         for batch_id in batch_ids:
             case_name = f"batch_{batch_id}"
             experiments = [*storage.experiments]
@@ -177,77 +180,81 @@ def get_internalized_keys(config: EverestConfig, batch_ids: Optional[Set[int]] =
     return internal_keys
 
 
-def validate_export(config: EverestConfig):
+def check_for_errors(
+    config: ExportConfig,
+    optimization_output_path: str,
+    storage_path: str,
+    data_file_path: Optional[str],
+):
     """
     Checks for possible errors when attempting to export current optimization
     case.
-    :param config: Everest config
-    :return: List of error messages
     """
     export_ecl = True
     export_errors: List[str] = []
-    if config.export is None:
-        return export_errors, export_ecl
 
-    # TODO turn into attr accessor when ExplicitNone & everlint is phased out
-    user_def_batches = config.export.batches
-    if user_def_batches:
-        valid_batches = _valid_batches(user_def_batches, config)
-        for batch in user_def_batches:
-            if batch not in valid_batches:
-                export_errors.append(
-                    "Batch {} not found in optimization "
-                    "results. Skipping for current export."
-                    "".format(batch)
-                )
-        user_def_batches = valid_batches
-        config.export.batches = user_def_batches
+    if config.batches:
+        _available_batches = available_batches(optimization_output_path)
+        for batch in set(config.batches).difference(_available_batches):
+            export_errors.append(
+                "Batch {} not found in optimization "
+                "results. Skipping for current export."
+                "".format(batch)
+            )
+        config.batches = list(set(config.batches).intersection(_available_batches))
 
-    if user_def_batches == []:
-        export_ecl = False
+    if config.batches == []:
         export_errors.append(
             "No batches selected for export. "
             "Only optimization data will be exported."
         )
-        return export_errors, export_ecl
+        return export_errors, False
 
-    if not config.model.data_file:
+    if not data_file_path:
         export_ecl = False
         export_errors.append(
             "No data file found in config." "Only optimization data will be exported."
         )
 
-    user_def_kw = config.export.keywords
-    if user_def_kw == []:
+    # If no user defined keywords are present it is no longer possible to check
+    # availability in internal storage
+    if config.keywords is None:
+        return export_errors, export_ecl
+
+    if not config.keywords:
         export_ecl = False
         export_errors.append(
             "No eclipse keywords selected for export. Only"
             " optimization data will be exported."
         )
 
-    # If no user defined keywords are present it is no longer possible to check
-    # availability in internal storage
-    if user_def_kw is None:
-        return export_errors, export_ecl
-
     internal_keys = get_internalized_keys(
-        config, set(user_def_batches) if user_def_batches else None
+        config=config,
+        storage_path=storage_path,
+        optimization_output_path=optimization_output_path,
+        batch_ids=set(config.batches) if config.batches else None,
     )
 
-    extra_keys = set(user_def_kw).difference(set(internal_keys))
+    extra_keys = set(config.keywords).difference(set(internal_keys))
     if extra_keys:
         export_ecl = False
         export_errors.append(
             f"Non-internalized ecl keys selected for export '{' '.join(extra_keys)}'."
             " in order to internalize missing keywords "
-            f"run 'everest load {config.config_file}'. "
+            f"run 'everest load <config_file>'. "
             "Only optimization data will be exported."
         )
 
     return export_errors, export_ecl
 
 
-def export(config: EverestConfig, export_ecl=True, progress_callback=lambda _: None):
+def export_data(
+    export_config: Optional[ExportConfig],
+    output_dir: str,
+    data_file: Optional[str],
+    export_ecl=True,
+    progress_callback=lambda _: None,
+):
     """Export everest data into a pandas dataframe. If the config specifies
     a data_file and @export_ecl is True, simulation data is included. When
     exporting simulation data, only keywords matching elements in @ecl_keywords
@@ -260,23 +267,28 @@ def export(config: EverestConfig, export_ecl=True, progress_callback=lambda _: N
     ecl_keywords = None
     # If user exports with a config file that has the SKIP_EXPORT
     # set to true export nothing
-    if config.export is not None:
-        if config.export.skip_export or config.export.batches == []:
+    if export_config is not None:
+        if export_config.skip_export or export_config.batches == []:
             return pd.DataFrame([])
 
-        ecl_keywords = config.export.keywords
-
-    metadata = _metadata(config)
-    data_file = config.model.data_file
+        ecl_keywords = export_config.keywords
+    optimization_output_dir = os.path.join(
+        os.path.abspath(output_dir), "optimization_output"
+    )
+    metadata = export_metadata(export_config, optimization_output_dir)
     if data_file is None or not export_ecl:
         return pd.DataFrame(metadata)
 
-    data = _load_simulation_data(config, metadata, progress_callback=progress_callback)
+    data = load_simulation_data(
+        output_path=output_dir,
+        metadata=metadata,
+        progress_callback=progress_callback,
+    )
 
     if ecl_keywords is not None:
         keywords = tuple(ecl_keywords)
-        # NOTE: Some of these keywords are necessary for a success full export,
-        # should not leave this to the user..
+        # NOTE: Some of these keywords are necessary to export successfully,
+        # we should not leave this to the user
         keywords += tuple(pd.DataFrame(metadata).columns)
         keywords += tuple(MetaDataColumnNames.get_all())
         keywords_set = set(keywords)
@@ -285,12 +297,12 @@ def export(config: EverestConfig, export_ecl=True, progress_callback=lambda _: N
     return data
 
 
-def _load_simulation_data(
-    config: EverestConfig, metadata: List[dict], progress_callback=lambda _: None
+def load_simulation_data(
+    output_path: str, metadata: List[dict], progress_callback=lambda _: None
 ):
     """Export simulations to a pandas DataFrame
-    @config the case configuration
-    @tags is a one ora a list of dictionaries. Keys from the dictionary become
+    @output_path optimization output folder path.
+    @metadata is a one ora a list of dictionaries. Keys from the dictionary become
     columns in the resulting dataframe. The values from the dictionary are
     assigned to those columns for the corresponding simulation.
     If a column is defined for some simulations but not for others, the value
@@ -310,8 +322,7 @@ def _load_simulation_data(
       4   2     pi  True  sim_2_row_0...
       5   2     pi  True  sim_3_row_0...
     """
-    assert config.output_dir is not None  # avoiding mypy error
-    ens_path = os.path.join(config.output_dir, STORAGE_DIR)
+    ens_path = os.path.join(output_path, STORAGE_DIR)
     with open_storage(ens_path, "r") as storage:
         # pylint: disable=unnecessary-lambda-assignment
         def load_batch_by_id():

@@ -114,11 +114,11 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
         self.everest_config, status=ServerStatus.running
     ),
 )
-@patch("everest.detached.jobs.everserver.validate_export", return_value=([], False))
 @patch(
-    "everest.detached.jobs.everserver.export_to_csv",
-    side_effect=partial(check_status, status=ServerStatus.exporting_to_csv),
+    "everest.detached.jobs.everserver.check_for_errors",
+    return_value=([], False),
 )
+@patch("everest.detached.jobs.everserver.export_to_csv")
 def test_everserver_status_running_complete(
     _1, _2, _3, _4, _5, _6, _7, _8, _9, copy_math_func_test_data_to_tmp
 ):
