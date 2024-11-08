@@ -8,7 +8,7 @@ from everest import filter_data
 from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
-from everest.export import export_data
+from everest.export import check_for_errors, export_data
 from tests.everest.utils import create_cached_mocked_test_case, relpath
 
 CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
@@ -321,7 +321,8 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     # Test error when user defines an empty list for the eclipse keywords
     config.export = ExportConfig()
     config.export.keywords = []
-    errors, export_ecl = config.export.check_for_errors(
+    errors, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -334,7 +335,8 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     # Test error when user defines an empty list for the eclipse keywords
     # and empty list of for batches to export
     config.export.batches = []
-    errors, export_ecl = config.export.check_for_errors(
+    errors, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -348,7 +350,8 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     # only keywords that represent a subset of already internalized keys
     config.export.keywords = ["FOPT"]
     config.export.batches = None
-    errors, export_ecl = config.export.check_for_errors(
+    errors, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -357,7 +360,8 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
 
     non_int_key = "STANGE_KEY"
     config.export.keywords = [non_int_key, "FOPT"]
-    errors, export_ecl = config.export.check_for_errors(
+    errors, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -377,7 +381,8 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     # them from the list of batches selected for export.
     non_valid_batch = 42
     config.export = ExportConfig(batches=[0, non_valid_batch])
-    errors, export_ecl = config.export.check_for_errors(
+    errors, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,

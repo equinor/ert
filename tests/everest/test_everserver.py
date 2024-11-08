@@ -115,7 +115,7 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     ),
 )
 @patch(
-    "everest.config.export_config.ExportConfig.check_for_errors",
+    "everest.detached.jobs.everserver.check_for_errors",
     return_value=([], False),
 )
 @patch("everest.detached.jobs.everserver.export_to_csv")

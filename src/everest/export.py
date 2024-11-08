@@ -1,16 +1,14 @@
 import os
 import re
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
-
-if TYPE_CHECKING:
-    from everest.config import ExportConfig
+from everest.config import ExportConfig
 from everest.strings import STORAGE_DIR
 
 if sys.version_info < (3, 11):
@@ -75,7 +73,7 @@ def available_batches(optimization_output_dir: str) -> Set[int]:
     return {data.batch for data in snapshot.simulation_data}
 
 
-def export_metadata(config: Optional["ExportConfig"], optimization_output_dir: str):
+def export_metadata(config: Optional[ExportConfig], optimization_output_dir: str):
     discard_gradient = True
     discard_rejected = True
     batches = None
@@ -155,7 +153,7 @@ def export_metadata(config: Optional["ExportConfig"], optimization_output_dir: s
 
 
 def get_internalized_keys(
-    config: "ExportConfig",
+    config: ExportConfig,
     storage_path: str,
     optimization_output_path: str,
     batch_ids: Optional[Set[int]] = None,
@@ -180,6 +178,123 @@ def get_internalized_keys(
                 )
 
     return internal_keys
+
+
+def check_for_errors(
+    config: ExportConfig,
+    optimization_output_path: str,
+    storage_path: str,
+    data_file_path: Optional[str],
+):
+    """
+    Checks for possible errors when attempting to export current optimization
+    case.
+    """
+    export_ecl = True
+    export_errors: List[str] = []
+
+    if config.batches:
+        _available_batches = available_batches(optimization_output_path)
+        for batch in set(config.batches).difference(_available_batches):
+            export_errors.append(
+                "Batch {} not found in optimization "
+                "results. Skipping for current export."
+                "".format(batch)
+            )
+        config.batches = list(set(config.batches).intersection(_available_batches))
+
+    if config.batches == []:
+        export_errors.append(
+            "No batches selected for export. "
+            "Only optimization data will be exported."
+        )
+        return export_errors, False
+
+    if not data_file_path:
+        export_ecl = False
+        export_errors.append(
+            "No data file found in config." "Only optimization data will be exported."
+        )
+
+    # If no user defined keywords are present it is no longer possible to check
+    # availability in internal storage
+    if config.keywords is None:
+        return export_errors, export_ecl
+
+    if not config.keywords:
+        export_ecl = False
+        export_errors.append(
+            "No eclipse keywords selected for export. Only"
+            " optimization data will be exported."
+        )
+
+    internal_keys = get_internalized_keys(
+        config=config,
+        storage_path=storage_path,
+        optimization_output_path=optimization_output_path,
+        batch_ids=set(config.batches) if config.batches else None,
+    )
+
+    extra_keys = set(config.keywords).difference(set(internal_keys))
+    if extra_keys:
+        export_ecl = False
+        export_errors.append(
+            f"Non-internalized ecl keys selected for export '{' '.join(extra_keys)}'."
+            " in order to internalize missing keywords "
+            f"run 'everest load <config_file>'. "
+            "Only optimization data will be exported."
+        )
+
+    return export_errors, export_ecl
+
+
+def export_data(
+    export_config: Optional[ExportConfig],
+    output_dir: str,
+    data_file: Optional[str],
+    export_ecl=True,
+    progress_callback=lambda _: None,
+):
+    """Export everest data into a pandas dataframe. If the config specifies
+    a data_file and @export_ecl is True, simulation data is included. When
+    exporting simulation data, only keywords matching elements in @ecl_keywords
+    are exported. Note that wildcards are allowed.
+
+    @progress_callback will be called with a number between 0 and 1 indicating
+    the fraction of batches that has been loaded.
+    """
+
+    ecl_keywords = None
+    # If user exports with a config file that has the SKIP_EXPORT
+    # set to true export nothing
+    if export_config is not None:
+        if export_config.skip_export or export_config.batches == []:
+            return pd.DataFrame([])
+
+        ecl_keywords = export_config.keywords
+    optimization_output_dir = os.path.join(
+        os.path.abspath(output_dir), "optimization_output"
+    )
+    metadata = export_metadata(export_config, optimization_output_dir)
+    if data_file is None or not export_ecl:
+        return pd.DataFrame(metadata)
+
+    data = load_simulation_data(
+        output_path=output_dir,
+        metadata=metadata,
+        progress_callback=progress_callback,
+    )
+
+    if ecl_keywords is not None:
+        keywords = tuple(ecl_keywords)
+        # NOTE: Some of these keywords are necessary to export successfully,
+        # we should not leave this to the user
+        keywords += tuple(pd.DataFrame(metadata).columns)
+        keywords += tuple(MetaDataColumnNames.get_all())
+        keywords_set = set(keywords)
+        data = filter_data(data, keywords_set)
+
+    return data
 
 
 def load_simulation_data(
@@ -246,54 +361,5 @@ def load_simulation_data(
         on=[MetaDataColumnNames.BATCH, MetaDataColumnNames.SIMULATION],
         sort=False,
     )
-
-    return data
-
-
-def export_data(
-    export_config: Optional["ExportConfig"],
-    output_dir: str,
-    data_file: Optional[str],
-    export_ecl=True,
-    progress_callback=lambda _: None,
-):
-    """Export everest data into a pandas dataframe. If the config specifies
-    a data_file and @export_ecl is True, simulation data is included. When
-    exporting simulation data, only keywords matching elements in @ecl_keywords
-    are exported. Note that wildcards are allowed.
-
-    @progress_callback will be called with a number between 0 and 1 indicating
-    the fraction of batches that has been loaded.
-    """
-
-    ecl_keywords = None
-    # If user exports with a config file that has the SKIP_EXPORT
-    # set to true export nothing
-    if export_config is not None:
-        if export_config.skip_export or export_config.batches == []:
-            return pd.DataFrame([])
-
-        ecl_keywords = export_config.keywords
-    optimization_output_dir = os.path.join(
-        os.path.abspath(output_dir), "optimization_output"
-    )
-    metadata = export_metadata(export_config, optimization_output_dir)
-    if data_file is None or not export_ecl:
-        return pd.DataFrame(metadata)
-
-    data = load_simulation_data(
-        output_path=output_dir,
-        metadata=metadata,
-        progress_callback=progress_callback,
-    )
-
-    if ecl_keywords is not None:
-        keywords = tuple(ecl_keywords)
-        # NOTE: Some of these keywords are necessary to export successfully,
-        # we should not leave this to the user
-        keywords += tuple(pd.DataFrame(metadata).columns)
-        keywords += tuple(MetaDataColumnNames.get_all())
-        keywords_set = set(keywords)
-        data = filter_data(data, keywords_set)
 
     return data

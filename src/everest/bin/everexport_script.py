@@ -7,6 +7,7 @@ from functools import partial
 from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
+from everest.export import check_for_errors
 from everest.strings import EVEREST
 
 
@@ -30,7 +31,8 @@ def everexport_entry(args=None):
         batch_list = [int(item) for item in options.batches]
         config.export.batches = batch_list
 
-    err_msgs, export_ecl = config.export.check_for_errors(
+    err_msgs, export_ecl = check_for_errors(
+        config=config.export,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,

@@ -104,7 +104,7 @@ def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
 
 
 @patch(
-    "everest.config.export_config.ExportConfig.check_for_errors",
+    "everest.bin.everexport_script.check_for_errors",
     side_effect=validate_export_mock,
 )
 @patch("everest.bin.utils.export_data")
