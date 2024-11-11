@@ -76,7 +76,7 @@ dependencies = [
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
-    "websockets",
+    "websockets < 14",
     "xarray",
     "xtgeo >= 3.3.0",
 ]
