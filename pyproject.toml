@@ -58,6 +58,7 @@ dependencies = [
     "python-dateutil",
     "python-multipart",  # extra dependency for fastapi
     "pyyaml",
+    "pyzmq",
     "qtpy",
     "requests",
     "resfo",
@@ -68,7 +69,6 @@ dependencies = [
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
-    "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
 ]

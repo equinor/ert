@@ -413,8 +413,8 @@ def no_cert_in_test(monkeypatch):
         def __init__(self, *args, **kwargs):
             if "use_token" not in kwargs:
                 kwargs["use_token"] = False
-            if "generate_cert" not in kwargs:
-                kwargs["generate_cert"] = False
+            if sys.platform != "linux":
+                kwargs["use_ipc_protocol"] = True
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)

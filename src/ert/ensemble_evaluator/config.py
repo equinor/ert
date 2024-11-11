@@ -1,14 +1,13 @@
 import ipaddress
 import logging
 import os
-import pathlib
 import socket
-import ssl
-import tempfile
+import uuid
 import warnings
 from base64 import b64encode
 from datetime import UTC, datetime, timedelta
 
+import zmq
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -95,54 +94,32 @@ def _generate_certificate(
 
 
 class EvaluatorServerConfig:
-    """
-    This class is responsible for identifying a host:port-combo and then provide
-    low-level sockets bound to said combo. The problem is that these sockets may
-    be closed by underlying code, while the EvaluatorServerConfig-instance is
-    still alive and expected to provide a bound low-level socket. Thus we risk
-    that the host:port is hijacked by another process in the meantime.
-
-    To prevent this, we keep a handle to the bound socket and every time
-    a socket is requested we return a duplicate of this. The duplicate will be
-    bound similarly to the handle, but when closed the handle stays open and
-    holds the port.
-
-    In particular, the websocket-server closes the websocket when exiting a
-    context:
-
-       https://github.com/aaugustin/websockets/blob/c439f1d52aafc05064cc11702d1c3014046799b0/src/websockets/legacy/server.py#L890
-
-    and digging into the cpython-implementation of asyncio, we see that causes
-    the asyncio code to also close the underlying socket:
-
-       https://github.com/python/cpython/blob/b34dd58fee707b8044beaf878962a6fa12b304dc/Lib/asyncio/selector_events.py#L607-L611
-
-    """
-
     def __init__(
         self,
         custom_port_range: range | None = None,
         use_token: bool = True,
-        generate_cert: bool = True,
         custom_host: str | None = None,
+        use_ipc_protocol: bool = True,
     ) -> None:
-        self._socket_handle = find_available_socket(
-            custom_range=custom_port_range, custom_host=custom_host
-        )
-        host, port = self._socket_handle.getsockname()
-        self.protocol = "wss" if generate_cert else "ws"
-        self.url = f"{self.protocol}://{host}:{port}"
-        self.client_uri = f"{self.url}/client"
-        self.dispatch_uri = f"{self.url}/dispatch"
-        if generate_cert:
-            cert, key, pw = _generate_certificate(host)
-        else:
-            cert, key, pw = None, None, None
-        self.cert = cert
-        self._key: bytes | None = key
-        self._key_pw = pw
+        self.host: str | None = None
+        self.router_port: int | None = None
+        self.url = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
+        self.token: str | None = None
 
-        self.token = _generate_authentication() if use_token else None
+        self.server_public_key: bytes | None = None
+        self.server_secret_key: bytes | None = None
+        if not use_ipc_protocol:
+            self._socket_handle = find_available_socket(
+                custom_range=custom_port_range,
+                custom_host=custom_host,
+                will_close_then_reopen_socket=True,
+            )
+            self.host, self.router_port = self._socket_handle.getsockname()
+            self.url = f"tcp://{self.host}:{self.router_port}"
+
+        if use_token:
+            self.server_public_key, self.server_secret_key = zmq.curve_keypair()
+            self.token = self.server_public_key.decode("utf-8")
 
     def get_socket(self) -> socket.socket:
         return self._socket_handle.dup()
@@ -150,25 +127,5 @@ class EvaluatorServerConfig:
     def get_connection_info(self) -> EvaluatorConnectionInfo:
         return EvaluatorConnectionInfo(
             self.url,
-            self.cert,
             self.token,
         )
-
-    def get_server_ssl_context(
-        self, protocol: int = ssl.PROTOCOL_TLS_SERVER
-    ) -> ssl.SSLContext | None:
-        if self.cert is None:
-            return None
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = pathlib.Path(tmp_dir)
-            cert_path = tmp_path / "ee.crt"
-            with open(cert_path, "w", encoding="utf-8") as filehandle_1:
-                filehandle_1.write(self.cert)
-
-            key_path = tmp_path / "ee.key"
-            if self._key is not None:
-                with open(key_path, "wb") as filehandle_2:
-                    filehandle_2.write(self._key)
-            context = ssl.SSLContext(protocol=protocol)
-            context.load_cert_chain(cert_path, key_path, self._key_pw)
-            return context

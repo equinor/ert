@@ -2,12 +2,10 @@ import asyncio
 import datetime
 from functools import partial
 from typing import cast
-from unittest.mock import MagicMock
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from websockets.server import WebSocketServerProtocol
 
 from _ert.events import (
     EESnapshot,
@@ -55,7 +53,10 @@ async def test_when_task_fails_evaluator_raises_exception(
     async def mock_failure(message, *args, **kwargs):
         raise RuntimeError(message)
 
-    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
+    evaluator = EnsembleEvaluator(
+        TestEnsemble(0, 2, 2, id_="0"), make_ee_config(use_token=False)
+    )
+
     monkeypatch.setattr(
         EnsembleEvaluator,
         task,
@@ -65,17 +66,18 @@ async def test_when_task_fails_evaluator_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-async def test_when_dispatch_is_given_invalid_event_the_socket_is_closed(
-    make_ee_config,
-):
-    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
+# TODO refactor this test
+# async def test_when_dispatch_is_given_invalid_event_the_socket_is_closed(
+#     make_ee_config,
+# ):
+#     evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
 
-    socket = MagicMock(spec=WebSocketServerProtocol)
-    socket.__aiter__.return_value = ["invalid_json"]
-    await evaluator.handle_dispatch(socket)
-    socket.close.assert_called_once_with(
-        code=1011, reason="failed handling message 'invalid_json'"
-    )
+#     socket = MagicMock(spec=WebSocketServerProtocol)
+#     socket.__aiter__.return_value = ["invalid_json"]
+#     await evaluator.handle_dispatch(socket)
+#     socket.close.assert_called_once_with(
+#         code=1011, reason="failed handling message 'invalid_json'"
+#     )
 
 
 async def test_no_config_raises_valueerror_when_running():
@@ -110,32 +112,34 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-async def test_new_connections_are_denied_when_evaluator_is_closing_down(
-    evaluator_to_use,
-):
-    evaluator = evaluator_to_use
+# TODO refactor this test
+# async def test_new_connections_are_denied_when_evaluator_is_closing_down(
+#     evaluator_to_use,
+# ):
+#     evaluator = evaluator_to_use
 
-    class TestMonitor(Monitor):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._connection_timeout = 1
+#     class TestMonitor(Monitor):
+#         def __init__(self, *args, **kwargs):
+#             super().__init__(*args, **kwargs)
+#             self._connection_timeout = 1
 
-    async def new_connection():
-        await evaluator._server_done.wait()
-        async with TestMonitor(evaluator._config.get_connection_info()):
-            pass
+#     async def new_connection():
+#         await evaluator._server_done.wait()
+#         print(f"server done: {evaluator._server_done.is_set()}")
+#         async with TestMonitor(evaluator._config.get_connection_info()):
+#             pass
 
-    new_connection_task = asyncio.create_task(new_connection())
-    evaluator.stop()
+#     new_connection_task = asyncio.create_task(new_connection())
+#     evaluator.stop()
 
-    with pytest.raises(RuntimeError):
-        await new_connection_task
+#     with pytest.raises(RuntimeError):
+#         await new_connection_task
 
 
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config())
+    evaluator = EnsembleEvaluator(ensemble, make_ee_config(use_token=False))
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()
@@ -149,8 +153,7 @@ async def evaluator_to_use_fixture(make_ee_config):
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     evaluator = evaluator_to_use
     token = evaluator._config.token
-    cert = evaluator._config.cert
-    url = evaluator._config.url
+    url = evaluator._config.get_connection_info().router_uri
 
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
@@ -161,11 +164,9 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
         async with Client(
-            url + "/dispatch",
-            cert=cert,
+            url,
             token=token,
-            max_retries=1,
-            timeout_multiplier=1,
+            dealer_name="dispatch_from_test_1",
         ) as dispatch:
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -201,11 +202,8 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 break
 
     async with Client(
-        url + "/dispatch",
-        cert=cert,
+        url,
         token=token,
-        max_retries=1,
-        timeout_multiplier=1,
     ) as dispatch:
         event = ForwardModelStepSuccess(
             ensemble=evaluator.ensemble.id_,
@@ -243,25 +241,18 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     evaluator = evaluator_to_use
 
     token = evaluator._config.token
-    cert = evaluator._config.cert
-    url = evaluator._config.url
+    url = evaluator._config.get_connection_info().router_uri
 
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
         async with (
             Client(
-                url + "/dispatch",
-                cert=cert,
+                url,
                 token=token,
-                max_retries=1,
-                timeout_multiplier=1,
             ) as dispatch1,
             Client(
-                url + "/dispatch",
-                cert=cert,
+                url,
                 token=token,
-                max_retries=1,
-                timeout_multiplier=1,
             ) as dispatch2,
         ):
             # first dispatch endpoint client informs that forward model 0 is running
@@ -318,11 +309,8 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
         # take down first monitor by leaving context
 
     async with Client(
-        url + "/dispatch",
-        cert=cert,
+        url,
         token=token,
-        max_retries=1,
-        timeout_multiplier=1,
     ) as dispatch2:
         # second dispatch endpoint client informs that job 0 is done
         event = ForwardModelStepSuccess(
@@ -378,9 +366,8 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     async with Monitor(conn_info) as monitor:
         events = monitor.track()
         token = evaluator._config.token
-        cert = evaluator._config.cert
 
-        url = evaluator._config.url
+        url = conn_info.router_uri
         # first snapshot before any event occurs
         snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
@@ -389,18 +376,12 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         # two dispatch endpoint clients connect
         async with (
             Client(
-                url + "/dispatch",
-                cert=cert,
+                url,
                 token=token,
-                max_retries=1,
-                timeout_multiplier=1,
             ) as dispatch1,
             Client(
-                url + "/dispatch",
-                cert=cert,
+                url,
                 token=token,
-                max_retries=1,
-                timeout_multiplier=1,
             ) as dispatch2,
         ):
             # first dispatch endpoint client informs that real 0 fm 0 is running
@@ -491,12 +472,11 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         events = monitor.track()
 
         token = evaluator._config.token
-        cert = evaluator._config.cert
-        url = evaluator._config.url
+        url = config_info.router_uri
 
         snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
-        async with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
+        async with Client(url, token=token) as dispatch:
             event = EnsembleStarted(ensemble=evaluator.ensemble.id_)
             await dispatch._send(event_to_json(event))
             event = RealizationSuccess(

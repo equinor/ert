@@ -188,7 +188,6 @@ def test_tracking(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",
         use_token=False,
-        generate_cert=False,
     )
 
     thread = ErtThread(
@@ -279,7 +278,6 @@ def test_setting_env_context_during_run(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",
         use_token=False,
-        generate_cert=False,
     )
     queue = Events()
     model = create_model(
@@ -356,7 +354,6 @@ def test_run_information_present_as_env_var_in_fm_context(
         custom_port_range=range(1024, 65535),
         custom_host="127.0.0.1",
         use_token=False,
-        generate_cert=False,
     )
     queue = Events()
     model = create_model(ert_config, storage, parsed, queue)
