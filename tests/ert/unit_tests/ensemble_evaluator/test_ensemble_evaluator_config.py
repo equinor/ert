@@ -11,16 +11,12 @@ def test_load_config(unused_tcp_port):
     )
     expected_host = "127.0.0.1"
     expected_port = unused_tcp_port
-    expected_url = f"wss://{expected_host}:{expected_port}"
-    expected_client_uri = f"{expected_url}/client"
-    expected_dispatch_uri = f"{expected_url}/dispatch"
+    expected_url = f"tcp://{expected_host}:{expected_port}"
 
     url = urlparse(serv_config.url)
     assert url.hostname == expected_host
     assert url.port == expected_port
     assert serv_config.url == expected_url
-    assert serv_config.client_uri == expected_client_uri
-    assert serv_config.dispatch_uri == expected_dispatch_uri
     assert serv_config.token is not None
     assert serv_config.cert is not None
     sock = serv_config.get_socket()

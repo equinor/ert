@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import logging
 import queue
-import threading
-from datetime import datetime, timedelta
+import time
 from pathlib import Path
 from typing import Final, Union
 
@@ -16,11 +15,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     event_to_json,
 )
-from _ert.forward_model_runner.client import (
-    Client,
-    ClientConnectionClosedOK,
-    ClientConnectionError,
-)
+from _ert.forward_model_runner.client import Client, ClientConnectionError
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
@@ -78,19 +73,7 @@ class Event(Reporter):
         self._real_id = None
         self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
         self._event_publisher_thread = ErtThread(target=self._event_publisher)
-        self._timeout_timestamp = None
-        self._timestamp_lock = threading.Lock()
-        # seconds to timeout the reporter the thread after Finish() was received
-        self._reporter_timeout = 60
-
-    def stop(self) -> None:
-        self._event_queue.put(Event._sentinel)
-        with self._timestamp_lock:
-            self._timeout_timestamp = datetime.now() + timedelta(
-                seconds=self._reporter_timeout
-            )
-        if self._event_publisher_thread.is_alive():
-            self._event_publisher_thread.join()
+        self._done = False
 
     def _event_publisher(self):
         logger.debug("Publishing event.")
@@ -99,32 +82,30 @@ class Event(Reporter):
             token=self._token,
             cert=self._cert,
         ) as client:
-            event = None
-            while True:
-                with self._timestamp_lock:
-                    if (
-                        self._timeout_timestamp is not None
-                        and datetime.now() > self._timeout_timestamp
-                    ):
-                        self._timeout_timestamp = None
-                        break
-                if event is None:
-                    # if we successfully sent the event we can proceed
-                    # to next one
+            events = []
+            last_sent_time = time.time()
+            while not self._done:
+                try:
                     event = self._event_queue.get()
                     if event is self._sentinel:
+                        self._done = True
+                        if events:
+                            client.send(events)
+                            events.clear()
                         break
-                try:
-                    client.send(event_to_json(event))
-                    event = None
-                except ClientConnectionError as exception:
-                    # Possible intermittent failure, we retry sending the event
-                    logger.error(str(exception))
-                except ClientConnectionClosedOK as exception:
-                    # The receiving end has closed the connection, we stop
-                    # sending events
-                    logger.debug(str(exception))
-                    break
+                    events.append(event_to_json(event))
+
+                    current_time = time.time()
+                    if current_time - last_sent_time >= 2:
+                        if events:
+                            client.send(events)
+                            events.clear()
+                        last_sent_time = current_time
+                except ClientConnectionError as e:
+                    logger.error(f"Failed to send event: {e}")
+                except Exception as e:
+                    logger.error(f"Error while sending event: {e}")
+                    raise
 
     def report(self, msg):
         self._statemachine.transition(msg)
@@ -187,7 +168,9 @@ class Event(Reporter):
             self._dump_event(event)
 
     def _finished_handler(self, _):
-        self.stop()
+        self._event_queue.put(Event._sentinel)
+        if self._event_publisher_thread.is_alive():
+            self._event_publisher_thread.join()
 
     def _checksum_handler(self, msg: Checksum):
         fm_checksum = ForwardModelStepChecksum(
