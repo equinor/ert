@@ -24,10 +24,9 @@ from ert.config.queue_config import (
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig, ServerConfig, SimulatorConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.strings import (
-    EVEREST,
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
     OPT_PROGRESS_ID,
@@ -35,7 +34,6 @@ from everest.strings import (
     SIM_PROGRESS_ID,
     STOP_ENDPOINT,
 )
-from everest.util import configure_logger
 
 # Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
@@ -54,35 +52,7 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
-    if server_is_running(
-        *ServerConfig.get_server_context(config.output_dir)
-    ):  # better safe than sorry
-        return
-
-    log_dir = config.log_dir
-
-    configure_logger(
-        name="res",
-        file_path=os.path.join(log_dir, "everest_server.log"),
-        log_level=logging.INFO,
-        log_to_azure=True,
-    )
-
-    configure_logger(
-        name=__name__,
-        file_path=os.path.join(log_dir, "simulations.log"),
-        log_level=logging.INFO,
-    )
-
-    try:
-        save_config_path = os.path.join(config.output_dir, config.config_file)
-        config.dump(save_config_path)
-    except (OSError, LookupError) as e:
-        logging.getLogger(EVEREST).error(
-            "Failed to save optimization config: {}".format(e)
-        )
-
-    driver = create_driver(get_server_queue_options(config))
+    driver = create_driver(get_server_queue_options(config.simulator, config.server))
     try:
         args = ["--config-file", str(config.config_path)]
         if debug:
@@ -96,13 +66,13 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     return driver
 
 
-def stop_server(config: EverestConfig, retries: int = 5):
+def stop_server(server_context: Tuple[str, str, Tuple[str, str]], retries: int = 5):
     """
     Stop server if found and it is running.
     """
     for retry in range(retries):
         try:
-            url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+            url, cert, auth = server_context
             stop_endpoint = "/".join([url, STOP_ENDPOINT])
             response = requests.post(
                 stop_endpoint,
@@ -124,18 +94,19 @@ def extract_errors_from_file(path: str):
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server(config: EverestConfig, timeout: int) -> None:
+def wait_for_server(output_dir: str, timeout: int) -> None:
     """
     Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
 
     Raise an exception when the timeout is reached.
     """
-    if not server_is_running(*ServerConfig.get_server_context(config.output_dir)):
+    everserver_status_path = ServerConfig.get_everserver_status_path(output_dir)
+    if not server_is_running(*ServerConfig.get_server_context(output_dir)):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             # Failure may occur before contact with the server is established:
-            status = everserver_status(config)
+            status = everserver_status(everserver_status_path)
             if status["status"] == ServerStatus.completed:
                 # For very small cases the optimization will finish and bring down the
                 # server before we can verify that it is running.
@@ -148,12 +119,11 @@ def wait_for_server(config: EverestConfig, timeout: int) -> None:
 
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
+            if server_is_running(*ServerConfig.get_server_context(output_dir)):
                 return
 
     # If number of retries reached and server is not running - throw exception
-    if not server_is_running(*ServerConfig.get_server_context(config.output_dir)):
-        raise RuntimeError("Failed to start server within configured timeout.")
+    raise RuntimeError("Failed to start server within configured timeout.")
 
 
 def get_opt_status(output_folder):
@@ -187,29 +157,27 @@ def get_opt_status(output_folder):
     }
 
 
-def wait_for_server_to_stop(config: EverestConfig, timeout):
+def wait_for_server_to_stop(server_context: Tuple[str, str, Tuple[str, str]], timeout):
     """
     Checks everest server has stoped _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
 
     Raise an exception when the timeout is reached.
     """
-    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
+    if server_is_running(*server_context):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if not server_is_running(
-                *ServerConfig.get_server_context(config.output_dir)
-            ):
+            if not server_is_running(*server_context):
                 return
 
     # If number of retries reached and server still running - throw exception
-    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
+    if server_is_running(*server_context):
         raise Exception("Failed to stop server within configured timeout.")
 
 
-def server_is_running(url: str, cert: bool, auth: Tuple[str, str]):
+def server_is_running(url: str, cert: str, auth: Tuple[str, str]):
     try:
         response = requests.get(
             url,
@@ -225,24 +193,16 @@ def server_is_running(url: str, cert: bool, auth: Tuple[str, str]):
     return True
 
 
-def get_optimization_status(config: EverestConfig):
-    seba_snapshot = SebaSnapshot(config.optimization_output_dir)
-    snapshot = seba_snapshot.get_snapshot(filter_out_gradient=True)
-
-    return {
-        "objective_history": snapshot.expected_single_objective,
-        "control_history": snapshot.optimization_controls,
-    }
-
-
-def start_monitor(config: EverestConfig, callback, polling_interval=5):
+def start_monitor(
+    server_context: Tuple[str, str, Tuple[str, str]], callback, polling_interval=5
+):
     """
     Checks status on Everest server and calls callback when status changes
 
     Monitoring stops when the server stops answering. It can also be
     interrupted by returning True from the callback
     """
-    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+    url, cert, auth = server_context
     sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
     opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
 
@@ -292,14 +252,17 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
 }
 
 
-def _find_res_queue_system(config: EverestConfig):
+def _find_res_queue_system(
+    simulator: Optional[SimulatorConfig],
+    server: Optional[ServerConfig],
+):
     queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
-    if config.simulator is not None:
-        queue_system_simulator = config.simulator.queue_system or queue_system_simulator
+    if simulator is not None and simulator.queue_system is not None:
+        queue_system_simulator = simulator.queue_system
 
     queue_system = queue_system_simulator
-    if config.server is not None:
-        queue_system = config.server.queue_system or queue_system
+    if server is not None:
+        queue_system = server.queue_system or queue_system
 
     if queue_system_simulator == CK.LOCAL and queue_system_simulator != queue_system:
         raise ValueError(
@@ -312,10 +275,12 @@ def _find_res_queue_system(config: EverestConfig):
     return QueueSystem(queue_system.upper())
 
 
-def get_server_queue_options(config: EverestConfig) -> QueueOptions:
-    queue_system = _find_res_queue_system(config)
-
-    ever_queue_config = config.server if config.server is not None else config.simulator
+def get_server_queue_options(
+    simulator: Optional[SimulatorConfig],
+    server: Optional[ServerConfig],
+) -> QueueOptions:
+    queue_system = _find_res_queue_system(simulator, server)
+    ever_queue_config = server if server is not None else simulator
 
     if queue_system == QueueSystem.LSF:
         queue = LsfQueueOptions(
@@ -376,17 +341,17 @@ class ServerStatusEncoder(json.JSONEncoder):
 
 
 def update_everserver_status(
-    config: EverestConfig, status: ServerStatus, message: Optional[str] = None
+    everserver_status_path: str, status: ServerStatus, message: Optional[str] = None
 ):
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
-    path = ServerConfig.get_everserver_status_path(config.output_dir)
+    path = everserver_status_path
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as outfile:
             json.dump(new_status, outfile, cls=ServerStatusEncoder)
     elif os.path.exists(path):
-        server_status = everserver_status(config)
+        server_status = everserver_status(path)
         if server_status["message"] is not None:
             if message is not None:
                 new_status["message"] = "{}\n{}".format(
@@ -398,7 +363,7 @@ def update_everserver_status(
             json.dump(new_status, outfile, cls=ServerStatusEncoder)
 
 
-def everserver_status(config: EverestConfig):
+def everserver_status(everserver_status_path: str):
     """Returns a dictionary representing the everest server status. If the
     status file is not found we assume the server has never ran before, and will
     return a status of ServerStatus.never_run
@@ -408,9 +373,8 @@ def everserver_status(config: EverestConfig):
                 'message': None
              }
     """
-    path = ServerConfig.get_everserver_status_path(config.output_dir)
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
+    if os.path.exists(everserver_status_path):
+        with open(everserver_status_path, "r", encoding="utf-8") as f:
             return json.load(f, object_hook=ServerStatusEncoder.decode)
     else:
         return {"status": ServerStatus.never_run, "message": None}

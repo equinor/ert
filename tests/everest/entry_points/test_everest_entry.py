@@ -65,10 +65,10 @@ def query_server_mock(cert, auth, endpoint):
         raise Exception("Stop! Hands in the air!")
 
 
-def run_detached_monitor_mock(
-    config, show_all_jobs=False, status=ServerStatus.completed, error=None
-):
-    update_everserver_status(config, status, message=error)
+def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
+    optimization_output = kwargs.get("optimization_output_dir")
+    path = os.path.join(optimization_output, "../detached_node_output/.session/status")
+    update_everserver_status(path, status, message=error)
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
@@ -470,7 +470,8 @@ def test_complete_status_for_normal_run(
 ):
     everest_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    status = everserver_status(status_path)
     expected_status = ServerStatus.completed
     expected_error = None
 
@@ -488,7 +489,8 @@ def test_complete_status_for_normal_run_monitor(
 ):
     monitor_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    status = everserver_status(status_path)
     expected_status = ServerStatus.completed
     expected_error = None
 

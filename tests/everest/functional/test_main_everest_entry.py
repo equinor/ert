@@ -11,7 +11,7 @@ from tests.everest.utils import (
 
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
@@ -85,7 +85,9 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
         start_everest(["everest", "run", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     assert status["status"] == ServerStatus.completed
 
@@ -102,7 +104,9 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     assert status["status"] == ServerStatus.completed
 
@@ -112,7 +116,9 @@ def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
 
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     assert status["status"] == ServerStatus.never_run
 

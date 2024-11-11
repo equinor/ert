@@ -168,10 +168,7 @@ def _find_open_port(host, lower, upper):
     raise Exception(msg)
 
 
-def _write_hostfile(config: EverestConfig, host, port, cert, auth):
-    # host_file_path = config.hostfile_path
-    host_file_path = ServerConfig.get_hostfile_path(config.output_dir)
-
+def _write_hostfile(host_file_path, host, port, cert, auth):
     if not os.path.exists(os.path.dirname(host_file_path)):
         os.makedirs(os.path.dirname(host_file_path))
     data = {
@@ -186,10 +183,11 @@ def _write_hostfile(config: EverestConfig, host, port, cert, auth):
         f.write(json_string)
 
 
-def _configure_loggers(config: EverestConfig):
-    detached_node_dir = ServerConfig.get_detached_node_dir(config.output_dir)
-    everest_logs_dir = config.log_dir
-
+def _configure_loggers(
+    detached_node_dir: str,
+    everest_logs_dir: str,
+    logging_level: int,
+):
     configure_logger(
         name="res",
         file_path=os.path.join(detached_node_dir, "simulations.log"),
@@ -205,20 +203,20 @@ def _configure_loggers(config: EverestConfig):
     configure_logger(
         name=EVEREST,
         file_path=os.path.join(everest_logs_dir, "everest.log"),
-        log_level=config.logging_level,
+        log_level=logging_level,
         log_to_azure=True,
     )
 
     configure_logger(
         name="forward_models",
         file_path=os.path.join(everest_logs_dir, "forward_models.log"),
-        log_level=config.logging_level,
+        log_level=logging_level,
     )
 
     configure_logger(
         name="ropt",
         file_path=os.path.join(everest_logs_dir, "ropt.log"),
-        log_level=config.logging_level,
+        log_level=logging_level,
     )
 
 
@@ -230,10 +228,17 @@ def main():
     config = EverestConfig.load_file(options.config_file)
     if options.debug:
         config.logging_level = "debug"
+    detached_dir = ServerConfig.get_detached_node_dir(config.output_dir)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    host_file = ServerConfig.get_hostfile_path(config.output_dir)
 
     try:
-        _configure_loggers(config)
-        update_everserver_status(config, ServerStatus.starting)
+        _configure_loggers(
+            detached_node_dir=detached_dir,
+            everest_logs_dir=config.log_dir,
+            logging_level=config.logging_level,
+        )
+        update_everserver_status(status_path, ServerStatus.starting)
         logging.getLogger(EVEREST).info(version_info())
         logging.getLogger(EVEREST).info(
             "Output directory: {}".format(config.output_dir)
@@ -241,10 +246,12 @@ def main():
         logging.getLogger(EVEREST).debug(str(options))
 
         authentication = _generate_authentication()
-        cert_path, key_path, key_pw = _generate_certificate(config)
+        cert_path, key_path, key_pw = _generate_certificate(
+            ServerConfig.get_certificate_dir(config.output_dir)
+        )
         host = get_machine_name()
         port = _find_open_port(host, lower=5000, upper=5800)
-        _write_hostfile(config, host, port, cert_path, authentication)
+        _write_hostfile(host_file, host, port, cert_path, authentication)
 
         shared_data = {
             SIM_PROGRESS_ENDPOINT: {},
@@ -268,12 +275,14 @@ def main():
         everserver_instance.start()
     except:
         update_everserver_status(
-            config, ServerStatus.failed, message=traceback.format_exc()
+            status_path,
+            ServerStatus.failed,
+            message=traceback.format_exc(),
         )
         return
 
     try:
-        update_everserver_status(config, ServerStatus.running)
+        update_everserver_status(status_path, ServerStatus.running)
 
         run_model = EverestRunModel.create(
             config,
@@ -291,22 +300,26 @@ def main():
 
         status, message = _get_optimization_status(run_model.exit_code, shared_data)
         if status != ServerStatus.completed:
-            update_everserver_status(config, status, message)
+            update_everserver_status(status_path, status, message)
             return
     except:
         if shared_data[STOP_ENDPOINT]:
             update_everserver_status(
-                config, ServerStatus.stopped, message="Optimization aborted."
+                status_path,
+                ServerStatus.stopped,
+                message="Optimization aborted.",
             )
         else:
             update_everserver_status(
-                config, ServerStatus.failed, message=traceback.format_exc()
+                status_path,
+                ServerStatus.failed,
+                message=traceback.format_exc(),
             )
         return
 
     try:
         # Exporting data
-        update_everserver_status(config, ServerStatus.exporting_to_csv)
+        update_everserver_status(status_path, ServerStatus.exporting_to_csv)
 
         if config.export is not None:
             err_msgs, export_ecl = check_for_errors(
@@ -326,11 +339,12 @@ def main():
         )
     except:
         update_everserver_status(
-            config, ServerStatus.failed, message=traceback.format_exc()
+            status_path,
+            ServerStatus.failed,
+            message=traceback.format_exc(),
         )
         return
-
-    update_everserver_status(config, ServerStatus.completed, message=message)
+    update_everserver_status(status_path, ServerStatus.completed, message=message)
 
 
 def _get_optimization_status(exit_code, shared_data):
@@ -375,7 +389,7 @@ def _failed_realizations_messages(shared_data):
     return messages
 
 
-def _generate_certificate(config: EverestConfig):
+def _generate_certificate(cert_folder: str):
     """Generate a private key and a certificate signed with it
 
     Both the certificate and the key are written to files in the folder given
@@ -416,7 +430,6 @@ def _generate_certificate(config: EverestConfig):
     )
 
     # Write certificate and key to disk
-    cert_folder = ServerConfig.get_certificate_dir(config.output_dir)
     makedirs_if_needed(cert_folder)
     cert_path = os.path.join(cert_folder, cert_name + ".crt")
     with open(cert_path, "wb") as f:

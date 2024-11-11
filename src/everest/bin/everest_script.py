@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import signal
 import threading
 from functools import partial
@@ -17,6 +18,7 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
+from everest.strings import EVEREST
 from everest.util import (
     makedirs_if_needed,
     version_info,
@@ -86,8 +88,10 @@ def _build_args_parser():
 
 async def run_everest(options):
     logger = logging.getLogger("everest_main")
-    server_state = everserver_status(options.config)
-
+    everserver_status_path = ServerConfig.get_everserver_status_path(
+        options.config.output_dir
+    )
+    server_state = everserver_status(everserver_status_path)
     if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
         config_file = options.config.config_file
         print(
@@ -105,13 +109,26 @@ async def run_everest(options):
             logger.info("Everest forward model contains job {}".format(job_name))
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
+        try:
+            output_dir = options.config.output_dir
+            config_file = options.config.config_file
+            save_config_path = os.path.join(output_dir, config_file)
+            options.config.dump(save_config_path)
+        except (OSError, LookupError) as e:
+            logging.getLogger(EVEREST).error(
+                "Failed to save optimization config: {}".format(e)
+            )
         await start_server(options.config, options.debug)
         print("Waiting for server ...")
-        wait_for_server(options.config, timeout=600)
+        wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")
-        run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
+        run_detached_monitor(
+            server_context=ServerConfig.get_server_context(options.config.output_dir),
+            optimization_output_dir=options.config.optimization_output_dir,
+            show_all_jobs=options.show_all_jobs,
+        )
 
-        server_state = everserver_status(options.config)
+        server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
             logger.error("Everest run failed with: {}".format(server_state_info))
@@ -120,7 +137,11 @@ async def run_everest(options):
             logger.info("Everest run finished with: {}".format(server_state_info))
             print(server_state_info)
     else:
-        report_on_previous_run(options.config)
+        report_on_previous_run(
+            config_file=options.config.config_file,
+            everserver_status_path=everserver_status_path,
+            optimization_output_dir=options.config.optimization_output_dir,
+        )
 
 
 if __name__ == "__main__":

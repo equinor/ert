@@ -62,7 +62,7 @@ as RMS and Eclipse.
         return f"https://{server_info['host']}:{server_info['port']}"
 
     @staticmethod
-    def get_server_context(output_dir: str) -> Tuple[str, bool, Tuple[str, str]]:
+    def get_server_context(output_dir: str) -> Tuple[str, str, Tuple[str, str]]:
         """Returns a tuple with
         - url of the server
         - path to the .cert file

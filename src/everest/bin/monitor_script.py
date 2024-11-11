@@ -61,11 +61,16 @@ def _build_args_parser():
 
 def monitor_everest(options):
     config: EverestConfig = options.config
-    server_state = everserver_status(options.config)
-
-    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
-        run_detached_monitor(config, show_all_jobs=options.show_all_jobs)
-        server_state = everserver_status(config)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    server_state = everserver_status(status_path)
+    server_context = ServerConfig.get_server_context(config.output_dir)
+    if server_is_running(*server_context):
+        run_detached_monitor(
+            server_context=server_context,
+            optimization_output_dir=config.optimization_output_dir,
+            show_all_jobs=options.show_all_jobs,
+        )
+        server_state = everserver_status(status_path)
         if server_state["status"] == ServerStatus.failed:
             raise SystemExit(server_state["message"])
         if server_state["message"] is not None:
@@ -78,7 +83,11 @@ def monitor_everest(options):
             f"  `everest run {config_file}`"
         )
     else:
-        report_on_previous_run(config)
+        report_on_previous_run(
+            config_file=config.config_file,
+            everserver_status_path=status_path,
+            optimization_output_dir=config.optimization_output_dir,
+        )
 
 
 if __name__ == "__main__":

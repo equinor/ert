@@ -11,7 +11,7 @@ import decorator
 import pytest
 
 from everest.bin.main import start_everest
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.jobs import script_names
 from everest.util import has_opm
@@ -142,6 +142,8 @@ def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
         monkeypatch.chdir("mocked_run")
         start_everest(["everest", "run", config_file])
         config = EverestConfig.load_file(config_file)
-        status = everserver_status(config)
+        status = everserver_status(
+            ServerConfig.get_everserver_status_path(config.output_dir)
+        )
         assert status["status"] == ServerStatus.completed
     return cache_path / "mocked_run"
