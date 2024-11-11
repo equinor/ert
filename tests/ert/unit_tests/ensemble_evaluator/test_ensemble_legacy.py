@@ -1,11 +1,9 @@
 import asyncio
-import contextlib
 import os
 from contextlib import asynccontextmanager
 from unittest.mock import MagicMock
 
 import pytest
-from websockets.exceptions import ConnectionClosed
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
 from ert.config import QueueConfig
@@ -44,11 +42,10 @@ async def test_run_legacy_ensemble(
             custom_port_range=custom_port_range,
             custom_host="127.0.0.1",
             use_token=False,
-            generate_cert=False,
         )
         async with (
             evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config) as monitor,
+            Monitor(config.get_connection_info()) as monitor,
         ):
             async for event in monitor.track():
                 if type(event) in {
@@ -80,29 +77,25 @@ async def test_run_and_cancel_legacy_ensemble(
             custom_port_range=custom_port_range,
             custom_host="127.0.0.1",
             use_token=False,
-            generate_cert=False,
         )
 
         terminated_event = False
 
         async with (
             evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config) as monitor,
+            Monitor(config.get_connection_info()) as monitor,
         ):
             # on lesser hardware the realizations might be killed by max_runtime
             # and the ensemble is set to STOPPED
             monitor._receiver_timeout = 10.0
             cancel = True
-            with contextlib.suppress(
-                ConnectionClosed
-            ):  # monitor throws some variant of CC if dispatcher dies
-                async for event in monitor.track(heartbeat_interval=0.1):
-                    # Cancel the ensemble upon the arrival of the first event
-                    if cancel:
-                        await monitor.signal_cancel()
-                        cancel = False
-                    if type(event) is EETerminated:
-                        terminated_event = True
+            async for event in monitor.track(heartbeat_interval=0.1):
+                # Cancel the ensemble upon the arrival of the first event
+                if cancel:
+                    await monitor.signal_cancel()
+                    cancel = False
+                if type(event) is EETerminated:
+                    terminated_event = True
 
         if terminated_event:
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED

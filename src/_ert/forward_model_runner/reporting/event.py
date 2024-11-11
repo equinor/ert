@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import queue
 import threading
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Final
 
@@ -16,11 +16,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     event_to_json,
 )
-from _ert.forward_model_runner.client import (
-    Client,
-    ClientConnectionClosedOK,
-    ClientConnectionError,
-)
+from _ert.forward_model_runner.client import Client, ClientConnectionError
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
@@ -59,14 +55,16 @@ class Event(Reporter):
 
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, evaluator_url, token=None, cert_path=None):
+    def __init__(
+        self,
+        evaluator_url: str,
+        token: str | None = None,
+        ack_timeout: float | None = None,
+        max_retries: int | None = None,
+        finished_event_timeout: float | None = None,
+    ):
         self._evaluator_url = evaluator_url
         self._token = token
-        if cert_path is not None:
-            with open(cert_path, encoding="utf-8") as f:
-                self._cert = f.read()
-        else:
-            self._cert = None
 
         self._statemachine = StateMachine()
         self._statemachine.add_handler((Init,), self._init_handler)
@@ -78,53 +76,54 @@ class Event(Reporter):
         self._real_id = None
         self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
         self._event_publisher_thread = ErtThread(target=self._event_publisher)
-        self._timeout_timestamp = None
-        self._timestamp_lock = threading.Lock()
-        # seconds to timeout the reporter the thread after Finish() was received
-        self._reporter_timeout = 60
+        self._done = threading.Event()
+        self._ack_timeout = ack_timeout
+        self._max_retries = max_retries
+        if finished_event_timeout is not None:
+            self._finished_event_timeout = finished_event_timeout
+        else:
+            self._finished_event_timeout = 60
 
-    def stop(self) -> None:
+    def stop(self):
         self._event_queue.put(Event._sentinel)
-        with self._timestamp_lock:
-            self._timeout_timestamp = datetime.now() + timedelta(
-                seconds=self._reporter_timeout
-            )
+        self._done.set()
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
 
     def _event_publisher(self):
-        logger.debug("Publishing event.")
-        with Client(
-            url=self._evaluator_url,
-            token=self._token,
-            cert=self._cert,
-        ) as client:
-            event = None
-            while True:
-                with self._timestamp_lock:
-                    if (
-                        self._timeout_timestamp is not None
-                        and datetime.now() > self._timeout_timestamp
-                    ):
-                        self._timeout_timestamp = None
-                        break
-                if event is None:
-                    # if we successfully sent the event we can proceed
-                    # to next one
-                    event = self._event_queue.get()
-                    if event is self._sentinel:
-                        break
-                try:
-                    client.send(event_to_json(event))
-                    event = None
-                except ClientConnectionError as exception:
-                    # Possible intermittent failure, we retry sending the event
-                    logger.error(str(exception))
-                except ClientConnectionClosedOK as exception:
-                    # The receiving end has closed the connection, we stop
-                    # sending events
-                    logger.debug(str(exception))
-                    break
+        async def publisher():
+            async with Client(
+                url=self._evaluator_url,
+                token=self._token,
+                ack_timeout=self._ack_timeout,
+            ) as client:
+                event = None
+                start_time = None
+                while True:
+                    try:
+                        if self._done.is_set() and start_time is None:
+                            start_time = asyncio.get_event_loop().time()
+                        if event is None:
+                            event = self._event_queue.get()
+                            if event is self._sentinel:
+                                break
+                        if (
+                            start_time
+                            and (asyncio.get_event_loop().time() - start_time)
+                            > self._finished_event_timeout
+                        ):
+                            break
+                        await client.send(event_to_json(event), self._max_retries)
+                        event = None
+                    except asyncio.CancelledError:
+                        return
+                    except ClientConnectionError as exc:
+                        logger.error(f"Failed to send event: {exc}")
+
+        try:
+            asyncio.run(publisher())
+        except ClientConnectionError as exc:
+            raise ClientConnectionError("Couldn't connect to evaluator") from exc
 
     def report(self, msg):
         self._statemachine.transition(msg)

@@ -1,26 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
 import traceback
-from collections.abc import (
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Generator,
-    Iterable,
-    Sequence,
-)
-from contextlib import asynccontextmanager, contextmanager
-from http import HTTPStatus
-from typing import (
-    Any,
-    get_args,
-)
+from collections.abc import Awaitable, Callable, Iterable, Sequence
+from typing import Any, get_args
 
-from pydantic_core._pydantic_core import ValidationError
-from websockets.asyncio.server import ServerConnection, serve
-from websockets.exceptions import ConnectionClosedError
-from websockets.http11 import Request, Response
+import zmq.asyncio
 
 from _ert.events import (
     EESnapshot,
@@ -40,6 +27,7 @@ from _ert.events import (
     event_from_json,
     event_to_json,
 )
+from _ert.forward_model_runner.client import ACK_MSG, CONNECT_MSG, DISCONNECT_MSG
 from ert.ensemble_evaluator import identifiers as ids
 
 from ._ensemble import FMStepSnapshot
@@ -64,15 +52,11 @@ class EnsembleEvaluator:
 
         self._loop: asyncio.AbstractEventLoop | None = None
 
-        self._clients: set[ServerConnection] = set()
-        self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
-
         self._events: asyncio.Queue[Event] = asyncio.Queue()
         self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
-        self._server_started: asyncio.Event = asyncio.Event()
         self._server_done: asyncio.Event = asyncio.Event()
 
         # batching section
@@ -82,14 +66,22 @@ class EnsembleEvaluator:
         self._max_batch_size: int = 500
         self._batching_interval: float = 2.0
         self._complete_batch: asyncio.Event = asyncio.Event()
+        self._server_started: asyncio.Event = asyncio.Event()
+        self._clients_connected: set[bytes] = set()
+        self._clients_empty: asyncio.Event = asyncio.Event()
+        self._clients_empty.set()
+        self._dispatchers_connected: set[bytes] = set()
+        self._dispatchers_empty: asyncio.Event = asyncio.Event()
+        self._dispatchers_empty.set()
 
     async def _publisher(self) -> None:
+        await self._server_started.wait()
         while True:
             event = await self._events_to_send.get()
-            await asyncio.gather(
-                *[client.send(event_to_json(event)) for client in self._clients],
-                return_exceptions=True,
-            )
+            for identity in self._clients_connected:
+                await self._router_socket.send_multipart(
+                    [identity, b"", event_to_json(event).encode("utf-8")]
+                )
             self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
@@ -204,140 +196,128 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    @contextmanager
-    def store_client(self, websocket: ServerConnection) -> Generator[None, None, None]:
-        self._clients.add(websocket)
-        yield
-        self._clients.remove(websocket)
-
-    async def handle_client(self, websocket: ServerConnection) -> None:
-        with self.store_client(websocket):
+    async def handle_client(self, dealer: bytes, frame: bytes) -> None:
+        if frame == CONNECT_MSG:
+            self._clients_connected.add(dealer)
+            self._clients_empty.clear()
             current_snapshot_dict = self._ensemble.snapshot.to_dict()
             event: Event = EESnapshot(
-                snapshot=current_snapshot_dict, ensemble=self.ensemble.id_
+                snapshot=current_snapshot_dict,
+                ensemble=self.ensemble.id_,
             )
-            await websocket.send(event_to_json(event))
+            await self._router_socket.send_multipart(
+                [dealer, b"", event_to_json(event).encode("utf-8")]
+            )
+        elif frame == DISCONNECT_MSG:
+            self._clients_connected.discard(dealer)
+            if not self._clients_connected:
+                self._clients_empty.set()
+        else:
+            event = event_from_json(frame.decode("utf-8"))
+            if type(event) is EEUserCancel:
+                logger.debug("Client asked to cancel.")
+                self._signal_cancel()
+            elif type(event) is EEUserDone:
+                logger.debug("Client signalled done.")
+                self.stop()
 
-            async for raw_msg in websocket:
-                event = event_from_json(raw_msg)
-                logger.debug(f"got message from client: {event}")
-                if type(event) is EEUserCancel:
-                    logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    self._signal_cancel()
-
-                elif type(event) is EEUserDone:
-                    logger.debug(f"Client {websocket.remote_address} signalled done.")
-                    self.stop()
-
-    @asynccontextmanager
-    async def count_dispatcher(self) -> AsyncIterator[None]:
-        await self._dispatchers_connected.put(None)
-        yield
-        await self._dispatchers_connected.get()
-        self._dispatchers_connected.task_done()
-
-    async def handle_dispatch(self, websocket: ServerConnection) -> None:
-        async with self.count_dispatcher():
-            try:
-                async for raw_msg in websocket:
-                    try:
-                        event = dispatch_event_from_json(raw_msg)
-                        if event.ensemble != self.ensemble.id_:
-                            logger.info(
-                                "Got event from evaluator "
-                                f"{event.ensemble}. "
-                                f"Ignoring since I am {self.ensemble.id_}"
-                            )
-                            continue
-                        if type(event) is ForwardModelStepChecksum:
-                            await self.forward_checksum(event)
-                        else:
-                            await self._events.put(event)
-                    except ValidationError as ex:
-                        logger.warning(
-                            "cannot handle event - "
-                            f"closing connection to dispatcher: {ex}"
-                        )
-                        await websocket.close(
-                            code=1011, reason=f"failed handling message {raw_msg!r}"
-                        )
-                        return
-
-                    if type(event) in {EnsembleSucceeded, EnsembleFailed}:
-                        return
-            except ConnectionClosedError as connection_error:
-                # Dispatchers may close the connection abruptly in the case of
-                #  * flaky network (then the dispatcher will try to reconnect)
-                #  * job being killed due to MAX_RUNTIME
-                #  * job being killed by user
-                logger.error(
-                    f"a dispatcher abruptly closed a websocket: {connection_error!s}"
+    async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
+        if frame == CONNECT_MSG:
+            self._dispatchers_connected.add(dealer)
+            self._dispatchers_empty.clear()
+        elif frame == DISCONNECT_MSG:
+            self._dispatchers_connected.discard(dealer)
+            if not self._dispatchers_connected:
+                self._dispatchers_empty.set()
+        else:
+            event = dispatch_event_from_json(frame.decode("utf-8"))
+            if event.ensemble != self.ensemble.id_:
+                logger.info(
+                    "Got event from evaluator "
+                    f"{event.ensemble}. "
+                    f"Ignoring since I am {self.ensemble.id_}"
                 )
+                return
+            if type(event) is ForwardModelStepChecksum:
+                await self.forward_checksum(event)
+            else:
+                await self._events.put(event)
+
+    async def listen_for_messages(self) -> None:
+        await self._server_started.wait()
+        while True:
+            try:
+                dealer, _, frame = await self._router_socket.recv_multipart()
+                await self._router_socket.send_multipart([dealer, b"", ACK_MSG])
+                sender = dealer.decode("utf-8")
+                if sender.startswith("client"):
+                    await self.handle_client(dealer, frame)
+                elif sender.startswith("dispatch"):
+                    await self.handle_dispatch(dealer, frame)
+                else:
+                    logger.info(f"Connection attempt to unknown sender: {sender}.")
+            except zmq.error.ZMQError as e:
+                if e.errno == zmq.ENOTSOCK:
+                    logger.warning(
+                        "Evaluator receiver closed, no new messages are received"
+                    )
+                else:
+                    logger.error(f"Unexpected error when listening to messages: {e}")
+            except asyncio.CancelledError:
+                self._router_socket.close()
+                return
 
     async def forward_checksum(self, event: Event) -> None:
         # clients still need to receive events via ws
         await self._events_to_send.put(event)
         await self._manifest_queue.put(event)
 
-    async def connection_handler(self, websocket: ServerConnection) -> None:
-        if websocket.request is not None:
-            path = websocket.request.path
-            elements = path.split("/")
-            if elements[1] == "client":
-                await self.handle_client(websocket)
-            elif elements[1] == "dispatch":
-                await self.handle_dispatch(websocket)
-            else:
-                logger.info(f"Connection attempt to unknown path: {path}.")
-        else:
-            logger.info("No request to handle.")
-
-    async def process_request(
-        self, connection: ServerConnection, request: Request
-    ) -> Response | None:
-        if request.headers.get("token") != self._config.token:
-            return connection.respond(HTTPStatus.UNAUTHORIZED, "")
-        if request.path == "/healthcheck":
-            return connection.respond(HTTPStatus.OK, "")
-        return None
-
     async def _server(self) -> None:
-        async with serve(
-            self.connection_handler,
-            sock=self._config.get_socket(),
-            ssl=self._config.get_server_ssl_context(),
-            process_request=self.process_request,
-            max_size=2**26,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ) as server:
-            self._server_started.set()
-            await self._server_done.wait()
-            server.close(close_connections=False)
-            if self._dispatchers_connected is not None:
-                logger.debug(
-                    f"Got done signal. {self._dispatchers_connected.qsize()} "
-                    "dispatchers to disconnect..."
-                )
-                try:  # Wait for dispatchers to disconnect
-                    await asyncio.wait_for(
-                        self._dispatchers_connected.join(), timeout=20
-                    )
-                except TimeoutError:
-                    logger.debug("Timed out waiting for dispatchers to disconnect")
+        zmq_context = zmq.asyncio.Context()
+        try:
+            self._router_socket: zmq.asyncio.Socket = zmq_context.socket(zmq.ROUTER)
+            self._router_socket.setsockopt(zmq.LINGER, 0)
+            if self._config.server_public_key and self._config.server_secret_key:
+                self._router_socket.curve_secretkey = self._config.server_secret_key
+                self._router_socket.curve_publickey = self._config.server_public_key
+                self._router_socket.curve_server = True
+
+            if self._config.router_port:
+                self._router_socket.bind(f"tcp://*:{self._config.router_port}")
             else:
-                logger.debug("Got done signal. No dispatchers connected")
-
-            logger.debug("Sending termination-message to clients...")
-
+                self._router_socket.bind(self._config.url)
+            self._server_started.set()
+        except zmq.error.ZMQError as e:
+            logger.error(f"ZMQ error encountered {e} during evaluator initialization")
+            raise
+        try:
+            await self._server_done.wait()
+            try:
+                await asyncio.wait_for(self._dispatchers_empty.wait(), timeout=5)
+            except TimeoutError:
+                logger.warning(
+                    "Not all dispatchers were disconnected when closing zmq server!"
+                )
             await self._events.join()
             await self._complete_batch.wait()
             await self._batch_processing_queue.join()
             event = EETerminated(ensemble=self._ensemble.id_)
             await self._events_to_send.put(event)
             await self._events_to_send.join()
-        logger.debug("Async server exiting.")
+            try:
+                await asyncio.wait_for(self._clients_empty.wait(), timeout=5)
+            except TimeoutError:
+                logger.warning(
+                    "Not all clients were disconnected when closing zmq server!"
+                )
+            logger.debug("Async server exiting.")
+        finally:
+            try:
+                self._router_socket.close()
+                zmq_context.destroy()
+            except Exception as exc:
+                logger.warning(f"Failed to clean up zmq context {exc}")
+            logger.info("ZMQ cleanup done!")
 
     def stop(self) -> None:
         self._server_done.set()
@@ -370,10 +350,10 @@ class EnsembleEvaluator:
             ),
             asyncio.create_task(self._process_event_buffer(), name="processing_task"),
             asyncio.create_task(self._publisher(), name="publisher_task"),
+            asyncio.create_task(self.listen_for_messages(), name="listener_task"),
         ]
-        # now we wait for the server to actually start
-        await self._server_started.wait()
 
+        await self._server_started.wait()
         self._ee_tasks.append(
             asyncio.create_task(
                 self._ensemble.evaluate(
@@ -405,9 +385,11 @@ class EnsembleEvaluator:
                     raise task_exception
                 elif task.get_name() == "server_task":
                     return
-                elif task.get_name() == "ensemble_task":
+                elif task.get_name() == "ensemble_task" or task.get_name() in {
+                    "ensemble_task",
+                    "listener_task",
+                }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
-                    continue
                 else:
                     msg = (
                         f"Something went wrong, {task.get_name()} is done prematurely!"
@@ -433,6 +415,9 @@ class EnsembleEvaluator:
         try:
             await self._monitor_and_handle_tasks()
         finally:
+            self._server_done.set()
+            self._clients_empty.set()
+            self._dispatchers_empty.set()
             for task in self._ee_tasks:
                 if not task.done():
                     task.cancel()
@@ -442,7 +427,7 @@ class EnsembleEvaluator:
                     result, Exception
                 ):
                     logger.error(str(result))
-                    raise result
+                    raise RuntimeError(result) from result
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
 

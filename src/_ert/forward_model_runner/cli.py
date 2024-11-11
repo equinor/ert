@@ -22,7 +22,6 @@ def _setup_reporters(
     ens_id,
     dispatch_url,
     ee_token=None,
-    ee_cert_path=None,
     experiment_id=None,
 ) -> list[reporting.Reporter]:
     reporters: list[reporting.Reporter] = []
@@ -30,11 +29,7 @@ def _setup_reporters(
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:
         reporters.append(reporting.File())
-        reporters.append(
-            reporting.Event(
-                evaluator_url=dispatch_url, token=ee_token, cert_path=ee_cert_path
-            )
-        )
+        reporters.append(reporting.Event(evaluator_url=dispatch_url, token=ee_token))
     else:
         reporters.append(reporting.File())
     return reporters
@@ -123,7 +118,6 @@ def main(args):
     experiment_id = jobs_data.get("experiment_id")
     ens_id = jobs_data.get("ens_id")
     ee_token = jobs_data.get("ee_token")
-    ee_cert_path = jobs_data.get("ee_cert_path")
     dispatch_url = jobs_data.get("dispatch_url")
 
     is_interactive_run = len(parsed_args.job) > 0
@@ -132,7 +126,6 @@ def main(args):
         ens_id,
         dispatch_url,
         ee_token,
-        ee_cert_path,
         experiment_id,
     )
 
