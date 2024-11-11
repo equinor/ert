@@ -12,21 +12,17 @@ from unittest.mock import Mock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-import websockets.exceptions
 import xtgeo
+import zmq
 from psutil import NoSuchProcess, Popen, Process, ZombieProcess
 from resdata.summary import Summary
 
 import _ert.threading
 import ert.shared
 from _ert.forward_model_runner.client import Client
-from ert import LibresFacade, ensemble_evaluator
+from ert import LibresFacade
 from ert.cli.main import ErtCliError
-from ert.config import (
-    ConfigValidationError,
-    ConfigWarning,
-    ErtConfig,
-)
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
@@ -106,9 +102,6 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_field_init_file_not_readable(monkeypatch):
-    monkeypatch.setattr(
-        ensemble_evaluator._wait_for_evaluator, "WAIT_FOR_EVALUATOR_TIMEOUT", 5
-    )
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
@@ -197,10 +190,12 @@ def test_that_the_model_raises_exception_if_successful_realizations_less_than_mi
             else:
                 fout.write(line)
         fout.write(
-            dedent("""
+            dedent(
+                """
             INSTALL_JOB failing_fm FAILING_FM
             FORWARD_MODEL failing_fm
-            """)
+            """
+            )
         )
     Path("FAILING_FM").write_text("EXECUTABLE failing_fm.py", encoding="utf-8")
     Path("failing_fm.py").write_text(
@@ -957,14 +952,13 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
 def test_that_connection_errors_do_not_effect_final_result(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 0)
-    monkeypatch.setattr(Client, "DEFAULT_TIMEOUT_MULTIPLIER", 0)
-    monkeypatch.setattr(Client, "CONNECTION_TIMEOUT", 1)
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
+    monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
     monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0.01)
     monkeypatch.setattr(Job, "DEFAULT_CHECKSUM_TIMEOUT", 0)
 
     def raise_connection_error(*args, **kwargs):
-        raise websockets.exceptions.ConnectionClosedError(None, None)
+        raise zmq.error.ZMQError(None, None)
 
     with patch(
         "ert.ensemble_evaluator.evaluator.dispatch_event_from_json",

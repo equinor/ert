@@ -104,7 +104,10 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         # most unix flavors https://en.wikipedia.org/wiki/Ephemeral_port
         args.port_range = range(49152, 51819)
 
-    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
+    use_ipc_protocol = model.queue_system == QueueSystem.LOCAL
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=args.port_range, use_ipc_protocol=use_ipc_protocol
+    )
 
     if model.check_if_runpath_exists():
         print(
