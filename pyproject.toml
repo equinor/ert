@@ -75,6 +75,7 @@ dependencies = [
     "tabulate",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
+    "uvloop",
     "uvicorn >= 0.17.0",
     "websockets < 14",
     "xarray",
