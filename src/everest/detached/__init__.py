@@ -16,7 +16,7 @@ from seba_sqlite.snapshot import SebaSnapshot
 
 from ert import BatchContext, BatchSimulator, JobState
 from ert.config import ErtConfig, QueueSystem
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.strings import (
     EVEREST,
@@ -59,7 +59,9 @@ def start_server(config: EverestConfig, ert_config: ErtConfig, storage):
     """
     Start an Everest server running the optimization defined in the config
     """
-    if server_is_running(*config.server_context):  # better safe than sorry
+    if server_is_running(
+        *ServerConfig.get_server_context(config.output_dir)
+    ):  # better safe than sorry
         return
 
     log_dir = config.log_dir
@@ -143,7 +145,7 @@ def stop_server(config: EverestConfig, retries: int = 5):
     """
     for retry in range(retries):
         try:
-            url, cert, auth = config.server_context
+            url, cert, auth = ServerConfig.get_server_context(config.output_dir)
             stop_endpoint = "/".join([url, STOP_ENDPOINT])
             response = requests.post(
                 stop_endpoint,
@@ -174,7 +176,7 @@ def wait_for_server(
 
     Raise an exception when the timeout is reached.
     """
-    if not server_is_running(*config.server_context):
+    if not server_is_running(*ServerConfig.get_server_context(config.output_dir)):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             # Failure may occur before contact with the server is established:
@@ -218,11 +220,11 @@ def wait_for_server(
 
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if server_is_running(*config.server_context):
+            if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
                 return
 
     # If number of retries reached and server is not running - throw exception
-    if not server_is_running(*config.server_context):
+    if not server_is_running(*ServerConfig.get_server_context(config.output_dir)):
         raise RuntimeError("Failed to start server within configured timeout.")
 
 
@@ -264,16 +266,18 @@ def wait_for_server_to_stop(config: EverestConfig, timeout):
 
     Raise an exception when the timeout is reached.
     """
-    if server_is_running(*config.server_context):
+    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             sleep_time = sleep_time_increment * (2**retry_count)
             time.sleep(sleep_time)
-            if not server_is_running(*config.server_context):
+            if not server_is_running(
+                *ServerConfig.get_server_context(config.output_dir)
+            ):
                 return
 
     # If number of retries reached and server still running - throw exception
-    if server_is_running(*config.server_context):
+    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
         raise Exception("Failed to stop server within configured timeout.")
 
 
@@ -310,7 +314,7 @@ def start_monitor(config: EverestConfig, callback, polling_interval=5):
     Monitoring stops when the server stops answering. It can also be
     interrupted by returning True from the callback
     """
-    url, cert, auth = config.server_context
+    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
     sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
     opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
 
@@ -448,7 +452,7 @@ def generate_everserver_ert_config(config: EverestConfig, debug_mode: bool = Fal
 
     site_config = ErtConfig.read_site_config()
     abs_everest_config = os.path.join(config.config_directory, config.config_file)
-    detached_node_dir = config.detached_node_dir
+    detached_node_dir = ServerConfig.get_detached_node_dir(config.output_dir)
     simulation_path = os.path.join(detached_node_dir, SIMULATION_DIR)
     queue_system = _find_res_queue_system(config)
     arg_list = ["--config-file", abs_everest_config]
@@ -532,7 +536,7 @@ def update_everserver_status(
 ):
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
-    path = config.everserver_status_path
+    path = ServerConfig.get_everserver_status_path(config.output_dir)
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as outfile:
@@ -560,7 +564,7 @@ def everserver_status(config: EverestConfig):
                 'message': None
              }
     """
-    path = config.everserver_status_path
+    path = ServerConfig.get_everserver_status_path(config.output_dir)
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f, object_hook=ServerStatusEncoder.decode)

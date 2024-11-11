@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import shutil
@@ -11,7 +10,6 @@ from typing import (
     Literal,
     Optional,
     Protocol,
-    Tuple,
     no_type_check,
 )
 
@@ -45,14 +43,9 @@ from everest.jobs import script_names
 
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
-    CERTIFICATE_DIR,
     DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    HOSTFILE_NAME,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
-    SERVER_STATUS,
-    SESSION_DIR,
     STORAGE_DIR,
 )
 from .control_config import ControlConfig
@@ -605,7 +598,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return None
 
     @property
-    def output_dir(self) -> Optional[str]:
+    def output_dir(self) -> str:
         assert self.environment is not None
         path = self.environment.output_folder
 
@@ -656,67 +649,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self._get_output_subdirectory(OPTIMIZATION_LOG_DIR)
 
     @property
-    def detached_node_dir(self):
-        return self._get_output_subdirectory(DETACHED_NODE_DIR)
-
-    @property
-    def session_dir(self):
-        """Return path to the session directory containing information about the
-        certificates and host information"""
-        return os.path.join(self.detached_node_dir, SESSION_DIR)
-
-    @property
-    def certificate_dir(self):
-        """Return the path to certificate folder"""
-        return os.path.join(self.session_dir, CERTIFICATE_DIR)
-
-    def get_server_url(self, server_info=None):
-        """Return the url of the server.
-
-        If server_info are given, the url is generated using that info. Otherwise
-        server information are retrieved from the hostfile
-        """
-        if server_info is None:
-            server_info = self.server_info
-
-        url = f"https://{server_info['host']}:{server_info['port']}"
-        return url
-
-    @property
-    def hostfile_path(self):
-        return os.path.join(self.session_dir, HOSTFILE_NAME)
-
-    @property
-    def server_info(self):
-        """Load server information from the hostfile"""
-        host_file_path = self.hostfile_path
-        try:
-            with open(host_file_path, "r", encoding="utf-8") as f:
-                json_string = f.read()
-
-            data = json.loads(json_string)
-            if set(data.keys()) != {"host", "port", "cert", "auth"}:
-                raise RuntimeError("Malformed hostfile")
-            return data
-        except FileNotFoundError:
-            # No host file
-            return {"host": None, "port": None, "cert": None, "auth": None}
-
-    @property
-    def server_context(self) -> Tuple[str, str, Tuple[str, str]]:
-        """Returns a tuple with
-        - url of the server
-        - path to the .cert file
-        - password for the certificate file
-        """
-
-        return (
-            self.get_server_url(self.server_info),
-            self.server_info[CERTIFICATE_DIR],
-            ("username", self.server_info["auth"]),
-        )
-
-    @property
     def export_path(self):
         """Returns the export file path. If not file name is provide the default
         export file name will have the same name as the config file, with the '.csv'
@@ -737,11 +669,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         else:
             default_export_file = f"{os.path.splitext(self.config_file)[0]}.csv"
             return os.path.join(full_file_path, default_export_file)
-
-    @property
-    def everserver_status_path(self):
-        """Returns path to the everest server status file"""
-        return os.path.join(self.session_dir, SERVER_STATUS)
 
     def to_dict(self) -> dict:
         the_dict = self.model_dump(exclude_none=True)

@@ -6,7 +6,7 @@ import signal
 import threading
 from functools import partial
 
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status, server_is_running
 
 from .utils import (
@@ -63,7 +63,7 @@ def monitor_everest(options):
     config: EverestConfig = options.config
     server_state = everserver_status(options.config)
 
-    if server_is_running(*config.server_context):
+    if server_is_running(*ServerConfig.get_server_context(config.output_dir)):
         run_detached_monitor(config, show_all_jobs=options.show_all_jobs)
         server_state = everserver_status(config)
         if server_state["status"] == ServerStatus.failed:

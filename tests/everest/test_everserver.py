@@ -6,7 +6,7 @@ from unittest.mock import patch
 from ropt.enums import OptimizerExitCode
 from seba_sqlite.snapshot import SebaSnapshot
 
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
@@ -72,7 +72,7 @@ def test_hostfile_storage(copy_math_func_test_data_to_tmp):
         "auth": "1234",
     }
     everserver._write_hostfile(config, **expected_result)
-    result = config.server_info
+    result = ServerConfig.get_server_info(config.output_dir)
     assert result == expected_result
 
 

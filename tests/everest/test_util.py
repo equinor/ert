@@ -6,7 +6,7 @@ import pytest
 
 from everest import util
 from everest.bin.utils import report_on_previous_run
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.config.everest_config import get_system_installed_jobs
 from everest.config_keys import ConfigKeys
 from everest.detached import ServerStatus
@@ -128,7 +128,7 @@ def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
     session_path = os.path.join(
         cwd, "everest_output", "detached_node_output", ".session"
     )
-    path = config.everserver_status_path
+    path = ServerConfig.get_everserver_status_path(config.output_dir)
     expected_path = os.path.join(session_path, SERVER_STATUS)
 
     assert path == expected_path
