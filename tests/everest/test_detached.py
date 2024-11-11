@@ -10,8 +10,7 @@ import requests
 from ert import JobState
 from ert.config import ErtConfig, QueueSystem
 from ert.storage import open_storage
-from everest.config import EverestConfig
-from everest.config.server_config import ServerConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.detached import (
@@ -84,7 +83,7 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
         server_status = everserver_status(everest_config)
         assert ServerStatus.running == server_status["status"]
 
-        url, cert, auth = everest_config.server_context
+        url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
         result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)
         assert result.status_code == 200  # Request has succeeded
 
@@ -95,7 +94,7 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
             response.raise_for_status()
 
         # Test request with wrong password fails
-        url, cert, _ = everest_config.server_context
+        url, cert, _ = ServerConfig.get_server_context(everest_config.output_dir)
         usr = "admin"
         password = "wrong_password"
         with pytest.raises(Exception):  # noqa B017
@@ -103,7 +102,9 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
             result.raise_for_status()
 
         # Test stopping server
-        assert server_is_running(*everest_config.server_context)
+        assert server_is_running(
+            *ServerConfig.get_server_context(everest_config.output_dir)
+        )
 
         if stop_server(everest_config):
             wait_for_server_to_stop(everest_config, 60)
@@ -115,7 +116,9 @@ def test_https_requests(copy_math_func_test_data_to_tmp):
                 ServerStatus.stopped,
                 ServerStatus.completed,
             ]
-            assert not server_is_running(*everest_config.server_context)
+            assert not server_is_running(
+                *ServerConfig.get_server_context(everest_config.output_dir)
+            )
         else:
             context_stop_and_wait()
             server_status = everserver_status(everest_config)
@@ -126,11 +129,13 @@ def test_server_status(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
 
     # Check status file does not exist before initial status update
-    assert not os.path.exists(config.everserver_status_path)
+    assert not os.path.exists(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
     update_everserver_status(config, ServerStatus.starting)
 
     # Check status file exists after initial status update
-    assert os.path.exists(config.everserver_status_path)
+    assert os.path.exists(ServerConfig.get_everserver_status_path(config.output_dir))
 
     # Check we can read the server status from disk
     status = everserver_status(config)

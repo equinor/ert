@@ -4,7 +4,7 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     context_stop_and_wait,
     generate_everserver_ert_config,
@@ -47,7 +47,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     everest_logs_dir_path = everest_config.log_dir
 
-    detached_node_dir = everest_config.detached_node_dir
+    detached_node_dir = ServerConfig.get_detached_node_dir(everest_config.output_dir)
     endpoint_log_path = os.path.join(detached_node_dir, "endpoint.log")
 
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")

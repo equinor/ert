@@ -23,7 +23,7 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest import export_to_csv, export_with_progress
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
 from everest.export import check_for_errors
 from everest.simulator import JOB_FAILURE
@@ -169,7 +169,9 @@ def _find_open_port(host, lower, upper):
 
 
 def _write_hostfile(config: EverestConfig, host, port, cert, auth):
-    host_file_path = config.hostfile_path
+    # host_file_path = config.hostfile_path
+    host_file_path = ServerConfig.get_hostfile_path(config.output_dir)
+
     if not os.path.exists(os.path.dirname(host_file_path)):
         os.makedirs(os.path.dirname(host_file_path))
     data = {
@@ -185,7 +187,7 @@ def _write_hostfile(config: EverestConfig, host, port, cert, auth):
 
 
 def _configure_loggers(config: EverestConfig):
-    detached_node_dir = config.detached_node_dir
+    detached_node_dir = ServerConfig.get_detached_node_dir(config.output_dir)
     everest_logs_dir = config.log_dir
 
     configure_logger(
@@ -414,7 +416,7 @@ def _generate_certificate(config: EverestConfig):
     )
 
     # Write certificate and key to disk
-    cert_folder = config.certificate_dir
+    cert_folder = ServerConfig.get_certificate_dir(config.output_dir)
     makedirs_if_needed(cert_folder)
     cert_path = os.path.join(cert_folder, cert_name + ".crt")
     with open(cert_path, "wb") as f:

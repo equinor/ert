@@ -10,7 +10,7 @@ import threading
 import traceback
 from functools import partial
 
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
 from everest.util import version_info
 
@@ -70,7 +70,9 @@ def _handle_keyboard_interrupt(signal, frame, after=False):
 
 
 def kill_everest(options):
-    if not server_is_running(*options.config.server_context):
+    if not server_is_running(
+        *ServerConfig.get_server_context(options.config.output_dir)
+    ):
         print("Server is not running.")
         return
 

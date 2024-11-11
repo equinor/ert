@@ -9,7 +9,7 @@ from functools import partial
 
 from ert.config import ErtConfig
 from ert.storage import open_storage
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
@@ -84,7 +84,7 @@ def run_everest(options):
     logger = logging.getLogger("everest_main")
     server_state = everserver_status(options.config)
 
-    if server_is_running(*options.config.server_context):
+    if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
         config_file = options.config.config_file
         print(
             "An optimization is currently running.\n"
