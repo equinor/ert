@@ -23,7 +23,7 @@ from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
 from _ert.threading import ErtThread
-from tests.ert.utils import _mock_ws_thread, wait_until
+from tests.ert.utils import MockZMQServer, wait_until
 
 from .test_event_reporter import _wait_until
 
@@ -302,7 +302,7 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
     jobs_json = json.dumps(
         {
             "ens_id": "_id_",
-            "dispatch_url": f"ws://localhost:{unused_tcp_port}",
+            "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
             "jobList": [],
         }
     )
@@ -316,7 +316,7 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
         (tmp_path / JOBS_FILE).write_text(jobs_json)
         lock.release()
 
-    with _mock_ws_thread("localhost", unused_tcp_port, []):
+    with MockZMQServer(unused_tcp_port):
         thread = ErtThread(target=create_jobs_file_after_lock)
         thread.start()
         main(args=["script.py", str(tmp_path)])
@@ -344,10 +344,11 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
-    host = "localhost"
+def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
-    jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
+    jobs_json = json.dumps(
+        {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
+    )
 
     with (
         patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg,
@@ -361,7 +362,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
         ]
         mock_getpgid.return_value = 17
 
-        with _mock_ws_thread(host, port, []):
+        with MockZMQServer(port):
             main(["script.py"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)

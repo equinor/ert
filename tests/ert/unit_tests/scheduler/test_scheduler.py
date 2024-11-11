@@ -11,7 +11,6 @@ import pytest
 
 from _ert.events import Id, RealizationFailed, RealizationTimeout
 from ert.config import QueueConfig
-from ert.constant_filenames import CERT_FILE
 from ert.ensemble_evaluator import Realization
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
@@ -124,10 +123,9 @@ async def test_cancel(realization, mock_driver):
 async def test_add_dispatch_information_to_jobs_file(
     storage, tmp_path: Path, mock_driver
 ):
-    test_ee_uri = "ws://test_ee_uri.com/121/"
+    test_ee_uri = "tcp://test_ee_uri.com/121/"
     test_ens_id = "test_ens_id121"
     test_ee_token = "test_ee_token_t0k€n121"
-    test_ee_cert = "test_ee_cert121.pem"
 
     ensemble_size = 10
 
@@ -144,7 +142,6 @@ async def test_add_dispatch_information_to_jobs_file(
         realizations=realizations,
         ens_id=test_ens_id,
         ee_uri=test_ee_uri,
-        ee_cert=test_ee_cert,
         ee_token=test_ee_token,
     )
 
@@ -155,15 +152,12 @@ async def test_add_dispatch_information_to_jobs_file(
 
     for realization in realizations:
         job_file_path = Path(realization.run_arg.runpath) / "jobs.json"
-        cert_file_path = Path(realization.run_arg.runpath) / CERT_FILE
         content: dict = json.loads(job_file_path.read_text(encoding="utf-8"))
         assert content["ens_id"] == test_ens_id
         assert content["real_id"] == realization.iens
         assert content["dispatch_url"] == test_ee_uri
         assert content["ee_token"] == test_ee_token
-        assert content["ee_cert_path"] == str(cert_file_path)
         assert type(content["jobList"]) == list and len(content["jobList"]) == 0
-        assert cert_file_path.read_text(encoding="utf-8") == test_ee_cert
 
 
 @pytest.mark.parametrize("max_submit", [1, 2, 3])

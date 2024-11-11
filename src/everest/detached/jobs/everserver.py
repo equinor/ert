@@ -313,12 +313,12 @@ def main():
             simulation_callback=partial(_sim_monitor, shared_data=shared_data),
             optimization_callback=partial(_opt_monitor, shared_data=shared_data),
         )
-
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(49152, 51819)
-            if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL
-            else None
-        )
+        if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL:
+            evaluator_server_config = EvaluatorServerConfig()
+        else:
+            evaluator_server_config = EvaluatorServerConfig(
+                custom_port_range=range(49152, 51819), use_ipc_protocol=False
+            )
 
         run_model.run_experiment(evaluator_server_config)
 

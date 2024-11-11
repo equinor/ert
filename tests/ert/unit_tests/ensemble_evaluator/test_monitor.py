@@ -1,88 +1,123 @@
 import asyncio
 import logging
-from http import HTTPStatus
-from typing import NoReturn
-from urllib.parse import urlparse
 
 import pytest
-from websockets.asyncio import server
-from websockets.exceptions import ConnectionClosedOK
+import zmq
+import zmq.asyncio
 
-import ert
-import ert.ensemble_evaluator
 from _ert.events import EEUserCancel, EEUserDone, event_from_json
+from _ert.forward_model_runner.client import (
+    ACK_MSG,
+    CONNECT_MSG,
+    DISCONNECT_MSG,
+    ClientConnectionError,
+)
 from ert.ensemble_evaluator import Monitor
 from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
 
 
-async def _mock_ws(
-    set_when_done: asyncio.Event, handler, ee_config: EvaluatorConnectionInfo
-):
-    async def process_request(connection, request):
-        if request.path == "/healthcheck":
-            return connection.respond(HTTPStatus.OK, "")
+async def async_zmq_server(port, handler):
+    zmq_context = zmq.asyncio.Context()
+    router_socket = zmq_context.socket(zmq.ROUTER)
+    router_socket.setsockopt(zmq.LINGER, 0)
+    router_socket.bind(f"tcp://*:{port}")
+    await handler(router_socket)
+    router_socket.close()
+    zmq_context.destroy()
 
-    url = urlparse(ee_config.url)
-    async with server.serve(
-        handler, url.hostname, url.port, process_request=process_request
-    ):
-        await set_when_done.wait()
+
+async def test_monitor_connects_and_disconnects_successfully(unused_tcp_port):
+    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
+    monitor = Monitor(ee_con_info)
+
+    messages = []
+
+    async def mock_event_handler(router_socket):
+        nonlocal messages
+        while True:
+            dealer, _, frame = await router_socket.recv_multipart()
+            await router_socket.send_multipart([dealer, b"", ACK_MSG])
+            messages.append((dealer.decode("utf-8"), frame))
+            if frame == DISCONNECT_MSG:
+                break
+
+    websocket_server_task = asyncio.create_task(
+        async_zmq_server(unused_tcp_port, mock_event_handler)
+    )
+    async with monitor:
+        pass
+    await websocket_server_task
+    dealer, msg = messages[0]
+    assert dealer.startswith("client-")
+    assert msg == CONNECT_MSG
+    dealer, msg = messages[1]
+    assert dealer.startswith("client-")
+    assert msg == DISCONNECT_MSG
 
 
 async def test_no_connection_established(make_ee_config):
     ee_config = make_ee_config()
     monitor = Monitor(ee_config.get_connection_info())
-    monitor._connection_timeout = 0.1
-    with pytest.raises(
-        RuntimeError, match="Couldn't establish connection with the ensemble evaluator!"
-    ):
+    monitor._ack_timeout = 0.1
+    with pytest.raises(ClientConnectionError):
         async with monitor:
             pass
 
 
 async def test_immediate_stop(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
+    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
 
-    set_when_done = asyncio.Event()
+    connected = False
 
-    async def mock_ws_event_handler(websocket):
-        async for raw_msg in websocket:
-            event = event_from_json(raw_msg)
-            assert type(event) is EEUserDone
-            break
-        await websocket.close()
+    async def mock_event_handler(router_socket):
+        nonlocal connected
+        while True:
+            dealer, _, frame = await router_socket.recv_multipart()
+            await router_socket.send_multipart([dealer, b"", ACK_MSG])
+            dealer = dealer.decode("utf-8")
+            if frame == CONNECT_MSG:
+                connected = True
+            elif frame == DISCONNECT_MSG:
+                connected = False
+                return
+            else:
+                event = event_from_json(frame.decode("utf-8"))
+                assert connected
+                assert type(event) is EEUserDone
 
     websocket_server_task = asyncio.create_task(
-        _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
+        async_zmq_server(unused_tcp_port, mock_event_handler)
     )
     async with Monitor(ee_con_info) as monitor:
+        assert connected is True
         await monitor.signal_done()
-    set_when_done.set()
     await websocket_server_task
+    assert connected is False
 
 
-async def test_unexpected_close(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
+async def test_unexpected_close_after_connection_successful(
+    monkeypatch, unused_tcp_port
+):
+    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
 
-    set_when_done = asyncio.Event()
-    socket_closed = asyncio.Event()
+    monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
+    monkeypatch.setattr(Monitor, "DEFAULT_ACK_TIMEOUT", 1)
 
-    async def mock_ws_event_handler(websocket):
-        await websocket.close()
-        socket_closed.set()
+    async def mock_event_handler(router_socket):
+        dealer, _, frame = await router_socket.recv_multipart()
+        await router_socket.send_multipart([dealer, b"", ACK_MSG])
+        dealer = dealer.decode("utf-8")
+        assert dealer.startswith("client-")
+        assert frame == CONNECT_MSG
+        router_socket.close()
 
     websocket_server_task = asyncio.create_task(
-        _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
+        async_zmq_server(unused_tcp_port, mock_event_handler)
     )
     async with Monitor(ee_con_info) as monitor:
-        # this expects Event send to fail
-        # but no attempt on resubmitting
-        # since connection closed via websocket.close
-        with pytest.raises(ConnectionClosedOK):
-            await socket_closed.wait()
+        with pytest.raises(ClientConnectionError):
             await monitor.signal_done()
 
-    set_when_done.set()
     await websocket_server_task
 
 
@@ -90,20 +125,29 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
     unused_tcp_port, caplog
 ):
     caplog.set_level(logging.ERROR)
-    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
+    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
 
-    set_when_done = asyncio.Event()
+    connected = False
 
-    async def mock_ws_event_handler(websocket):
-        async for raw_msg in websocket:
-            event = event_from_json(raw_msg)
-            assert type(event) is EEUserCancel
-            break
-        await websocket.close()
+    async def mock_event_handler(router_socket):
+        nonlocal connected
+        while True:
+            dealer, _, frame = await router_socket.recv_multipart()
+            await router_socket.send_multipart([dealer, b"", ACK_MSG])
+            if frame == CONNECT_MSG:
+                connected = True
+            elif frame == DISCONNECT_MSG:
+                connected = False
+                return
+            else:
+                event = event_from_json(frame.decode("utf-8"))
+                assert connected
+                assert type(event) is EEUserCancel
 
     websocket_server_task = asyncio.create_task(
-        _mock_ws(set_when_done, mock_ws_event_handler, ee_con_info)
+        async_zmq_server(unused_tcp_port, mock_event_handler)
     )
+
     async with Monitor(ee_con_info) as monitor:
         monitor._receiver_timeout = 0.1
         await monitor.signal_cancel()
@@ -115,7 +159,6 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
             "Evaluator did not send the TERMINATED event!"
         ) in caplog.messages, "Monitor receiver did not stop!"
 
-    set_when_done.set()
     await websocket_server_task
 
 
@@ -124,11 +167,18 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
     exit anytime. A heartbeat is a None event.
 
     If the heartbeat is never sent, this test function will hang and then timeout."""
-    ee_con_info = EvaluatorConnectionInfo(f"ws://127.0.0.1:{unused_tcp_port}")
+    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
 
-    set_when_done = asyncio.Event()
+    async def mock_event_handler(router_socket):
+        while True:
+            try:
+                dealer, _, __ = await router_socket.recv_multipart()
+                await router_socket.send_multipart([dealer, b"", ACK_MSG])
+            except asyncio.CancelledError:
+                break
+
     websocket_server_task = asyncio.create_task(
-        _mock_ws(set_when_done, None, ee_con_info)
+        async_zmq_server(unused_tcp_port, mock_event_handler)
     )
 
     async with Monitor(ee_con_info) as monitor:
@@ -136,24 +186,6 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
             if event is None:
                 break
 
-    set_when_done.set()  # shuts down websocket server
-    await websocket_server_task
-
-
-@pytest.mark.timeout(10)
-async def test_that_monitor_will_raise_exception_if_wait_for_evaluator_fails(
-    monkeypatch,
-):
-    async def mock_failing_wait_for_evaluator(*args, **kwargs) -> NoReturn:
-        raise ValueError()
-
-    monkeypatch.setattr(
-        ert.ensemble_evaluator.monitor,
-        "wait_for_evaluator",
-        mock_failing_wait_for_evaluator,
-    )
-    ee_con_info = EvaluatorConnectionInfo("")
-
-    with pytest.raises(ValueError):
-        async with Monitor(ee_con_info):
-            pass
+    if not websocket_server_task.done():
+        websocket_server_task.cancel()
+        asyncio.gather(websocket_server_task, return_exceptions=True)

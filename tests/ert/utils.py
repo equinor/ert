@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import websockets.server
+import zmq
+import zmq.asyncio
 
-from _ert.forward_model_runner.client import Client
+from _ert.forward_model_runner.client import ACK_MSG, CONNECT_MSG, DISCONNECT_MSG
 from _ert.threading import ErtThread
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
@@ -61,46 +61,71 @@ def wait_until(func, interval=0.5, timeout=30):
     )
 
 
-def _mock_ws(host, port, messages, delay_startup=0):
-    loop = asyncio.new_event_loop()
-    done = loop.create_future()
+class MockZMQServer:
+    def __init__(self, port, signal=0):
+        """Mock ZMQ server for testing
+        signal = 0: normal operation
+        signal = 1: don't send ACK and don't receive messages
+        signal = 2: don't send ACK, but receive messages
+        """
+        self.port = port
+        self.messages = []
+        self.value = signal
+        self.loop = None
+        self.server_task = None
+        self.handler_task = None
 
-    async def _handler(websocket, path):
+    def start_event_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self.mock_zmq_server())
+
+    def __enter__(self):
+        self.loop = asyncio.new_event_loop()
+        self.thread = ErtThread(target=self.start_event_loop)
+        self.thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.handler_task and not self.handler_task.done():
+            self.loop.call_soon_threadsafe(self.handler_task.cancel)
+        self.thread.join()
+        self.loop.close()
+
+    async def __aenter__(self):
+        self.server_task = asyncio.create_task(self.mock_zmq_server())
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if not self.server_task.done():
+            self.server_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.server_task
+
+    async def mock_zmq_server(self):
+        zmq_context = zmq.asyncio.Context()
+        self.router_socket = zmq_context.socket(zmq.ROUTER)
+        self.router_socket.bind(f"tcp://*:{self.port}")
+
+        self.handler_task = asyncio.create_task(self._handler())
+        try:
+            await self.handler_task
+        finally:
+            self.router_socket.close()
+            zmq_context.term()
+
+    def signal(self, value):
+        self.value = value
+
+    async def _handler(self):
         while True:
-            msg = await websocket.recv()
-            messages.append(msg)
-            if msg == "stop":
-                done.set_result(None)
+            try:
+                dealer, __, frame = await self.router_socket.recv_multipart()
+                if frame in {CONNECT_MSG, DISCONNECT_MSG} or self.value == 0:
+                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
+                if frame not in {CONNECT_MSG, DISCONNECT_MSG} and self.value != 1:
+                    self.messages.append(frame.decode("utf-8"))
+            except asyncio.CancelledError:
                 break
-
-    async def _run_server():
-        await asyncio.sleep(delay_startup)
-        async with websockets.server.serve(_handler, host, port):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
-
-
-@contextlib.contextmanager
-def _mock_ws_thread(host, port, messages):
-    mock_ws_thread = ErtThread(
-        target=partial(_mock_ws, messages=messages),
-        args=(
-            host,
-            port,
-        ),
-    )
-    mock_ws_thread.start()
-    try:
-        yield
-    # Make sure to join the thread even if an exception occurs
-    finally:
-        url = f"ws://{host}:{port}"
-        with Client(url) as client:
-            client.send("stop")
-        mock_ws_thread.join()
-        messages.pop()
 
 
 async def poll(driver: Driver, expected: set[int], *, started=None, finished=None):
