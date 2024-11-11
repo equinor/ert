@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731336372312,
+  "lastUpdate": 1731354399623,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "98576cc8ad12e751a19340e8fa350ef08ed3ee59",
-          "message": "Increase sleep in memory profile test from 0.1 -> 0.15",
-          "timestamp": "2024-10-31T08:31:09+01:00",
-          "tree_id": "4c6ccb8737b71f6d7b3377f7515303b6d5b27f26",
-          "url": "https://github.com/equinor/ert/commit/98576cc8ad12e751a19340e8fa350ef08ed3ee59"
-        },
-        "date": 1730359979652,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19419065877406683,
-            "unit": "iter/sec",
-            "range": "stddev: 0.041257105184121186",
-            "extra": "mean: 5.149578287200006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03577791452492691",
             "extra": "mean: 5.219836459599998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "3fec61fe1e32d284424476a47713a662fdf04fec",
+          "message": "Disable modes that do parameter updates if there are no params to update\n\nIf all parameters have UPDATE:FALSE set, then we should not let the user\nselect any mode that does parameter updates.",
+          "timestamp": "2024-11-11T20:44:48+01:00",
+          "tree_id": "1df8258edfecb6486268ac9a7943afa6723a490f",
+          "url": "https://github.com/equinor/ert/commit/3fec61fe1e32d284424476a47713a662fdf04fec"
+        },
+        "date": 1731354399209,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19687312447796668,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02858994384048197",
+            "extra": "mean: 5.079413468200005 sec\nrounds: 5"
           }
         ]
       }
