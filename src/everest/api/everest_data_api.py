@@ -4,7 +4,7 @@ import pandas as pd
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 
 
@@ -204,7 +204,8 @@ class EverestDataAPI:
 
     @property
     def everest_csv(self):
-        state = everserver_status(self._config)
+        status_path = ServerConfig.get_everserver_status_path(self._config.output_dir)
+        state = everserver_status(status_path)
         if state["status"] == ServerStatus.completed:
             return self._config.export_path
         else:

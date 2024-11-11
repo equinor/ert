@@ -1,14 +1,16 @@
 import fnmatch
 import os
 import shutil
+from unittest.mock import patch
 
 import pytest
 
 from ert.config import ErtConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
+from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
-from everest.detached import start_server
+from everest.detached import ServerStatus, start_server
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
@@ -97,12 +99,20 @@ def test_everest_output(copy_mocked_test_data_to_tmp):
     assert len(fnmatch.filter(final_files, "everest_output*")) == 2
 
 
-async def test_save_running_config(copy_math_func_test_data_to_tmp):
+@patch("everest.bin.everest_script.server_is_running", return_value=False)
+@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.wait_for_server")
+@patch("everest.bin.everest_script.start_server")
+@patch(
+    "everest.bin.everest_script.everserver_status",
+    return_value={"status": ServerStatus.never_run, "message": None},
+)
+def test_save_running_config(_, _1, _2, _3, _4, copy_math_func_test_data_to_tmp):
+    """Test everest detached, when an optimization has already run"""
+    # optimization already run, notify the user
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
-    makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    await start_server(config)
-
+    everest_entry([file_name])
     saved_config_path = os.path.join(config.output_dir, file_name)
 
     assert os.path.exists(saved_config_path)

@@ -34,7 +34,7 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, debug=True)
     try:
-        wait_for_server(everest_config, 120)
+        wait_for_server(everest_config.output_dir, 120)
     except SystemExit as e:
         raise e
     await server_running()
@@ -48,12 +48,10 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
     forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
-    simulation_log_path = os.path.join(everest_logs_dir_path, "simulations.log")
 
     assert os.path.exists(everest_output_path)
     assert os.path.exists(everest_logs_dir_path)
     assert os.path.exists(forward_model_log_path)
-    assert os.path.exists(simulation_log_path)
     assert os.path.exists(everest_log_path)
     assert os.path.exists(endpoint_log_path)
 

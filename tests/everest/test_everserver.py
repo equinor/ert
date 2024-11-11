@@ -1,6 +1,8 @@
+import json
 import os
 import ssl
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 from ropt.enums import OptimizerExitCode
@@ -19,7 +21,8 @@ def configure_everserver_logger(*args, **kwargs):
 
 
 def check_status(*args, **kwargs):
-    status = everserver_status(args[0])
+    everest_server_status_path = str(Path(args[0]).parent / "status")
+    status = everserver_status(everest_server_status_path)
     assert status["status"] == kwargs["status"]
 
 
@@ -50,8 +53,10 @@ def set_shared_status(context_status, event, shared_data, progress):
 
 
 def test_certificate_generation(copy_math_func_test_data_to_tmp):
-    everest_config = EverestConfig.load_file("config_minimal.yml")
-    cert, key, pw = everserver._generate_certificate(everest_config)
+    config = EverestConfig.load_file("config_minimal.yml")
+    cert, key, pw = everserver._generate_certificate(
+        ServerConfig.get_certificate_dir(config.output_dir)
+    )
 
     # check that files are written
     assert os.path.exists(cert)
@@ -62,8 +67,9 @@ def test_certificate_generation(copy_math_func_test_data_to_tmp):
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-def test_hostfile_storage(copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file("config_minimal.yml")
+def test_hostfile_storage(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    host_file_path = "detach/.session/host_file"
 
     expected_result = {
         "host": "hostname.1.2.3",
@@ -71,8 +77,10 @@ def test_hostfile_storage(copy_math_func_test_data_to_tmp):
         "cert": "/a/b/c.cert",
         "auth": "1234",
     }
-    everserver._write_hostfile(config, **expected_result)
-    result = ServerConfig.get_server_info(config.output_dir)
+    everserver._write_hostfile(host_file_path, **expected_result)
+    assert os.path.exists(host_file_path)
+    with open(host_file_path, encoding="utf-8") as f:
+        result = json.load(f)
     assert result == expected_result
 
 
@@ -85,7 +93,9 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     assert status["status"] == ServerStatus.failed
     assert "Exception: Configuring logger failed" in status["message"]
@@ -111,7 +121,8 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
     side_effect=lambda self, evaluator_server_config, restart=False: check_status(
-        self.everest_config, status=ServerStatus.running
+        ServerConfig.get_hostfile_path(self.everest_config.output_dir),
+        status=ServerStatus.running,
     ),
 )
 @patch(
@@ -125,7 +136,9 @@ def test_everserver_status_running_complete(
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     assert status["status"] == ServerStatus.completed
     assert status["message"] == "Optimization completed."
@@ -173,7 +186,9 @@ def test_everserver_status_failed_job(
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     # The server should fail and store a user-friendly message.
     assert status["status"] == ServerStatus.failed
@@ -211,7 +226,9 @@ def test_everserver_status_exception(
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     # The server should fail, and store the exception that
     # start_optimization raised.
@@ -242,7 +259,9 @@ def test_everserver_status_max_batch_num(
     config_file = "config_one_batch.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
-    status = everserver_status(config)
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
 
     # The server should complete without error.
     assert status["status"] == ServerStatus.completed

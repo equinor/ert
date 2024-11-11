@@ -4,7 +4,7 @@ import argparse
 from functools import partial
 
 from everest.api import EverestDataAPI
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
@@ -27,7 +27,9 @@ def visualization_entry(args=None):
     options = parser.parse_args(args)
     config = options.config_file
 
-    server_state = everserver_status(config)
+    server_state = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
     if server_state["status"] != ServerStatus.never_run:
         pm = EverestPluginManager()
         pm.hook.visualize_data(api=EverestDataAPI(config))

@@ -4,7 +4,7 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import ClassVar, Dict, List
+from typing import ClassVar, Dict, List, Tuple
 
 import colorama
 from colorama import Fore
@@ -140,8 +140,7 @@ class _DetachedMonitor:
     INDENT = 2
     FLOAT_FMT = ".5g"
 
-    def __init__(self, config, show_all_jobs):
-        self._config = config
+    def __init__(self, show_all_jobs):
         self._show_all_jobs: bool = show_all_jobs
         self._clear_lines = 0
         self._batches_done = set()
@@ -300,19 +299,26 @@ class _DetachedMonitor:
             print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
 
 
-def run_detached_monitor(config: EverestConfig, show_all_jobs: bool = False):
-    monitor = _DetachedMonitor(config, show_all_jobs)
-    start_monitor(config, callback=monitor.update)
-    opt_status = get_opt_status(config.optimization_output_dir)
+def run_detached_monitor(
+    server_context: Tuple[str, str, Tuple[str, str]],
+    optimization_output_dir: str,
+    show_all_jobs: bool = False,
+):
+    monitor = _DetachedMonitor(show_all_jobs)
+    start_monitor(server_context, callback=monitor.update)
+    opt_status = get_opt_status(optimization_output_dir)
     if opt_status.get("cli_monitor_data"):
         msg, _ = monitor.get_opt_progress(opt_status)
         if msg.strip():
             print(f"{msg}\n")
 
 
-def report_on_previous_run(config: EverestConfig):
-    server_state = everserver_status(config)
-    config_file = config.config_file
+def report_on_previous_run(
+    config_file: str,
+    everserver_status_path: str,
+    optimization_output_dir: str,
+):
+    server_state = everserver_status(everserver_status_path)
     if server_state["status"] == ServerStatus.failed:
         error_msg = server_state["message"]
         print(
@@ -321,14 +327,13 @@ def report_on_previous_run(config: EverestConfig):
             f"`  everest run --new-run {config_file}`\n"
         )
     else:
-        output_dir = config.output_dir
-        opt_status = get_opt_status(config.optimization_output_dir)
+        opt_status = get_opt_status(optimization_output_dir)
         if opt_status.get("cli_monitor_data"):
-            monitor = _DetachedMonitor(config, show_all_jobs=False)
+            monitor = _DetachedMonitor(show_all_jobs=False)
             msg, _ = monitor.get_opt_progress(opt_status)
             print(msg + "\n")
         print(
-            f"Optimization completed, results in {output_dir}\n"
+            f"Optimization completed.\n"
             "\nTo re-run the optimization use command:\n"
             f"  `everest run --new-run {config_file}`\n"
             "To export the results use command:\n"

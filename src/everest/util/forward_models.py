@@ -23,7 +23,7 @@ def lint_forward_model_job(job: str, args) -> List[str]:
 def check_forward_model_objective(
     forward_model_steps: List[str], objectives: Set[str]
 ) -> None:
-    if not objectives:
+    if not objectives or not forward_model_steps:
         return
     fm_outputs = pm.hook.custom_forward_model_outputs(
         forward_model_steps=forward_model_steps,
