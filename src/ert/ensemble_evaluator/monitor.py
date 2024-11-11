@@ -1,12 +1,12 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import ssl
 import uuid
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Final, Optional, Union
 
-from aiohttp import ClientError
-from websockets import ConnectionClosed, Headers
-from websockets.asyncio.client import ClientConnection, connect
+import zmq.asyncio
 
 from _ert.events import (
     EETerminated,
@@ -16,7 +16,6 @@ from _ert.events import (
     event_from_json,
     event_to_json,
 )
-from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
@@ -36,53 +35,66 @@ class Monitor:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._event_queue: asyncio.Queue[Union[Event, EventSentinel]] = asyncio.Queue()
-        self._connection: Optional[ClientConnection] = None
         self._receiver_task: Optional[asyncio.Task[None]] = None
         self._connected: asyncio.Future[None] = asyncio.Future()
         self._connection_timeout: float = 120.0
         self._receiver_timeout: float = 60.0
+        # zmq connection
+        self._zmq_context = zmq.asyncio.Context()
+        self._socket = self._zmq_context.socket(zmq.DEALER)
+        self._socket.setsockopt(zmq.LINGER, 0)
+        self._socket.setsockopt_string(zmq.IDENTITY, f"client-{self._id}")
+        if ee_con_info.token is not None:
+            client_public, client_secret = zmq.curve_keypair()
+            self._socket.curve_secretkey = client_secret
+            self._socket.curve_publickey = client_public
+            self._socket.curve_serverkey = ee_con_info.token.encode("utf-8")
 
     async def __aenter__(self) -> "Monitor":
-        self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await asyncio.wait_for(self._connected, timeout=self._connection_timeout)
+            await self.reconnect()
         except asyncio.TimeoutError as exc:
+            await self._term()
             msg = "Couldn't establish connection with the ensemble evaluator!"
             logger.error(msg)
-            self._receiver_task.cancel()
             raise RuntimeError(msg) from exc
+        self._receiver_task = asyncio.create_task(self._receiver())
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+    async def _term(self) -> None:
         if self._receiver_task:
+            await self._socket.send_multipart([b"", b"DISCONNECT"])
+            self._socket.disconnect(self._ee_con_info.router_uri)
             if not self._receiver_task.done():
                 self._receiver_task.cancel()
-            # we are done and not interested in errors when cancelling
             await asyncio.gather(
                 self._receiver_task,
                 return_exceptions=True,
             )
-        if self._connection:
-            await self._connection.close()
+        self._socket.close()
+        self._zmq_context.term()
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self._term()
 
     async def signal_cancel(self) -> None:
-        if not self._connection:
-            return
         await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
         cancel_event = EEUserCancel(monitor=self._id)
-        await self._connection.send(event_to_json(cancel_event))
+        await self._socket.send_multipart(
+            [b"", event_to_json(cancel_event).encode("utf-8")]
+        )
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
     async def signal_done(self) -> None:
-        if not self._connection:
-            return
         await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
         done_event = EEUserDone(monitor=self._id)
-        await self._connection.send(event_to_json(done_event))
+        await self._socket.send_multipart(
+            [b"", event_to_json(done_event).encode("utf-8")]
+        )
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
@@ -116,44 +128,35 @@ class Monitor:
             if event is not None:
                 self._event_queue.task_done()
 
+    async def reconnect(self) -> None:
+        self._socket.connect(self._ee_con_info.router_uri)
+        await self._socket.send_multipart([b"", b"CONNECT"])
+        try:
+            _, ack = await asyncio.wait_for(
+                self._socket.recv_multipart(), timeout=self._connection_timeout
+            )
+            if ack.decode() != "ACK":
+                raise asyncio.TimeoutError("No Ack for connect")
+        except asyncio.TimeoutError:
+            print("NO CONNECTION")
+            logger.warning(
+                f"Failed to get acknowledgment on the monitor {self._id} connect!"
+            )
+            raise
+
     async def _receiver(self) -> None:
         tls: Optional[ssl.SSLContext] = None
         if self._ee_con_info.cert:
             tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             tls.load_verify_locations(cadata=self._ee_con_info.cert)
-        headers = Headers()
-        if self._ee_con_info.token:
-            headers["token"] = self._ee_con_info.token
-        try:
-            await wait_for_evaluator(
-                base_url=self._ee_con_info.url,
-                token=self._ee_con_info.token,
-                cert=self._ee_con_info.cert,
-                timeout=5,
-            )
-        except Exception as e:
-            self._connected.set_exception(e)
-            return
-        async for conn in connect(
-            self._ee_con_info.client_uri,
-            ssl=tls,
-            additional_headers=headers,
-            max_size=2**26,
-            max_queue=500,
-            open_timeout=5,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
+        while True:
             try:
-                self._connection = conn
-                self._connected.set_result(None)
-                async for raw_msg in self._connection:
-                    event = event_from_json(raw_msg)
-                    await self._event_queue.put(event)
-            except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
-                self._connection = None
-                self._connected = asyncio.Future()
+                _, raw_msg = await self._socket.recv_multipart()
+                event = event_from_json(raw_msg.decode("utf-8"))
+                await self._event_queue.put(event)
+            except zmq.ZMQError as exc:
+                # Handle disconnection or other ZMQ errors (reconnect or log)
                 logger.debug(
-                    f"Monitor connection to EnsembleEvaluator went down, reconnecting: {exc}"
+                    f"ZeroMQ connection to EnsembleEvaluator went down, reconnecting: {exc}"
                 )
+                await self.reconnect()

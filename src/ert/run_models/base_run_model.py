@@ -26,12 +26,7 @@ from typing import (
 
 import numpy as np
 
-from _ert.events import (
-    EESnapshot,
-    EESnapshotUpdate,
-    EETerminated,
-    Event,
-)
+from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import (
     AnalysisEvent,
     AnalysisStatusEvent,
@@ -523,7 +518,6 @@ class BaseRunModel(ABC):
                             event,
                             iteration,
                         )
-
                         if event.snapshot.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,

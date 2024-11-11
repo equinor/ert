@@ -6,18 +6,6 @@ from typing import Optional, Union
 class EvaluatorConnectionInfo:
     """Read only server-info"""
 
-    url: str
+    router_uri: str
     cert: Optional[Union[str, bytes]] = None
     token: Optional[str] = None
-
-    @property
-    def dispatch_uri(self) -> str:
-        return f"{self.url}/dispatch"
-
-    @property
-    def client_uri(self) -> str:
-        return f"{self.url}/client"
-
-    @property
-    def result_uri(self) -> str:
-        return f"{self.url}/result"

@@ -1,17 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-import ssl
-from typing import Any, AnyStr, Optional, Union
+import uuid
+from typing import Any, Optional, Union
 
+import zmq
+import zmq.asyncio
 from typing_extensions import Self
-from websockets.asyncio.client import ClientConnection, connect
-from websockets.datastructures import Headers
-from websockets.exceptions import (
-    ConnectionClosedError,
-    ConnectionClosedOK,
-    InvalidHandshake,
-    InvalidURI,
-)
 
 from _ert.async_utils import new_event_loop
 
@@ -32,107 +28,130 @@ class Client:
     CONNECTION_TIMEOUT = 60
 
     def __enter__(self) -> Self:
+        self.loop.run_until_complete(self.reconnect())
         return self
 
-    def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
-        if self.websocket is not None:
-            self.loop.run_until_complete(self.websocket.close())
+    def term(self) -> None:
+        self.socket.close()
+        self.context.term()
         self.loop.close()
 
-    async def __aenter__(self) -> "Client":
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
+        self.send("DISCONNECT")
+        self.socket.disconnect(self.url)
+        self.term()
+
+    async def __aenter__(self) -> Self:
+        await self.reconnect()
         return self
 
     async def __aexit__(
         self, exc_type: Any, exc_value: Any, exc_traceback: Any
     ) -> None:
-        if self.websocket is not None:
-            await self.websocket.close()
+        await self._send("DISCONNECT")
+        self.socket.disconnect(self.url)
+        self.term()
 
     def __init__(
         self,
         url: str,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        max_retries: Optional[int] = None,
-        timeout_multiplier: Optional[int] = None,
+        max_retries: int = 10,
+        connection_timeout: float = 5.0,
+        dealer_name: Optional[str] = None,
     ) -> None:
         if max_retries is None:
             max_retries = self.DEFAULT_MAX_RETRIES
-        if timeout_multiplier is None:
-            timeout_multiplier = self.DEFAULT_TIMEOUT_MULTIPLIER
-        if url is None:
-            raise ValueError("url was None")
+        self._connection_timeout = connection_timeout
         self.url = url
         self.token = token
-        self._additional_headers = Headers()
-        if token is not None:
-            self._additional_headers["token"] = token
 
-        # Mimics the behavior of the ssl argument when connection to
-        # websockets. If none is specified it will deduce based on the url,
-        # if True it will enforce TLS, and if you want to use self signed
-        # certificates you need to pass an ssl_context with the certificate
-        # loaded.
-        self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = None
-        if cert is not None:
-            self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            self._ssl_context.load_verify_locations(cadata=cert)
-        elif url.startswith("wss"):
-            self._ssl_context = True
+        # Set up ZeroMQ context and socket
+        self.context = zmq.asyncio.Context()
+        self.socket = self.context.socket(zmq.DEALER)
+        self.socket.setsockopt(zmq.LINGER, 0)
+        if dealer_name is None:
+            dispatch_id = f"dispatch-{uuid.uuid4().hex[:8]}"
+        else:
+            dispatch_id = dealer_name
+        self.dispatch_id = dispatch_id
+        self.socket.setsockopt_string(zmq.IDENTITY, dispatch_id)
+        print(f"{self.dispatch_id} {token}")
+        if token is not None:
+            client_public, client_secret = zmq.curve_keypair()
+            self.socket.curve_secretkey = client_secret
+            self.socket.curve_publickey = client_public
+            self.socket.curve_serverkey = token.encode("utf-8")
 
         self._max_retries = max_retries
-        self._timeout_multiplier = timeout_multiplier
-        self.websocket: Optional[ClientConnection] = None
         self.loop = new_event_loop()
 
-    async def get_websocket(self) -> ClientConnection:
-        return await connect(
-            self.url,
-            ssl=self._ssl_context,
-            additional_headers=self._additional_headers,
-            open_timeout=self.CONNECTION_TIMEOUT,
-            ping_timeout=self.CONNECTION_TIMEOUT,
-            ping_interval=self.CONNECTION_TIMEOUT,
-            close_timeout=self.CONNECTION_TIMEOUT,
-        )
+    async def reconnect(self) -> None:
+        self.socket.connect(self.url)
+        print(f"{self.dispatch_id=} CONNECTING to {self.url=}")
+        try:
+            await self._send("CONNECT", max_retries=1)
+            _, ack = await asyncio.wait_for(
+                self.socket.recv_multipart(), timeout=self._connection_timeout
+            )
+            if ack.decode() != "ACK":
+                raise ClientConnectionError("No Ack for connect")
+        except asyncio.TimeoutError as exc:
+            logger.warning("Failed to get acknowledgment on dealer connect!")
+            self.term()
+            raise ClientConnectionError(
+                "Connection to evaluator not established!"
+            ) from exc
 
-    async def _send(self, msg: AnyStr) -> None:
-        for retry in range(self._max_retries + 1):
+    def send(
+        self, messages: str | list[str], max_retries: Optional[int] = None
+    ) -> None:
+        self.loop.run_until_complete(self._send(messages, max_retries))
+
+    async def _send(
+        self, messages: str | list[str], max_retries: Optional[int] = None
+    ) -> None:
+        if isinstance(messages, str):
+            messages = [messages]
+
+        retries = max_retries or self._max_retries
+        backoff = 1
+
+        while retries > 0:
             try:
-                if self.websocket is None:
-                    self.websocket = await self.get_websocket()
-                await self.websocket.send(msg)
-                return
-            except ConnectionClosedOK as exception:
-                _error_msg = (
-                    f"Connection closed received from the server {self.url}! "
-                    f" Exception from {type(exception)}: {exception!s}"
+                await self.socket.send_multipart(
+                    [b""] + [message.encode("utf-8") for message in messages]
                 )
-                raise ClientConnectionClosedOK(_error_msg) from exception
-            except (
-                InvalidHandshake,
-                InvalidURI,
-                OSError,
-                asyncio.TimeoutError,
-            ) as exception:
-                if retry == self._max_retries:
-                    _error_msg = (
-                        f"Not able to establish the "
-                        f"websocket connection {self.url}! Max retries reached!"
-                        " Check for firewall issues."
-                        f" Exception from {type(exception)}: {exception!s}"
-                    )
-                    raise ClientConnectionError(_error_msg) from exception
-            except ConnectionClosedError as exception:
-                if retry == self._max_retries:
-                    _error_msg = (
-                        f"Not been able to send the event"
-                        f" to {self.url}! Max retries reached!"
-                        f" Exception from {type(exception)}: {exception!s}"
-                    )
-                    raise ClientConnectionError(_error_msg) from exception
-            await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
-            self.websocket = None
 
-    def send(self, msg: AnyStr) -> None:
-        self.loop.run_until_complete(self._send(msg))
+                # Wait for acknowledgment
+                try:
+                    _, ack = await asyncio.wait_for(
+                        self.socket.recv_multipart(), timeout=self._connection_timeout
+                    )
+                    if ack.decode() == "ACK":
+                        logger.info("Message acknowledged.")
+                        print(f"message sent {messages=} from {self.dispatch_id=}")
+                        return
+                    logger.warning(
+                        "Got acknowledgment but not the expected message. Resending."
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        "Failed to get acknowledgment on the message. Resending."
+                    )
+
+            except zmq.ZMQError as e:
+                logger.warning(f"ZMQ error occurred: {e}. Reconnecting...")
+                await self.reconnect()
+            except asyncio.CancelledError:
+                self.term()
+                raise
+
+            retries -= 1
+            if retries > 0:
+                logger.info(f"Retrying... ({retries} attempts left)")
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 10)  # Exponential backoff
+
+        raise ClientConnectionError("Failed to send message after retries.")
