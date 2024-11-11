@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731317093477,
+  "lastUpdate": 1731336372312,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "f9347350ae9c409d19872101e1a6479a20ed9eea",
-          "message": "Show obs counts correctly summary panel",
-          "timestamp": "2024-10-30T13:20:14+01:00",
-          "tree_id": "b510a8ab6abf4c337865c195d3e43363bf32d9ca",
-          "url": "https://github.com/equinor/ert/commit/f9347350ae9c409d19872101e1a6479a20ed9eea"
-        },
-        "date": 1730290928464,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1938469715755869,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02412473537954339",
-            "extra": "mean: 5.158708396999998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024245559668833395",
             "extra": "mean: 5.098957288600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "a7559fdcd2bf70dcf59e9c14c9cc97c00d76cf5b",
+          "message": "Freeze websockets at < 14\n\nNew version is incompatible with our current code",
+          "timestamp": "2024-11-11T15:44:22+01:00",
+          "tree_id": "64eb439aa57f476e8f43bf6e568ae30cd0d13790",
+          "url": "https://github.com/equinor/ert/commit/a7559fdcd2bf70dcf59e9c14c9cc97c00d76cf5b"
+        },
+        "date": 1731336371907,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19157688324906472,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03577791452492691",
+            "extra": "mean: 5.219836459599998 sec\nrounds: 5"
           }
         ]
       }
