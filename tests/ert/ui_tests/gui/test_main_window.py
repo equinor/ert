@@ -616,6 +616,8 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         assert plot_window
 
+        prev_open_windows = len(QApplication.topLevelWindows())
+
         def detect_external_plot_widget_open_on_right_click(plot_count: int):
             previous_count = plot_count - 1
             assert len(QApplication.topLevelWindows()) == previous_count
@@ -626,9 +628,9 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
             )
             assert len(QApplication.topLevelWindows()) == plot_count
 
-        detect_external_plot_widget_open_on_right_click(1)
-        detect_external_plot_widget_open_on_right_click(2)
-        detect_external_plot_widget_open_on_right_click(3)
+        detect_external_plot_widget_open_on_right_click(prev_open_windows + 1)
+        detect_external_plot_widget_open_on_right_click(prev_open_windows + 2)
+        detect_external_plot_widget_open_on_right_click(prev_open_windows + 3)
     gui.close()
 
 
