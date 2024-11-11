@@ -391,11 +391,18 @@ def test_that_the_manage_experiments_tool_can_be_used(
         dialog._ensemble_edit.setText("_new_ensemble_")
         assert dialog._ok_button.isEnabled()
 
+        dialog._iterations_field.setText("a")
+        assert not dialog._ok_button.isEnabled()
+        dialog._iterations_field.setText("42")
+        assert dialog._ok_button.isEnabled()
+
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
     create_widget = get_child(storage_widget, AddWidget)
     qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+
+    assert experiments_panel.notifier.current_ensemble.iteration == 42
 
     # Go to the "initialize from scratch" panel
     experiments_panel.setCurrentIndex(1)

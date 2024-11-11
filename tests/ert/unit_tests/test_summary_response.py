@@ -54,7 +54,7 @@ def test_load_summary_response_restart_not_zero(
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 
         facade = LibresFacade.from_config_file("config.ert")
-        facade.load_from_forward_model(ensemble, [True], 0)
+        facade.load_from_forward_model(ensemble, [True])
 
         df = ensemble.load_responses("summary", (0,))
         df = df.pivot(on="response_key", values="values")

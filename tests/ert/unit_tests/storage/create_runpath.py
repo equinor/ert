@@ -61,4 +61,4 @@ def create_runpath(
 def load_from_forward_model(ert_config, ensemble):
     facade = LibresFacade.from_config_file(ert_config)
     realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations, 0)
+    return facade.load_from_forward_model(ensemble, realizations)

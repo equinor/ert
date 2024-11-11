@@ -5,6 +5,7 @@ import logging
 import time
 import warnings
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -29,10 +30,8 @@ from ert.config import (
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
 from ert.load_status import LoadResult, LoadStatus
-from ert.run_arg import create_run_arguments
 
 from .plugins import ErtPluginContext
-from .runpaths import Runpaths
 
 _logger = logging.getLogger(__name__)
 
@@ -43,16 +42,16 @@ if TYPE_CHECKING:
         EnkfObs,
         WorkflowJob,
     )
-    from ert.run_arg import RunArg
     from ert.storage import Ensemble, Storage
 
 
-def _load_realization(
-    realisation: int,
-    run_args: List[RunArg],
+def _load_realization_from_run_path(
+    run_path: str,
+    realization: int,
+    ensemble: Ensemble,
 ) -> Tuple[LoadResult, int]:
-    result = asyncio.run(forward_model_ok(run_args[realisation]))
-    return result, realisation
+    result = asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
+    return result, realization
 
 
 class LibresFacade:
@@ -122,34 +121,20 @@ class LibresFacade:
     def run_path(self) -> str:
         return self.config.model_config.runpath_format_string
 
+    @property
+    def resolved_run_path(self) -> str:
+        return str(Path(self.config.model_config.runpath_format_string).resolve())
+
     def load_from_forward_model(
         self,
         ensemble: Ensemble,
         realisations: npt.NDArray[np.bool_],
-        iteration: Optional[int] = None,
     ) -> int:
-        if iteration is not None:
-            warnings.warn(
-                "The iteration argument has no effect, iteration is read from ensemble",
-                DeprecationWarning,
-                stacklevel=1,
-            )
         t = time.perf_counter()
-        run_args = create_run_arguments(
-            Runpaths(
-                jobname_format=self.config.model_config.jobname_format_string,
-                runpath_format=self.config.model_config.runpath_format_string,
-                filename=str(self.config.runpath_file),
-                substitutions=self.config.substitutions,
-                eclbase=self.config.model_config.eclbase_format_string,
-            ),
-            realisations,
-            ensemble=ensemble,
-        )
-        nr_loaded = self._load_from_run_path(
-            self.config.model_config.num_realizations,
-            run_args,
-            realisations,
+        nr_loaded = self.load_from_run_path(
+            self.resolved_run_path,
+            ensemble,
+            [r for r, active in enumerate(realisations) if active],
         )
         _logger.debug(
             f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
@@ -157,21 +142,26 @@ class LibresFacade:
         return nr_loaded
 
     @staticmethod
-    def _load_from_run_path(
-        ensemble_size: int,
-        run_args: List[RunArg],
-        active_realizations: npt.NDArray[np.bool_],
+    def load_from_run_path(
+        run_path_format: str,
+        ensemble: Ensemble,
+        active_realizations: List[int],
     ) -> int:
         """Returns the number of loaded realizations"""
         pool = ThreadPool(processes=8)
 
         async_result = [
             pool.apply_async(
-                _load_realization,
-                (iens, run_args),
+                _load_realization_from_run_path,
+                (
+                    run_path_format.replace("<IENS>", str(realization)).replace(
+                        "<ITER>", "0"
+                    ),
+                    realization,
+                    ensemble,
+                ),
             )
-            for iens in range(ensemble_size)
-            if active_realizations[iens]
+            for realization in active_realizations
         ]
 
         loaded = 0
