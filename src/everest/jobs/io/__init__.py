@@ -40,4 +40,4 @@ def safe_open(file, mode="r", **kwargs):
 
     if any(wtoken in mode for wtoken in "wxa+"):
         _create_folders(file)
-    return open(file, mode, encoding="utf-8", **kwargs)  # noqa SIM115
+    return open(file, mode, encoding="utf-8", **kwargs)
