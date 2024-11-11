@@ -67,7 +67,7 @@ def test_missing_runpath_has_isolated_failures(tmp_path, monkeypatch):
 def raising_named_temporary_file(*args, **kwargs):
     if "realization-1" in str(kwargs["dir"]):
         raise OSError("Don't like realization-1")
-    return NamedTemporaryFile(*args, **kwargs)  # noqa
+    return NamedTemporaryFile(*args, **kwargs)
 
 
 def patch_raising_named_temporary_file(queue_system):

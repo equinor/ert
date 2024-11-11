@@ -238,7 +238,7 @@ class OpenPBSDriver(Driver):
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-A", self._project_code] if self._project_code else []
         arg_keep_qsub_output = (
-            [] if self._keep_qsub_output else "-o /dev/null -e /dev/null".split()
+            [] if self._keep_qsub_output else ["-o", "/dev/null", "-e", "/dev/null"]
         )
 
         script = (
