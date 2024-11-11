@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731065415559,
+  "lastUpdate": 1731317093477,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "28763a6551f19eadb9cc4675baa9d2f405f10921",
-          "message": "Increment storage version\n\nPut polars migration into separate version\r\ndue to 2024.10 ERT being still xarray",
-          "timestamp": "2024-10-29T15:39:24+01:00",
-          "tree_id": "07a9b8692b3231f1ae013ae1797bc907651db3a6",
-          "url": "https://github.com/equinor/ert/commit/28763a6551f19eadb9cc4675baa9d2f405f10921"
-        },
-        "date": 1730212875866,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18802466468712978,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0342248591953596",
-            "extra": "mean: 5.318451181200004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03579840874600964",
             "extra": "mean: 5.232084833599998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1b29b3a37efd53b56fe86ed181069306a4b3b5b3",
+          "message": "Enable load results manually from any available iteration\n\n* Allow non-zero iteration number when creating experiment-ensemble pair using CreateExperimentDialog\r\n\r\n* Enable load results manually from any available iteration",
+          "timestamp": "2024-11-11T11:23:05+02:00",
+          "tree_id": "8e02d3e23a4fe3fb59917ec29893d77460f9379f",
+          "url": "https://github.com/equinor/ert/commit/1b29b3a37efd53b56fe86ed181069306a4b3b5b3"
+        },
+        "date": 1731317093034,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19611852843634342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024245559668833395",
+            "extra": "mean: 5.098957288600002 sec\nrounds: 5"
           }
         ]
       }
