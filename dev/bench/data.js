@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731410678494,
+  "lastUpdate": 1731418678001,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "ca68c84724fc67d44779725544014ab836ee1c4c",
-          "message": "Remove iEverest",
-          "timestamp": "2024-10-31T12:06:00+01:00",
-          "tree_id": "e3f63400b7a087c0a892a3d1c8bd655c3224837c",
-          "url": "https://github.com/equinor/ert/commit/ca68c84724fc67d44779725544014ab836ee1c4c"
-        },
-        "date": 1730372876680,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19203659249219796,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0364210809898341",
-            "extra": "mean: 5.207340887599992 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015545395168153927",
             "extra": "mean: 5.246805058600006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "f088b4b9140945a2effab4cfa38a42c4aac0c6c0",
+          "message": "Remove macos fail flag export tests",
+          "timestamp": "2024-11-12T14:36:03+01:00",
+          "tree_id": "fdd56e044dfabfb8d111a9a721ad51c38566b218",
+          "url": "https://github.com/equinor/ert/commit/f088b4b9140945a2effab4cfa38a42c4aac0c6c0"
+        },
+        "date": 1731418677331,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.195301811719276,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008535186557729876",
+            "extra": "mean: 5.120280202199996 sec\nrounds: 5"
           }
         ]
       }
