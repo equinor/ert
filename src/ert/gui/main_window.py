@@ -33,7 +33,7 @@ from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
-from ert.trace import getTraceID
+from ert.trace import get_trace_id
 
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
@@ -80,7 +80,7 @@ class ErtMainWindow(QMainWindow):
         self.log_handler = log_handler
 
         self.setWindowTitle(
-            f"ERT - {config_file} - {find_ert_info()} - {getTraceID()[:8]}"
+            f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
