@@ -1,7 +1,10 @@
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 from ert.config import ModelConfig
-from ert.config.parsing import ConfigKeys, ConfigValidationError
+from ert.config.parsing import ConfigKeys, ConfigValidationError, ConfigWarning
 
 
 def test_default_model_config_run_path(tmpdir):
@@ -61,3 +64,13 @@ def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
 
         with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
             _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: "time_map.txt"})
+
+
+def test_warning_when_full_disk(tmp_path):
+    Path(tmp_path / "simulations").mkdir()
+    runpath = "simulations/realization-%d/iter-%d"
+    msg = "Little space left in runpath, only 2.00 B free on"
+    with patch(
+        "ert.config.model_config.shutil.disk_usage", return_value=(100, 98, 2)
+    ), pytest.warns(ConfigWarning, match=msg):
+        _ = ModelConfig(num_realizations=1, runpath_format_string=runpath)

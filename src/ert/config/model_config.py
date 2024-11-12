@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os.path
+import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import no_type_check
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
+
+from ert.shared.status.utils import byte_with_unit
 
 from .parsing import (
     ConfigDict,
@@ -42,6 +47,9 @@ DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
+
+FULL_DISK_PERCENTAGE_THRESHOLD = 0.97
+MINIMUM_BYTES_LEFT_ON_DISK = 200 * 1024**3  # 200 GB required
 
 
 @dataclass
@@ -83,6 +91,19 @@ class ModelConfig:
             )
             ConfigWarning.warn(msg)
             logger.warning(msg)
+        with contextlib.suppress(Exception):
+            mount_dir = _get_mount_directory(runpath_format_string)
+            total, used, free = shutil.disk_usage(mount_dir)
+            percentage_used = used / total
+            if (
+                percentage_used > FULL_DISK_PERCENTAGE_THRESHOLD
+                and free < MINIMUM_BYTES_LEFT_ON_DISK
+            ):
+                msg = (
+                    f"Little space left in runpath, only {byte_with_unit(free)} free on {mount_dir !s}."
+                    " Consider cleaning up disk before running simulations."
+                )
+                ConfigWarning.warn(msg)
         return result
 
     @field_validator("jobname_format_string", mode="before")
@@ -142,3 +163,12 @@ def _replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
     format_string = format_string.replace("%d", "<ITER>", 1)
     return format_string
+
+
+def _get_mount_directory(runpath: str) -> Path:
+    path = Path(runpath).absolute()
+
+    while not path.is_mount():
+        path = path.parent
+
+    return path
