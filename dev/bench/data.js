@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731419848476,
+  "lastUpdate": 1731420444934,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "c077aad7c74ce1d48e26dc1703545263a4d6f152",
-          "message": "Make plot_api return all observations for response",
-          "timestamp": "2024-10-31T14:39:37Z",
-          "tree_id": "e633ef272ba93fc496b2ddc23ad75338c0221864",
-          "url": "https://github.com/equinor/ert/commit/c077aad7c74ce1d48e26dc1703545263a4d6f152"
-        },
-        "date": 1730385691493,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19462632084366618,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01928909080231142",
-            "extra": "mean: 5.138051193000001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.12035984176026342",
             "extra": "mean: 5.3905892956 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "efb812cf823994775f4ddea84a3c19b889acf9dd",
+          "message": "Add trace ID to clipboard debug info and title bar (#9157)",
+          "timestamp": "2024-11-12T15:05:33+01:00",
+          "tree_id": "be794f114365a4a6196b469bd1ad04134adc2c69",
+          "url": "https://github.com/equinor/ert/commit/efb812cf823994775f4ddea84a3c19b889acf9dd"
+        },
+        "date": 1731420442192,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19307666222800574,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01839081835385295",
+            "extra": "mean: 5.179289865800001 sec\nrounds: 5"
           }
         ]
       }
