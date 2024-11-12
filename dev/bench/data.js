@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731420444934,
+  "lastUpdate": 1731423239274,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "8c312f2c2552203f62156054223c160f613bdd83",
-          "message": "Fix logging of step runtime statistics\n\nThis had to be moved to _ensemble.py as the state inside _snapshot.py\nonly had information about steps that fell into the same batching\nwindow, thus long lasting steps would have start_time=None",
-          "timestamp": "2024-11-01T07:44:34+01:00",
-          "tree_id": "62f20f1cd653ea7548f2c3321ab7f63a7dd62ef4",
-          "url": "https://github.com/equinor/ert/commit/8c312f2c2552203f62156054223c160f613bdd83"
-        },
-        "date": 1730443586578,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.193994606010088,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03415446621832291",
-            "extra": "mean: 5.154782499199996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01839081835385295",
             "extra": "mean: 5.179289865800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "22b7f7142ca8232fb9c5f39fbfb99cfc58aca5fa",
+          "message": "Fixup ert plugin documentation\n\n- Specifies package structure assumption\n- Adds pyproject.toml example\n- Fixes syntax error in code example",
+          "timestamp": "2024-11-12T15:51:10+01:00",
+          "tree_id": "cf7a53afb52243068701175efdb21ae6700ff4bc",
+          "url": "https://github.com/equinor/ert/commit/22b7f7142ca8232fb9c5f39fbfb99cfc58aca5fa"
+        },
+        "date": 1731423238294,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1927639173767591,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0368780184250326",
+            "extra": "mean: 5.187692871200005 sec\nrounds: 5"
           }
         ]
       }
