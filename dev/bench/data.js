@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731406464477,
+  "lastUpdate": 1731410678494,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "aac8f804ffc6ffa25bb7127ade296f2f0aac3952",
-          "message": "Remove function only called in test",
-          "timestamp": "2024-10-31T12:03:18+01:00",
-          "tree_id": "0021ef19fea09eaac61b6b4e7406d6db63efa941",
-          "url": "https://github.com/equinor/ert/commit/aac8f804ffc6ffa25bb7127ade296f2f0aac3952"
-        },
-        "date": 1730372707382,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19671715994098707,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0388839294678522",
-            "extra": "mean: 5.0834406124 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.054413618347240345",
             "extra": "mean: 5.272309151200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "5b96e8a9a4cfcd809941596212ea637dcd493018",
+          "message": "Add just command helper tool to repository",
+          "timestamp": "2024-11-12T12:22:36+01:00",
+          "tree_id": "ba4d5c9c3463b1b6dfa076ff25a6dd63bdc30150",
+          "url": "https://github.com/equinor/ert/commit/5b96e8a9a4cfcd809941596212ea637dcd493018"
+        },
+        "date": 1731410677520,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.190592177302434,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015545395168153927",
+            "extra": "mean: 5.246805058600006 sec\nrounds: 5"
           }
         ]
       }
