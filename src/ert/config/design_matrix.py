@@ -102,14 +102,14 @@ class DesignMatrix:
         design_parameter_group = self.parameter_configuration[DESIGN_MATRIX_GROUP]
         design_keys = []
         if isinstance(design_parameter_group, GenKwConfig):
-            design_keys = design_parameter_group.getKeyWords()
+            design_keys = [e.name for e in design_parameter_group.transform_functions]
 
         design_group_added = False
         for genkw_group in existing_parameters:
             if not isinstance(genkw_group, GenKwConfig):
                 new_param_config += [genkw_group]
                 continue
-            existing_keys = genkw_group.getKeyWords()
+            existing_keys = [e.name for e in genkw_group.transform_functions]
             if set(existing_keys) == set(design_keys):
                 design_parameter_group.name = genkw_group.name
                 design_group_added = True
