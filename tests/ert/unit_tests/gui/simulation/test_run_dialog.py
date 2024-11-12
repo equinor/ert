@@ -624,7 +624,12 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
 
         clipboard_text = QApplication.clipboard().text()
 
-        for keyword in ["Single realization test-run", "Local", r"minimal\_config.ert"]:
+        for keyword in [
+            "Single realization test-run",
+            "Local",
+            r"minimal\_config.ert",
+            "Trace ID",
+        ]:
             assert keyword in clipboard_text
 
 
