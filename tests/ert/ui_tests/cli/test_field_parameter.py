@@ -7,6 +7,7 @@ from textwrap import dedent
 import numpy as np
 import numpy.testing
 import polars as pl
+import pytest
 import resfo
 import xtgeo
 
@@ -330,5 +331,44 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                 param_config.nx * param_config.ny * param_config.nz,
             ).T
         )
+        # Check that generalized variance is reduced by update step.
+        assert np.trace(prior_covariance) > np.trace(posterior_covariance)
+
+
+@pytest.mark.usefixtures("copy_heat_equation")
+def test_foward_init_false():
+    config = ErtConfig.from_file("config_forward_init_false.ert")
+    run_cli(
+        ENSEMBLE_SMOOTHER_MODE,
+        "--disable-monitor",
+        "config_forward_init_false.ert",
+        "--experiment-name",
+        "es-test",
+    )
+
+    with open_storage(config.ens_path) as storage:
+        experiment = storage.get_experiment_by_name("es-test")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
+
+        param_config = config.ensemble_config.parameter_configs["COND"]
+
+        prior_result = prior.load_parameters("COND")["values"]
+        prior_covariance = np.cov(
+            prior_result.values.reshape(
+                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
+            ),
+            rowvar=False,
+        )
+
+        posterior_result = posterior.load_parameters("COND")["values"]
+        posterior_covariance = np.cov(
+            posterior_result.values.reshape(
+                posterior.ensemble_size,
+                param_config.nx * param_config.ny * param_config.nz,
+            ),
+            rowvar=False,
+        )
+
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)

@@ -8,6 +8,7 @@ from typing import Callable, List
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import resfo
 import xtgeo
 from definition import Coordinate, obs_coordinates, obs_times
 from heat_equation import heat_equation, sample_prior_conductivity
@@ -71,6 +72,19 @@ def make_observations(
     return d
 
 
+def generate_priors():
+    """For testing FORWARD_INIT:False"""
+    rng = np.random.default_rng()
+    for i in range(10):
+        cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(
+            nx, nx
+        )
+        resfo.write(
+            f"cond_{i}.bgrdecl",
+            [("COND    ", cond.flatten(order="F").astype(np.float32))],
+        )
+
+
 if __name__ == "__main__":
     create_egrid_file()
 
@@ -122,3 +136,5 @@ if __name__ == "__main__":
         with open(f"obs_{obs_time}.txt", "w", encoding="utf-8") as fobs:
             df = d.iloc[d.index.get_level_values("k") == obs_time]
             fobs.write(df.sort_index().to_csv(header=False, index=False, sep=" "))
+
+    generate_priors()
