@@ -578,7 +578,6 @@ async def test_that_bsub_will_retry_and_fail(
             " '&' cannot be used in the resource requirement section. Job not submitted.",
         ),
         (255, "Error in rusage section. Job not submitted."),
-        (255, "Job not submitted."),
     ],
 )
 async def test_that_bsub_will_fail_without_retries(
@@ -604,6 +603,8 @@ async def test_that_bsub_will_fail_without_retries(
     [
         (0, "void"),
         (FLAKY_SSH_RETURNCODE, ""),
+        (0, "Request from non-LSF host rejected"),
+        (FLAKY_SSH_RETURNCODE, "Request from non-LSF host rejected"),
     ],
 )
 async def test_that_bsub_will_retry_and_succeed(
