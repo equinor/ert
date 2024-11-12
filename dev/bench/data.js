@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731354399623,
+  "lastUpdate": 1731399468951,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "c4e136546fa7f03090110e8dac1647c95e0f58b8",
-          "message": "Log runtime for individual forward model steps\n\nThis is meant for making statistics pr forward model step name.\n\nWhile testing on poly_example and local queue, there\nis some odd occurences of the logged message that start_time\nis None, this is not believed to happen often in production.",
-          "timestamp": "2024-10-31T09:26:43+01:00",
-          "tree_id": "d4651fd3a80f2f0fe8fa630d1418271291a22cb0",
-          "url": "https://github.com/equinor/ert/commit/c4e136546fa7f03090110e8dac1647c95e0f58b8"
-        },
-        "date": 1730363313927,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19573123415225843,
-            "unit": "iter/sec",
-            "range": "stddev: 0.013071220862864061",
-            "extra": "mean: 5.109046618599995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02858994384048197",
             "extra": "mean: 5.079413468200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "08b672c8498636fdb1da41a5c8380f54ff481ade",
+          "message": "Mitigate flakyness on busy test nodes\n\nA kill window of 1 second is not enough on real-life test nodes.",
+          "timestamp": "2024-11-12T09:15:54+01:00",
+          "tree_id": "e436340dbec313ed44706a92af0f3e3f3a2c264e",
+          "url": "https://github.com/equinor/ert/commit/08b672c8498636fdb1da41a5c8380f54ff481ade"
+        },
+        "date": 1731399468448,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19543837210645734,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04032319220786674",
+            "extra": "mean: 5.11670246340002 sec\nrounds: 5"
           }
         ]
       }
