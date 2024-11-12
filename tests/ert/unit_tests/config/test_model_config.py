@@ -68,8 +68,8 @@ def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
 
 def test_warning_when_full_disk(tmp_path):
     Path(tmp_path / "simulations").mkdir()
-    runpath = "simulations/realization-%d/iter-%d"
-    msg = "Little space left in runpath, only 2.00 B free on"
+    runpath = f"{tmp_path !s}/simulations/realization-%d/iter-%d"
+    msg = "Low disk space: 2.00 B free on"
     with patch(
         "ert.config.model_config.shutil.disk_usage", return_value=(100, 98, 2)
     ), pytest.warns(ConfigWarning, match=msg):
