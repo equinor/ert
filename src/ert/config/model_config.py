@@ -100,8 +100,8 @@ class ModelConfig:
                 and free < MINIMUM_BYTES_LEFT_ON_DISK
             ):
                 msg = (
-                    f"Little space left in runpath, only {byte_with_unit(free)} free on {mount_dir !s}."
-                    " Consider cleaning up disk before running simulations."
+                    f"Low disk space: {byte_with_unit(free)} free on {mount_dir !s}."
+                    " Consider freeing up some space to ensure successful simulation runs."
                 )
                 ConfigWarning.warn(msg)
         return result
