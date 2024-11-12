@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731399468951,
+  "lastUpdate": 1731401497554,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "40c833805eae51f790d20d3bde1038c40b6a27a2",
-          "message": "Test field update using heat equation instead of poly",
-          "timestamp": "2024-10-31T11:41:44+01:00",
-          "tree_id": "6e6c5e9c3692347b9b511c126d5e02136b700280",
-          "url": "https://github.com/equinor/ert/commit/40c833805eae51f790d20d3bde1038c40b6a27a2"
-        },
-        "date": 1730371414413,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19560114247813806,
-            "unit": "iter/sec",
-            "range": "stddev: 0.020794376431325683",
-            "extra": "mean: 5.112444576399997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04032319220786674",
             "extra": "mean: 5.11670246340002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "44ece921ec48834ffddb256fdc93f9e9561c7020",
+          "message": "Update pre-commit: ruff v0.6.9 -> v0.7.3",
+          "timestamp": "2024-11-12T09:49:30+01:00",
+          "tree_id": "f361723a24ce7be08bf6531727e7ddfd132a0a2c",
+          "url": "https://github.com/equinor/ert/commit/44ece921ec48834ffddb256fdc93f9e9561c7020"
+        },
+        "date": 1731401496656,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1902289437654308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030989492307420905",
+            "extra": "mean: 5.2568235948000055 sec\nrounds: 5"
           }
         ]
       }
