@@ -1,0 +1,111 @@
+{
+  "batches": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "control_names": [
+    "point_x",
+    "point_y"
+  ],
+  "accepted_batches": [
+    0,
+    1,
+    3
+  ],
+  "objective_function_names": [
+    "func"
+  ],
+  "output_constraint_names": [],
+  "realizations": [
+    0
+  ],
+  "simulations": [
+    0
+  ],
+  "control_values": [
+    {
+      "control": "point_x",
+      "batch": 0,
+      "value": 0.0
+    },
+    {
+      "control": "point_y",
+      "batch": 0,
+      "value": 0.0
+    },
+    {
+      "control": "point_x",
+      "batch": 1,
+      "value": 6.0
+    },
+    {
+      "control": "point_y",
+      "batch": 1,
+      "value": 4.0
+    },
+    {
+      "control": "point_x",
+      "batch": 2,
+      "value": 3.0
+    },
+    {
+      "control": "point_y",
+      "batch": 2,
+      "value": 1.0
+    },
+    {
+      "control": "point_x",
+      "batch": 3,
+      "value": 3.0
+    },
+    {
+      "control": "point_y",
+      "batch": 3,
+      "value": 7.0
+    }
+  ],
+  "single_objective_values": [
+    {
+      "batch": 0,
+      "objective": 0.0,
+      "accepted": 1
+    },
+    {
+      "batch": 1,
+      "objective": 4.0,
+      "accepted": 1
+    },
+    {
+      "batch": 2,
+      "objective": 1.0,
+      "accepted": 0
+    },
+    {
+      "batch": 3,
+      "objective": 7.0,
+      "accepted": 1
+    }
+  ],
+  "gradient_values": [],
+  "input_constraint('point_x')": {
+    "min": 0.0,
+    "max": 10.0
+  },
+  "input_constraint('point_y')": {
+    "min": 0.0,
+    "max": 10.0
+  },
+  "optimal_result_json": {
+    "batch": 3,
+    "controls": {
+      "point_x": 3.0,
+      "point_y": 7.0
+    },
+    "total_objective": 7.0,
+    "expected_objectives": {
+      "func": 7.0
+    }
+  }
+}

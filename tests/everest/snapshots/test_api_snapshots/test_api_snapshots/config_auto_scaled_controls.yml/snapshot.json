@@ -1,0 +1,200 @@
+{
+  "batches": [
+    0,
+    1,
+    3,
+    5,
+    7,
+    9
+  ],
+  "control_names": [
+    "point_x",
+    "point_y",
+    "point_z"
+  ],
+  "accepted_batches": [
+    0,
+    1,
+    3,
+    5,
+    7
+  ],
+  "objective_function_names": [
+    "distance"
+  ],
+  "output_constraint_names": [],
+  "realizations": [
+    0
+  ],
+  "simulations": [
+    0
+  ],
+  "control_values": [
+    {
+      "control": "point_x",
+      "batch": 0,
+      "value": 0.2
+    },
+    {
+      "control": "point_y",
+      "batch": 0,
+      "value": 0.2
+    },
+    {
+      "control": "point_z",
+      "batch": 0,
+      "value": 0.2
+    },
+    {
+      "control": "point_x",
+      "batch": 1,
+      "value": -0.01613438
+    },
+    {
+      "control": "point_y",
+      "batch": 1,
+      "value": -0.01682551
+    },
+    {
+      "control": "point_z",
+      "batch": 1,
+      "value": 0.5571275
+    },
+    {
+      "control": "point_x",
+      "batch": 3,
+      "value": -0.02716208
+    },
+    {
+      "control": "point_y",
+      "batch": 3,
+      "value": -0.02686554
+    },
+    {
+      "control": "point_z",
+      "batch": 3,
+      "value": 0.32152608
+    },
+    {
+      "control": "point_x",
+      "batch": 5,
+      "value": 0.14271157
+    },
+    {
+      "control": "point_y",
+      "batch": 5,
+      "value": 0.14281097
+    },
+    {
+      "control": "point_z",
+      "batch": 5,
+      "value": 0.40830957
+    },
+    {
+      "control": "point_x",
+      "batch": 7,
+      "value": 0.2225664
+    },
+    {
+      "control": "point_y",
+      "batch": 7,
+      "value": 0.21233962
+    },
+    {
+      "control": "point_z",
+      "batch": 7,
+      "value": 0.49289096
+    },
+    {
+      "control": "point_x",
+      "batch": 9,
+      "value": 0.21940694
+    },
+    {
+      "control": "point_y",
+      "batch": 9,
+      "value": 0.26757899
+    },
+    {
+      "control": "point_z",
+      "batch": 9,
+      "value": 0.49314616
+    }
+  ],
+  "single_objective_values": [
+    {
+      "batch": 0,
+      "objective": -0.27000001,
+      "accepted": 1
+    },
+    {
+      "batch": 1,
+      "objective": -0.53676701,
+      "accepted": 1
+    },
+    {
+      "batch": 3,
+      "objective": -0.58734,
+      "accepted": 1
+    },
+    {
+      "batch": 5,
+      "objective": -0.26364601,
+      "accepted": 1
+    },
+    {
+      "batch": 7,
+      "objective": -0.159768,
+      "accepted": 1
+    },
+    {
+      "batch": 9,
+      "objective": -0.132799,
+      "accepted": 0
+    }
+  ],
+  "gradient_values": [
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_x",
+      "value": 2.99973311
+    },
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_y",
+      "value": 2.99553111
+    },
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_z",
+      "value": 3.00247454
+    }
+  ],
+  "input_constraint('point_x')": {
+    "min": 0.3,
+    "max": 0.7
+  },
+  "input_constraint('point_y')": {
+    "min": 0.3,
+    "max": 0.7
+  },
+  "input_constraint('point_z')": {
+    "min": 0.3,
+    "max": 0.7
+  },
+  "optimal_result_json": {
+    "batch": 7,
+    "controls": {
+      "point_x": 0.2225664,
+      "point_y": 0.21233962,
+      "point_z": 0.49289096
+    },
+    "total_objective": -0.159768,
+    "expected_objectives": {
+      "distance": -0.159768
+    }
+  }
+}

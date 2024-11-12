@@ -1,0 +1,389 @@
+{
+  "batches": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "control_names": [
+    "point_x-0",
+    "point_x-1",
+    "point_x-2"
+  ],
+  "accepted_batches": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "objective_function_names": [
+    "distance"
+  ],
+  "output_constraint_names": [
+    "x-0_coord"
+  ],
+  "realizations": [
+    0,
+    2
+  ],
+  "simulations": [
+    0,
+    1
+  ],
+  "control_values": [
+    {
+      "control": "point_x-0",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-1",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-2",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-0",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-1",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-2",
+      "batch": 0,
+      "value": 0.25
+    },
+    {
+      "control": "point_x-0",
+      "batch": 1,
+      "value": 0.25904478
+    },
+    {
+      "control": "point_x-1",
+      "batch": 1,
+      "value": 0.13792475
+    },
+    {
+      "control": "point_x-2",
+      "batch": 1,
+      "value": 0.17336687
+    },
+    {
+      "control": "point_x-0",
+      "batch": 1,
+      "value": 0.25904478
+    },
+    {
+      "control": "point_x-1",
+      "batch": 1,
+      "value": 0.13792475
+    },
+    {
+      "control": "point_x-2",
+      "batch": 1,
+      "value": 0.17336687
+    },
+    {
+      "control": "point_x-0",
+      "batch": 2,
+      "value": 0.31863568
+    },
+    {
+      "control": "point_x-1",
+      "batch": 2,
+      "value": 0.00504358
+    },
+    {
+      "control": "point_x-2",
+      "batch": 2,
+      "value": 0.13385209
+    },
+    {
+      "control": "point_x-0",
+      "batch": 2,
+      "value": 0.31863568
+    },
+    {
+      "control": "point_x-1",
+      "batch": 2,
+      "value": 0.00504358
+    },
+    {
+      "control": "point_x-2",
+      "batch": 2,
+      "value": 0.13385209
+    },
+    {
+      "control": "point_x-0",
+      "batch": 3,
+      "value": 0.24117771
+    },
+    {
+      "control": "point_x-1",
+      "batch": 3,
+      "value": 0.03015417
+    },
+    {
+      "control": "point_x-2",
+      "batch": 3,
+      "value": 0.24583776
+    },
+    {
+      "control": "point_x-0",
+      "batch": 3,
+      "value": 0.24117771
+    },
+    {
+      "control": "point_x-1",
+      "batch": 3,
+      "value": 0.03015417
+    },
+    {
+      "control": "point_x-2",
+      "batch": 3,
+      "value": 0.24583776
+    },
+    {
+      "control": "point_x-0",
+      "batch": 4,
+      "value": 0.15091481
+    },
+    {
+      "control": "point_x-1",
+      "batch": 4,
+      "value": -0.00394611
+    },
+    {
+      "control": "point_x-2",
+      "batch": 4,
+      "value": 0.36960914
+    },
+    {
+      "control": "point_x-0",
+      "batch": 4,
+      "value": 0.15091481
+    },
+    {
+      "control": "point_x-1",
+      "batch": 4,
+      "value": -0.00394611
+    },
+    {
+      "control": "point_x-2",
+      "batch": 4,
+      "value": 0.36960914
+    },
+    {
+      "control": "point_x-0",
+      "batch": 5,
+      "value": 0.1145273
+    },
+    {
+      "control": "point_x-1",
+      "batch": 5,
+      "value": 0.00635029
+    },
+    {
+      "control": "point_x-2",
+      "batch": 5,
+      "value": 0.38836369
+    },
+    {
+      "control": "point_x-0",
+      "batch": 5,
+      "value": 0.1145273
+    },
+    {
+      "control": "point_x-1",
+      "batch": 5,
+      "value": 0.00635029
+    },
+    {
+      "control": "point_x-2",
+      "batch": 5,
+      "value": 0.38836369
+    }
+  ],
+  "single_objective_values": [
+    {
+      "batch": 0,
+      "objective": -1.6875,
+      "accepted": 1
+    },
+    {
+      "batch": 1,
+      "objective": -1.69281773,
+      "accepted": 1
+    },
+    {
+      "batch": 2,
+      "objective": -1.73561919,
+      "accepted": 1
+    },
+    {
+      "batch": 3,
+      "objective": -1.6236748,
+      "accepted": 1
+    },
+    {
+      "batch": 4,
+      "objective": -1.539793,
+      "accepted": 1
+    },
+    {
+      "batch": 5,
+      "objective": -1.52561897,
+      "accepted": 1
+    }
+  ],
+  "gradient_values": [
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.49076627
+    },
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": -0.50191014
+    },
+    {
+      "batch": 0,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.50424549
+    },
+    {
+      "batch": 1,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.52209326
+    },
+    {
+      "batch": 1,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": -0.28579331
+    },
+    {
+      "batch": 1,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.64869691
+    },
+    {
+      "batch": 2,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.64281291
+    },
+    {
+      "batch": 2,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": -0.00521952
+    },
+    {
+      "batch": 2,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.73152662
+    },
+    {
+      "batch": 3,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.47276201
+    },
+    {
+      "batch": 3,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": -0.0785477
+    },
+    {
+      "batch": 3,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.51539765
+    },
+    {
+      "batch": 4,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.30369426
+    },
+    {
+      "batch": 4,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": 0.02314375
+    },
+    {
+      "batch": 4,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.25834193
+    },
+    {
+      "batch": 5,
+      "function": "distance",
+      "control": "point_x-0",
+      "value": -0.21656122
+    },
+    {
+      "batch": 5,
+      "function": "distance",
+      "control": "point_x-1",
+      "value": -0.00578828
+    },
+    {
+      "batch": 5,
+      "function": "distance",
+      "control": "point_x-2",
+      "value": 0.2172204
+    }
+  ],
+  "input_constraint('point_x-0')": {
+    "min": -1.0,
+    "max": 1.0
+  },
+  "input_constraint('point_x-1')": {
+    "min": -1.0,
+    "max": 1.0
+  },
+  "input_constraint('point_x-2')": {
+    "min": -1.0,
+    "max": 1.0
+  },
+  "output_constraint('x-0_coord')": {
+    "type": "ge",
+    "right_hand_side": 0.1
+  },
+  "optimal_result_json": {
+    "batch": 5,
+    "controls": {
+      "point_x-0": 0.1145273,
+      "point_x-1": 0.00635029,
+      "point_x-2": 0.38836369
+    },
+    "total_objective": -1.52561897,
+    "expected_objectives": {
+      "distance": -1.52561897
+    }
+  }
+}
