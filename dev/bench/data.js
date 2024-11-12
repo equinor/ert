@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731401497554,
+  "lastUpdate": 1731406464477,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "3eb3e3cbd65068b465e38cf0a41b5d54693743dd",
-          "message": "Add readthedocs for everest",
-          "timestamp": "2024-10-31T12:02:37+01:00",
-          "tree_id": "5eea284ebe8496ca09c6f09eaee0686c9366bc9f",
-          "url": "https://github.com/equinor/ert/commit/3eb3e3cbd65068b465e38cf0a41b5d54693743dd"
-        },
-        "date": 1730372672197,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19206740369335817,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021636133729286657",
-            "extra": "mean: 5.206505532799997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030989492307420905",
             "extra": "mean: 5.2568235948000055 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "b5d36717b7bdc15879f02c8a44ae614dea95a7eb",
+          "message": "Add default values using Pandas assign in design_matrix",
+          "timestamp": "2024-11-12T11:12:31+01:00",
+          "tree_id": "5f970c12fb5113a4e6cf6080b1d79de5a2314a8f",
+          "url": "https://github.com/equinor/ert/commit/b5d36717b7bdc15879f02c8a44ae614dea95a7eb"
+        },
+        "date": 1731406463776,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18967021305501305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.054413618347240345",
+            "extra": "mean: 5.272309151200005 sec\nrounds: 5"
           }
         ]
       }
