@@ -33,6 +33,7 @@ from ert.shared.status.utils import (
     format_running_time,
     get_ert_memory_usage,
 )
+from ert.trace import getTraceID
 
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
@@ -385,6 +386,7 @@ class ExperimentPanel(QWidget):
                 kv[field.name.replace("_", " ").capitalize()] = str(field_value)
 
         kv["**Status**"] = ""
+        kv["Trace ID"] = getTraceID()
         kv["Running time"] = (
             format_running_time(self._model.get_runtime()).split(":")[1].strip()
         )

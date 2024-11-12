@@ -9,3 +9,7 @@ tracer_provider = TracerProvider(
 trace.set_tracer_provider(tracer_provider)
 
 tracer = trace.get_tracer("ert.main")
+
+
+def getTraceID() -> str:
+    return trace.format_trace_id(trace.get_current_span().get_span_context().trace_id)
