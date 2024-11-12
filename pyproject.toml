@@ -73,7 +73,7 @@ dependencies = [
     "typing_extensions>=4.5",
     "uvloop",
     "uvicorn >= 0.17.0",
-    "websockets < 14",
+    "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
 ]
