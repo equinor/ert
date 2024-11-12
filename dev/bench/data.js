@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731419536723,
+  "lastUpdate": 1731419848476,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "d29493050df0077131058fe80d04d9b2576944fe",
-          "message": "Change button text `Debug Info`->`Copy Debug Info`\n\nThe button text was misleading, as it could be interpreted as \"show debug info\" instead of it copying the debug info to the clipboard.",
-          "timestamp": "2024-10-31T14:52:16+01:00",
-          "tree_id": "11e229cf8aa2273fe817ee6bb8bbcd2662d3547a",
-          "url": "https://github.com/equinor/ert/commit/d29493050df0077131058fe80d04d9b2576944fe"
-        },
-        "date": 1730382843163,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19291091671620175,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0268233687214356",
-            "extra": "mean: 5.183739816400004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02492280900488543",
             "extra": "mean: 5.221621864000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "e50f2d3463133db536e3204cd7c27b528122a4e7",
+          "message": "Assume non-LSF host error is flaky\n\nThe LSF driver experiences crashes stemming from bsub returning with the\nerror message 'Request from non-LSF host rejected'. There are reasons to\nbelieve this is not a permanent error, but some flakyness in the IP\ninfrastructure, and thus should should be categorized as a retriable\nfailure.\n\nThe reason for believing this is flakyness is mostly from the fact that\nthe same error is also seen on 'bjobs'-calls. If it was a permanent\nfailure scenario, there would be an enourmous amount of error from these\nbjobs calls, but there is not.",
+          "timestamp": "2024-11-12T14:55:36+01:00",
+          "tree_id": "bf29e38b8c6c51bab62bc55819496f2308075b34",
+          "url": "https://github.com/equinor/ert/commit/e50f2d3463133db536e3204cd7c27b528122a4e7"
+        },
+        "date": 1731419847936,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1855084750782697,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12035984176026342",
+            "extra": "mean: 5.3905892956 sec\nrounds: 5"
           }
         ]
       }
