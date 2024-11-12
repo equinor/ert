@@ -167,7 +167,6 @@ def test_export_only_give_batches(copy_math_func_test_data_to_tmp, snapshot):
     snapshot.assert_match(df.round(4).to_csv(), "export.csv")
 
 
-@pytest.mark.fails_on_macos_github_workflow
 def test_export_batches_progress(cache_dir, copy_mocked_test_data_to_tmp, snapshot):
     config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
 
@@ -269,7 +268,6 @@ def test_get_export_path(copy_math_func_test_data_to_tmp):
     assert expected_export_path == new_config.export_path
 
 
-@pytest.mark.fails_on_macos_github_workflow
 def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
 
