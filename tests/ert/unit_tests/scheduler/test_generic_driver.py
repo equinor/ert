@@ -250,3 +250,31 @@ async def test_poll_exits_on_filenotfounderror(driver: Driver, caplog):
     assert "retry" not in str(caplog.text)
     assert "No such file or directory" in str(caplog.text)
     assert "/usr/bin/foo" in str(caplog.text)
+
+
+async def test_poll_ignores_memory_os_error_from_subprocess_calling_poll_command(
+    driver, monkeypatch, caplog
+):
+    if isinstance(driver, LocalDriver):
+        pytest.skip("LocalDriver does not poll")
+    caplog.set_level(logging.DEBUG)
+
+    times_mock_method_called = 0
+    mock_method_was_called_two_times = asyncio.Future()
+
+    async def mock_create_subprocess_exec(*args, **kwargs) -> None:
+        await asyncio.sleep(0)
+        nonlocal mock_method_was_called_two_times, times_mock_method_called
+        times_mock_method_called += 1
+        if times_mock_method_called > 1 and not mock_method_was_called_two_times.done():
+            mock_method_was_called_two_times.set_result(True)
+        raise OSError("Cannot allocate memory")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", mock_create_subprocess_exec)
+    driver._jobs = {"foo": "bar"}
+    driver._non_finished_job_ids = ["foo"]
+    polling_task = asyncio.create_task(driver.poll())
+
+    await asyncio.wait_for(mock_method_was_called_two_times, timeout=5)
+    polling_task.cancel()
+    assert "Cannot allocate memory" in caplog.text

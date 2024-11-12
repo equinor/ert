@@ -324,6 +324,11 @@ class OpenPBSDriver(Driver):
                 except FileNotFoundError as e:
                     logger.error(str(e))
                     return
+                except OSError as e:
+                    if "Cannot allocate memory" in str(e):
+                        logger.debug(str(e))
+                        continue
+                    raise e
                 stdout, stderr = await process.communicate()
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
