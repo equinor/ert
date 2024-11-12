@@ -147,6 +147,8 @@ class EnsembleEvaluator:
                     function = event_handler[type(event)]
                     batch.append((function, event))
                     self._events.task_done()
+                    if type(event) in [EnsembleSucceeded, EnsembleFailed]:
+                        break
                 except asyncio.TimeoutError:
                     continue
             self._complete_batch.set()
