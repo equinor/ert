@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731418678001,
+  "lastUpdate": 1731419536723,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "70e85a76a6a27f5716c45c1ec4b8b276daf4f808",
-          "message": "Fix unbound event\n\nValidation is raised from dispatch_event_from_json so\nevent is unbound.",
-          "timestamp": "2024-10-31T12:55:38+01:00",
-          "tree_id": "0fa6ff1f7a01f542801a69e27d934f2cf9913ef8",
-          "url": "https://github.com/equinor/ert/commit/70e85a76a6a27f5716c45c1ec4b8b276daf4f808"
-        },
-        "date": 1730375846438,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1991651433045672,
-            "unit": "iter/sec",
-            "range": "stddev: 0.013230070044671145",
-            "extra": "mean: 5.020958905800001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008535186557729876",
             "extra": "mean: 5.120280202199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fecb69209de6b4751f75007404cf0ac04555e464",
+          "message": "Add snapshot test for everest API",
+          "timestamp": "2024-11-12T13:50:20Z",
+          "tree_id": "229c71a030ca1bcc6d6b7299e6b372efc66ecbca",
+          "url": "https://github.com/equinor/ert/commit/fecb69209de6b4751f75007404cf0ac04555e464"
+        },
+        "date": 1731419533395,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19151137827394382,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02492280900488543",
+            "extra": "mean: 5.221621864000002 sec\nrounds: 5"
           }
         ]
       }
