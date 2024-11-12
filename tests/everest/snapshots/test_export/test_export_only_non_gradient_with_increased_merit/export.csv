@@ -1,0 +1,3 @@
+,batch,sim_avg_obj,is_gradient,realization,start_time,end_time,success,realization_weight,simulation,distance_p,distance_p_norm,distance_p_weighted_norm,distance_q,distance_q_norm,distance_q_weighted_norm,point_x,point_y,point_z,real_avg_obj,increased_merit,gradient-distance_p-point_x,gradient-distance_p-point_y,gradient-distance_p-point_z,gradient-distance_q-point_x,gradient-distance_q-point_y,gradient-distance_q-point_z
+0,0,-2.3333,0,0,1725344867.0882,1725344867.1048,1,1,0,-0.75,-1.125,-0.75,-4.75,-4.75,-1.5833,0.0,0.0,0.0,-2.3333,1,0.9959,0.9887,1.0047,-3.0046,-3.0114,1.0045
+1,2,-2.0,0,0,1725344867.8464,1725344867.8476,1,1,0,-0.5078,-0.7617,-0.5078,-4.4768,-4.4768,-1.4923,-0.0021,-0.0056,0.4999,-2.0,1,,,,,,
