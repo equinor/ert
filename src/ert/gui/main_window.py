@@ -3,10 +3,10 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QCursor, QIcon
+from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
 from qtpy.QtWidgets import (
     QAction,
     QFrame,
@@ -62,6 +62,17 @@ BUTTON_STYLE_SHEET_DARK: str = (
 )
 
 
+class SidebarToolButton(QToolButton):
+    right_clicked = Signal()
+
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
+        if event:
+            if event.button() == Qt.MouseButton.RightButton:
+                self.right_clicked.emit()
+            else:
+                super().mousePressEvent(event)
+
+
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
@@ -90,6 +101,7 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setLayout(self.central_layout)
         self.facade = LibresFacade(self.ert_config)
         self.side_frame = QFrame(self)
+        self._external_plot_windows: List[PlotWindow] = []
 
         if self.is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
@@ -104,7 +116,8 @@ class ErtMainWindow(QMainWindow):
         self._plot_window: Optional[PlotWindow] = None
         self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
         self._add_sidebar_button("Start simulation", QIcon("img:library_add.svg"))
-        self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
+        plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
+        plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
             "Simulation status", QIcon("img:in_progress.svg")
@@ -124,6 +137,13 @@ class ErtMainWindow(QMainWindow):
 
     def is_dark_mode(self) -> bool:
         return self.palette().base().color().value() < 70
+
+    def right_clicked(self) -> None:
+        actor = self.sender()
+        if actor and actor.property("index") == "Create plot":
+            pw = PlotWindow(self.config_file, None)
+            pw.show()
+            self._external_plot_windows.append(pw)
 
     def select_central_widget(self) -> None:
         actor = self.sender()
@@ -234,8 +254,8 @@ class ErtMainWindow(QMainWindow):
                     self.help_menu.menuAction(), self.plugins_tool.get_menu()
                 )
 
-    def _add_sidebar_button(self, name: str, icon: QIcon) -> QToolButton:
-        button = QToolButton(self.side_frame)
+    def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
+        button = SidebarToolButton(self.side_frame)
         button.setFixedSize(85, 95)
         button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
@@ -256,6 +276,7 @@ class ErtMainWindow(QMainWindow):
         self.vbox_layout.addWidget(button)
 
         button.clicked.connect(self.select_central_widget)
+        button.right_clicked.connect(self.right_clicked)
         button.setProperty("index", name)
         return button
 
@@ -308,6 +329,10 @@ class ErtMainWindow(QMainWindow):
         tools_menu.addAction(self.load_results_tool.getAction())
 
     def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
+        for plot_window in self._external_plot_windows:
+            if plot_window:
+                plot_window.close()
+
         if closeEvent is not None:
             if self.notifier.is_simulation_running:
                 closeEvent.ignore()
