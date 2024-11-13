@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 import pytest
 
@@ -816,8 +817,6 @@ def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
 @pytest.mark.requires_eclipse
 @pytest.mark.timeout(0)
 def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
-    # shutil.copytree(relpath(ROOT), tmp_path, dirs_exist_ok=True)
-    # monkeypatch.chdir(tmp_path)
     config = EverestConfig.load_file(CONFIG_FILE)
 
     class CBTracker(object):
@@ -846,5 +845,5 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
         data.drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
         .round(6)
         .to_csv(),
-        "egg.csv",
+        f"egg-py{sys.version_info.major}{sys.version_info.minor}.csv",
     )
