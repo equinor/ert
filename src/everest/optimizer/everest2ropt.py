@@ -221,7 +221,7 @@ def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
     ropt_config["variables"]["indices"] = (
         None if all(enabled) else [idx for idx, item in enumerate(enabled) if item]
     )
-    ropt_config["variables"]["delimiters"] = ".-"
+    ropt_config["variables"]["delimiters"] = "_-"
     ropt_config["gradient"] = dict(gradients)
 
     # The samplers in the list constructed above contain the names of the
