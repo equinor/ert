@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731493691517,
+  "lastUpdate": 1731496352520,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "044db5aec48bbda9839cf197c7faac5c8e72a058",
-          "message": "Revert \"Increase sleep in memory profile test from 0.1 -> 0.15\"\n\nThis reverts commit 98576cc8ad12e751a19340e8fa350ef08ed3ee59.\n\nChanging the sleep time affects the rate of memory allocation,\nwhich the assert further down depends on.",
-          "timestamp": "2024-11-01T12:39:24+01:00",
-          "tree_id": "b13dbc3fab2b8f853aa8b692b223d51e71a795bc",
-          "url": "https://github.com/equinor/ert/commit/044db5aec48bbda9839cf197c7faac5c8e72a058"
-        },
-        "date": 1730461281432,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19200743007680682,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04340572702924938",
-            "extra": "mean: 5.2081317873999975 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04883771372788808",
             "extra": "mean: 5.153933939200004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "d11ba38bd8f93808ae60d320e03ab10725294dec",
+          "message": "Use uvloop for asyncio\n\nThis replacement loop is significantly faster for sockets and streams",
+          "timestamp": "2024-11-13T12:10:35+01:00",
+          "tree_id": "edd7b884d97ea1c00fce1f6c50255b0a31c14538",
+          "url": "https://github.com/equinor/ert/commit/d11ba38bd8f93808ae60d320e03ab10725294dec"
+        },
+        "date": 1731496351881,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1952211746880142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023524822419013096",
+            "extra": "mean: 5.122395158199998 sec\nrounds: 5"
           }
         ]
       }
