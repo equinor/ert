@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731497529358,
+  "lastUpdate": 1731497655644,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "87136c7cbf2f966dced604e36a2dde82a129285d",
-          "message": "Add timeout for server",
-          "timestamp": "2024-11-01T14:59:14+01:00",
-          "tree_id": "095dc0a0f2a245530d269197313acb2f998ecec2",
-          "url": "https://github.com/equinor/ert/commit/87136c7cbf2f966dced604e36a2dde82a129285d"
-        },
-        "date": 1730469665407,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1898364121527562,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03155378385903209",
-            "extra": "mean: 5.267693318999977 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028072447011939037",
             "extra": "mean: 5.25010087739999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "8903abb42591d50c9c26b2ad086609b0286baf8d",
+          "message": "Add egg snapshots for py38 and py311",
+          "timestamp": "2024-11-13T12:32:25+01:00",
+          "tree_id": "16931008c0b9b6cdcfefcd7e9a23df0e89140785",
+          "url": "https://github.com/equinor/ert/commit/8903abb42591d50c9c26b2ad086609b0286baf8d"
+        },
+        "date": 1731497655119,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19058716203305348,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017363024075441224",
+            "extra": "mean: 5.246943127399999 sec\nrounds: 5"
           }
         ]
       }
