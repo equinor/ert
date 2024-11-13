@@ -49,7 +49,9 @@ DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
 DEFAULT_ECLBASE_FORMAT = "ECLBASE<IENS>"
 
 FULL_DISK_PERCENTAGE_THRESHOLD = 0.97
-MINIMUM_BYTES_LEFT_ON_DISK = 200 * 1024**3  # 200 GB required
+MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
+# We give warning if free disk space is less than MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD
+# and used space in percentage is greater than FULL_DISK_PERCENTAGE_THRESHOLD
 
 
 @dataclass
@@ -93,14 +95,14 @@ class ModelConfig:
             logger.warning(msg)
         with contextlib.suppress(Exception):
             mount_dir = _get_mount_directory(runpath_format_string)
-            total, used, free = shutil.disk_usage(mount_dir)
-            percentage_used = used / total
+            total_space, used_space, free_space = shutil.disk_usage(mount_dir)
+            percentage_used = used_space / total_space
             if (
                 percentage_used > FULL_DISK_PERCENTAGE_THRESHOLD
-                and free < MINIMUM_BYTES_LEFT_ON_DISK
+                and free_space < MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD
             ):
                 msg = (
-                    f"Low disk space: {byte_with_unit(free)} free on {mount_dir !s}."
+                    f"Low disk space: {byte_with_unit(free_space)} free on {mount_dir !s}."
                     " Consider freeing up some space to ensure successful simulation runs."
                 )
                 ConfigWarning.warn(msg)
