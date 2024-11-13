@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Tuple, Type
+from typing import Awaitable, Callable, Dict, Tuple, Type
 
 from _ert.forward_model_runner.reporting.message import (
     Checksum,
@@ -35,13 +35,15 @@ class StateMachine:
         self._state = None
 
     def add_handler(
-        self, states: Tuple[Type[Message], ...], handler: Callable[[Message], None]
+        self,
+        states: Tuple[Type[Message], ...],
+        handler: Callable[[Message], Awaitable[None]],
     ) -> None:
         if states in self._handler:
             raise ValueError(f"{states} already handled by {self._handler[states]}")
         self._handler[states] = handler
 
-    def transition(self, message: Message):
+    async def transition(self, message: Message):
         new_state = None
         for state in self._handler:
             if isinstance(message, state):
@@ -58,5 +60,5 @@ class StateMachine:
                 f"expected to transition into {self._transitions[self._state]}"
             )
 
-        self._handler[new_state](message)
+        await self._handler[new_state](message)
         self._state = new_state

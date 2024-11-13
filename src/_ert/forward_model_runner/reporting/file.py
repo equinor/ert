@@ -39,7 +39,7 @@ class File(Reporter):
         self.status_dict = {}
         self.node = socket.gethostname()
 
-    def report(self, msg: Message):
+    async def report(self, msg: Message):
         fm_step_status = {}
 
         if msg.job:
@@ -217,3 +217,6 @@ class File(Reporter):
     def _dump_status_json(self):
         with open(STATUS_json, "wb") as fp:
             fp.write(orjson.dumps(self.status_dict, option=orjson.OPT_INDENT_2))
+
+    def cancel(self):
+        pass

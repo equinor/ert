@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -90,7 +91,7 @@ def _read_jobs_file(retry=True):
             raise e
 
 
-def main(args):
+async def main(args):
     parser = argparse.ArgumentParser(
         description=(
             "Run all the jobs specified in jobs.json, "
@@ -137,19 +138,38 @@ def main(args):
     )
 
     job_runner = ForwardModelRunner(jobs_data)
+    job_task = asyncio.create_task(_main(job_runner, parsed_args, reporters))
 
-    for job_status in job_runner.run(parsed_args.job):
-        logger.info(f"Job status: {job_status}")
+    def handle_sigterm(*args, **kwargs):
+        nonlocal reporters, job_task
+        job_task.cancel()
         for reporter in reporters:
-            try:
-                reporter.report(job_status)
-            except OSError as oserror:
-                print(
-                    f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
-                )
-                pgid = os.getpgid(os.getpid())
-                os.killpg(pgid, signal.SIGKILL)
+            reporter.cancel()
 
-        if isinstance(job_status, Finish) and not job_status.success():
-            pgid = os.getpgid(os.getpid())
-            os.killpg(pgid, signal.SIGKILL)
+    asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, handle_sigterm)
+    await job_task
+
+
+async def _main(
+    job_runner: ForwardModelRunner,
+    parsed_args,
+    reporters: typing.Sequence[reporting.Reporter],
+):
+    try:
+        async for job_status in job_runner.run(parsed_args.job):
+            logger.info(f"Job status: {job_status}")
+
+            for reporter in reporters:
+                try:
+                    await reporter.report(job_status)
+                    await asyncio.sleep(0)
+                except OSError as oserror:
+                    print(
+                        f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
+                    )
+                    return
+
+            if isinstance(job_status, Finish) and not job_status.success():
+                return
+    except asyncio.CancelledError:
+        pass

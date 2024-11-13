@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import os
@@ -49,46 +50,52 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    def run(self, names_of_steps_to_run: List[str]):
-        if not names_of_steps_to_run:
-            step_queue = self.steps
-        else:
-            step_queue = [
-                step for step in self.steps if step.name() in names_of_steps_to_run
-            ]
-        init_message = Init(
-            step_queue,
-            self.simulation_id,
-            self.ert_pid,
-            self.ens_id,
-            self.real_id,
-            self.experiment_id,
-        )
-
-        unused = set(names_of_steps_to_run) - {step.name() for step in step_queue}
-        if unused:
-            init_message.with_error(
-                f"{unused} does not exist. "
-                f"Available forward_model steps: {[step.name() for step in self.steps]}"
+    async def run(self, names_of_steps_to_run: List[str]):
+        try:
+            if not names_of_steps_to_run:
+                step_queue = self.steps
+            else:
+                step_queue = [
+                    step for step in self.steps if step.name() in names_of_steps_to_run
+                ]
+            init_message = Init(
+                step_queue,
+                self.simulation_id,
+                self.ert_pid,
+                self.ens_id,
+                self.real_id,
+                self.experiment_id,
             )
+
+            unused = set(names_of_steps_to_run) - {step.name() for step in step_queue}
+            if unused:
+                init_message.with_error(
+                    f"{unused} does not exist. "
+                    f"Available forward_model steps: {[step.name() for step in self.steps]}"
+                )
+                yield init_message
+                return
+
             yield init_message
+            for step in step_queue:
+                for status_update in step.run():
+                    yield status_update
+                    if not status_update.success():
+                        yield Checksum(checksum_dict={}, run_path=os.getcwd())
+                        yield Finish().with_error(
+                            "Not all forward model steps completed successfully."
+                        )
+                        return
+
+            checksum_dict = self._populate_checksums(self._read_manifest())
+            yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
+            yield Finish()
+        except asyncio.CancelledError:
+            yield Checksum(checksum_dict={}, run_path=os.getcwd())
+            yield Finish().with_error(
+                "Not all forward model steps completed successfully."
+            )
             return
-        else:
-            yield init_message
-
-        for step in step_queue:
-            for status_update in step.run():
-                yield status_update
-                if not status_update.success():
-                    yield Checksum(checksum_dict={}, run_path=os.getcwd())
-                    yield Finish().with_error(
-                        "Not all forward model steps completed successfully."
-                    )
-                    return
-
-        checksum_dict = self._populate_checksums(self._read_manifest())
-        yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
-        yield Finish()
 
     def _set_environment(self):
         if self.global_environment:

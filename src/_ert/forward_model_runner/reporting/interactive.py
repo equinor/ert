@@ -11,7 +11,7 @@ from _ert.forward_model_runner.reporting.message import (
 
 class Interactive(Reporter):
     @staticmethod
-    def _report(msg: Message) -> Optional[str]:
+    async def _report(msg: Message) -> Optional[str]:
         if not isinstance(msg, (Start, Finish)):
             return None
         if isinstance(msg, Finish):
@@ -26,7 +26,10 @@ class Interactive(Reporter):
             )
         return f"Running job: {msg.job.name()} ... "
 
-    def report(self, msg: Message):
-        _msg = self._report(msg)
+    async def report(self, msg: Message):
+        _msg = await self._report(msg)
         if _msg is not None:
             print(_msg)
+
+    def cancel(self):
+        pass

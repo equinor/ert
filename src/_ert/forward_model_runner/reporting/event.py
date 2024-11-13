@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import asyncio
 import logging
-import queue
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -32,7 +32,6 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import StateMachine
-from _ert.threading import ErtThread
 
 logger = logging.getLogger(__name__)
 
@@ -76,22 +75,24 @@ class Event(Reporter):
 
         self._ens_id = None
         self._real_id = None
-        self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
-        self._event_publisher_thread = ErtThread(target=self._event_publisher)
+        self._event_queue: asyncio.Queue[events.Event | EventSentinel] = asyncio.Queue()
+        # self._event_publisher_thread = ErtThread(target=self._event_publisher)
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()
         # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
+        self._running = True
+        self._event_publishing_task = asyncio.create_task(self.async_event_publisher())
 
-    def _event_publisher(self):
+    async def async_event_publisher(self):
         logger.debug("Publishing event.")
-        with Client(
+        async with Client(
             url=self._evaluator_url,
             token=self._token,
             cert=self._cert,
         ) as client:
             event = None
-            while True:
+            while self._running:
                 with self._timestamp_lock:
                     if (
                         self._timeout_timestamp is not None
@@ -102,11 +103,13 @@ class Event(Reporter):
                 if event is None:
                     # if we successfully sent the event we can proceed
                     # to next one
-                    event = self._event_queue.get()
+                    event = await self._event_queue.get()
                     if event is self._sentinel:
-                        break
+                        print("NEW EVENT WAS SENTINEL :))")
+                        return
                 try:
-                    client.send(event_to_json(event))
+                    await client.send(event_to_json(event))
+                    self._event_queue.task_done()
                     event = None
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
@@ -115,21 +118,21 @@ class Event(Reporter):
                     # The receiving end has closed the connection, we stop
                     # sending events
                     logger.debug(str(exception))
+                    self._event_queue.task_done()
                     break
 
-    def report(self, msg):
-        self._statemachine.transition(msg)
+    async def report(self, msg):
+        await self._statemachine.transition(msg)
 
-    def _dump_event(self, event: events.Event):
+    async def _dump_event(self, event: events.Event):
         logger.debug(f'Schedule "{type(event)}" for delivery')
-        self._event_queue.put(event)
+        await self._event_queue.put(event)
 
-    def _init_handler(self, msg: Init):
+    async def _init_handler(self, msg: Init):
         self._ens_id = str(msg.ens_id)
         self._real_id = str(msg.real_id)
-        self._event_publisher_thread.start()
 
-    def _job_handler(self, msg: Union[Start, Running, Exited]):
+    async def _job_handler(self, msg: Union[Start, Running, Exited]):
         assert msg.job
         job_name = msg.job.name()
         job_msg = {
@@ -144,16 +147,16 @@ class Event(Reporter):
                 std_out=str(Path(msg.job.std_out).resolve()),
                 std_err=str(Path(msg.job.std_err).resolve()),
             )
-            self._dump_event(event)
+            await self._dump_event(event)
             if not msg.success():
                 logger.error(f"Job {job_name} FAILED to start")
                 event = ForwardModelStepFailure(**job_msg, error_msg=msg.error_message)
-                self._dump_event(event)
+                await self._dump_event(event)
 
         elif isinstance(msg, Exited):
             if msg.success():
                 logger.debug(f"Job {job_name} exited successfully")
-                self._dump_event(ForwardModelStepSuccess(**job_msg))
+                await self._dump_event(ForwardModelStepSuccess(**job_msg))
             else:
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(
@@ -165,7 +168,7 @@ class Event(Reporter):
                 event = ForwardModelStepFailure(
                     **job_msg, exit_code=msg.exit_code, error_msg=msg.error_message
                 )
-                self._dump_event(event)
+                await self._dump_event(event)
 
         elif isinstance(msg, Running):
             logger.debug(f"{job_name} job is running")
@@ -175,21 +178,22 @@ class Event(Reporter):
                 current_memory_usage=msg.memory_status.rss,
                 cpu_seconds=msg.memory_status.cpu_seconds,
             )
-            self._dump_event(event)
+            await self._dump_event(event)
 
-    def _finished_handler(self, _):
-        self._event_queue.put(Event._sentinel)
+    async def _finished_handler(self, _):
+        await self._event_queue.put(Event._sentinel)
         with self._timestamp_lock:
             self._timeout_timestamp = datetime.now() + timedelta(
                 seconds=self._reporter_timeout
             )
-        if self._event_publisher_thread.is_alive():
-            self._event_publisher_thread.join()
 
-    def _checksum_handler(self, msg: Checksum):
+    async def _checksum_handler(self, msg: Checksum):
         fm_checksum = ForwardModelStepChecksum(
             ensemble=self._ens_id,
             real=self._real_id,
             checksums={msg.run_path: msg.data},
         )
-        self._dump_event(fm_checksum)
+        await self._dump_event(fm_checksum)
+
+    def cancel(self):
+        self._event_publishing_task.cancel()

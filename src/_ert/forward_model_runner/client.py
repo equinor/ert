@@ -96,7 +96,7 @@ class Client:
             close_timeout=self.CONNECTION_TIMEOUT,
         )
 
-    async def _send(self, msg: AnyStr) -> None:
+    async def send(self, msg: AnyStr) -> None:
         for retry in range(self._max_retries + 1):
             try:
                 if self.websocket is None:
@@ -133,6 +133,3 @@ class Client:
                     raise ClientConnectionError(_error_msg) from exception
             await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
             self.websocket = None
-
-    def send(self, msg: AnyStr) -> None:
-        self.loop.run_until_complete(self._send(msg))
