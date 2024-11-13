@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731490189489,
+  "lastUpdate": 1731493691517,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "66aa073a0831991022c17dff7a5fd09688298e37",
-          "message": "Use maxprocesses=2 for cli tests\n\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
-          "timestamp": "2024-11-01T11:32:36+01:00",
-          "tree_id": "2262601ceb4df8b82c20f24d137caf1c9f2e402a",
-          "url": "https://github.com/equinor/ert/commit/66aa073a0831991022c17dff7a5fd09688298e37"
-        },
-        "date": 1730457263680,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19656487553447052,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03869466312127469",
-            "extra": "mean: 5.087378898599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02441490217600472",
             "extra": "mean: 5.1258548347999975 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "d673a07d7e4d8db7f1e49ded19bc1739e3dec249",
+          "message": "Make ropt use \"_\" instead of \".\" delimiter",
+          "timestamp": "2024-11-13T11:26:15+01:00",
+          "tree_id": "1147ceee05d07a5dd6382b7a21e8182fc6807d53",
+          "url": "https://github.com/equinor/ert/commit/d673a07d7e4d8db7f1e49ded19bc1739e3dec249"
+        },
+        "date": 1731493691047,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19402654589616652,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04883771372788808",
+            "extra": "mean: 5.153933939200004 sec\nrounds: 5"
           }
         ]
       }
