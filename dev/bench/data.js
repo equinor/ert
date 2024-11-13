@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731481307033,
+  "lastUpdate": 1731490189489,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "6454d3a8a8163665b7a39d4d4cc77f867b38b8e5",
-          "message": "Skip logging of short fm steps\n\nThere are more short forward model time steps than we want the logging\nsystem to handle.",
-          "timestamp": "2024-11-01T10:52:13+01:00",
-          "tree_id": "5b6c02efe727ff0f0ad7d7511a14bf8d659b1b76",
-          "url": "https://github.com/equinor/ert/commit/6454d3a8a8163665b7a39d4d4cc77f867b38b8e5"
-        },
-        "date": 1730454849177,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19433471679065184,
-            "unit": "iter/sec",
-            "range": "stddev: 0.006063808994274784",
-            "extra": "mean: 5.145760965999995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030203551263009",
             "extra": "mean: 5.232408289800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "5ac831ed67f2d15393bdc9fa2da53a5014b5e3e2",
+          "message": "Add warning when everest-models file outputs do not match everest objectives",
+          "timestamp": "2024-11-13T18:27:54+09:00",
+          "tree_id": "96be8224578478c256319794909450a7966210c4",
+          "url": "https://github.com/equinor/ert/commit/5ac831ed67f2d15393bdc9fa2da53a5014b5e3e2"
+        },
+        "date": 1731490188870,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19508941088438342,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02441490217600472",
+            "extra": "mean: 5.1258548347999975 sec\nrounds: 5"
           }
         ]
       }
