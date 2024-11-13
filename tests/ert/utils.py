@@ -61,6 +61,16 @@ def wait_until(func, interval=0.5, timeout=30):
     )
 
 
+async def async_wait_until(condition, timeout, fail_msg, interval=0.1):
+    t = 0
+    while t < timeout:
+        await asyncio.sleep(interval)
+        if condition():
+            return
+        t += interval
+    raise AssertionError(fail_msg)
+
+
 def _mock_ws(host, port, messages, delay_startup=0):
     loop = asyncio.new_event_loop()
     done = loop.create_future()
@@ -70,6 +80,7 @@ def _mock_ws(host, port, messages, delay_startup=0):
             msg = await websocket.recv()
             messages.append(msg)
             if msg == "stop":
+                print("SHOULD STOP!")
                 done.set_result(None)
                 break
 
@@ -82,8 +93,24 @@ def _mock_ws(host, port, messages, delay_startup=0):
     loop.close()
 
 
-@contextlib.contextmanager
-def _mock_ws_thread(host, port, messages):
+async def _mock_ws_async(host, port, messages, delay_startup=0):
+    done = asyncio.Future()
+
+    async def _handler(websocket, path):
+        while True:
+            msg = await websocket.recv()
+            messages.append(msg)
+            if msg == "stop":
+                done.set_result(None)
+                break
+
+    await asyncio.sleep(delay_startup)
+    async with websockets.server.serve(_handler, host, port):
+        await done
+
+
+@contextlib.asynccontextmanager
+async def _mock_ws_thread(host, port, messages):
     mock_ws_thread = ErtThread(
         target=partial(_mock_ws, messages=messages),
         args=(
@@ -97,9 +124,23 @@ def _mock_ws_thread(host, port, messages):
     # Make sure to join the thread even if an exception occurs
     finally:
         url = f"ws://{host}:{port}"
-        with Client(url) as client:
-            client.send("stop")
+        async with Client(url) as client:
+            await client.send("stop")
         mock_ws_thread.join()
+        messages.pop()
+
+
+@contextlib.asynccontextmanager
+async def _mock_ws_task(host, port, messages):
+    mock_ws_task = asyncio.create_task(_mock_ws_async(host, port, messages))
+    try:
+        yield
+    # Make sure to join the thread even if an exception occurs
+    finally:
+        url = f"ws://{host}:{port}"
+        async with Client(url) as client:
+            await client.send("stop")
+        await mock_ws_task
         messages.pop()
 
 

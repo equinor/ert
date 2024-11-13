@@ -76,13 +76,15 @@ class Event(Reporter):
         self._ens_id = None
         self._real_id = None
         self._event_queue: asyncio.Queue[events.Event | EventSentinel] = asyncio.Queue()
-        # self._event_publisher_thread = ErtThread(target=self._event_publisher)
         self._timeout_timestamp = None
         self._timestamp_lock = threading.Lock()
         # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
-        self._running = True
         self._event_publishing_task = asyncio.create_task(self.async_event_publisher())
+        self._event_publisher_ready = asyncio.Event()
+
+    async def join(self) -> None:
+        await self._event_publishing_task
 
     async def async_event_publisher(self):
         logger.debug("Publishing event.")
@@ -91,8 +93,9 @@ class Event(Reporter):
             token=self._token,
             cert=self._cert,
         ) as client:
+            self._event_publisher_ready.set()
             event = None
-            while self._running:
+            while True:
                 with self._timestamp_lock:
                     if (
                         self._timeout_timestamp is not None
@@ -103,14 +106,17 @@ class Event(Reporter):
                 if event is None:
                     # if we successfully sent the event we can proceed
                     # to next one
+                    print("GETTING MORE EVENTS!")
                     event = await self._event_queue.get()
                     if event is self._sentinel:
+                        self._event_queue.task_done()
                         print("NEW EVENT WAS SENTINEL :))")
-                        return
+                        break
                 try:
                     await client.send(event_to_json(event))
                     self._event_queue.task_done()
                     event = None
+                    print("Sent event :)")
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
                     logger.error(str(exception))
@@ -122,9 +128,11 @@ class Event(Reporter):
                     break
 
     async def report(self, msg):
+        await self._event_publisher_ready.wait()
         await self._statemachine.transition(msg)
 
     async def _dump_event(self, event: events.Event):
+        print(f"DUMPED EVENT {type(event)=}")
         logger.debug(f'Schedule "{type(event)}" for delivery')
         await self._event_queue.put(event)
 

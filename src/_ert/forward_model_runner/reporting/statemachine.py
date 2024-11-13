@@ -59,6 +59,6 @@ class StateMachine:
                 f"Illegal transition {self._state} -> {new_state} for {message}, "
                 f"expected to transition into {self._transitions[self._state]}"
             )
-
+        print(f"TRANSITIONING STATE W/{message=}")
         await self._handler[new_state](message)
         self._state = new_state

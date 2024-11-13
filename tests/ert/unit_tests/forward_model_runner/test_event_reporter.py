@@ -1,6 +1,6 @@
+import asyncio
 import os
 import sys
-import time
 from unittest.mock import patch
 
 import pytest
@@ -27,17 +27,10 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
-from tests.ert.utils import _mock_ws_thread
+from tests.ert.utils import _mock_ws_task, async_wait_until
 
 
-def _wait_until(condition, timeout, fail_msg):
-    start = time.time()
-    while not condition():
-        assert start + timeout > time.time(), fail_msg
-        time.sleep(0.1)
-
-
-def test_report_with_successful_start_message_argument(unused_tcp_port):
+async def test_report_with_successful_start_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -45,10 +38,12 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
         {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
     )
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Start(fmstep1))
-        reporter.report(Finish())
+
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Start(fmstep1))
+        await reporter.report(Finish())
+        await reporter.join()
 
     assert len(lines) == 1
     event = event_from_json(lines[0])
@@ -58,9 +53,10 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     assert event.fm_step == "0"
     assert os.path.basename(event.std_out) == "stdout"
     assert os.path.basename(event.std_err) == "stderr"
+    reporter._event_publishing_task.cancel()
 
 
-def test_report_with_failed_start_message_argument(unused_tcp_port):
+async def test_report_with_failed_start_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -70,13 +66,13 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
 
         msg = Start(fmstep1).with_error("massive_failure")
-
-        reporter.report(msg)
-        reporter.report(Finish())
+        await reporter.report(msg)
+        await reporter.report(Finish())
+        await reporter.join()
 
     assert len(lines) == 2
     event = event_from_json(lines[1])
@@ -84,7 +80,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
     assert event.error_msg == "massive_failure"
 
 
-def test_report_with_successful_exit_message_argument(unused_tcp_port):
+async def test_report_with_successful_exit_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -93,17 +89,18 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Exited(fmstep1, 0))
-        reporter.report(Finish().with_error("failed"))
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Exited(fmstep1, 0))
+        await reporter.report(Finish().with_error("failed"))
+        await reporter.join()
 
     assert len(lines) == 1
     event = event_from_json(lines[0])
     assert type(event) is ForwardModelStepSuccess
 
 
-def test_report_with_failed_exit_message_argument(unused_tcp_port):
+async def test_report_with_failed_exit_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -112,10 +109,11 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Exited(fmstep1, 1).with_error("massive_failure"))
-        reporter.report(Finish())
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Exited(fmstep1, 1).with_error("massive_failure"))
+        await reporter.report(Finish())
+        await reporter.join()
 
     assert len(lines) == 1
     event = event_from_json(lines[0])
@@ -123,7 +121,7 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
     assert event.error_msg == "massive_failure"
 
 
-def test_report_with_running_message_argument(unused_tcp_port):
+async def test_report_with_running_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -132,10 +130,11 @@ def test_report_with_running_message_argument(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-        reporter.report(Finish())
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
+        await reporter.report(Finish())
+        await reporter.join()
 
     assert len(lines) == 1
     event = event_from_json(lines[0])
@@ -144,7 +143,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
     assert event.current_memory_usage == 10
 
 
-def test_report_only_job_running_for_successful_run(unused_tcp_port):
+async def test_report_only_job_running_for_successful_run(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -153,15 +152,16 @@ def test_report_only_job_running_for_successful_run(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-        reporter.report(Finish())
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
+        await reporter.report(Finish())
+        await reporter.join()
 
     assert len(lines) == 1
 
 
-def test_report_with_failed_finish_message_argument(unused_tcp_port):
+async def test_report_with_failed_finish_message_argument(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
@@ -170,32 +170,32 @@ def test_report_with_failed_finish_message_argument(unused_tcp_port):
     )
 
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-        reporter.report(Finish().with_error("massive_failure"))
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
+        await reporter.report(Finish().with_error("massive_failure"))
+        await reporter.join()
 
     assert len(lines) == 1
 
 
-def test_report_inconsistent_events(unused_tcp_port):
+async def test_report_inconsistent_events(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
 
     lines = []
-    with (
-        _mock_ws_thread(host, unused_tcp_port, lines),
-        pytest.raises(
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        with pytest.raises(
             TransitionError,
             match=r"Illegal transition None -> \(MessageType<Finish>,\)",
-        ),
-    ):
-        reporter.report(Finish())
+        ):
+            await reporter.report(Finish())
+    reporter.cancel()
 
 
 @pytest.mark.integration_test
-def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
+async def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
     # see reporter._event_publisher_thread.join()
@@ -204,8 +204,8 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # which then sets _timeout_timestamp=None
     mock_send_retry_time = 2
 
-    def mock_send(msg):
-        time.sleep(mock_send_retry_time)
+    async def mock_send(msg):
+        await asyncio.sleep(mock_send_retry_time)
         raise ClientConnectionError("Sending failed!")
 
     host = "localhost"
@@ -216,18 +216,23 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
         {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
     )
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    async with _mock_ws_task(host, unused_tcp_port, lines):
         with patch(
             "_ert.forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
-            reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
+            await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10))
+            )
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10))
+            )
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10))
+            )
             # set _stop_timestamp
-            reporter.report(Finish())
-        if reporter._event_publisher_thread.is_alive():
-            reporter._event_publisher_thread.join()
+            await reporter.report(Finish())
+        await reporter.join()
         # set _stop_timestamp to None only when timer stopped
         assert reporter._timeout_timestamp is None
     assert len(lines) == 0, "expected 0 Job running messages"
@@ -238,7 +243,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Performance can be flaky"
 )
-def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
+async def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails but reconnects
     # reporter still manages to send events and completes fine
     # see assert reporter._timeout_timestamp is not None
@@ -246,27 +251,33 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # it finished succesfully
     mock_send_retry_time = 0.1
 
-    def send_func(msg):
-        time.sleep(mock_send_retry_time)
+    async def send_func(msg):
+        await asyncio.sleep(mock_send_retry_time)
         raise ClientConnectionError("Sending failed!")
 
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
-    reporter = Event(evaluator_url=url)
     fmstep1 = ForwardModelStep(
         {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
     )
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
+    async with _mock_ws_task(host, unused_tcp_port, lines):
         with patch("_ert.forward_model_runner.client.Client.send") as patched_send:
+            reporter = Event(evaluator_url=url)
             patched_send.side_effect = send_func
 
-            reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=200, rss=10)))
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=300, rss=10)))
+            await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10))
+            )
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=200, rss=10))
+            )
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=300, rss=10))
+            )
 
-            _wait_until(
+            await async_wait_until(
                 condition=lambda: patched_send.call_count == 3,
                 timeout=10,
                 fail_msg="10 seconds should be sufficient to send three events",
@@ -274,23 +285,22 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
 
         # reconnect and continue sending events
         # set _stop_timestamp
-        reporter.report(Finish())
-        if reporter._event_publisher_thread.is_alive():
-            reporter._event_publisher_thread.join()
+        await reporter.report(Finish())
+        await reporter.join()
         # set _stop_timestamp was not set to None since the reporter finished on time
         assert reporter._timeout_timestamp is not None
     assert len(lines) == 3, "expected 3 Job running messages"
 
 
 @pytest.mark.integration_test
-def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
+async def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
     # Whenever the receiver end closes the connection, a ConnectionClosedOK is raised
     # The reporter should exit the publisher thread gracefully and not send any
     # more events
     mock_send_retry_time = 3
 
-    def mock_send(msg):
-        time.sleep(mock_send_retry_time)
+    async def mock_send(msg):
+        await asyncio.sleep(mock_send_retry_time)
         raise ClientConnectionClosedOK("Connection Closed")
 
     host = "localhost"
@@ -300,13 +310,13 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
         {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
     )
     lines = []
-    with _mock_ws_thread(host, unused_tcp_port, lines):
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=200, rss=10)))
+    async with _mock_ws_task(host, unused_tcp_port, lines):
+        await reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=200, rss=10)))
 
         # sleep until both Running events have been received
-        _wait_until(
+        await async_wait_until(
             condition=lambda: len(lines) == 2,
             timeout=10,
             fail_msg="Should not take 10 seconds to send two events",
@@ -315,15 +325,16 @@ def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
         with patch(
             "_ert.forward_model_runner.client.Client.send", lambda x, y: mock_send(y)
         ):
-            reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=300, rss=10)))
+            await reporter.report(
+                Running(fmstep1, ProcessTreeStatus(max_rss=300, rss=10))
+            )
             # Make sure the publisher thread exits because it got
             # ClientConnectionClosedOK. If it hangs it could indicate that the
             # exception is not caught/handled correctly
-            if reporter._event_publisher_thread.is_alive():
-                reporter._event_publisher_thread.join()
+            await reporter.join()
 
-        reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=400, rss=10)))
-        reporter.report(Finish())
+        await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=400, rss=10)))
+        await reporter.report(Finish())
 
     # set _stop_timestamp was not set to None since the reporter finished on time
     assert reporter._timeout_timestamp is not None

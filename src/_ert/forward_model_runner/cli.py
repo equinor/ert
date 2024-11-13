@@ -5,7 +5,6 @@ import logging
 import os
 import signal
 import sys
-import time
 import typing
 from datetime import datetime
 
@@ -72,21 +71,21 @@ def _setup_logging(directory: str = "logs"):
 JOBS_JSON_RETRY_TIME = 30
 
 
-def _wait_for_retry():
-    time.sleep(JOBS_JSON_RETRY_TIME)
+async def _wait_for_retry():
+    await asyncio.sleep(JOBS_JSON_RETRY_TIME)
 
 
-def _read_jobs_file(retry=True):
+async def _read_jobs_file(retry=True):
     try:
-        with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
+        with open(JOBS_FILE, "r", encoding="utf-8") as json_file:  # noqa: ASYNC230
             return json.load(json_file)
     except json.JSONDecodeError as e:
         raise IOError("Job Runner cli failed to load JSON-file.") from e
     except FileNotFoundError as e:
         if retry:
             logger.error(f"Could not find file {JOBS_FILE}, retrying")
-            _wait_for_retry()
-            return _read_jobs_file(retry=False)
+            await _wait_for_retry()
+            return await _read_jobs_file(retry=False)
         else:
             raise e
 
@@ -119,7 +118,7 @@ async def main(args):
     # Make sure that logging is setup _after_ we have moved to the runpath directory
     _setup_logging()
 
-    jobs_data = _read_jobs_file()
+    jobs_data = await _read_jobs_file()
 
     experiment_id = jobs_data.get("experiment_id")
     ens_id = jobs_data.get("ens_id")
@@ -167,9 +166,9 @@ async def _main(
                     print(
                         f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
                     )
-                    return
+                    raise SystemExit(1)
 
             if isinstance(job_status, Finish) and not job_status.success():
-                return
+                raise SystemExit(1)
     except asyncio.CancelledError:
-        pass
+        raise SystemExit(1)
