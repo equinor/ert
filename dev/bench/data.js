@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731496352520,
+  "lastUpdate": 1731496819457,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "7ee89c18b36844c0e4c3ba0f886ecccdc1d7e552",
-          "message": "Mitigate flakiness in memory profiling\n\nAnd add some explanation for further debugging",
-          "timestamp": "2024-11-01T14:21:48+01:00",
-          "tree_id": "99e7dbc9660f1203352392ac251f9504a719f21a",
-          "url": "https://github.com/equinor/ert/commit/7ee89c18b36844c0e4c3ba0f886ecccdc1d7e552"
-        },
-        "date": 1730467418469,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19083839842672864,
-            "unit": "iter/sec",
-            "range": "stddev: 0.034027747519319154",
-            "extra": "mean: 5.2400355916000025 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023524822419013096",
             "extra": "mean: 5.122395158199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "648aa27f158115786ed1d80a6cbd17f669037150",
+          "message": "Fix error with inconsistent blobsize in flaky test\n\nFixing this bug will probably mitigate flakyness",
+          "timestamp": "2024-11-13T12:18:26+01:00",
+          "tree_id": "f38f6371c61cf5a742d86df9bf9eddbbb5a06537",
+          "url": "https://github.com/equinor/ert/commit/648aa27f158115786ed1d80a6cbd17f669037150"
+        },
+        "date": 1731496818921,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18871684404487493,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01539583628591243",
+            "extra": "mean: 5.298944061200018 sec\nrounds: 5"
           }
         ]
       }
