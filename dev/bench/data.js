@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731423239274,
+  "lastUpdate": 1731480640783,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "3b1db99eb00cc8c783063eed20c2e53fa13ec991",
-          "message": "Have CopyDebugInfoButton change text to `Copied...` on click\n\nThis commit refactors the copydebuginfobutton in run_dialog.py into its own class, and makes it change text `Copy Debug Info\" -> `Copied...` when clicked while running the callback passed to it. After one second, it changes it text back to `Copy Debug Info`.",
-          "timestamp": "2024-11-01T09:39:47+01:00",
-          "tree_id": "4cc66a61a1f773952099a0ca34dc6a49bc637258",
-          "url": "https://github.com/equinor/ert/commit/3b1db99eb00cc8c783063eed20c2e53fa13ec991"
-        },
-        "date": 1730450500938,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19274783485756736,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021090395544056846",
-            "extra": "mean: 5.188125722599989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0368780184250326",
             "extra": "mean: 5.187692871200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "93081a13cfba2dd439943a5a72912d786e3e2890",
+          "message": "Move everserver config to ServerConfig",
+          "timestamp": "2024-11-13T07:48:44+01:00",
+          "tree_id": "a1cc3c08e11020bf6233519842e48d7e4c985a60",
+          "url": "https://github.com/equinor/ert/commit/93081a13cfba2dd439943a5a72912d786e3e2890"
+        },
+        "date": 1731480640195,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19134390136318888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01955277528329969",
+            "extra": "mean: 5.226192174799996 sec\nrounds: 5"
           }
         ]
       }
