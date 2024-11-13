@@ -12,6 +12,7 @@ import re
 import shutil
 import threading
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -290,6 +291,24 @@ class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
 
 
+@dataclass
+class OptimalResult:
+    batch: int
+    controls: List[Any]
+    total_objective: float
+
+    @staticmethod
+    def from_seba_optimal_result(
+        o: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None,
+    ) -> "OptimalResult" | None:
+        if o is None:
+            return None
+
+        return OptimalResult(
+            batch=o.batch, controls=o.controls, total_objective=o.total_objective
+        )
+
+
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
@@ -318,7 +337,7 @@ class EverestRunModel(BaseRunModel):
             else (everest_config.simulator.delete_run_path or False)
         )
         self._display_all_jobs = display_all_jobs
-        self._result: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None
+        self._result: Optional[OptimalResult] = None
         self._exit_code: Optional[
             Literal["max_batch_num_reached"] | OptimizerExitCode
         ] = None
@@ -415,7 +434,9 @@ class EverestRunModel(BaseRunModel):
         optimizer_exit_code = optimizer.run().exit_code
 
         # Extract the best result from the storage.
-        self._result = seba_storage.get_optimal_result()  # type: ignore
+        self._result = OptimalResult.from_seba_optimal_result(
+            seba_storage.get_optimal_result()  # type: ignore
+        )
 
         if self._monitor_thread is not None:
             self._monitor_thread.stop()
@@ -565,7 +586,7 @@ class EverestRunModel(BaseRunModel):
         return self._exit_code
 
     @property
-    def result(self) -> Optional[seba_sqlite.sqlite_storage.OptimalResult]:
+    def result(self) -> Optional[OptimalResult]:
         return self._result
 
     def __repr__(self) -> str:

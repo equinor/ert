@@ -192,9 +192,6 @@
       "point_y": 0.21233962,
       "point_z": 0.49289096
     },
-    "total_objective": -0.159768,
-    "expected_objectives": {
-      "distance": -0.159768
-    }
+    "total_objective": -0.159768
   }
 }
