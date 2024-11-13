@@ -122,7 +122,7 @@ def test_memory_usage_counts_grandchildren():
         job = Job(
             {
                 "executable": executable,
-                "argList": [str(layers), str(int(1e6))],
+                "argList": [str(layers), str(int(1e7))],
             },
             0,
         )
