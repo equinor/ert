@@ -60,7 +60,7 @@ dependencies = [
     "python-dateutil",
     "python-multipart",
     "pyyaml",
-    "qtpy",
+    "qtpy==2.4.1",
     "requests",
     "resfo",
     "scipy >= 1.10.1",
