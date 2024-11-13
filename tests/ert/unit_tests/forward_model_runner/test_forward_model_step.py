@@ -99,6 +99,7 @@ def test_cpu_seconds_can_detect_multiprocess():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
+    blobsize = 1e7
     with open(scriptname, "w", encoding="utf-8") as script:
         script.write(
             textwrap.dedent(
@@ -109,11 +110,15 @@ def test_memory_usage_counts_grandchildren():
             import time
 
             counter = int(sys.argv[-2])
-            numbers = list(range(int(sys.argv[-1])))
+            blobsize = int(sys.argv[-1])
+
+            # Allocate memory
+            _blob = list(range(blobsize))
+
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(int(1e7))])
+                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(blobsize)])
             time.sleep(3)"""  # Too low sleep will make the test faster but flaky
             )
         )
@@ -124,7 +129,7 @@ def test_memory_usage_counts_grandchildren():
         fmstep = ForwardModelStep(
             {
                 "executable": executable,
-                "argList": [str(layers), str(int(1e6))],
+                "argList": [str(layers), str(int(blobsize))],
             },
             0,
         )
@@ -139,7 +144,7 @@ def test_memory_usage_counts_grandchildren():
     # comparing the memory used with different amounts of forks done.
     # subtract a little bit (* 0.9) due to natural variance in memory used
     # when running the program.
-    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e7 * 0.90
+    memory_per_numbers_list = sys.getsizeof(int(0)) * blobsize * 0.90
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
     assert max_seens[0] + memory_per_numbers_list < max_seens[1]
