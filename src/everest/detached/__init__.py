@@ -84,7 +84,7 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
 
     driver = create_driver(get_server_queue_options(config))
     try:
-        args = ["--config-file", config.config_file]
+        args = ["--config-file", str(config.config_path)]
         if debug:
             args.append("--debug")
         await driver.submit(0, "everserver", *args)

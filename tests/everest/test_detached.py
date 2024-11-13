@@ -1,4 +1,6 @@
 import os
+import stat
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -10,6 +12,7 @@ from ert.config.queue_config import (
     LsfQueueOptions,
     SlurmQueueOptions,
 )
+from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -294,3 +297,46 @@ def test_generate_queue_options_no_config():
 def test_generate_queue_options_use_simulator_values(queue_options, expected_result):
     config = EverestConfig.with_defaults(**{"simulator": queue_options})
     assert get_server_queue_options(config) == expected_result
+
+
+@pytest.mark.timeout(5)  # Simulation might not finish
+@pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
+async def test_starting_not_in_folder(tmp_path, monkeypatch):
+    """
+    This tests that the second argument to the everserver is the config
+    file, and that the config file exists. This is a regression test for
+    a bug that happened when everest was started from a different dir
+    than the config file was in.
+    """
+
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return event
+
+    os.makedirs(tmp_path / "new_folder")
+    monkeypatch.chdir(tmp_path / "new_folder")
+    everest_config = EverestConfig.with_defaults()
+    everest_config.dump("minimal_config.yml")
+    everest_config.config_path = Path("minimal_config.yml").absolute()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PATH", f".:{os.environ['PATH']}")
+    everserver_path = Path("everserver")
+    with open(everserver_path, "w", encoding="utf-8") as file:  # noqa: ASYNC230
+        file.write(
+            """#!/usr/bin/env python
+import sys
+from pathlib import Path
+if __name__ == "__main__":
+    config_path = sys.argv[2]
+    if not Path(config_path).exists():
+        raise ValueError(f"config_path ({config_path}) does not exist")
+"""
+        )
+    everserver_path.chmod(everserver_path.stat().st_mode | stat.S_IEXEC)
+    makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
+    driver = await start_server(everest_config, debug=True)
+    final_state = await server_running()
+    assert final_state.returncode == 0
