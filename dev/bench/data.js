@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731496819457,
+  "lastUpdate": 1731497529358,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "c34060ca08b824c1e5dbedd21cca552dff98b796",
-          "message": "Improve logging with open telemetry traces (#9083)\n\nAdd a span processor through the add_span_processor pluggin hook\r\nto export trace information to e.g. azure\r\n---------\r\n\r\nCo-authored-by: Andreas Eknes Lie <andrli@equinor.com>",
-          "timestamp": "2024-11-01T14:25:59+01:00",
-          "tree_id": "a4b2c2ab5e5967b8505c052d41534d985e8bde95",
-          "url": "https://github.com/equinor/ert/commit/c34060ca08b824c1e5dbedd21cca552dff98b796"
-        },
-        "date": 1730467673141,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1939554861378494,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02633452409202933",
-            "extra": "mean: 5.1558221935999935 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01539583628591243",
             "extra": "mean: 5.298944061200018 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6f6543ff9f57948ce6d65f1e3c8f40da98f8ed9f",
+          "message": "Add right click capability to open external plot windows",
+          "timestamp": "2024-11-13T12:30:18+01:00",
+          "tree_id": "58dee35ba649edec11f47f8b118b28f4402c2303",
+          "url": "https://github.com/equinor/ert/commit/6f6543ff9f57948ce6d65f1e3c8f40da98f8ed9f"
+        },
+        "date": 1731497528855,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1904725305954941,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028072447011939037",
+            "extra": "mean: 5.25010087739999 sec\nrounds: 5"
           }
         ]
       }
