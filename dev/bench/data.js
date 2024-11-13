@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731480640783,
+  "lastUpdate": 1731481307033,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "67ac195545097204906b1f9a1dfce531a4a745b0",
-          "message": "Update docs path",
-          "timestamp": "2024-11-01T10:51:26+01:00",
-          "tree_id": "f656a0e906a4acf753e0767cf8b456bfbbfa224e",
-          "url": "https://github.com/equinor/ert/commit/67ac195545097204906b1f9a1dfce531a4a745b0"
-        },
-        "date": 1730454796832,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1935736941597423,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04787168965994167",
-            "extra": "mean: 5.165991197000006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01955277528329969",
             "extra": "mean: 5.226192174799996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "03cfa25311451e196ded467b2e260b41a79d6587",
+          "message": "Remove old job queue test snapshot",
+          "timestamp": "2024-11-13T07:59:48+01:00",
+          "tree_id": "932ccdc696aefc5c0347d0d0f614718ebec01a35",
+          "url": "https://github.com/equinor/ert/commit/03cfa25311451e196ded467b2e260b41a79d6587"
+        },
+        "date": 1731481306024,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19111658429816888,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030203551263009",
+            "extra": "mean: 5.232408289800003 sec\nrounds: 5"
           }
         ]
       }
