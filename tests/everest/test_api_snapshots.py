@@ -74,7 +74,6 @@ def test_api_snapshots(
         "batch": optimal_result.batch,
         "controls": optimal_result.controls,
         "total_objective": optimal_result.total_objective,
-        "expected_objectives": optimal_result.expected_objectives,
     }
 
     api = EverestDataAPI(config)

@@ -103,9 +103,6 @@
       "point_x": 3.0,
       "point_y": 7.0
     },
-    "total_objective": 7.0,
-    "expected_objectives": {
-      "func": 7.0
-    }
+    "total_objective": 7.0
   }
 }

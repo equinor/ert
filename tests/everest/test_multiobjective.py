@@ -105,8 +105,3 @@ def test_multi_objectives_run(
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)
     run_model.run_experiment(evaluator_server_config)
-
-    # Loop through objective functions in config and ensure they are in the
-    # result object
-    for obj in config.objective_functions:
-        assert obj.name in run_model.result.expected_objectives

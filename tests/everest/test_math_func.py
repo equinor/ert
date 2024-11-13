@@ -34,12 +34,6 @@ def test_math_func_multiobj(
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
 
-    # Check the optimum values for each object.
-    optim_p = run_model.result.expected_objectives["distance_p"]
-    optim_q = run_model.result.expected_objectives["distance_q"]
-    assert optim_p == pytest.approx(-0.5, abs=0.05)
-    assert optim_q == pytest.approx(-4.5, abs=0.05)
-
     # The overall optimum is a weighted average of the objectives
     assert run_model.result.total_objective == pytest.approx(
         (-0.5 * (2.0 / 3.0) * 1.5) + (-4.5 * (1.0 / 3.0) * 1.0), abs=0.01
@@ -73,8 +67,6 @@ def test_math_func_multiobj(
     assert best["point_x"] == pytest.approx(x)
     assert best["point_y"] == pytest.approx(y)
     assert best["point_z"] == pytest.approx(z)
-    assert best["distance_p"] == pytest.approx(optim_p)
-    assert best["distance_q"] == pytest.approx(optim_q)
     assert best["sim_avg_obj"] == pytest.approx(run_model.result.total_objective)
 
     test_space = itertools.product(

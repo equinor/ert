@@ -381,9 +381,6 @@
       "point_x-1": 0.00635029,
       "point_x-2": 0.38836369
     },
-    "total_objective": -1.52561897,
-    "expected_objectives": {
-      "distance": -1.52561897
-    }
+    "total_objective": -1.52561897
   }
 }
