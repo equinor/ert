@@ -17,6 +17,7 @@ from ert.config import QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
+    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
@@ -311,7 +312,7 @@ def _find_res_queue_system(config: EverestConfig):
     return QueueSystem(queue_system.upper())
 
 
-def get_server_queue_options(config: EverestConfig):
+def get_server_queue_options(config: EverestConfig) -> QueueOptions:
     queue_system = _find_res_queue_system(config)
 
     ever_queue_config = config.server if config.server is not None else config.simulator
