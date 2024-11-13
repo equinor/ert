@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731499457805,
+  "lastUpdate": 1731501246190,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "90d11ec9604f2d3b4b2a12cd90ba19ec58fbf1ca",
-          "message": "Make scheduler execute yield during spawning of realizations\n\nStarting the realizations in scheduler was blocking all other async tasks\nfrom running. Nothing could connect to ensemble evaluator during this.\nUnder heavy load this could cause Monitor to time out and fail. Now we will\nsleep(0) between each time we create a new subprocess. This will allow\nother asyncio tasks to run.",
-          "timestamp": "2024-11-01T15:15:27+01:00",
-          "tree_id": "5fd69702e1f912ba4c614ab240104c1f7b93c28b",
-          "url": "https://github.com/equinor/ert/commit/90d11ec9604f2d3b4b2a12cd90ba19ec58fbf1ca"
-        },
-        "date": 1730470638886,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19423774875696875,
-            "unit": "iter/sec",
-            "range": "stddev: 0.035257273320927464",
-            "extra": "mean: 5.148329850400012 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.041618329787992694",
             "extra": "mean: 5.211806618599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "d32d419d487dcd9b0fdcd3dc3369d741dd1a41e7",
+          "message": "Log when dark storage fails to load response",
+          "timestamp": "2024-11-13T13:32:12+01:00",
+          "tree_id": "0ff1ac4db4aa0ac92aa5e9234439d23af1844b55",
+          "url": "https://github.com/equinor/ert/commit/d32d419d487dcd9b0fdcd3dc3369d741dd1a41e7"
+        },
+        "date": 1731501245742,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19224891034741187,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01960705610632294",
+            "extra": "mean: 5.201589950200008 sec\nrounds: 5"
           }
         ]
       }
