@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731571528904,
+  "lastUpdate": 1731576497995,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "05dfe1711c20226ee73ff22eb3794272b6b794e7",
-          "message": "Create driver from QueueOptions instead of QueueConfig",
-          "timestamp": "2024-11-05T10:21:14+01:00",
-          "tree_id": "a2240fbc1f1acd9b98b2dff2fd72c14acf3c9bc6",
-          "url": "https://github.com/equinor/ert/commit/05dfe1711c20226ee73ff22eb3794272b6b794e7"
-        },
-        "date": 1730798583967,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19657331009998202,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04104420423443821",
-            "extra": "mean: 5.0871606094000015 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02040400479608584",
             "extra": "mean: 5.201997337399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "1b235cf54a592a6b3be1b0c7ba0a95570115d288",
+          "message": "Use sh for all code blocks in readme",
+          "timestamp": "2024-11-14T10:26:21+01:00",
+          "tree_id": "5a88f390f18b00da23698eb80ede1d040f3809c9",
+          "url": "https://github.com/equinor/ert/commit/1b235cf54a592a6b3be1b0c7ba0a95570115d288"
+        },
+        "date": 1731576497317,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18999392828727604,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01782326892716323",
+            "extra": "mean: 5.263326091600004 sec\nrounds: 5"
           }
         ]
       }
