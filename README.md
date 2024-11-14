@@ -18,14 +18,14 @@ Iterative Ensemble Smoother (IES).
 
 ## Installation
 
-``` sh
+```sh
 $ pip install ert
 $ ert --help
 ```
 
 or, for the latest development version:
 
-``` sh
+```sh
 $ pip install git+https://github.com/equinor/ert.git@main
 $ ert --help
 ```
@@ -40,7 +40,7 @@ reservoir models (e.g., an ensemble of geologically-consistent models).
 This will enable robust decisions about drilling schedule and well
 placement, in order to achieve results of significant practical value.
 
-```bash
+```sh
     pip install . "[everest]"
 ```
 
@@ -103,7 +103,7 @@ git submodule foreach "git lfs pull"
 ### Build documentation
 
 You can build the documentation after installation by running
-```bash
+```sh
 pip install ".[dev]"
 sphinx-build -n -v -E -W ./docs/ert ./tmp/ert_docs
 ```
@@ -111,7 +111,7 @@ and then open the generated `./tmp/ert_docs/index.html` in a browser.
 
 To automatically reload on changes you may use
 
-```bash
+```sh
 sphinx-autobuild docs docs/_build/html
 ```
 
@@ -120,7 +120,7 @@ sphinx-autobuild docs docs/_build/html
 There are a set of style requirements, which are gathered in the `pre-commit`
 configuration, to have it automatically run on each commit do:
 
-``` sh
+```sh
 $ pip install pre-commit
 $ pre-commit install
 ```
@@ -151,10 +151,10 @@ command `ulimit -a`. In order to increase maximum number of open files, run
 
 ### Basic ert test
 To test if ert itself is working, go to `test-data/ert/poly_example` and start ert by running `poly.ert` with `ert gui`
-```
+```sh
 cd test-data/ert/poly_example
 ert gui poly.ert
-````
+```
 This opens up the ert graphical user interface.
 Finally, test ert by starting and successfully running the experiment.
 
