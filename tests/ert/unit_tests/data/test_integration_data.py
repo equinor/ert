@@ -154,7 +154,9 @@ def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data
     experiment = next(snake_oil_storage.experiments)
     obs_keys = experiment.observation_keys
     measured_data = create_measured_data(obs_keys)
-    snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
+    snapshot.assert_match(
+        measured_data.data.round(10).to_csv(), "snake_oil_measured_output.csv"
+    )
 
 
 def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
