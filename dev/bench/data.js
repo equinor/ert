@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731577474821,
+  "lastUpdate": 1731581778935,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "stephan.dehoop@tno.nl",
-            "name": "Stephan de Hoop",
-            "username": "StephanDeHoop"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "1f00a17aa7bce09e93740ffdb3754285abaacbe5",
-          "message": "Fix small typo in Everest docs (#9153)\n\nFix small typo in docs",
-          "timestamp": "2024-11-05T10:41:15+01:00",
-          "tree_id": "c63a7abd0552cfa75a94ce3d4bfc4ec2cd0c5273",
-          "url": "https://github.com/equinor/ert/commit/1f00a17aa7bce09e93740ffdb3754285abaacbe5"
-        },
-        "date": 1730799781183,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19694008109762362,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02300224569439814",
-            "extra": "mean: 5.077686545199998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010724499538523202",
             "extra": "mean: 5.137766665400005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "91310f99e95e135cc2e63fbce0640033352e9c7b",
+          "message": "Run ruff",
+          "timestamp": "2024-11-14T11:54:05+01:00",
+          "tree_id": "b9864e9c010671e7d6344582cb8b114e47bf6034",
+          "url": "https://github.com/equinor/ert/commit/91310f99e95e135cc2e63fbce0640033352e9c7b"
+        },
+        "date": 1731581777665,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18832109962684743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06783166517792047",
+            "extra": "mean: 5.310079444000007 sec\nrounds: 5"
           }
         ]
       }
