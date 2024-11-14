@@ -137,7 +137,7 @@ def make_SLURM_machine_list(SLURM_JOB_NODELIST, SLURM_TASKS_PER_NODE):
         task_count_list += _expand_SLURM_task_count(task_count_string)
 
     host_list = []
-    for node, count in zip(nodelist, task_count_list):
+    for node, count in zip(nodelist, task_count_list, strict=False):
         host_list += [node] * count
 
     return host_list

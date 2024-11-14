@@ -44,12 +44,15 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
 
 
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
-    with _open_main_window(config_path) as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
+    with (
+        _open_main_window(config_path) as (
+            gui,
+            _,
+            config,
+        ),
+        StorageService.init_service(
+            project=os.path.abspath(config.ens_path),
+        ),
     ):
         yield gui
 
@@ -88,9 +91,10 @@ def _open_main_window(
     args_mock.config = str(path)
     with ErtPluginContext():
         config = ErtConfig.with_plugins().from_file(path)
-        with open_storage(
-            config.ens_path, mode="w"
-        ) as storage, add_gui_log_handler() as log_handler:
+        with (
+            open_storage(config.ens_path, mode="w") as storage,
+            add_gui_log_handler() as log_handler,
+        ):
             gui = _setup_main_window(config, args_mock, log_handler, storage)
             yield gui, storage, config
             gui.close()
@@ -107,10 +111,13 @@ def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
 def _esmda_run(run_experiment, source_root, tmp_path_factory):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
-    with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
-        gui,
-        _,
-        config,
+    with (
+        pytest.MonkeyPatch.context() as mp,
+        _open_main_window(path / "poly.ert") as (
+            gui,
+            _,
+            config,
+        ),
     ):
         mp.chdir(path)
         run_experiment(MultipleDataAssimilation, gui)
@@ -128,10 +135,13 @@ def _ensemble_experiment_run(
 ):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
-    with pytest.MonkeyPatch.context() as mp, _open_main_window(path / "poly.ert") as (
-        gui,
-        _,
-        _,
+    with (
+        pytest.MonkeyPatch.context() as mp,
+        _open_main_window(path / "poly.ert") as (
+            gui,
+            _,
+            _,
+        ),
     ):
         mp.chdir(path)
         if failing_reals:
@@ -177,12 +187,15 @@ def _ensemble_experiment_run(
 def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     shutil.copytree(_esmda_run, tmp_path, dirs_exist_ok=True)
-    with _open_main_window(tmp_path / "poly.ert") as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
+    with (
+        _open_main_window(tmp_path / "poly.ert") as (
+            gui,
+            _,
+            config,
+        ),
+        StorageService.init_service(
+            project=os.path.abspath(config.ens_path),
+        ),
     ):
         yield gui
 

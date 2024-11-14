@@ -88,7 +88,7 @@ def gen_data_display_keys(ensemble: Ensemble) -> Iterator[str]:
     if gen_data_config:
         assert isinstance(gen_data_config, GenDataConfig)
         for key, report_steps in zip(
-            gen_data_config.keys, gen_data_config.report_steps_list
+            gen_data_config.keys, gen_data_config.report_steps_list, strict=False
         ):
             if report_steps is None:
                 yield f"{key}@0"

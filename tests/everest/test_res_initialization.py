@@ -413,7 +413,7 @@ def test_install_data_no_init(copy_test_data_to_tmp):
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmd_list = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = list(zip(sources, targets, links, cmd_list))
+    test_base = list(zip(sources, targets, links, cmd_list, strict=False))
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base[1:2]:
         ever_config = EverestConfig.load_file(tutorial_config_path)
@@ -518,7 +518,7 @@ def test_install_data(copy_test_data_to_tmp):
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmds = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = zip(sources, targets, links, cmds)
+    test_base = zip(sources, targets, links, cmds, strict=False)
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base:
         ever_config = EverestConfig.load_file(tutorial_config_path)

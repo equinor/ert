@@ -27,13 +27,16 @@ async def attempt_connection(
 ) -> None:
     timeout = aiohttp.ClientTimeout(connect=connection_timeout)
     headers = {} if token is None else {"token": token}
-    async with aiohttp.ClientSession() as session, session.request(
-        method="get",
-        url=url,
-        ssl=get_ssl_context(cert),
-        headers=headers,
-        timeout=timeout,
-    ) as resp:
+    async with (
+        aiohttp.ClientSession() as session,
+        session.request(
+            method="get",
+            url=url,
+            ssl=get_ssl_context(cert),
+            headers=headers,
+            timeout=timeout,
+        ) as resp,
+    ):
         resp.raise_for_status()
 
 

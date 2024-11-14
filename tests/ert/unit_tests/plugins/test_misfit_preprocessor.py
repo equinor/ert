@@ -11,10 +11,13 @@ def test_that_misfit_preprocessor_raises():
         fh.writelines("HOOK_WORKFLOW config PRE_FIRST_UPDATE\n")
     with open("config", "w", encoding="utf-8") as fh:
         fh.writelines("MISFIT_PREPROCESSOR")
-    with pytest.raises(
-        ConfigValidationError,
-        match="MISFIT_PREPROCESSOR is removed, use ANALYSIS_SET_VAR OBSERVATIONS",
-    ), ErtPluginContext():
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match="MISFIT_PREPROCESSOR is removed, use ANALYSIS_SET_VAR OBSERVATIONS",
+        ),
+        ErtPluginContext(),
+    ):
         ErtConfig.from_file("poly.ert")
 
 
@@ -25,8 +28,11 @@ def test_that_misfit_preprocessor_raises_with_config():
         fh.writelines("HOOK_WORKFLOW config PRE_FIRST_UPDATE\n")
     with open("config", "w", encoding="utf-8") as fh:
         fh.writelines("MISFIT_PREPROCESSOR my_config")
-    with pytest.raises(
-        ConfigValidationError,
-        match="Add multiple entries to set up multiple groups",
-    ), ErtPluginContext():
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match="Add multiple entries to set up multiple groups",
+        ),
+        ErtPluginContext(),
+    ):
         ErtConfig.from_file("poly.ert")

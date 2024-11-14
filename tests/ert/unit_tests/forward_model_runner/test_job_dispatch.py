@@ -345,11 +345,12 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg, patch(
-        "_ert.forward_model_runner.cli.os.getpgid"
-    ) as mock_getpgid, patch(
-        "_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner:
+    with (
+        patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg,
+        patch("_ert.forward_model_runner.cli.os.getpgid") as mock_getpgid,
+        patch("_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)),
+        patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner,
+    ):
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

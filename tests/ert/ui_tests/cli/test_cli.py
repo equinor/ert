@@ -64,9 +64,10 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
 )
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly-no-gen-kw.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if "GEN_KW" not in line:
                 fout.write(line)
@@ -185,9 +186,10 @@ def test_that_the_model_raises_exception_if_active_less_than_minimum_realization
     Omit testing of SingleTestRun because that executes with 1 active realization
     regardless of configuration.
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly_high_min_reals.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly_high_min_reals.ert", "w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if "MIN_REALIZATIONS" in line:
                 fout.write("MIN_REALIZATIONS 100")
@@ -215,9 +217,10 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     NUM_REALIZATIONS when running ensemble_experiment.
     A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly_lower_active_reals.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly_lower_active_reals.ert", "w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if "MIN_REALIZATIONS" in line:
                 fout.write("MIN_REALIZATIONS 100")
@@ -864,9 +867,10 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     """Verify that the run model now gereneates a cleanup log when
     there are repeated forward models
     """
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly_repeated_forward_model_steps.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly_repeated_forward_model_steps.ert", "w", encoding="utf-8") as fout,
+    ):
         forward_model_steps = ["FORWARD_MODEL poly_eval\n"] * 5
         lines = fin.readlines() + forward_model_steps
         fout.writelines(lines)

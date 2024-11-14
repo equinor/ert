@@ -63,15 +63,21 @@ def test_create_experiment(tmp_path):
 
 
 def test_that_loading_non_existing_experiment_throws(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage, pytest.raises(
-        KeyError, match="Experiment with name 'non-existing-experiment' not found"
+    with (
+        open_storage(tmp_path, mode="w") as storage,
+        pytest.raises(
+            KeyError, match="Experiment with name 'non-existing-experiment' not found"
+        ),
     ):
         storage.get_experiment_by_name("non-existing-experiment")
 
 
 def test_that_loading_non_existing_ensemble_throws(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage, pytest.raises(
-        KeyError, match="Ensemble with name 'non-existing-ensemble' not found"
+    with (
+        open_storage(tmp_path, mode="w") as storage,
+        pytest.raises(
+            KeyError, match="Ensemble with name 'non-existing-ensemble' not found"
+        ),
     ):
         experiment = storage.create_experiment(name="test-experiment")
         experiment.get_ensemble_by_name("non-existing-ensemble")
@@ -424,7 +430,7 @@ def test_get_unique_experiment_name(snake_oil_storage):
             "default",
         ]
         experiment_list = [MagicMock() for _ in range(len(names))]
-        for k, v in zip(experiment_list, names):
+        for k, v in zip(experiment_list, names, strict=False):
             k.name = v
         experiments.return_value = experiment_list
 
@@ -606,10 +612,13 @@ class RaisingWriteNamedTemporaryFile:
 def test_write_transaction_failure(tmp_path):
     with open_storage(tmp_path, "w") as storage:
         path = tmp_path / "file.txt"
-        with patch(
-            "ert.storage.local_storage.NamedTemporaryFile",
-            RaisingWriteNamedTemporaryFile,
-        ) as f, pytest.raises(RuntimeError):
+        with (
+            patch(
+                "ert.storage.local_storage.NamedTemporaryFile",
+                RaisingWriteNamedTemporaryFile,
+            ) as f,
+            pytest.raises(RuntimeError),
+        ):
             storage._write_transaction(path, b"deadbeaf")
 
         assert f.entered
@@ -700,9 +709,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def double_open_timeout(self):
         # Opening with write access will timeout when
         # already opened with mode="w" somewhere else
-        with patch(
-            "ert.storage.local_storage.LocalStorage.LOCK_TIMEOUT", 0.0
-        ), pytest.raises(ErtStorageException):
+        with (
+            patch("ert.storage.local_storage.LocalStorage.LOCK_TIMEOUT", 0.0),
+            pytest.raises(ErtStorageException),
+        ):
             open_storage(self.tmpdir + "/storage/", mode="w")
 
     @rule()
@@ -776,10 +786,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
         iens = 0
         assume(not storage_ensemble.realizations_initialized([iens]))
         for f in fields:
-            with patch(
-                "ert.storage.local_storage.NamedTemporaryFile",
-                RaisingWriteNamedTemporaryFile,
-            ) as temp_file, pytest.raises(RuntimeError):
+            with (
+                patch(
+                    "ert.storage.local_storage.NamedTemporaryFile",
+                    RaisingWriteNamedTemporaryFile,
+                ) as temp_file,
+                pytest.raises(RuntimeError),
+            ):
                 storage_ensemble.save_parameters(
                     f.name,
                     iens,
@@ -1029,10 +1042,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
 
-        with patch(
-            "ert.storage.local_storage.NamedTemporaryFile",
-            RaisingWriteNamedTemporaryFile,
-        ) as f, pytest.raises(RuntimeError):
+        with (
+            patch(
+                "ert.storage.local_storage.NamedTemporaryFile",
+                RaisingWriteNamedTemporaryFile,
+            ) as f,
+            pytest.raises(RuntimeError),
+        ):
             storage_ensemble.set_failure(
                 realization, RealizationStorageState.PARENT_FAILURE, message
             )

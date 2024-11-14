@@ -133,10 +133,13 @@ def test_ensemble_config_duplicate_node_names():
             ]
         ],
     }
-    with pytest.raises(
-        ConfigValidationError,
-        match="GEN_KW and GEN_DATA contained duplicate name: Test_name",
-    ), pytest.warns(match="The template file .* is empty"):
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match="GEN_KW and GEN_DATA contained duplicate name: Test_name",
+        ),
+        pytest.warns(match="The template file .* is empty"),
+    ):
         EnsembleConfig.from_dict(config_dict=config_dict)
 
 

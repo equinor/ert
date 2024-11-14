@@ -13,8 +13,9 @@ def test_invalid_server():
     host = "localhost"
     url = f"ws://{host}:{port}"
 
-    with Client(url, max_retries=2, timeout_multiplier=2) as c1, pytest.raises(
-        ClientConnectionError
+    with (
+        Client(url, max_retries=2, timeout_multiplier=2) as c1,
+        pytest.raises(ClientConnectionError),
     ):
         c1.send("hei")
 

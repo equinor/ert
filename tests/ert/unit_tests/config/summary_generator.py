@@ -486,7 +486,16 @@ def summaries(
         )
     )
     assume(
-        len(set(zip(smspec.keywords, smspec.region_numbers, smspec.well_names)))
+        len(
+            set(
+                zip(
+                    smspec.keywords,
+                    smspec.region_numbers,
+                    smspec.well_names,
+                    strict=False,
+                )
+            )
+        )
         == len(smspec.keywords)
     )
     dates = [0.0, *draw(time_deltas)]

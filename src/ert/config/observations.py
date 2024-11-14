@@ -177,7 +177,7 @@ class EnkfObs:
                 segment_instance,
             )
         data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
-        for date, error, value in zip(refcase.dates, std_dev, values):
+        for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
             data[date] = SummaryObservation(summary_key, summary_key, value, error)
 
         return {
