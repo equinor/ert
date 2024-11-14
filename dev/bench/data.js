@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731585249543,
+  "lastUpdate": 1731586386471,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "721f3c6d24038a0a55677cd81ef169af87a81d95",
-          "message": "Make simulator fm invocation more explicit",
-          "timestamp": "2024-11-06T09:17:29+01:00",
-          "tree_id": "09af707c0a6520b44b2ee84198f5f546ebd9428d",
-          "url": "https://github.com/equinor/ert/commit/721f3c6d24038a0a55677cd81ef169af87a81d95"
-        },
-        "date": 1730881163707,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1924269346460438,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0370351370942405",
-            "extra": "mean: 5.196777685200004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021056245468429068",
             "extra": "mean: 5.115755313800008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "augustommg@gmail.com",
+            "name": "AugustoMagalhaes",
+            "username": "AugustoMagalhaes"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "120659c388e9419327c899d34f1c4a346b551037",
+          "message": "Adds test for invalid install_data templates",
+          "timestamp": "2024-11-14T21:11:05+09:00",
+          "tree_id": "0c0948dcaf4f5dee5b224c55944eec961484d2cf",
+          "url": "https://github.com/equinor/ert/commit/120659c388e9419327c899d34f1c4a346b551037"
+        },
+        "date": 1731586385230,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1919442611014824,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029696380098208634",
+            "extra": "mean: 5.209845786800014 sec\nrounds: 5"
           }
         ]
       }
