@@ -4,11 +4,13 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
+from typing import List
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
 from qtpy.QtCore import Qt, QTimer
+from qtpy.QtGui import QWindow
 from qtpy.QtWidgets import (
     QAction,
     QApplication,
@@ -612,25 +614,39 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
         assert button_plot_tool
 
+        def top_level_plotter_windows() -> List[QWindow]:
+            top_level_plot_windows = []
+            top_level_windows = QApplication.topLevelWindows()
+            for win in top_level_windows:
+                if "Plotting" in win.title() and win.isVisible():
+                    top_level_plot_windows.append(win)
+            return top_level_plot_windows
+
+        def right_click_plotter_button() -> None:
+            top_level_windows = len(top_level_plotter_windows())
+            qtbot.mouseClick(button_plot_tool, Qt.RightButton)
+            qtbot.wait_until(
+                lambda: len(top_level_plotter_windows()) > top_level_windows,
+                timeout=5000,
+            )
+
+        right_click_plotter_button()
+        right_click_plotter_button()
+        right_click_plotter_button()
+
+        window_list = top_level_plotter_windows()
+        assert len(window_list) == 3
+
+        for window in window_list:
+            window.close()
+
+        qtbot.wait_until(lambda: not top_level_plotter_windows(), timeout=5000)
+
         qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         assert plot_window
+        assert "Plotting" in plot_window.windowTitle()
 
-        prev_open_windows = len(QApplication.topLevelWindows())
-
-        def detect_external_plot_widget_open_on_right_click(plot_count: int):
-            previous_count = plot_count - 1
-            assert len(QApplication.topLevelWindows()) == previous_count
-            qtbot.mouseClick(button_plot_tool, Qt.RightButton)
-            qtbot.wait_until(
-                lambda: len(QApplication.topLevelWindows()) != previous_count,
-                timeout=5000,
-            )
-            assert len(QApplication.topLevelWindows()) == plot_count
-
-        detect_external_plot_widget_open_on_right_click(prev_open_windows + 1)
-        detect_external_plot_widget_open_on_right_click(prev_open_windows + 2)
-        detect_external_plot_widget_open_on_right_click(prev_open_windows + 3)
     gui.close()
 
 
