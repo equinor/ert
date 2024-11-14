@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731581778935,
+  "lastUpdate": 1731583825401,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "59453cf198848c74e942eb0c3a4fb34d34c54c21",
-          "message": "Fix pytest option typo (#9141)",
-          "timestamp": "2024-11-05T12:19:47+01:00",
-          "tree_id": "aa4ba7c44b9a629e2f1cc9656816b08e7a0923bf",
-          "url": "https://github.com/equinor/ert/commit/59453cf198848c74e942eb0c3a4fb34d34c54c21"
-        },
-        "date": 1730805702469,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19317858907262322,
-            "unit": "iter/sec",
-            "range": "stddev: 0.010193189508555507",
-            "extra": "mean: 5.176557116400005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06783166517792047",
             "extra": "mean: 5.310079444000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "9a3c864607c891791a023e54abe6cea4706bf9ae",
+          "message": "Convert ErtConfig to dataclass",
+          "timestamp": "2024-11-14T12:28:20+01:00",
+          "tree_id": "9afa168d7d375b58f8ba9a20880ff18dafa4596c",
+          "url": "https://github.com/equinor/ert/commit/9a3c864607c891791a023e54abe6cea4706bf9ae"
+        },
+        "date": 1731583824251,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1924551332956283,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03686378717714496",
+            "extra": "mean: 5.196016249999997 sec\nrounds: 5"
           }
         ]
       }
