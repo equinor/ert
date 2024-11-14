@@ -149,6 +149,12 @@ async def main(args):
     await job_task
 
 
+async def let_reporters_finish(reporters):
+    for reporter in reporters:
+        if isinstance(reporter, reporting.Event):
+            await reporter.join()
+
+
 async def _main(
     job_runner: ForwardModelRunner,
     parsed_args,
@@ -161,14 +167,16 @@ async def _main(
             for reporter in reporters:
                 try:
                     await reporter.report(job_status)
-                    await asyncio.sleep(0)
                 except OSError as oserror:
                     print(
                         f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
                     )
+                    await let_reporters_finish(reporters)
                     raise SystemExit(1)
 
             if isinstance(job_status, Finish) and not job_status.success():
+                await let_reporters_finish(reporters)
                 raise SystemExit(1)
     except asyncio.CancelledError:
+        await let_reporters_finish(reporters)
         raise SystemExit(1)

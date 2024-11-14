@@ -78,7 +78,7 @@ class ForwardModelRunner:
 
             yield init_message
             for step in step_queue:
-                for status_update in step.run():
+                async for status_update in step.run():
                     yield status_update
                     if not status_update.success():
                         yield Checksum(checksum_dict={}, run_path=os.getcwd())
@@ -86,6 +86,7 @@ class ForwardModelRunner:
                             "Not all forward model steps completed successfully."
                         )
                         return
+                    await asyncio.sleep(0)
 
             checksum_dict = self._populate_checksums(self._read_manifest())
             yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())

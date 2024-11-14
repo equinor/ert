@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import io
 import json
@@ -12,7 +13,17 @@ import time
 from datetime import datetime as dt
 from pathlib import Path
 from subprocess import Popen, run
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple, cast
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    cast,
+)
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -89,10 +100,11 @@ class ForwardModelStep:
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self) -> Generator[Start | Exited | Running | None]:
+    async def run(self) -> AsyncGenerator[Start | Exited | Running | None]:
         try:
             for msg in self._run():
                 yield msg
+                await asyncio.sleep(0)
         except Exception as e:
             yield Exited(self, exit_code=1).with_error(str(e))
 

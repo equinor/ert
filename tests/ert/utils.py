@@ -131,8 +131,10 @@ async def _mock_ws_thread(host, port, messages):
 
 
 @contextlib.asynccontextmanager
-async def _mock_ws_task(host, port, messages):
-    mock_ws_task = asyncio.create_task(_mock_ws_async(host, port, messages))
+async def _mock_ws_task(host, port, messages, delay_startup=0):
+    mock_ws_task = asyncio.create_task(
+        _mock_ws_async(host, port, messages, delay_startup)
+    )
     try:
         yield
     # Make sure to join the thread even if an exception occurs
