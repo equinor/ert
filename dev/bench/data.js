@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731583825401,
+  "lastUpdate": 1731585249543,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "4b18368cbac651d45bd0e30845686e3efd171810",
-          "message": "Remove simulation server option and add deprecation warning is present in config",
-          "timestamp": "2024-11-06T04:03:35+09:00",
-          "tree_id": "e4299ca59a7a4d9af15821a802d6ef27ff856179",
-          "url": "https://github.com/equinor/ert/commit/4b18368cbac651d45bd0e30845686e3efd171810"
-        },
-        "date": 1730833536856,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19389436321681078,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06516216173492596",
-            "extra": "mean: 5.157447506000006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03686378717714496",
             "extra": "mean: 5.196016249999997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "sted@equinor.com",
+            "name": "StephanDeHoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "distinct": true,
+          "id": "137bdc64b0be0f9d300720e487458226dc4ee1e4",
+          "message": "Use everest.strings instead of hardcoded",
+          "timestamp": "2024-11-14T12:52:17+01:00",
+          "tree_id": "6ef924718b0ff0a5b4da73391879d4072fb7d11d",
+          "url": "https://github.com/equinor/ert/commit/137bdc64b0be0f9d300720e487458226dc4ee1e4"
+        },
+        "date": 1731585249027,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1954745562795878,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021056245468429068",
+            "extra": "mean: 5.115755313800008 sec\nrounds: 5"
           }
         ]
       }
