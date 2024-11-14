@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731501246190,
+  "lastUpdate": 1731571528904,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "distinct": true,
-          "id": "8c679c1f3753359fdf656db36faa5721e182a865",
-          "message": "Update ropt dependency to 0.9",
-          "timestamp": "2024-11-04T11:10:22+01:00",
-          "tree_id": "213486ade147c9856172d5a8c2d4b11b20381248",
-          "url": "https://github.com/equinor/ert/commit/8c679c1f3753359fdf656db36faa5721e182a865"
-        },
-        "date": 1730715132812,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19240231102079516,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028166166099757847",
-            "extra": "mean: 5.1974427682000055 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01960705610632294",
             "extra": "mean: 5.201589950200008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "a1a028c3aacbd0ba1e813b4c9842bbaf108ae66d",
+          "message": "Disregard expected_objectives from OptimalResults\n\nthe calculation within seba does not make sense",
+          "timestamp": "2024-11-14T09:03:31+01:00",
+          "tree_id": "434623a1d3e6a0ff07e83e6005c3dbfa8a35da2b",
+          "url": "https://github.com/equinor/ert/commit/a1a028c3aacbd0ba1e813b4c9842bbaf108ae66d"
+        },
+        "date": 1731571528260,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19223385464088083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02040400479608584",
+            "extra": "mean: 5.201997337399996 sec\nrounds: 5"
           }
         ]
       }
