@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731576497995,
+  "lastUpdate": 1731577474821,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "e310860625e56f8daad713991ef56f35ef04d400",
-          "message": "Transpose before calculating covariance in test\n\nnp.cov expects rows to be parameters and columns to be realizations",
-          "timestamp": "2024-11-05T10:24:16+01:00",
-          "tree_id": "01c0b3041f0abd978231c71184edbf4749b148c9",
-          "url": "https://github.com/equinor/ert/commit/e310860625e56f8daad713991ef56f35ef04d400"
-        },
-        "date": 1730798770057,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19046176259498293,
-            "unit": "iter/sec",
-            "range": "stddev: 0.07114044650732476",
-            "extra": "mean: 5.250397698600011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01782326892716323",
             "extra": "mean: 5.263326091600004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "fd6fa0574a8edc085d50d2872d16b19646217dfd",
+          "message": "Fix typing for batching interval",
+          "timestamp": "2024-11-14T10:42:41+01:00",
+          "tree_id": "6f55cfa43074a52a9439ac804c8563b1253dd420",
+          "url": "https://github.com/equinor/ert/commit/fd6fa0574a8edc085d50d2872d16b19646217dfd"
+        },
+        "date": 1731577474307,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19463709917666028,
+            "unit": "iter/sec",
+            "range": "stddev: 0.010724499538523202",
+            "extra": "mean: 5.137766665400005 sec\nrounds: 5"
           }
         ]
       }
