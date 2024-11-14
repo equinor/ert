@@ -438,7 +438,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_maintained_forward_model_write_objectives(self) -> Self:
-        if not self.objective_functions:
+        if not self.objective_functions or not self.forward_model:
             return self
         objectives = {objective.name for objective in self.objective_functions}
         check_forward_model_objective(self.forward_model, objectives)
