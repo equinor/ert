@@ -86,7 +86,7 @@ class EnsembleEvaluator:
             List[Tuple[EVENT_HANDLER, Event]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
-        self._batching_interval: int = 2
+        self._batching_interval: float = 2.0
         self._complete_batch: asyncio.Event = asyncio.Event()
 
     async def _publisher(self) -> None:
