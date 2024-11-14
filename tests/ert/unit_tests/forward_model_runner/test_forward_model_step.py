@@ -261,7 +261,7 @@ class MockedProcess:
 
 
 def test_cpu_seconds_for_process_with_children():
-    (_, cpu_seconds, _) = _get_processtree_data(MockedProcess(123))
+    (_, cpu_seconds, _, _) = _get_processtree_data(MockedProcess(123))
     assert cpu_seconds == 123 / 10.0 + 124 / 10.0
 
 
@@ -275,7 +275,7 @@ def test_oom_score_is_max_over_processtree():
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
-        (_, _, oom_score) = _get_processtree_data(MockedProcess(123))
+        (_, _, oom_score, _) = _get_processtree_data(MockedProcess(123))
 
     assert oom_score == 456
 

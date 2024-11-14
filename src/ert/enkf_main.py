@@ -260,6 +260,11 @@ def create_run_path(
                 itr=ensemble.iteration,
                 context_env=context_env,
             )
+
+            if "NO_MEMORY_REPORTING" in os.environ:
+                for job in forward_model_output["jobList"]:
+                    job["report_memory"] = False
+
             with open(run_path / "jobs.json", mode="wb") as fptr:
                 fptr.write(
                     orjson.dumps(forward_model_output, option=orjson.OPT_NON_STR_KEYS)

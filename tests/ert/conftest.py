@@ -54,6 +54,11 @@ def log_check():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def _no_memory_reporting():
+    os.environ["NO_MEMORY_REPORTING"] = "1"
+
+
+@pytest.fixture(scope="session", autouse=True)
 def _reraise_thread_exceptions_on_main_thread():
     """Allow `_ert.threading.ErtThread` to re-raise exceptions on main thread"""
     set_signal_handler()

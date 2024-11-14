@@ -11,7 +11,17 @@ import time
 from datetime import datetime as dt
 from pathlib import Path
 from subprocess import Popen, run
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple, cast
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    cast,
+)
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -29,7 +39,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def killed_by_oom(pids: Sequence[int]) -> bool:
+def killed_by_oom(pids: Set[int]) -> bool:
     """Will try to detect if a process (or any of its descendants) was killed
     by the Linux OOM-killer.
 
@@ -87,6 +97,7 @@ class ForwardModelStep:
         self.index = index
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
+        self.report_memory = job_data.get("report_memory", True)
 
     def run(self) -> Generator[Start | Exited | Running | None]:
         try:
@@ -187,19 +198,21 @@ class ForwardModelStep:
         max_memory_usage = 0
         fm_step_pids = {int(process.pid)}
         while exit_code is None:
-            (memory_rss, cpu_seconds, oom_score) = _get_processtree_data(process)
-            max_memory_usage = max(memory_rss, max_memory_usage)
-            yield Running(
-                self,
-                ProcessTreeStatus(
-                    rss=memory_rss,
-                    max_rss=max_memory_usage,
-                    fm_step_id=self.index,
-                    fm_step_name=self.job_data.get("name"),
-                    cpu_seconds=cpu_seconds,
-                    oom_score=oom_score,
-                ),
-            )
+            if self.report_memory is True:
+                (mem_rss, cpu_seconds, oom_score, pids) = _get_processtree_data(process)
+                fm_step_pids |= pids
+                max_memory_usage = max(mem_rss, max_memory_usage)
+                yield Running(
+                    self,
+                    ProcessTreeStatus(
+                        rss=mem_rss,
+                        max_rss=max_memory_usage,
+                        fm_step_id=self.index,
+                        fm_step_name=self.job_data.get("name"),
+                        cpu_seconds=cpu_seconds,
+                        oom_score=oom_score,
+                    ),
+                )
 
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
@@ -209,11 +222,7 @@ class ForwardModelStep:
                 )
                 if isinstance(potential_exited_msg, Exited):
                     yield potential_exited_msg
-
                     return
-                fm_step_pids |= {
-                    int(child.pid) for child in process.children(recursive=True)
-                }
 
         ensure_file_handles_closed([stdin, stdout, stderr])
         exited_message = self._create_exited_message_based_on_exit_code(
@@ -226,7 +235,7 @@ class ForwardModelStep:
         max_memory_usage: int,
         target_file_mtime: Optional[int],
         exit_code: int,
-        fm_step_pids: Sequence[int],
+        fm_step_pids: Set[int],
     ) -> Exited:
         if exit_code != 0:
             exited_message = self._create_exited_msg_for_non_zero_exit_code(
@@ -253,7 +262,7 @@ class ForwardModelStep:
         self,
         max_memory_usage: int,
         exit_code: int,
-        fm_step_pids: Sequence[int],
+        fm_step_pids: Set[int],
     ) -> Exited:
         # All child pids for the forward model step. Need to track these in order to be able
         # to detect OOM kills in case of failure.
@@ -428,7 +437,7 @@ def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) 
 
 def _get_processtree_data(
     process: Process,
-) -> Tuple[int, float, Optional[int]]:
+) -> Tuple[int, float, Optional[int], Set[int]]:
     """Obtain the oom_score (the Linux kernel uses this number to
     decide which process to kill first in out-of-memory siturations).
 
@@ -448,6 +457,7 @@ def _get_processtree_data(
     # A value of None means that we have no information.
     memory_rss = 0
     cpu_seconds = 0.0
+    pids = set()
     with contextlib.suppress(ValueError, FileNotFoundError):
         oom_score = int(
             Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
@@ -478,9 +488,10 @@ def _get_processtree_data(
                     if oom_score is not None
                     else oom_score_child
                 )
+                pids.add(int(child.pid))
             with contextlib.suppress(
                 NoSuchProcess, AccessDenied, ZombieProcess
             ), child.oneshot():
                 memory_rss += child.memory_info().rss
                 cpu_seconds += child.cpu_times().user
-    return (memory_rss, cpu_seconds, oom_score)
+    return (memory_rss, cpu_seconds, oom_score, pids)
