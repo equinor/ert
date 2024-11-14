@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731587033297,
+  "lastUpdate": 1731588136091,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "1b29b3a37efd53b56fe86ed181069306a4b3b5b3",
-          "message": "Enable load results manually from any available iteration\n\n* Allow non-zero iteration number when creating experiment-ensemble pair using CreateExperimentDialog\r\n\r\n* Enable load results manually from any available iteration",
-          "timestamp": "2024-11-11T11:23:05+02:00",
-          "tree_id": "8e02d3e23a4fe3fb59917ec29893d77460f9379f",
-          "url": "https://github.com/equinor/ert/commit/1b29b3a37efd53b56fe86ed181069306a4b3b5b3"
-        },
-        "date": 1731317093034,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19611852843634342,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024245559668833395",
-            "extra": "mean: 5.098957288600002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027146648481339533",
             "extra": "mean: 5.134306538600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "9819a5b03255355abd69d16667bd95ae69e0afbc",
+          "message": "Fix flaky rightclick plot-button test",
+          "timestamp": "2024-11-14T13:40:12+01:00",
+          "tree_id": "77d974138c33d242d929ff7cd5a11ae2e83b941e",
+          "url": "https://github.com/equinor/ert/commit/9819a5b03255355abd69d16667bd95ae69e0afbc"
+        },
+        "date": 1731588134861,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19231872867327135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02460795550748442",
+            "extra": "mean: 5.199701593800006 sec\nrounds: 5"
           }
         ]
       }
