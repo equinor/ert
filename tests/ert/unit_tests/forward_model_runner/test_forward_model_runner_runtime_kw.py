@@ -5,7 +5,7 @@ from _ert.forward_model_runner.runner import ForwardModelRunner
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_one_fm_step_with_an_integer_arg_is_actually_a_fractional():
+async def test_run_one_fm_step_with_an_integer_arg_is_actually_a_fractional():
     fm_step_1 = {
         "name": "FM_STEP_1",
         "executable": "echo",
@@ -20,7 +20,7 @@ def test_run_one_fm_step_with_an_integer_arg_is_actually_a_fractional():
     data = {"jobList": [fm_step_1]}
 
     runner = ForwardModelRunner(data)
-    statuses = list(runner.run([]))
+    statuses = [status async for status in runner.run([])]
     starts = [e for e in statuses if isinstance(e, Start)]
 
     assert len(starts) == 1, "There should be 1 start message"
@@ -28,8 +28,8 @@ def test_run_one_fm_step_with_an_integer_arg_is_actually_a_fractional():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_given_one_fm_step_with_missing_file_and_one_file_present():
-    with open("a_file", "w", encoding="utf-8") as f:
+async def test_run_given_one_fm_step_with_missing_file_and_one_file_present():
+    with open("a_file", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write("Hello")
 
     executable = "echo"
@@ -62,7 +62,7 @@ def test_run_given_one_fm_step_with_missing_file_and_one_file_present():
 
     runner = ForwardModelRunner(data)
 
-    statuses = list(runner.run([]))
+    statuses = [status async for status in runner.run([])]
 
     starts = [e for e in statuses if isinstance(e, Start)]
     assert len(starts) == 2, "There should be 2 start messages"

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -491,7 +492,7 @@ def assertContextStatusOddFailures(batch_ctx: BatchContext, final_state_only=Fal
 
 
 @pytest.mark.integration_test
-def test_batch_ctx_status_failing_jobs(setup_case, storage):
+async def test_batch_ctx_status_failing_jobs(setup_case, storage):
     ert_config = setup_case("batch_sim", "batch_sim_sleep_and_fail.ert")
 
     external_parameters = {
@@ -515,6 +516,6 @@ def test_batch_ctx_status_failing_jobs(setup_case, storage):
     batch_ctx = rsim.start("case_name", ensembles)
     while batch_ctx.running():
         assertContextStatusOddFailures(batch_ctx)
-        time.sleep(1)
+        await asyncio.sleep(1)
 
     assertContextStatusOddFailures(batch_ctx, final_state_only=True)

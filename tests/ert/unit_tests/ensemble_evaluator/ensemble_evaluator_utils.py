@@ -76,14 +76,14 @@ class TestEnsemble(Ensemble):
         )
         async with Client(config.url + "/dispatch") as dispatch:
             event = EnsembleStarted(ensemble=self.id_)
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
 
             event_id += 1
             for real in range(0, self.test_reals):
                 real = str(real)
 
                 event = RealizationUnknown(ensemble=self.id_, real=real)
-                await dispatch._send(event_to_json(event))
+                await dispatch.send(event_to_json(event))
 
                 event_id += 1
                 for fm_step in range(0, self.fm_steps):
@@ -95,7 +95,7 @@ class TestEnsemble(Ensemble):
                         fm_step=fm_step,
                         current_memory_usage=1000,
                     )
-                    await dispatch._send(event_to_json(event))
+                    await dispatch.send(event_to_json(event))
                     event_id += 1
 
                     event = ForwardModelStepSuccess(
@@ -104,16 +104,16 @@ class TestEnsemble(Ensemble):
                         fm_step=fm_step,
                         current_memory_usage=1000,
                     )
-                    await dispatch._send(event_to_json(event))
+                    await dispatch.send(event_to_json(event))
                     event_id += 1
                     event_id += 1
 
                 event = RealizationSuccess(ensemble=self.id_, real=real)
-                await dispatch._send(event_to_json(event))
+                await dispatch.send(event_to_json(event))
                 event_id += 1
 
             event = EnsembleSucceeded(ensemble=self.id_)
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
 
     @property
     def cancellable(self) -> bool:
