@@ -952,37 +952,41 @@ def test_that_non_existing_workflow_jobs_cause_error():
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.parametrize(
-    ["objective", "warning_msg"],
+    ["objective", "forward_model", "warning_msg"],
     [
         (
             ["npv", "rf"],
+            ["rf -s TEST -o rf"],
             "Warning: Forward model might not write the required output file for \\['npv'\\]",
         ),
         (
             ["npv", "npv2"],
+            ["rf -s TEST -o rf"],
             "Warning: Forward model might not write the required output files for \\['npv', 'npv2'\\]",
         ),
-        (["rf"], None),
+        (
+            ["rf"],
+            ["rf -s TEST -o rf"],
+            None,
+        ),
+        (
+            ["rf"],
+            None,
+            None,
+        ),
     ],
 )
-def test_warning_forward_model_write_objectives(objective, warning_msg):
-    fm_steps = [
-        "well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json",
-        "add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json",
-        "schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch",
-        "eclipse100 TEST.DATA --version 2020.2",
-        "rf -s TEST -o rf",
-    ]
+def test_warning_forward_model_write_objectives(objective, forward_model, warning_msg):
     if warning_msg is not None:
         with pytest.warns(ConfigWarning, match=warning_msg):
             EverestConfig.with_defaults(
                 objective_functions=[{"name": o} for o in objective],
-                forward_model=fm_steps,
+                forward_model=forward_model,
             )
     else:
         with warnings.catch_warnings():
             warnings.simplefilter("error", category=ConfigWarning)
             EverestConfig.with_defaults(
                 objective_functions=[{"name": o} for o in objective],
-                forward_model=fm_steps,
+                forward_model=forward_model,
             )
