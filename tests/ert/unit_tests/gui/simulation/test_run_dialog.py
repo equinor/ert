@@ -558,12 +558,15 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ), patch.object(
-        ert.run_models.SingleTestRun,
-        "run_experiment",
-        MagicMock(side_effect=ValueError("I failed :(")),
+    with (
+        StorageService.init_service(
+            project=os.path.abspath(ert_config.ens_path),
+        ),
+        patch.object(
+            ert.run_models.SingleTestRun,
+            "run_experiment",
+            MagicMock(side_effect=ValueError("I failed :(")),
+        ),
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
@@ -641,9 +644,12 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 
-    with StorageService.init_service(
-        project=os.path.abspath(snake_oil_case.ens_path),
-    ), open_storage(snake_oil_case.ens_path, mode="w") as storage:
+    with (
+        StorageService.init_service(
+            project=os.path.abspath(snake_oil_case.ens_path),
+        ),
+        open_storage(snake_oil_case.ens_path, mode="w") as storage,
+    ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
         experiment_panel = gui.findChild(ExperimentPanel)
 

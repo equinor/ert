@@ -35,7 +35,9 @@ class GenDataConfig(ResponseConfig):
     @property
     def expected_input_files(self) -> List[str]:
         expected_files = []
-        for input_file, report_steps in zip(self.input_files, self.report_steps_list):
+        for input_file, report_steps in zip(
+            self.input_files, self.report_steps_list, strict=False
+        ):
             if report_steps is None:
                 expected_files.append(input_file)
             else:
@@ -145,7 +147,7 @@ class GenDataConfig(ResponseConfig):
         datasets_per_name = []
 
         for name, input_file, report_steps in zip(
-            self.keys, self.input_files, self.report_steps_list
+            self.keys, self.input_files, self.report_steps_list, strict=False
         ):
             datasets_per_report_step = []
             if report_steps is None:

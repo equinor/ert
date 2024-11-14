@@ -4,7 +4,7 @@ from resdata.summary import Summary
 
 def writeDiff(filename, vector1, vector2):
     with open(filename, "w", encoding="utf-8") as f:
-        for node1, node2 in zip(vector1, vector2):
+        for node1, node2 in zip(vector1, vector2, strict=False):
             f.write(f"{node1-node2:f}\n")
 
 

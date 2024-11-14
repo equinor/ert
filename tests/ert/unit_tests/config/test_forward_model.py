@@ -124,9 +124,10 @@ def test_portable_exe_error_message():
         mode = os.stat(name).st_mode
         mode |= stat.S_IXUSR | stat.S_IXGRP
         os.chmod(name, stat.S_IMODE(mode))
-    with pytest.raises(
-        ConfigValidationError, match="EXECUTABLE must be set"
-    ), pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'):
+    with (
+        pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"),
+        pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'),
+    ):
         _ = _forward_model_step_from_config_file("CONFIG")
 
 
@@ -1023,9 +1024,10 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             raise ForwardModelStepValidationError("I should not be a warning")
 
-    with pytest.raises(
-        ConfigValidationError, match="I should not be a warning"
-    ), pytest.warns(ConfigWarning, match="I should be a warning"):
+    with (
+        pytest.raises(ConfigValidationError, match="I should not be a warning"),
+        pytest.warns(ConfigWarning, match="I should be a warning"),
+    ):
         _ = ErtConfig.with_plugins(
             forward_model_step_classes=[
                 FMWithFMStepValidationError,

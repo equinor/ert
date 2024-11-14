@@ -154,8 +154,9 @@ def test_invalid_realization_memory(invalid_memory_spec: str):
 
 
 def test_conflicting_realization_slurm_memory():
-    with pytest.raises(ConfigValidationError), pytest.warns(
-        ConfigWarning, match="deprecated"
+    with (
+        pytest.raises(ConfigValidationError),
+        pytest.warns(ConfigWarning, match="deprecated"),
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
@@ -176,8 +177,9 @@ def test_conflicting_realization_slurm_memory_per_cpu():
 
 
 def test_conflicting_realization_openpbs_memory_per_job():
-    with pytest.raises(ConfigValidationError), pytest.warns(
-        ConfigWarning, match="deprecated"
+    with (
+        pytest.raises(ConfigValidationError),
+        pytest.warns(ConfigWarning, match="deprecated"),
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
@@ -201,8 +203,9 @@ def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only
 def test_that_invalid_memory_pr_job_raises_validation_error(
     torque_memory_with_unit_str,
 ):
-    with pytest.raises(ConfigValidationError), pytest.warns(
-        ConfigWarning, match="deprecated"
+    with (
+        pytest.raises(ConfigValidationError),
+        pytest.warns(ConfigWarning, match="deprecated"),
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
@@ -324,8 +327,9 @@ def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
     ["5", "5g"],
 )
 def test_that_torque_queue_mem_options_are_corrected(mem_per_job: str):
-    with pytest.raises(ConfigValidationError) as e, pytest.warns(
-        ConfigWarning, match="deprecated"
+    with (
+        pytest.raises(ConfigValidationError) as e,
+        pytest.warns(ConfigWarning, match="deprecated"),
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"

@@ -30,8 +30,9 @@ def test_everest_entry_docs():
     other tests. Here we just check that the entry point triggers the
     correct execution paths in the applcation
     """
-    with capture_streams() as (out, err), pytest.raises(
-        SystemExit
+    with (
+        capture_streams() as (out, err),
+        pytest.raises(SystemExit),
     ):  # there is a call to sys.exit
         start_everest(["everest", "--docs"])
     lines = [line.strip() for line in out.getvalue().split("\n")]

@@ -133,6 +133,7 @@ class Simulator(BatchSimulator):
                 for control_name, control_value in zip(
                     metadata.config.variables.names,  # type: ignore
                     control_values[sim_idx, :],
+                    strict=False,
                 ):
                     self._add_control(controls, control_name, control_value)
                 case_data.append((real_id, controls))

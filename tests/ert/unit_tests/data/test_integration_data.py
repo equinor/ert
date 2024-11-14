@@ -116,7 +116,7 @@ def create_summary_observation():
     rng = np.random.default_rng()
     values = rng.uniform(0, 1.5, 200)
     errors = values * 0.1
-    for restart, (value, error) in enumerate(zip(values, errors)):
+    for restart, (value, error) in enumerate(zip(values, errors, strict=False)):
         observations += f"""
     \nSUMMARY_OBSERVATION FOPR_{restart + 1}
 {{

@@ -96,6 +96,7 @@ def test_math_func_multiobj(
     for a, b in zip(
         dt["obj_fn"],  # pylint: disable=unsubscriptable-object
         ok_evals["sim_avg_obj"],
+        strict=False,
     ):
         # Opposite, because ropt negates values before passing to dakota
         assert -a == pytest.approx(b)

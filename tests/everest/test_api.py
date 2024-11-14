@@ -108,7 +108,7 @@ def _make_mock(mock_SebaSnapshot):
             gradient_info=grad_val,
         )
         for bid, mf, obj_val, grad_val in zip(
-            _batch_ids, _merit_flags, _obj_values, _gradient_info
+            _batch_ids, _merit_flags, _obj_values, _gradient_info, strict=False
         )
     ]
     simulation_data = [
@@ -133,6 +133,7 @@ def _make_mock(mock_SebaSnapshot):
             8 * [_batch_ids[0]] + 8 * [_batch_ids[1]],
             _control_values,
             _function_values,
+            strict=False,
         )
     ]
 
@@ -217,7 +218,9 @@ def test_batches(api_no_gradient, api):
 
 
 def test_accepted_batches(api_no_gradient, api):
-    expected_result = [bid for bid, mf in zip(_batch_ids, _merit_flags) if mf]
+    expected_result = [
+        bid for bid, mf in zip(_batch_ids, _merit_flags, strict=False) if mf
+    ]
     assert api_no_gradient.accepted_batches == expected_result
     assert api.accepted_batches == expected_result
 
@@ -255,7 +258,9 @@ def test_realizations(api_no_gradient, api):
 
 
 def test_simulations(api_no_gradient, api):
-    expected_result = [s for s, g in zip(_simulations, _is_gradient) if not g]
+    expected_result = [
+        s for s, g in zip(_simulations, _is_gradient, strict=False) if not g
+    ]
     assert api_no_gradient.simulations == expected_result
     assert api.simulations == _simulations
 
@@ -270,14 +275,18 @@ def test_control_values(api_no_gradient, api):
     control_names = api_no_gradient.control_names
     expected_result = [
         {"batch": bid, "control": name, "value": con[name]}
-        for bid, con in zip(8 * [_batch_ids[0]] + 8 * [_batch_ids[1]], _control_values)
+        for bid, con in zip(
+            8 * [_batch_ids[0]] + 8 * [_batch_ids[1]], _control_values, strict=False
+        )
         for name in control_names
     ]
-    for res, er in zip(api.control_values, expected_result):
+    for res, er in zip(api.control_values, expected_result, strict=False):
         assert res == er
     is_gradient = [ig for ig in _is_gradient for name in control_names]
-    expected_result = [tv for tv, ig in zip(expected_result, is_gradient) if not ig]
-    for res, er in zip(api_no_gradient.control_values, expected_result):
+    expected_result = [
+        tv for tv, ig in zip(expected_result, is_gradient, strict=False) if not ig
+    ]
+    for res, er in zip(api_no_gradient.control_values, expected_result, strict=False):
         assert res == er
 
 
@@ -298,14 +307,17 @@ def test_objective_values(api_no_gradient, api):
             2 * _simulations,
             8 * [_batch_ids[0]] + 8 * [_batch_ids[1]],
             _function_values,
+            strict=False,
         )
         for name in function_names
     ]
-    for res, er in zip(api.objective_values, expected_result):
+    for res, er in zip(api.objective_values, expected_result, strict=False):
         assert res == er
     is_gradient = [ig for ig in _is_gradient for name in function_names]
-    expected_result = [tv for tv, ig in zip(expected_result, is_gradient) if not ig]
-    for res, er in zip(api_no_gradient.objective_values, expected_result):
+    expected_result = [
+        tv for tv, ig in zip(expected_result, is_gradient, strict=False) if not ig
+    ]
+    for res, er in zip(api_no_gradient.objective_values, expected_result, strict=False):
         assert res == er
 
 
@@ -317,6 +329,7 @@ def test_single_objective_values(api_no_gradient):
             _is_gradient,
             8 * [_batch_ids[0]] + 8 * [_batch_ids[1]],
             _function_values,
+            strict=False,
         )
         if not ig
     ]
@@ -332,7 +345,7 @@ def test_single_objective_values(api_no_gradient):
 
     expected_result = [
         {"accepted": m, "batch": b, "objective": v, **expected_objectives[b]}
-        for b, v, m in zip(_batch_ids, _obj_values, _merit_flags)
+        for b, v, m in zip(_batch_ids, _obj_values, _merit_flags, strict=False)
     ]
 
     result = api_no_gradient.single_objective_values
@@ -342,7 +355,7 @@ def test_single_objective_values(api_no_gradient):
 def test_gradient_values(api_no_gradient):
     expected_result = [
         {"batch": bid, "function": func, "control": ctrl, "value": val}
-        for bid, grad_info in zip(_batch_ids, _gradient_info)
+        for bid, grad_info in zip(_batch_ids, _gradient_info, strict=False)
         for func, info in grad_info.items()
         for ctrl, val in info.items()
     ]
@@ -443,7 +456,9 @@ def test_get_summary_keys(_, api_no_gradient):
     assert summary_values.shape[0] == len(_realizations) * len(_batch_ids) * len(_dates)
     assert set(summary_values["batch"]) == set(_batch_ids)
     assert set(summary_values["realization"]) == set(_realizations)
-    non_gradient_simulations = [s for s, g in zip(_simulations, _is_gradient) if not g]
+    non_gradient_simulations = [
+        s for s, g in zip(_simulations, _is_gradient, strict=False) if not g
+    ]
     assert set(summary_values["simulation"]) == set(non_gradient_simulations)
     assert set(summary_values["date"]) == set(_dates)
     # Check key values.
@@ -492,7 +507,9 @@ def test_get_summary_keys_single_batch(_, api_no_gradient):
     assert summary_values.shape[0] == len(_realizations) * len(_dates)
     assert summary_values["batch"].iloc[0] == 2
     assert set(summary_values["realization"]) == set(_realizations)
-    non_gradient_simulations = [s for s, g in zip(_simulations, _is_gradient) if not g]
+    non_gradient_simulations = [
+        s for s, g in zip(_simulations, _is_gradient, strict=False) if not g
+    ]
     assert set(summary_values["simulation"]) == set(non_gradient_simulations)
     assert set(summary_values["date"]) == set(_dates)
 
@@ -517,7 +534,9 @@ def test_get_summary_keys_single_key(_, api_no_gradient):
     assert summary_values.shape[0] == len(_realizations) * len(_batch_ids) * len(_dates)
     assert set(summary_values["batch"]) == set(_batch_ids)
     assert set(summary_values["realization"]) == set(_realizations)
-    non_gradient_simulations = [s for s, g in zip(_simulations, _is_gradient) if not g]
+    non_gradient_simulations = [
+        s for s, g in zip(_simulations, _is_gradient, strict=False) if not g
+    ]
     assert set(summary_values["simulation"]) == set(non_gradient_simulations)
     assert set(summary_values["date"]) == set(_dates)
     # Check key values.

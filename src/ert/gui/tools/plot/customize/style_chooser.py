@@ -199,7 +199,7 @@ class StyleChooser(QWidget):
 
         titles = ["Line style", "Width", "Marker style", "Size"]
         sizes = self.getItemSizes()
-        for title, size in zip(titles, sizes):
+        for title, size in zip(titles, sizes, strict=False):
             label = QLabel(title)
             label.setFixedWidth(size)
             layout.addWidget(label)
