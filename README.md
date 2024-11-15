@@ -80,10 +80,9 @@ code you can run a fast subset of the tests with
 pytest -n logical tests/ert/unit_tests -m "not integration_tests"
 ```
 
-[Git LFS](https://git-lfs.com/) must be installed to get all the files. This is packaged as `git-lfs` on Ubuntu, Fedora or macOS Homebrew. For Equinor RGS node users, it is possible to use `git` from Red Hat Software Collections:
-```sh
-source /opt/rh/rh-git227/enable
-```
+[Git LFS](https://git-lfs.com/) must be installed to get all the files. This is
+packaged as `git-lfs` on Ubuntu, Fedora or macOS Homebrew.  For Equinor TGX
+users, it is preinstalled.
 
 If you have not used git-lfs before, you might have to make changes to your global Git config for git-lfs to work properly.
 ```sh
