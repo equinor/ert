@@ -9,7 +9,6 @@ from tests.everest.utils import (
     create_cached_mocked_test_case,
 )
 
-from ert.config import ErtConfig
 from everest import MetaDataColumnNames as MDCN
 from everest.bin.everload_script import everload_entry
 from everest.config import EverestConfig
@@ -43,10 +42,13 @@ def get_config(cache_dir):
     return config
 
 
-def assertInternalizeCalls(batch_ids, mocked_internalize):
+def assert_internalize_calls(batch_ids, mocked_internalize):
     for i, b_id in enumerate(batch_ids):
-        config, bid, data = mocked_internalize.call_args_list[i].args
-        assert isinstance(config, ErtConfig)
+        ensemble_path, run_path_format, bid, data = mocked_internalize.call_args_list[
+            i
+        ].args
+        assert isinstance(ensemble_path, str)
+        assert isinstance(run_path_format, str)
         assert isinstance(data, pd.DataFrame)
         assert bid == b_id
 
@@ -73,7 +75,7 @@ def test_everload_entry_run(
         export_ecl=False,
     )
     batch_ids = set(df[MDCN.BATCH])
-    assertInternalizeCalls(batch_ids, mocked_internalize)
+    assert_internalize_calls(batch_ids, mocked_internalize)
     assertBackup(config)
 
 
@@ -125,7 +127,7 @@ def test_everload_entry_batches(
 
     everload_entry([CONFIG_FILE, "-s", "-b"] + [str(b) for b in batch_ids])
 
-    assertInternalizeCalls(batch_ids, mocked_internalize)
+    assert_internalize_calls(batch_ids, mocked_internalize)
     assertBackup(config)
 
 
@@ -162,7 +164,7 @@ def test_everload_entry_overwrite(
         export_ecl=False,
     )
     batch_ids = set(df[MDCN.BATCH])
-    assertInternalizeCalls(batch_ids, mocked_internalize)
+    assert_internalize_calls(batch_ids, mocked_internalize)
 
     # Note that, as we are mocking the entire ert related part, the
     # internalization does not take place, so no new storage dir is created
@@ -204,7 +206,7 @@ def test_everload_entry_not_silent(
         export_ecl=False,
     )
     batch_ids = set(df[MDCN.BATCH])
-    assertInternalizeCalls(batch_ids, mocked_internalize)
+    assert_internalize_calls(batch_ids, mocked_internalize)
 
     df = export_data(
         export_config=config.export,
@@ -213,5 +215,5 @@ def test_everload_entry_not_silent(
         export_ecl=False,
     )
     batch_ids = set(df[MDCN.BATCH])
-    assertInternalizeCalls(batch_ids, mocked_internalize)
+    assert_internalize_calls(batch_ids, mocked_internalize)
     assertBackup(config)
