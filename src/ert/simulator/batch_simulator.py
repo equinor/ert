@@ -171,9 +171,6 @@ class BatchSimulator:
 
         for control_name, control in controls.items():
             ext_config = self.parameter_configurations[control_name]
-
-            # fix this
-
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
