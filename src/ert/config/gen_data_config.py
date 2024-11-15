@@ -8,6 +8,7 @@ import numpy as np
 import polars
 from typing_extensions import Self
 
+from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
 from ._option_dict import option_dict
@@ -118,7 +119,7 @@ class GenDataConfig(ResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, _: int) -> polars.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
         def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
             try:
                 data = np.loadtxt(_run_path / filename, ndmin=1)
@@ -152,14 +153,15 @@ class GenDataConfig(ResponseConfig):
             datasets_per_report_step = []
             if report_steps is None:
                 try:
-                    datasets_per_report_step.append(
-                        _read_file(_run_path / input_file, 0)
-                    )
+                    filename = substitute_runpath_name(input_file, iens, iter)
+                    datasets_per_report_step.append(_read_file(_run_path / filename, 0))
                 except (InvalidResponseFile, FileNotFoundError) as err:
                     errors.append(err)
             else:
                 for report_step in report_steps:
-                    filename = input_file % report_step
+                    filename = substitute_runpath_name(
+                        input_file % report_step, iens, iter
+                    )
                     try:
                         datasets_per_report_step.append(
                             _read_file(_run_path / filename, report_step)

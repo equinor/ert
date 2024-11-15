@@ -13,6 +13,7 @@ from pydantic.dataclasses import dataclass
 from typing_extensions import Self
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
+from ert.substitutions import substitute_runpath_name
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -138,11 +139,11 @@ class Field(ParameterConfig):
 
         return np.size(self.mask) - np.count_nonzero(self.mask)
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+    def read_from_runpath(
+        self, run_path: Path, real_nr: int, iteration: int
+    ) -> xr.Dataset:
         t = time.perf_counter()
-        file_name = self.forward_init_file
-        if "%d" in file_name:
-            file_name = file_name % real_nr  # noqa
+        file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
         ds = xr.Dataset(
             {
                 "values": (
@@ -166,7 +167,9 @@ class Field(ParameterConfig):
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
         t = time.perf_counter()
-        file_out = run_path.joinpath(self.output_file)
+        file_out = run_path.joinpath(
+            substitute_runpath_name(str(self.output_file), real_nr, ensemble.iteration)
+        )
         if os.path.islink(file_out):
             os.unlink(file_out)
 

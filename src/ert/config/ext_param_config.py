@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Un
 import numpy as np
 import xarray as xr
 
+from ert.substitutions import substitute_runpath_name
+
 from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
@@ -65,13 +67,17 @@ class ExtParamConfig(ParameterConfig):
                     f"Duplicate keys for key '{self.name}' - keys: {self.input_keys}"
                 )
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
+    def read_from_runpath(
+        self, run_path: Path, real_nr: int, iteration: int
+    ) -> xr.Dataset:
         raise NotImplementedError()
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
-        file_path = run_path / self.output_file
+        file_path = run_path / substitute_runpath_name(
+            self.output_file, real_nr, ensemble.iteration
+        )
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}

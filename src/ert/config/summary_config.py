@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional, Set, Union, no_type_check
 
+from ert.substitutions import substitute_runpath_name
+
 from ._read_summary import read_summary
 from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
@@ -37,8 +39,8 @@ class SummaryConfig(ResponseConfig):
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
-    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:
-        filename = self.input_files[0].replace("<IENS>", str(iens))
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
+        filename = substitute_runpath_name(self.input_files[0], iens, iter)
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
         if len(data) == 0 or len(keys) == 0:
             # https://github.com/equinor/ert/issues/6974

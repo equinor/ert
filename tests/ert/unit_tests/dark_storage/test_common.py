@@ -64,7 +64,7 @@ def test_data_for_key_gives_mean_for_duplicate_values(tmp_path):
         )
         smspec.to_file(tmp_path / "CASE.SMSPEC")
         unsmry.to_file(tmp_path / "CASE.UNSMRY")
-        ds = summary_config.read_from_file(tmp_path, 0)
+        ds = summary_config.read_from_file(tmp_path, 0, 0)
         ensemble.save_response(summary_config.response_type, ds, 0)
         df = data_for_key(ensemble, "NRPPR:WELLNAME")
         assert list(df.columns) == [pd.Timestamp("2014-01-16 05:00:00")]

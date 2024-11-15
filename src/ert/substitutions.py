@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
@@ -29,25 +29,7 @@ class Substitutions(UserDict[str, str]):
         emitted during subsitution.
 
         """
-        substituted_string = to_substitute
-        for _ in range(max_iterations):
-            substituted_tmp_string = _replace_strings(self, substituted_string)
-            if substituted_tmp_string is None:
-                break
-            substituted_string = substituted_tmp_string
-        else:
-            if warn_max_iter:
-                warning_message = (
-                    "Reached max iterations while trying to resolve defines in the "
-                    f"string '{to_substitute}' - after iteratively applying "
-                    "substitutions given by defines, we ended up with the "
-                    f"string '{substituted_string}'"
-                )
-                if context:
-                    warning_message += f" - context was {context}"
-                logger.warning(warning_message)
-
-        return substituted_string
+        return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int
@@ -107,11 +89,45 @@ class Substitutions(UserDict[str, str]):
         return handler(core_schema.str_schema())
 
 
-def _replace_strings(subst_list: Substitutions, string: str) -> Optional[str]:
+def _substitute(
+    substitutions: Mapping[str, str],
+    to_substitute: str,
+    context: str = "",
+    max_iterations: int = 1000,
+    warn_max_iter: bool = True,
+) -> str:
+    """Perform a search-replace on the first argument
+
+    The `context` argument may be used to add information to warnings
+    emitted during subsitution.
+
+    """
+    substituted_string = to_substitute
+    for _ in range(max_iterations):
+        substituted_tmp_string = _replace_strings(substitutions, substituted_string)
+        if substituted_tmp_string is None:
+            break
+        substituted_string = substituted_tmp_string
+    else:
+        if warn_max_iter:
+            warning_message = (
+                "Reached max iterations while trying to resolve defines in the "
+                f"string '{to_substitute}' - after iteratively applying "
+                "substitutions given by defines, we ended up with the "
+                f"string '{substituted_string}'"
+            )
+            if context:
+                warning_message += f" - context was {context}"
+            logger.warning(warning_message)
+
+    return substituted_string
+
+
+def _replace_strings(substitutions: Mapping[str, str], string: str) -> Optional[str]:
     start = 0
     parts = []
     for match in _PATTERN.finditer(string):
-        if (val := subst_list.get(match[0])) and val is not None:
+        if (val := substitutions.get(match[0])) and val is not None:
             parts.append(string[start : match.start()])
             parts.append(val)
             start = match.end()
@@ -119,3 +135,20 @@ def _replace_strings(subst_list: Substitutions, string: str) -> Optional[str]:
         return None
     parts.append(string[start:])
     return "".join(parts)
+
+
+def substitute_runpath_name(
+    to_substitute: str, realization: int, iteration: int
+) -> str:
+    """
+    To separate between substitution list and what can be substituted in runpath,
+    this method is separate from the Substitutions.
+    """
+    substituted = _substitute(
+        {"<IENS>": str(realization), "<ITER>": str(iteration)}, to_substitute
+    )
+
+    if "%d" in substituted:
+        substituted = substituted % realization  # noqa
+
+    return substituted
