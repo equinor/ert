@@ -10,4 +10,4 @@ snake_oil:
 
 # execute rapid unittests
 rapid-tests:
-    pytest -n logical tests/ert/unit_tests -m "not integration_tests"
+    nice pytest -n logical tests/ert/unit_tests -m "not integration_tests"
