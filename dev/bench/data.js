@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731653255372,
+  "lastUpdate": 1731660445121,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "3fec61fe1e32d284424476a47713a662fdf04fec",
-          "message": "Disable modes that do parameter updates if there are no params to update\n\nIf all parameters have UPDATE:FALSE set, then we should not let the user\nselect any mode that does parameter updates.",
-          "timestamp": "2024-11-11T20:44:48+01:00",
-          "tree_id": "1df8258edfecb6486268ac9a7943afa6723a490f",
-          "url": "https://github.com/equinor/ert/commit/3fec61fe1e32d284424476a47713a662fdf04fec"
-        },
-        "date": 1731354399209,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19687312447796668,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02858994384048197",
-            "extra": "mean: 5.079413468200005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08942009358555235",
             "extra": "mean: 5.288051126400001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ffaa27ab2532153f0971dab394bf825c1b56ad54",
+          "message": "Extend save parameters to handle multiple realizations\n\nAdd test that uses the new functionality and also documents\r\nsome troublesome behavior of adaptive localization.",
+          "timestamp": "2024-11-15T09:45:29+01:00",
+          "tree_id": "a487246ff4b0bf535714a7434410a52ae809d1b3",
+          "url": "https://github.com/equinor/ert/commit/ffaa27ab2532153f0971dab394bf825c1b56ad54"
+        },
+        "date": 1731660444481,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19541078065371262,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008124962162825272",
+            "extra": "mean: 5.117424927399986 sec\nrounds: 5"
           }
         ]
       }
