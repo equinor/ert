@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731674679890,
+  "lastUpdate": 1731675053481,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "b5d36717b7bdc15879f02c8a44ae614dea95a7eb",
-          "message": "Add default values using Pandas assign in design_matrix",
-          "timestamp": "2024-11-12T11:12:31+01:00",
-          "tree_id": "5f970c12fb5113a4e6cf6080b1d79de5a2314a8f",
-          "url": "https://github.com/equinor/ert/commit/b5d36717b7bdc15879f02c8a44ae614dea95a7eb"
-        },
-        "date": 1731406463776,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18967021305501305,
-            "unit": "iter/sec",
-            "range": "stddev: 0.054413618347240345",
-            "extra": "mean: 5.272309151200005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02509802690880647",
             "extra": "mean: 5.241971638599995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "58c1b1fcc5b0303a4f8e3d424f75d9a745264632",
+          "message": "Unpin websockets",
+          "timestamp": "2024-11-15T13:49:05+01:00",
+          "tree_id": "1a4cced8ba301b67db19805ff4f42ab257593426",
+          "url": "https://github.com/equinor/ert/commit/58c1b1fcc5b0303a4f8e3d424f75d9a745264632"
+        },
+        "date": 1731675052955,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1944160101319624,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03315314304280298",
+            "extra": "mean: 5.143609311400008 sec\nrounds: 5"
           }
         ]
       }
