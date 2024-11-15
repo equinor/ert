@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731660445121,
+  "lastUpdate": 1731667817981,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "08b672c8498636fdb1da41a5c8380f54ff481ade",
-          "message": "Mitigate flakyness on busy test nodes\n\nA kill window of 1 second is not enough on real-life test nodes.",
-          "timestamp": "2024-11-12T09:15:54+01:00",
-          "tree_id": "e436340dbec313ed44706a92af0f3e3f3a2c264e",
-          "url": "https://github.com/equinor/ert/commit/08b672c8498636fdb1da41a5c8380f54ff481ade"
-        },
-        "date": 1731399468448,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19543837210645734,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04032319220786674",
-            "extra": "mean: 5.11670246340002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008124962162825272",
             "extra": "mean: 5.117424927399986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "76125352e552ab45a2ff9c6c0a6f6c8745b7adf5",
+          "message": "Fetch all tags in readthedocs workflow",
+          "timestamp": "2024-11-15T11:48:13+01:00",
+          "tree_id": "e33af86cc33b24b14b1ec322a10661ec8c7bead1",
+          "url": "https://github.com/equinor/ert/commit/76125352e552ab45a2ff9c6c0a6f6c8745b7adf5"
+        },
+        "date": 1731667816815,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19012768757649334,
+            "unit": "iter/sec",
+            "range": "stddev: 0.041726213055851856",
+            "extra": "mean: 5.2596232182 sec\nrounds: 5"
           }
         ]
       }
