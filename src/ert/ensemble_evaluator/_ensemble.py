@@ -181,6 +181,14 @@ class LegacyEnsemble:
     def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
         snapshot_mutate_event = EnsembleSnapshot()
         for event in events:
+            snapshot_mutate_event = snapshot_mutate_event.update_from_event(
+                event, source_snapshot=self.snapshot
+            )
+        self.snapshot.merge_snapshot(snapshot_mutate_event)
+        if self.snapshot.status is not None and self.status != self.snapshot.status:
+            self.status = self._status_tracker.update_state(self.snapshot.status)
+
+        for event in events:
             if isinstance(event, (ForwardModelStepSuccess, ForwardModelStepFailure)):
                 step = (
                     self.snapshot.reals[event.real]
@@ -188,12 +196,7 @@ class LegacyEnsemble:
                     .get(event.fm_step)
                 )
                 self._log_completed_fm_step(event, step)
-            snapshot_mutate_event = snapshot_mutate_event.update_from_event(
-                event, source_snapshot=self.snapshot
-            )
-        self.snapshot.merge_snapshot(snapshot_mutate_event)
-        if self.snapshot.status is not None and self.status != self.snapshot.status:
-            self.status = self._status_tracker.update_state(self.snapshot.status)
+
         return snapshot_mutate_event
 
     async def send_event(
