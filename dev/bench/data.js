@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731588136091,
+  "lastUpdate": 1731653255372,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "a7559fdcd2bf70dcf59e9c14c9cc97c00d76cf5b",
-          "message": "Freeze websockets at < 14\n\nNew version is incompatible with our current code",
-          "timestamp": "2024-11-11T15:44:22+01:00",
-          "tree_id": "64eb439aa57f476e8f43bf6e568ae30cd0d13790",
-          "url": "https://github.com/equinor/ert/commit/a7559fdcd2bf70dcf59e9c14c9cc97c00d76cf5b"
-        },
-        "date": 1731336371907,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19157688324906472,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03577791452492691",
-            "extra": "mean: 5.219836459599998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02460795550748442",
             "extra": "mean: 5.199701593800006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "e544ddcdc19898ef7aa6a8a198ebd4fdcf99e086",
+          "message": "Fix faulty validation for maintained forward model objectives.",
+          "timestamp": "2024-11-15T15:45:23+09:00",
+          "tree_id": "7d5cff4b0ff8f6749f7ba2f42269159f2831d373",
+          "url": "https://github.com/equinor/ert/commit/e544ddcdc19898ef7aa6a8a198ebd4fdcf99e086"
+        },
+        "date": 1731653254257,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18910558466570274,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08942009358555235",
+            "extra": "mean: 5.288051126400001 sec\nrounds: 5"
           }
         ]
       }
