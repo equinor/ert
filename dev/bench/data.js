@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731667817981,
+  "lastUpdate": 1731674679890,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "44ece921ec48834ffddb256fdc93f9e9561c7020",
-          "message": "Update pre-commit: ruff v0.6.9 -> v0.7.3",
-          "timestamp": "2024-11-12T09:49:30+01:00",
-          "tree_id": "f361723a24ce7be08bf6531727e7ddfd132a0a2c",
-          "url": "https://github.com/equinor/ert/commit/44ece921ec48834ffddb256fdc93f9e9561c7020"
-        },
-        "date": 1731401496656,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1902289437654308,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030989492307420905",
-            "extra": "mean: 5.2568235948000055 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.041726213055851856",
             "extra": "mean: 5.2596232182 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "a1a13cc1eb0aa3b8ac77bdc995f414c5e3428c08",
+          "message": "Simplify test logic",
+          "timestamp": "2024-11-15T21:42:46+09:00",
+          "tree_id": "419e2444034fb044dc4d8dc1dca0706fee4905aa",
+          "url": "https://github.com/equinor/ert/commit/a1a13cc1eb0aa3b8ac77bdc995f414c5e3428c08"
+        },
+        "date": 1731674679407,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19076791500288928,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02509802690880647",
+            "extra": "mean: 5.241971638599995 sec\nrounds: 5"
           }
         ]
       }
