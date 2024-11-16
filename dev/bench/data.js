@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731676919718,
+  "lastUpdate": 1731768999963,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "fecb69209de6b4751f75007404cf0ac04555e464",
-          "message": "Add snapshot test for everest API",
-          "timestamp": "2024-11-12T13:50:20Z",
-          "tree_id": "229c71a030ca1bcc6d6b7299e6b372efc66ecbca",
-          "url": "https://github.com/equinor/ert/commit/fecb69209de6b4751f75007404cf0ac04555e464"
-        },
-        "date": 1731419533395,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19151137827394382,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02492280900488543",
-            "extra": "mean: 5.221621864000002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02442527226961437",
             "extra": "mean: 5.233443950799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "c46b06127ac5a449e221096e0771b50481676a92",
+          "message": "Leave test machine usable when running rapid-tests\n\nRunning with a lower CPU priority helps this",
+          "timestamp": "2024-11-16T15:54:48+01:00",
+          "tree_id": "4c0f8bf80146edf417e9ec9b55732972ca847f6b",
+          "url": "https://github.com/equinor/ert/commit/c46b06127ac5a449e221096e0771b50481676a92"
+        },
+        "date": 1731768999463,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19496214685337976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.020167511008323178",
+            "extra": "mean: 5.129200802000014 sec\nrounds: 5"
           }
         ]
       }
