@@ -18,6 +18,7 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 from everest.util import (
     makedirs_if_needed,
@@ -50,6 +51,12 @@ def everest_entry(args=None):
             signal.SIGINT,
             partial(handle_keyboard_interrupt, options=options),
         )
+
+    # Validate ert config
+    try:
+        _ = everest_to_ert_config(options.config)
+    except ValueError as exc:
+        raise SystemExit(f"Config validation error: {exc}") from exc
 
     if EverestRunModel.create(options.config).check_if_runpath_exists():
         warn_user_that_runpath_is_nonempty()

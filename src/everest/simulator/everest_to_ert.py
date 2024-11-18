@@ -326,7 +326,7 @@ def _is_dir_all_geo(source, ever_config: EverestConfig):
     realizations = ever_config.model.realizations
     if not realizations:
         msg = "Expected realizations when analysing data installation source"
-        raise AssertionError(msg)
+        raise ValueError(msg)
 
     is_dir = []
     for geo_id in realizations:
@@ -336,7 +336,7 @@ def _is_dir_all_geo(source, ever_config: EverestConfig):
                 "Expected source to exist for data installation, "
                 "did not find: {}".format(geo_source)
             )
-            raise AssertionError(msg)
+            raise ValueError(msg)
 
         is_dir.append(os.path.isdir(geo_source))
 
