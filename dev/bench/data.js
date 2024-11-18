@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731913443224,
+  "lastUpdate": 1731924969798,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "22b7f7142ca8232fb9c5f39fbfb99cfc58aca5fa",
-          "message": "Fixup ert plugin documentation\n\n- Specifies package structure assumption\n- Adds pyproject.toml example\n- Fixes syntax error in code example",
-          "timestamp": "2024-11-12T15:51:10+01:00",
-          "tree_id": "cf7a53afb52243068701175efdb21ae6700ff4bc",
-          "url": "https://github.com/equinor/ert/commit/22b7f7142ca8232fb9c5f39fbfb99cfc58aca5fa"
-        },
-        "date": 1731423238294,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1927639173767591,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0368780184250326",
-            "extra": "mean: 5.187692871200005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02051725654738917",
             "extra": "mean: 5.245308537800009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "c4a2062e5a094b52f5c7c1ffbac132d6ecc1c6d3",
+          "message": "Refactor usage of EverestConfig in everest server functionality",
+          "timestamp": "2024-11-18T19:14:16+09:00",
+          "tree_id": "2c8857c1297c0b21eff6c9ab62420b378b1ab698",
+          "url": "https://github.com/equinor/ert/commit/c4a2062e5a094b52f5c7c1ffbac132d6ecc1c6d3"
+        },
+        "date": 1731924969313,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19563452425450104,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04089270139270816",
+            "extra": "mean: 5.111572222799998 sec\nrounds: 5"
           }
         ]
       }
