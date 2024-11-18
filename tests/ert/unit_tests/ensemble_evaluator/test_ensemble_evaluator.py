@@ -155,7 +155,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     async with Monitor(config_info) as monitor:
         # first snapshot before any event occurs
         events = monitor.track()
-        snapshot_event = await events.__anext__()
+        snapshot_event = await anext(events)
         snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
@@ -247,19 +247,22 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
 
     config_info = evaluator._config.get_connection_info()
     async with Monitor(config_info) as monitor:
-        async with Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch1, Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch2:
+        async with (
+            Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch1,
+            Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch2,
+        ):
             # first dispatch endpoint client informs that forward model 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -377,24 +380,27 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
 
         url = evaluator._config.url
         # first snapshot before any event occurs
-        snapshot_event = await events.__anext__()
+        snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
         snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
         assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatch endpoint clients connect
-        async with Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch1, Client(
-            url + "/dispatch",
-            cert=cert,
-            token=token,
-            max_retries=1,
-            timeout_multiplier=1,
-        ) as dispatch2:
+        async with (
+            Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch1,
+            Client(
+                url + "/dispatch",
+                cert=cert,
+                token=token,
+                max_retries=1,
+                timeout_multiplier=1,
+            ) as dispatch2,
+        ):
             # first dispatch endpoint client informs that real 0 fm 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -428,7 +434,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             )
             await dispatch2._send(event_to_json(event))
 
-            event = await events.__anext__()
+            event = await anext(events)
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             assert (
                 snapshot.get_fm_step("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
@@ -442,7 +448,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
         # a second monitor connects
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
-            full_snapshot_event = await events2.__anext__()
+            full_snapshot_event = await anext(events2)
             event = cast(EESnapshot, full_snapshot_event)
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
@@ -460,8 +466,8 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             await monitor.signal_cancel()
 
             # both monitors should get a terminated event
-            terminated = await events.__anext__()
-            terminated2 = await events2.__anext__()
+            terminated = await anext(events)
+            terminated2 = await anext(events2)
             assert type(terminated) is EETerminated
             assert type(terminated2) is EETerminated
 
@@ -486,7 +492,7 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         cert = evaluator._config.cert
         url = evaluator._config.url
 
-        snapshot_event = await events.__anext__()
+        snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
         async with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
             event = EnsembleStarted(ensemble=evaluator.ensemble.id_)

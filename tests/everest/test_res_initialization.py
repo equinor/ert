@@ -3,11 +3,13 @@ import os
 from unittest.mock import patch
 
 import pytest
+from ruamel.yaml import YAML
 
 import everest
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys
+from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
@@ -17,7 +19,6 @@ from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     everest_to_ert_config,
 )
-from everest.util.forward_models import collect_forward_models
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
@@ -383,7 +384,6 @@ def test_queue_configuration(copy_test_data_to_tmp):
     expected_options = [
         ("LSF", "MAX_RUNNING", 3),
         ("LSF", "LSF_QUEUE", "mr"),
-        ("LSF", "LSF_SERVER", "lx-fastserver01"),
         ("LSF", "LSF_RESOURCE", "span = 1 && select[x86 and GNU/Linux]"),
     ]
 
@@ -400,7 +400,7 @@ def test_queue_config():
     assert config.simulator.resubmit_limit == 17
     assert config.simulator.cores == 3
     assert config.simulator.queue_system == "lsf"
-    assert config.simulator.server == "lx-fastserver01"
+    assert config.simulator.server is None
     opts = "span = 1 && select[x86 and GNU/Linux]"
     assert opts == config.simulator.options
 
@@ -415,7 +415,7 @@ def test_install_data_no_init(copy_test_data_to_tmp):
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmd_list = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = list(zip(sources, targets, links, cmd_list))
+    test_base = list(zip(sources, targets, links, cmd_list, strict=False))
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base[1:2]:
         ever_config = EverestConfig.load_file(tutorial_config_path)
@@ -520,7 +520,7 @@ def test_install_data(copy_test_data_to_tmp):
     targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
     links = [True, False, True, False]
     cmds = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = zip(sources, targets, links, cmds)
+    test_base = zip(sources, targets, links, cmds, strict=False)
     tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
     for source, target, link, cmd in test_base:
         ever_config = EverestConfig.load_file(tutorial_config_path)
@@ -560,6 +560,60 @@ def test_install_data(copy_test_data_to_tmp):
         )
 
 
+@pytest.mark.parametrize(
+    "install_data, expected_error_msg",
+    [
+        (
+            {"source": "r{{ foo }}/", "link": True, "target": "bar.json"},
+            "'/' is a mount point and can't be handled",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": "bar.json"},
+            "No such file or directory",
+        ),
+        (
+            {"source": None, "link": True, "target": "bar.json"},
+            "Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]",
+        ),
+        (
+            {"source": "", "link": "false", "target": "bar.json"},
+            " false could not be parsed to a boolean",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": 3},
+            "Input should be a valid string [type=string_type, input_value=3, input_type=int]",
+        ),
+    ],
+)
+def test_install_data_with_invalid_templates(
+    copy_mocked_test_data_to_tmp,
+    install_data,
+    expected_error_msg,
+):
+    """
+    Checks for InstallDataConfig's validations instantiating EverestConfig to also
+    check invalid template rendering (e.g 'r{{ foo }}/) that maps to '/'
+    """
+
+    config_file = "mocked_multi_batch.yml"
+
+    with open(config_file, encoding="utf-8") as f:
+        raw_config = YAML(typ="safe", pure=True).load(f)
+
+    raw_config[CK.INSTALL_DATA] = [install_data]
+
+    with open(config_file, "w", encoding="utf-8") as f:
+        yaml = YAML(typ="safe", pure=True)
+        yaml.indent = 2
+        yaml.default_flow_style = False
+        yaml.dump(raw_config, f)
+
+    with pytest.raises(ValueError) as exc_info:
+        EverestConfig.load_file(config_file)
+
+    assert expected_error_msg in str(exc_info.value)
+
+
 def test_strip_date_job_insertion(copy_test_data_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
@@ -576,19 +630,6 @@ def test_strip_date_job_insertion(copy_test_data_to_tmp):
     # Transform to res dict and verify equality
     ert_config_dict = _everest_to_ert_config_dict(ever_config)
     assert snake_dict == ert_config_dict
-
-
-def test_forward_model_job_insertion(copy_test_data_to_tmp):
-    # Load config file
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-
-    # Transform to res dict
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-    jobs = ert_config_dict[ErtConfigKeys.INSTALL_JOB]
-    for job in collect_forward_models():
-        res_job = (job["name"], job["path"])
-        assert res_job in jobs
 
 
 def test_workflow_job(copy_test_data_to_tmp):

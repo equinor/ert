@@ -6,7 +6,7 @@ from ropt.version import version as ropt_version
 
 from ert.shared.version import version as ert_version
 from everest.plugins.everest_plugin_manager import EverestPluginManager
-from everest.strings import DATE_FORMAT, DEFAULT_LOGGING_FORMAT
+from everest.strings import DATE_FORMAT, DEFAULT_LOGGING_FORMAT, EVEREST
 from everest.util.async_run import async_run  # noqa
 
 try:
@@ -76,11 +76,23 @@ def makedirs_if_needed(path, roll_if_exists=False):
     os.makedirs(path)
 
 
+def warn_user_that_runpath_is_nonempty() -> None:
+    print(
+        "Everest is running in an existing runpath.\n\n"
+        "Please be aware of the following:\n"
+        "- Previously generated results "
+        "might be overwritten.\n"
+        "- Previously generated files might "
+        "be used if not configured correctly.\n"
+    )
+    logging.getLogger(EVEREST).warning("Everest is running in an existing runpath")
+
+
 def _roll_dir(old_name):
     old_name = os.path.realpath(old_name)
     new_name = old_name + datetime.datetime.utcnow().strftime("__%Y-%m-%d_%H.%M.%S.%f")
     os.rename(old_name, new_name)
-    logging.getLogger("everest").info("renamed %s to %s" % (old_name, new_name))
+    logging.getLogger(EVEREST).info("renamed %s to %s" % (old_name, new_name))
 
 
 def load_deck(fname):

@@ -4,15 +4,33 @@ Plugin system
 Introduction
 ------------
 
-Discovery is done by registering your plugin via a setuptools entry point, with the namespace :code:`ert`:
+Assuming the following package structure::
+
+    your_package
+    ├── pyproject.toml        # or setup.py
+    └── src
+        └── your_module
+            ├── __init__.py
+            ├── your_plugins.py
+            └── ...
+
+where the ert plugins are defined in :code:`your_plugins.py`, then discovery is done
+by registering your plugin via a setuptools entry point, with the namespace :code:`ert`:
 
 .. code-block:: python
 
-   setup(
-     ...
-     entry_points={"ert": ["your_module_jobs = your_module.jobs"]},
-     ...
-   )
+    # setup.py
+    setup(
+        ...
+        entry_points={"ert": ["your_module_jobs = your_module.your_plugins"]},
+        ...
+    )
+
+.. code-block:: toml
+
+    # pyproject.toml
+    [project.entry-points.ert]
+    your_module_jobs = "your_module.your_plugins"
 
 This entry point should point to the module where your ert plugin(s) exists.
 (Notice that the entry point expects a list, so you can register multiple
@@ -32,12 +50,15 @@ use the simplified :code:`installable_jobs` function name, or
 
 .. code-block:: python
 
-   import ert
+    from typing import Optional
 
-   @ert.plugin(name="my_plugin")
-   def installable_jobs() -> dict[str, str]:
-       return {
-                "job_name": "/path/to/workflow.config"
+    import ert
+
+
+    @ert.plugin(name="my_plugin")
+    def installable_jobs() -> dict[str, str]:
+        return {
+            "job_name": "/path/to/workflow.config"
         }
 
 
@@ -50,8 +71,8 @@ use the simplified :code:`installable_jobs` function name, or
 
         def validate_pre_realization_run(
             self, fm_step_json: ert.ForwardModelStepJSON
-        ) -> ForwardModelStepJSON:
-            if fm_json["argList"][0] not in ["start", "stop"]:
+        ) -> ert.ForwardModelStepJSON:
+            if fm_step_json["argList"][0] not in ["start", "stop"]:
                 raise ert.ForwardModelStepValidationError(
                     "First argument to MY_FORWARD_MODEL must be either start or stop"
                 )
@@ -70,9 +91,9 @@ use the simplified :code:`installable_jobs` function name, or
             )
 
 
-   @ert.plugin(name="my_plugin")
-   def installable_forward_model_steps() -> list[ert.ForwardModelStepPlugin]:
-       return [MyForwardModel]
+    @ert.plugin(name="my_plugin")
+    def installable_forward_model_steps() -> list[ert.ForwardModelStepPlugin]:
+        return [MyForwardModel]
 
 
 Notice that by using :code:`installable_forward_model_steps`, validation can be added

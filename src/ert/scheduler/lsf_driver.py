@@ -94,7 +94,14 @@ _STATE_ORDER: dict[Type[AnyJob], int] = {
 LSF_INFO_JSON_FILENAME = "lsf_info.json"
 FLAKY_SSH_RETURNCODE = 255
 JOB_ALREADY_FINISHED_BKILL_MSG = "Job has already finished"
-BSUB_FAILURE_MESSAGES = ("Job not submitted",)
+BSUB_FAILURE_MESSAGES = (
+    "Error in rusage section",
+    "Expeced number, string",
+    "No such queue",
+    "Too many processors requested",
+    "cannot be used in the resource requirement section",
+    "duplicate section",
+)
 
 
 def _parse_jobs_dict(jobs: Mapping[str, JobState]) -> dict[str, AnyJob]:

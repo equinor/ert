@@ -8,14 +8,14 @@ from qtpy.QtWidgets import QTextEdit
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
-    from ert.validation import ArgumentDefinition
+    from ert.validation import StringDefinition
 
     from .models import TextModel
 
 
-class MultiLineStringBox(QTextEdit):
-    """MultiLineStringBox shows a multiline string. The data structure expected and sent to the
-    getter and setter is a multiline string."""
+class TextBox(QTextEdit):
+    """TextBox shows a multi line string. The data structure expected and sent to the
+    getter and setter is a multi line string."""
 
     def __init__(
         self,
@@ -23,19 +23,18 @@ class MultiLineStringBox(QTextEdit):
         default_string: str = "",
         placeholder_text: str = "",
         minimum_width: int = 250,
-        readonly: bool = False,
     ):
         QTextEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)
-        self._validator: Optional[ArgumentDefinition] = None
+        self._validator: Optional[StringDefinition] = None
         self._model = model
         self._enable_validation = True
 
         if placeholder_text:
             self.setPlaceholderText(placeholder_text)
-        self.textChanged.connect(self.stringBoxChanged)
 
+        self.textChanged.connect(self.textBoxChanged)
         self.textChanged.connect(self.validateString)
 
         self._valid_color = self.palette().color(self.backgroundRole())
@@ -43,43 +42,40 @@ class MultiLineStringBox(QTextEdit):
 
         self._model.valueChanged.connect(self.modelChanged)
         self.modelChanged()
-        self.setReadOnly(readonly)
 
     def validateString(self) -> None:
-        if not self._enable_validation or self._validator is None:
-            return
+        if self._enable_validation:
+            string_to_validate = self.get_text
+            if self._validator is not None:
+                status = self._validator.validate(string_to_validate)
 
-        string_to_validate = self.toPlainText()
-        if not string_to_validate and self.placeholderText():
-            string_to_validate = self.placeholderText()
-
-        validation_success = self._validator.validate(string_to_validate)
-
-        palette = self.palette()
-        if not validation_success:
-            palette.setColor(QPalette.ColorRole.Base, ValidationSupport.ERROR_COLOR)
-            self.setPalette(palette)
-            self._validation.setValidationMessage(
-                str(validation_success), ValidationSupport.EXCLAMATION
-            )
-        else:
-            palette.setColor(QPalette.ColorRole.Base, self._valid_color)
-            self.setPalette(palette)
-            self._validation.setValidationMessage("")
+                palette = QPalette()
+                if not status:
+                    palette.setColor(
+                        self.backgroundRole(), ValidationSupport.ERROR_COLOR
+                    )
+                    self.setPalette(palette)
+                    self._validation.setValidationMessage(
+                        str(status), ValidationSupport.EXCLAMATION
+                    )
+                else:
+                    palette.setColor(self.backgroundRole(), self._valid_color)
+                    self.setPalette(palette)
+                    self._validation.setValidationMessage("")
 
     def emitChange(self, q_string: Any) -> None:
         self.textChanged.emit(str(q_string))
 
-    def stringBoxChanged(self) -> None:
-        """Called whenever the contents of the textedit changes."""
-        text: Optional[str] = self.get_text
+    def textBoxChanged(self) -> None:
+        """Called whenever the contents of the textbox changes."""
+        text: Optional[str] = self.toPlainText()
         if not text:
             text = None
 
         self._model.setValue(text)
 
     def modelChanged(self) -> None:
-        """Retrieves data from the model and inserts it into the textedit"""
+        """Retrieves data from the model and inserts it into the textbox"""
         text = self._model.getValue()
         if text is None:
             text = ""
@@ -92,7 +88,7 @@ class MultiLineStringBox(QTextEdit):
     def model(self) -> TextModel:
         return self._model
 
-    def setValidator(self, validator: ArgumentDefinition) -> None:
+    def setValidator(self, validator: StringDefinition) -> None:
         self._validator = validator
 
     def getValidationSupport(self) -> ValidationSupport:

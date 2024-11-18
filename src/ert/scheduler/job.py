@@ -240,7 +240,12 @@ class Job:
                     logger.error(f"Disk synchronization failed for {file_path}")
 
     async def _handle_finished_forward_model(self) -> None:
-        callback_status, status_msg = await forward_model_ok(self.real.run_arg)
+        callback_status, status_msg = await forward_model_ok(
+            run_path=self.real.run_arg.runpath,
+            realization=self.real.run_arg.iens,
+            iter=self.real.run_arg.itr,
+            ensemble=self.real.run_arg.ensemble_storage,
+        )
         if self._message:
             self._message = status_msg
         else:

@@ -33,6 +33,7 @@ from ert.shared.status.utils import (
     format_running_time,
     get_ert_memory_usage,
 )
+from ert.trace import get_trace_id
 
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
@@ -152,9 +153,9 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        experiment_type_valid = bool(
-            config.ensemble_config.parameter_configs and config.observations
-        )
+        experiment_type_valid = any(
+            p.update for p in config.ensemble_config.parameter_configs.values()
+        ) and bool(config.observations)
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
@@ -202,7 +203,9 @@ class ExperimentPanel(QWidget):
             sim_item = model.item(item_count)
             assert sim_item is not None
             sim_item.setEnabled(False)
-            sim_item.setToolTip("Both observations and parameters must be defined")
+            sim_item.setToolTip(
+                "Both observations and parameters must be defined.\nThere must be parameters to update."
+            )
             style = self.style()
             assert style is not None
             sim_item.setIcon(
@@ -383,6 +386,7 @@ class ExperimentPanel(QWidget):
                 kv[field.name.replace("_", " ").capitalize()] = str(field_value)
 
         kv["**Status**"] = ""
+        kv["Trace ID"] = get_trace_id()
         kv["Running time"] = (
             format_running_time(self._model.get_runtime()).split(":")[1].strip()
         )

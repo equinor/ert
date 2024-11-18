@@ -57,7 +57,6 @@ class ConfigKeys:
     LSF = "lsf"
     LSF_OPTIONS = "options"  # LSF_RESOURCES
     LSF_QUEUE_NAME = "name"
-    LSF_SERVER = "server"
     SLURM = "slurm"
     SLURM_QUEUE = "name"
     SLURM_SBATCH = "sbatch"

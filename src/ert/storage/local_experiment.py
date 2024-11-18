@@ -334,7 +334,67 @@ class LocalExperiment(BaseMode):
     def response_key_to_response_type(self) -> Dict[str, str]:
         mapping = {}
         for config in self.response_configuration.values():
-            for key in config.keys:
+            for key in config.keys if config.has_finalized_keys else []:
                 mapping[key] = config.response_type
 
         return mapping
+
+    @cached_property
+    def response_type_to_response_keys(self) -> Dict[str, List[str]]:
+        result: Dict[str, List[str]] = {}
+
+        for response_key, response_type in self.response_key_to_response_type.items():
+            if response_type not in result:
+                result[response_type] = []
+
+            result[response_type].append(response_key)
+
+        for keys in result.values():
+            keys.sort()
+
+        return result
+
+    def _has_finalized_response_keys(self, response_type: str) -> bool:
+        responses_configuration = self.response_configuration
+        if response_type not in responses_configuration:
+            raise KeyError(
+                f"Response type {response_type} does not exist in current responses.json"
+            )
+
+        return responses_configuration[response_type].has_finalized_keys
+
+    def _update_response_keys(
+        self, response_type: str, response_keys: List[str]
+    ) -> None:
+        """
+        When a response is saved to storage, it may contain keys
+        that are not explicitly declared in the config. Calling this ensures
+        that the response config saved in this storage has keys corresponding
+        to the actual received responses.
+        """
+        responses_configuration = self.response_configuration
+        if response_type not in responses_configuration:
+            raise KeyError(
+                f"Response type {response_type} does not exist in current responses.json"
+            )
+
+        config = responses_configuration[response_type]
+        config.keys = sorted(response_keys)
+        config.has_finalized_keys = True
+        self._storage._write_transaction(
+            self._path / self._responses_file,
+            json.dumps(
+                {
+                    c.response_type: c.to_dict()
+                    for c in responses_configuration.values()
+                },
+                default=str,
+                indent=2,
+            ).encode("utf-8"),
+        )
+
+        if self.response_key_to_response_type is not None:
+            del self.response_key_to_response_type
+
+        if self.response_type_to_response_keys is not None:
+            del self.response_type_to_response_keys

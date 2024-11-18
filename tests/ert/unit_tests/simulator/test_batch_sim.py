@@ -49,21 +49,17 @@ class PatchedBatchSimulator(BatchSimulator):
         try:
             ens_config = ert_config.ensemble_config
             for control_name, variables in controls.items():
-                ens_config.addNode(
-                    ExtParamConfig(
-                        name=control_name,
-                        input_keys=variables,
-                        output_file=control_name + ".json",
-                    )
+                ens_config.parameter_configs[control_name] = ExtParamConfig(
+                    name=control_name,
+                    input_keys=variables,
+                    output_file=control_name + ".json",
                 )
 
             if "gen_data" not in ens_config:
-                ens_config.addNode(
-                    GenDataConfig(
-                        keys=results,
-                        input_files=[f"{k}" for k in results],
-                        report_steps_list=[None for _ in results],
-                    )
+                ens_config.response_configs["gen_data"] = GenDataConfig(
+                    keys=results,
+                    input_files=[f"{k}" for k in results],
+                    report_steps_list=[None for _ in results],
                 )
             else:
                 existing_gendata = ens_config.response_configs["gen_data"]
@@ -240,7 +236,7 @@ def test_batch_simulation(batch_simulator, storage):
     results = ctx.results()
     assert len(results) == 2
 
-    for result, (_, controls) in zip(results, case_data):
+    for result, (_, controls) in zip(results, case_data, strict=False):
         assert sorted(result.keys()) == sorted(["ORDER", "ON_OFF"])
 
         for res_key, ctrl_key in (
@@ -397,7 +393,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
         assert sorted(result.keys()) == sorted(["ORDER", "ON_OFF"])
 
     keys = ("W1", "W2", "W3")
-    for result, (_, controls) in zip(results, case_data):
+    for result, (_, controls) in zip(results, case_data, strict=False):
         expected = [controls["WELL_ON_OFF"][key] ** 2 for key in keys]
 
         # [:3] slicing can be removed when responses are not stored in netcdf leading
@@ -407,7 +403,7 @@ def test_batch_simulation_suffixes(batch_sim_example, storage):
         expected = [
             v**2 for key in keys for _, v in controls["WELL_ORDER"][key].items()
         ]
-        for exp, act in zip(expected, list(result["ORDER"])):
+        for exp, act in zip(expected, list(result["ORDER"]), strict=False):
             assert act == pytest.approx(exp)
 
 

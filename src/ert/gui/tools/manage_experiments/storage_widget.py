@@ -156,6 +156,7 @@ class StorageWidget(QWidget):
             ).create_ensemble(
                 name=create_experiment_dialog.ensemble_name,
                 ensemble_size=self._ensemble_size,
+                iteration=create_experiment_dialog.iteration,
             )
             self._notifier.set_current_ensemble(ensemble)
             self._notifier.ertChanged.emit()

@@ -1,15 +1,18 @@
 import os
 import pathlib
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import pytest
 from pydantic import ValidationError
 
+from ert.config import ConfigWarning
 from everest.config import EverestConfig, ModelConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
+from tests.everest.utils import skipif_no_everest_models
 
 
 def has_error(error: Union[ValidationError, List[dict]], match: str):
@@ -944,3 +947,46 @@ def test_that_non_existing_workflow_jobs_cause_error():
                 ]
             },
         )
+
+
+@skipif_no_everest_models
+@pytest.mark.everest_models_test
+@pytest.mark.parametrize(
+    ["objective", "forward_model", "warning_msg"],
+    [
+        (
+            ["npv", "rf"],
+            ["rf -s TEST -o rf"],
+            "Warning: Forward model might not write the required output file for \\['npv'\\]",
+        ),
+        (
+            ["npv", "npv2"],
+            ["rf -s TEST -o rf"],
+            "Warning: Forward model might not write the required output files for \\['npv', 'npv2'\\]",
+        ),
+        (
+            ["rf"],
+            ["rf -s TEST -o rf"],
+            None,
+        ),
+        (
+            ["rf"],
+            None,
+            None,
+        ),
+    ],
+)
+def test_warning_forward_model_write_objectives(objective, forward_model, warning_msg):
+    if warning_msg is not None:
+        with pytest.warns(ConfigWarning, match=warning_msg):
+            EverestConfig.with_defaults(
+                objective_functions=[{"name": o} for o in objective],
+                forward_model=forward_model,
+            )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", category=ConfigWarning)
+            EverestConfig.with_defaults(
+                objective_functions=[{"name": o} for o in objective],
+                forward_model=forward_model,
+            )

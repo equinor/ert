@@ -32,11 +32,21 @@ def empty_case(facade, storage):
 
 
 def test_keyword_type_checks(snake_oil_default_storage):
-    assert "BPR:1,3,8" in snake_oil_default_storage.get_summary_keyset()
+    assert (
+        "BPR:1,3,8"
+        in snake_oil_default_storage.experiment.response_type_to_response_keys[
+            "summary"
+        ]
+    )
 
 
 def test_keyword_type_checks_missing_key(snake_oil_default_storage):
-    assert "nokey" not in snake_oil_default_storage.get_summary_keyset()
+    assert (
+        "nokey"
+        not in snake_oil_default_storage.experiment.response_type_to_response_keys[
+            "summary"
+        ]
+    )
 
 
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
@@ -129,7 +139,7 @@ def test_summary_collector(
 def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
     facade = LibresFacade(snake_oil_case_storage)
     data = facade.load_all_misfit_data(snake_oil_default_storage)
-    snapshot.assert_match(data.to_csv(), "misfit_collector.csv")
+    snapshot.assert_match(data.round(8).to_csv(), "misfit_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:

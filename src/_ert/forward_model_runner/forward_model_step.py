@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import signal
+import socket
 import sys
 import time
 from datetime import datetime as dt
@@ -262,7 +263,7 @@ class ForwardModelStep:
         if killed_by_oom(fm_step_pids):
             return exited_message.with_error(
                 f"Forward model step {self.job_data.get('name')} "
-                "was killed due to out-of-memory. "
+                f"was killed due to out-of-memory on {socket.gethostname()}. "
                 "Max memory usage recorded by Ert for the "
                 f"realization was {max_memory_usage//1024//1024} MB. "
                 "Please add REALIZATION_MEMORY to your ert config together "
@@ -452,9 +453,12 @@ def _get_processtree_data(
         oom_score = int(
             Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
         )
-    with contextlib.suppress(
-        ValueError, NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
-    ), process.oneshot():
+    with (
+        contextlib.suppress(
+            ValueError, NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
+        ),
+        process.oneshot(),
+    ):
         memory_rss = process.memory_info().rss
         cpu_seconds = process.cpu_times().user
 
@@ -478,9 +482,10 @@ def _get_processtree_data(
                     if oom_score is not None
                     else oom_score_child
                 )
-            with contextlib.suppress(
-                NoSuchProcess, AccessDenied, ZombieProcess
-            ), child.oneshot():
+            with (
+                contextlib.suppress(NoSuchProcess, AccessDenied, ZombieProcess),
+                child.oneshot(),
+            ):
                 memory_rss += child.memory_info().rss
                 cpu_seconds += child.cpu_times().user
     return (memory_rss, cpu_seconds, oom_score)

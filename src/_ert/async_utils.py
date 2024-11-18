@@ -4,7 +4,9 @@ import asyncio
 import logging
 import traceback
 from contextlib import suppress
-from typing import Any, Coroutine, Generator, TypeVar, Union
+from typing import Any, Coroutine, Generator, Mapping, TypeVar, Union
+
+import uvloop
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 
 
 def new_event_loop() -> asyncio.AbstractEventLoop:
-    loop = asyncio.new_event_loop()
+    loop = uvloop.new_event_loop()
     loop.set_task_factory(_create_task)
     return loop
 
@@ -30,9 +32,10 @@ def get_running_loop() -> asyncio.AbstractEventLoop:
 def _create_task(
     loop: asyncio.AbstractEventLoop,
     coro: Union[Coroutine[Any, Any, _T], Generator[Any, None, _T]],
+    **kwargs: Mapping[str, Any],
 ) -> asyncio.Task[_T]:
     assert asyncio.iscoroutine(coro)
-    task = asyncio.Task(coro, loop=loop)
+    task = asyncio.Task(coro, loop=loop, **kwargs)  # type: ignore
     task.add_done_callback(_done_callback)
     return task
 

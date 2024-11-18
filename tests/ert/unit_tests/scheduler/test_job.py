@@ -119,7 +119,7 @@ async def test_job_run_sends_expected_events(
     realization: Realization,
     monkeypatch,
 ):
-    async def load_result(_):
+    async def load_result(**_):
         return (forward_model_ok_result, "")
 
     monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_result)

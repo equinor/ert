@@ -8,17 +8,16 @@ import shutil
 from functools import partial
 
 from ert import LibresFacade
-from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest import MetaDataColumnNames as MDCN
-from everest import export
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
+from everest.export import export_data
+from everest.strings import SIMULATION_DIR, STORAGE_DIR
 from everest.util import version_info
 
 
-def everload_entry(args=None):
+def everload_entry(args=None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     if options.debug:
@@ -70,7 +69,7 @@ def everload_entry(args=None):
     reload_data(config, backup_path=backup_path)
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Load Eclipse data from an existing simulation folder",
@@ -117,7 +116,7 @@ def _build_args_parser():
     return arg_parser
 
 
-def user_confirms(simulation_path, storage_path=None, backup_path=None):
+def user_confirms(simulation_path, storage_path=None, backup_path=None) -> bool:
     print("\n*************************************************************")
     print("*** This operation can take several minutes or even hours ***")
     print("*************************************************************\n")
@@ -139,7 +138,7 @@ def user_confirms(simulation_path, storage_path=None, backup_path=None):
             return True
 
 
-def reload_data(ever_config: EverestConfig, backup_path=None):
+def reload_data(ever_config: EverestConfig, backup_path=None) -> None:
     """Load data from a completed optimization into ert storage
 
     If @batch_ids are given, only the specified batches are internalized
@@ -155,14 +154,13 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     ever_config.install_data = None
     ever_config.install_templates = None
 
-    # prepare the ErtConfig object
-    ert_config_dict = _everest_to_ert_config_dict(
-        ever_config, site_config=ErtConfig.read_site_config()
-    )
-    ert_config = ErtConfig.with_plugins().from_dict(config_dict=ert_config_dict)
-
     # load information about batches from previous run
-    df = export(ever_config, export_ecl=False)
+    df = export_data(
+        export_config=ever_config.export,
+        output_dir=ever_config.output_dir,
+        data_file=ever_config.model.data_file if ever_config.model else None,
+        export_ecl=False,
+    )
     groups = df.groupby(by=MDCN.BATCH)
 
     # backup or delete the previous internal storage
@@ -171,25 +169,29 @@ def reload_data(ever_config: EverestConfig, backup_path=None):
     else:
         shutil.rmtree(ever_config.storage_dir)
 
+    ensemble_path = os.path.join(ever_config.output_dir, STORAGE_DIR)
+    run_path_format = os.path.join(
+        ever_config.simulation_dir,
+        "<CASE_NAME>",
+        "geo_realization_<GEO_ID>",
+        SIMULATION_DIR,
+    )
+
     # internalize one batch at a time
     for batch_id, group in groups:
-        _internalize_batch(ert_config, batch_id, group)
+        _internalize_batch(ensemble_path, run_path_format, batch_id, group)
 
 
-def _internalize_batch(ert_config, batch_id, batch_data):
-    facade = LibresFacade(ert_config)
+def _internalize_batch(
+    ensemble_path: str, run_path_format: str, batch_id, batch_data
+) -> None:
     case_name = "batch_{}".format(batch_id)
     batch_size = batch_data.shape[0]
-    with open_storage(facade.enspath, "w") as storage:
+    with open_storage(ensemble_path, "w") as storage:
         experiment = storage.get_experiment_by_name(f"experiment_{case_name}")
         ensemble = experiment.get_ensemble_by_name(case_name)
-        # Everest artificially inflates the ensemble size as it is not possible to
-        # add after the fact, therefore a batch is much smaller than the overall
-        # ensemble size
-        realizations = [True] * batch_size + [False] * (
-            facade.get_ensemble_size() - batch_size
-        )
-        facade.load_from_forward_model(ensemble, realizations, 0)
+        active_realizations = list(range(batch_size))
+        LibresFacade.load_from_run_path(run_path_format, ensemble, active_realizations)
 
 
 if __name__ == "__main__":

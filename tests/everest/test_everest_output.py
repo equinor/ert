@@ -8,8 +8,9 @@ import pytest
 from ert.config import ErtConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
+from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
-from everest.detached import generate_everserver_ert_config, start_server
+from everest.detached import ServerStatus, start_server
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
@@ -42,8 +43,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(
 
 
 @pytest.mark.integration_test
-@patch("ert.simulator.BatchSimulator.start", return_value=None)
-def test_everest_output(start_mock, copy_mocked_test_data_to_tmp):
+def test_everest_output(copy_mocked_test_data_to_tmp):
     config_folder = os.getcwd()
     config = EverestConfig.load_file("mocked_test_case.yml")
     everest_output_dir = config.output_dir
@@ -74,13 +74,8 @@ def test_everest_output(start_mock, copy_mocked_test_data_to_tmp):
 
     assert "storage" not in initial_folders
     assert DETACHED_NODE_DIR not in initial_folders
-    ert_config = ErtConfig.with_plugins().from_dict(
-        generate_everserver_ert_config(config)
-    )
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    with open_storage(ert_config.ens_path, "w") as storage:
-        start_server(config, ert_config, storage)
-    start_mock.assert_called_once()
+    start_server(config)
 
     (path, folders, files) = next(os.walk(config_folder))
     # Check we are looking at the config folder
@@ -97,27 +92,27 @@ def test_everest_output(start_mock, copy_mocked_test_data_to_tmp):
     # Check storage folder no longer created in the config folder
     assert "storage" not in final_folders
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    with open_storage(ert_config.ens_path, "w") as storage:
-        start_server(config, ert_config, storage)
-    assert start_mock.call_count == 2
+    start_server(config)
     final_files = os.listdir(config_folder)
 
     # verify two everest_output dirs present
     assert len(fnmatch.filter(final_files, "everest_output*")) == 2
 
 
-@patch("ert.simulator.BatchSimulator.start", return_value=None)
-def test_save_running_config(start_mock, copy_math_func_test_data_to_tmp):
+@patch("everest.bin.everest_script.server_is_running", return_value=False)
+@patch("everest.bin.everest_script.run_detached_monitor")
+@patch("everest.bin.everest_script.wait_for_server")
+@patch("everest.bin.everest_script.start_server")
+@patch(
+    "everest.bin.everest_script.everserver_status",
+    return_value={"status": ServerStatus.never_run, "message": None},
+)
+def test_save_running_config(_, _1, _2, _3, _4, copy_math_func_test_data_to_tmp):
+    """Test everest detached, when an optimization has already run"""
+    # optimization already run, notify the user
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
-    ert_config = ErtConfig.with_plugins().from_dict(
-        generate_everserver_ert_config(config)
-    )
-    makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    with open_storage(ert_config.ens_path, "w") as storage:
-        start_server(config, ert_config, storage)
-    start_mock.assert_called_once()
-
+    everest_entry([file_name])
     saved_config_path = os.path.join(config.output_dir, file_name)
 
     assert os.path.exists(saved_config_path)

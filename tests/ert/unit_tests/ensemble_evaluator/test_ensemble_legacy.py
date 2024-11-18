@@ -46,9 +46,10 @@ async def test_run_legacy_ensemble(
             use_token=False,
             generate_cert=False,
         )
-        async with evaluator_to_use(ensemble, config) as evaluator, Monitor(
-            config
-        ) as monitor:
+        async with (
+            evaluator_to_use(ensemble, config) as evaluator,
+            Monitor(config) as monitor,
+        ):
             async for event in monitor.track():
                 if type(event) in (
                     EESnapshotUpdate,
@@ -84,9 +85,10 @@ async def test_run_and_cancel_legacy_ensemble(
 
         terminated_event = False
 
-        async with evaluator_to_use(ensemble, config) as evaluator, Monitor(
-            config
-        ) as monitor:
+        async with (
+            evaluator_to_use(ensemble, config) as evaluator,
+            Monitor(config) as monitor,
+        ):
             # on lesser hardware the realizations might be killed by max_runtime
             # and the ensemble is set to STOPPED
             monitor._receiver_timeout = 10.0

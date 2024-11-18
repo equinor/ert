@@ -15,7 +15,8 @@ def test_that_we_can_disable_a_parameter():
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
-    with pytest.raises(
-        ConfigValidationError, match="use the UPDATE:FALSE option"
-    ), ErtPluginContext():
+    with (
+        pytest.raises(ConfigValidationError, match="use the UPDATE:FALSE option"),
+        ErtPluginContext(),
+    ):
         ErtConfig.from_file("poly.ert")

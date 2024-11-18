@@ -25,7 +25,7 @@ from .searchbox import SearchBox
 from .ensembleselector import EnsembleSelector
 from .checklist import CheckList
 from .stringbox import StringBox
-from .multilinestringbox import MultiLineStringBox
+from .textbox import TextBox
 from .listeditbox import ListEditBox
 from .customdialog import CustomDialog
 from .pathchooser import PathChooser
@@ -52,13 +52,13 @@ __all__ = [
     "EnsembleSelector",
     "ErtMessageBox",
     "ListEditBox",
-    "MultiLineStringBox",
     "PathChooser",
     "PathModel",
     "SearchBox",
     "SelectableListModel",
     "StringBox",
     "TargetEnsembleModel",
+    "TextBox",
     "TextModel",
     "ValueModel",
     "showWaitCursorWhileWaiting",

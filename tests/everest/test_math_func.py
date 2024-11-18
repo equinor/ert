@@ -9,7 +9,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
-from everest.export import export
+from everest.export import export_data
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
@@ -34,12 +34,6 @@ def test_math_func_multiobj(
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
 
-    # Check the optimum values for each object.
-    optim_p = run_model.result.expected_objectives["distance_p"]
-    optim_q = run_model.result.expected_objectives["distance_q"]
-    assert optim_p == pytest.approx(-0.5, abs=0.05)
-    assert optim_q == pytest.approx(-4.5, abs=0.05)
-
     # The overall optimum is a weighted average of the objectives
     assert run_model.result.total_objective == pytest.approx(
         (-0.5 * (2.0 / 3.0) * 1.5) + (-4.5 * (1.0 / 3.0) * 1.0), abs=0.01
@@ -49,7 +43,11 @@ def test_math_func_multiobj(
     if config.export is None:
         config.export = ExportConfig(discard_rejected=False)
 
-    df = export(config)
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
 
     # Three points in this case are increasing the merit
@@ -69,8 +67,6 @@ def test_math_func_multiobj(
     assert best["point_x"] == pytest.approx(x)
     assert best["point_y"] == pytest.approx(y)
     assert best["point_z"] == pytest.approx(z)
-    assert best["distance_p"] == pytest.approx(optim_p)
-    assert best["distance_q"] == pytest.approx(optim_q)
     assert best["sim_avg_obj"] == pytest.approx(run_model.result.total_objective)
 
     test_space = itertools.product(
@@ -100,6 +96,7 @@ def test_math_func_multiobj(
     for a, b in zip(
         dt["obj_fn"],  # pylint: disable=unsubscriptable-object
         ok_evals["sim_avg_obj"],
+        strict=False,
     ):
         # Opposite, because ropt negates values before passing to dakota
         assert -a == pytest.approx(b)
@@ -136,7 +133,11 @@ def test_math_func_advanced(
     assert expected_opt == pytest.approx(run_model.result.total_objective, abs=0.001)
 
     # Test conversion to pandas DataFrame
-    df = export(config)
+    df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     ok_evals = df[(df["is_gradient"] == 0) & (df["success"] == 1)]
 
     ok_evals_0 = ok_evals[ok_evals["realization"] == 0]
@@ -169,7 +170,11 @@ def test_math_func_advanced(
     batches_list = [0, 2]
     config.export.batches = batches_list
 
-    batch_filtered_df = export(config)
+    batch_filtered_df = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
     n_unique_batches = batch_filtered_df["batch"].nunique()
     unique_batches = np.sort(batch_filtered_df["batch"].unique()).tolist()
 

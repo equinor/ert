@@ -4,13 +4,16 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
+from typing import List
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
 from qtpy.QtCore import Qt, QTimer
+from qtpy.QtGui import QWindow
 from qtpy.QtWidgets import (
     QAction,
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -30,6 +33,7 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.main_window import SidebarToolButton
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
@@ -94,7 +98,9 @@ def test_both_errors_and_warning_can_be_shown_in_suggestor(
         assert isinstance(gui, Suggestor)
         suggestions = gui.findChildren(SuggestorMessage)
         shown_messages = [elem.lbl.text() for elem in suggestions]
-        assert all(e in m for m, e in zip(shown_messages, expected_message_types))
+        assert all(
+            e in m for m, e in zip(shown_messages, expected_message_types, strict=False)
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -138,9 +144,10 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
 def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     qapp, tmp_path
 ):
-    with open("poly.ert", "r", encoding="utf-8") as fin, open(
-        "poly-no-gen-kw.ert", "w", encoding="utf-8"
-    ) as fout:
+    with (
+        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
+    ):
         for line in fin:
             if "GEN_KW" not in line:
                 fout.write(line)
@@ -391,11 +398,18 @@ def test_that_the_manage_experiments_tool_can_be_used(
         dialog._ensemble_edit.setText("_new_ensemble_")
         assert dialog._ok_button.isEnabled()
 
+        dialog._iterations_field.setText("a")
+        assert not dialog._ok_button.isEnabled()
+        dialog._iterations_field.setText("42")
+        assert dialog._ok_button.isEnabled()
+
         qtbot.mouseClick(dialog._ok_button, Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, handle_add_dialog)
     create_widget = get_child(storage_widget, AddWidget)
     qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+
+    assert experiments_panel.notifier.current_ensemble.iteration == 42
 
     # Go to the "initialize from scratch" panel
     experiments_panel.setCurrentIndex(1)
@@ -583,6 +597,60 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
             plot_window, EnsembleSelectListWidget, "ensemble_selector"
         ).get_checked_ensembles()
         assert len(ensemble_plot_names) == 0
+
+
+@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypatch):
+    monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+    ert_config = ErtConfig.from_file(config_file)
+    with StorageService.init_service(
+        project=os.path.abspath(ert_config.ens_path),
+    ):
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        qtbot.addWidget(gui)
+
+        button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
+        assert button_plot_tool
+
+        def top_level_plotter_windows() -> List[QWindow]:
+            top_level_plot_windows = []
+            top_level_windows = QApplication.topLevelWindows()
+            for win in top_level_windows:
+                if "Plotting" in win.title() and win.isVisible():
+                    top_level_plot_windows.append(win)
+            return top_level_plot_windows
+
+        def right_click_plotter_button() -> None:
+            top_level_windows = len(top_level_plotter_windows())
+            qtbot.mouseClick(button_plot_tool, Qt.RightButton)
+            qtbot.wait_until(
+                lambda: len(top_level_plotter_windows()) > top_level_windows,
+                timeout=5000,
+            )
+
+        right_click_plotter_button()
+        right_click_plotter_button()
+        right_click_plotter_button()
+
+        window_list = top_level_plotter_windows()
+        assert len(window_list) == 3
+
+        for window in window_list:
+            window.close()
+
+        qtbot.wait_until(lambda: not top_level_plotter_windows(), timeout=5000)
+
+        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
+        assert plot_window
+        assert "Plotting" in plot_window.windowTitle()
+
+    gui.close()
 
 
 @pytest.mark.usefixtures("copy_poly_case")

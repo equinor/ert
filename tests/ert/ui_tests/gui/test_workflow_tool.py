@@ -53,12 +53,15 @@ def _open_main_window(
 @pytest.fixture
 def open_gui(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with _open_main_window(tmp_path) as (
-        gui,
-        _,
-        config,
-    ), StorageService.init_service(
-        project=os.path.abspath(config.ens_path),
+    with (
+        _open_main_window(tmp_path) as (
+            gui,
+            _,
+            config,
+        ),
+        StorageService.init_service(
+            project=os.path.abspath(config.ens_path),
+        ),
     ):
         yield gui
 

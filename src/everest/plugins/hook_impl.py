@@ -36,11 +36,6 @@ def flow_config_path():
 
 
 @hookimpl
-def get_forward_models():
-    return None
-
-
-@hookimpl
 def lint_forward_model():
     return None
 

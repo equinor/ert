@@ -1,7 +1,7 @@
 import logging
 import os
 from functools import partial
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -9,7 +9,7 @@ from ert.resources import all_shell_script_fm_steps
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     SIM_PROGRESS_ENDPOINT,
     ServerStatus,
@@ -65,10 +65,10 @@ def query_server_mock(cert, auth, endpoint):
         raise Exception("Stop! Hands in the air!")
 
 
-def run_detached_monitor_mock(
-    config, show_all_jobs=False, status=ServerStatus.completed, error=None
-):
-    update_everserver_status(config, status, message=error)
+def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
+    optimization_output = kwargs.get("optimization_output_dir")
+    path = os.path.join(optimization_output, "../detached_node_output/.session/status")
+    update_everserver_status(path, status, message=error)
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
@@ -288,9 +288,8 @@ def test_everest_entry_monitor_no_run(
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.detached._query_server", side_effect=query_server_mock)
 @patch.object(
-    EverestConfig,
-    "server_context",
-    new_callable=PropertyMock,
+    ServerConfig,
+    "get_server_context",
     return_value=("localhost", "", ""),
 )
 @patch("everest.detached.get_opt_status", return_value={})
@@ -323,9 +322,8 @@ def test_everest_entry_show_all_jobs(
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.detached._query_server", side_effect=query_server_mock)
 @patch.object(
-    EverestConfig,
-    "server_context",
-    new_callable=PropertyMock,
+    ServerConfig,
+    "get_server_context",
     return_value=("localhost", "", ""),
 )
 @patch("everest.detached.get_opt_status", return_value={})
@@ -360,9 +358,8 @@ def test_everest_entry_no_show_all_jobs(
 @patch("everest.bin.monitor_script.server_is_running", return_value=True)
 @patch("everest.detached._query_server", side_effect=query_server_mock)
 @patch.object(
-    EverestConfig,
-    "server_context",
-    new_callable=PropertyMock,
+    ServerConfig,
+    "get_server_context",
     return_value=("localhost", "", ""),
 )
 @patch("everest.detached.get_opt_status", return_value={})
@@ -392,9 +389,8 @@ def test_monitor_entry_show_all_jobs(
 @patch("everest.bin.monitor_script.server_is_running", return_value=True)
 @patch("everest.detached._query_server", side_effect=query_server_mock)
 @patch.object(
-    EverestConfig,
-    "server_context",
-    new_callable=PropertyMock,
+    ServerConfig,
+    "get_server_context",
     return_value=("localhost", "", ""),
 )
 @patch("everest.detached.get_opt_status", return_value={})
@@ -474,7 +470,8 @@ def test_complete_status_for_normal_run(
 ):
     everest_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    status = everserver_status(status_path)
     expected_status = ServerStatus.completed
     expected_error = None
 
@@ -492,7 +489,8 @@ def test_complete_status_for_normal_run_monitor(
 ):
     monitor_entry([CONFIG_FILE_MINIMAL])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
-    status = everserver_status(config)
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    status = everserver_status(status_path)
     expected_status = ServerStatus.completed
     expected_error = None
 

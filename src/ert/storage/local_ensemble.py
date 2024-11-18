@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 import polars
-from polars.exceptions import ColumnNotFoundError
 
 
 class _Index(BaseModel):
@@ -311,10 +310,21 @@ class LocalEnsemble(BaseMode):
         if key:
             return _has_response(key)
 
-        return all(
-            _has_response(response)
-            for response in self.experiment.response_configuration
+        is_expecting_any_responses = any(
+            bool(config.keys)
+            for config in self.experiment.response_configuration.values()
         )
+
+        if not is_expecting_any_responses:
+            return True
+
+        non_empty_response_configs = [
+            response
+            for response, config in self.experiment.response_configuration.items()
+            if bool(config.keys)
+        ]
+
+        return all(_has_response(response) for response in non_empty_response_configs)
 
     def is_initalized(self) -> List[int]:
         """
@@ -502,27 +512,6 @@ class LocalEnsemble(BaseMode):
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
-    def get_summary_keyset(self) -> List[str]:
-        """
-        Find the first folder with summary data then load the
-        summary keys from this.
-
-        Returns
-        -------
-        keys : list of str
-            List of summary keys.
-        """
-
-        try:
-            summary_data = self.load_responses(
-                "summary",
-                tuple(self.get_realization_list_with_responses("summary")),
-            )
-
-            return sorted(summary_data["response_key"].unique().to_list())
-        except (ValueError, KeyError, ColumnNotFoundError):
-            return []
-
     def _load_single_dataset(
         self,
         group: str,
@@ -696,8 +685,6 @@ class LocalEnsemble(BaseMode):
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = self.get_summary_keyset()
-
         try:
             df_pl = self.load_responses("summary", tuple(realizations))
 
@@ -715,6 +702,7 @@ class LocalEnsemble(BaseMode):
         )
 
         if keys:
+            summary_keys = self.experiment.response_type_to_response_keys["summary"]
             summary_keys = sorted(
                 [key for key in keys if key in summary_keys]
             )  # ignore keys that doesn't exist
@@ -788,51 +776,54 @@ class LocalEnsemble(BaseMode):
     def save_parameters(
         self,
         group: str,
-        realization: int,
+        realization: Union[int, npt.NDArray[np.int_]],
         dataset: xr.Dataset,
     ) -> None:
         """
-        Saves the provided dataset under a parameter group and realization index
-
+        Saves the provided dataset under a parameter group and realization index(es)
         Parameters
         ----------
         group : str
             Parameter group name for saving dataset.
-
-        realization : int
-            Realization index for saving group.
-
+        realization : int or NDArray[int_]
+            Realization index(es) for saving group.
         dataset : Dataset
             Dataset to save. It must contain a variable named 'values'
             which will be used when flattening out the parameters into
-            a 1d-vector.
+            a 1d-vector. When saving multiple realizations, dataset must
+            have a 'realizations' dimension.
         """
-
         if "values" not in dataset.variables:
             raise ValueError(
-                f"Dataset for parameter group '{group}' "
-                f"must contain a 'values' variable"
+                f"Dataset for parameter group '{group}' must contain a 'values' variable"
             )
-
         if dataset["values"].size == 0:
             raise ValueError(
                 f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
-
-        if dataset["values"].ndim >= 2 and dataset["values"].values.dtype == "float64":
-            logger.warning(
-                "Dataset uses 'float64' for fields/surfaces. Use 'float32' to save memory."
-            )
-
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
-        path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
-        path.parent.mkdir(exist_ok=True)
-
-        self._storage._to_netcdf_transaction(
-            path, dataset.expand_dims(realizations=[realization])
+        # Convert to numpy array if it's an integer
+        realizations: npt.NDArray[np.int_] = (
+            np.array([realization])
+            if isinstance(realization, (int, np.integer))
+            else np.asarray(realization)
         )
+
+        if realizations.size > 1 and "realizations" not in dataset.dims:
+            raise ValueError(
+                "Dataset must have 'realizations' dimension when saving multiple realizations"
+            )
+
+        for real in realizations:
+            path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
+            path.parent.mkdir(exist_ok=True)
+            if "realizations" in dataset.dims:
+                data_to_save = dataset.sel(realizations=[real])
+            else:
+                data_to_save = dataset.expand_dims(realizations=[real])
+            self._storage._to_netcdf_transaction(path, data_to_save)
 
     @require_write
     def save_response(
@@ -876,6 +867,10 @@ class LocalEnsemble(BaseMode):
         self._storage._to_parquet_transaction(
             output_path / f"{response_type}.parquet", data
         )
+
+        if not self.experiment._has_finalized_response_keys(response_type):
+            response_keys = data["response_key"].unique().to_list()
+            self.experiment._update_response_keys(response_type, response_keys)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:

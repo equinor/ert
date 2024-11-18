@@ -4,6 +4,7 @@ import logging
 import os
 import os.path
 import stat
+import warnings
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
@@ -11,6 +12,7 @@ from textwrap import dedent
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
+from pydantic import RootModel, TypeAdapter
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import (
@@ -26,7 +28,6 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.config.parsing.queue_system import QueueSystem
 
 from .config_dict_generator import config_generators
@@ -377,11 +378,14 @@ def test_data_file_with_non_utf_8_character_gives_error_message():
     with open(data_file, "ab") as f:
         f.write(b"\xff")
     data_file_path = str(Path.cwd() / data_file)
-    with pytest.raises(
-        ConfigValidationError,
-        match="Unsupported non UTF-8 character "
-        f"'ÿ' found in file: {data_file_path!r}",
-    ), pytest.warns(match="Failed to read NUM_CPU"):
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match="Unsupported non UTF-8 character "
+            f"'ÿ' found in file: {data_file_path!r}",
+        ),
+        pytest.warns(match="Failed to read NUM_CPU"),
+    ):
         ErtConfig.from_file("config.ert")
 
 
@@ -453,6 +457,25 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.usefixtures("set_site_config")
+@settings(max_examples=20)
+@given(config_generators())
+def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
+    filename = "config.ert"
+    with config_generator(tmp_path_factory, filename) as config_values:
+        ert_config = ErtConfig.from_dict(
+            config_values.to_config_dict("config.ert", os.getcwd())
+        )
+        config_json = json.loads(RootModel[ErtConfig](ert_config).model_dump_json())
+        from_json = ErtConfig(**config_json)
+        assert from_json == ert_config
+
+
+def test_that_ert_config_has_valid_schema():
+    TypeAdapter(ErtConfig).json_schema()
+
+
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
 @settings(max_examples=10)
@@ -1375,7 +1398,7 @@ def test_no_timemap_or_refcase_provides_clear_error():
             print(line, end="")
 
     with pytest.raises(
-        ObservationConfigError,
+        ConfigValidationError,
         match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
     ):
         ErtConfig.from_file("snake_oil.ert")
@@ -1416,7 +1439,7 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
                 continue
             print(line, end="")
 
-    with pytest.raises(ObservationConfigError) as err:
+    with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [
@@ -1537,9 +1560,7 @@ def test_general_option_in_local_config_has_priority_over_site_config():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, recwarn):
-    caplog.set_level(logging.WARNING)
-
+def test_warning_raised_when_summary_key_and_no_simulation_job_present():
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
 
@@ -1548,22 +1569,18 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, r
         fout.write("NUM_REALIZATIONS 1\n")
         fout.write("SUMMARY *\n")
         fout.write("ECLBASE RESULT_SUMMARY\n")
-
         fout.write("INSTALL_JOB job_name job_file\n")
         fout.write(
             "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
         )
+    with warnings.catch_warnings(record=True) as all_warnings:
+        ErtConfig.from_file("config_file.ert")
 
-    ErtConfig.from_file("config_file.ert")
-
-    # Check no warning is logged when config contains
-    # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not caplog.text
-    assert len(recwarn) == 1
-    assert issubclass(recwarn[0].category, ConfigWarning)
-    assert (
-        recwarn[0].message.info.message
+    assert any(
+        str(w.message)
         == "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
+        for w in all_warnings
+        if isinstance(w.message, ConfigWarning)
     )
 
 
@@ -1571,11 +1588,7 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present(caplog, r
     "job_name", ["eclipse", "eclipse100", "flow", "FLOW", "ECLIPSE100"]
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_warning_when_summary_key_and_simulation_job_present(
-    caplog, recwarn, job_name
-):
-    caplog.set_level(logging.WARNING)
-
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
 
@@ -1589,9 +1602,8 @@ def test_no_warning_when_summary_key_and_simulation_job_present(
         fout.write(
             f"FORWARD_MODEL {job_name}(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
         )
-
-    ErtConfig.from_file("config_file.ert")
-
     # Check no warning is logged when config contains
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not any(w.message for w in recwarn if issubclass(w.category, ConfigWarning))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConfigWarning)
+        ErtConfig.from_file("config_file.ert")

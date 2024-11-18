@@ -5,11 +5,8 @@ import stat
 import sys
 import textwrap
 from dataclasses import dataclass
-from datetime import datetime
-from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
 
-import numpy as np
 import pytest
 
 from _ert.forward_model_runner.forward_model_step import (
@@ -99,6 +96,7 @@ def test_cpu_seconds_can_detect_multiprocess():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
+    blobsize = 1e7
     with open(scriptname, "w", encoding="utf-8") as script:
         script.write(
             textwrap.dedent(
@@ -109,11 +107,15 @@ def test_memory_usage_counts_grandchildren():
             import time
 
             counter = int(sys.argv[-2])
-            numbers = list(range(int(sys.argv[-1])))
+            blobsize = int(sys.argv[-1])
+
+            # Allocate memory
+            _blob = list(range(blobsize))
+
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(int(1e7))])
+                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(blobsize)])
             time.sleep(3)"""  # Too low sleep will make the test faster but flaky
             )
         )
@@ -124,7 +126,7 @@ def test_memory_usage_counts_grandchildren():
         fmstep = ForwardModelStep(
             {
                 "executable": executable,
-                "argList": [str(layers), str(int(1e6))],
+                "argList": [str(layers), str(int(blobsize))],
             },
             0,
         )
@@ -139,94 +141,11 @@ def test_memory_usage_counts_grandchildren():
     # comparing the memory used with different amounts of forks done.
     # subtract a little bit (* 0.9) due to natural variance in memory used
     # when running the program.
-    memory_per_numbers_list = sys.getsizeof(int(0)) * 1e7 * 0.90
+    memory_per_numbers_list = sys.getsizeof(int(0)) * blobsize * 0.90
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
     assert max_seens[0] + memory_per_numbers_list < max_seens[1]
     assert max_seens[1] + memory_per_numbers_list < max_seens[2]
-
-
-@pytest.mark.integration_test
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.usefixtures("use_tmpdir")
-def test_memory_profile_in_running_events():
-    scriptname = "increasing_memory.py"
-    with open(scriptname, "w", encoding="utf-8") as script:
-        script.write(
-            textwrap.dedent(
-                """\
-            #!/usr/bin/env python
-            import time
-            somelist = []
-
-            for _ in range(10):
-                # 1 Mb allocated pr iteration
-                somelist.append(b' ' * 1024 * 1024)
-                time.sleep(0.1)"""
-            )
-        )
-    executable = os.path.realpath(scriptname)
-    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-
-    fm_step = ForwardModelStep(
-        {
-            "executable": executable,
-            "argList": [""],
-        },
-        0,
-    )
-    fm_step.MEMORY_POLL_PERIOD = 0.01
-    emitted_timestamps: List[datetime] = []
-    emitted_rss_values: List[Optional[int]] = []
-    emitted_oom_score_values: List[Optional[int]] = []
-    for status in fm_step.run():
-        if isinstance(status, Running):
-            emitted_timestamps.append(
-                datetime.fromisoformat(status.memory_status.timestamp)
-            )
-            emitted_rss_values.append(status.memory_status.rss)
-            emitted_oom_score_values.append(status.memory_status.oom_score)
-
-    # Any asserts on the emitted_rss_values easily becomes flaky, so be mild:
-    assert (
-        np.diff(np.array(emitted_rss_values[:-3])) >= 0
-        # Avoid the tail of the array, then the process is tearing down
-    ).all(), f"Emitted memory usage not increasing, got {emitted_rss_values[:-3]=}"
-
-    memory_deltas = np.diff(np.array(emitted_rss_values[7:]))
-    if not len(memory_deltas):
-        # This can happen if memory profiling is lagging behind the process
-        # we are trying to track.
-        memory_deltas = np.diff(np.array(emitted_rss_values[2:]))
-
-    lenience_factor = 4
-    # Ideally this is 1 which corresponds to being able to track every memory
-    # allocation perfectly. But on loaded hardware, some of the allocations can be
-    # missed due to process scheduling. Bump as needed.
-
-    assert (
-        max(memory_deltas) < lenience_factor * 1024 * 1024
-        # Avoid the first steps, which includes the Python interpreters memory usage
-    ), (
-        "Memory increased too sharply, missing a measurement? "
-        f"Got {emitted_rss_values=} with selected diffs {memory_deltas}. "
-        "If the maximal number is at the beginning, it is probably the Python process "
-        "startup that is tracked."
-    )
-
-    if sys.platform.startswith("darwin"):
-        # No oom_score on MacOS
-        assert set(emitted_oom_score_values) == {None}
-    else:
-        for oom_score in emitted_oom_score_values:
-            assert oom_score is not None, "No oom_score, are you not on Linux?"
-            # Upper limit "should" be 1000, but has been proven to overshoot.
-            assert oom_score >= -1000
-
-    timedeltas = np.diff(np.array(emitted_timestamps))
-    # The timedeltas should be close to MEMORY_POLL_PERIOD==0.01, but
-    # any weak test hardware will make that hard to attain.
-    assert min(timedeltas).total_seconds() >= 0.01
 
 
 @dataclass

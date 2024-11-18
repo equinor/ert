@@ -293,7 +293,9 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transform_functions)}, expected {array.size}"
             )
 
-        data = dict(zip(array["names"].values.tolist(), array.values.tolist()))
+        data = dict(
+            zip(array["names"].values.tolist(), array.values.tolist(), strict=False)
+        )
 
         log10_data = {
             tf.name: math.log(data[tf.name], 10)
@@ -477,7 +479,7 @@ class GenKwConfig(ParameterConfig):
                     f"Unable to convert float number: {p}"
                 ) from e
 
-        params = dict(zip(param_names, param_floats))
+        params = dict(zip(param_names, param_floats, strict=False))
 
         return TransformFunction(
             name=t.name,

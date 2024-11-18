@@ -79,9 +79,12 @@ def test_rft_csv_export_plugin_exports_rft_data(
     output_file = Path("output.csv")
 
     ert_config = ErtConfig.from_file(args.config)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ), open_storage(ert_config.ens_path, mode="w") as storage:
+    with (
+        StorageService.init_service(
+            project=os.path.abspath(ert_config.ens_path),
+        ),
+        open_storage(ert_config.ens_path, mode="w") as storage,
+    ):
         gui = _setup_main_window(ert_config, args, GUILogHandler(), storage)
         qtbot.addWidget(gui)
 

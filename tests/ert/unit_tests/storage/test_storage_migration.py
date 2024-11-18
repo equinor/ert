@@ -195,7 +195,10 @@ def test_that_storage_matches(
             "gen_data",
         )
 
-        assert ensemble.get_summary_keyset() == ["FOPR"]
+        assert not ensemble.experiment._has_finalized_response_keys("summary")
+        ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
 
 
 @pytest.mark.integration_test

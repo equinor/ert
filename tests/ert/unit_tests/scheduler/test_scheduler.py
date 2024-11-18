@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import json
 import random
 import shutil
@@ -519,8 +520,7 @@ async def test_submit_sleep(
     await sch.execute()
 
     deltas = [
-        next_start - start
-        for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
+        next_start - start for start, next_start in itertools.pairwise(run_start_times)
     ]
     assert min(deltas) >= submit_sleep * 0.8
     assert max(deltas) <= submit_sleep + 0.1
@@ -568,8 +568,7 @@ async def test_submit_sleep_with_max_running(
     await sch.execute()
 
     deltas = [
-        next_start - start
-        for start, next_start in zip(run_start_times[:-1], run_start_times[1:])
+        next_start - start for start, next_start in itertools.pairwise(run_start_times)
     ]
     assert min(deltas) >= submit_sleep * 0.8
 

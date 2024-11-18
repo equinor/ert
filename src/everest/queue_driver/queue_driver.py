@@ -8,7 +8,6 @@ from everest.config_keys import ConfigKeys
 _LSF_OPTIONS = [
     (ConfigKeys.CORES, "MAX_RUNNING"),
     (ConfigKeys.LSF_QUEUE_NAME, "LSF_QUEUE"),
-    (ConfigKeys.LSF_SERVER, "LSF_SERVER"),
     (ConfigKeys.LSF_OPTIONS, "LSF_RESOURCE"),
 ]
 

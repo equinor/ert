@@ -29,10 +29,12 @@ class DesignMatrix:
     xls_filename: Path
     design_sheet: str
     default_sheet: str
-    num_realizations: Optional[int] = None
-    active_realizations: Optional[List[bool]] = None
-    design_matrix_df: Optional[pd.DataFrame] = None
-    parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
+
+    def __post_init__(self) -> None:
+        self.num_realizations: Optional[int] = None
+        self.active_realizations: Optional[List[bool]] = None
+        self.design_matrix_df: Optional[pd.DataFrame] = None
+        self.parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
 
     @classmethod
     def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
@@ -112,12 +114,10 @@ class DesignMatrix:
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error:\n{error_msg}")
 
-        defaults = DesignMatrix._read_defaultssheet(
-            self.xls_filename, self.default_sheet
+        defaults_to_use = DesignMatrix._read_defaultssheet(
+            self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
         )
-        for k, v in defaults.items():
-            if k not in design_matrix_df.columns:
-                design_matrix_df[k] = v
+        design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
         parameter_configuration: Dict[str, ParameterConfig] = {}
         transform_function_definitions: List[TransformFunctionDefinition] = []
@@ -192,7 +192,7 @@ class DesignMatrix:
             errors.append("Duplicate parameter names found in design sheet")
         empties = [
             f"Realization {design_matrix.index[i]}, column {design_matrix.columns[j]}"
-            for i, j in zip(*np.where(pd.isna(design_matrix)))
+            for i, j in zip(*np.where(pd.isna(design_matrix)), strict=False)
         ]
         if len(empties) > 0:
             errors.append(f"Design matrix contains empty cells {empties}")
@@ -200,11 +200,14 @@ class DesignMatrix:
 
     @staticmethod
     def _read_defaultssheet(
-        xls_filename: Union[Path, str], defaults_sheetname: str
+        xls_filename: Union[Path, str],
+        defaults_sheetname: str,
+        existing_parameters: List[str],
     ) -> Dict[str, Union[str, float]]:
         """
         Construct a dict of keys and values to be used as defaults from the
-        first two columns in a spreadsheet.
+        first two columns in a spreadsheet. Only returns the keys that are
+        different from the exisiting parameters.
 
         Returns a dict of default values
 
@@ -222,7 +225,7 @@ class DesignMatrix:
             raise ValueError("Defaults sheet must have at least two columns")
         empty_cells = [
             f"Row {default_df.index[i]}, column {default_df.columns[j]}"
-            for i, j in zip(*np.where(pd.isna(default_df)))
+            for i, j in zip(*np.where(pd.isna(default_df)), strict=False)
         ]
         if len(empty_cells) > 0:
             raise ValueError(f"Default sheet contains empty cells {empty_cells}")
@@ -230,7 +233,11 @@ class DesignMatrix:
         if not default_df[0].is_unique:
             raise ValueError("Default sheet contains duplicate parameter names")
 
-        return {row[0]: convert_to_numeric(row[1]) for _, row in default_df.iterrows()}
+        return {
+            row[0]: convert_to_numeric(row[1])
+            for _, row in default_df.iterrows()
+            if row[0] not in existing_parameters
+        }
 
 
 def convert_to_numeric(x: str) -> Union[str, float]:

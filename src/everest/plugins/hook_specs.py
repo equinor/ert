@@ -1,4 +1,4 @@
-from typing import Sequence, Type, TypeVar
+from typing import List, Sequence, Type, TypeVar
 
 from everest.plugins import hookspec
 
@@ -60,15 +60,6 @@ def flow_config_path():
     """
 
 
-@hookspec
-def get_forward_models():
-    """
-    Return a list of dicts detailing the names and paths to forward models.
-
-    Example [{"name": "job1", "path":"path1"}, {"name": "job2", "path":"path2"}]
-    """
-
-
 @hookspec(firstresult=True)
 def lint_forward_model(job: str, args: Sequence[str]):
     """
@@ -112,3 +103,11 @@ def add_log_handle_to_root():
 @hookspec
 def get_forward_model_documentations():
     """ """
+
+
+@hookspec(firstresult=True)
+def custom_forward_model_outputs(forward_model_steps: List[str]):
+    """
+    Check if the given forward model steps will output to a file maching the
+    defined everest objective
+    """

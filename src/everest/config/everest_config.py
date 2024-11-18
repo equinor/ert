@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import shutil
@@ -11,7 +10,6 @@ from typing import (
     Literal,
     Optional,
     Protocol,
-    Tuple,
     no_type_check,
 )
 
@@ -25,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 from ruamel.yaml import YAML, YAMLError
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Self
 
 from ert.config import ErtConfig
 from everest.config.control_variable_config import ControlVariableGuessListConfig
@@ -42,18 +40,15 @@ from everest.config.validation_utils import (
     validate_forward_model_configs,
 )
 from everest.jobs import script_names
-from everest.util.forward_models import collect_forward_models
+from everest.util.forward_models import (
+    check_forward_model_objective,
+)
 
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
-    CERTIFICATE_DIR,
     DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    HOSTFILE_NAME,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
-    SERVER_STATUS,
-    SESSION_DIR,
     STORAGE_DIR,
 )
 from .control_config import ControlConfig
@@ -206,7 +201,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 """,
     )
     simulator: Optional[SimulatorConfig] = Field(
-        default=None, description="Simulation settings"
+        default_factory=SimulatorConfig, description="Simulation settings"
     )
     forward_model: Optional[List[str]] = Field(
         default=None, description="List of jobs to run"
@@ -222,7 +217,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
-    def validate_install_job_sources(self):  # pylint: disable=E0213
+    def validate_install_job_sources(self) -> Self:  # pylint: disable=E0213
         model = self.model
         config_path = self.config_path
         if not model or not config_path:
@@ -287,7 +282,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self):  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -297,7 +292,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         installed_jobs_name = [job.name for job in install_jobs]
         installed_jobs_name += list(script_names)  # default jobs
         installed_jobs_name += get_system_installed_jobs()  # system jobs
-        installed_jobs_name += [job["name"] for job in collect_forward_models()]
 
         errors = []
         for fm_job in forward_model_jobs:
@@ -310,7 +304,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_workflow_name_installed(self):  # pylint: disable=E0213
+    def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
         workflows = self.workflows
         if workflows is None:
             return self
@@ -346,7 +340,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return install_templates
 
     @model_validator(mode="after")
-    def validate_install_templates_are_existing_files(self):
+    def validate_install_templates_are_existing_files(self) -> Self:
         install_templates = self.install_templates
 
         if not install_templates:
@@ -376,7 +370,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_cvar_nreals_interval(self):  # pylint: disable=E0213
+    def validate_cvar_nreals_interval(self) -> Self:  # pylint: disable=E0213
         optimization = self.optimization
         if not optimization:
             return self
@@ -404,7 +398,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_install_data_source_exists(self):
+    def validate_install_data_source_exists(self) -> Self:
         install_data = self.install_data or []
         if not install_data:
             return self
@@ -419,7 +413,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_model_data_file_exists(self):  # pylint: disable=E0213
+    def validate_model_data_file_exists(self) -> Self:  # pylint: disable=E0213
         model = self.model
         if not model:
             return self
@@ -431,7 +425,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_maintained_forward_models(self):
+    def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
         model = self.model
         realizations = model.realizations if model else [0]
@@ -443,8 +437,16 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
+    def validate_maintained_forward_model_write_objectives(self) -> Self:
+        if not self.objective_functions or not self.forward_model:
+            return self
+        objectives = {objective.name for objective in self.objective_functions}
+        check_forward_model_objective(self.forward_model, objectives)
+        return self
+
+    @model_validator(mode="after")
     # pylint: disable=E0213
-    def validate_input_constraints_weight_definition(self):
+    def validate_input_constraints_weight_definition(self) -> Self:
         input_constraints = self.input_constraints
         if not input_constraints:
             return self
@@ -481,7 +483,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_variable_name_match_well_name(self):  # pylint: disable=E0213
+    def validate_variable_name_match_well_name(self) -> Self:  # pylint: disable=E0213
         controls = self.controls
         wells = self.wells
         if controls is None or wells is None:
@@ -499,7 +501,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_that_environment_sim_folder_is_writeable(self):
+    def validate_that_environment_sim_folder_is_writeable(self) -> Self:
         environment = self.environment
         config_path = self.config_path
         if environment is None or config_path is None:
@@ -607,7 +609,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return None
 
     @property
-    def output_dir(self) -> Optional[str]:
+    def output_dir(self) -> str:
         assert self.environment is not None
         path = self.environment.output_folder
 
@@ -658,67 +660,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self._get_output_subdirectory(OPTIMIZATION_LOG_DIR)
 
     @property
-    def detached_node_dir(self):
-        return self._get_output_subdirectory(DETACHED_NODE_DIR)
-
-    @property
-    def session_dir(self):
-        """Return path to the session directory containing information about the
-        certificates and host information"""
-        return os.path.join(self.detached_node_dir, SESSION_DIR)
-
-    @property
-    def certificate_dir(self):
-        """Return the path to certificate folder"""
-        return os.path.join(self.session_dir, CERTIFICATE_DIR)
-
-    def get_server_url(self, server_info=None):
-        """Return the url of the server.
-
-        If server_info are given, the url is generated using that info. Otherwise
-        server information are retrieved from the hostfile
-        """
-        if server_info is None:
-            server_info = self.server_info
-
-        url = f"https://{server_info['host']}:{server_info['port']}"
-        return url
-
-    @property
-    def hostfile_path(self):
-        return os.path.join(self.session_dir, HOSTFILE_NAME)
-
-    @property
-    def server_info(self):
-        """Load server information from the hostfile"""
-        host_file_path = self.hostfile_path
-        try:
-            with open(host_file_path, "r", encoding="utf-8") as f:
-                json_string = f.read()
-
-            data = json.loads(json_string)
-            if set(data.keys()) != {"host", "port", "cert", "auth"}:
-                raise RuntimeError("Malformed hostfile")
-            return data
-        except FileNotFoundError:
-            # No host file
-            return {"host": None, "port": None, "cert": None, "auth": None}
-
-    @property
-    def server_context(self) -> Tuple[str, str, Tuple[str, str]]:
-        """Returns a tuple with
-        - url of the server
-        - path to the .cert file
-        - password for the certificate file
-        """
-
-        return (
-            self.get_server_url(self.server_info),
-            self.server_info[CERTIFICATE_DIR],
-            ("username", self.server_info["auth"]),
-        )
-
-    @property
     def export_path(self):
         """Returns the export file path. If not file name is provide the default
         export file name will have the same name as the config file, with the '.csv'
@@ -739,11 +680,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         else:
             default_export_file = f"{os.path.splitext(self.config_file)[0]}.csv"
             return os.path.join(full_file_path, default_export_file)
-
-    @property
-    def everserver_status_path(self):
-        """Returns path to the everest server status file"""
-        return os.path.join(self.session_dir, SERVER_STATUS)
 
     def to_dict(self) -> dict:
         the_dict = self.model_dump(exclude_none=True)

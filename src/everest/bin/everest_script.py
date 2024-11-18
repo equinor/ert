@@ -1,26 +1,29 @@
 #!/usr/bin/env python
 
 import argparse
+import asyncio
 import json
 import logging
+import os
 import signal
 import threading
 from functools import partial
 
-from ert.config import ErtConfig
-from ert.storage import open_storage
-from everest.config import EverestConfig
+from ert.run_models.everest_run_model import EverestRunModel
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    generate_everserver_ert_config,
     server_is_running,
     start_server,
-    wait_for_context,
     wait_for_server,
 )
-from everest.plugins.site_config_env import PluginSiteConfigEnv
-from everest.util import makedirs_if_needed, version_info
+from everest.strings import EVEREST
+from everest.util import (
+    makedirs_if_needed,
+    version_info,
+    warn_user_that_runpath_is_nonempty,
+)
 
 from .utils import (
     handle_keyboard_interrupt,
@@ -48,7 +51,10 @@ def everest_entry(args=None):
             partial(handle_keyboard_interrupt, options=options),
         )
 
-    run_everest(options)
+    if EverestRunModel.create(options.config).check_if_runpath_exists():
+        warn_user_that_runpath_is_nonempty()
+
+    asyncio.run(run_everest(options))
 
 
 def _build_args_parser():
@@ -80,11 +86,13 @@ def _build_args_parser():
     return arg_parser
 
 
-def run_everest(options):
+async def run_everest(options):
     logger = logging.getLogger("everest_main")
-    server_state = everserver_status(options.config)
-
-    if server_is_running(*options.config.server_context):
+    everserver_status_path = ServerConfig.get_everserver_status_path(
+        options.config.output_dir
+    )
+    server_state = everserver_status(everserver_status_path)
+    if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
         config_file = options.config.config_file
         print(
             "An optimization is currently running.\n"
@@ -100,24 +108,27 @@ def run_everest(options):
             job_name = fm_job.split()[0]
             logger.info("Everest forward model contains job {}".format(job_name))
 
-        with PluginSiteConfigEnv():
-            ert_config = ErtConfig.with_plugins().from_dict(
-                config_dict=generate_everserver_ert_config(
-                    options.config, options.debug
-                )
-            )
-
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
+        try:
+            output_dir = options.config.output_dir
+            config_file = options.config.config_file
+            save_config_path = os.path.join(output_dir, config_file)
+            options.config.dump(save_config_path)
+        except (OSError, LookupError) as e:
+            logging.getLogger(EVEREST).error(
+                "Failed to save optimization config: {}".format(e)
+            )
+        await start_server(options.config, options.debug)
+        print("Waiting for server ...")
+        wait_for_server(options.config.output_dir, timeout=600)
+        print("Everest server found!")
+        run_detached_monitor(
+            server_context=ServerConfig.get_server_context(options.config.output_dir),
+            optimization_output_dir=options.config.optimization_output_dir,
+            show_all_jobs=options.show_all_jobs,
+        )
 
-        with open_storage(ert_config.ens_path, "w") as storage, PluginSiteConfigEnv():
-            context = start_server(options.config, ert_config, storage)
-            print("Waiting for server ...")
-            wait_for_server(options.config, timeout=600, context=context)
-            print("Everest server found!")
-            run_detached_monitor(options.config, show_all_jobs=options.show_all_jobs)
-            wait_for_context()
-
-        server_state = everserver_status(options.config)
+        server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
             logger.error("Everest run failed with: {}".format(server_state_info))
@@ -126,7 +137,11 @@ def run_everest(options):
             logger.info("Everest run finished with: {}".format(server_state_info))
             print(server_state_info)
     else:
-        report_on_previous_run(options.config)
+        report_on_previous_run(
+            config_file=options.config.config_file,
+            everserver_status_path=everserver_status_path,
+            optimization_output_dir=options.config.optimization_output_dir,
+        )
 
 
 if __name__ == "__main__":

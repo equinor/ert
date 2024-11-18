@@ -20,7 +20,6 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys
 from everest.queue_driver.queue_driver import _extract_queue_system
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
-from everest.util.forward_models import collect_forward_models
 
 
 def _get_datafiles(ever_config: EverestConfig):
@@ -209,8 +208,6 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
             f.write("EXECUTABLE %s" % script)
 
         ever_jobs.append(Job(name=default_job, source=job_spec_file))
-    for job in collect_forward_models():
-        ever_jobs.append(Job(name=job["name"], source=job["path"]))
 
     return ever_jobs
 
@@ -541,12 +538,10 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
     # configuration key. When initializing an ERT config object, it is ignored.
     # It is used by the Simulator object to inject ExtParamConfig nodes.
     for control in ever_config.controls or []:
-        ens_config.addNode(
-            ExtParamConfig(
-                name=control.name,
-                input_keys=_get_variables(control.variables),
-                output_file=control.name + ".json",
-            )
+        ens_config.parameter_configs[control.name] = ExtParamConfig(
+            name=control.name,
+            input_keys=_get_variables(control.variables),
+            output_file=control.name + ".json",
         )
 
     return ert_config

@@ -8,7 +8,6 @@ import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.util.forward_models import collect_forward_models
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
@@ -161,7 +160,7 @@ def test_non_existent_file():
 def test_invalid_integer():
     invalid_values = [-1, -999, "apekatt"]
     exp_errors = 2 * ["(.*)greater than or equal to 0"] + ["(.*) not a valid integer"]
-    for invalid_value, err in zip(invalid_values, exp_errors):
+    for invalid_value, err in zip(invalid_values, exp_errors, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.MODEL][ConfigKeys.REALIZATIONS][1] = invalid_value
 
@@ -204,7 +203,7 @@ def test_malformed_list():
         "No such file or directory (.*)",
     ]
 
-    for invalid_val, exp_err in zip(invalid_values, exp_errs):
+    for invalid_val, exp_err in zip(invalid_values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.SOURCE] = invalid_val
 
@@ -244,7 +243,7 @@ def test_bool_validation():
     values = [True, False, 0, 1, "True", ["I'm", [True for real in []]]]
     exp_errs = 2 * [None] + 4 * ["(.*) could not be parsed to a boolean"]
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.LINK] = val
 
@@ -287,7 +286,7 @@ def test_existing_path_validation():
         + ["str type expected"]
     )
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.SOURCE] = val
 
@@ -318,7 +317,7 @@ def test_existing_file_validation():
         + ["str type expected"]
     )
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         jobs = config[ConfigKeys.INSTALL_JOBS]
         jobs[0][ConfigKeys.SOURCE] = val
@@ -338,7 +337,7 @@ def test_existing_dir_validation():
 
     exp_errs = [None, "no such file or directory (.*)"]
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.CONFIGPATH] = Path(val)
         errors = EverestConfig.lint_config_dict(config)
@@ -368,7 +367,7 @@ def test_valid_path_validation():
         + ["embedded null byte"]
     )
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config[ConfigKeys.ENVIRONMENT][ConfigKeys.OUTPUT_DIR] = val
 
@@ -389,7 +388,7 @@ def test_valid_filepath_validation():
 
     exp_errs = ["Invalid type", None, None, "Invalid type"]
 
-    for val, exp_err in zip(values, exp_errs):
+    for val, exp_err in zip(values, exp_errs, strict=False):
         config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
         config["export"] = {}
         config["export"]["csv_output_filepath"] = val
@@ -585,12 +584,3 @@ def test_lint_everest_models_jobs():
     config = EverestConfig.load_file(config_file).to_dict()
     # Check initial config file is valid
     assert len(EverestConfig.lint_config_dict(config)) == 0
-
-
-def test_overloading_everest_models_names():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    for job in collect_forward_models():
-        config["install_jobs"][2]["name"] = job["name"]
-        config["forward_model"][1] = job["name"]
-        errors = EverestConfig.lint_config_dict(config)
-        assert len(errors) == 0, f"Failed for job {job['name']}"

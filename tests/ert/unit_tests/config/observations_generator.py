@@ -137,7 +137,7 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
     }
     val_type = draw(st.sampled_from(["value", "obs_file"]))
     if val_type == "value":
-        kws["value"] = draw(st.floats(allow_nan=False))
+        kws["value"] = draw(st.floats(allow_nan=False, allow_infinity=False))
     if val_type == "obs_file":
         kws["obs_file"] = draw(names)
         kws["error"] = None
@@ -243,7 +243,10 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
             st.builds(
                 HistoryObservation,
                 error=st.floats(
-                    min_value=std_cutoff, allow_nan=False, allow_infinity=False
+                    min_value=std_cutoff,
+                    max_value=1e20,
+                    allow_nan=False,
+                    allow_infinity=False,
                 ),
                 segment=st.lists(
                     st.builds(
@@ -253,12 +256,14 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
                         stop=st.integers(min_value=1, max_value=10),
                         error=st.floats(
                             min_value=0.01,
+                            max_value=1e20,
                             allow_nan=False,
                             allow_infinity=False,
                             exclude_min=True,
                         ),
                         error_min=st.floats(
                             min_value=0.0,
+                            max_value=1e20,
                             allow_nan=False,
                             allow_infinity=False,
                             exclude_min=True,

@@ -8,7 +8,6 @@ from dataclasses import asdict, field, fields
 from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
 
 import pydantic
-from pydantic import Field
 from pydantic.dataclasses import dataclass
 from typing_extensions import Annotated
 
@@ -270,7 +269,7 @@ class QueueConfig:
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: Union[
         LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
-    ] = Field(default_factory=LocalQueueOptions, discriminator="name")
+    ] = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 

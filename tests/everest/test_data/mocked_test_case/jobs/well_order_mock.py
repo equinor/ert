@@ -6,9 +6,10 @@ from collections import OrderedDict
 
 
 def create_file(order, template_file, target_file):
-    with open(target_file, "w", encoding="utf-8") as writeH, open(
-        template_file, encoding="utf-8"
-    ) as readH:
+    with (
+        open(target_file, "w", encoding="utf-8") as writeH,
+        open(template_file, encoding="utf-8") as readH,
+    ):
         for line in readH.readlines():
             match_obj = re.search("(__[A-Z]+_[0-9]__)", line)
             if match_obj:

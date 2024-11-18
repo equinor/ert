@@ -162,13 +162,9 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
         # Allow more time when tested on a real compute cluster to avoid false positives.
         job_kill_window = 60
         test_grace_time = 120
-    elif sys.platform.startswith("darwin"):
-        # Mitigate flakiness on low-power test nodes
-        job_kill_window = 5
-        test_grace_time = 8
     else:
-        job_kill_window = 1
-        test_grace_time = 2
+        job_kill_window = 5  # Busy test nodes require a long kill window
+        test_grace_time = 8
 
     async def kill_job_once_started(iens):
         nonlocal driver

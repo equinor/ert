@@ -11,11 +11,10 @@ import decorator
 import pytest
 
 from everest.bin.main import start_everest
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.jobs import script_names
 from everest.util import has_opm
-from everest.util.forward_models import collect_forward_models
 
 
 def skipif_no_opm(function):
@@ -124,7 +123,7 @@ def everest_default_jobs(output_dir):
             os.path.join(output_dir, ".jobs", "_%s" % script_name),
         )
         for script_name in script_names
-    ] + [(job["name"], job["path"]) for job in collect_forward_models()]
+    ]
 
 
 def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
@@ -143,6 +142,8 @@ def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
         monkeypatch.chdir("mocked_run")
         start_everest(["everest", "run", config_file])
         config = EverestConfig.load_file(config_file)
-        status = everserver_status(config)
+        status = everserver_status(
+            ServerConfig.get_everserver_status_path(config.output_dir)
+        )
         assert status["status"] == ServerStatus.completed
     return cache_path / "mocked_run"

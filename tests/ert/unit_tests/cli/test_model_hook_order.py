@@ -114,13 +114,16 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
 
     # Mock the return values of iterative_smoother_update
     # Mock the iteration property of IteratedEnsembleSmoother
-    with patch(
-        "ert.run_models.iterated_ensemble_smoother.iterative_smoother_update",
-        MagicMock(return_value=(MagicMock(), MagicMock())),
-    ), patch(
-        "ert.run_models.iterated_ensemble_smoother.IteratedEnsembleSmoother.sies_iteration",
-        new_callable=PropertyMock,
-    ) as mock_iteration:
+    with (
+        patch(
+            "ert.run_models.iterated_ensemble_smoother.iterative_smoother_update",
+            MagicMock(return_value=(MagicMock(), MagicMock())),
+        ),
+        patch(
+            "ert.run_models.iterated_ensemble_smoother.IteratedEnsembleSmoother.sies_iteration",
+            new_callable=PropertyMock,
+        ) as mock_iteration,
+    ):
         mock_iteration.return_value = 2
         test_class.run_experiment(MagicMock())
 

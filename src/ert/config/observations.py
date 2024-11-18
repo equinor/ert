@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Union
@@ -39,8 +39,8 @@ def history_key(key: str) -> str:
 
 @dataclass
 class EnkfObs:
-    obs_vectors: Dict[str, ObsVector]
-    obs_time: List[datetime]
+    obs_vectors: Dict[str, ObsVector] = field(default_factory=dict)
+    obs_time: List[datetime] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         grouped: Dict[str, List[polars.DataFrame]] = {}
@@ -177,7 +177,7 @@ class EnkfObs:
                 segment_instance,
             )
         data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
-        for date, error, value in zip(refcase.dates, std_dev, values):
+        for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
             data[date] = SummaryObservation(summary_key, summary_key, value, error)
 
         return {
@@ -394,7 +394,9 @@ class EnkfObs:
                 f"index list ({indices}) must be of equal length",
                 obs_file if obs_file is not None else "",
             )
-        return GenObservation(values, stds, indices, std_scaling)
+        return GenObservation(
+            values.tolist(), stds.tolist(), indices.tolist(), std_scaling.tolist()
+        )
 
     @classmethod
     def _handle_general_observation(

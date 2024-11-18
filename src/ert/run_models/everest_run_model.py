@@ -12,6 +12,7 @@ import re
 import shutil
 import threading
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -290,6 +291,24 @@ class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
 
 
+@dataclass
+class OptimalResult:
+    batch: int
+    controls: List[Any]
+    total_objective: float
+
+    @staticmethod
+    def from_seba_optimal_result(
+        o: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None,
+    ) -> "OptimalResult" | None:
+        if o is None:
+            return None
+
+        return OptimalResult(
+            batch=o.batch, controls=o.controls, total_objective=o.total_objective
+        )
+
+
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
@@ -318,7 +337,7 @@ class EverestRunModel(BaseRunModel):
             else (everest_config.simulator.delete_run_path or False)
         )
         self._display_all_jobs = display_all_jobs
-        self._result: Optional[seba_sqlite.sqlite_storage.OptimalResult] = None
+        self._result: Optional[OptimalResult] = None
         self._exit_code: Optional[
             Literal["max_batch_num_reached"] | OptimizerExitCode
         ] = None
@@ -399,15 +418,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         # Initialize the ropt optimizer:
-        optimizer = self._configure_optimizer(simulator)
-
-        # Before each batch evaluation we check if we should abort:
-        optimizer.add_observer(
-            EventType.START_EVALUATION,
-            functools.partial(
-                self._ropt_callback, optimizer=optimizer, simulator=simulator
-            ),
-        )
+        optimizer = self._create_optimizer(simulator)
 
         # The SqliteStorage object is used to store optimization results from
         # Seba in an sqlite database. It reacts directly to events emitted by
@@ -423,7 +434,9 @@ class EverestRunModel(BaseRunModel):
         optimizer_exit_code = optimizer.run().exit_code
 
         # Extract the best result from the storage.
-        self._result = seba_storage.get_optimal_result()  # type: ignore
+        self._result = OptimalResult.from_seba_optimal_result(
+            seba_storage.get_optimal_result()  # type: ignore
+        )
 
         if self._monitor_thread is not None:
             self._monitor_thread.stop()
@@ -434,6 +447,13 @@ class EverestRunModel(BaseRunModel):
             "max_batch_num_reached"
             if self._max_batch_num_reached
             else optimizer_exit_code
+        )
+
+    def check_if_runpath_exists(self) -> bool:
+        return (
+            self.everest_config.simulation_dir is not None
+            and os.path.exists(self.everest_config.simulation_dir)
+            and any(os.listdir(self.everest_config.simulation_dir))
         )
 
     def _handle_errors(
@@ -479,7 +499,7 @@ class EverestRunModel(BaseRunModel):
         )
         self._monitor_thread.start()
 
-    def _ropt_callback(
+    def _on_before_forward_model_evaluation(
         self, _: Event, optimizer: BasicOptimizer, simulator: Simulator
     ) -> None:
         logging.getLogger(EVEREST).debug("Optimization callback called")
@@ -502,21 +522,22 @@ class EverestRunModel(BaseRunModel):
             logging.getLogger(EVEREST).info("User abort requested.")
             optimizer.abort_optimization()
 
-    def _configure_optimizer(self, simulator: Simulator) -> BasicOptimizer:
+    def _create_optimizer(self, simulator: Simulator) -> BasicOptimizer:
         assert (
             self.everest_config.environment is not None
             and self.everest_config.environment is not None
         )
 
         ropt_output_folder = Path(self.everest_config.optimization_output_dir)
+        ropt_evaluator_fn = simulator.create_forward_model_evaluator_function()
 
         # Initialize the optimizer with output tables. `min_header_len` is set
         # to ensure that all tables have the same number of header lines,
         # simplifying code that reads them as fixed width tables. `maximize` is
         # set because ropt reports minimization results, while everest wants
         # maximization results, necessitating a conversion step.
-        return (
-            BasicOptimizer(enopt_config=self.ropt_config, evaluator=simulator)
+        optimizer = (
+            BasicOptimizer(enopt_config=self.ropt_config, evaluator=ropt_evaluator_fn)
             .add_table(
                 columns=RESULT_COLUMNS,
                 path=ropt_output_folder / "results.txt",
@@ -545,6 +566,18 @@ class EverestRunModel(BaseRunModel):
             )
         )
 
+        # Before each batch evaluation we check if we should abort:
+        optimizer.add_observer(
+            EventType.START_EVALUATION,
+            functools.partial(
+                self._on_before_forward_model_evaluation,
+                optimizer=optimizer,
+                simulator=simulator,
+            ),
+        )
+
+        return optimizer
+
     @classmethod
     def name(cls) -> str:
         return "Batch simulator"
@@ -560,7 +593,7 @@ class EverestRunModel(BaseRunModel):
         return self._exit_code
 
     @property
-    def result(self) -> Optional[seba_sqlite.sqlite_storage.OptimalResult]:
+    def result(self) -> Optional[OptimalResult]:
         return self._result
 
     def __repr__(self) -> str:
