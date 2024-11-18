@@ -258,7 +258,6 @@ class ErtMainWindow(QMainWindow):
                     self.help_menu.menuAction(), self.plugins_tool.get_menu()
                 )
 
-
     def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
         button = SidebarToolButton(self.side_frame)
         button.setCheckable(True)
