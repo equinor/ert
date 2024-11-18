@@ -14,7 +14,6 @@ from typing import (
 import numpy as np
 import polars
 from numpy.core.numeric import Infinity
-from ropt.config.enopt import EnOptConfig
 from ropt.enums import EventType
 from ropt.plan import BasicOptimizer, Event
 from ropt.results import FunctionResults, GradientResults, convert_to_maximize
@@ -39,8 +38,10 @@ class OptimalResult:
         if o is None:
             return None
 
+        # Note: ROPT results are 1-indexed now, and seba keeps its own counter
+        # +1'ing here corrects that discrepancy.
         return OptimalResult(
-            batch=o.batch, controls=o.controls, total_objective=o.total_objective
+            batch=o.batch + 1, controls=o.controls, total_objective=o.total_objective
         )
 
 
@@ -423,12 +424,12 @@ class EverestStorage:
 
         self.data.objective_functions = polars.DataFrame(
             {
-                "objective_name": config.objective_functions.names,
+                "objective_name": config.objectives.names,
                 "weight": polars.Series(
-                    config.objective_functions.weights, dtype=polars.Float32
+                    config.objectives.weights, dtype=polars.Float32
                 ),
                 "normalization": polars.Series(
-                    [1.0 / s for s in config.objective_functions.scales],
+                    [1.0 / s for s in config.objectives.scales],
                     dtype=polars.Float32,
                 ),
             }
@@ -455,17 +456,14 @@ class EverestStorage:
             }
         )
 
-    def _store_function_results(
-        self, config: EnOptConfig, results: FunctionResults
-    ) -> _EvaluationResults:
+    def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         realization_objectives = polars.from_pandas(
-            results.to_dataframe(config, "evaluations").reset_index()
+            results.to_dataframe("evaluations").reset_index()
         ).drop("plan_id")
         batch_objectives = polars.from_pandas(
             results.to_dataframe(
-                config,
                 "functions",
                 select=["objectives", "weighted_objective", "scaled_objectives"],
             ).reset_index()
@@ -473,7 +471,7 @@ class EverestStorage:
 
         batch_controls = polars.from_pandas(
             results.to_dataframe(
-                config, "evaluations", select=["variables", "scaled_variables"]
+                "evaluations", select=["variables", "scaled_variables"]
             ).reset_index()
         ).drop("plan_id")
 
@@ -502,7 +500,7 @@ class EverestStorage:
 
         try:
             batch_constraints = polars.from_pandas(
-                results.to_dataframe(config, "nonlinear_constraints").reset_index()
+                results.to_dataframe("nonlinear_constraints").reset_index()
             ).drop("plan_id")
         except AttributeError:
             batch_constraints = None
@@ -653,18 +651,16 @@ class EverestStorage:
         }
         return df.rename({k: v for k, v in _renames.items() if k in df.columns})
 
-    def _store_gradient_results(
-        self, config: EnOptConfig, results: FunctionResults
-    ) -> _GradientResults:
+    def _store_gradient_results(self, results: FunctionResults) -> _GradientResults:
         perturbation_objectives = polars.from_pandas(
-            results.to_dataframe(config, "evaluations").reset_index()
+            results.to_dataframe("evaluations").reset_index()
         ).drop("plan_id")
 
         try:
             # ROPT_NOTE: Why is this sometimes None? How can we know if it is
             # expected to be None?
             batch_objective_gradient = polars.from_pandas(
-                results.to_dataframe(config, "gradients").reset_index()
+                results.to_dataframe("gradients").reset_index()
             ).drop("plan_id")
         except AttributeError:
             batch_objective_gradient = None
@@ -847,7 +843,7 @@ class EverestStorage:
                 _batches[item.batch_id] = {}
 
             if isinstance(item, FunctionResults):
-                eval_results = self._store_function_results(event.config, item)
+                eval_results = self._store_function_results(item)
 
                 _batches[item.batch_id]["batch_controls"] = eval_results.batch_controls
                 _batches[item.batch_id]["batch_objectives"] = (
@@ -864,7 +860,7 @@ class EverestStorage:
                 )
 
             if isinstance(item, GradientResults):
-                gradient_results = self._store_gradient_results(event.config, item)
+                gradient_results = self._store_gradient_results(item)
 
                 _batches[item.batch_id]["batch_objective_gradient"] = (
                     gradient_results.batch_objective_gradient
