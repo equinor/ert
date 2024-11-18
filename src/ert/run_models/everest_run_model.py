@@ -287,6 +287,9 @@ class EverestRunModel(BaseRunModel):
             seba_storage.get_optimal_result()  # type: ignore
         )
         optimal_result_from_everstorage = self.ever_storage.get_optimal_result()
+
+        # Seems ROPT batches are 1-indexed now,
+        # whereas seba has its own 0-indexed counter.
         assert self._result == optimal_result_from_everstorage
 
         self._exit_code = (
