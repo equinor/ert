@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731938405323,
+  "lastUpdate": 1731939985581,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "5ac831ed67f2d15393bdc9fa2da53a5014b5e3e2",
-          "message": "Add warning when everest-models file outputs do not match everest objectives",
-          "timestamp": "2024-11-13T18:27:54+09:00",
-          "tree_id": "96be8224578478c256319794909450a7966210c4",
-          "url": "https://github.com/equinor/ert/commit/5ac831ed67f2d15393bdc9fa2da53a5014b5e3e2"
-        },
-        "date": 1731490188870,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19508941088438342,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02441490217600472",
-            "extra": "mean: 5.1258548347999975 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03164605887585596",
             "extra": "mean: 5.167176883800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "2475f7fcae76599512b0efc2f74f1edca184b316",
+          "message": "Log which hostname had an OOM-situation",
+          "timestamp": "2024-11-18T15:24:29+01:00",
+          "tree_id": "9055cff49d09320367543cf2926c542dc2b0c4fc",
+          "url": "https://github.com/equinor/ert/commit/2475f7fcae76599512b0efc2f74f1edca184b316"
+        },
+        "date": 1731939985122,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19130676982102993,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05889932274208237",
+            "extra": "mean: 5.227206548599997 sec\nrounds: 5"
           }
         ]
       }
