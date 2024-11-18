@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731927552452,
+  "lastUpdate": 1731938405323,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "03cfa25311451e196ded467b2e260b41a79d6587",
-          "message": "Remove old job queue test snapshot",
-          "timestamp": "2024-11-13T07:59:48+01:00",
-          "tree_id": "932ccdc696aefc5c0347d0d0f614718ebec01a35",
-          "url": "https://github.com/equinor/ert/commit/03cfa25311451e196ded467b2e260b41a79d6587"
-        },
-        "date": 1731481306024,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19111658429816888,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030203551263009",
-            "extra": "mean: 5.232408289800003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03613657517165334",
             "extra": "mean: 5.225785666200016 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "e2924f1b4f98ba583bcdd3f4afaa07fd128e1fe4",
+          "message": "Remove flaky memory profiling test\n\nThis test is too hard to make robust on loaded hardware.",
+          "timestamp": "2024-11-18T14:58:11+01:00",
+          "tree_id": "030728307887e051648f9f7482cc4aa2bebae111",
+          "url": "https://github.com/equinor/ert/commit/e2924f1b4f98ba583bcdd3f4afaa07fd128e1fe4"
+        },
+        "date": 1731938404760,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19352927575116952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03164605887585596",
+            "extra": "mean: 5.167176883800005 sec\nrounds: 5"
           }
         ]
       }
