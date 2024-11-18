@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import partial
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -496,3 +497,21 @@ def test_complete_status_for_normal_run_monitor(
 
     assert expected_status == status["status"]
     assert expected_error == status["message"]
+
+
+@patch("everest.bin.everest_script.server_is_running", return_value=False)
+@patch(
+    "everest.bin.everest_script.everserver_status",
+    return_value={"status": ServerStatus.never_run, "message": None},
+)
+async def test_validate_ert_config_before_starting_everest_server(
+    tmp_path, monkeypatch
+):
+    os.makedirs(tmp_path / "new_folder")
+    monkeypatch.chdir(tmp_path / "new_folder")
+    everest_config = EverestConfig.with_defaults()
+    everest_config.dump("minimal_config.yml")
+    everest_config.config_path = Path("minimal_config.yml").absolute()
+    error = "Expected realizations when analysing data installation source"
+    with pytest.raises(SystemExit, match=f"Config validation error: {error}"):
+        everest_entry([str(everest_config.config_path)])
