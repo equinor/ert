@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import signal
+import socket
 import sys
 import time
 from datetime import datetime as dt
@@ -262,7 +263,7 @@ class ForwardModelStep:
         if killed_by_oom(fm_step_pids):
             return exited_message.with_error(
                 f"Forward model step {self.job_data.get('name')} "
-                "was killed due to out-of-memory. "
+                f"was killed due to out-of-memory on {socket.gethostname()}. "
                 "Max memory usage recorded by Ert for the "
                 f"realization was {max_memory_usage//1024//1024} MB. "
                 "Please add REALIZATION_MEMORY to your ert config together "
