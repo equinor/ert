@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731924969798,
+  "lastUpdate": 1731927552452,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "93081a13cfba2dd439943a5a72912d786e3e2890",
-          "message": "Move everserver config to ServerConfig",
-          "timestamp": "2024-11-13T07:48:44+01:00",
-          "tree_id": "a1cc3c08e11020bf6233519842e48d7e4c985a60",
-          "url": "https://github.com/equinor/ert/commit/93081a13cfba2dd439943a5a72912d786e3e2890"
-        },
-        "date": 1731480640195,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19134390136318888,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01955277528329969",
-            "extra": "mean: 5.226192174799996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04089270139270816",
             "extra": "mean: 5.111572222799998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "a02a4867455e2eef226483ad0e45188735e18d62",
+          "message": "Remove ErtConfig and LibresFacade",
+          "timestamp": "2024-11-18T11:57:17+01:00",
+          "tree_id": "998cf8d3ae389628fba14b1aef664dfe8f944198",
+          "url": "https://github.com/equinor/ert/commit/a02a4867455e2eef226483ad0e45188735e18d62"
+        },
+        "date": 1731927551755,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19135878581242316,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03613657517165334",
+            "extra": "mean: 5.225785666200016 sec\nrounds: 5"
           }
         ]
       }
