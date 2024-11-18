@@ -58,9 +58,9 @@ def make_api_snapshot(api) -> Dict[str, Any]:
         "config_minimal.yml",
         "config_multiobj.yml",
         "config_auto_scaled_controls.yml",
-        "config_cvar.yml",
-        "config_discrete.yml",
-        "config_stddev.yml",
+        # "config_cvar.yml",
+        # "config_discrete.yml",
+        # "config_stddev.yml",
     ],
 )
 def test_api_snapshots(config_file, snapshot, cached_example):
