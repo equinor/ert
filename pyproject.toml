@@ -146,7 +146,7 @@ types = [
 everest = [
     "progressbar2",
     "ruamel.yaml",
-    "flask",
+    "fastapi",
     "decorator",
     "resdata",
     "colorama",
@@ -234,6 +234,11 @@ allowed-confusables = ["–"]
 
 [tool.ruff.lint.pylint]
 max-args = 20
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+]
 
 [tool.pyright]
 include = ["src"]
