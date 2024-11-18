@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731768999963,
+  "lastUpdate": 1731911398765,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "e50f2d3463133db536e3204cd7c27b528122a4e7",
-          "message": "Assume non-LSF host error is flaky\n\nThe LSF driver experiences crashes stemming from bsub returning with the\nerror message 'Request from non-LSF host rejected'. There are reasons to\nbelieve this is not a permanent error, but some flakyness in the IP\ninfrastructure, and thus should should be categorized as a retriable\nfailure.\n\nThe reason for believing this is flakyness is mostly from the fact that\nthe same error is also seen on 'bjobs'-calls. If it was a permanent\nfailure scenario, there would be an enourmous amount of error from these\nbjobs calls, but there is not.",
-          "timestamp": "2024-11-12T14:55:36+01:00",
-          "tree_id": "bf29e38b8c6c51bab62bc55819496f2308075b34",
-          "url": "https://github.com/equinor/ert/commit/e50f2d3463133db536e3204cd7c27b528122a4e7"
-        },
-        "date": 1731419847936,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1855084750782697,
-            "unit": "iter/sec",
-            "range": "stddev: 0.12035984176026342",
-            "extra": "mean: 5.3905892956 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020167511008323178",
             "extra": "mean: 5.129200802000014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "d58862b596cd6fc58039f3eeff3b43d240e4eeb8",
+          "message": "Remove outdated git lfs instruction\n\n\"rpm -qa | grep git-lfs\" reveals this is in place",
+          "timestamp": "2024-11-18T07:28:07+01:00",
+          "tree_id": "8e22e8306b42ae84860c58112f5a1e15a74c8e05",
+          "url": "https://github.com/equinor/ert/commit/d58862b596cd6fc58039f3eeff3b43d240e4eeb8"
+        },
+        "date": 1731911398264,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19320606802078388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02445986601585514",
+            "extra": "mean: 5.1758208747999905 sec\nrounds: 5"
           }
         ]
       }
