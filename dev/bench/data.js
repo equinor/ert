@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732012022492,
+  "lastUpdate": 1732020426812,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "6f6543ff9f57948ce6d65f1e3c8f40da98f8ed9f",
-          "message": "Add right click capability to open external plot windows",
-          "timestamp": "2024-11-13T12:30:18+01:00",
-          "tree_id": "58dee35ba649edec11f47f8b118b28f4402c2303",
-          "url": "https://github.com/equinor/ert/commit/6f6543ff9f57948ce6d65f1e3c8f40da98f8ed9f"
-        },
-        "date": 1731497528855,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1904725305954941,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028072447011939037",
-            "extra": "mean: 5.25010087739999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03895071287625285",
             "extra": "mean: 5.192317420400002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86219529+AugustoMagalhaes@users.noreply.github.com",
+            "name": "AugustoMagalhaes",
+            "username": "AugustoMagalhaes"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a40bed18eca037e87919ac8f021609dfa441a0b",
+          "message": "Highlights selected tab in main window\n\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
+          "timestamp": "2024-11-19T13:45:02+01:00",
+          "tree_id": "d5e58e7af829ed09785811aeb41882a413c05ffa",
+          "url": "https://github.com/equinor/ert/commit/2a40bed18eca037e87919ac8f021609dfa441a0b"
+        },
+        "date": 1732020425849,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.192367426625743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03408702116653935",
+            "extra": "mean: 5.1983852856 sec\nrounds: 5"
           }
         ]
       }
