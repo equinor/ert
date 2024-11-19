@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732020426812,
+  "lastUpdate": 1732027380799,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "8903abb42591d50c9c26b2ad086609b0286baf8d",
-          "message": "Add egg snapshots for py38 and py311",
-          "timestamp": "2024-11-13T12:32:25+01:00",
-          "tree_id": "16931008c0b9b6cdcfefcd7e9a23df0e89140785",
-          "url": "https://github.com/equinor/ert/commit/8903abb42591d50c9c26b2ad086609b0286baf8d"
-        },
-        "date": 1731497655119,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19058716203305348,
-            "unit": "iter/sec",
-            "range": "stddev: 0.017363024075441224",
-            "extra": "mean: 5.246943127399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03408702116653935",
             "extra": "mean: 5.1983852856 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d07a7e7869ccf998597e36d46766e009ac31b512",
+          "message": "Update everest install command in ReadMe (#9255)\n\nUpdate everest install command in ReadMe docs",
+          "timestamp": "2024-11-19T15:41:09+01:00",
+          "tree_id": "41feea775dc97c00633b026c48dac62591993aea",
+          "url": "https://github.com/equinor/ert/commit/d07a7e7869ccf998597e36d46766e009ac31b512"
+        },
+        "date": 1732027380280,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18882093614298373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03430320971169947",
+            "extra": "mean: 5.296022890400008 sec\nrounds: 5"
           }
         ]
       }
