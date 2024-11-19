@@ -12,6 +12,7 @@ from typing import (
     Union,
 )
 
+from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType, PerturbationType, VariableType
 from typing_extensions import Final, TypeAlias
 
@@ -504,7 +505,7 @@ def _parse_environment(ever_config: EverestConfig, ropt_config):
         ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
 
 
-def everest2ropt(ever_config: EverestConfig) -> Dict[str, Any]:
+def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of
@@ -531,4 +532,4 @@ def everest2ropt(ever_config: EverestConfig) -> Dict[str, Any]:
     _parse_model(ever_config, ropt_config)
     _parse_environment(ever_config, ropt_config)
 
-    return ropt_config
+    return EnOptConfig.model_validate(ropt_config)

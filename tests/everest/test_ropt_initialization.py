@@ -3,7 +3,6 @@ import os.path
 import numpy
 import pytest
 from pydantic import ValidationError
-from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType
 
 from everest.config import EverestConfig
@@ -17,7 +16,7 @@ _CONFIG_FILE = "mocked_test_case.yml"
 
 def test_tutorial_everest2ropt():
     ever_config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
-    ropt_config = EnOptConfig.model_validate(everest2ropt(ever_config))
+    ropt_config = everest2ropt(ever_config)
 
     realizations = ropt_config.realizations
 
@@ -32,7 +31,7 @@ def test_everest2ropt_controls():
     controls = config.controls
     assert len(controls) == 1
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
 
     assert len(ropt_config.variables.lower_bounds) == 16
     assert len(ropt_config.variables.upper_bounds) == 16
@@ -43,7 +42,7 @@ def test_everest2ropt_controls_auto_scale():
     controls = config.controls
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert numpy.allclose(ropt_config.variables.lower_bounds, 0.3)
     assert numpy.allclose(ropt_config.variables.upper_bounds, 0.7)
 
@@ -53,7 +52,7 @@ def test_everest2ropt_variables_auto_scale():
     controls = config.controls
     controls[0].variables[1].auto_scale = True
     controls[0].variables[1].scaled_range = [0.3, 0.7]
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert ropt_config.variables.lower_bounds[0] == 0.0
     assert ropt_config.variables.upper_bounds[0] == 0.1
     assert ropt_config.variables.lower_bounds[1] == 0.3
@@ -70,7 +69,7 @@ def test_everest2ropt_controls_input_constraint():
     # Check that there are two input constraints entries in the config
     assert len(input_constraints_ever_config) == 2
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
 
     # The input has two constraints: one two-sided inequality constraint,
     # and an equality constraint. The first is converted into LE and GE
@@ -96,7 +95,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     # Check that there are two input constraints entries in the config
     assert len(input_constraints_ever_config) == 2
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     min_values = ropt_config.variables.lower_bounds.copy()
     max_values = ropt_config.variables.upper_bounds.copy()
     coefficients = ropt_config.linear_constraints.coefficients
@@ -117,7 +116,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     scaled_coefficients = coefficients * (max_values - min_values) / 0.4
     scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0 / 0.4
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert numpy.allclose(
         ropt_config.linear_constraints.coefficients,
         scaled_coefficients,
@@ -131,7 +130,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
 def test_everest2ropt_controls_optimizer_setting():
     config = os.path.join(_CONFIG_DIR, "config_full_gradient_info.yml")
     config = EverestConfig.load_file(config)
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert len(ropt_config.realizations.names) == 15
     assert ropt_config.optimizer.method == "dakota/conmin_mfd"
     assert ropt_config.gradient.number_of_perturbations == 20
@@ -141,7 +140,7 @@ def test_everest2ropt_controls_optimizer_setting():
 def test_everest2ropt_constraints():
     config = os.path.join(_CONFIG_DIR, "config_output_constraints.yml")
     config = EverestConfig.load_file(config)
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert len(ropt_config.nonlinear_constraints.names) == 16
 
 
@@ -150,16 +149,16 @@ def test_everest2ropt_backend_options():
     config = EverestConfig.load_file(config)
 
     config.optimization.options = ["test = 1"]
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.options == ["test = 1"]
 
     config.optimization.backend = "scipy"
     config.optimization.backend_options = {"test": 1}
     with pytest.raises(RuntimeError):
-        _ = EnOptConfig.model_validate(everest2ropt(config))
+        _ = everest2ropt(config)
 
     config.optimization.options = None
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.options["test"] == 1
 
 
@@ -167,7 +166,7 @@ def test_everest2ropt_samplers():
     config = os.path.join(_CONFIG_DIR, "config_samplers.yml")
     config = EverestConfig.load_file(config)
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
 
     assert len(ropt_config.samplers) == 5
     assert ropt_config.gradient.samplers.tolist() == [0, 0, 1, 2, 3, 4]
@@ -205,9 +204,7 @@ def test_everest2ropt_cvar():
         "number_of_realizations": 1,
     }
 
-    ropt_config = EnOptConfig.model_validate(
-        everest2ropt(EverestConfig.model_validate(config_dict))
-    )
+    ropt_config = everest2ropt(EverestConfig.model_validate(config_dict))
 
     assert ropt_config.objective_functions.realization_filters == [0]
     assert len(ropt_config.realization_filters) == 1
@@ -220,9 +217,7 @@ def test_everest2ropt_cvar():
         "percentile": 0.3,
     }
 
-    ropt_config = EnOptConfig.model_validate(
-        everest2ropt(EverestConfig.model_validate(config_dict))
-    )
+    ropt_config = everest2ropt(EverestConfig.model_validate(config_dict))
     assert ropt_config.objective_functions.realization_filters == [0]
     assert len(ropt_config.realization_filters) == 1
     assert ropt_config.realization_filters[0].method == "cvar-objective"
@@ -234,7 +229,7 @@ def test_everest2ropt_arbitrary_backend_options():
     config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     config.optimization.backend_options = {"a": [1]}
 
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert "a" in ropt_config.optimizer.options
     assert ropt_config.optimizer.options["a"] == [1]
 
@@ -245,5 +240,5 @@ def test_everest2ropt_no_algorithm_name(copy_test_data_to_tmp):
     )
 
     config.optimization.algorithm = None
-    ropt_config = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.method == "dakota/default"
