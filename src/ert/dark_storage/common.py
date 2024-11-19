@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import polars
 import xarray as xr
+from polars.exceptions import ColumnNotFoundError
 
 from ert.config import GenDataConfig, GenKwConfig
 from ert.config.field import Field
@@ -184,7 +185,7 @@ def data_for_key(
                 return data.astype(float)
             except ValueError:
                 return data
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, ColumnNotFoundError):
             return pd.DataFrame()
 
     return pd.DataFrame()
