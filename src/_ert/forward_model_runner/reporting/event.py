@@ -98,18 +98,13 @@ class Event(Reporter):
             self._event_publisher_ready.set()
             event = None
             while True:
-                with self._timestamp_lock:
-                    if (
-                        self._timeout_timestamp is not None
-                        and datetime.now() > self._timeout_timestamp
-                    ):
-                        self._timeout_timestamp = None
-                        break
                 if event is None:
                     # if we successfully sent the event we can proceed
                     # to next one
                     print("GETTING MORE EVENTS!")
-                    event = await self._event_queue.get()
+                    event = await asyncio.wait_for(
+                        self._event_queue.get(), timeout=self._reporter_timeout
+                    )
                     if event is self._sentinel:
                         self._event_queue.task_done()
                         print("NEW EVENT WAS SENTINEL :))")

@@ -9,7 +9,12 @@ import typing
 from datetime import datetime
 
 from _ert.forward_model_runner import reporting
-from _ert.forward_model_runner.reporting.message import Finish, ProcessTreeStatus
+from _ert.forward_model_runner.reporting.base import Reporter
+from _ert.forward_model_runner.reporting.message import (
+    Finish,
+    Message,
+    ProcessTreeStatus,
+)
 from _ert.forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
@@ -139,49 +144,64 @@ async def main(args):
         ee_cert_path,
         experiment_id,
     )
+    reporter_queue: asyncio.Queue[Message] = asyncio.Queue()
 
-    job_runner = ForwardModelRunner(jobs_data)
-    job_task = asyncio.create_task(_main(job_runner, parsed_args, reporters))
+    done_flag = asyncio.Event()
+
+    forward_model_runner_task = asyncio.create_task(
+        ForwardModelRunner(jobs_data, reporter_queue=reporter_queue).run(
+            parsed_args.job
+        )
+    )
+    reporting_task = asyncio.create_task(
+        handle_reporting(reporters, reporter_queue, done_flag)
+    )
 
     def handle_sigterm(*args, **kwargs):
-        nonlocal reporters, job_task
-        job_task.cancel()
+        nonlocal reporters, forward_model_runner_task
+        forward_model_runner_task.cancel()
         for reporter in reporters:
             reporter.cancel()
 
     asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, handle_sigterm)
-    await job_task
+
+    await forward_model_runner_task
+
+    done_flag.set()
+    await reporting_task
+
+
+async def handle_reporting(
+    reporters: typing.Iterable[Reporter],
+    message_queue: asyncio.Queue[Message],
+    done: asyncio.Event,
+):
+    while not done.is_set() or not message_queue.empty():
+        try:
+            job_status = await asyncio.wait_for(message_queue.get(), timeout=2)
+        except asyncio.TimeoutError:
+            continue
+        logger.info(f"Job status: {job_status}")
+
+        for reporter in reporters:
+            try:
+                await reporter.report(job_status)
+            except OSError as oserror:
+                print(
+                    f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
+                )
+                await let_reporters_finish(reporters)
+                raise ForwardModelRunnerException from oserror
+        print(f"REPORTERS REPORTED {type(job_status)=}")
+        message_queue.task_done()
+        if isinstance(job_status, Finish) and not job_status.success():
+            print("JONAK HERE")
+            await let_reporters_finish(reporters)
+            raise ForwardModelRunnerException
+    await let_reporters_finish(reporters)
 
 
 async def let_reporters_finish(reporters):
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
             await reporter.join()
-
-
-async def _main(
-    job_runner: ForwardModelRunner,
-    parsed_args,
-    reporters: typing.Sequence[reporting.Reporter],
-):
-    try:
-        async for job_status in job_runner.run(parsed_args.job):
-            logger.info(f"Job status: {job_status}")
-
-            for reporter in reporters:
-                try:
-                    await reporter.report(job_status)
-                    await asyncio.sleep(0)
-                except OSError as oserror:
-                    print(
-                        f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
-                    )
-                    await let_reporters_finish(reporters)
-                    raise ForwardModelRunnerException from oserror
-
-            if isinstance(job_status, Finish) and not job_status.success():
-                await let_reporters_finish(reporters)
-                # raise ForwardModelRunnerException
-    except asyncio.CancelledError:
-        await let_reporters_finish(reporters)
-        raise ForwardModelRunnerException from None

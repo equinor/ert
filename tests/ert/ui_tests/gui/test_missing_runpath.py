@@ -54,6 +54,7 @@ def test_missing_runpath_has_isolated_failures(
     tmp_path, run_experiment, qtbot, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
+    print(f"{tmp_path=}")
     write_config(tmp_path, "LOCAL")
 
     def handle_message_box(dialog):

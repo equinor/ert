@@ -6,11 +6,18 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
-from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
+from _ert.forward_model_runner.reporting.message import (
+    Checksum,
+    Finish,
+    Init,
+    Message,
+)
 
 
 class ForwardModelRunner:
-    def __init__(self, steps_data: Dict[str, Any]):
+    def __init__(
+        self, steps_data: Dict[str, Any], reporter_queue: asyncio.Queue[Message]
+    ):
         self.steps_data = (
             steps_data  # On disk, this is called jobs.json for legacy reasons
         )
@@ -26,7 +33,7 @@ class ForwardModelRunner:
         self.steps: List[ForwardModelStep] = []
         for index, step_data in enumerate(steps_data["jobList"]):
             self.steps.append(ForwardModelStep(step_data, index))
-
+        self._reporter_queue = reporter_queue
         self._set_environment()
 
     def _read_manifest(self):
@@ -50,7 +57,7 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    async def run(self, names_of_steps_to_run: List[str]):
+    async def run(self, names_of_steps_to_run: List[str]) -> None:
         try:
             if not names_of_steps_to_run:
                 step_queue = self.steps
@@ -73,41 +80,48 @@ class ForwardModelRunner:
                     f"{unused} does not exist. "
                     f"Available forward_model steps: {[step.name() for step in self.steps]}"
                 )
-                yield init_message
+                await self.put_event(init_message)
                 await asyncio.sleep(0)
                 return
 
-            yield init_message
+            await self.put_event(init_message)
             await asyncio.sleep(0)
             for step in step_queue:
                 async for status_update in step.run():
-                    yield status_update
+                    await self.put_event(status_update)
                     await asyncio.sleep(0)
                     if not status_update.success():
                         print("JONAK 2")
-                        yield Checksum(checksum_dict={}, run_path=os.getcwd())
+                        await self.put_event(
+                            Checksum(checksum_dict={}, run_path=os.getcwd())
+                        )
                         await asyncio.sleep(0)
-                        yield Finish().with_error(
-                            "Not all forward model steps completed successfully."
+                        await self.put_event(
+                            Finish().with_error(
+                                "Not all forward model steps completed successfully."
+                            )
                         )
                         await asyncio.sleep(0)
                         return
                     await asyncio.sleep(0)
-            print(f"{len(step_queue)=}")
             checksum_dict = self._populate_checksums(self._read_manifest())
             print("JONAK 3")
-            yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
+            await self.put_event(
+                Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
+            )
             await asyncio.sleep(0)
             print("YIELDING FINISH")
-            yield Finish()
+            await self.put_event(Finish())
             await asyncio.sleep(0)
             print("YIELDED FINISH")
             return
         except asyncio.CancelledError:
             print("JONAK 4")
-            yield Checksum(checksum_dict={}, run_path=os.getcwd())
-            yield Finish().with_error(
-                "Not all forward model steps completed successfully."
+            await self.put_event(Checksum(checksum_dict={}, run_path=os.getcwd()))
+            await self.put_event(
+                Finish().with_error(
+                    "Not all forward model steps completed successfully."
+                )
             )
             await asyncio.sleep(0)
             return
@@ -118,3 +132,6 @@ class ForwardModelRunner:
                 for env_key, env_val in os.environ.items():
                     value = value.replace(f"${env_key}", env_val)
                 os.environ[key] = value
+
+    async def put_event(self, event: Message):
+        await self._reporter_queue.put(event)

@@ -103,9 +103,7 @@ class ForwardModelStep:
         try:
             async for msg in self._run():
                 yield msg
-                await asyncio.sleep(0)
         except Exception as e:
-            print("FAILED AT RUN")
             yield Exited(self, exit_code=1).with_error(str(e))
 
     def create_start_message_and_check_job_files(self) -> Start:

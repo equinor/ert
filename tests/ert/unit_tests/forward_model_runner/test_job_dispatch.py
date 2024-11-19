@@ -10,7 +10,7 @@ import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
-from unittest.mock import mock_open, patch
+from unittest.mock import mock_open
 
 import pandas as pd
 import psutil
@@ -26,6 +26,7 @@ from _ert.forward_model_runner.cli import (
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
+from _ert.forward_model_runner.runner import ForwardModelRunner
 from tests.ert.utils import _mock_ws_task, async_wait_until, wait_until
 
 
@@ -345,32 +346,30 @@ async def test_setup_reporters(is_interactive_run, ens_id):
         assert len(reporters) == 1
         assert any(isinstance(r, Interactive) for r in reporters)
 
+    for reporter in reporters:
+        if isinstance(reporter, Event):
+            await reporter.join()
+
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+async def test_job_dispatch_kills_itself_after_unsuccessful_job(
+    unused_tcp_port, monkeypatch
+):
     host = "localhost"
     port = unused_tcp_port
-    jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
+    jobs_json = json.dumps(
+        {"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}", "jobList": []}
+    )
 
-    with (
-        patch("_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)),
-        patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner,
-    ):
+    async def mock_run_method(self: ForwardModelRunner, *args, **kwargs):
+        await self.put_event(Init([], 0, 0))
+        await self.put_event(Finish().with_error("overall bad run"))
 
-        async def mock_run_method(*args, **kwargs):
-            events = [
-                Init([], 0, 0),
-                Finish().with_error("overall bad run"),
-            ]
-            for event in events:
-                await asyncio.sleep(0)
-                yield event
-
-        mock_runner.return_value.run = mock_run_method
-
-        async with _mock_ws_task(host, port, []):
-            with pytest.raises(ForwardModelRunnerException):
-                await main(["script.py"])
+    monkeypatch.setattr(ForwardModelRunner, "run", mock_run_method)
+    monkeypatch.setattr("builtins.open", mock_open(read_data=jobs_json))
+    async with _mock_ws_task(host, port, []):
+        with pytest.raises(ForwardModelRunnerException):
+            await main(["script.py"])
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")

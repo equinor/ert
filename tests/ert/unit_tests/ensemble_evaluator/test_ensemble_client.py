@@ -34,9 +34,10 @@ async def test_retry(unused_tcp_port):
     messages = []
 
     messages_c1 = ["test_1", "test_2", "test_3"]
-    async with _mock_ws_task(host, unused_tcp_port, messages, delay_startup=2), Client(
-        url, max_retries=2, timeout_multiplier=2
-    ) as c1:
+    async with (
+        _mock_ws_task(host, unused_tcp_port, messages, delay_startup=2),
+        Client(url, max_retries=2, timeout_multiplier=2) as c1,
+    ):
         for msg in messages_c1:
             await c1.send(msg)
 
