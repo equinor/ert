@@ -187,12 +187,13 @@ def mock_facade():
 
 def mock_storage(batches):
     storage = MagicMock()
-    data = MagicMock()
-    data.load_all_summary_data.side_effect = [
+    mock_ensemble = MagicMock()
+    mock_ensemble.load_all_summary_data.side_effect = [
         _mock_summary_collector(i) for i in batches
     ]
-    experiment = storage.get_experiment_by_name.return_value
-    experiment.get_ensemble_by_name.return_value = data
+    mock_experiment = MagicMock()
+    mock_experiment.get_ensemble_by_name.return_value = mock_ensemble
+    type(storage).experiments = PropertyMock(return_value=iter([mock_experiment]))
     return storage
 
 

@@ -185,11 +185,10 @@ def reload_data(ever_config: EverestConfig, backup_path=None) -> None:
 def _internalize_batch(
     ensemble_path: str, run_path_format: str, batch_id, batch_data
 ) -> None:
-    case_name = "batch_{}".format(batch_id)
     batch_size = batch_data.shape[0]
     with open_storage(ensemble_path, "w") as storage:
-        experiment = storage.get_experiment_by_name(f"experiment_{case_name}")
-        ensemble = experiment.get_ensemble_by_name(case_name)
+        experiment = next(storage.experiments)
+        ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
         active_realizations = list(range(batch_size))
         LibresFacade.load_from_run_path(run_path_format, ensemble, active_realizations)
 
