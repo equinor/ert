@@ -685,6 +685,20 @@ _DUMMY_SLAVE_STARTED_MESSAGE = """\
             _DUMMY_SLAVE_STARTED_MESSAGE,
             [_DUMMY_SLAVE_STARTED_MESSAGE],
         ),
+        (
+            f"""\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+{_DUMMY_SLAVE_STARTED_MESSAGE}
+
+<various_output>
+
+{_DUMMY_ERROR_MESSAGE_E100}
+ """,
+            [_DUMMY_ERROR_MESSAGE_E100, _DUMMY_SLAVE_STARTED_MESSAGE],
+        ),
     ],
 )
 def test_can_parse_errors(prt_error, expected_error_list):
