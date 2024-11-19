@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import math
 import os
 import shutil
@@ -33,8 +32,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
-
-_logger = logging.getLogger(__name__)
 
 
 class PriorDict(TypedDict):
@@ -239,7 +236,6 @@ class GenKwConfig(ParameterConfig):
         if self.forward_init_file:
             return self.read_from_runpath(Path(), real_nr)
 
-        _logger.info(f"Sampling parameter {self.name} for realization {real_nr}")
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
