@@ -12,15 +12,20 @@ from subprocess import Popen
 from textwrap import dedent
 from unittest.mock import mock_open, patch
 
-from _ert.forward_model_runner.reporting.message import Finish, Init
 import pandas as pd
 import psutil
 import pytest
 
 import _ert.forward_model_runner.cli
-from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
+from _ert.forward_model_runner.cli import (
+    JOBS_FILE,
+    ForwardModelRunnerException,
+    _setup_reporters,
+    main,
+)
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
+from _ert.forward_model_runner.reporting.message import Finish, Init
 from tests.ert.utils import _mock_ws_task, async_wait_until, wait_until
 
 
@@ -351,6 +356,7 @@ async def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port)
         patch("_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)),
         patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner,
     ):
+
         async def mock_run_method(*args, **kwargs):
             events = [
                 Init([], 0, 0),
@@ -359,13 +365,12 @@ async def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port)
             for event in events:
                 await asyncio.sleep(0)
                 yield event
+
         mock_runner.return_value.run = mock_run_method
 
         async with _mock_ws_task(host, port, []):
-            tsk = asyncio.create_task(main(["script.py"]))
-            await tsk
-            assert isinstance(tsk.exception, SystemExit)
-        await asyncio.sleep(0)
+            with pytest.raises(ForwardModelRunnerException):
+                await main(["script.py"])
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")

@@ -17,6 +17,10 @@ JOBS_FILE = "jobs.json"
 logger = logging.getLogger(__name__)
 
 
+class ForwardModelRunnerException(Exception):
+    pass
+
+
 def _setup_reporters(
     is_interactive_run,
     ens_id,
@@ -172,11 +176,11 @@ async def _main(
                         f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
                     )
                     await let_reporters_finish(reporters)
-                    raise SystemExit(1)
+                    raise ForwardModelRunnerException from oserror
 
             if isinstance(job_status, Finish) and not job_status.success():
                 await let_reporters_finish(reporters)
-                raise SystemExit(1)
+                raise ForwardModelRunnerException
     except asyncio.CancelledError:
         await let_reporters_finish(reporters)
-        raise SystemExit(1)
+        raise ForwardModelRunnerException from None
