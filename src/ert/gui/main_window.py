@@ -9,6 +9,7 @@ from qtpy.QtCore import QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
 from qtpy.QtWidgets import (
     QAction,
+    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
@@ -51,6 +52,7 @@ BUTTON_STYLE_SHEET_LIGHT: str = (
     BUTTON_STYLE_SHEET
     + """
     QToolButton:hover {background-color: rgba(50, 50, 50, 90);}
+    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}
     """
 )
 
@@ -58,6 +60,7 @@ BUTTON_STYLE_SHEET_DARK: str = (
     BUTTON_STYLE_SHEET
     + """
     QToolButton:hover {background-color: rgba(30, 30, 30, 150);}
+    QToolButton:checked {background-color: rgba(30, 30, 30, 120);}
     """
 )
 
@@ -101,6 +104,7 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setLayout(self.central_layout)
         self.facade = LibresFacade(self.ert_config)
         self.side_frame = QFrame(self)
+        self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: List[PlotWindow] = []
 
         if self.is_dark_mode():
@@ -256,6 +260,7 @@ class ErtMainWindow(QMainWindow):
 
     def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
         button = SidebarToolButton(self.side_frame)
+        button.setCheckable(True)
         button.setFixedSize(85, 95)
         button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
@@ -278,6 +283,7 @@ class ErtMainWindow(QMainWindow):
         button.clicked.connect(self.select_central_widget)
         button.right_clicked.connect(self.right_clicked)
         button.setProperty("index", name)
+        self.button_group.addButton(button)
         return button
 
     def __add_help_menu(self) -> None:
