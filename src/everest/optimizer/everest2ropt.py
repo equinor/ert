@@ -19,6 +19,11 @@ from typing_extensions import Final, TypeAlias
 from everest.config import (
     ControlConfig,
     EverestConfig,
+    InputConstraintConfig,
+    ModelConfig,
+    ObjectiveFunctionConfig,
+    OptimizationConfig,
+    OutputConstraintConfig,
     SamplerConfig,
 )
 from everest.config.control_variable_config import (
@@ -236,7 +241,7 @@ def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
         ropt_config["gradient"]["samplers"] = sampler_indices
 
 
-def _parse_objectives(ever_config: EverestConfig, ropt_config):
+def _parse_objectives(objective_functions: List[ObjectiveFunctionConfig], ropt_config):
     names: List[str] = []
     scales: List[float] = []
     auto_scale: List[bool] = []
@@ -244,8 +249,7 @@ def _parse_objectives(ever_config: EverestConfig, ropt_config):
     transform_indices: List[int] = []
     transforms: List = []
 
-    ever_objs = ever_config.objective_functions or []
-    for objective in ever_objs:
+    for objective in objective_functions:
         assert isinstance(objective.name, str)
         names.append(objective.name)
         weights.append(objective.weight or 1.0)
@@ -286,9 +290,12 @@ def _parse_objectives(ever_config: EverestConfig, ropt_config):
         ropt_config["function_transforms"] = transforms
 
 
-def _parse_input_constraints(ever_config: EverestConfig, ropt_config, formatted_names):
-    input_constrs = ever_config.input_constraints or None
-    if input_constrs is None:
+def _parse_input_constraints(
+    input_constraints: Optional[List[InputConstraintConfig]],
+    ropt_config,
+    formatted_names,
+):
+    if not input_constraints:
         return
 
     coefficients_matrix = []
@@ -301,7 +308,7 @@ def _parse_input_constraints(ever_config: EverestConfig, ropt_config, formatted_
             rhs_values.append(rhs_value)
             types.append(constraint_type)
 
-    for constr in input_constrs:
+    for constr in input_constraints:
         coefficients = [0.0] * len(formatted_names)
         for name, value in constr.weights.items():
             coefficients[formatted_names.index(name)] = value
@@ -323,9 +330,10 @@ def _parse_input_constraints(ever_config: EverestConfig, ropt_config, formatted_
     }
 
 
-def _parse_output_constraints(ever_config: EverestConfig, ropt_config):
-    ever_constrs = ever_config.output_constraints or None
-    if ever_constrs is None:
+def _parse_output_constraints(
+    output_constraints: Optional[List[OutputConstraintConfig]], ropt_config
+):
+    if not output_constraints:
         return
 
     names: List[str] = []
@@ -345,7 +353,7 @@ def _parse_output_constraints(ever_config: EverestConfig, ropt_config):
             auto_scale.append(constr.auto_scale or False)
             types.append(constraint_type)
 
-    for constr in ever_constrs:
+    for constr in output_constraints:
         target = constr.target
         upper_bound = constr.upper_bound
         lower_bound = constr.lower_bound
@@ -377,11 +385,13 @@ def _parse_output_constraints(ever_config: EverestConfig, ropt_config):
     }
 
 
-def _parse_optimization(ever_config: EverestConfig, ropt_config):
+def _parse_optimization(
+    ever_opt: Optional[OptimizationConfig],
+    has_output_constraints: bool,
+    ropt_config,
+):
     ropt_config["optimizer"] = {}
-
-    ever_opt = ever_config.optimization or None
-    if ever_opt is None:
+    if not ever_opt:
         return
 
     ropt_optimizer = ropt_config["optimizer"]
@@ -416,9 +426,8 @@ def _parse_optimization(ever_config: EverestConfig, ropt_config):
         raise RuntimeError("Only one of 'options' and 'backend_options' allowed.")
     # The constraint_tolerance option is only used by Dakota:
     if backend == "dakota":
-        output_constraints = ever_config.output_constraints or None
         alg_const_tol = ever_opt.constraint_tolerance or None
-        if output_constraints is not None and alg_const_tol is not None:
+        if has_output_constraints and alg_const_tol is not None:
             options += [f"constraint_tolerance = {alg_const_tol}"]
     if options:
         ropt_optimizer["options"] = options
@@ -477,9 +486,12 @@ def _parse_optimization(ever_config: EverestConfig, ropt_config):
             ropt_optimizer["split_evaluations"] = True
 
 
-def _parse_model(ever_config: EverestConfig, ropt_config):
-    ever_model = ever_config.model or None
-    if ever_model is None:
+def _parse_model(
+    ever_model: Optional[ModelConfig],
+    ever_opt: Optional[OptimizationConfig],
+    ropt_config,
+):
+    if not ever_model:
         return
 
     ever_reals = ever_model.realizations or []
@@ -491,18 +503,17 @@ def _parse_model(ever_config: EverestConfig, ropt_config):
         "names": ever_reals,
         "weights": ever_reals_weights,
     }
-    ever_opt = ever_config.optimization or None
-    min_real_succ = ever_opt.min_realizations_success if ever_opt is not None else None
+    min_real_succ = ever_opt.min_realizations_success if ever_opt else None
     if min_real_succ is not None:
         ropt_config["realizations"]["realization_min_success"] = min_real_succ
 
 
-def _parse_environment(ever_config: EverestConfig, ropt_config):
-    ropt_config["optimizer"]["output_dir"] = os.path.abspath(
-        ever_config.optimization_output_dir
-    )
-    if ever_config.environment.random_seed is not None:
-        ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
+def _parse_environment(
+    optimization_output_dir: str, random_seed: Optional[int], ropt_config
+):
+    ropt_config["optimizer"]["output_dir"] = os.path.abspath(optimization_output_dir)
+    if random_seed is not None:
+        ropt_config["gradient"]["seed"] = random_seed
 
 
 def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
@@ -525,11 +536,25 @@ def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
         for control_name in ropt_config["variables"]["names"]
     ]
 
-    _parse_objectives(ever_config, ropt_config)
-    _parse_input_constraints(ever_config, ropt_config, control_names)
-    _parse_output_constraints(ever_config, ropt_config)
-    _parse_optimization(ever_config, ropt_config)
-    _parse_model(ever_config, ropt_config)
-    _parse_environment(ever_config, ropt_config)
+    _parse_objectives(ever_config.objective_functions, ropt_config)
+    _parse_input_constraints(ever_config.input_constraints, ropt_config, control_names)
+    _parse_output_constraints(ever_config.output_constraints, ropt_config)
+    _parse_optimization(
+        ever_opt=ever_config.optimization,
+        has_output_constraints=ever_config.output_constraints is not None,
+        ropt_config=ropt_config,
+    )
+    _parse_model(
+        ever_model=ever_config.model,
+        ever_opt=ever_config.optimization,
+        ropt_config=ropt_config,
+    )
+    _parse_environment(
+        optimization_output_dir=ever_config.optimization_output_dir,
+        random_seed=ever_config.environment.random_seed
+        if ever_config.environment
+        else None,
+        ropt_config=ropt_config,
+    )
 
     return EnOptConfig.model_validate(ropt_config)
