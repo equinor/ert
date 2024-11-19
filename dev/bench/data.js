@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732006233105,
+  "lastUpdate": 1732007005809,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "d11ba38bd8f93808ae60d320e03ab10725294dec",
-          "message": "Use uvloop for asyncio\n\nThis replacement loop is significantly faster for sockets and streams",
-          "timestamp": "2024-11-13T12:10:35+01:00",
-          "tree_id": "edd7b884d97ea1c00fce1f6c50255b0a31c14538",
-          "url": "https://github.com/equinor/ert/commit/d11ba38bd8f93808ae60d320e03ab10725294dec"
-        },
-        "date": 1731496351881,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1952211746880142,
-            "unit": "iter/sec",
-            "range": "stddev: 0.023524822419013096",
-            "extra": "mean: 5.122395158199998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02770199828680481",
             "extra": "mean: 5.138404363599994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f38fd9d30f3e91e0cc9b38d247ab17ca84e1dd68",
+          "message": "Perform validation earlier by returning EnOptConfig instead of dict  (#9249)\n\nPerform earlier validation on the EnOptConfig",
+          "timestamp": "2024-11-19T10:01:30+01:00",
+          "tree_id": "5a0df2e7ea226799299a7c87f624ddb2e4e9d4c3",
+          "url": "https://github.com/equinor/ert/commit/f38fd9d30f3e91e0cc9b38d247ab17ca84e1dd68"
+        },
+        "date": 1732007004879,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19363517092743143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038216885462063914",
+            "extra": "mean: 5.164351058800003 sec\nrounds: 5"
           }
         ]
       }
