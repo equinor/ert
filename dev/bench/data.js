@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731939985581,
+  "lastUpdate": 1732006233105,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "d673a07d7e4d8db7f1e49ded19bc1739e3dec249",
-          "message": "Make ropt use \"_\" instead of \".\" delimiter",
-          "timestamp": "2024-11-13T11:26:15+01:00",
-          "tree_id": "1147ceee05d07a5dd6382b7a21e8182fc6807d53",
-          "url": "https://github.com/equinor/ert/commit/d673a07d7e4d8db7f1e49ded19bc1739e3dec249"
-        },
-        "date": 1731493691047,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19402654589616652,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04883771372788808",
-            "extra": "mean: 5.153933939200004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05889932274208237",
             "extra": "mean: 5.227206548599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "49dde01efb96dc9b19fef2c07b6417fac5dce60e",
+          "message": "Fix incorrect batch ensemble getter",
+          "timestamp": "2024-11-19T09:48:35+01:00",
+          "tree_id": "de6901c4332e6c9fe553c6854838e05a661d0cbe",
+          "url": "https://github.com/equinor/ert/commit/49dde01efb96dc9b19fef2c07b6417fac5dce60e"
+        },
+        "date": 1732006232480,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19461294387104142,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02770199828680481",
+            "extra": "mean: 5.138404363599994 sec\nrounds: 5"
           }
         ]
       }
