@@ -1,7 +1,8 @@
 import pandas as pd
+import polars
 import pytest
 
-from ert.config import SummaryConfig
+from ert.config import GenDataConfig, SummaryConfig
 from ert.dark_storage.common import data_for_key
 from ert.storage import open_storage
 from tests.ert.unit_tests.config.summary_generator import (
@@ -70,3 +71,32 @@ def test_data_for_key_gives_mean_for_duplicate_values(tmp_path):
         assert df[pd.Timestamp("2014-01-16 05:00:00")][0] == pytest.approx(
             (value1 + value2) / 2
         )
+
+
+def test_data_for_key_returns_empty_gen_data_config(tmp_path):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        gen_data_config = GenDataConfig(keys=["response"])
+        experiment = storage.create_experiment(
+            observations={},
+            parameters=[],
+            responses=[gen_data_config],
+        )
+        ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
+
+        data = data_for_key(ensemble, "response@0")
+        assert data.empty
+
+        ensemble.save_response(
+            "gen_data",
+            polars.DataFrame(
+                {
+                    "response_key": "response",
+                    "report_step": polars.Series([0], dtype=polars.UInt16),
+                    "index": polars.Series([0], dtype=polars.UInt16),
+                    "values": polars.Series([0.0], dtype=polars.Float32),
+                }
+            ),
+            0,
+        )
+        data = data_for_key(ensemble, "response@0")
+        assert not data.empty
