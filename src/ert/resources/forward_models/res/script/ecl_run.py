@@ -47,7 +47,9 @@ class EclError(RuntimeError):
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
-error_pattern_e100 = rf"^\s@--  ERROR{date_sub_pattern}${body_sub_pattern}"
+error_pattern_e100 = (
+    rf"^\s@--  ERROR\s(FROM PROCESSOR \d+)?{date_sub_pattern}${body_sub_pattern}"
+)
 error_pattern_e300 = rf"^\s@--Error${body_sub_pattern}"
 slave_started_pattern = (
     rf"^\s@--MESSAGE{date_sub_pattern}\s^\s@\s+STARTING SLAVE.+${body_sub_pattern}"
