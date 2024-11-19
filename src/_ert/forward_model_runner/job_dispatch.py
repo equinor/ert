@@ -12,8 +12,8 @@ def sigterm_handler(_signo, _stack_frame):
 
 
 def main():
-    os.nice(19)
-    signal.signal(signal.SIGTERM, sigterm_handler)
+    # os.nice(19)
+    # signal.signal(signal.SIGTERM, sigterm_handler)
     asyncio.run(job_runner_main(sys.argv))
 
 

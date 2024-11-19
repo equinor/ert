@@ -12,12 +12,11 @@ import sys
 import time
 from datetime import datetime as dt
 from pathlib import Path
-from subprocess import Popen, run
+from subprocess import run
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
     Dict,
-    Generator,
     List,
     Optional,
     Sequence,
@@ -25,7 +24,7 @@ from typing import (
     cast,
 )
 
-from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
+from psutil import AccessDenied, NoSuchProcess, Process, ZombieProcess
 
 from .io import check_executable
 from .reporting.message import (
@@ -102,10 +101,11 @@ class ForwardModelStep:
 
     async def run(self) -> AsyncGenerator[Start | Exited | Running | None]:
         try:
-            for msg in self._run():
+            async for msg in self._run():
                 yield msg
                 await asyncio.sleep(0)
         except Exception as e:
+            print("FAILED AT RUN")
             yield Exited(self, exit_code=1).with_error(str(e))
 
     def create_start_message_and_check_job_files(self) -> Start:
@@ -163,11 +163,12 @@ class ForwardModelStep:
             combined_environment = {**os.environ, **environment}
         return combined_environment
 
-    def _run(self) -> Generator[Start | Exited | Running | None]:
+    async def _run(self) -> "AsyncGenerator[Start | Exited | Running | None]":
         start_message = self.create_start_message_and_check_job_files()
-
+        print("ACTUALLY RAN")
         yield start_message
         if not start_message.success():
+            print("NOT SUCCESS")
             return
 
         arg_list = self._build_arg_list()
@@ -179,8 +180,8 @@ class ForwardModelStep:
         target_file_mtime: Optional[int] = _get_target_file_ntime(target_file)
 
         try:
-            proc = Popen(
-                arg_list,
+            proc = await asyncio.create_subprocess_exec(
+                *arg_list,
                 stdin=stdin,
                 stdout=stdout,
                 stderr=stderr,
@@ -215,8 +216,10 @@ class ForwardModelStep:
             )
 
             try:
-                exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
-            except TimeoutExpired:
+                exit_code = await asyncio.wait_for(
+                    proc.wait(), timeout=self.MEMORY_POLL_PERIOD
+                )  # process.wait(timeout=self.MEMORY_POLL_PERIOD)
+            except asyncio.TimeoutError:
                 potential_exited_msg = (
                     self.handle_process_timeout_and_create_exited_msg(exit_code, proc)
                 )
@@ -286,7 +289,7 @@ class ForwardModelStep:
         )
 
     def handle_process_timeout_and_create_exited_msg(
-        self, exit_code: Optional[int], proc: Popen[Process]
+        self, exit_code: Optional[int], proc: asyncio.subprocess.Process
     ) -> Exited | None:
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
@@ -361,7 +364,7 @@ class ForwardModelStep:
 
         if executable_error := check_executable(self.job_data.get("executable")):
             errors.append(executable_error)
-
+        print(f"{errors=}")
         return errors
 
     def _check_target_file_is_written(

@@ -74,28 +74,42 @@ class ForwardModelRunner:
                     f"Available forward_model steps: {[step.name() for step in self.steps]}"
                 )
                 yield init_message
+                await asyncio.sleep(0)
                 return
 
             yield init_message
+            await asyncio.sleep(0)
             for step in step_queue:
                 async for status_update in step.run():
                     yield status_update
+                    await asyncio.sleep(0)
                     if not status_update.success():
+                        print("JONAK 2")
                         yield Checksum(checksum_dict={}, run_path=os.getcwd())
+                        await asyncio.sleep(0)
                         yield Finish().with_error(
                             "Not all forward model steps completed successfully."
                         )
+                        await asyncio.sleep(0)
                         return
                     await asyncio.sleep(0)
-
+            print(f"{len(step_queue)=}")
             checksum_dict = self._populate_checksums(self._read_manifest())
+            print("JONAK 3")
             yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
+            await asyncio.sleep(0)
+            print("YIELDING FINISH")
             yield Finish()
+            await asyncio.sleep(0)
+            print("YIELDED FINISH")
+            return
         except asyncio.CancelledError:
+            print("JONAK 4")
             yield Checksum(checksum_dict={}, run_path=os.getcwd())
             yield Finish().with_error(
                 "Not all forward model steps completed successfully."
             )
+            await asyncio.sleep(0)
             return
 
     def _set_environment(self):

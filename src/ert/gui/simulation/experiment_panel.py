@@ -255,7 +255,7 @@ class ExperimentPanel(QWidget):
         self._model = model
 
         QApplication.restoreOverrideCursor()
-        if model.check_if_runpath_exists():
+        if True:  # model.check_if_runpath_exists():
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUN_PATH_WARNING_BOX")
 
@@ -270,7 +270,7 @@ class ExperimentPanel(QWidget):
                     "might be overwritten.\n"
                     "- Previously generated files might "
                     "be used if not configured correctly.\n"
-                    f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
+                    # f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
                     "are running in existing runpaths.\n"
                     "Are you sure you want to continue?"
                 )

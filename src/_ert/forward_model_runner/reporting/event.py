@@ -28,10 +28,10 @@ from _ert.forward_model_runner.reporting.message import (
     Exited,
     Finish,
     Init,
+    Message,
     Running,
     Start,
 )
-from _ert.forward_model_runner.reporting.statemachine import StateMachine
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +67,11 @@ class Event(Reporter):
         else:
             self._cert = None
 
-        self._statemachine = StateMachine()
-        self._statemachine.add_handler((Init,), self._init_handler)
-        self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
-        self._statemachine.add_handler((Checksum,), self._checksum_handler)
-        self._statemachine.add_handler((Finish,), self._finished_handler)
+        # self._statemachine = StateMachine()
+        # self._statemachine.add_handler((Init,), self._init_handler)
+        # self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
+        # self._statemachine.add_handler((Checksum,), self._checksum_handler)
+        # self._statemachine.add_handler((Finish,), self._finished_handler)
 
         self._ens_id = None
         self._real_id = None
@@ -84,6 +84,8 @@ class Event(Reporter):
         self._event_publisher_ready = asyncio.Event()
 
     async def join(self) -> None:
+        print("called join")
+        await self._event_queue.put(Event._sentinel)
         await self._event_publishing_task
 
     async def async_event_publisher(self):
@@ -127,9 +129,19 @@ class Event(Reporter):
                     self._event_queue.task_done()
                     break
 
-    async def report(self, msg):
+    async def report(self, msg: Message):
         await self._event_publisher_ready.wait()
-        await self._statemachine.transition(msg)
+        await self._report(msg)  # await self._statemachine.transition(msg)
+
+    async def _report(self, msg: Message):
+        if isinstance(msg, Init):
+            await self._init_handler(msg)
+        elif isinstance(msg, (Start, Running, Exited)):
+            await self._job_handler(msg)
+        elif isinstance(msg, Checksum):
+            await self._checksum_handler(msg)
+        elif isinstance(msg, Finish):
+            await self._finished_handler()
 
     async def _dump_event(self, event: events.Event):
         print(f"DUMPED EVENT {type(event)=}")
@@ -188,7 +200,7 @@ class Event(Reporter):
             )
             await self._dump_event(event)
 
-    async def _finished_handler(self, _):
+    async def _finished_handler(self):
         await self._event_queue.put(Event._sentinel)
         with self._timestamp_lock:
             self._timeout_timestamp = datetime.now() + timedelta(

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from _ert.forward_model_runner.reporting.base import Reporter
@@ -28,6 +29,7 @@ class Interactive(Reporter):
 
     async def report(self, msg: Message):
         _msg = await self._report(msg)
+        await asyncio.sleep(0)
         if _msg is not None:
             print(_msg)
 

@@ -171,6 +171,7 @@ async def _main(
             for reporter in reporters:
                 try:
                     await reporter.report(job_status)
+                    await asyncio.sleep(0)
                 except OSError as oserror:
                     print(
                         f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
@@ -180,7 +181,7 @@ async def _main(
 
             if isinstance(job_status, Finish) and not job_status.success():
                 await let_reporters_finish(reporters)
-                raise ForwardModelRunnerException
+                # raise ForwardModelRunnerException
     except asyncio.CancelledError:
         await let_reporters_finish(reporters)
         raise ForwardModelRunnerException from None
