@@ -687,9 +687,7 @@ _DUMMY_SLAVE_STARTED_MESSAGE = """\
         ),
     ],
 )
-def test_can_parce_errors_when_eclipse_uses_multiple_cpus(
-    prt_error, expected_error_list
-):
+def test_can_parse_errors(prt_error, expected_error_list):
     Path("ECLCASE.PRT").write_text(prt_error + "\n", encoding="utf-8")
 
     Path("ECLCASE.DATA").write_text("", encoding="utf-8")
