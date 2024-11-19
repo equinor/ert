@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732007005809,
+  "lastUpdate": 1732012022492,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "648aa27f158115786ed1d80a6cbd17f669037150",
-          "message": "Fix error with inconsistent blobsize in flaky test\n\nFixing this bug will probably mitigate flakyness",
-          "timestamp": "2024-11-13T12:18:26+01:00",
-          "tree_id": "f38f6371c61cf5a742d86df9bf9eddbbb5a06537",
-          "url": "https://github.com/equinor/ert/commit/648aa27f158115786ed1d80a6cbd17f669037150"
-        },
-        "date": 1731496818921,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18871684404487493,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01539583628591243",
-            "extra": "mean: 5.298944061200018 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038216885462063914",
             "extra": "mean: 5.164351058800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "0d2c4c8c70f24ddbd293f60b0d97919e7bfcd47e",
+          "message": "Instantiate ert config before starting everest server",
+          "timestamp": "2024-11-19T19:25:11+09:00",
+          "tree_id": "ed2b71c90e3b4b6337cd78205dcafc3cd84e29b4",
+          "url": "https://github.com/equinor/ert/commit/0d2c4c8c70f24ddbd293f60b0d97919e7bfcd47e"
+        },
+        "date": 1732012021877,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1925922317597761,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03895071287625285",
+            "extra": "mean: 5.192317420400002 sec\nrounds: 5"
           }
         ]
       }
