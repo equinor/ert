@@ -41,7 +41,7 @@ This will enable robust decisions about drilling schedule and well
 placement, in order to achieve results of significant practical value.
 
 ```sh
-    pip install . "[everest]"
+    pip install ert[everest]
 ```
 
 ## Developing
