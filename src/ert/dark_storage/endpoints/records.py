@@ -19,7 +19,6 @@ from ert.dark_storage.common import (
 )
 from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
-from ert.storage.realization_storage_state import RealizationStorageState
 
 router = APIRouter(tags=["record"])
 
@@ -117,7 +116,6 @@ def get_ensemble_responses(
 
     response_names_with_observations = set()
     observations = ensemble.experiment.observations
-
     for (
         response_type,
         response_config,
@@ -134,15 +132,7 @@ def get_ensemble_responses(
             )
             response_names_with_observations.update(set(obs_with_responses))
 
-    has_responses = any(
-        s == RealizationStorageState.HAS_DATA for s in ensemble.get_ensemble_state()
-    )
-
-    for name in (
-        ensemble.experiment.response_type_to_response_keys.get("summary", [])
-        if has_responses
-        else []
-    ):
+    for name in ensemble.experiment.response_type_to_response_keys.get("summary", []):
         response_map[str(name)] = js.RecordOut(
             id=UUID(int=0),
             name=name,
@@ -150,13 +140,14 @@ def get_ensemble_responses(
             has_observations=name in response_names_with_observations,
         )
 
-    for name in gen_data_display_keys(ensemble) if has_responses else []:
-        response_map[str(name)] = js.RecordOut(
-            id=UUID(int=0),
-            name=name,
-            userdata={"data_origin": "GEN_DATA"},
-            has_observations=name in response_names_with_observations,
-        )
+    if "gen_data" in ensemble.experiment.response_type_to_response_keys:
+        for name in gen_data_display_keys(ensemble):
+            response_map[str(name)] = js.RecordOut(
+                id=UUID(int=0),
+                name=name,
+                userdata={"data_origin": "GEN_DATA"},
+                has_observations=name in response_names_with_observations,
+            )
 
     return response_map
 
