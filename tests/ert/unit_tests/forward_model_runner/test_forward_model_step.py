@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
+from _ert.forward_model_runner import forward_model_step
 from _ert.forward_model_runner.forward_model_step import (
     ForwardModelStep,
     _get_processtree_data,
@@ -182,13 +183,17 @@ class MockedProcess:
         return contextlib.nullcontext()
 
 
-def test_cpu_seconds_for_process_with_children():
-    (_, cpu_seconds, _) = _get_processtree_data(MockedProcess(123))
+def test_cpu_seconds_for_process_with_children(monkeypatch):
+    def mocked_process(pid):
+        return MockedProcess(123)
+
+    monkeypatch.setattr(forward_model_step, "Process", mocked_process)
+    (_, cpu_seconds, _) = _get_processtree_data(123)
     assert cpu_seconds == 123 / 10.0 + 124 / 10.0
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
-def test_oom_score_is_max_over_processtree():
+def test_oom_score_is_max_over_processtree(monkeypatch):
     def read_text_side_effect(self: pathlib.Path, *args, **kwargs):
         if self.absolute() == pathlib.Path("/proc/123/oom_score"):
             return "234"
@@ -197,6 +202,11 @@ def test_oom_score_is_max_over_processtree():
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
         mocked_read_text.side_effect = read_text_side_effect
+
+        def mocked_process(pid):
+            return MockedProcess(123)
+
+        monkeypatch.setattr(forward_model_step, "Process", mocked_process)
         (_, _, oom_score) = _get_processtree_data(MockedProcess(123))
 
     assert oom_score == 456
