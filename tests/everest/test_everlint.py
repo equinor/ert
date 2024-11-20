@@ -550,25 +550,6 @@ def test_date_type():
             has_error(err, match=f"malformed date: {date}(.*)")
 
 
-def test_lint_report_steps():
-    config_file = relpath("test_data/mocked_test_case/mocked_test_case.yml")
-    config = EverestConfig.load_file(config_file).to_dict()
-    # Check initial config file is valid
-    assert len(EverestConfig.lint_config_dict(config)) == 0
-    config[ConfigKeys.MODEL][ConfigKeys.REPORT_STEPS] = [
-        "2000-1-1",
-        "2001-1-1",
-        "2002-1-1",
-        "2003-1-1",
-    ]
-    # Check config file is valid after report steps have been added
-    assert len(EverestConfig.lint_config_dict(config)) == 0
-    config[ConfigKeys.MODEL][ConfigKeys.REPORT_STEPS].append("invalid_date")
-    # Check config no longer valid when invalid date is added
-    errors = EverestConfig.lint_config_dict(config)
-    has_error(errors, match="malformed date: invalid_date(.*)")
-
-
 @pytest.mark.fails_on_macos_github_workflow
 def test_lint_everest_models_jobs():
     pytest.importorskip("everest_models")

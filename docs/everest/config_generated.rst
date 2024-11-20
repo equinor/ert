@@ -29,12 +29,6 @@ Configuration of the Everest model
     If specified, it must be a list of numeric values, one per realization.
 
 
-**report_steps (optional)**
-    Type: *Optional[List[str]]*
-
-    List of dates allowed in the summary file.
-
-
 
 controls (required)
 -------------------
