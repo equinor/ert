@@ -88,7 +88,6 @@ optimization:
 model:
   realizations: [0, 1, 2]
   data_file: ../../eclipse/include/realizations/realization-r{{realization}}/eclipse/model/EGG_FLOW.DATA
-  report_steps: ['2014-05-30', '2014-08-28', '2014-11-26', '2015-02-24', '2015-05-25', '2015-08-23', '2015-11-21', '2016-02-19', '2016-05-19']
 
 environment:
   simulation_folder: egg_simulations

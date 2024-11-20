@@ -644,33 +644,6 @@ def test_that_model_data_file_exists(change_to_tmpdir):
     )
 
 
-def test_that_model_report_steps_invalid_dates_errors(change_to_tmpdir):
-    os.makedirs("config_dir/relative/path")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
-
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            model={
-                "realizations": [1, 2, 3],
-                "report_steps": ["2022-02-02", "hey", "yo", "sup", "ma", "dawg"],
-                "data_file": "relative/path",
-            },
-            config_path=Path("config_dir/test.yml"),
-        )
-
-    assert has_error(e.value, "malformed dates: hey, yo, sup, ma, dawg")
-
-    EverestConfig.with_defaults(
-        model={
-            "realizations": [1, 2, 3],
-            "report_steps": ["2022-01-01", "2022-01-03", "2022-01-05"],
-            "data_file": "relative/path",
-        },
-        config_path=Path("config_dir/test.yml"),
-    )
-
-
 @pytest.mark.parametrize(
     ["install_keyword"],
     [
@@ -990,3 +963,8 @@ def test_warning_forward_model_write_objectives(objective, forward_model, warnin
                 objective_functions=[{"name": o} for o in objective],
                 forward_model=forward_model,
             )
+
+
+def test_deprecated_keyword():
+    with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
+        ModelConfig(**{"report_steps": []})

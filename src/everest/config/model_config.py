@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, NonNegativeInt, field_validator, model_validator
+from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
-from everest.strings import DATE_FORMAT
+from ert.config import ConfigWarning
 
 
 class ModelConfig(BaseModel, extra="forbid"):  # type: ignore
@@ -26,10 +25,16 @@ NOTE: Without a data file no well or group specific summary data will be exporte
 
 If specified, it must be a list of numeric values, one per realization.""",
     )
-    report_steps: Optional[List[str]] = Field(
-        default=None,
-        description="List of dates allowed in the summary file.",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def remove_deprecated(cls, values):
+        if values.get("report_steps") is not None:
+            ConfigWarning.warn(
+                "report_steps no longer has any effect and can be removed."
+            )
+            values.pop("report_steps")
+        return values
 
     @model_validator(mode="before")
     @classmethod
@@ -47,25 +52,3 @@ If specified, it must be a list of numeric values, one per realization.""",
             )
 
         return values
-
-    @field_validator("report_steps")
-    @classmethod
-    def validate_report_steps_are_dates(cls, report_steps):  # pylint: disable=E0213
-        invalid_steps = []
-        for step in report_steps:
-            try:
-                if not isinstance(step, str):
-                    invalid_steps.append(str(step))
-                    continue
-
-                datetime.strptime(step, DATE_FORMAT)
-            except ValueError:
-                invalid_steps.append(step)
-
-        if len(invalid_steps) > 0:
-            raise ValueError(
-                f"malformed dates: {', '.join(invalid_steps)},"
-                f"expected format: {DATE_FORMAT}"
-            )
-
-        return report_steps

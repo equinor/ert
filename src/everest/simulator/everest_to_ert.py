@@ -408,33 +408,10 @@ def _extract_templating(ever_config: EverestConfig):
     return forward_model
 
 
-def _insert_strip_dates_job(everest_config: EverestConfig, forward_model):
-    report_steps = everest_config.model.report_steps
-
-    if report_steps:
-        simulation_idx = [
-            idx
-            for idx, model in enumerate(forward_model)
-            if "eclipse" in model.split()[0] or "flow" in model.split()[0]
-        ]
-
-        strip_dates_job_str = "{job_name} {args}".format(
-            job_name="strip_dates",
-            args="--summary {file} --dates {dates}".format(
-                file="<ECLBASE>.UNSMRY", dates=" ".join(report_steps)
-            ),
-        )
-
-        for idx in simulation_idx:
-            forward_model.insert(idx + 1, strip_dates_job_str)
-    return forward_model
-
-
 def _extract_forward_model(ever_config: EverestConfig, ert_config):
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
     forward_model += ever_config.forward_model or []
-    forward_model = _insert_strip_dates_job(ever_config, forward_model)
 
     sim_job = ert_config.get(ErtConfigKeys.SIMULATION_JOB, [])
     for job in forward_model:

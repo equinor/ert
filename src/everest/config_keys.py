@@ -104,7 +104,6 @@ class ConfigKeys:
     REALIZATIONS = "realizations"
     REALIZATIONS_WEIGHTS = "realizations_weights"
     RELATIVE = "relative"
-    REPORT_STEPS = "report_steps"
     RESUBMIT_LIMIT = "resubmit_limit"
     SKIP_EXPORT = "skip_export"
     RUN_TEMPLATE = "run_template"

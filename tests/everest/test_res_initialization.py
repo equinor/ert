@@ -32,7 +32,7 @@ SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
 
 
-def build_snake_dict(output_dir, queue_system, report_steps=False):
+def build_snake_dict(output_dir, queue_system):
     # This is a tested config from ert corresponding to the
     # snake_oil
 
@@ -50,20 +50,6 @@ def build_snake_dict(output_dir, queue_system, report_steps=False):
             ("snake_oil_npv",),
             ("snake_oil_diff",),
         ]
-        if report_steps:
-            sim_jobs.insert(2, ("eclipse100",))
-            sim_jobs.insert(
-                3,
-                (
-                    "strip_dates",
-                    "--summary",
-                    "<ECLBASE>.UNSMRY",
-                    "--dates",
-                    "2000-1-1",
-                    "2001-1-2",
-                    "2002-1-1",
-                ),
-            )
         return sim_jobs
 
     def install_jobs():
@@ -608,24 +594,6 @@ def test_install_data_with_invalid_templates(
         EverestConfig.load_file(config_file)
 
     assert expected_error_msg in str(exc_info.value)
-
-
-def test_strip_date_job_insertion(copy_snake_oil_to_tmp):
-    # Load config file
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-    ever_config.model.report_steps = [
-        "2000-1-1",
-        "2001-1-2",
-        "2002-1-1",
-    ]
-    ever_config.forward_model.insert(1, "eclipse100")
-
-    output_dir = ever_config.output_dir
-    snake_dict = build_snake_dict(output_dir, ConfigKeys.LOCAL, report_steps=True)
-
-    # Transform to res dict and verify equality
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    assert snake_dict == ert_config_dict
 
 
 def test_workflow_job(copy_snake_oil_to_tmp):
