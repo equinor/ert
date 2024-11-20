@@ -77,6 +77,7 @@ class SlurmDriver(Driver):
         max_runtime: Optional[float] = None,
         squeue_timeout: float = 2,
         project_code: Optional[str] = None,
+        activate_script: str = "",
     ) -> None:
         """
         The arguments "memory" and "realization_memory" are currently both
@@ -90,7 +91,7 @@ class SlurmDriver(Driver):
         zero "realization memory" is the default and means no intended
         memory allocation.
         """
-        super().__init__()
+        super().__init__(activate_script)
         self._submit_locks: dict[int, asyncio.Lock] = {}
         self._iens2jobid: dict[int, str] = {}
         self._jobs: dict[str, JobData] = {}
@@ -181,7 +182,7 @@ class SlurmDriver(Driver):
         if runpath is None:
             runpath = Path.cwd()
 
-        script = create_submit_script(runpath, executable, args)
+        script = create_submit_script(runpath, executable, args, self.activate_script)
         script_path: Optional[Path] = None
         try:
             with NamedTemporaryFile(

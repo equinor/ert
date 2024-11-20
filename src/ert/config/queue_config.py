@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 from abc import abstractmethod
@@ -26,12 +27,20 @@ logger = logging.getLogger(__name__)
 NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
 
 
+def activate_script() -> str:
+    venv = os.environ.get("VIRTUAL_ENV")
+    if not venv:
+        return ""
+    return f"source {venv}/bin/activate"
+
+
 @pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
 class QueueOptions:
     name: str
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: Optional[str] = None
+    activate_script: str = field(default_factory=activate_script)
 
     @staticmethod
     def create_queue_options(
@@ -292,7 +301,6 @@ class QueueConfig:
         _grouped_queue_options = _group_queue_options_by_queue_system(
             _raw_queue_options
         )
-
         _log_duplicated_queue_options(_raw_queue_options)
         _raise_for_defaulted_invalid_options(_raw_queue_options)
 

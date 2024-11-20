@@ -13,10 +13,13 @@ SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal value when a process exited due to a signal"""
 
 
-def create_submit_script(runpath: Path, executable: str, args: tuple[str, ...]) -> str:
+def create_submit_script(
+    runpath: Path, executable: str, args: tuple[str, ...], activate_script: str
+) -> str:
     return (
         "#!/usr/bin/env bash\n"
         f"cd {shlex.quote(str(runpath))}\n"
+        f"{activate_script}\n"
         f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
     )
 
@@ -28,9 +31,10 @@ class FailedSubmit(RuntimeError):
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
-    def __init__(self, **kwargs: Dict[str, str]) -> None:
+    def __init__(self, activate_script: str = "") -> None:
         self._event_queue: Optional[asyncio.Queue[Event]] = None
         self._job_error_message_by_iens: Dict[int, str] = {}
+        self.activate_script = activate_script
 
     @property
     def event_queue(self) -> asyncio.Queue[Event]:

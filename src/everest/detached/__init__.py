@@ -21,6 +21,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.plugins import ErtPluginManager
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -279,22 +280,24 @@ def get_server_queue_options(
     simulator: Optional[SimulatorConfig],
     server: Optional[ServerConfig],
 ) -> QueueOptions:
+    activate_script = ErtPluginManager().activate_script()
     queue_system = _find_res_queue_system(simulator, server)
     ever_queue_config = server if server is not None else simulator
-
     if queue_system == QueueSystem.LSF:
         queue = LsfQueueOptions(
+            activate_script=activate_script,
             lsf_queue=ever_queue_config.name,
             lsf_resource=ever_queue_config.options,
         )
     elif queue_system == QueueSystem.SLURM:
         queue = SlurmQueueOptions(
+            activate_script=activate_script,
             exclude_host=ever_queue_config.exclude_host,
             include_host=ever_queue_config.include_host,
             partition=ever_queue_config.name,
         )
     elif queue_system == QueueSystem.TORQUE:
-        queue = TorqueQueueOptions()
+        queue = TorqueQueueOptions(activate_script=activate_script)
     elif queue_system == QueueSystem.LOCAL:
         queue = LocalQueueOptions()
     else:

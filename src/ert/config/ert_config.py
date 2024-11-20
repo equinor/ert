@@ -54,6 +54,7 @@ from .parsing import (
     ForwardModelStepKeys,
     HistorySource,
     HookRuntime,
+    QueueSystemWithGeneric,
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
@@ -260,6 +261,7 @@ class ErtConfig:
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
     ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = {}
+    ACTIVATE_SCRIPT: Optional[str] = None
 
     substitutions: Substitutions = field(default_factory=Substitutions)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
@@ -347,6 +349,7 @@ class ErtConfig:
                 Dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
             ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = env_pr_fm_step
+            ACTIVATE_SCRIPT = ErtPluginManager().activate_script()
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
@@ -675,6 +678,12 @@ class ErtConfig:
                 user_config_dict[keyword] = value + original_entries
             elif keyword not in user_config_dict:
                 user_config_dict[keyword] = value
+        if cls.ACTIVATE_SCRIPT:
+            if "QUEUE_OPTION" not in user_config_dict:
+                user_config_dict["QUEUE_OPTION"] = []
+            user_config_dict["QUEUE_OPTION"].append(
+                [QueueSystemWithGeneric.GENERIC, "ACTIVATE_SCRIPT", cls.ACTIVATE_SCRIPT]
+            )
         return user_config_dict
 
     @classmethod

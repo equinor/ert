@@ -198,6 +198,17 @@ class ErtPluginManager(pluggy.PluginManager):
         ]
         return list(chain.from_iterable(reversed(plugin_site_config_lines)))
 
+    def activate_script(self) -> str:
+        plugin_responses = self.hook.activate_script()
+        if not plugin_responses:
+            return ""
+        if len(plugin_responses) > 1:
+            raise ValueError(
+                f"Only one activate script is allowed, got {[plugin.plugin_metadata.plugin_name for plugin in plugin_responses]}"
+            )
+        else:
+            return plugin_responses[0].data
+
     def get_installable_workflow_jobs(self) -> Dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()

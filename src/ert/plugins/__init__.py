@@ -33,6 +33,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "flow_config_path",
                     "help_links",
                     "site_config_lines",
+                    "activate_script",
                 ]
                 and res is not None
             ):

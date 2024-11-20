@@ -145,8 +145,9 @@ class OpenPBSDriver(Driver):
         qsub_cmd: Optional[str] = None,
         qstat_cmd: Optional[str] = None,
         qdel_cmd: Optional[str] = None,
+        activate_script: str = "",
     ) -> None:
-        super().__init__()
+        super().__init__(activate_script)
 
         self._queue_name = queue_name
         self._project_code = project_code
@@ -241,7 +242,7 @@ class OpenPBSDriver(Driver):
             [] if self._keep_qsub_output else ["-o", "/dev/null", "-e", "/dev/null"]
         )
 
-        script = create_submit_script(runpath, executable, args)
+        script = create_submit_script(runpath, executable, args, self.activate_script)
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             str(self._qsub_cmd),

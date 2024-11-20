@@ -1,3 +1,4 @@
+from .activate_script import activate_script
 from .ecl_config import (
     ecl100_config_path,
     ecl300_config_path,
@@ -21,6 +22,7 @@ from .logging import (
 from .site_config import site_config_lines
 
 __all__ = [
+    "activate_script",
     "add_log_handle_to_root",
     "add_span_processor",
     "ecl100_config_path",
