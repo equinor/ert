@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Final, Union
@@ -67,26 +66,26 @@ class Event(Reporter):
         else:
             self._cert = None
 
-        # self._statemachine = StateMachine()
-        # self._statemachine.add_handler((Init,), self._init_handler)
-        # self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
-        # self._statemachine.add_handler((Checksum,), self._checksum_handler)
-        # self._statemachine.add_handler((Finish,), self._finished_handler)
-
         self._ens_id = None
         self._real_id = None
         self._event_queue: asyncio.Queue[events.Event | EventSentinel] = asyncio.Queue()
-        self._timeout_timestamp = None
-        self._timestamp_lock = threading.Lock()
+
         # seconds to timeout the reporter the thread after Finish() was received
+        self._timeout_timestamp = None
         self._reporter_timeout = 60
+
+        self._queue_polling_timeout = 2
         self._event_publishing_task = asyncio.create_task(self.async_event_publisher())
         self._event_publisher_ready = asyncio.Event()
 
     async def join(self) -> None:
         print("called join")
-        await self._event_queue.put(Event._sentinel)
         await self._event_publishing_task
+
+    async def stop(self) -> None:
+        print("called stop")
+        await self._event_queue.put(Event._sentinel)
+        await self.join()
 
     async def async_event_publisher(self):
         logger.debug("Publishing event.")
@@ -97,17 +96,18 @@ class Event(Reporter):
         ) as client:
             self._event_publisher_ready.set()
             event = None
-            while True:
+            while (
+                self._timeout_timestamp is None
+                or datetime.now() <= self._timeout_timestamp
+            ):
                 if event is None:
                     # if we successfully sent the event we can proceed
                     # to next one
-                    print("GETTING MORE EVENTS!")
                     event = await asyncio.wait_for(
-                        self._event_queue.get(), timeout=self._reporter_timeout
+                        self._event_queue.get(), timeout=self._queue_polling_timeout
                     )
                     if event is self._sentinel:
                         self._event_queue.task_done()
-                        print("NEW EVENT WAS SENTINEL :))")
                         break
                 try:
                     await client.send(event_to_json(event))
@@ -123,10 +123,11 @@ class Event(Reporter):
                     logger.debug(str(exception))
                     self._event_queue.task_done()
                     break
+        print("TIMED OUT")
 
     async def report(self, msg: Message):
         await self._event_publisher_ready.wait()
-        await self._report(msg)  # await self._statemachine.transition(msg)
+        await self._report(msg)
 
     async def _report(self, msg: Message):
         if isinstance(msg, Init):
@@ -197,10 +198,9 @@ class Event(Reporter):
 
     async def _finished_handler(self):
         await self._event_queue.put(Event._sentinel)
-        with self._timestamp_lock:
-            self._timeout_timestamp = datetime.now() + timedelta(
-                seconds=self._reporter_timeout
-            )
+        self._timeout_timestamp = datetime.now() + timedelta(
+            seconds=self._reporter_timeout
+        )
 
     async def _checksum_handler(self, msg: Checksum):
         fm_checksum = ForwardModelStepChecksum(

@@ -348,7 +348,7 @@ async def test_setup_reporters(is_interactive_run, ens_id):
 
     for reporter in reporters:
         if isinstance(reporter, Event):
-            await reporter.join()
+            await reporter.stop()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

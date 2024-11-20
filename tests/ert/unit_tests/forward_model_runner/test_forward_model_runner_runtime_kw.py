@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from _ert.forward_model_runner.reporting.message import Exited, Finish, Start
@@ -18,13 +20,17 @@ async def test_run_one_fm_step_with_an_integer_arg_is_actually_a_fractional():
     }
 
     data = {"jobList": [fm_step_1]}
+    event_queue = asyncio.Queue()
+    runner = ForwardModelRunner(data, event_queue)
+    await runner.run([])
+    start_msg_count = 0
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Start):
+            start_msg_count += 1
+            assert not event.success(), "fm_step should not start with success"
 
-    runner = ForwardModelRunner(data)
-    statuses = [status async for status in runner.run([])]
-    starts = [e for e in statuses if isinstance(e, Start)]
-
-    assert len(starts) == 1, "There should be 1 start message"
-    assert not starts[0].success(), "fm_step should not start with success"
+    assert start_msg_count == 1, "There should be 1 start message"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -59,10 +65,14 @@ async def test_run_given_one_fm_step_with_missing_file_and_one_file_present():
     data = {
         "jobList": [fm_step_0, fm_step_1],
     }
+    event_queue = asyncio.Queue()
+    runner = ForwardModelRunner(data, event_queue)
+    await runner.run([])
 
-    runner = ForwardModelRunner(data)
-
-    statuses = [status async for status in runner.run([])]
+    statuses = []
+    while not event_queue.empty():
+        event = await event_queue.get()
+        statuses.append(event)
 
     starts = [e for e in statuses if isinstance(e, Start)]
     assert len(starts) == 2, "There should be 2 start messages"

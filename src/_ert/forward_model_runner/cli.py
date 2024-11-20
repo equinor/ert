@@ -205,3 +205,9 @@ async def let_reporters_finish(reporters):
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
             await reporter.join()
+
+
+async def stop_reporters(reporters):
+    for reporter in reporters:
+        if isinstance(reporter, reporting.Event):
+            await reporter.stop()

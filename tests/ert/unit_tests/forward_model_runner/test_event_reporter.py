@@ -26,7 +26,6 @@ from _ert.forward_model_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert.forward_model_runner.reporting.statemachine import TransitionError
 from tests.ert.utils import _mock_ws_task, async_wait_until
 
 
@@ -179,23 +178,10 @@ async def test_report_with_failed_finish_message_argument(unused_tcp_port):
     assert len(lines) == 1
 
 
-async def test_report_inconsistent_events(unused_tcp_port):
-    host = "localhost"
-    url = f"ws://{host}:{unused_tcp_port}"
-    reporter = Event(evaluator_url=url)
-
-    lines = []
-    async with _mock_ws_task(host, unused_tcp_port, lines):
-        with pytest.raises(
-            TransitionError,
-            match=r"Illegal transition None -> \(MessageType<Finish>,\)",
-        ):
-            await reporter.report(Finish())
-    reporter.cancel()
-
-
 @pytest.mark.integration_test
-async def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
+async def test_report_with_failed_reporter_but_finished_jobs(
+    unused_tcp_port, monkeypatch
+):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
     # see reporter._event_publisher_thread.join()
@@ -232,9 +218,8 @@ async def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
             )
             # set _stop_timestamp
             await reporter.report(Finish())
-        await reporter.join()
+            await reporter.join()
         # set _stop_timestamp to None only when timer stopped
-        assert reporter._timeout_timestamp is None
     assert len(lines) == 0, "expected 0 Job running messages"
 
 
@@ -336,11 +321,8 @@ async def test_report_with_closed_received_exiting_gracefully(unused_tcp_port):
         await reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=400, rss=10)))
         await reporter.report(Finish())
 
-    # set _stop_timestamp was not set to None since the reporter finished on time
-    assert reporter._timeout_timestamp is not None
-
     # The Running(fmstep1, 300, 10) is popped from the queue, but never sent.
     # The following Running is added to queue along with the sentinel
-    assert reporter._event_queue.qsize() == 2
+    assert reporter._event_queue.qsize() == 2, reporter._event_queue
     # None of the messages after ClientConnectionClosedOK was raised, has been sent
     assert len(lines) == 2, "expected 2 Job running messages"
