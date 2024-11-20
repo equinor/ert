@@ -224,8 +224,12 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                self._parameters_exist_for_realization(i)
-                for i in range(self.ensemble_size)
+                state
+                in {
+                    RealizationStorageState.INITIALIZED,
+                    RealizationStorageState.HAS_DATA,
+                }
+                for state in self.get_ensemble_state()
             ]
         )
 
@@ -248,8 +252,8 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                self._responses_exist_for_realization(i, key)
-                for i in range(self.ensemble_size)
+                state == RealizationStorageState.HAS_DATA
+                for state in self.get_ensemble_state()
             ]
         )
 
