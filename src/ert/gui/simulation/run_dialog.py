@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from queue import SimpleQueue
 from typing import Callable, Optional
+from uuid import UUID
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
@@ -32,6 +33,7 @@ from qtpy.QtWidgets import (
 )
 
 from _ert.threading import ErtThread
+from ert.analysis.event import DataSection
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -425,72 +427,54 @@ class RunDialog(QFrame):
 
     @Slot(object)
     def _on_event(self, event: object) -> None:
-        if isinstance(event, EndEvent):
-            self.simulation_done.emit(event.failed, event.msg)
-            self._ticker.stop()
-        elif isinstance(event, FullSnapshotEvent):
-            if event.snapshot is not None:
-                if self._restart:
-                    self._snapshot_model._update_snapshot(
-                        event.snapshot, str(event.iteration)
-                    )
-                else:
-                    self._snapshot_model._add_snapshot(
-                        event.snapshot, str(event.iteration)
-                    )
-            self.update_total_progress(event.progress, event.iteration_label)
-            self._progress_widget.update_progress(
-                event.status_count, event.realization_count
-            )
-            self.progress_update_event.emit(event.status_count, event.realization_count)
-        elif isinstance(event, SnapshotUpdateEvent):
-            if event.snapshot is not None:
-                self._snapshot_model._update_snapshot(
-                    event.snapshot, str(event.iteration)
-                )
-            self._progress_widget.update_progress(
-                event.status_count, event.realization_count
-            )
-            self.update_total_progress(event.progress, event.iteration_label)
-            self.progress_update_event.emit(event.status_count, event.realization_count)
-        elif isinstance(event, RunModelUpdateBeginEvent):
-            iteration = event.iteration
-            widget = UpdateWidget(iteration)
-            tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
+        model = self._snapshot_model
+        match event:
+            case EndEvent(failed=failed, msg=msg):
+                self.simulation_done.emit(failed, msg)
+                self._ticker.stop()
+            case FullSnapshotEvent(
+                status_count=status_count, realization_count=realization_count
+            ):
+                if event.snapshot is not None:
+                    if self._restart:
+                        model._update_snapshot(event.snapshot, str(event.iteration))
+                    else:
+                        model._add_snapshot(event.snapshot, str(event.iteration))
+                self.update_total_progress(event.progress, event.iteration_label)
+                self._progress_widget.update_progress(status_count, realization_count)
+                self.progress_update_event.emit(status_count, realization_count)
+            case SnapshotUpdateEvent(
+                status_count=status_count, realization_count=realization_count
+            ):
+                if event.snapshot is not None:
+                    model._update_snapshot(event.snapshot, str(event.iteration))
+                self._progress_widget.update_progress(status_count, realization_count)
+                self.update_total_progress(event.progress, event.iteration_label)
+                self.progress_update_event.emit(status_count, realization_count)
+            case RunModelUpdateBeginEvent(iteration=iteration):
+                widget = UpdateWidget(iteration)
+                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
+                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
+                    self._tab_widget.setCurrentIndex(tab_index)
+                widget.begin(event)
+            case RunModelUpdateEndEvent():
+                self._progress_widget.stop_waiting_progress_bar()
+                self._get_update_widget(event.iteration).end(event)
+                self._dump_event_data_to_json(event.data, "Report", event.run_id)
+            case RunModelStatusEvent() | RunModelTimeEvent():
+                self._get_update_widget(event.iteration).update_status(event)
+            case RunModelDataEvent():
+                self._get_update_widget(event.iteration).add_table(event)
+                self._dump_event_data_to_json(event.data, event.name, event.run_id)
+            case RunModelErrorEvent():
+                self._get_update_widget(event.iteration).error(event)
+                self._dump_event_data_to_json(event.data, "Report", event.run_id)
 
-            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                self._tab_widget.setCurrentIndex(tab_index)
-
-            widget.begin(event)
-
-        elif isinstance(event, RunModelUpdateEndEvent):
-            self._progress_widget.stop_waiting_progress_bar()
-            if (widget := self._get_update_widget(event.iteration)) is not None:
-                widget.end(event)
-
-        elif (isinstance(event, (RunModelStatusEvent, RunModelTimeEvent))) and (
-            widget := self._get_update_widget(event.iteration)
-        ) is not None:
-            widget.update_status(event)
-
-        elif (isinstance(event, RunModelDataEvent)) and (
-            widget := self._get_update_widget(event.iteration)
-        ) is not None:
-            widget.add_table(event)
-
-        elif isinstance(event, RunModelErrorEvent):
-            if (widget := self._get_update_widget(event.iteration)) is not None:
-                widget.error(event)
-
-        if (
-            isinstance(
-                event, (RunModelDataEvent, RunModelUpdateEndEvent, RunModelErrorEvent)
-            )
-            and self.output_path
-        ):
-            name = event.name if hasattr(event, "name") else "Report"
-            if event.data:
-                event.data.to_csv(name, self.output_path / str(event.run_id))
+    def _dump_event_data_to_json(
+        self, data: Optional[DataSection], name: str, run_id: UUID
+    ) -> None:
+        if self.output_path and data:
+            data.to_csv(name, self.output_path / str(run_id))
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(0, self._tab_widget.count()):
