@@ -77,30 +77,27 @@ class Monitor:
     ) -> EndEvent:
         self._start_time = datetime.now()
         while True:
-            event = event_queue.get()
-            if isinstance(event, FullSnapshotEvent):
-                if event.snapshot is not None:
-                    self._snapshots[event.iteration] = event.snapshot
-                self._progress = event.progress
-            elif isinstance(event, SnapshotUpdateEvent):
-                if event.snapshot is not None:
-                    self._snapshots[event.iteration].merge_snapshot(event.snapshot)
-                self._print_progress(event)
-            if isinstance(event, EndEvent):
-                self._print_result(event.failed, event.msg)
-                self._print_job_errors()
-                return event
-
-            if (
-                isinstance(
-                    event,
-                    (RunModelDataEvent, RunModelUpdateEndEvent, RunModelErrorEvent),
-                )
-                and output_path
-            ):
-                name = event.name if hasattr(event, "name") else "Report"
-                if event.data:
-                    event.data.to_csv(name, output_path / str(event.run_id))
+            match event_queue.get():
+                case FullSnapshotEvent(
+                    snapshot=snapshot, iteration=iteration, progress=progress
+                ):
+                    if snapshot is not None:
+                        self._snapshots[iteration] = snapshot
+                    self._progress = progress
+                case SnapshotUpdateEvent(snapshot=snapshot) as event:
+                    if snapshot is not None:
+                        self._snapshots[event.iteration].merge_snapshot(snapshot)
+                    self._print_progress(event)
+                case EndEvent() as event:
+                    self._print_result(event.failed, event.msg)
+                    self._print_job_errors()
+                    return event
+                case (
+                    RunModelDataEvent()
+                    | RunModelUpdateEndEvent()
+                    | RunModelErrorEvent() as event
+                ):
+                    event.write_as_csv(output_path)
 
     def _print_job_errors(self) -> None:
         failed_jobs: Dict[Optional[str], int] = {}
