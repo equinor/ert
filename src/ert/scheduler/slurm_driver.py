@@ -17,7 +17,7 @@ from typing import (
     Tuple,
 )
 
-from .driver import SIGNAL_OFFSET, Driver, FailedSubmit
+from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
@@ -181,11 +181,7 @@ class SlurmDriver(Driver):
         if runpath is None:
             runpath = Path.cwd()
 
-        script = (
-            "#!/usr/bin/env bash\n"
-            f"cd {shlex.quote(str(runpath))}\n"
-            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
-        )
+        script = create_submit_script(runpath, executable, args)
         script_path: Optional[Path] = None
         try:
             with NamedTemporaryFile(
