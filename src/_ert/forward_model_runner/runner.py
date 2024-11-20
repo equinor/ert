@@ -93,7 +93,7 @@ class ForwardModelRunner:
                         )
                         await self.put_event(
                             Finish().with_error(
-                                "Not all forward model steps completed successfully."
+                                f"Not all forward model steps completed successfully ({status_update.error_message})."
                             )
                         )
                         return

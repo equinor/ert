@@ -5,11 +5,10 @@ import logging
 import os
 import signal
 import sys
-import typing
 from datetime import datetime
+from typing import List, Sequence
 
 from _ert.forward_model_runner import reporting
-from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     Finish,
     Message,
@@ -33,8 +32,8 @@ def _setup_reporters(
     ee_token=None,
     ee_cert_path=None,
     experiment_id=None,
-) -> typing.List[reporting.Reporter]:
-    reporters: typing.List[reporting.Reporter] = []
+) -> List[reporting.Reporter]:
+    reporters: List[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:
@@ -172,7 +171,7 @@ async def main(args):
 
 
 async def handle_reporting(
-    reporters: typing.Iterable[Reporter],
+    reporters: Sequence[reporting.Reporter],
     message_queue: asyncio.Queue[Message],
     done: asyncio.Event,
 ):
@@ -196,7 +195,8 @@ async def handle_reporting(
         message_queue.task_done()
         if isinstance(job_status, Finish) and not job_status.success():
             await let_reporters_finish(reporters)
-            raise ForwardModelRunnerException
+            print(f"{job_status.error_message=}")
+            raise ForwardModelRunnerException(job_status.error_message)
 
     await let_reporters_finish(reporters)
 
