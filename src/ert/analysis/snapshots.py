@@ -33,14 +33,18 @@ class ObservationAndResponseSnapshot(BaseModel):
             return ObservationStatus.OUTLIER
         return ObservationStatus.ACTIVE
 
-    def get_status(self) -> str:
-        if self.status == ObservationStatus.MISSING_RESPONSE:
-            return "Deactivated, missing response(es)"
-        if self.status == ObservationStatus.STD_CUTOFF:
-            return f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
-        if self.status == ObservationStatus.OUTLIER:
-            return "Deactivated, outlier"
-        return "Active"
+    def get_status_message(self) -> str:
+        match self.status:
+            case ObservationStatus.MISSING_RESPONSE:
+                return "Deactivated, missing response(es)"
+            case ObservationStatus.STD_CUTOFF:
+                return (
+                    f"Deactivated, ensemble std ({self.response_std:.3f}) > STD_CUTOFF"
+                )
+            case ObservationStatus.OUTLIER:
+                return "Deactivated, outlier"
+            case ObservationStatus.ACTIVE:
+                return "Active"
 
 
 class SmootherSnapshot(BaseModel):
@@ -79,7 +83,7 @@ class SmootherSnapshot(BaseModel):
                     step.obs_scaling * step.obs_std,
                     step.response_mean,
                     step.response_std,
-                    step.get_status(),
+                    step.get_status_message(),
                 ]
             )
         return data
