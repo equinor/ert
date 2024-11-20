@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732110120457,
+  "lastUpdate": 1732110210976,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "1b235cf54a592a6b3be1b0c7ba0a95570115d288",
-          "message": "Use sh for all code blocks in readme",
-          "timestamp": "2024-11-14T10:26:21+01:00",
-          "tree_id": "5a88f390f18b00da23698eb80ede1d040f3809c9",
-          "url": "https://github.com/equinor/ert/commit/1b235cf54a592a6b3be1b0c7ba0a95570115d288"
-        },
-        "date": 1731576497317,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18999392828727604,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01782326892716323",
-            "extra": "mean: 5.263326091600004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021801768775517923",
             "extra": "mean: 5.156197026000006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "57e6b70db861f019241a999010b09279469527f9",
+          "message": "Fix issue where dark_storage did not handle empty responses",
+          "timestamp": "2024-11-20T14:41:37+01:00",
+          "tree_id": "8f1ebbb6f8a23dc9fd77cfaa951bd0015fb14af7",
+          "url": "https://github.com/equinor/ert/commit/57e6b70db861f019241a999010b09279469527f9"
+        },
+        "date": 1732110209947,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18915693655015092,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01876167033183068",
+            "extra": "mean: 5.286615538599989 sec\nrounds: 5"
           }
         ]
       }
