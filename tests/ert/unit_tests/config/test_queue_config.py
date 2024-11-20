@@ -15,6 +15,7 @@ from ert.config.parsing import ConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
+    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
@@ -509,3 +510,15 @@ def test_driver_initialization_from_defaults(queue_system):
         LocalDriver(**LocalQueueOptions().driver_options)
     if queue_system == QueueSystem.SLURM:
         SlurmDriver(**SlurmQueueOptions().driver_options)
+
+
+@pytest.mark.parametrize(
+    "venv, expected", [("my_env", "source my_env/bin/activate"), (None, "")]
+)
+def test_default_activate_script_generation(expected, monkeypatch, venv):
+    if venv:
+        monkeypatch.setenv("VIRTUAL_ENV", venv)
+    else:
+        monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+    options = QueueOptions(name="local")
+    assert options.activate_script == expected

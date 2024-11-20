@@ -264,8 +264,9 @@ class LsfDriver(Driver):
         bjobs_cmd: Optional[str] = None,
         bkill_cmd: Optional[str] = None,
         bhist_cmd: Optional[str] = None,
+        activate_script: str = "",
     ) -> None:
-        super().__init__()
+        super().__init__(activate_script)
         self._queue_name = queue_name
         self._project_code = project_code
         self._resource_requirement = resource_requirement
@@ -309,7 +310,7 @@ class LsfDriver(Driver):
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-P", self._project_code] if self._project_code else []
-        script = create_submit_script(runpath, executable, args)
+        script = create_submit_script(runpath, executable, args, self.activate_script)
         script_path: Optional[Path] = None
         try:
             with NamedTemporaryFile(

@@ -1,14 +1,15 @@
 import json
 import logging
 import tempfile
-from unittest.mock import Mock
+from functools import partial
+from unittest.mock import Mock, patch
 
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
 
 import ert.plugins.hook_implementations
-from ert import plugin
-from ert.plugins import ErtPluginManager
+from ert.config import ErtConfig
+from ert.plugins import ErtPluginManager, plugin
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import (
     DummyFMStep,
@@ -279,3 +280,44 @@ def test_that_forward_model_step_is_registered(tmpdir):
     with tmpdir.as_cwd():
         pm = ErtPluginManager(plugins=[dummy_plugins])
         assert pm.forward_model_steps == [DummyFMStep]
+
+
+class ActivatePlugin:
+    @plugin(name="first")
+    def activate_script(self):
+        return "source something"
+
+
+class AnotherActivatePlugin:
+    @plugin(name="second")
+    def activate_script(self):
+        return "Something"
+
+
+class EmptyActivatePlugin:
+    @plugin(name="empty")
+    def activate_script(self):
+        return None
+
+
+@pytest.mark.parametrize(
+    "plugins", [[ActivatePlugin()], [ActivatePlugin(), EmptyActivatePlugin()]]
+)
+def test_activate_script_hook(plugins):
+    pm = ErtPluginManager(plugins=plugins)
+    assert pm.activate_script() == "source something"
+
+
+def test_multiple_activate_script_hook():
+    pm = ErtPluginManager(plugins=[ActivatePlugin(), AnotherActivatePlugin()])
+    with pytest.raises(ValueError, match="one activate script is allowed"):
+        pm.activate_script()
+
+
+def test_activate_script_plugin_integration():
+    patched = partial(
+        ert.config.ert_config.ErtPluginManager, plugins=[ActivatePlugin()]
+    )
+    with patch("ert.config.ert_config.ErtPluginManager", patched):
+        config = ErtConfig.with_plugins().from_file_contents("NUM_REALIZATIONS 1\n")
+        assert config.queue_config.queue_options.activate_script == "source something"

@@ -279,7 +279,9 @@ def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
     qc = ert_config.queue_config
     qo = qc.queue_options
     assert qc.queue_system == "TORQUE"
-    assert {k: v for k, v in qo.driver_options.items() if v is not None} == {
+    driver_options = qo.driver_options
+    driver_options.pop("activate_script")
+    assert {k: v for k, v in driver_options.items() if v is not None} == {
         "project_code": "snake_oil_pc",
         "qsub_cmd": "qsub",
         "qstat_cmd": "qstat",
