@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 from queue import SimpleQueue
 from typing import Callable, Optional
-from uuid import UUID
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
@@ -33,7 +32,6 @@ from qtpy.QtWidgets import (
 )
 
 from _ert.threading import ErtThread
-from ert.analysis.event import DataSection
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -460,21 +458,15 @@ class RunDialog(QFrame):
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
                 self._get_update_widget(event.iteration).end(event)
-                self._dump_event_data_to_json(event.data, "Report", event.run_id)
+                event.write_as_csv(self.output_path)
             case RunModelStatusEvent() | RunModelTimeEvent():
                 self._get_update_widget(event.iteration).update_status(event)
             case RunModelDataEvent():
                 self._get_update_widget(event.iteration).add_table(event)
-                self._dump_event_data_to_json(event.data, event.name, event.run_id)
+                event.write_as_csv(self.output_path)
             case RunModelErrorEvent():
                 self._get_update_widget(event.iteration).error(event)
-                self._dump_event_data_to_json(event.data, "Report", event.run_id)
-
-    def _dump_event_data_to_json(
-        self, data: Optional[DataSection], name: str, run_id: UUID
-    ) -> None:
-        if self.output_path and data:
-            data.to_csv(name, self.output_path / str(run_id))
+                event.write_as_csv(self.output_path)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(0, self._tab_widget.count()):
