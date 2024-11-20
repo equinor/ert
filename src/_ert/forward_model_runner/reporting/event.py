@@ -103,9 +103,12 @@ class Event(Reporter):
                 if event is None:
                     # if we successfully sent the event we can proceed
                     # to next one
-                    event = await asyncio.wait_for(
-                        self._event_queue.get(), timeout=self._queue_polling_timeout
-                    )
+                    try:
+                        event = await asyncio.wait_for(
+                            self._event_queue.get(), timeout=self._queue_polling_timeout
+                        )
+                    except asyncio.TimeoutError:
+                        continue
                     if event is self._sentinel:
                         self._event_queue.task_done()
                         break
