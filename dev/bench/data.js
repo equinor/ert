@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732027380799,
+  "lastUpdate": 1732086241868,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "c5c693ead24db25a09d27178b44c59bbbd0bf5b1",
-          "message": "Add return type annotation",
-          "timestamp": "2024-11-13T13:02:20+01:00",
-          "tree_id": "316da7e035920d8206bcd2c75a9a739a673b5952",
-          "url": "https://github.com/equinor/ert/commit/c5c693ead24db25a09d27178b44c59bbbd0bf5b1"
-        },
-        "date": 1731499456831,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19187204614061862,
-            "unit": "iter/sec",
-            "range": "stddev: 0.041618329787992694",
-            "extra": "mean: 5.211806618599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03430320971169947",
             "extra": "mean: 5.296022890400008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "3b603d448b4d996f9a6414580688bd0209817802",
+          "message": "Add api snapshot test w/ summary data",
+          "timestamp": "2024-11-20T08:02:13+01:00",
+          "tree_id": "31bb5d47e341d0d07a704b0636b6904b9e1d2c9f",
+          "url": "https://github.com/equinor/ert/commit/3b603d448b4d996f9a6414580688bd0209817802"
+        },
+        "date": 1732086241256,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19876168725926224,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018711861136174072",
+            "extra": "mean: 5.0311506899999925 sec\nrounds: 5"
           }
         ]
       }
