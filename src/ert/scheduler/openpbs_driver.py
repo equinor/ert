@@ -23,7 +23,7 @@ from typing import (
     get_type_hints,
 )
 
-from .driver import Driver, FailedSubmit
+from .driver import Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
 
 logger = logging.getLogger(__name__)
@@ -241,11 +241,7 @@ class OpenPBSDriver(Driver):
             [] if self._keep_qsub_output else ["-o", "/dev/null", "-e", "/dev/null"]
         )
 
-        script = (
-            "#!/usr/bin/env bash\n"
-            f"cd {shlex.quote(str(runpath))}\n"
-            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
-        )
+        script = create_submit_script(runpath, executable, args)
         name_prefix = self._job_prefix or ""
         qsub_with_args: List[str] = [
             str(self._qsub_cmd),

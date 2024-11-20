@@ -13,6 +13,14 @@ SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal value when a process exited due to a signal"""
 
 
+def create_submit_script(runpath: Path, executable: str, args: tuple[str, ...]) -> str:
+    return (
+        "#!/usr/bin/env bash\n"
+        f"cd {shlex.quote(str(runpath))}\n"
+        f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
+    )
+
+
 class FailedSubmit(RuntimeError):
     pass
 

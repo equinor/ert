@@ -27,7 +27,7 @@ from typing import (
     get_args,
 )
 
-from .driver import SIGNAL_OFFSET, Driver, FailedSubmit
+from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
@@ -309,12 +309,7 @@ class LsfDriver(Driver):
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-P", self._project_code] if self._project_code else []
-
-        script = (
-            "#!/usr/bin/env bash\n"
-            f"cd {shlex.quote(str(runpath))}\n"
-            f"exec -a {shlex.quote(executable)} {executable} {shlex.join(args)}\n"
-        )
+        script = create_submit_script(runpath, executable, args)
         script_path: Optional[Path] = None
         try:
             with NamedTemporaryFile(
