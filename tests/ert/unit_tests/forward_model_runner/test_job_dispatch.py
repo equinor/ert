@@ -10,7 +10,6 @@ import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
-from unittest.mock import mock_open
 
 import pandas as pd
 import psutil
@@ -357,16 +356,21 @@ async def test_job_dispatch_kills_itself_after_unsuccessful_job(
 ):
     host = "localhost"
     port = unused_tcp_port
-    jobs_json = json.dumps(
-        {"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}", "jobList": []}
-    )
+    jobs_obj = {
+        "ens_id": "_id_",
+        "dispatch_url": f"ws://localhost:{port}",
+        "jobList": [],
+    }
+    print(os.getcwd())
+    with open("jobs.json", mode="w+", encoding="utf-8") as f:  # noqa: ASYNC230
+        json.dump(jobs_obj, f)
 
     async def mock_run_method(self: ForwardModelRunner, *args, **kwargs):
         await self.put_event(Init([], 0, 0))
         await self.put_event(Finish().with_error("overall bad run"))
 
     monkeypatch.setattr(ForwardModelRunner, "run", mock_run_method)
-    monkeypatch.setattr("builtins.open", mock_open(read_data=jobs_json))
+    # monkeypatch.setattr(_ert.forward_model_runner.cli, "builtins.open", mock_open(read_data=jobs_json))
     async with _mock_ws_task(host, port, []):
         with pytest.raises(ForwardModelRunnerException):
             await main(["script.py"])

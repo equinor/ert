@@ -207,7 +207,7 @@ def test_oom_score_is_max_over_processtree(monkeypatch):
             return MockedProcess(123)
 
         monkeypatch.setattr(forward_model_step, "Process", mocked_process)
-        (_, _, oom_score) = _get_processtree_data(MockedProcess(123))
+        (_, _, oom_score) = _get_processtree_data(123)
 
     assert oom_score == 456
 
