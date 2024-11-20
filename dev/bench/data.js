@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732086241868,
+  "lastUpdate": 1732098951936,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "d32d419d487dcd9b0fdcd3dc3369d741dd1a41e7",
-          "message": "Log when dark storage fails to load response",
-          "timestamp": "2024-11-13T13:32:12+01:00",
-          "tree_id": "0ff1ac4db4aa0ac92aa5e9234439d23af1844b55",
-          "url": "https://github.com/equinor/ert/commit/d32d419d487dcd9b0fdcd3dc3369d741dd1a41e7"
-        },
-        "date": 1731501245742,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19224891034741187,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01960705610632294",
-            "extra": "mean: 5.201589950200008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018711861136174072",
             "extra": "mean: 5.0311506899999925 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "b555902c5d7de1dc9cb426d5350a9958c454fbe2",
+          "message": "get_ensemble_responses without get_ensemble_state",
+          "timestamp": "2024-11-20T11:33:43+01:00",
+          "tree_id": "b4782fa4b3c102abc97c5f4c27e298ed5082dcc6",
+          "url": "https://github.com/equinor/ert/commit/b555902c5d7de1dc9cb426d5350a9958c454fbe2"
+        },
+        "date": 1732098951450,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19221839416979355,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0150592879566697",
+            "extra": "mean: 5.202415743399996 sec\nrounds: 5"
           }
         ]
       }
