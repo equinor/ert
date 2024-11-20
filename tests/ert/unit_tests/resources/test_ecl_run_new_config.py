@@ -642,3 +642,70 @@ def test_slave_started_message_are_not_counted_as_errors():
     assert "Warning, mismatch between stated Error count" not in str(
         exception_info.value
     )
+
+
+_DUMMY_ERROR_MESSAGE_E100 = """\
+ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS A DUMMY ERROR MESSAGE"""
+
+_DUMMY_ERROR_MESSAGE_MULTIPLE_CPUS_E100 = """\
+ @--  ERROR FROM PROCESSOR 1 AT TIME        0.0   DAYS    (21-DEC-2002):
+ @           LICENSE FAILURE: ERROR NUMBER IS -4"""
+
+_DUMMY_ERROR_MESSAGE_E300 = """\
+ @--Error
+ @ ECLIPSE option not allowed in license
+ @ Please ask for a new license
+ @ Run stopping"""
+
+_DUMMY_SLAVE_STARTED_MESSAGE = """\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
+ @           ON HOST localhost                        IN DIRECTORY
+ @           dummypath/slave1"""
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "prt_error, expected_error_list",
+    [
+        (
+            _DUMMY_ERROR_MESSAGE_E100,
+            [_DUMMY_ERROR_MESSAGE_E100],
+        ),
+        (
+            _DUMMY_ERROR_MESSAGE_MULTIPLE_CPUS_E100,
+            [_DUMMY_ERROR_MESSAGE_MULTIPLE_CPUS_E100],
+        ),
+        (
+            _DUMMY_ERROR_MESSAGE_E300,
+            [_DUMMY_ERROR_MESSAGE_E300],
+        ),
+        (
+            _DUMMY_SLAVE_STARTED_MESSAGE,
+            [_DUMMY_SLAVE_STARTED_MESSAGE],
+        ),
+        (
+            f"""\
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+ @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
+ @           THIS IS JUST A MESSAGE, NOTHING ELSE
+{_DUMMY_SLAVE_STARTED_MESSAGE}
+
+<various_output>
+
+{_DUMMY_ERROR_MESSAGE_E100}
+ """,
+            [_DUMMY_ERROR_MESSAGE_E100, _DUMMY_SLAVE_STARTED_MESSAGE],
+        ),
+    ],
+)
+def test_can_parse_errors(prt_error, expected_error_list):
+    Path("ECLCASE.PRT").write_text(prt_error + "\n", encoding="utf-8")
+
+    Path("ECLCASE.DATA").write_text("", encoding="utf-8")
+
+    run = ecl_run.EclRun("ECLCASE.DATA", "dummysimulatorobject")
+    error_list = run.parseErrors()
+    assert error_list == expected_error_list
