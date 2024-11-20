@@ -257,79 +257,6 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
-    def _parameters_exist_for_realization(self, realization: int) -> bool:
-        """
-        Returns true if all parameters in the experiment have
-        all been saved in the ensemble. If no parameters, return True
-
-        Parameters
-        ----------
-        realization : int
-            Realization index.
-
-        Returns
-        -------
-        exists : bool
-            True if parameters exist for realization.
-        """
-        if not self.experiment.parameter_configuration:
-            return True
-        path = self._realization_dir(realization)
-        return all(
-            (path / (_escape_filename(parameter) + ".nc")).exists()
-            for parameter in self.experiment.parameter_configuration
-        )
-
-    def _responses_exist_for_realization(
-        self, realization: int, key: Optional[str] = None
-    ) -> bool:
-        """
-        Returns true if there are responses in the experiment and they have
-        all been saved in the ensemble
-
-        Parameters
-        ----------
-        realization : int
-            Realization index.
-        key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
-
-        Returns
-        -------
-        exists : bool
-            True if responses exist for realization.
-        """
-
-        if not self.experiment.response_configuration:
-            return True
-        path = self._realization_dir(realization)
-
-        def _has_response(_key: str) -> bool:
-            if _key in self.experiment.response_key_to_response_type:
-                _response_type = self.experiment.response_key_to_response_type[_key]
-                return (path / f"{_response_type}.parquet").exists()
-
-            return (path / f"{_key}.parquet").exists()
-
-        if key:
-            return _has_response(key)
-
-        is_expecting_any_responses = any(
-            bool(config.keys)
-            for config in self.experiment.response_configuration.values()
-        )
-
-        if not is_expecting_any_responses:
-            return True
-
-        non_empty_response_configs = [
-            response
-            for response, config in self.experiment.response_configuration.items()
-            if bool(config.keys)
-        ]
-
-        return all(_has_response(response) for response in non_empty_response_configs)
-
     def is_initalized(self) -> List[int]:
         """
         Return the realization numbers where all parameters are internalized. In
@@ -503,14 +430,89 @@ class LocalEnsemble(BaseMode):
             List of realization states.
         """
 
+        def _parameters_exist_for_realization(realization: int) -> bool:
+            """
+            Returns true if all parameters in the experiment have
+            all been saved in the ensemble. If no parameters, return True
+
+            Parameters
+            ----------
+            realization : int
+                Realization index.
+
+            Returns
+            -------
+            exists : bool
+                True if parameters exist for realization.
+            """
+            if not self.experiment.parameter_configuration:
+                return True
+            path = self._realization_dir(realization)
+            return all(
+                (path / (_escape_filename(parameter) + ".nc")).exists()
+                for parameter in self.experiment.parameter_configuration
+            )
+
+        def _responses_exist_for_realization(
+            realization: int, key: Optional[str] = None
+        ) -> bool:
+            """
+            Returns true if there are responses in the experiment and they have
+            all been saved in the ensemble
+
+            Parameters
+            ----------
+            realization : int
+                Realization index.
+            key : str, optional
+                Response key to filter realizations. If None, all responses are considered.
+
+            Returns
+            -------
+            exists : bool
+                True if responses exist for realization.
+            """
+
+            if not self.experiment.response_configuration:
+                return True
+            path = self._realization_dir(realization)
+
+            def _has_response(_key: str) -> bool:
+                if _key in self.experiment.response_key_to_response_type:
+                    _response_type = self.experiment.response_key_to_response_type[_key]
+                    return (path / f"{_response_type}.parquet").exists()
+
+                return (path / f"{_key}.parquet").exists()
+
+            if key:
+                return _has_response(key)
+
+            is_expecting_any_responses = any(
+                bool(config.keys)
+                for config in self.experiment.response_configuration.values()
+            )
+
+            if not is_expecting_any_responses:
+                return True
+
+            non_empty_response_configs = [
+                response
+                for response, config in self.experiment.response_configuration.items()
+                if bool(config.keys)
+            ]
+
+            return all(
+                _has_response(response) for response in non_empty_response_configs
+            )
+
         def _find_state(realization: int) -> RealizationStorageState:
             if self.has_failure(realization):
                 failure = self.get_failure(realization)
                 assert failure
                 return failure.type
-            if self._responses_exist_for_realization(realization):
+            if _responses_exist_for_realization(realization):
                 return RealizationStorageState.HAS_DATA
-            if self._parameters_exist_for_realization(realization):
+            if _parameters_exist_for_realization(realization):
                 return RealizationStorageState.INITIALIZED
             else:
                 return RealizationStorageState.UNDEFINED
