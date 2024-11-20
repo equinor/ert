@@ -168,7 +168,7 @@ class LegacyEnsemble:
             walltime = 0
 
         if walltime > 120:
-            logger.warning(
+            logger.info(
                 f"{event.event_type} {step_name} "
                 f"{walltime=} "
                 f"{cpu_seconds=} "
