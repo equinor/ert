@@ -163,10 +163,8 @@ class ForwardModelStep:
 
     async def _run(self) -> "AsyncGenerator[Start | Exited | Running | None]":
         start_message = self.create_start_message_and_check_job_files()
-        print("ACTUALLY RAN")
         yield start_message
         if not start_message.success():
-            print("NOT SUCCESS")
             return
 
         arg_list = self._build_arg_list()
@@ -216,7 +214,7 @@ class ForwardModelStep:
             try:
                 exit_code = await asyncio.wait_for(
                     proc.wait(), timeout=self.MEMORY_POLL_PERIOD
-                )  # process.wait(timeout=self.MEMORY_POLL_PERIOD)
+                )
             except asyncio.TimeoutError:
                 potential_exited_msg = (
                     self.handle_process_timeout_and_create_exited_msg(exit_code, proc)
@@ -362,7 +360,6 @@ class ForwardModelStep:
 
         if executable_error := check_executable(self.job_data.get("executable")):
             errors.append(executable_error)
-        print(f"{errors=}")
         return errors
 
     def _check_target_file_is_written(

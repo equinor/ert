@@ -52,7 +52,7 @@ async def test_report_with_successful_start_message_argument(unused_tcp_port):
     assert event.fm_step == "0"
     assert os.path.basename(event.std_out) == "stdout"
     assert os.path.basename(event.std_err) == "stderr"
-    reporter._event_publishing_task.cancel()
+    reporter.cancel()
 
 
 async def test_report_with_failed_start_message_argument(unused_tcp_port):

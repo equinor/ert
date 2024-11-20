@@ -70,20 +70,17 @@ class Event(Reporter):
         self._real_id = None
         self._event_queue: asyncio.Queue[events.Event | EventSentinel] = asyncio.Queue()
 
-        # seconds to timeout the reporter the thread after Finish() was received
         self._timeout_timestamp = None
+        # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
 
         self._queue_polling_timeout = 2
         self._event_publishing_task = asyncio.create_task(self.async_event_publisher())
-        self._event_publisher_ready = asyncio.Event()
 
     async def join(self) -> None:
-        print("called join")
         await self._event_publishing_task
 
     async def stop(self) -> None:
-        print("called stop")
         await self._event_queue.put(Event._sentinel)
         await self.join()
 
@@ -94,7 +91,6 @@ class Event(Reporter):
             token=self._token,
             cert=self._cert,
         ) as client:
-            self._event_publisher_ready.set()
             event = None
             while (
                 self._timeout_timestamp is None
@@ -109,6 +105,7 @@ class Event(Reporter):
                         )
                     except asyncio.TimeoutError:
                         continue
+
                     if event is self._sentinel:
                         self._event_queue.task_done()
                         break
@@ -116,7 +113,6 @@ class Event(Reporter):
                     await client.send(event_to_json(event))
                     self._event_queue.task_done()
                     event = None
-                    print("Sent event :)")
                 except ClientConnectionError as exception:
                     # Possible intermittent failure, we retry sending the event
                     logger.error(str(exception))
@@ -126,10 +122,8 @@ class Event(Reporter):
                     logger.debug(str(exception))
                     self._event_queue.task_done()
                     break
-        print("TIMED OUT")
 
     async def report(self, msg: Message):
-        await self._event_publisher_ready.wait()
         await self._report(msg)
 
     async def _report(self, msg: Message):
@@ -143,7 +137,6 @@ class Event(Reporter):
             await self._finished_handler()
 
     async def _dump_event(self, event: events.Event):
-        print(f"DUMPED EVENT {type(event)=}")
         logger.debug(f'Schedule "{type(event)}" for delivery')
         await self._event_queue.put(event)
 
@@ -205,7 +198,7 @@ class Event(Reporter):
             seconds=self._reporter_timeout
         )
 
-    async def _checksum_handler(self, msg: Checksum):
+    async def _checksum_handler(self, msg: Checksum) -> None:
         fm_checksum = ForwardModelStepChecksum(
             ensemble=self._ens_id,
             real=self._real_id,
@@ -213,5 +206,5 @@ class Event(Reporter):
         )
         await self._dump_event(fm_checksum)
 
-    def cancel(self):
+    def cancel(self) -> None:
         self._event_publishing_task.cancel()

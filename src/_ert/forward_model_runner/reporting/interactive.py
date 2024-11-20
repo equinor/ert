@@ -1,4 +1,3 @@
-import asyncio
 from typing import Optional
 
 from _ert.forward_model_runner.reporting.base import Reporter
@@ -12,7 +11,7 @@ from _ert.forward_model_runner.reporting.message import (
 
 class Interactive(Reporter):
     @staticmethod
-    async def _report(msg: Message) -> Optional[str]:
+    def _report(msg: Message) -> Optional[str]:
         if not isinstance(msg, (Start, Finish)):
             return None
         if isinstance(msg, Finish):
@@ -28,8 +27,7 @@ class Interactive(Reporter):
         return f"Running job: {msg.job.name()} ... "
 
     async def report(self, msg: Message):
-        _msg = await self._report(msg)
-        await asyncio.sleep(0)
+        _msg = self._report(msg)
         if _msg is not None:
             print(_msg)
 

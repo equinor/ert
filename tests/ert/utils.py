@@ -3,14 +3,12 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import websockets.server
 
 from _ert.forward_model_runner.client import Client
-from _ert.threading import ErtThread
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
 if TYPE_CHECKING:
@@ -71,28 +69,6 @@ async def async_wait_until(condition, timeout, fail_msg, interval=0.1):
     raise AssertionError(fail_msg)
 
 
-def _mock_ws(host, port, messages, delay_startup=0):
-    loop = asyncio.new_event_loop()
-    done = loop.create_future()
-
-    async def _handler(websocket, path):
-        while True:
-            msg = await websocket.recv()
-            messages.append(msg)
-            if msg == "stop":
-                print("SHOULD STOP!")
-                done.set_result(None)
-                break
-
-    async def _run_server():
-        await asyncio.sleep(delay_startup)
-        async with websockets.server.serve(_handler, host, port):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
-
-
 async def _mock_ws_async(host, port, messages, delay_startup=0):
     done = asyncio.Future()
 
@@ -107,27 +83,6 @@ async def _mock_ws_async(host, port, messages, delay_startup=0):
     await asyncio.sleep(delay_startup)
     async with websockets.server.serve(_handler, host, port):
         await done
-
-
-@contextlib.asynccontextmanager
-async def _mock_ws_thread(host, port, messages):
-    mock_ws_thread = ErtThread(
-        target=partial(_mock_ws, messages=messages),
-        args=(
-            host,
-            port,
-        ),
-    )
-    mock_ws_thread.start()
-    try:
-        yield
-    # Make sure to join the thread even if an exception occurs
-    finally:
-        url = f"ws://{host}:{port}"
-        async with Client(url) as client:
-            await client.send("stop")
-        mock_ws_thread.join()
-        messages.pop()
 
 
 @contextlib.asynccontextmanager

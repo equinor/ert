@@ -192,12 +192,12 @@ async def handle_reporting(
                 )
                 await let_reporters_finish(reporters)
                 raise ForwardModelRunnerException from oserror
-        print(f"REPORTERS REPORTED {type(job_status)=}")
+
         message_queue.task_done()
         if isinstance(job_status, Finish) and not job_status.success():
-            print("JONAK HERE")
             await let_reporters_finish(reporters)
             raise ForwardModelRunnerException
+
     await let_reporters_finish(reporters)
 
 

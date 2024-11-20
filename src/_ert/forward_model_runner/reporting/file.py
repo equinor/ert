@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import logging
 import os
@@ -42,7 +41,6 @@ class File(Reporter):
 
     async def report(self, msg: Message):
         fm_step_status = {}
-        await asyncio.sleep(0)
         if msg.job:
             logger.debug("Adding message job to status dictionary.")
             fm_step_status = self.status_dict["jobs"][msg.job.index]
