@@ -765,6 +765,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
     )
     def save_field(self, model_ensemble: Ensemble, field_data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+
+        # Ensembles w/ parent failure will never have parameters written to them
+        assume(
+            storage_ensemble.get_ensemble_state()[self.iens_to_edit]
+            != RealizationStorageState.PARENT_FAILURE
+        )
+
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
         for f in fields:
@@ -785,6 +792,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
     )
     def write_error_in_save_field(self, model_ensemble: Ensemble, field_data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+
+        # Ensembles w/ parent failure will never have parameters written to them
+        assume(
+            storage_ensemble.get_ensemble_state()[self.iens_to_edit]
+            != RealizationStorageState.PARENT_FAILURE
+        )
+
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
         assume(not storage_ensemble.realizations_initialized([self.iens_to_edit]))
