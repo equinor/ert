@@ -202,6 +202,13 @@ def copy_snake_oil_case(copy_case):
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
 
 
+@pytest.fixture()
+def copy_heat_equation(copy_case):
+    copy_case("heat_equation")
+    with open("config.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+
+
 @pytest.fixture(
     name="copy_snake_oil_case_storage",
     params=[
