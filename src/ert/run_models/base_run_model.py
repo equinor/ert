@@ -230,40 +230,41 @@ class BaseRunModel(ABC):
     def send_smoother_event(
         self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
     ) -> None:
-        if isinstance(event, AnalysisStatusEvent):
-            self.send_event(
-                RunModelStatusEvent(iteration=iteration, run_id=run_id, msg=event.msg)
-            )
-        elif isinstance(event, AnalysisTimeEvent):
-            self.send_event(
-                RunModelTimeEvent(
-                    iteration=iteration,
-                    run_id=run_id,
-                    elapsed_time=event.elapsed_time,
-                    remaining_time=event.remaining_time,
+        match event:
+            case AnalysisStatusEvent(msg=msg):
+                self.send_event(
+                    RunModelStatusEvent(iteration=iteration, run_id=run_id, msg=msg)
                 )
-            )
-        elif isinstance(event, AnalysisErrorEvent):
-            self.send_event(
-                RunModelErrorEvent(
-                    iteration=iteration,
-                    run_id=run_id,
-                    error_msg=event.error_msg,
-                    data=event.data,
+            case AnalysisTimeEvent():
+                self.send_event(
+                    RunModelTimeEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        elapsed_time=event.elapsed_time,
+                        remaining_time=event.remaining_time,
+                    )
                 )
-            )
-        elif isinstance(event, AnalysisDataEvent):
-            self.send_event(
-                RunModelDataEvent(
-                    iteration=iteration, run_id=run_id, name=event.name, data=event.data
+            case AnalysisErrorEvent():
+                self.send_event(
+                    RunModelErrorEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        error_msg=event.error_msg,
+                        data=event.data,
+                    )
                 )
-            )
-        elif isinstance(event, AnalysisCompleteEvent):
-            self.send_event(
-                RunModelUpdateEndEvent(
-                    iteration=iteration, run_id=run_id, data=event.data
+            case AnalysisDataEvent(name=name, data=data):
+                self.send_event(
+                    RunModelDataEvent(
+                        iteration=iteration, run_id=run_id, name=name, data=data
+                    )
                 )
-            )
+            case AnalysisCompleteEvent():
+                self.send_event(
+                    RunModelUpdateEndEvent(
+                        iteration=iteration, run_id=run_id, data=event.data
+                    )
+                )
 
     @property
     def queue_system(self) -> QueueSystem:
