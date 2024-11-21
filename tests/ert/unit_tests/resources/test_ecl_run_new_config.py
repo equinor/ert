@@ -157,6 +157,37 @@ def test_forward_model_cmd_line_api_works(source_root):
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_eclrun_when_unsmry_is_ambiguous(source_root):
+    shutil.copy(
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
+        "SPE1.DATA",
+    )
+    # Mock files from another existing run
+    Path("PREVIOUS_SPE1.SMSPEC").touch()
+    Path("PREVIOUS_SPE1.UNSMRY").touch()
+    ecl_run.run(ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3"])
+    assert Path("SPE1.OK").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_eclrun_when_unsmry_is_ambiguous_with_mpi(source_root):
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "PARALLEL\n  2 /\n\nTITLE")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    # Mock files from another existing run
+    Path("PREVIOUS_SPE1.SMSPEC").touch()
+    Path("PREVIOUS_SPE1.UNSMRY").touch()
+    ecl_run.run(
+        ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3", "--num-cpu=2"]
+    )
+    assert Path("SPE1.OK").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_ecl_run_on_parallel_deck(source_root):
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "PARALLEL\n  2 /\n\nTITLE")
@@ -182,6 +213,19 @@ def test_eclrun_on_nosim(source_root):
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_eclrun_on_nosim_with_existing_unsmry_file(source_root):
+    """This emulates users rerunning Eclipse in an existing runpath"""
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "NOSIM\n\nTITLE")
+    Path("SPE1.UNSMRY").write_text("", encoding="utf-8")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    ecl_run.run(ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3"])
+    assert Path("SPE1.OK").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
     minimum_duration = 15  # This is max_wait in the await function tested
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
@@ -199,6 +243,27 @@ def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
     assert (
         end_time - start_time > minimum_duration
     ), "timeout in await_completed not triggered"
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_eclrun_on_nosim_with_mpi_and_existing_unsmry_file(source_root):
+    """This emulates users rerunning Eclipse in an existing runpath, with MPI.
+
+    The wait for timeout will not happen, since there is a summary file present.
+
+    This test only effectively asserts that no crash occurs"""
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "NOSIM\n\nPARALLEL\n 2 /\n\nTITLE")
+    Path("SPE1.UNSMRY").write_text("", encoding="utf-8")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    ecl_run.run(
+        ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3", "--num-cpu=2"]
+    )
+    # There is no assert on runtime because we cannot predict how long the Eclipse license
+    # checkout takes, otherwise we should assert that there is no await for unsmry completion.
+    assert Path("SPE1.OK").exists()
 
 
 @pytest.mark.integration_test
@@ -304,7 +369,7 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
         (["foo/spe1.unsmry"], "foo/spe1", "foo/spe1.unsmry"),
         (["foo/SPE1.UNSMRY", "SPE1.UNSMRY"], "foo/SPE1", "foo/SPE1.UNSMRY"),
         (["foo/SPE1.UNSMRY", "SPE1.UNSMRY"], "SPE1", "SPE1.UNSMRY"),
-        (["EXTRA_SPE1.UNSMRY", "SPE1.UNSMRY"], "SPE1", "ValueError"),
+        (["EXTRA_SPE1.UNSMRY", "SPE1.UNSMRY"], "SPE1", "SPE1.UNSMRY"),
         (["EXTRA_SPE1.UNSMRY", "SPE1.UNSMRY"], "EXTRA_SPE1", "EXTRA_SPE1.UNSMRY"),
         (["SPE1.UNSMRY", "SPE1.FUNSMRY"], "SPE1", "ValueError"),
         (
@@ -325,7 +390,6 @@ def test_find_unsmry(paths_to_touch, basepath, expectation):
             ecl_run.find_unsmry(Path(basepath))
     elif expectation is None:
         assert ecl_run.find_unsmry(Path(basepath)) is None
-
     else:
         assert str(ecl_run.find_unsmry(Path(basepath))) == expectation
 
