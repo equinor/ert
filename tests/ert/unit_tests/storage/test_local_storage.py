@@ -982,37 +982,29 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_experiment = self.model[experiment_id]
         model_experiment.ensembles[ensemble.id] = model_ensemble
 
-        expected_posterior_state = RealizationStorageState.PARENT_FAILURE
-        prior_keys = list(prior.response_values.keys())
+        prior_state = prior_ensemble.get_ensemble_state()
+        edited_prior_state = prior_state[self.iens_to_edit]
 
-        is_expecting_responses = (
-            sum(len(config.keys) for config in model_experiment.responses) > 0
-        )
+        posterior_state = ensemble.get_ensemble_state()
+        edited_posterior_state = posterior_state[self.iens_to_edit]
 
-        if not is_expecting_responses:
-            # Expect a HAS_DATA no matter what
-            expected_posterior_state = RealizationStorageState.HAS_DATA
-        elif (
-            bool(prior_keys)
-            and (
-                prior_keys
-                == [
-                    r.name
-                    for r in model_experiment.responses
-                    if (r.has_finalized_keys and len(r.keys) > 0)
-                ]
+        if edited_prior_state in {
+            RealizationStorageState.UNDEFINED,
+            RealizationStorageState.PARENT_FAILURE,
+            RealizationStorageState.LOAD_FAILURE,
+        }:
+            assert edited_posterior_state == RealizationStorageState.PARENT_FAILURE
+        else:
+            is_expecting_responses = (
+                sum(len(config.keys) for config in model_experiment.responses) > 0
             )
-        ) or (
-            list(prior.response_values.keys())
-            == [r.name for r in model_experiment.responses]
-            and self.iens_to_edit not in prior.failure_messages
-            and prior_ensemble.get_ensemble_state()[self.iens_to_edit]
-            != RealizationStorageState.PARENT_FAILURE
-        ):
-            expected_posterior_state = RealizationStorageState.UNDEFINED
-        assert (
-            ensemble.get_ensemble_state()[self.iens_to_edit] == expected_posterior_state
-        )
+            # If expecting no responses, i.e., it has empty .keys in all response
+            # configs, it will be a HAS_DATA even if no responses were ever saved
+            if not is_expecting_responses:
+                assert edited_posterior_state == RealizationStorageState.HAS_DATA
+            else:
+                assert self.iens_to_edit not in prior.failure_messages
+                assert edited_posterior_state == RealizationStorageState.UNDEFINED
 
         return model_ensemble
 
