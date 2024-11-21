@@ -54,7 +54,7 @@ def test_missing_runpath_has_isolated_failures(tmp_path, monkeypatch):
     try:
         with pytest.raises(
             ErtCliError,
-            match=r"active realizations \(9\) is less than .* MIN_REALIZATIONS\(10\)",
+            match=r"successful realizations \(9\) is less than .* MIN_REALIZATIONS\(10\)",
         ):
             run_cli_with_pm(
                 ["ensemble_experiment", "config.ert", "--disable-monitoring"]
@@ -97,7 +97,7 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
     with (
         pytest.raises(
             ErtCliError,
-            match=r"(?s)active realizations \(9\) is less than .* MIN_REALIZATIONS\(10\).*"
+            match=r"(?s)successful realizations \(9\) is less than .* MIN_REALIZATIONS\(10\).*"
             r"Driver reported: Could not create submit script: Don't like realization-1",
         ),
         patch_raising_named_temporary_file(queue_system.lower()),
