@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732196675374,
+  "lastUpdate": 1732196754910,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "58c1b1fcc5b0303a4f8e3d424f75d9a745264632",
-          "message": "Unpin websockets",
-          "timestamp": "2024-11-15T13:49:05+01:00",
-          "tree_id": "1a4cced8ba301b67db19805ff4f42ab257593426",
-          "url": "https://github.com/equinor/ert/commit/58c1b1fcc5b0303a4f8e3d424f75d9a745264632"
-        },
-        "date": 1731675052955,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1944160101319624,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03315314304280298",
-            "extra": "mean: 5.143609311400008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03929361310869673",
             "extra": "mean: 5.166676971800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "430a782d8fde5833ccffb927fbd332a94dc7d0e5",
+          "message": "Remove unused files from test-data/eclipse",
+          "timestamp": "2024-11-21T14:44:04+01:00",
+          "tree_id": "a0ee072205f61bed5c84b72c51ebec6db84b9fc9",
+          "url": "https://github.com/equinor/ert/commit/430a782d8fde5833ccffb927fbd332a94dc7d0e5"
+        },
+        "date": 1732196754364,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1919791632094739,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02833289490247708",
+            "extra": "mean: 5.2088986288 sec\nrounds: 5"
           }
         ]
       }
