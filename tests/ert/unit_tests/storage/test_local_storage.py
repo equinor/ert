@@ -651,7 +651,6 @@ class Experiment:
     observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
-# @reproduce_failure("6.112.2", b"AXicY2BgZCAHMIL0ARE/mM2ASjKiMUCK+SD6eBkYAAYxADg=")
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and
