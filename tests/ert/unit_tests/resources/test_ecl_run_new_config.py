@@ -5,6 +5,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import textwrap
 import threading
 import time
@@ -290,6 +291,43 @@ def test_mpi_run_is_managed_by_system_tool(source_root):
     assert not Path(
         "SPE1_PARALLEL.3.MSG"
     ).exists(), "There should not be 3 MPI processes"
+
+
+@pytest.mark.parametrize(
+    "paths_to_touch, basepath, expectation",
+    [
+        ([], "SPE1", None),
+        (["SPE1.UNSMRY"], "SPE1", "SPE1.UNSMRY"),
+        (["spe1.unsmry"], "spe1", "spe1.unsmry"),
+        (["SPE1.FUNSMRY"], "SPE1", "SPE1.FUNSMRY"),
+        (["spe1.funsmry"], "spe1", "spe1.funsmry"),
+        (["foo/spe1.unsmry"], "foo/spe1", "foo/spe1.unsmry"),
+        (["foo/SPE1.UNSMRY", "SPE1.UNSMRY"], "foo/SPE1", "foo/SPE1.UNSMRY"),
+        (["foo/SPE1.UNSMRY", "SPE1.UNSMRY"], "SPE1", "SPE1.UNSMRY"),
+        (["EXTRA_SPE1.UNSMRY", "SPE1.UNSMRY"], "SPE1", "ValueError"),
+        (["EXTRA_SPE1.UNSMRY", "SPE1.UNSMRY"], "EXTRA_SPE1", "EXTRA_SPE1.UNSMRY"),
+        (["SPE1.UNSMRY", "SPE1.FUNSMRY"], "SPE1", "ValueError"),
+        (
+            ["SPE1.UNSMRY", "SPE1.unsmry"],
+            "SPE1",
+            "ValueError" if sys.platform != "darwin" else "SPE1.UNSMRY",
+        ),
+        (["SPE1.UNSMRY"], "spe1", None),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_find_unsmry(paths_to_touch, basepath, expectation):
+    for path in paths_to_touch:
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).touch()
+    if expectation == "ValueError":
+        with pytest.raises(ValueError):
+            ecl_run.find_unsmry(Path(basepath))
+    elif expectation is None:
+        assert ecl_run.find_unsmry(Path(basepath)) is None
+
+    else:
+        assert str(ecl_run.find_unsmry(Path(basepath))) == expectation
 
 
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
