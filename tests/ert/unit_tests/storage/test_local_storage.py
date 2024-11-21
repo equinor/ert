@@ -828,6 +828,11 @@ class StatefulStorageTest(RuleBasedStateMachine):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         storage_experiment = storage_ensemble.experiment
 
+        assume(
+            storage_ensemble.get_ensemble_state()[self.iens_to_edit]
+            != RealizationStorageState.PARENT_FAILURE
+        )
+
         # Enforce the summary data to respect the
         # scheme outlined in the response configs
         smry_config = storage_experiment.response_configuration.get("summary")
