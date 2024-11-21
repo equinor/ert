@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732181301207,
+  "lastUpdate": 1732181523697,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "79aad486f76bbb27746c34de4c29758b028a93a4",
-          "message": "Fix bug where Everest would not start with relative paths",
-          "timestamp": "2024-11-14T13:22:04+01:00",
-          "tree_id": "15e370783b3ae0b9b823688d0576f5f9acef1810",
-          "url": "https://github.com/equinor/ert/commit/79aad486f76bbb27746c34de4c29758b028a93a4"
-        },
-        "date": 1731587032787,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19476826957680538,
-            "unit": "iter/sec",
-            "range": "stddev: 0.027146648481339533",
-            "extra": "mean: 5.134306538600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04454005559099521",
             "extra": "mean: 5.235107743600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "33cc2c2c6ccfce36bda3e3fc9f35acebe771b7b0",
+          "message": "Test field with FORWARD_INIT:False",
+          "timestamp": "2024-11-21T10:30:12+01:00",
+          "tree_id": "d2af8bbeb81f635379f68d46e0851ac9fcffe60f",
+          "url": "https://github.com/equinor/ert/commit/33cc2c2c6ccfce36bda3e3fc9f35acebe771b7b0"
+        },
+        "date": 1732181523045,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19352657535572754,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024763611003450363",
+            "extra": "mean: 5.167248984600008 sec\nrounds: 5"
           }
         ]
       }
