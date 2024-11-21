@@ -45,34 +45,35 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, A
     param_list = []
     ensemble = storage.get_ensemble(ensemble_id)
     for config in ensemble.experiment.parameter_configuration.values():
-        if isinstance(config, GenKwConfig):
-            for keyword in (e.name for e in config.transform_functions):
+        match config:
+            case GenKwConfig(name=name, transform_functions=transform_functions):
+                for tf in transform_functions:
+                    param_list.append(
+                        {
+                            "name": (
+                                f"LOG10_{name}:{tf.name}"
+                                if tf.use_log
+                                else f"{name}:{tf.name}"
+                            ),
+                            "userdata": {"data_origin": "GEN_KW"},
+                            "dimensionality": 1,
+                            "labels": [],
+                        }
+                    )
+            case Field(name=name, nx=nx, ny=ny, nz=nz):
                 param_list.append(
                     {
-                        "name": (
-                            f"LOG10_{config.name}:{keyword}"
-                            if config.shouldUseLogScale(keyword)
-                            else f"{config.name}:{keyword}"
-                        ),
-                        "userdata": {"data_origin": "GEN_KW"},
-                        "dimensionality": 1,
+                        "name": name,
+                        "userdata": {
+                            "data_origin": "FIELD",
+                            "nx": nx,
+                            "ny": ny,
+                            "nz": nz,
+                        },
+                        "dimensionality": 3,
                         "labels": [],
                     }
                 )
-        elif isinstance(config, Field):
-            param_list.append(
-                {
-                    "name": config.name,
-                    "userdata": {
-                        "data_origin": "FIELD",
-                        "nx": config.nx,
-                        "ny": config.ny,
-                        "nz": config.nz,
-                    },
-                    "dimensionality": 3,
-                    "labels": [],
-                }
-            )
 
     return param_list
 
