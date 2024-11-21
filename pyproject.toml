@@ -32,8 +32,6 @@ dependencies = [
     "aiohttp",
     "backports-datetime_fromisoformat; python_version < '3.11'",
     "cryptography",
-    "dask",  # extra dependency for xarray/pandas
-    "deprecation",
     "dnspython >= 2",
     "fastapi",
     "filelock",
@@ -60,7 +58,7 @@ dependencies = [
     "pydantic > 2, < 2.10",
     "PyQt5",
     "python-dateutil",
-    "python-multipart",
+    "python-multipart",  # extra dependency for fastapi
     "pyyaml",
     "qtpy",
     "requests",
@@ -126,7 +124,6 @@ dev = [
     "sphinx-autoapi",
     "sphinx-copybutton",
     "sphinxcontrib.datatemplates",
-    "testpath",
 ]
 style = [
     "pre-commit",
