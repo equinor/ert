@@ -156,6 +156,53 @@ def test_forward_model_cmd_line_api_works(source_root):
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_ecl_run_on_parallel_deck(source_root):
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "PARALLEL\n  2 /\n\nTITLE")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    ecl_run.run(
+        ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3", "--num-cpu=2"]
+    )
+    assert Path("SPE1.OK").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_eclrun_on_nosim(source_root):
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "NOSIM\n\nTITLE")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    ecl_run.run(ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3"])
+    assert Path("SPE1.OK").exists()
+    assert not Path("SPE1.UNSMRY").exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
+def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
+    minimum_duration = 15  # This is max_wait in the await function tested
+    deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
+    deck = deck.replace("TITLE", "NOSIM\n\nPARALLEL\n 2 /\n\nTITLE")
+    Path("SPE1.DATA").write_text(deck, encoding="utf-8")
+    start_time = time.time()
+    ecl_run.run(
+        ecl_config.Ecl100Config(), ["SPE1.DATA", "--version=2019.3", "--num-cpu=2"]
+    )
+    end_time = time.time()
+    assert Path("SPE1.OK").exists()
+    assert not Path(
+        "SPE1.UNSMRY"
+    ).exists(), "A nosim run should not produce an unsmry file"
+    assert (
+        end_time - start_time > minimum_duration
+    ), "timeout in await_completed not triggered"
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "init_eclrun_config")
 def test_eclrun_will_raise_on_deck_errors(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
