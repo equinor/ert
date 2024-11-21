@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732173557862,
+  "lastUpdate": 1732173601610,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "9a3c864607c891791a023e54abe6cea4706bf9ae",
-          "message": "Convert ErtConfig to dataclass",
-          "timestamp": "2024-11-14T12:28:20+01:00",
-          "tree_id": "9afa168d7d375b58f8ba9a20880ff18dafa4596c",
-          "url": "https://github.com/equinor/ert/commit/9a3c864607c891791a023e54abe6cea4706bf9ae"
-        },
-        "date": 1731583824251,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1924551332956283,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03686378717714496",
-            "extra": "mean: 5.196016249999997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022726353756363466",
             "extra": "mean: 5.227506610599994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "81e21d9918847646016afd255a47c8405705a776",
+          "message": "Aggregate logging of sampling information\n\nA separate log entry for each realization does not provide much\nextra value",
+          "timestamp": "2024-11-21T08:18:12+01:00",
+          "tree_id": "2d0e93b6169c25bffd3ecbe953512888fb92defa",
+          "url": "https://github.com/equinor/ert/commit/81e21d9918847646016afd255a47c8405705a776"
+        },
+        "date": 1732173600891,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1934878001944904,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03492326630468336",
+            "extra": "mean: 5.168284506800006 sec\nrounds: 5"
           }
         ]
       }
