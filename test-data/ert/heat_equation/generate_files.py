@@ -73,12 +73,17 @@ def make_observations(
 
 
 def generate_priors():
-    """For testing FORWARD_INIT:False"""
+    """Generates and saves 10 random conductivity field realizations.
+
+    Uses a prior sampling function to create conductivity fields,
+    then saves each field to a separate .bgrdecl file in ECLIPSE format
+    using Fortran-style ordering. Used for testing when FORWARD_INIT
+    is disabled.
+    """
+
     rng = np.random.default_rng()
     for i in range(10):
-        cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(
-            nx, nx
-        )
+        cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng)
         resfo.write(
             f"cond_{i}.bgrdecl",
             [("COND    ", cond.flatten(order="F").astype(np.float32))],
