@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732196754910,
+  "lastUpdate": 1732196884577,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "90c7a4cd29b5548a83d0ce81b3952240e7dddeff",
-          "message": "Fix walltime computation bug\n\nBecause we logged finished step events before the current batch\nof events were processed, there were situations where the snapshot from a previous\nfailed realization was out of date.\n\nThis solves that problem. There is still a residual problem that will surface if\nwalltime is to be computed for all steps: If a failure event for a step and its\nsuccess event from the subsequent run is in the same batch of events, we can get\na negative walltime computed. This problem is ignored as the walltime computation\nis only interesting (currently) for walltimes > 120 seconds, where this cannot\nhappen (max time between batches is 2 seconds).",
-          "timestamp": "2024-11-15T14:01:27+01:00",
-          "tree_id": "a69defab2b5866ba5c7e92ff1c16d532625a93b8",
-          "url": "https://github.com/equinor/ert/commit/90c7a4cd29b5548a83d0ce81b3952240e7dddeff"
-        },
-        "date": 1731675806223,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1938057308711761,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0323433171968204",
-            "extra": "mean: 5.159806139400007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02833289490247708",
             "extra": "mean: 5.2088986288 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "adda9e04c1d2851e660169ef9a376049eea5d550",
+          "message": "Replace Flask with FastAPI",
+          "timestamp": "2024-11-21T14:46:09+01:00",
+          "tree_id": "387891bda11b1f13497a62711084025657b72618",
+          "url": "https://github.com/equinor/ert/commit/adda9e04c1d2851e660169ef9a376049eea5d550"
+        },
+        "date": 1732196883703,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19491331697103567,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018720853496559556",
+            "extra": "mean: 5.130485774600004 sec\nrounds: 5"
           }
         ]
       }
