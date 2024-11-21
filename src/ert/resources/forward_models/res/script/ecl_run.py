@@ -167,10 +167,9 @@ def find_unsmry(basepath: Path) -> Optional[Path]:
             "funsmry",
         ]
 
-    dir = basepath.parent
     base = basepath.name
     candidates: List[str] = list(
-        filter(lambda x: _is_unsmry(base, x), os.listdir(dir or "."))
+        filter(lambda x: _is_unsmry(base, x), glob.glob(str(basepath) + "*"))
     )
     if not candidates:
         return None
@@ -178,7 +177,7 @@ def find_unsmry(basepath: Path) -> Optional[Path]:
         raise ValueError(
             f"Ambiguous reference to unsmry in {basepath}, could be any of {candidates}"
         )
-    return Path(dir) / candidates[0]
+    return Path(candidates[0])
 
 
 def await_completed_unsmry_file(
