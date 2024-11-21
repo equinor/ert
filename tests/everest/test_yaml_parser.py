@@ -10,8 +10,6 @@ from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import MockParser, relpath, skipif_no_everest_models
 
-# snake_oil_folder = relpath("test_data", "snake_oil")
-
 
 @pytest.mark.integration_test
 def test_default_seed(copy_test_data_to_tmp, monkeypatch):
@@ -187,6 +185,7 @@ def test_valid_config_file(copy_test_data_to_tmp, monkeypatch):
         )
         is None
     )
+
     assert (
         "The config file: <invalid_yaml_config.yml> contains invalid YAML syntax:"
         in parser.get_error()

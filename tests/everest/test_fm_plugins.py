@@ -11,9 +11,6 @@ from everest.config import EverestConfig
 from everest.plugins import hook_impl, hook_specs, hookimpl
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
-from tests.everest.utils import relpath
-
-SNAKE_CONFIG_PATH = relpath("test_data/snake_oil/everest/model/snake_oil.yml")
 
 
 class MockPluginManager(pluggy.PluginManager):
@@ -40,9 +37,12 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
     yield register_plugin_hooks
 
 
-def test_everest_models_jobs():
+def test_everest_models_jobs(copy_snake_oil_to_tmp):
     everest_models = pytest.importorskip("everest_models")
-    ert_config = everest_to_ert_config(EverestConfig.load_file(SNAKE_CONFIG_PATH))
+    ert_config = everest_to_ert_config(
+        EverestConfig.load_file("everest/model/snake_oil.yml")
+    )
+
     jobs = everest_models.forward_models.get_forward_models()
     assert bool(jobs)
     for job in jobs:
