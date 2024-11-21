@@ -208,12 +208,6 @@ def test_multiple_data_assimilation_restart_paths(
 
     monkeypatch.setattr(
         ert.run_models.base_run_model.BaseRunModel,
-        "validate_active_realizations_count",
-        MagicMock(),
-    )
-
-    monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
         "validate_successful_realizations_count",
         MagicMock(),
     )
@@ -269,11 +263,6 @@ def test_evaluate_ensemble_paths(
     tmp_path, monkeypatch, ensemble_iteration, expected_path
 ):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
-        "validate_active_realizations_count",
-        MagicMock(),
-    )
 
     monkeypatch.setattr(
         ert.run_models.base_run_model.BaseRunModel,

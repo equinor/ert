@@ -188,7 +188,6 @@ class BaseRunModel(ABC):
         self.minimum_required_realizations = minimum_required_realizations
         self.active_realizations = copy.copy(active_realizations)
         self.start_iteration = start_iteration
-        self.validate_active_realizations_count()
 
     def log_at_startup(self) -> None:
         keys_to_drop = [
@@ -655,17 +654,6 @@ class BaseRunModel(ABC):
         for run_path in self.paths:
             if Path(run_path).exists():
                 shutil.rmtree(run_path)
-
-    def validate_active_realizations_count(self) -> None:
-        active_realizations_count = self.get_number_of_active_realizations()
-        min_realization_count = self.minimum_required_realizations
-
-        if active_realizations_count < min_realization_count:
-            raise ValueError(
-                f"Number of active realizations ({active_realizations_count}) is less "
-                f"than the specified MIN_REALIZATIONS"
-                f"({min_realization_count})"
-            )
 
     def validate_successful_realizations_count(self) -> None:
         successful_reallizations_count = self.get_number_of_successful_realizations()
