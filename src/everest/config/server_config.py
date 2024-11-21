@@ -2,7 +2,7 @@ import json
 import os
 from typing import Literal, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from ..strings import (
     CERTIFICATE_DIR,
@@ -46,9 +46,6 @@ as RMS and Eclipse.
     queue_system: Optional[Literal["lsf", "local", "slurm"]] = Field(
         None,
         description="Defines which queue system the everest server runs on.",
-    )
-    model_config = ConfigDict(
-        extra="forbid",
     )
 
     @staticmethod
