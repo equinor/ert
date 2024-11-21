@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732185667197,
+  "lastUpdate": 1732193486684,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ffaa27ab2532153f0971dab394bf825c1b56ad54",
-          "message": "Extend save parameters to handle multiple realizations\n\nAdd test that uses the new functionality and also documents\r\nsome troublesome behavior of adaptive localization.",
-          "timestamp": "2024-11-15T09:45:29+01:00",
-          "tree_id": "a487246ff4b0bf535714a7434410a52ae809d1b3",
-          "url": "https://github.com/equinor/ert/commit/ffaa27ab2532153f0971dab394bf825c1b56ad54"
-        },
-        "date": 1731660444481,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19541078065371262,
-            "unit": "iter/sec",
-            "range": "stddev: 0.008124962162825272",
-            "extra": "mean: 5.117424927399986 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.036638804131725995",
             "extra": "mean: 5.241994553400008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "77cf86fc88bf9178bee2e7b2bcefa6178934d34d",
+          "message": "Increase number of examples for stateful storage test",
+          "timestamp": "2024-11-21T13:49:34+01:00",
+          "tree_id": "34343a1e7384a8ee56f6feb0e37d047a405fd7a5",
+          "url": "https://github.com/equinor/ert/commit/77cf86fc88bf9178bee2e7b2bcefa6178934d34d"
+        },
+        "date": 1732193486007,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19013579343634682,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05824185461817928",
+            "extra": "mean: 5.259398990200009 sec\nrounds: 5"
           }
         ]
       }
