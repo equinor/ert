@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732196520379,
+  "lastUpdate": 1732196675374,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "a1a13cc1eb0aa3b8ac77bdc995f414c5e3428c08",
-          "message": "Simplify test logic",
-          "timestamp": "2024-11-15T21:42:46+09:00",
-          "tree_id": "419e2444034fb044dc4d8dc1dca0706fee4905aa",
-          "url": "https://github.com/equinor/ert/commit/a1a13cc1eb0aa3b8ac77bdc995f414c5e3428c08"
-        },
-        "date": 1731674679407,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19076791500288928,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02509802690880647",
-            "extra": "mean: 5.241971638599995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024672064553451997",
             "extra": "mean: 5.048914236200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "20e9fff2409a4a351887f45e0155dfb2e4208bd7",
+          "message": "Remove unused files from test-data/open_shut_state_modifier",
+          "timestamp": "2024-11-21T14:42:43+01:00",
+          "tree_id": "8ad96d8afe86f8a0934bdc6237f2f3660606d88a",
+          "url": "https://github.com/equinor/ert/commit/20e9fff2409a4a351887f45e0155dfb2e4208bd7"
+        },
+        "date": 1732196674778,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19354800105716952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03929361310869673",
+            "extra": "mean: 5.166676971800001 sec\nrounds: 5"
           }
         ]
       }
