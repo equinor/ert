@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732110210976,
+  "lastUpdate": 1732173175292,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "fd6fa0574a8edc085d50d2872d16b19646217dfd",
-          "message": "Fix typing for batching interval",
-          "timestamp": "2024-11-14T10:42:41+01:00",
-          "tree_id": "6f55cfa43074a52a9439ac804c8563b1253dd420",
-          "url": "https://github.com/equinor/ert/commit/fd6fa0574a8edc085d50d2872d16b19646217dfd"
-        },
-        "date": 1731577474307,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19463709917666028,
-            "unit": "iter/sec",
-            "range": "stddev: 0.010724499538523202",
-            "extra": "mean: 5.137766665400005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01876167033183068",
             "extra": "mean: 5.286615538599989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "12144e3fd0022424b4228cf5599e672ed0d469e3",
+          "message": "Remove loading the same workflow twice (#9257)",
+          "timestamp": "2024-11-21T08:11:02+01:00",
+          "tree_id": "71c8f251212dba9c5653171d585661b60de4bcd4",
+          "url": "https://github.com/equinor/ert/commit/12144e3fd0022424b4228cf5599e672ed0d469e3"
+        },
+        "date": 1732173174378,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1948615488916678,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018399556017963052",
+            "extra": "mean: 5.1318487699999995 sec\nrounds: 5"
           }
         ]
       }
