@@ -14,7 +14,7 @@ import numpy as np
 import polars
 import pytest
 import xarray as xr
-from hypothesis import assume, given, note
+from hypothesis import assume, given, note, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 
@@ -651,6 +651,7 @@ class Experiment:
     observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
+@settings(max_examples=300)
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and
