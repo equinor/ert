@@ -687,6 +687,10 @@ class StatefulStorageTest(RuleBasedStateMachine):
         self.model: Dict[UUID, Experiment] = {}
         assert list(self.storage.ensembles) == []
 
+        # Realization to save/delete params/responses
+        # (all other reals are not modified throughout every run of this test)
+        self.iens_to_edit = 0
+
     experiments = Bundle("experiments")
     ensembles = Bundle("ensembles")
     field_list = Bundle("field_list")
@@ -783,8 +787,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
-        iens = 0
-        assume(not storage_ensemble.realizations_initialized([iens]))
+        assume(not storage_ensemble.realizations_initialized([self.iens_to_edit]))
         for f in fields:
             with (
                 patch(
@@ -795,7 +798,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
             ):
                 storage_ensemble.save_parameters(
                     f.name,
-                    iens,
+                    self.iens_to_edit,
                     xr.DataArray(
                         field_data,
                         name="values",
@@ -804,7 +807,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 )
 
             assert temp_file.entered
-        assert not storage_ensemble.realizations_initialized([iens])
+        assert not storage_ensemble.realizations_initialized([self.iens_to_edit])
 
     @rule(
         model_ensemble=ensembles,
@@ -812,10 +815,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def get_parameters(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameter_names = model_ensemble.parameter_values.keys()
-        iens = 0
 
         for f in parameter_names:
-            parameter_data = storage_ensemble.load_parameters(f, iens)
+            parameter_data = storage_ensemble.load_parameters(f, self.iens_to_edit)
             xr.testing.assert_equal(
                 model_ensemble.parameter_values[f],
                 parameter_data["values"],
@@ -867,14 +869,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
         smspec, unsmry = summary_data
         smspec.to_file(self.tmpdir + f"/{summary.input_files[0]}.SMSPEC")
         unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
-        iens = 0
 
         try:
-            ds = summary.read_from_file(self.tmpdir, iens)
+            ds = summary.read_from_file(self.tmpdir, self.iens_to_edit)
         except Exception as e:  # no match in keys
             assume(False)
             raise AssertionError() from e
-        storage_ensemble.save_response(summary.response_type, ds, iens)
+        storage_ensemble.save_response(summary.response_type, ds, self.iens_to_edit)
 
         model_ensemble.response_values[summary.name] = ds
 
@@ -893,10 +894,11 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def get_responses(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         response_types = model_ensemble.response_values.keys()
-        iens = 0
 
         for response_type in response_types:
-            ensemble_data = storage_ensemble.load_responses(response_type, (iens,))
+            ensemble_data = storage_ensemble.load_responses(
+                response_type, (self.iens_to_edit,)
+            )
             model_data = model_ensemble.response_values[response_type]
             assert ensemble_data.equals(model_data)
 
@@ -909,7 +911,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         with pytest.raises(
             KeyError, match=f"No dataset '{parameter}' in storage for realization 0"
         ):
-            _ = storage_ensemble.load_parameters(parameter, 0)
+            _ = storage_ensemble.load_parameters(parameter, self.iens_to_edit)
 
     @rule(
         target=ensembles,
@@ -984,12 +986,14 @@ class StatefulStorageTest(RuleBasedStateMachine):
         ) or (
             list(prior.response_values.keys())
             == [r.name for r in model_experiment.responses]
-            and 0 not in prior.failure_messages
-            and prior_ensemble.get_ensemble_state()[0]
+            and self.iens_to_edit not in prior.failure_messages
+            and prior_ensemble.get_ensemble_state()[self.iens_to_edit]
             != RealizationStorageState.PARENT_FAILURE
         ):
             expected_posterior_state = RealizationStorageState.UNDEFINED
-        assert ensemble.get_ensemble_state()[0] == expected_posterior_state
+        assert (
+            ensemble.get_ensemble_state()[self.iens_to_edit] == expected_posterior_state
+        )
 
         return model_ensemble
 
