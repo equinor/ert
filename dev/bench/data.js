@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732193486684,
+  "lastUpdate": 1732196520379,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "76125352e552ab45a2ff9c6c0a6f6c8745b7adf5",
-          "message": "Fetch all tags in readthedocs workflow",
-          "timestamp": "2024-11-15T11:48:13+01:00",
-          "tree_id": "e33af86cc33b24b14b1ec322a10661ec8c7bead1",
-          "url": "https://github.com/equinor/ert/commit/76125352e552ab45a2ff9c6c0a6f6c8745b7adf5"
-        },
-        "date": 1731667816815,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19012768757649334,
-            "unit": "iter/sec",
-            "range": "stddev: 0.041726213055851856",
-            "extra": "mean: 5.2596232182 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05824185461817928",
             "extra": "mean: 5.259398990200009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "01063e214ad939b6c5ea55dddf4bc332ac750d07",
+          "message": "Remove unused dependencies dask, deprecation, testpath",
+          "timestamp": "2024-11-21T14:40:02+01:00",
+          "tree_id": "b0c2fb96a44655a5dc29174c4936862f506f2870",
+          "url": "https://github.com/equinor/ert/commit/01063e214ad939b6c5ea55dddf4bc332ac750d07"
+        },
+        "date": 1732196519460,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1980623859344135,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024672064553451997",
+            "extra": "mean: 5.048914236200005 sec\nrounds: 5"
           }
         ]
       }
