@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732181523697,
+  "lastUpdate": 1732181851878,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "9819a5b03255355abd69d16667bd95ae69e0afbc",
-          "message": "Fix flaky rightclick plot-button test",
-          "timestamp": "2024-11-14T13:40:12+01:00",
-          "tree_id": "77d974138c33d242d929ff7cd5a11ae2e83b941e",
-          "url": "https://github.com/equinor/ert/commit/9819a5b03255355abd69d16667bd95ae69e0afbc"
-        },
-        "date": 1731588134861,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19231872867327135,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02460795550748442",
-            "extra": "mean: 5.199701593800006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024763611003450363",
             "extra": "mean: 5.167248984600008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "b5f9caa79234ef6f17a2208f83200babb25dcb46",
+          "message": "Put back flaky tag for test_logging_setup",
+          "timestamp": "2024-11-21T18:35:39+09:00",
+          "tree_id": "7123662106b62d428fafdc32b7c77dc6c4a629d2",
+          "url": "https://github.com/equinor/ert/commit/b5f9caa79234ef6f17a2208f83200babb25dcb46"
+        },
+        "date": 1732181851242,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1906726475798551,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021604003101121476",
+            "extra": "mean: 5.244590730200002 sec\nrounds: 5"
           }
         ]
       }
