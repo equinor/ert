@@ -180,41 +180,52 @@ def test_unopenable_observation_config_fails_gracefully():
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_raises_exception_if_active_less_than_minimum_realizations(mode):
-    """
-    Verify that the run model checks that active realizations 20 is less than 100
-    Omit testing of SingleTestRun because that executes with 1 active realization
-    regardless of configuration.
-    """
+def test_that_the_model_raises_exception_if_successful_realizations_less_than_minimum_realizations(
+    mode,
+):
     with (
         open("poly.ert", "r", encoding="utf-8") as fin,
-        open("poly_high_min_reals.ert", "w", encoding="utf-8") as fout,
+        open("failing_realizations.ert", "w", encoding="utf-8") as fout,
     ):
         for line in fin:
             if "MIN_REALIZATIONS" in line:
-                fout.write("MIN_REALIZATIONS 100")
+                fout.write("MIN_REALIZATIONS 2\n")
+            elif "NUM_REALIZATIONS" in line:
+                fout.write("NUM_REALIZATIONS 2\n")
             else:
                 fout.write(line)
+        fout.write(
+            dedent("""
+            INSTALL_JOB failing_fm FAILING_FM
+            FORWARD_MODEL failing_fm
+            """)
+        )
+    Path("FAILING_FM").write_text("EXECUTABLE failing_fm.py", encoding="utf-8")
+    Path("failing_fm.py").write_text(
+        "#!/usr/bin/env python3\nraise RuntimeError('fm failed')", encoding="utf-8"
+    )
+    os.chmod("failing_fm.py", 0o755)
+
     with pytest.raises(
         ErtCliError,
-        match="Number of active realizations",
+        match="Number of successful realizations",
     ):
-        run_cli(
-            mode,
-            "--disable-monitor",
-            "poly_high_min_reals.ert",
-            "--realizations",
-            "0-19",
-            "--target-case",
-            "testcase-%d",
-        )
+        run_cli(mode, "--disable-monitor", "failing_realizations.ert")
 
 
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ES_MDA_MODE),
+    ],
+)
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_warns_when_active_realizations_less_min_realizations():
+def test_that_the_model_warns_when_active_realizations_less_min_realizations(mode):
     """
     Verify that the run model checks that active realizations is equal or higher than
-    NUM_REALIZATIONS when running ensemble_experiment.
+    NUM_REALIZATIONS when running an experiment.
     A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
     """
     with (
@@ -223,15 +234,17 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations():
     ):
         for line in fin:
             if "MIN_REALIZATIONS" in line:
-                fout.write("MIN_REALIZATIONS 100")
+                fout.write("MIN_REALIZATIONS 10\n")
+            elif "NUM_REALIZATIONS" in line:
+                fout.write("NUM_REALIZATIONS 10\n")
             else:
                 fout.write(line)
     with pytest.warns(
         ConfigWarning,
-        match="Due to active_realizations 5 is lower than MIN_REALIZATIONS",
+        match=r"MIN_REALIZATIONS was set to the current number of active realizations \(5\)",
     ):
         run_cli(
-            "ensemble_experiment",
+            mode,
             "--disable-monitor",
             "poly_lower_active_reals.ert",
             "--realizations",
