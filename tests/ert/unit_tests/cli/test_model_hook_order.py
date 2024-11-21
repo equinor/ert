@@ -28,7 +28,10 @@ EXPECTED_CALL_ORDER = [
 @pytest.fixture
 def patch_base_run_model(monkeypatch):
     monkeypatch.setattr(base_run_model, "create_run_path", MagicMock())
-    monkeypatch.setattr(BaseRunModel, "validate", MagicMock())
+    monkeypatch.setattr(BaseRunModel, "validate_active_realizations_count", MagicMock())
+    monkeypatch.setattr(
+        BaseRunModel, "validate_successful_realizations_count", MagicMock()
+    )
     monkeypatch.setattr(BaseRunModel, "set_env_key", MagicMock())
 
 
