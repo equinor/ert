@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732173175292,
+  "lastUpdate": 1732173557862,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "91310f99e95e135cc2e63fbce0640033352e9c7b",
-          "message": "Run ruff",
-          "timestamp": "2024-11-14T11:54:05+01:00",
-          "tree_id": "b9864e9c010671e7d6344582cb8b114e47bf6034",
-          "url": "https://github.com/equinor/ert/commit/91310f99e95e135cc2e63fbce0640033352e9c7b"
-        },
-        "date": 1731581777665,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18832109962684743,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06783166517792047",
-            "extra": "mean: 5.310079444000007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018399556017963052",
             "extra": "mean: 5.1318487699999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "19c7192081cfe0f44ffc9e22ad2a24afc3a3eb7e",
+          "message": "Degrade logged warning to info\n\nThis was a workaround to propagate this particular log through\na filter that only propagated warning. Now info logs are also\npropagated so this workaround is no longer needed.",
+          "timestamp": "2024-11-21T08:17:23+01:00",
+          "tree_id": "be05b339489c834c5e849b27a1f644714777aa49",
+          "url": "https://github.com/equinor/ert/commit/19c7192081cfe0f44ffc9e22ad2a24afc3a3eb7e"
+        },
+        "date": 1732173556981,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19129578869824207,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022726353756363466",
+            "extra": "mean: 5.227506610599994 sec\nrounds: 5"
           }
         ]
       }
