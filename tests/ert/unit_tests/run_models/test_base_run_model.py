@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import ErtConfig, ModelConfig
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
 from ert.storage import Storage
 from ert.substitutions import Substitutions
@@ -18,7 +19,7 @@ def patch_abstractmethods(monkeypatch):
 
 
 def test_base_run_model_supports_restart(minimum_case):
-    BaseRunModel.validate = MagicMock()
+    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(minimum_case, None, None, minimum_case.queue_config, [True])
     assert brm.support_restart
 
@@ -40,7 +41,7 @@ class MockJob:
     ],
 )
 def test_active_realizations(initials):
-    BaseRunModel.validate = MagicMock()
+    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     assert brm.ensemble_size == len(initials)
@@ -60,7 +61,7 @@ def test_active_realizations(initials):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    BaseRunModel.validate = MagicMock()
+    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
@@ -182,7 +183,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
     # Given NUM_CPU in the config file has a special value
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2\nNUM_CPU 42")
     # Set up a BaseRunModel object from the config above:
-    BaseRunModel.validate = MagicMock()
+    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(
         config=config,
         storage=MagicMock(spec=Storage),
@@ -199,3 +200,102 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
     # Assert the built ensemble has the correct NUM_CPU information
     assert ensemble.reals[0].num_cpu == 42
     assert ensemble.reals[1].num_cpu == 42
+
+
+@pytest.mark.parametrize(
+    "initial_active_realizations, new_active_realizations, real_status_dict, expected_result",
+    [
+        pytest.param(
+            [True, True, True],
+            [False, False, False],
+            {},
+            {"Finished": 3},
+            id="all_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [False, True, False],
+            {},
+            {"Finished": 2},
+            id="some_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, True],
+            {},
+            {"Finished": 0},
+            id="no_realizations_in_previous_run_succeeded",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, False, True],
+            {},
+            {"Finished": 1},
+            id="did_not_run_all_realizations_and_some_succeeded",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, True, True],
+            {},
+            {"Finished": 0},
+            id="did_not_run_all_realizations_and_none_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, True],
+            {"0": "Finished", "1": "Finished", "2": "Finished"},
+            {"Finished": 3},
+            id="ran_all_realizations_and_all_succeeded",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, True],
+            {"0": "Finished", "1": "Finished", "2": "Failed"},
+            {"Finished": 2, "Failed": 1},
+            id="ran_all_realizations_and_some_failed",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, True],
+            {"0": "Finished", "1": "Running", "2": "Failed"},
+            {"Finished": 1, "Failed": 1, "Running": 1},
+            id="ran_all_realizations_and_result_was_mixed",
+        ),
+        pytest.param(
+            [True, True, True],
+            [True, True, False],
+            {"0": "Finished", "1": "Finished"},
+            {"Finished": 3},
+            id="reran_some_realizations_and_all_finished",
+        ),
+        pytest.param(
+            [False, True, True],
+            [False, True, False],
+            {"1": "Finished"},
+            {"Finished": 2},
+            id="did_not_run_all_realizations_then_reran_and_the_realizations_finished",
+        ),
+    ],
+)
+def test_get_current_status(
+    initial_active_realizations,
+    new_active_realizations,
+    real_status_dict: dict[str, str],
+    expected_result,
+):
+    """Active realizations gets changed when we choose to rerun, and the result from the previous run should be included in the current_status."""
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
+    brm = BaseRunModel(
+        config=config,
+        storage=MagicMock(spec=Storage),
+        queue_config=config.queue_config,
+        status_queue=MagicMock(spec=SimpleQueue),
+        active_realizations=initial_active_realizations,
+    )
+    snapshot_dict_reals = {}
+    for index, realization_status in real_status_dict.items():
+        snapshot_dict_reals[index] = {"status": realization_status}
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+    assert dict(brm.get_current_status()) == expected_result

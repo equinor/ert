@@ -188,7 +188,7 @@ class BaseRunModel(ABC):
         self.minimum_required_realizations = minimum_required_realizations
         self.active_realizations = copy.copy(active_realizations)
         self.start_iteration = start_iteration
-        self.validate()
+        self.validate_active_realizations_count()
 
     def log_at_startup(self) -> None:
         keys_to_drop = [
@@ -406,8 +406,13 @@ class BaseRunModel(ABC):
                 for real in all_realizations.values():
                     status[str(real["status"])] += 1
 
-        status["Finished"] += self.active_realizations.count(False)
+        status["Finished"] += self._get_number_of_finished_realizations_from_reruns()
         return status
+
+    def _get_number_of_finished_realizations_from_reruns(self) -> int:
+        return self.active_realizations.count(
+            False
+        ) - self._initial_realizations_mask.count(False)
 
     def get_memory_consumption(self) -> int:
         max_memory_consumption: int = 0
@@ -425,7 +430,7 @@ class BaseRunModel(ABC):
         done_realizations = self.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
-        realization_count = len(self.active_realizations)
+        realization_count = self.get_number_of_active_realizations()
 
         if all_realizations:
             for real in all_realizations.values():
@@ -643,6 +648,9 @@ class BaseRunModel(ABC):
         return [real_path.exists() for real_path in realization_set].count(True)
 
     def get_number_of_active_realizations(self) -> int:
+        return self._initial_realizations_mask.count(True)
+
+    def get_number_of_successful_realizations(self) -> int:
         return self.active_realizations.count(True)
 
     def rm_run_path(self) -> None:
@@ -650,13 +658,24 @@ class BaseRunModel(ABC):
             if Path(run_path).exists():
                 shutil.rmtree(run_path)
 
-    def validate(self) -> None:
+    def validate_active_realizations_count(self) -> None:
         active_realizations_count = self.get_number_of_active_realizations()
         min_realization_count = self.minimum_required_realizations
 
         if active_realizations_count < min_realization_count:
             raise ValueError(
                 f"Number of active realizations ({active_realizations_count}) is less "
+                f"than the specified MIN_REALIZATIONS"
+                f"({min_realization_count})"
+            )
+
+    def validate_successful_realizations_count(self) -> None:
+        successful_reallizations_count = self.get_number_of_successful_realizations()
+        min_realization_count = self.minimum_required_realizations
+
+        if successful_reallizations_count < min_realization_count:
+            raise ValueError(
+                f"Number of successful realizations ({successful_reallizations_count}) is less "
                 f"than the specified MIN_REALIZATIONS"
                 f"({min_realization_count})"
             )
@@ -701,7 +720,7 @@ class BaseRunModel(ABC):
             self.active_realizations[iens] = False
 
         num_successful_realizations = len(successful_realizations)
-        self.validate()
+        self.validate_successful_realizations_count()
         logger.info(f"Experiment ran on QUEUESYSTEM: {self._queue_config.queue_system}")
         logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
         logger.info(
@@ -750,7 +769,7 @@ class UpdateRunModel(BaseRunModel):
     def update(
         self, prior: Ensemble, posterior_name: str, weight: float = 1.0
     ) -> Ensemble:
-        self.validate()
+        self.validate_successful_realizations_count()
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
         )
