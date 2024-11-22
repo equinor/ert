@@ -198,7 +198,7 @@ class SchemaItem:
         keyword: FileContextToken,
         cwd: str,
     ) -> Union[
-        T, MaybeWithContext, None, ContextList[Union[T, MaybeWithContext, None]]
+        T, MaybeWithContext, ContextList[Union[T, MaybeWithContext, None]], None
     ]:
         errors: List[Union[ErrorInfo, ConfigValidationError]] = []
 

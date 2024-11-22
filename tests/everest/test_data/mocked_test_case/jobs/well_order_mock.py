@@ -11,7 +11,7 @@ def create_file(order, template_file, target_file):
         open(template_file, encoding="utf-8") as readH,
     ):
         for line in readH.readlines():
-            match_obj = re.search("(__[A-Z]+_[0-9]__)", line)
+            match_obj = re.search(r"(__[A-Z]+_[0-9]__)", line)
             if match_obj:
                 new_well = order.popitem(False)[0]
                 line = line.replace(match_obj.group(1), new_well)
