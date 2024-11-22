@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-import everest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
+from everest.jobs import script_names
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
@@ -24,14 +24,6 @@ OPTIONAL_TOP_KEYS = (
     ConfigKeys.SIMULATOR,
     ConfigKeys.DEFINITIONS,
 )
-
-
-def _key(lint_msg):
-    return lint_msg.key
-
-
-def _keys(lint_msgs):
-    return list(map(_key, lint_msgs))
 
 
 SNAKE_OIL_CONFIG = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
@@ -524,7 +516,7 @@ def test_init_context_controls():
 def test_default_jobs():
     config_file = relpath("test_data/mocked_test_case/mocked_test_case.yml")
     config = EverestConfig.load_file(config_file)
-    config.forward_model += everest.jobs.script_names
+    config.forward_model += script_names
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
 
