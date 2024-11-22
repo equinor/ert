@@ -27,10 +27,6 @@ from tests.everest.utils import (
     skipif_no_opm,
 )
 
-NO_PROJECT_RES = (
-    os.environ.get("NO_PROJECT_RES", False),
-    "Skipping tests when no access to /project/res",
-)
 SNAKE_CONFIG_DIR = "snake_oil/everest/model"
 SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
