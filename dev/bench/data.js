@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732266245497,
+  "lastUpdate": 1732271554906,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "d58862b596cd6fc58039f3eeff3b43d240e4eeb8",
-          "message": "Remove outdated git lfs instruction\n\n\"rpm -qa | grep git-lfs\" reveals this is in place",
-          "timestamp": "2024-11-18T07:28:07+01:00",
-          "tree_id": "8e22e8306b42ae84860c58112f5a1e15a74c8e05",
-          "url": "https://github.com/equinor/ert/commit/d58862b596cd6fc58039f3eeff3b43d240e4eeb8"
-        },
-        "date": 1731911398264,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19320606802078388,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02445986601585514",
-            "extra": "mean: 5.1758208747999905 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03003362364688835",
             "extra": "mean: 5.204675488400011 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "e0d923b0af2a15a7a3c55f6e9179b0d4f202f166",
+          "message": "fixup get_ensemble_responses logic in dark storage",
+          "timestamp": "2024-11-22T11:30:38+01:00",
+          "tree_id": "c29d349e0bdb2fa70b08592763f8f1ef10091877",
+          "url": "https://github.com/equinor/ert/commit/e0d923b0af2a15a7a3c55f6e9179b0d4f202f166"
+        },
+        "date": 1732271553834,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19467722427034373,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02816589297512203",
+            "extra": "mean: 5.136707715799991 sec\nrounds: 5"
           }
         ]
       }
