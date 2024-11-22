@@ -40,7 +40,7 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
 def test_everest_models_jobs(copy_snake_oil_to_tmp):
     everest_models = pytest.importorskip("everest_models")
     ert_config = everest_to_ert_config(
-        EverestConfig.load_file("everest/model/snake_oil.yml")
+        EverestConfig.load_file("snake_oil/everest/model/snake_oil.yml")
     )
 
     jobs = everest_models.forward_models.get_forward_models()

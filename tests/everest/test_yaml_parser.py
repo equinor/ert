@@ -12,7 +12,7 @@ from tests.everest.utils import MockParser, relpath, skipif_no_everest_models
 
 
 @pytest.mark.integration_test
-def test_default_seed(copy_test_data_to_tmp, monkeypatch):
+def test_default_seed(copy_snake_oil_to_tmp, monkeypatch):
     monkeypatch.chdir("snake_oil")
     config_file = os.path.join("everest/model", "snake_oil_all.yml")
 
