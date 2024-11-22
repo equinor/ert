@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732263450916,
+  "lastUpdate": 1732266245497,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "c46b06127ac5a449e221096e0771b50481676a92",
-          "message": "Leave test machine usable when running rapid-tests\n\nRunning with a lower CPU priority helps this",
-          "timestamp": "2024-11-16T15:54:48+01:00",
-          "tree_id": "4c0f8bf80146edf417e9ec9b55732972ca847f6b",
-          "url": "https://github.com/equinor/ert/commit/c46b06127ac5a449e221096e0771b50481676a92"
-        },
-        "date": 1731768999463,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19496214685337976,
-            "unit": "iter/sec",
-            "range": "stddev: 0.020167511008323178",
-            "extra": "mean: 5.129200802000014 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03420532938387256",
             "extra": "mean: 5.208748270399985 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "52b1e2c274fc2839cd36345431d4eef6d06fbc33",
+          "message": "Fix tests writing files to the source tree",
+          "timestamp": "2024-11-22T10:02:07+01:00",
+          "tree_id": "e5e165b82f21e98522fa79e077915bbbd3bcd16c",
+          "url": "https://github.com/equinor/ert/commit/52b1e2c274fc2839cd36345431d4eef6d06fbc33"
+        },
+        "date": 1732266244625,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19213493756311287,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03003362364688835",
+            "extra": "mean: 5.204675488400011 sec\nrounds: 5"
           }
         ]
       }
