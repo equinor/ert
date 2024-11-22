@@ -365,7 +365,8 @@ class LocalEnsemble(BaseMode):
             for i in range(self.ensemble_size)
             if all(
                 (self._realization_dir(i) / f"{response}.parquet").exists()
-                for response in self.experiment.response_configuration
+                or (config.has_finalized_keys and config.keys == [])
+                for response, config in self.experiment.response_configuration.items()
             )
         ]
 
