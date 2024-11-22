@@ -371,7 +371,9 @@ class LsfDriver(Driver):
                 self._job_error_message_by_iens[iens] = process_message
                 raise FailedSubmit(process_message)
 
-            match = re.search("Job <([0-9]+)> is submitted to .*queue", process_message)
+            match = re.search(
+                r"Job <([0-9]+)> is submitted to .*queue", process_message
+            )
             if match is None:
                 raise FailedSubmit(
                     f"Could not understand '{process_message}' from bsub"

@@ -354,7 +354,7 @@ class ForwardModelStep:
 
     def _check_target_file_is_written(
         self, target_file_mtime: int, timeout: int = 5
-    ) -> None | str:
+    ) -> str | None:
         """
         Check whether or not a target_file eventually appear. Returns None in
         case of success, an error message in the case of failure.

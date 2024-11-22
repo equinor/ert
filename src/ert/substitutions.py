@@ -9,7 +9,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 
 logger = logging.getLogger(__name__)
-_PATTERN = re.compile("<[^<>]+>")
+_PATTERN = re.compile(r"<[^<>]+>")
 
 
 from collections import UserDict
