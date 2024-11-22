@@ -226,7 +226,7 @@ def build_tutorial_dict(config_dir, output_dir):
     }
 
 
-def test_snake_everest_to_ert(copy_test_data_to_tmp):
+def test_snake_everest_to_ert(copy_snake_oil_to_tmp):
     # Load config file
     ever_config_dict = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
@@ -610,7 +610,7 @@ def test_install_data_with_invalid_templates(
     assert expected_error_msg in str(exc_info.value)
 
 
-def test_strip_date_job_insertion(copy_test_data_to_tmp):
+def test_strip_date_job_insertion(copy_snake_oil_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.model.report_steps = [
@@ -628,7 +628,7 @@ def test_strip_date_job_insertion(copy_test_data_to_tmp):
     assert snake_dict == ert_config_dict
 
 
-def test_workflow_job(copy_test_data_to_tmp):
+def test_workflow_job(copy_snake_oil_to_tmp):
     workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
@@ -641,7 +641,7 @@ def test_workflow_job(copy_test_data_to_tmp):
     )
 
 
-def test_workflows(copy_test_data_to_tmp):
+def test_workflows(copy_snake_oil_to_tmp):
     workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     ever_config.install_workflow_jobs = workflow_jobs
@@ -659,7 +659,7 @@ def test_workflows(copy_test_data_to_tmp):
     assert hooks[0] == ("pre_simulation", "PRE_SIMULATION")
 
 
-def test_user_config_jobs_precedence(copy_test_data_to_tmp):
+def test_user_config_jobs_precedence(copy_snake_oil_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
     first_job = everest.jobs.script_names[0]
@@ -677,7 +677,7 @@ def test_user_config_jobs_precedence(copy_test_data_to_tmp):
     assert job[0][1] == os.path.join(config_dir, "expected_source")
 
 
-def test_user_config_num_cpu(copy_test_data_to_tmp):
+def test_user_config_num_cpu(copy_snake_oil_to_tmp):
     # Load config file
     ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
 
