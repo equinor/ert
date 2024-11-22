@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732271554906,
+  "lastUpdate": 1732275722390,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "dbb6321c6df23be68d3e486a4d13a6e95a8928e1",
-          "message": "Add test for mean calculation in dark_storage common",
-          "timestamp": "2024-11-18T08:02:15+01:00",
-          "tree_id": "37f1993492c76236526953de60cb4d0600c60e48",
-          "url": "https://github.com/equinor/ert/commit/dbb6321c6df23be68d3e486a4d13a6e95a8928e1"
-        },
-        "date": 1731913442729,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19064655449599555,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02051725654738917",
-            "extra": "mean: 5.245308537800009 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02816589297512203",
             "extra": "mean: 5.136707715799991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "968a97c8babf1e755ccab74df358eca778377e84",
+          "message": "Align has_data with empty response config .keys",
+          "timestamp": "2024-11-22T12:40:09+01:00",
+          "tree_id": "89c4293bcfab02856a0b26b3fb2e2996f0c85fc4",
+          "url": "https://github.com/equinor/ert/commit/968a97c8babf1e755ccab74df358eca778377e84"
+        },
+        "date": 1732275721739,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18827087648756913,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02621250911694178",
+            "extra": "mean: 5.311495960800005 sec\nrounds: 5"
           }
         ]
       }
