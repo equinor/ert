@@ -1,9 +1,12 @@
 import gc
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 from textwrap import dedent
+from typing import Dict
 from urllib.parse import quote
 
 import httpx
+import memray
 import pandas as pd
 import polars
 import pytest
@@ -193,6 +196,83 @@ def api_and_storage(monkeypatch, tmp_path):
         enkf._storage.close()
     enkf._storage = None
     gc.collect()
+
+
+@pytest.mark.parametrize(
+    "num_reals, num_dates, num_keys, max_memory_mb",
+    [  # Tested 24.11.22 on macbook pro M1 max
+        # (xr = tested on previous ert using xarray to store responses)
+        (1, 100, 100, 800),  # 790MiB local, xr: 791, MiB
+        (1000, 100, 100, 950),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
+        # (Cases below are more realistic at up to 200realizations)
+        # Not to be run these on GHA runners
+        # (2000, 100, 100, 1950),  # 1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
+        # (2, 5803, 11787, 5500),  # 4657MiB local, xr: 10115MiB
+        # (10, 5803, 11787, 13500),  # 10036MiB local, 12803MiB mac-3.12, xr: 46715MiB
+    ],
+)
+def test_plot_api_big_summary_memory_usage(
+    num_reals, num_dates, num_keys, max_memory_mb, use_tmpdir, api_and_storage
+):
+    api, storage = api_and_storage
+
+    dates = []
+
+    for i in range(num_keys):
+        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates
+
+    dates_df = polars.Series(dates, dtype=polars.Datetime).dt.cast_time_unit("ms")
+
+    keys_df = polars.Series([f"K{i}" for i in range(num_keys)])
+    values_df = polars.Series(list(range(num_keys * num_dates)), dtype=polars.Float32)
+
+    big_summary = polars.DataFrame(
+        {
+            "response_key": polars.concat([keys_df] * num_dates),
+            "time": dates_df,
+            "values": values_df,
+        }
+    )
+
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                keys=keys_df,
+            )
+        ],
+    )
+
+    ensemble = experiment.create_ensemble(ensemble_size=num_reals, name="bigboi")
+    for real in range(ensemble.ensemble_size):
+        ensemble.save_response("summary", big_summary.clone(), real)
+
+    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+        # Initialize plotter window
+        all_keys = {k.key for k in api.all_data_type_keys()}
+        all_ensembles = [e.id for e in api.get_all_ensembles()]
+        assert set(keys_df.to_list()) == set(all_keys)
+
+        # call updatePlot()
+        ensemble_to_data_map: Dict[str, pd.DataFrame] = {}
+        sample_key = keys_df.sample(1).item()
+        for ensemble in all_ensembles:
+            ensemble_to_data_map[ensemble] = api.data_for_key(ensemble, sample_key)
+
+        for ensemble in all_ensembles:
+            data = ensemble_to_data_map[ensemble]
+
+            # Transpose it twice as done in plotter
+            # (should ideally be avoided)
+            _ = data.T
+            _ = data.T
+
+    stats = memray._memray.compute_statistics("memray.bin")
+    os.remove("memray.bin")
+    total_memory_usage = stats.total_memory_allocated / (1024**2)
+    assert total_memory_usage < max_memory_mb
 
 
 def test_plot_api_handles_urlescape(api_and_storage):
