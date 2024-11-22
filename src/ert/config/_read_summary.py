@@ -63,7 +63,7 @@ def make_summary_key(
     li: Optional[int] = None,
     lj: Optional[int] = None,
     lk: Optional[int] = None,
-) -> Optional[str]:
+) -> str:
     try:
         sum_type = SummaryKeyType.from_keyword(keyword)
     except Exception as err:
@@ -71,55 +71,46 @@ def make_summary_key(
             f"Could not read summary keyword '{keyword}': {err}"
         ) from err
 
-    if sum_type in [
-        SummaryKeyType.FIELD,
-        SummaryKeyType.OTHER,
-    ]:
-        return keyword
-    if sum_type in [
-        SummaryKeyType.REGION,
-        SummaryKeyType.AQUIFER,
-    ]:
-        return f"{keyword}:{number}"
-    if sum_type == SummaryKeyType.BLOCK:
-        nx, ny = _check_if_missing("block", "dimens", nx, ny)
-        (number,) = _check_if_missing("block", "nums", number)
-        i, j, k = _cell_index(number - 1, nx, ny)
-        return f"{keyword}:{i},{j},{k}"
-    if sum_type in [
-        SummaryKeyType.GROUP,
-        SummaryKeyType.WELL,
-    ]:
-        return f"{keyword}:{name}"
-    if sum_type == SummaryKeyType.SEGMENT:
-        return f"{keyword}:{name}:{number}"
-    if sum_type == SummaryKeyType.COMPLETION:
-        nx, ny = _check_if_missing("completion", "dimens", nx, ny)
-        (number,) = _check_if_missing("completion", "nums", number)
-        i, j, k = _cell_index(number - 1, nx, ny)
-        return f"{keyword}:{name}:{i},{j},{k}"
-    if sum_type == SummaryKeyType.INTER_REGION:
-        (number,) = _check_if_missing("inter region", "nums", number)
-        r1 = number % 32768
-        r2 = ((number - r1) // 32768) - 10
-        return f"{keyword}:{r1}-{r2}"
-    if sum_type == SummaryKeyType.LOCAL_WELL:
-        (name,) = _check_if_missing("local well", "WGNAMES", name)
-        (lgr_name,) = _check_if_missing("local well", "LGRS", lgr_name)
-        return f"{keyword}:{lgr_name}:{name}"
-    if sum_type == SummaryKeyType.LOCAL_BLOCK:
-        li, lj, lk = _check_if_missing("local block", "NUMLX", li, lj, lk)
-        (lgr_name,) = _check_if_missing("local block", "LGRS", lgr_name)
-        return f"{keyword}:{lgr_name}:{li},{lj},{lk}"
-    if sum_type == SummaryKeyType.LOCAL_COMPLETION:
-        li, lj, lk = _check_if_missing("local completion", "NUMLX", li, lj, lk)
-        (name,) = _check_if_missing("local completion", "WGNAMES", name)
-        (lgr_name,) = _check_if_missing("local completion", "LGRS", lgr_name)
-        return f"{keyword}:{lgr_name}:{name}:{li},{lj},{lk}"
-    if sum_type == SummaryKeyType.NETWORK:
-        (name,) = _check_if_missing("network", "WGNAMES", name)
-        return f"{keyword}:{name}"
-    raise InvalidResponseFile(f"Unexpected keyword type: {sum_type}")
+    match sum_type:
+        case SummaryKeyType.FIELD | SummaryKeyType.OTHER:
+            return keyword
+        case SummaryKeyType.REGION | SummaryKeyType.AQUIFER:
+            return f"{keyword}:{number}"
+        case SummaryKeyType.BLOCK:
+            nx, ny = _check_if_missing("block", "dimens", nx, ny)
+            (number,) = _check_if_missing("block", "nums", number)
+            i, j, k = _cell_index(number - 1, nx, ny)
+            return f"{keyword}:{i},{j},{k}"
+        case SummaryKeyType.GROUP | SummaryKeyType.WELL:
+            return f"{keyword}:{name}"
+        case SummaryKeyType.SEGMENT:
+            return f"{keyword}:{name}:{number}"
+        case SummaryKeyType.COMPLETION:
+            nx, ny = _check_if_missing("completion", "dimens", nx, ny)
+            (number,) = _check_if_missing("completion", "nums", number)
+            i, j, k = _cell_index(number - 1, nx, ny)
+            return f"{keyword}:{name}:{i},{j},{k}"
+        case SummaryKeyType.INTER_REGION:
+            (number,) = _check_if_missing("inter region", "nums", number)
+            r1 = number % 32768
+            r2 = ((number - r1) // 32768) - 10
+            return f"{keyword}:{r1}-{r2}"
+        case SummaryKeyType.LOCAL_WELL:
+            (name,) = _check_if_missing("local well", "WGNAMES", name)
+            (lgr_name,) = _check_if_missing("local well", "LGRS", lgr_name)
+            return f"{keyword}:{lgr_name}:{name}"
+        case SummaryKeyType.LOCAL_BLOCK:
+            li, lj, lk = _check_if_missing("local block", "NUMLX", li, lj, lk)
+            (lgr_name,) = _check_if_missing("local block", "LGRS", lgr_name)
+            return f"{keyword}:{lgr_name}:{li},{lj},{lk}"
+        case SummaryKeyType.LOCAL_COMPLETION:
+            li, lj, lk = _check_if_missing("local completion", "NUMLX", li, lj, lk)
+            (name,) = _check_if_missing("local completion", "WGNAMES", name)
+            (lgr_name,) = _check_if_missing("local completion", "LGRS", lgr_name)
+            return f"{keyword}:{lgr_name}:{name}:{li},{lj},{lk}"
+        case SummaryKeyType.NETWORK:
+            (name,) = _check_if_missing("network", "WGNAMES", name)
+            return f"{keyword}:{name}"
 
 
 class DateUnit(Enum):
@@ -362,7 +353,7 @@ def _read_spec(
         lk = optional_get(numlz, i)
 
         key = make_summary_key(keyword, num, name, nx, ny, lgr_name, li, lj, lk)
-        if key is not None and should_load_key(key):
+        if should_load_key(key):
             if key in index_mapping:
                 # only keep the index of the last occurrence of a key
                 # this is done for backwards compatability
