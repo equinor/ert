@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732196884577,
+  "lastUpdate": 1732263450916,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "cc33a48341d019c88b1b5e414e99b85317f762ca",
-          "message": "Remove comment",
-          "timestamp": "2024-11-15T14:20:00+01:00",
-          "tree_id": "f66f96bb3ee5ba8e89d7df436915baa2c09cc804",
-          "url": "https://github.com/equinor/ert/commit/cc33a48341d019c88b1b5e414e99b85317f762ca"
-        },
-        "date": 1731676918720,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1910787636976867,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02442527226961437",
-            "extra": "mean: 5.233443950799995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018720853496559556",
             "extra": "mean: 5.130485774600004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "8b4dc2a7d100700641ea5c44c54c9ba0c23d2d65",
+          "message": "Make find_smry() precise\n\nThis solves a bug where find_unsmry() would not be able to locate\nthe correct summary file even if it has the correct base for the\nEclipse deck",
+          "timestamp": "2024-11-22T09:13:20+01:00",
+          "tree_id": "bdbdfce8161878af0b6c38dba42059ecb45800a2",
+          "url": "https://github.com/equinor/ert/commit/8b4dc2a7d100700641ea5c44c54c9ba0c23d2d65"
+        },
+        "date": 1732263450247,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19198470497849743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03420532938387256",
+            "extra": "mean: 5.208748270399985 sec\nrounds: 5"
           }
         ]
       }
