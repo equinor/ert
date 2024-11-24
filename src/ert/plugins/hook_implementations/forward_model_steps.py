@@ -110,10 +110,10 @@ class CopyFile(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`COPY_FILE` job will copy a file. If the :code:`<TO>`
-argument has a directory component, that directory will be created.
-This is an extension of the normal :code:`cp` command
-which will *not* create directories in this way.
+Copies file from :code:`<FROM>` to :code:`<TO>`. If no directory is specified in :code:`<TO>`,
+the file will be copied to :code:`RUNPATH`. If the :code:`<TO>` argument includes a directory component,
+that directory will be created. Unlike the standard :code:`cp` command, this job will automatically
+create any missing directories in the destination path.
 """,
             examples="""
 .. code-block:: bash
