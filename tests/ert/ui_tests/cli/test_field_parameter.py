@@ -223,6 +223,8 @@ if __name__ == "__main__":
 
 
 @pytest.mark.timeout(600)
+@pytest.mark.filterwarnings("ignore:.*Cross-correlation.*:")
+@pytest.mark.filterwarnings("ignore:.*divide by zero.*:")
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
     heat_equation_storage,
 ):
