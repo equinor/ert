@@ -194,7 +194,7 @@ def sample_prior(
             )
             ensemble.save_parameters(parameter, realization_nr, ds)
 
-    ensemble.refresh_ensemble_state()
+    ensemble.refresh()
     logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
 

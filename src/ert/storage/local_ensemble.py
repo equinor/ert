@@ -420,7 +420,7 @@ class LocalEnsemble(BaseMode):
             )
         return None
 
-    def refresh_ensemble_state(self) -> None:
+    def refresh(self) -> None:
         self.get_ensemble_state.cache_clear()
         self.get_ensemble_state()
 
