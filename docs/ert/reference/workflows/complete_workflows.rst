@@ -47,29 +47,35 @@ With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
 points during ERTs execution. Currently there are five points in ERTs
 flow of execution where you can hook in a workflow:
 
-- Before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
+- Before the experiment starts using :code:`PRE_EXPERIMENT`
+- before the simulations (all forward models for a realization) start using :code:`PRE_SIMULATION`,
 - after all the simulations have completed using :code:`POST_SIMULATION`,
 - before the update step using :code:`PRE_UPDATE`
 - after the update step using :code:`POST_UPDATE` and
 - only before the first update using :code:`PRE_FIRST_UPDATE`.
+- after the experiment has completed using :code:`POST_EXPERIMENT`
 
 For non-iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UPDATE`.
 The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
 ::
+   HOOK_WORKFLOW preExperimentWFLOW        PRE_EXPERIMENT
+   HOOK_WORKFLOW initWFLOW                 PRE_SIMULATION
+   HOOK_WORKFLOW preUpdateWFLOW            PRE_UPDATE
+   HOOK_WORKFLOW postUpdateWFLOW           POST_UPDATE
+   HOOK_WORKFLOW QC_WFLOW1                 POST_SIMULATION
+   HOOK_WORKFLOW QC_WFLOW2                 POST_SIMULATION
+   HOOK_WORKFLOW postExperimentWFLOW       POST_EXPERIMENT
 
-   HOOK_WORKFLOW initWFLOW        PRE_SIMULATION
-   HOOK_WORKFLOW preUpdateWFLOW   PRE_UPDATE
-   HOOK_WORKFLOW postUpdateWFLOW  POST_UPDATE
-   HOOK_WORKFLOW QC_WFLOW1        POST_SIMULATION
-   HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
-
-In this example the workflow :code:`initWFLOW` will run after all the
+In this example the workflow, :code:`preExperimentWFLOW` will run,
+then :code:`initWFLOW` will run at the start of every iteration, when
 simulation directories have been created, just before the forward
 model is submitted to the queue. The workflow :code:`preUpdateWFLOW`
 will be run before the update step and :code:`postUpdateWFLOW` will be
-run after the update step. When all the simulations have completed the
+run after the update step. At the end of each forward model run, the
 two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
+After all iterations are complete, the :code:`postExperimentWFLOW` will
+run.
 
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
