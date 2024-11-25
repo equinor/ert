@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732522624608,
+  "lastUpdate": 1732522715404,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "49dde01efb96dc9b19fef2c07b6417fac5dce60e",
-          "message": "Fix incorrect batch ensemble getter",
-          "timestamp": "2024-11-19T09:48:35+01:00",
-          "tree_id": "de6901c4332e6c9fe553c6854838e05a661d0cbe",
-          "url": "https://github.com/equinor/ert/commit/49dde01efb96dc9b19fef2c07b6417fac5dce60e"
-        },
-        "date": 1732006232480,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19461294387104142,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02770199828680481",
-            "extra": "mean: 5.138404363599994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.045695956206649124",
             "extra": "mean: 5.2003044628 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0a4bad63a11f0f9d6ea1671415ae55383a64c87e",
+          "message": "Remove --iter-num from ert cli (#9276)\n\nThis option is no longer available\r\nand is ignored by the application",
+          "timestamp": "2024-11-25T09:16:39+01:00",
+          "tree_id": "b38ac7bd4324447cb3c714bc3c24aed70254dd8d",
+          "url": "https://github.com/equinor/ert/commit/0a4bad63a11f0f9d6ea1671415ae55383a64c87e"
+        },
+        "date": 1732522714364,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18962108509115977,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03051962987155439",
+            "extra": "mean: 5.2736751270000015 sec\nrounds: 5"
           }
         ]
       }
