@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732275722390,
+  "lastUpdate": 1732518192493,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "c4a2062e5a094b52f5c7c1ffbac132d6ecc1c6d3",
-          "message": "Refactor usage of EverestConfig in everest server functionality",
-          "timestamp": "2024-11-18T19:14:16+09:00",
-          "tree_id": "2c8857c1297c0b21eff6c9ab62420b378b1ab698",
-          "url": "https://github.com/equinor/ert/commit/c4a2062e5a094b52f5c7c1ffbac132d6ecc1c6d3"
-        },
-        "date": 1731924969313,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19563452425450104,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04089270139270816",
-            "extra": "mean: 5.111572222799998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02621250911694178",
             "extra": "mean: 5.311495960800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "edc56e1fc70ea098d3c1948ad62d21642a9f7dbf",
+          "message": "Clean up everest tests",
+          "timestamp": "2024-11-25T08:01:26+01:00",
+          "tree_id": "5d3f19ef64eee0ad1276f3cd19f74f71f0483f78",
+          "url": "https://github.com/equinor/ert/commit/edc56e1fc70ea098d3c1948ad62d21642a9f7dbf"
+        },
+        "date": 1732518192042,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1970148106735814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02709782905823896",
+            "extra": "mean: 5.0757605308000056 sec\nrounds: 5"
           }
         ]
       }
