@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732538612384,
+  "lastUpdate": 1732543711986,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "stephan.dehoop@tno.nl",
-            "name": "Stephan de Hoop",
-            "username": "StephanDeHoop"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d07a7e7869ccf998597e36d46766e009ac31b512",
-          "message": "Update everest install command in ReadMe (#9255)\n\nUpdate everest install command in ReadMe docs",
-          "timestamp": "2024-11-19T15:41:09+01:00",
-          "tree_id": "41feea775dc97c00633b026c48dac62591993aea",
-          "url": "https://github.com/equinor/ert/commit/d07a7e7869ccf998597e36d46766e009ac31b512"
-        },
-        "date": 1732027380280,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18882093614298373,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03430320971169947",
-            "extra": "mean: 5.296022890400008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05743047757617601",
             "extra": "mean: 5.210861026799989 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "e33dfe75f022372c6195da861ddba37f146519a9",
+          "message": "Upgrade pre-commit ruff 0.7.3 -> 0.8.0",
+          "timestamp": "2024-11-25T15:06:40+01:00",
+          "tree_id": "7e4b8ed5f116b9ea8718977a9183535ec68376b7",
+          "url": "https://github.com/equinor/ert/commit/e33dfe75f022372c6195da861ddba37f146519a9"
+        },
+        "date": 1732543711387,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19396551495225098,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028487240631395443",
+            "extra": "mean: 5.155555616400022 sec\nrounds: 5"
           }
         ]
       }
