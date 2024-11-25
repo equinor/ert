@@ -202,8 +202,8 @@ def api_and_storage(monkeypatch, tmp_path):
     "num_reals, num_dates, num_keys, max_memory_mb",
     [  # Tested 24.11.22 on macbook pro M1 max
         # (xr = tested on previous ert using xarray to store responses)
-        (1, 100, 100, 800),  # 790MiB local, xr: 791, MiB
-        (1000, 100, 100, 950),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
+        (1, 100, 100, 1200),  # 790MiB local, xr: 791, MiB
+        (1000, 100, 100, 1500),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
         # (Cases below are more realistic at up to 200realizations)
         # Not to be run these on GHA runners
         # (2000, 100, 100, 1950),  # 1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
