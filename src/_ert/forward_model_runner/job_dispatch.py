@@ -10,11 +10,11 @@ def sigterm_handler(_signo, _stack_frame):
     os.kill(0, signal.SIGTERM)
 
 
-def main():
+def main(argv):
     os.nice(19)
     signal.signal(signal.SIGTERM, sigterm_handler)
     try:
-        job_runner_main(sys.argv)
+        job_runner_main(argv)
     except Exception as e:
         pgid = os.getpgid(os.getpid())
         os.killpg(pgid, signal.SIGTERM)
@@ -22,4 +22,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

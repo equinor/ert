@@ -396,7 +396,6 @@ class EnsembleEvaluator:
                 self._server_done.wait(), timeout=self.CLOSE_SERVER_TIMEOUT
             )
         except asyncio.TimeoutError:
-            print("Timeout server done")
             self._server_done.set()
 
     async def _monitor_and_handle_tasks(self) -> None:

@@ -3,9 +3,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import os
+import multiprocessing
 import signal
-from asyncio.subprocess import Process
 from contextlib import suppress
 from pathlib import Path
 from typing import MutableMapping, Optional, Set
@@ -23,6 +22,7 @@ class LocalDriver(Driver):
         super().__init__()
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
         self._sent_finished_events: Set[int] = set()
+        self._spawn_context = multiprocessing.get_context("spawn")
 
     async def submit(
         self,
@@ -82,12 +82,16 @@ class LocalDriver(Driver):
             await self._dispatch_finished_event(iens, 127)
             return
 
-        await self.event_queue.put(StartedEvent(iens=iens))
-
-        returncode = 1
         try:
-            returncode = await self._wait(proc)
-            logger.info(f"Realization {iens} finished with {returncode=}")
+            proc.start()
+            await self.event_queue.put(StartedEvent(iens=iens))
+
+            returncode = 1
+            while proc.is_alive():
+                proc.join(timeout=0.001)
+                await asyncio.sleep(1)
+            logger.info(f"Realization {iens} finished with exitcode={proc.exitcode}")
+            returncode = proc.exitcode if proc.exitcode is not None else 1
         except asyncio.CancelledError:
             returncode = await self._kill(proc)
         finally:
@@ -99,35 +103,44 @@ class LocalDriver(Driver):
             await self.event_queue.put(FinishedEvent(iens=iens, returncode=returncode))
             self._sent_finished_events.add(iens)
 
-    @staticmethod
-    async def _init(iens: int, executable: str, /, *args: str) -> Process:
+    async def _init(
+        self, iens: int, executable: str, /, *args: str
+    ) -> multiprocessing.Process:
         """This method exists to allow for mocking it in tests"""
-        return await asyncio.create_subprocess_exec(
-            executable,
-            *args,
-            preexec_fn=os.setpgrp,
-        )
+        from _ert.forward_model_runner.job_dispatch import main  # noqa
 
-    @staticmethod
-    async def _wait(proc: Process) -> int:
-        return await proc.wait()
+        return self._spawn_context.Process(
+            target=main, args=[["job_dispatch.py", *args]]
+        )  # type: ignore
 
-    @staticmethod
-    async def _kill(proc: Process) -> int:
-        try:
-            proc.terminate()
-            await asyncio.wait_for(proc.wait(), _TERMINATE_TIMEOUT)
-        except asyncio.TimeoutError:
-            proc.kill()
-        except ProcessLookupError:
-            # This will happen if the subprocess has not yet started
-            return signal.SIGTERM + SIGNAL_OFFSET
-        ret_val = await proc.wait()
+    @classmethod
+    async def _wait(
+        cls,
+        proc: multiprocessing.Process,
+        max_wait: int = 10,
+        blocked_wait: float = 0.001,
+        sleep_interval: int = 1,
+    ) -> None:
+        wait = 0
+        while wait < max_wait and proc.exitcode is None:
+            proc.join(timeout=blocked_wait)
+            await asyncio.sleep(sleep_interval)
+            wait += blocked_wait + sleep_interval
+
+    @classmethod
+    async def _kill(cls, proc: multiprocessing.Process) -> int:
+        proc.terminate()
+        await cls._wait(proc)
+        proc.kill()
+        await cls._wait(proc)
         # the returncode of a subprocess will be the negative signal value
         # if it terminated due to a signal.
         # https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess.returncode
         # we return SIGNAL_OFFSET + signal value to be in line with lfs/pbs drivers.
-        return -ret_val + SIGNAL_OFFSET
+        if proc.exitcode is not None:
+            return proc.exitcode + SIGNAL_OFFSET
+        else:
+            return -1 + SIGNAL_OFFSET
 
     async def poll(self) -> None:
         """LocalDriver does not poll"""
