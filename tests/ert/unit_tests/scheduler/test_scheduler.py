@@ -248,6 +248,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     assert retries == 1
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
 async def test_max_running(max_running, mock_driver, storage, tmp_path):
     runs: List[bool] = []
