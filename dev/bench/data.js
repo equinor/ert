@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732522715404,
+  "lastUpdate": 1732527629540,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "stephan.dehoop@tno.nl",
-            "name": "Stephan de Hoop",
-            "username": "StephanDeHoop"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "f38fd9d30f3e91e0cc9b38d247ab17ca84e1dd68",
-          "message": "Perform validation earlier by returning EnOptConfig instead of dict  (#9249)\n\nPerform earlier validation on the EnOptConfig",
-          "timestamp": "2024-11-19T10:01:30+01:00",
-          "tree_id": "5a0df2e7ea226799299a7c87f624ddb2e4e9d4c3",
-          "url": "https://github.com/equinor/ert/commit/f38fd9d30f3e91e0cc9b38d247ab17ca84e1dd68"
-        },
-        "date": 1732007004879,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19363517092743143,
-            "unit": "iter/sec",
-            "range": "stddev: 0.038216885462063914",
-            "extra": "mean: 5.164351058800003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03051962987155439",
             "extra": "mean: 5.2736751270000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "bd0538e9b794a8083b2221f8b0c50bb2b2608151",
+          "message": "Adjust memory test for unstable/high peak usage\n\nhttps://github.com/equinor/ert/actions/runs/12006134015/job/33464079712?pr=9047\n`FAILED tests/ert/unit_tests/gui/tools/plot/test_plot_api.py::test_plot_api_big_summary_memory_usage[1000-100-100-950] - assert 1301.3557224273682 < 950\n`",
+          "timestamp": "2024-11-25T10:38:32+01:00",
+          "tree_id": "e4caccda1035c548b0d8728069ceb2fb815647d6",
+          "url": "https://github.com/equinor/ert/commit/bd0538e9b794a8083b2221f8b0c50bb2b2608151"
+        },
+        "date": 1732527628558,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18945509745135816,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015067811929970186",
+            "extra": "mean: 5.278295561600004 sec\nrounds: 5"
           }
         ]
       }
