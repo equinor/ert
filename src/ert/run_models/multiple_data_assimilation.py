@@ -112,6 +112,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                     f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -135,7 +136,6 @@ class MultipleDataAssimilation(UpdateRunModel):
                 ensemble=prior,
             )
 
-            self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
             sample_prior(
                 prior,
                 np.where(self.active_realizations)[0],
@@ -167,7 +167,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             prior = posterior
 
-        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, prior)
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @staticmethod
     def parse_weights(weights: str) -> List[float]:

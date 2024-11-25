@@ -670,7 +670,10 @@ class BaseRunModel(ABC):
 
     @tracer.start_as_current_span(f"{__name__}.run_workflows")
     def run_workflows(
-        self, runtime: HookRuntime, storage: Storage, ensemble: Ensemble
+        self,
+        runtime: HookRuntime,
+        storage: Storage | None = None,
+        ensemble: Ensemble | None = None,
     ) -> None:
         for workflow in self.ert_config.hooked_workflows[runtime]:
             WorkflowRunner(workflow, storage, ensemble).run_blocking()

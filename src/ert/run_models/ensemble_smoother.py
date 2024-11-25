@@ -62,6 +62,7 @@ class EnsembleSmoother(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -82,10 +83,7 @@ class EnsembleSmoother(UpdateRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
-        self.set_env_key("_ERT_ITERATION", "0")
-        self.set_env_key("_IS_FINAL_ITERATION", "True")
 
-        self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
@@ -110,7 +108,7 @@ class EnsembleSmoother(UpdateRunModel):
             posterior,
             evaluator_server_config,
         )
-        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, prior)
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:

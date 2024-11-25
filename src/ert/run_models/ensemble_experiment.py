@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
+from ert.config import HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
@@ -15,7 +16,7 @@ from ..run_arg import create_run_arguments
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig, HookRuntime, QueueConfig
+    from ert.config import ErtConfig, QueueConfig
 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class EnsembleExperiment(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         if not restart:
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -83,8 +85,6 @@ class EnsembleExperiment(BaseRunModel):
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self.ensemble.id))
-        self.set_env_key("_ERT_ITERATION", "0")
-        self.set_env_key("_IS_FINAL_ITERATION", "False")
 
         run_args = create_run_arguments(
             self.run_paths,
@@ -92,7 +92,6 @@ class EnsembleExperiment(BaseRunModel):
             ensemble=self.ensemble,
         )
 
-        self.run_workflows(HookRuntime.PRE_EXPERIMENT, self._storage, self.ensemble)
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],
@@ -103,7 +102,7 @@ class EnsembleExperiment(BaseRunModel):
             self.ensemble,
             evaluator_server_config,
         )
-        self.run_workflows(HookRuntime.POST_EXPERIMENT, self._storage, self.ensemble)
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:
