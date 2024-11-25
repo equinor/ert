@@ -143,6 +143,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
             iens,
         )
 
+    prior_ensemble.refresh()
+
     posterior_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
         ensemble_size=prior_ensemble.ensemble_size,

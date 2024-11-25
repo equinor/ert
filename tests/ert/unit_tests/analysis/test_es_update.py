@@ -785,6 +785,8 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.refresh()
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
