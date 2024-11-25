@@ -11,7 +11,6 @@ on:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
-  UV_SYSTEM_PYTHON: 1
 
 jobs:
   tests-ert:
@@ -25,22 +24,23 @@ jobs:
         submodules: true
         lfs: true
 
-    - uses: actions/setup-python@v5
-      id: setup_python
-      with:
-        python-version: ${{ inputs.python-version }}
-
     - name: Install uv
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v4
+
+    - name: Install python ${{ inputs.python-version }}
+      run: uv python install ${{ inputs.python-version }}
 
     - name: Install ert
       run: |
+        uv venv -p ${{ inputs.python-version }} venv
+        source venv/bin/activate
         uv pip install ".[dev, everest]"
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui
+        source venv/bin/activate
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui --durations=0
 
     - name: Upload artifact images
       uses: actions/upload-artifact@v4
@@ -53,21 +53,25 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --maxprocesses=2 -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli
+        source venv/bin/activate
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --maxprocesses=2 -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=0
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests
+        source venv/bin/activate
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests --durations=0
         pytest --doctest-modules --cov=ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'
       run: |
-        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests
+        source venv/bin/activate
+        pytest --cov=ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests --durations=0
 
     - name: Test for a clean repository
       run: |
+        source venv/bin/activate
         # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
         git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
