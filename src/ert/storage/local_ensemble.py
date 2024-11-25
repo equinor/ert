@@ -548,10 +548,10 @@ class LocalEnsemble(BaseMode):
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, npt.NDArray[np.int_], None],
+        realizations: Union[int, np.int64, npt.NDArray[np.int_], None],
     ) -> xr.Dataset:
-        if isinstance(realizations, int):
-            return self._load_single_dataset(group, realizations).isel(
+        if isinstance(realizations, (int, np.int64)):
+            return self._load_single_dataset(group, int(realizations)).isel(
                 realizations=0, drop=True
             )
 
@@ -792,7 +792,7 @@ class LocalEnsemble(BaseMode):
     def save_parameters(
         self,
         group: str,
-        realization: Union[int, npt.NDArray[np.int_]],
+        realization: int,
         dataset: xr.Dataset,
     ) -> None:
         """
@@ -820,30 +820,13 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
 
-        # Convert to numpy array if it's an integer
-        realizations: npt.NDArray[np.int_] = (
-            np.array([realization])
-            if isinstance(realization, (int, np.integer))
-            else np.asarray(realization)
-        )
-
-        if realizations.size > 1 and "realizations" not in dataset.dims:
-            raise ValueError(
-                "Dataset must have 'realizations' dimension when saving multiple realizations"
-            )
-
+        path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
+        path.parent.mkdir(exist_ok=True)
         if "realizations" in dataset.dims:
-            dataset = dataset.sel(realizations=realizations)
-            for real, data_to_save in dataset.groupby("realizations"):
-                path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
-                path.parent.mkdir(exist_ok=True)
-                self._storage._to_netcdf_transaction(path, data_to_save)
+            data_to_save = dataset.sel(realizations=[realization])
         else:
-            for real in realizations:
-                path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
-                path.parent.mkdir(exist_ok=True)
-                data_to_save = dataset.expand_dims(realizations=[real])
-                self._storage._to_netcdf_transaction(path, data_to_save)
+            data_to_save = dataset.expand_dims(realizations=[realization])
+        self._storage._to_netcdf_transaction(path, data_to_save)
 
     @require_write
     def save_response(
