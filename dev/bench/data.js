@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732545314693,
+  "lastUpdate": 1732549685743,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "a8f4d7312692eda17a8f3634aad5dc82087207dd",
-          "message": "Fix ecl not able to parce errors from MPI runs (#9248)",
-          "timestamp": "2024-11-20T14:40:06+01:00",
-          "tree_id": "26a66b3d6165716475936b9b19760bf4fd8a988d",
-          "url": "https://github.com/equinor/ert/commit/a8f4d7312692eda17a8f3634aad5dc82087207dd"
-        },
-        "date": 1732110119771,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1939413864438311,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021801768775517923",
-            "extra": "mean: 5.156197026000006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05835965963870035",
             "extra": "mean: 5.145979672000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oyveid@equinor.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "c0cb78880bca1cdc045935f60f1e157ea60746b2",
+          "message": "Remove report_steps\n\nThis was a remnant from when we could not load different summary\nfiles with different report_steps. This is no longer the case, so\nthis is just a complication.",
+          "timestamp": "2024-11-25T16:46:14+01:00",
+          "tree_id": "9ab87e9eff109b50a44da1ad82093c5c8b88667d",
+          "url": "https://github.com/equinor/ert/commit/c0cb78880bca1cdc045935f60f1e157ea60746b2"
+        },
+        "date": 1732549685308,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19593875553165482,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021031451449080443",
+            "extra": "mean: 5.1036355584000095 sec\nrounds: 5"
           }
         ]
       }
