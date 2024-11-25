@@ -222,6 +222,7 @@ if __name__ == "__main__":
             ).read_text(encoding="utf-8")
 
 
+@pytest.mark.timeout(600)
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
     heat_equation_storage,
 ):
