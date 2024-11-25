@@ -817,14 +817,18 @@ class LocalEnsemble(BaseMode):
                 "Dataset must have 'realizations' dimension when saving multiple realizations"
             )
 
-        for real in realizations:
-            path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
-            path.parent.mkdir(exist_ok=True)
-            if "realizations" in dataset.dims:
-                data_to_save = dataset.sel(realizations=[real])
-            else:
+        if "realizations" in dataset.dims:
+            dataset = dataset.sel(realizations=realizations)
+            for real, data_to_save in dataset.groupby("realizations"):
+                path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
+                path.parent.mkdir(exist_ok=True)
+                self._storage._to_netcdf_transaction(path, data_to_save)
+        else:
+            for real in realizations:
+                path = self._realization_dir(real) / f"{_escape_filename(group)}.nc"
+                path.parent.mkdir(exist_ok=True)
                 data_to_save = dataset.expand_dims(realizations=[real])
-            self._storage._to_netcdf_transaction(path, data_to_save)
+                self._storage._to_netcdf_transaction(path, data_to_save)
 
     @require_write
     def save_response(
