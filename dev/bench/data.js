@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732518252943,
+  "lastUpdate": 1732518295477,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "e2924f1b4f98ba583bcdd3f4afaa07fd128e1fe4",
-          "message": "Remove flaky memory profiling test\n\nThis test is too hard to make robust on loaded hardware.",
-          "timestamp": "2024-11-18T14:58:11+01:00",
-          "tree_id": "030728307887e051648f9f7482cc4aa2bebae111",
-          "url": "https://github.com/equinor/ert/commit/e2924f1b4f98ba583bcdd3f4afaa07fd128e1fe4"
-        },
-        "date": 1731938404760,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19352927575116952,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03164605887585596",
-            "extra": "mean: 5.167176883800005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035086335938649585",
             "extra": "mean: 5.232307544599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "7acec5cae10b2c4774839eac486e0f7bb95cd910",
+          "message": "Remove unused files from test-data/valid_config_file",
+          "timestamp": "2024-11-25T08:02:59+01:00",
+          "tree_id": "12d4352f8e83115758208e60d5fbc4b754704985",
+          "url": "https://github.com/equinor/ert/commit/7acec5cae10b2c4774839eac486e0f7bb95cd910"
+        },
+        "date": 1732518294452,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1924180816360404,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03236805996069496",
+            "extra": "mean: 5.197016784999988 sec\nrounds: 5"
           }
         ]
       }
