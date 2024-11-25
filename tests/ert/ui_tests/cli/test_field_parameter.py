@@ -266,7 +266,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
             name="prior-zero-var",
         )
         cond["values"][:, :, :5, 0] = 1.0
-        new_prior.save_parameters("COND", range(prior.ensemble_size), cond)
+        for real in range(prior.ensemble_size):
+            new_prior.save_parameters("COND", real, cond)
 
         # Copy responses from existing prior to new prior.
         # Note that we ideally should generate new responses by running the
