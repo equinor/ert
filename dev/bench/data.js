@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732543711986,
+  "lastUpdate": 1732544806204,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "3b603d448b4d996f9a6414580688bd0209817802",
-          "message": "Add api snapshot test w/ summary data",
-          "timestamp": "2024-11-20T08:02:13+01:00",
-          "tree_id": "31bb5d47e341d0d07a704b0636b6904b9e1d2c9f",
-          "url": "https://github.com/equinor/ert/commit/3b603d448b4d996f9a6414580688bd0209817802"
-        },
-        "date": 1732086241256,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19876168725926224,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018711861136174072",
-            "extra": "mean: 5.0311506899999925 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028487240631395443",
             "extra": "mean: 5.155555616400022 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "4485f41bc30417fc3d4dd36bd5d43ce62099c373",
+          "message": "Mark a test as flaky\n\nThis is a very rare occurence, reruns should be sufficient",
+          "timestamp": "2024-11-25T15:24:58+01:00",
+          "tree_id": "5a632a6a172c30eeae62f608cabe96b6c9226881",
+          "url": "https://github.com/equinor/ert/commit/4485f41bc30417fc3d4dd36bd5d43ce62099c373"
+        },
+        "date": 1732544805756,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18920632357885153,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11250853964733565",
+            "extra": "mean: 5.2852356151999915 sec\nrounds: 5"
           }
         ]
       }
