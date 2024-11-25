@@ -283,15 +283,6 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
             prior_ensemble=new_prior,
         )
 
-        smoother_update(
-            new_prior,
-            new_posterior,
-            experiment.observation_keys,
-            config.ensemble_config.parameters,
-            UpdateSettings(),
-            ESSettings(localization=True),
-        )
-
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")  # Ensure all warnings are always recorded
             smoother_update(
