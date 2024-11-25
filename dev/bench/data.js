@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732518295477,
+  "lastUpdate": 1732522624608,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "2475f7fcae76599512b0efc2f74f1edca184b316",
-          "message": "Log which hostname had an OOM-situation",
-          "timestamp": "2024-11-18T15:24:29+01:00",
-          "tree_id": "9055cff49d09320367543cf2926c542dc2b0c4fc",
-          "url": "https://github.com/equinor/ert/commit/2475f7fcae76599512b0efc2f74f1edca184b316"
-        },
-        "date": 1731939985122,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19130676982102993,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05889932274208237",
-            "extra": "mean: 5.227206548599997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03236805996069496",
             "extra": "mean: 5.197016784999988 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "233bee235736095eff9e97567622e60e55da20a3",
+          "message": "Add memory test for some plotapi endpoints",
+          "timestamp": "2024-11-25T09:15:13+01:00",
+          "tree_id": "498b2b1431e8ba8f6fea597a9670bc0d1a1ce266",
+          "url": "https://github.com/equinor/ert/commit/233bee235736095eff9e97567622e60e55da20a3"
+        },
+        "date": 1732522623991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1922964332479814,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045695956206649124",
+            "extra": "mean: 5.2003044628 sec\nrounds: 5"
           }
         ]
       }
