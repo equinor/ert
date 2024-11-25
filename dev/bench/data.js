@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732518192493,
+  "lastUpdate": 1732518252943,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "a02a4867455e2eef226483ad0e45188735e18d62",
-          "message": "Remove ErtConfig and LibresFacade",
-          "timestamp": "2024-11-18T11:57:17+01:00",
-          "tree_id": "998cf8d3ae389628fba14b1aef664dfe8f944198",
-          "url": "https://github.com/equinor/ert/commit/a02a4867455e2eef226483ad0e45188735e18d62"
-        },
-        "date": 1731927551755,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19135878581242316,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03613657517165334",
-            "extra": "mean: 5.225785666200016 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02709782905823896",
             "extra": "mean: 5.0757605308000056 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "306f821714c2cc7185da25f5438ca93cb85d76d3",
+          "message": "Replace jobs dir with a symlink",
+          "timestamp": "2024-11-25T08:02:24+01:00",
+          "tree_id": "ff9aea94ef44504282919cae68bacd7a3b1c2946",
+          "url": "https://github.com/equinor/ert/commit/306f821714c2cc7185da25f5438ca93cb85d76d3"
+        },
+        "date": 1732518252425,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1911202641427395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035086335938649585",
+            "extra": "mean: 5.232307544599996 sec\nrounds: 5"
           }
         ]
       }
