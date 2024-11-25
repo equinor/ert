@@ -146,14 +146,6 @@ def valid_ensemble(user_input: str) -> Union[str, UUID]:
     return valid_name(user_input)
 
 
-def valid_iter_num(user_input: str) -> str:
-    validator = IntegerArgument(from_value=0)
-    validated = validator.validate(user_input)
-    if validated.failed():
-        strip_error_message_and_raise_exception(validated)
-    return user_input
-
-
 def valid_num_iterations(user_input: str) -> str:
     validator = IntegerArgument(from_value=1)
     validated = validator.validate(user_input)
@@ -365,14 +357,6 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
         type=str,
         default="ensemble-experiment",
         help="Name of the experiment",
-    )
-    ensemble_experiment_parser.add_argument(
-        "--iter-num",
-        type=valid_iter_num,
-        default=0,
-        required=False,
-        help="Specification of which iteration number is about to be made. "
-        "Use iter-num to avoid recomputing the priors.",
     )
 
     # ensemble_smoother_parser
