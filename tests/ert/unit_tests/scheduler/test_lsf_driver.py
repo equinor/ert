@@ -282,6 +282,7 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
     bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
+    driver._max_bsub_attempts = 1
     with expectation:
         await driver.submit(0, "sleep")
 
