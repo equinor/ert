@@ -64,11 +64,12 @@ from ert.shared.status.utils import (
     byte_with_unit,
     file_has_content,
     format_running_time,
+    get_mount_directory,
 )
 
 from ..find_ert_info import find_ert_info
 from .queue_emitter import QueueEmitter
-from .view import ProgressWidget, RealizationWidget, UpdateWidget
+from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 
@@ -220,6 +221,9 @@ class RunDialog(QFrame):
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
+        self.disk_space = DiskSpaceWidget(
+            get_mount_directory(run_model.run_paths._runpath_format)
+        )
 
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
@@ -244,6 +248,8 @@ class RunDialog(QFrame):
         button_layout.addWidget(self.running_time)
         button_layout.addStretch()
         button_layout.addWidget(self.memory_usage)
+        button_layout.addStretch()
+        button_layout.addWidget(self.disk_space)
         button_layout.addStretch()
         button_layout.addWidget(self.copy_debug_info_button)
         button_layout.addWidget(self.kill_button)
@@ -424,6 +430,8 @@ class RunDialog(QFrame):
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
+
+        self.disk_space.update_status()
 
         if maximum_memory_usage:
             self.memory_usage.setText(
