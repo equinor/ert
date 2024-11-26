@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732626875275,
+  "lastUpdate": 1732627927792,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "33cc2c2c6ccfce36bda3e3fc9f35acebe771b7b0",
-          "message": "Test field with FORWARD_INIT:False",
-          "timestamp": "2024-11-21T10:30:12+01:00",
-          "tree_id": "d2af8bbeb81f635379f68d46e0851ac9fcffe60f",
-          "url": "https://github.com/equinor/ert/commit/33cc2c2c6ccfce36bda3e3fc9f35acebe771b7b0"
-        },
-        "date": 1732181523045,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19352657535572754,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024763611003450363",
-            "extra": "mean: 5.167248984600008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04043459587765664",
             "extra": "mean: 5.134128750800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "d7829aca719d2016e4884ef38e464a318444f18b",
+          "message": "Initialize ert config with plugins when starting webviz ert",
+          "timestamp": "2024-11-26T14:30:14+01:00",
+          "tree_id": "824133a85bc64e939f99759d96c5bb5ae006c2e7",
+          "url": "https://github.com/equinor/ert/commit/d7829aca719d2016e4884ef38e464a318444f18b"
+        },
+        "date": 1732627926837,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1908070904512115,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03657527773268285",
+            "extra": "mean: 5.240895386199997 sec\nrounds: 5"
           }
         ]
       }
