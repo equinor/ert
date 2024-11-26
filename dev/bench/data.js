@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732549685743,
+  "lastUpdate": 1732607292704,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "57e6b70db861f019241a999010b09279469527f9",
-          "message": "Fix issue where dark_storage did not handle empty responses",
-          "timestamp": "2024-11-20T14:41:37+01:00",
-          "tree_id": "8f1ebbb6f8a23dc9fd77cfaa951bd0015fb14af7",
-          "url": "https://github.com/equinor/ert/commit/57e6b70db861f019241a999010b09279469527f9"
-        },
-        "date": 1732110209947,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18915693655015092,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01876167033183068",
-            "extra": "mean: 5.286615538599989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021031451449080443",
             "extra": "mean: 5.1036355584000095 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "bb0318635e275ed426e597f8c91a63a581bd7565",
+          "message": "Remove multi-realization save logic\n\n(testing)",
+          "timestamp": "2024-11-26T08:46:16+01:00",
+          "tree_id": "83ff05c81684940f2ddf2b1c85f0f065892318fd",
+          "url": "https://github.com/equinor/ert/commit/bb0318635e275ed426e597f8c91a63a581bd7565"
+        },
+        "date": 1732607291835,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19237468187030143,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05902346462649664",
+            "extra": "mean: 5.198189232999994 sec\nrounds: 5"
           }
         ]
       }
