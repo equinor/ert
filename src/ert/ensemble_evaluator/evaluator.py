@@ -386,49 +386,28 @@ class EnsembleEvaluator:
 
     CLOSE_SERVER_TIMEOUT = 60
 
-    async def _wait_for_stopped_server(self) -> None:
-        """
-        When the ensemble is done, we wait for the server to stop
-        with a timeout.
-        """
-        try:
-            await asyncio.wait_for(
-                self._server_done.wait(), timeout=self.CLOSE_SERVER_TIMEOUT
-            )
-        except asyncio.TimeoutError:
-            print("Timeout server done")
-            self._server_done.set()
-
     async def _monitor_and_handle_tasks(self) -> None:
         pending: Iterable[asyncio.Task[None]] = self._ee_tasks
-        stop_timeout_task: Optional[asyncio.Task[None]] = None
+        timeout = None
 
         while True:
             done, pending = await asyncio.wait(
-                pending, return_when=asyncio.FIRST_COMPLETED
+                pending, return_when=asyncio.FIRST_COMPLETED, timeout=timeout
             )
+            if not done and timeout:
+                logger.info("Time-out while waiting for server_task to complete")
+                self._server_done.set()
+                timeout = None
+                continue
+
             for task in done:
                 if task_exception := task.exception():
-                    exc_traceback = "".join(
-                        traceback.format_exception(
-                            None, task_exception, task_exception.__traceback__
-                        )
-                    )
-                    logger.error(
-                        (
-                            f"Exception in evaluator task {task.get_name()}: {task_exception}\n"
-                            f"Traceback: {exc_traceback}"
-                        )
-                    )
+                    self.log_exception(task_exception, task.get_name())
                     raise task_exception
                 elif task.get_name() == "server_task":
-                    if stop_timeout_task:
-                        stop_timeout_task.cancel()
                     return
                 elif task.get_name() == "ensemble_task":
-                    stop_timeout_task = asyncio.create_task(
-                        self._wait_for_stopped_server()
-                    )
+                    timeout = self.CLOSE_SERVER_TIMEOUT
                     continue
                 else:
                     msg = (
@@ -436,6 +415,20 @@ class EnsembleEvaluator:
                     )
                     logger.error(msg)
                     raise RuntimeError(msg)
+
+    @staticmethod
+    def log_exception(task_exception: BaseException, task_name: str) -> None:
+        exc_traceback = "".join(
+            traceback.format_exception(
+                None, task_exception, task_exception.__traceback__
+            )
+        )
+        logger.error(
+            (
+                f"Exception in evaluator task {task_name}: {task_exception}\n"
+                f"Traceback: {exc_traceback}"
+            )
+        )
 
     async def run_and_get_successful_realizations(self) -> List[int]:
         await self._start_running()
