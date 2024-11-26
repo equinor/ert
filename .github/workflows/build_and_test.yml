@@ -35,7 +35,7 @@ jobs:
       matrix:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.11', '3.12' ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-24.04 ]
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
