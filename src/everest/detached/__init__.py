@@ -245,16 +245,19 @@ _EVERSERVER_JOB_PATH = str(
 _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
     "LSF": {
         "options": [(CK.LSF_OPTIONS, "LSF_RESOURCE")],
-        "name": "LSF_QUEUE",
+        "name": "QUEUE_NAME",
     },
     "SLURM": {
         "options": [
             (CK.SLURM_EXCLUDE_HOST_OPTION, "EXCLUDE_HOST"),
             (CK.SLURM_INCLUDE_HOST_OPTION, "INCLUDE_HOST"),
         ],
-        "name": "PARTITION",
+        "name": "QUEUE_NAME",
     },
-    "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
+    "TORQUE": {
+        "options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"],
+        "name": "QUEUE_NAME",
+    },
 }
 
 
@@ -291,7 +294,7 @@ def get_server_queue_options(
     if queue_system == QueueSystem.LSF:
         queue = LsfQueueOptions(
             activate_script=script,
-            lsf_queue=ever_queue_config.name,
+            queue_name=ever_queue_config.name,
             lsf_resource=ever_queue_config.options,
         )
     elif queue_system == QueueSystem.SLURM:
@@ -299,7 +302,7 @@ def get_server_queue_options(
             activate_script=script,
             exclude_host=ever_queue_config.exclude_host,
             include_host=ever_queue_config.include_host,
-            partition=ever_queue_config.name,
+            queue_name=ever_queue_config.name,
         )
     elif queue_system == QueueSystem.TORQUE:
         queue = TorqueQueueOptions(activate_script=script)

@@ -94,7 +94,7 @@ def build_snake_dict(output_dir, queue_system):
             ErtConfigKeys.QUEUE_OPTION: [
                 (
                     "SLURM",
-                    "PARTITION",
+                    "QUEUE_NAME",
                     "default-queue",
                 ),
                 (
@@ -263,7 +263,7 @@ def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
         ("TORQUE", "QSUB_CMD", "qsub"),
         ("TORQUE", "QSTAT_CMD", "qstat"),
         ("TORQUE", "QDEL_CMD", "qdel"),
-        ("TORQUE", "QUEUE", "permanent_8"),
+        ("TORQUE", "QUEUE_NAME", "permanent_8"),
         ("TORQUE", "MEMORY_PER_JOB", "100mb"),
         ("TORQUE", "KEEP_QSUB_OUTPUT", 1),
         ("TORQUE", "SUBMIT_SLEEP", 0.5),
@@ -367,7 +367,7 @@ def test_queue_configuration(copy_test_data_to_tmp):
 
     expected_options = [
         ("LSF", "MAX_RUNNING", 3),
-        ("LSF", "LSF_QUEUE", "mr"),
+        ("LSF", "QUEUE_NAME", "mr"),
         ("LSF", "LSF_RESOURCE", "span = 1 && select[x86 and GNU/Linux]"),
     ]
 

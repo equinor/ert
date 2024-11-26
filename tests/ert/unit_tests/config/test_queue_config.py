@@ -217,7 +217,7 @@ def test_that_invalid_memory_pr_job_raises_validation_error(
 
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
-    [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+    [("LSF", "LSF_QUEUE"), ("SLURM", "PARTITION"), ("TORQUE", "QUEUE")],
 )
 def test_that_overwriting_QUEUE_OPTIONS_warns(
     queue_system, queue_system_option, caplog
@@ -234,7 +234,7 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
             f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
         )
     assert (
-        f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
+        "Overwriting QUEUE_OPTION GENERIC QUEUE_NAME: \n Old value:"
         " test_0 \n New value: test_1"
     ) in caplog.text and (
         f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
@@ -257,7 +257,7 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     )
 
     if queue_system == "LSF":
-        assert config_object.queue_config.queue_options.lsf_queue is None
+        assert config_object.queue_config.queue_options.queue_name is None
     if queue_system == "SLURM":
         assert config_object.queue_config.queue_options.squeue == "squeue"
     assert config_object.queue_config.queue_options.max_running == 0
@@ -522,3 +522,20 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
         monkeypatch.delenv("VIRTUAL_ENV", raising=False)
     options = QueueOptions(name="local")
     assert options.activate_script == expected
+
+
+@pytest.mark.parametrize(
+        "queue_system, queue_option",
+    (
+        ("LSF", "LSF_QUEUE"),
+        ("TORQUE", "QUEUE"),
+        ("SLURM", "PARTITION"),
+    ),
+)
+def test_deprecated_queue_name_initialization(queue_system, queue_option):
+    with pytest.warns(
+        ConfigWarning, match="Deprecated .* use: QUEUE_OPTION GENERIC QUEUE_NAME"
+    ):
+        QueueConfig.from_dict(
+            {"QUEUE_OPTION": [[queue_system, queue_option, "some_name"]]}
+        )

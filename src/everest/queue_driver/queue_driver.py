@@ -7,13 +7,13 @@ from everest.config_keys import ConfigKeys
 
 _LSF_OPTIONS = [
     (ConfigKeys.CORES, "MAX_RUNNING"),
-    (ConfigKeys.LSF_QUEUE_NAME, "LSF_QUEUE"),
+    (ConfigKeys.LSF_QUEUE_NAME, "QUEUE_NAME"),
     (ConfigKeys.LSF_OPTIONS, "LSF_RESOURCE"),
 ]
 
 _SLURM_OPTIONS = [
     (ConfigKeys.CORES, "MAX_RUNNING"),
-    (ConfigKeys.SLURM_QUEUE, "PARTITION"),
+    (ConfigKeys.SLURM_QUEUE, "QUEUE_NAME"),
     (ConfigKeys.SLURM_SBATCH, "SBATCH"),
     (ConfigKeys.SLURM_SCANCEL, "SCANCEL"),
     (ConfigKeys.SLURM_SCONTROL, "SCONTROL"),
@@ -31,7 +31,7 @@ _TORQUE_OPTIONS = [
     (ConfigKeys.TORQUE_QSUB_CMD, "QSUB_CMD"),
     (ConfigKeys.TORQUE_QSTAT_CMD, "QSTAT_CMD"),
     (ConfigKeys.TORQUE_QDEL_CMD, "QDEL_CMD"),
-    (ConfigKeys.TORQUE_QUEUE_NAME, "QUEUE"),
+    (ConfigKeys.TORQUE_QUEUE_NAME, "QUEUE_NAME"),
     (ConfigKeys.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"),
     (ConfigKeys.CORES_PER_NODE, "NUM_CPUS_PER_NODE"),
     (ConfigKeys.TORQUE_MEMORY_PER_JOB, "MEMORY_PER_JOB"),
