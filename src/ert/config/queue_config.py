@@ -5,9 +5,9 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from collections.abc import Mapping
-from dataclasses import asdict, field, fields
-from typing import Annotated, Any, Literal, no_type_check
+from typing import Annotated
+from dataclasses import asdict, fields, field
+from typing import Any, Literal, Mapping, Optional, no_type_check
 
 import pydantic
 from pydantic.dataclasses import dataclass
@@ -90,7 +90,7 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
+    name: Literal[QueueSystem.LOCAL, "local", "LOCAL"] = str(QueueSystem.LOCAL)
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -99,7 +99,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LSF] = QueueSystem.LSF
+    name: Literal[QueueSystem.LSF, "lsf", "LSF"] = str(QueueSystem.LSF)
     bhist_cmd: NonEmptyString | None = None
     bjobs_cmd: NonEmptyString | None = None
     bkill_cmd: NonEmptyString | None = None
@@ -122,7 +122,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
+    name: Literal[QueueSystem.TORQUE, "torque", "TORQUE"] = str(QueueSystem.TORQUE)
     qsub_cmd: NonEmptyString | None = None
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
@@ -158,7 +158,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.SLURM] = QueueSystem.SLURM
+    name: Literal[QueueSystem.SLURM, "SLURM", "slurm"] = str(QueueSystem.SLURM)
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
@@ -322,7 +322,6 @@ class QueueConfig:
         )
 
         queue_options = all_validated_queue_options[selected_queue_system]
-        queue_options_test_run = all_validated_queue_options[QueueSystem.LOCAL]
         queue_options.add_global_queue_options(config_dict)
 
         if queue_options.project_code is None:
@@ -370,7 +369,6 @@ class QueueConfig:
             max_submit,
             selected_queue_system,
             queue_options,
-            queue_options_test_run,
             stop_long_running=bool(stop_long_running),
         )
 
@@ -380,8 +378,7 @@ class QueueConfig:
             self.realization_memory,
             self.max_submit,
             QueueSystem.LOCAL,
-            self.queue_options_test_run,
-            self.queue_options_test_run,
+            LocalQueueOptions(),
             stop_long_running=bool(self.stop_long_running),
         )
 
