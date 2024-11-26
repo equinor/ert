@@ -149,7 +149,7 @@ class LocalStorage(BaseMode):
         self._experiments = self._load_experiments()
 
         for ens in self._ensembles.values():
-            ens.refresh_ensemble_state()
+            ens.refresh()
 
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """

@@ -136,7 +136,7 @@ class LibresFacade:
             ensemble,
             [r for r, active in enumerate(realisations) if active],
         )
-        ensemble.refresh_ensemble_state()
+        ensemble.refresh()
         _logger.debug(
             f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
         )
@@ -174,7 +174,7 @@ class LibresFacade:
             else:
                 _logger.error(f"Realization: {iens}, load failure: {message}")
 
-        ensemble.refresh_ensemble_state()
+        ensemble.refresh()
         return loaded
 
     def get_observations(self) -> "EnkfObs":

@@ -1,9 +1,7 @@
-import os
 import pathlib
 from datetime import datetime
 
 import numpy as np
-import polars
 import pytest
 
 from ert.config import ErtConfig
@@ -164,12 +162,10 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         ensemble = experiment.get_ensemble_by_name("default_0")
 
-        for real in range(ensemble.ensemble_size):
-            # .save_responses() does not allow for saving directly with an empty ds
-            ds_path = ensemble._realization_dir(real) / "summary.parquet"
-            smry_df = polars.read_parquet(ds_path)
-            os.remove(ds_path)
-            smry_df.clear().write_parquet(ds_path)
+        smry_df = ensemble.load_responses(
+            "summary", tuple(range(ensemble.ensemble_size))
+        )
+        smry_df.clear().write_parquet(ensemble.mount_point / "summary.parquet")
 
         ensemble.load_responses.cache_clear()
 

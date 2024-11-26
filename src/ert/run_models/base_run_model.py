@@ -578,7 +578,7 @@ class BaseRunModel(ABC):
             self._end_queue.get()
             return []
         await evaluator_task
-        ensemble.refresh_ensemble_state()
+        ensemble.refresh()
 
         return evaluator_task.result()
 
