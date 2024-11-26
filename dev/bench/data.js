@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732621606084,
+  "lastUpdate": 1732626875275,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "46f7ba390923c646ae33905db5a77fbb21761b07",
-          "message": "Remove unused test-data",
-          "timestamp": "2024-11-21T10:26:28+01:00",
-          "tree_id": "938237efb75e70bbc0eb1daa76c7b378db407d37",
-          "url": "https://github.com/equinor/ert/commit/46f7ba390923c646ae33905db5a77fbb21761b07"
-        },
-        "date": 1732181300594,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19101803610871523,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04454005559099521",
-            "extra": "mean: 5.235107743600002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035587246495269155",
             "extra": "mean: 5.22142772759999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "dc5ab03d3013b896c85ee095da20a89db375928b",
+          "message": "Remove excess minimum realizations validation in baserunmodel\n\nThis commit removes the additional validation `validate_active_realizations_count` which checked that the number of  realizations to run was greater than the minimum required realizations count.\nThis validation is already done in `model_factory::_setup_ensemble_experiment`",
+          "timestamp": "2024-11-26T14:12:41+01:00",
+          "tree_id": "d248292d4d0450a5c669c1d0527461d91c22dcad",
+          "url": "https://github.com/equinor/ert/commit/dc5ab03d3013b896c85ee095da20a89db375928b"
+        },
+        "date": 1732626874798,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19477501413344553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04043459587765664",
+            "extra": "mean: 5.134128750800005 sec\nrounds: 5"
           }
         ]
       }
