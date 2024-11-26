@@ -958,7 +958,7 @@ def test_that_connection_errors_do_not_effect_final_result(
     monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 0)
     monkeypatch.setattr(Client, "DEFAULT_TIMEOUT_MULTIPLIER", 0)
     monkeypatch.setattr(Client, "CONNECTION_TIMEOUT", 1)
-    monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0)
+    monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0.01)
     monkeypatch.setattr(Job, "DEFAULT_CHECKSUM_TIMEOUT", 0)
 
     def raise_connection_error(*args, **kwargs):
