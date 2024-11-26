@@ -135,7 +135,7 @@ def generate_environment_config(
     return _extract_non_none_from_dict(config)
 
 
-def generate_minimal_everest_config() -> EverestConfig:
+def generate_minimal_everest_config_file() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [generate_controls_config()]
     everest_config["objective_functions"] = [generate_objective_function_config()]
@@ -154,7 +154,7 @@ def generate_minimal_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_auto_scaled_controls_everest_config() -> EverestConfig:
+def generate_auto_scaled_controls_everest_config_file() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [
         generate_controls_config(
@@ -182,7 +182,7 @@ def generate_auto_scaled_controls_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_cvar_everest_config() -> EverestConfig:
+def generate_cvar_everest_config_file() -> EverestConfig:
     everest_config = {}
     variables = [
         {"name": "x", "initial_guess": 0.0},
@@ -220,7 +220,7 @@ def generate_cvar_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_advanced_everest_config() -> EverestConfig:
+def generate_advanced_everest_config_file() -> EverestConfig:
     everest_config = {}
 
     variables = [
@@ -290,8 +290,8 @@ def generate_advanced_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_advanced_scipy_everest_config() -> EverestConfig:
-    config = generate_advanced_everest_config()
+def generate_advanced_scipy_everest_config_file() -> EverestConfig:
+    config = generate_advanced_everest_config_file()
     config.optimization.backend = "scipy"
     config.optimization.algorithm = "SLSQP"
     config.optimization.convergence_tolerance = 0.001
@@ -305,7 +305,7 @@ def generate_advanced_scipy_everest_config() -> EverestConfig:
     return config
 
 
-def generate_minimal_slow_everest_config() -> EverestConfig:
+def generate_minimal_slow_everest_config_file() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [generate_controls_config()]
     everest_config["objective_functions"] = [generate_objective_function_config()]
@@ -326,7 +326,7 @@ def generate_minimal_slow_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_multiobj_everest_config() -> EverestConfig:
+def generate_multiobj_everest_config_file() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [
         generate_controls_config(initial_guess=0, perturbation_magnitude=0.01)
@@ -357,8 +357,8 @@ def generate_multiobj_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_one_batch_everest_config() -> EverestConfig:
-    config = generate_minimal_everest_config()
+def generate_one_batch_everest_config_file() -> EverestConfig:
+    config = generate_minimal_everest_config_file()
     config.controls[0].initial_guess = 0.0
     config.optimization.convergence_tolerance = None
     config.optimization.max_batch_num = 1
@@ -370,7 +370,7 @@ def generate_one_batch_everest_config() -> EverestConfig:
     return config
 
 
-def generate_remove_run_path_everest_config() -> EverestConfig:
+def generate_remove_run_path_everest_config_file() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [generate_controls_config(initial_guess=0)]
     everest_config["objective_functions"] = [generate_objective_function_config()]
@@ -405,7 +405,7 @@ def generate_remove_run_path_everest_config() -> EverestConfig:
     return EverestConfig.model_validate(everest_config)
 
 
-def generate_stddev_everest_config() -> EverestConfig:
+def generate_stddev_everest_config_file() -> EverestConfig:
     everest_config = {}
     variables = [
         {"name": "x", "initial_guess": 0.0},
