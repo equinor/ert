@@ -146,11 +146,9 @@ async def main(args):
     reporter_queue: asyncio.Queue[Message] = asyncio.Queue()
 
     is_running = True
-
+    forward_model_runner = ForwardModelRunner(jobs_data, reporter_queue=reporter_queue)
     forward_model_runner_task = asyncio.create_task(
-        ForwardModelRunner(jobs_data, reporter_queue=reporter_queue).run(
-            parsed_args.job
-        )
+        forward_model_runner.run(parsed_args.job)
     )
     reporting_task = asyncio.create_task(
         handle_reporting(reporters, reporter_queue, is_running)
@@ -196,7 +194,6 @@ async def handle_reporting(
         message_queue.task_done()
         if isinstance(job_status, Finish) and not job_status.success():
             await let_reporters_finish(reporters)
-            print(f"{job_status.error_message=}")
             raise ForwardModelRunnerException(job_status.error_message)
 
     await let_reporters_finish(reporters)
@@ -206,9 +203,3 @@ async def let_reporters_finish(reporters):
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
             await reporter.join()
-
-
-async def stop_reporters(reporters):
-    for reporter in reporters:
-        if isinstance(reporter, reporting.Event):
-            await reporter.stop()

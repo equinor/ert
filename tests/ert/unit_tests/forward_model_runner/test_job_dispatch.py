@@ -346,8 +346,7 @@ async def test_setup_reporters(is_interactive_run, ens_id):
         assert any(isinstance(r, Interactive) for r in reporters)
 
     for reporter in reporters:
-        if isinstance(reporter, Event):
-            await reporter.stop()
+        reporter.cancel()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

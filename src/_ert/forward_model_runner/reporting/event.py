@@ -80,10 +80,6 @@ class Event(Reporter):
     async def join(self) -> None:
         await self._event_publishing_task
 
-    async def stop(self) -> None:
-        await self._event_queue.put(Event._sentinel)
-        await self.join()
-
     async def async_event_publisher(self):
         logger.debug("Publishing event.")
         async with Client(
