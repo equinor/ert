@@ -31,7 +31,6 @@ from fastapi.security import (
     HTTPBasicCredentials,
 )
 
-from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
@@ -305,7 +304,7 @@ def main():
             simulation_callback=partial(_sim_monitor, shared_data=shared_data),
             optimization_callback=partial(_opt_monitor, shared_data=shared_data),
         )
-        if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL:
+        if config.simulator.queue_system.name == "local":
             evaluator_server_config = EvaluatorServerConfig()
         else:
             evaluator_server_config = EvaluatorServerConfig(

@@ -1,26 +1,39 @@
-import warnings
-from typing import Literal
+from typing import Any
 
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    NonNegativeInt,
+    PositiveInt,
+    field_validator,
+    model_validator,
+)
 
-from .has_ert_queue_options import HasErtQueueOptions
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
+from ert.plugins import ErtPluginManager
 
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
 
 
-class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: ignore
-    name: str | None = Field(default=None, description="Specifies which queue to use")
-    cores: PositiveInt | None = Field(
-        default=None,
-        description="""Defines the number of simultaneously running forward models.
+def check_removed_config(queue_system):
+    queue_systems = {
+        "lsf": LsfQueueOptions,
+        "torque": TorqueQueueOptions,
+        "slurm": SlurmQueueOptions,
+        "local": LocalQueueOptions,
+    }
+    if isinstance(queue_system, str) and queue_system in queue_systems:
+        raise ValueError(
+            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].__dataclass_fields__.keys())}"
+        )
 
-    When using queue system lsf, this corresponds to number of nodes used at one
-    time, whereas when using the local queue system, cores refers to the number of
-    cores you want to use on your system.
 
-    This number is specified in Ert as MAX_RUNNING.
-    """,
-    )
+class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
     cores_per_node: PositiveInt | None = Field(
         default=None,
         description="""defines the number of CPUs when running
@@ -35,16 +48,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         description="Whether the batch folder for a successful simulation "
         "needs to be deleted.",
     )
-    exclude_host: str | None = Field(
-        "",
-        description="""Comma separated list of nodes that should be
-                 excluded from the slurm run.""",
-    )
-    include_host: str | None = Field(
-        "",
-        description="""Comma separated list of nodes that
-                should be included in the slurm run""",
-    )
     max_runtime: NonNegativeInt | None = Field(
         default=None,
         description="""Maximum allowed running time of a forward model. When
@@ -52,15 +55,17 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         A value of 0 means unlimited runtime.
         """,
     )
-    options: str | None = Field(
+    queue_system: (
+        LocalQueueOptions
+        | LsfQueueOptions
+        | SlurmQueueOptions
+        | TorqueQueueOptions
+        | None
+    ) = Field(
         default=None,
-        description="""Used to specify options to LSF.
-        Examples to set memory requirement is:
-        * rusage[mem=1000]""",
-    )
-    queue_system: Literal["lsf", "local", "slurm", "torque"] | None = Field(
-        default="local",
-        description="Defines which queue system the everest server runs on.",
+        description="Defines which queue system the everest submits jobs to",
+        discriminator="name",
+        validate_default=True,
     )
     resubmit_limit: NonNegativeInt | None = Field(
         default=None,
@@ -72,38 +77,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
     might make sense to resubmit a forward model in case it fails.
     resumbit_limit defines the number of times we will resubmit a failing forward model.
     If not specified, a default value of 1 will be used.""",
-    )
-    sbatch: str | None = Field(
-        default=None,
-        description="sbatch executable to be used by the slurm queue interface.",
-    )
-    scancel: str | None = Field(
-        default=None,
-        description="scancel executable to be used by the slurm queue interface.",
-    )
-    scontrol: str | None = Field(
-        default=None,
-        description="scontrol executable to be used by the slurm queue interface.",
-    )
-    sacct: str | None = Field(
-        default=None,
-        description="sacct executable to be used by the slurm queue interface.",
-    )
-    squeue: str | None = Field(
-        default=None,
-        description="squeue executable to be used by the slurm queue interface.",
-    )
-    server: str | None = Field(
-        default=None,
-        description="Name of LSF server to use. This option is deprecated and no longer required",
-    )
-    slurm_timeout: int | None = Field(
-        default=None,
-        description="Timeout for cached status used by the slurm queue interface",
-    )
-    squeue_timeout: int | None = Field(
-        default=None,
-        description="Timeout for cached status used by the slurm queue interface.",
     )
     enable_cache: bool = Field(
         default=False,
@@ -118,32 +91,19 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         the most common use of a standard optimization with a continuous
         optimizer.""",
     )
-    qsub_cmd: str | None = Field(default="qsub", description="The submit command")
-    qstat_cmd: str | None = Field(default="qstat", description="The query command")
-    qdel_cmd: str | None = Field(default="qdel", description="The kill command")
-    cluster_label: str | None = Field(
-        default=None,
-        description="The name of the cluster you are running simulations in.",
-    )
-    keep_qsub_output: int | None = Field(
-        default=0,
-        description="Set to 1 to keep error messages from qsub. Usually only to be used if somethign is seriously wrong with the queue environment/setup.",
-    )
-    submit_sleep: float | None = Field(
-        default=0.5,
-        description="To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5",
-    )
-    project_code: str | None = Field(
-        default=None,
-        description="String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.",
-    )
 
-    @field_validator("server")
+    @field_validator("queue_system", mode="before")
     @classmethod
-    def validate_server(cls, server):  # pylint: disable=E0213
-        if server is not None and server:
-            warnings.warn(
-                "The simulator server property was deprecated and is no longer needed",
-                DeprecationWarning,
-                stacklevel=1,
-            )
+    def default_local_queue(cls, v):
+        if v is None:
+            return LocalQueueOptions(max_running=8)
+        elif "activate_script" not in v and ErtPluginManager().activate_script():
+            v["activate_script"] = ErtPluginManager().activate_script()
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_old_config(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            check_removed_config(data.get("queue_system"))
+        return data

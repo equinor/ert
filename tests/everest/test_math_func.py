@@ -219,7 +219,7 @@ def test_remove_run_path(
     # Manually rolling the output folder between two runs
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
 
-    config.simulator = None
+    config.simulator.delete_run_path = False
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)
     run_model.run_experiment(evaluator_server_config)
