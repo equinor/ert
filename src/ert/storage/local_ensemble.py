@@ -297,29 +297,6 @@ class LocalEnsemble(BaseMode):
             if RealizationStorageState.RESPONSES_LOADED in ensemble_state[i]
         ]
 
-    def realizations_initialized(self, realizations: List[int]) -> bool:
-        """
-        Check if specified realizations are initialized.
-
-        Parameters
-        ----------
-        realizations : list of int
-            List of realization indices.
-
-        Returns
-        -------
-        initialized : bool
-            True if all realizations are initialized.
-        """
-
-        responses = self.get_realization_mask_with_responses()
-        parameters = self.get_realization_mask_with_parameters()
-
-        if len(responses) == 0 and len(parameters) == 0:
-            return False
-
-        return all((responses[real] or parameters[real]) for real in realizations)
-
     def get_realization_list_with_responses(self) -> List[int]:
         """
         List of realization indices with associated responses.
