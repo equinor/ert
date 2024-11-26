@@ -804,7 +804,12 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
-        assume(not storage_ensemble.realizations_initialized([self.iens_to_edit]))
+
+        assume(
+            not storage_ensemble.get_realization_mask_with_parameters()[
+                self.iens_to_edit
+            ]
+        )
         for f in fields:
             with (
                 patch(
@@ -824,7 +829,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 )
 
             assert temp_file.entered
-        assert not storage_ensemble.realizations_initialized([self.iens_to_edit])
+        assert not storage_ensemble.get_realization_mask_with_parameters()[
+            self.iens_to_edit
+        ]
 
     @rule(
         model_ensemble=ensembles,
