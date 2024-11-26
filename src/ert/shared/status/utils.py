@@ -2,6 +2,7 @@ import math
 import os
 import resource
 import sys
+from pathlib import Path
 
 
 def byte_with_unit(byte_count: float) -> str:
@@ -82,3 +83,12 @@ def get_ert_memory_usage() -> int:
         rss_scale = 1000
 
     return usage.ru_maxrss // rss_scale
+
+
+def get_mount_directory(runpath: str) -> Path:
+    path = Path(runpath).absolute()
+
+    while not path.is_mount():
+        path = path.parent
+
+    return path
