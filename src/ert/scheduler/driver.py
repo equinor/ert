@@ -94,7 +94,7 @@ class Driver(ABC):
         _logger = driverlogger or logging.getLogger(__name__)
         error_message: Optional[str] = None
 
-        for _ in range(total_attempts):
+        for i in range(total_attempts):
             try:
                 process = await asyncio.create_subprocess_exec(
                     *cmd_with_args,
@@ -150,8 +150,8 @@ class Driver(ABC):
                 )
                 _logger.error(error_message)
                 return False, error_message
-
-            await asyncio.sleep(retry_interval)
+            if i < (total_attempts - 1):
+                await asyncio.sleep(retry_interval)
         error_message = (
             f'Command "{shlex.join(cmd_with_args)}" failed after {total_attempts} attempts '
             f"with {outputs}"

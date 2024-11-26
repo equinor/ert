@@ -282,6 +282,7 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
     bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
+    driver._max_bsub_attempts = 1
     with expectation:
         await driver.submit(0, "sleep")
 
@@ -578,7 +579,7 @@ async def test_that_bsub_will_retry_and_fail(
     bsub_path.write_text(f"#!/bin/sh\necho {error_msg} >&2\nexit {exit_code}")
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
-    driver._bsub_retries = 2
+    driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
         f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg if error_msg else "<empty>"}"'
@@ -662,7 +663,7 @@ async def test_that_bsub_will_retry_and_succeed(
     )
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
-    driver._bsub_retries = 2
+    driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     await driver.submit(0, "sleep 10")
 

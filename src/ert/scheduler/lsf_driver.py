@@ -282,7 +282,7 @@ class LsfDriver(Driver):
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
         self._sleep_time_between_cmd_retries = 3
-        self._bsub_retries = 10
+        self._max_bsub_attempts = 10
 
         self._poll_period = _POLL_PERIOD
 
@@ -363,7 +363,7 @@ class LsfDriver(Driver):
                 bsub_with_args,
                 retry_on_empty_stdout=True,
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
-                total_attempts=self._bsub_retries,
+                total_attempts=self._max_bsub_attempts,
                 retry_interval=self._sleep_time_between_cmd_retries,
                 error_on_msgs=BSUB_FAILURE_MESSAGES,
             )

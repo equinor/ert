@@ -156,7 +156,7 @@ class OpenPBSDriver(Driver):
         self._num_cpus_per_node: Optional[int] = num_cpus_per_node
         self._cluster_label: Optional[str] = cluster_label
         self._job_prefix = job_prefix
-        self._num_pbs_cmd_retries = 10
+        self._max_pbs_cmd_attempts = 10
         self._sleep_time_between_cmd_retries = 2
         self._poll_period = _POLL_PERIOD
 
@@ -268,7 +268,7 @@ class OpenPBSDriver(Driver):
                 QSUB_CONNECTION_REFUSED,
             ),
             stdin=script.encode(encoding="utf-8"),
-            total_attempts=self._num_pbs_cmd_retries,
+            total_attempts=self._max_pbs_cmd_attempts,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
@@ -298,7 +298,7 @@ class OpenPBSDriver(Driver):
             [str(self._qdel_cmd), str(job_id)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
-            total_attempts=self._num_pbs_cmd_retries,
+            total_attempts=self._max_pbs_cmd_attempts,
             retry_interval=self._sleep_time_between_cmd_retries,
             driverlogger=logger,
         )
