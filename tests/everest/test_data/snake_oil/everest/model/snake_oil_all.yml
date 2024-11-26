@@ -81,7 +81,7 @@ simulator:
   queue_system:
     max_running: 3
     name: lsf
-    lsf_queue: mr
+    queue_name: mr
     lsf_resource: span = 1 && select[x86 and GNU/Linux]
 
 model:

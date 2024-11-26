@@ -97,12 +97,13 @@ environment:
   simulation_folder: r{{ scratch }}/simulations
 
 simulator:
+  resubmit_limit: 17
   queue_system:
     name: lsf
-    max_submitt: 3
-    lsf_queue: mr
-    options: span = 1 && select[x86 and GNU/Linux]
-  resubmit_limit: 17
+    max_running: 3
+    queue_name: mr
+    lsf_resource: span = 1 && select[x86 and GNU/Linux]
+
 
 model:
   realizations: [0, 1, 2]
@@ -139,6 +140,7 @@ def test_read_file():
         ConfigKeys.ENVIRONMENT,
         ConfigKeys.MODEL,
         ConfigKeys.SIMULATOR,
+        ConfigKeys.EVERSERVER,
         ConfigKeys.OPTIMIZATION,
         ConfigKeys.FORWARD_MODEL,
         ConfigKeys.INSTALL_DATA,
