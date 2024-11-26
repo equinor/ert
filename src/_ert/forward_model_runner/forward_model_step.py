@@ -161,7 +161,7 @@ class ForwardModelStep:
             combined_environment = {**os.environ, **environment}
         return combined_environment
 
-    async def _run(self) -> "AsyncGenerator[Start | Exited | Running | None]":
+    async def _run(self) -> AsyncGenerator[Start | Exited | Running | None]:
         start_message = self.create_start_message_and_check_job_files()
         yield start_message
         if not start_message.success():
