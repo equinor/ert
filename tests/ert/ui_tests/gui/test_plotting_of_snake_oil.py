@@ -41,6 +41,7 @@ from .conftest import get_child, wait_for_child
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
     ],
 )
+@pytest.mark.xdist_group(name="heat_equation_storage")
 def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
     key, plot_name, storage_type = request.param
     args_mock = Mock()
