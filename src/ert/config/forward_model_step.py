@@ -174,6 +174,12 @@ class ForwardModelStep:
         "_ERT_RUNPATH": "<RUNPATH>",
     }
 
+    def __eq__(self, other):
+        for attr in vars(self):  # noqa: SIM110
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
+
     @field_validator("private_args", mode="before")
     @classmethod
     def convert_to_substitutions(cls, v: Dict[str, str]) -> Substitutions:
