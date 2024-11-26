@@ -145,7 +145,7 @@ async def main(args):
     )
     reporter_queue: asyncio.Queue[Message] = asyncio.Queue()
 
-    done_flag = asyncio.Event()
+    is_running = True
 
     forward_model_runner_task = asyncio.create_task(
         ForwardModelRunner(jobs_data, reporter_queue=reporter_queue).run(
@@ -153,7 +153,7 @@ async def main(args):
         )
     )
     reporting_task = asyncio.create_task(
-        handle_reporting(reporters, reporter_queue, done_flag)
+        handle_reporting(reporters, reporter_queue, is_running)
     )
 
     def handle_sigterm(*args, **kwargs):
@@ -166,22 +166,23 @@ async def main(args):
 
     await forward_model_runner_task
 
-    done_flag.set()
+    is_running = False
     await reporting_task
 
 
 async def handle_reporting(
     reporters: Sequence[reporting.Reporter],
     message_queue: asyncio.Queue[Message],
-    done: asyncio.Event,
+    is_running: bool,
 ):
-    while not done.is_set() or not message_queue.empty():
+    while True:
         try:
             job_status = await asyncio.wait_for(message_queue.get(), timeout=2)
         except asyncio.TimeoutError:
-            continue
-        logger.info(f"Job status: {job_status}")
+            if not is_running:
+                break
 
+        logger.info(f"Job status: {job_status}")
         for reporter in reporters:
             try:
                 await reporter.report(job_status)
