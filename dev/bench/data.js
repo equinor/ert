@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732627927792,
+  "lastUpdate": 1732630988599,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "b5f9caa79234ef6f17a2208f83200babb25dcb46",
-          "message": "Put back flaky tag for test_logging_setup",
-          "timestamp": "2024-11-21T18:35:39+09:00",
-          "tree_id": "7123662106b62d428fafdc32b7c77dc6c4a629d2",
-          "url": "https://github.com/equinor/ert/commit/b5f9caa79234ef6f17a2208f83200babb25dcb46"
-        },
-        "date": 1732181851242,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1906726475798551,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021604003101121476",
-            "extra": "mean: 5.244590730200002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03657527773268285",
             "extra": "mean: 5.240895386199997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca1806e59d1a6a45a18cbc4a3c4ca51af6b4db0b",
+          "message": "Make bsub tests faster (#9350)\n\n* Remove needless wait in driver execute\r\n\r\nDo not wait after last possible attempt in driver execute_with_retry\r\n\r\n* Fix naming of max attempts in driver\r\n\r\n* Add max attempt to lsf test\r\n\r\nRemove retries due to stdout missing",
+          "timestamp": "2024-11-26T15:21:17+01:00",
+          "tree_id": "a2a5066c6e3cf411c3ec7d8cd65fa875de5deaa6",
+          "url": "https://github.com/equinor/ert/commit/ca1806e59d1a6a45a18cbc4a3c4ca51af6b4db0b"
+        },
+        "date": 1732630987772,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19233637591227304,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04663167774807077",
+            "extra": "mean: 5.199224511 sec\nrounds: 5"
           }
         ]
       }
