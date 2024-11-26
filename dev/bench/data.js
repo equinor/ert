@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732607292704,
+  "lastUpdate": 1732613071413,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "stephan.dehoop@tno.nl",
-            "name": "Stephan de Hoop",
-            "username": "StephanDeHoop"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "12144e3fd0022424b4228cf5599e672ed0d469e3",
-          "message": "Remove loading the same workflow twice (#9257)",
-          "timestamp": "2024-11-21T08:11:02+01:00",
-          "tree_id": "71c8f251212dba9c5653171d585661b60de4bcd4",
-          "url": "https://github.com/equinor/ert/commit/12144e3fd0022424b4228cf5599e672ed0d469e3"
-        },
-        "date": 1732173174378,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1948615488916678,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018399556017963052",
-            "extra": "mean: 5.1318487699999995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05902346462649664",
             "extra": "mean: 5.198189232999994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "4b2c2f58090658fbc3ac85bebc4e48c48359e26d",
+          "message": "Remove unused files from test-data/templating",
+          "timestamp": "2024-11-26T10:22:33+01:00",
+          "tree_id": "7d92cc687e995aa5bbd7a86187c8573f480d82de",
+          "url": "https://github.com/equinor/ert/commit/4b2c2f58090658fbc3ac85bebc4e48c48359e26d"
+        },
+        "date": 1732613070919,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19472945167182465,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05068456452254919",
+            "extra": "mean: 5.135330025400004 sec\nrounds: 5"
           }
         ]
       }
