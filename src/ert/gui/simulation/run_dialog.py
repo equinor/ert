@@ -62,6 +62,7 @@ from ert.run_models import (
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import (
     byte_with_unit,
+    disk_space_status,
     file_has_content,
     format_running_time,
 )
@@ -195,6 +196,8 @@ class RunDialog(QFrame):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
+        self.run_path_mp = run_model.run_paths._runpath_format
+
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
                 total_progress=0, iteration_label="Starting..."
@@ -220,6 +223,7 @@ class RunDialog(QFrame):
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
+        self.disk_space = QLabel("")
 
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
@@ -244,6 +248,8 @@ class RunDialog(QFrame):
         button_layout.addWidget(self.running_time)
         button_layout.addStretch()
         button_layout.addWidget(self.memory_usage)
+        button_layout.addStretch()
+        button_layout.addWidget(self.disk_space)
         button_layout.addStretch()
         button_layout.addWidget(self.copy_debug_info_button)
         button_layout.addWidget(self.kill_button)
@@ -424,6 +430,10 @@ class RunDialog(QFrame):
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
+        disk_usage = disk_space_status(self.run_path_mp)
+
+        if disk_usage:
+            self.disk_space.setText(f"Disk space used runpath: {disk_usage:.2f}%")
 
         if maximum_memory_usage:
             self.memory_usage.setText(
