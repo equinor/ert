@@ -542,6 +542,7 @@ def test_run_dialog_fm_label_show_correct_info(
     assert fm_step_model._real == 0
 
     fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
+    assert "Realization id 0 in iteration 0" in fm_step_label.text()
 
     realization_box._item_clicked(run_dialog._fm_step_overview.model().index(0, 0))
     assert (
