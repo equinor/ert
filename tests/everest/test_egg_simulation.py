@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from ert.config import ErtConfig, QueueSystem
+from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
@@ -471,8 +471,6 @@ def _generate_exp_ert_config(config_path, output_dir):
     return {
         ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", config_path)],
         ErtConfigKeys.INSTALL_JOB: everest_default_jobs(output_dir),
-        ErtConfigKeys.QUEUE_OPTION: [(QueueSystem.LOCAL, "MAX_RUNNING", 3)],
-        ErtConfigKeys.QUEUE_SYSTEM: QueueSystem.LOCAL,
         ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
         ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,

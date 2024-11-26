@@ -7,7 +7,7 @@ import shutil
 from abc import abstractmethod
 from dataclasses import field
 from copy import copy
-from dataclasses import asdict, fields
+from dataclasses import asdict, field, fields
 from typing import Any, Literal, Mapping, Optional, no_type_check, Annotated
 
 import pydantic
@@ -91,7 +91,7 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LOCAL, "local", "LOCAL"] = str(QueueSystem.LOCAL)
+    name: Literal[QueueSystem.LOCAL, "local", "LOCAL"] = "local"
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -100,7 +100,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LSF, "lsf", "LSF"] = str(QueueSystem.LSF)
+    name: Literal[QueueSystem.LSF, "lsf", "LSF"] = "lsf"
     bhist_cmd: NonEmptyString | None = None
     bjobs_cmd: NonEmptyString | None = None
     bkill_cmd: NonEmptyString | None = None
@@ -108,6 +108,7 @@ class LsfQueueOptions(QueueOptions):
     exclude_host: str | None = None
     lsf_queue: NonEmptyString | None = None
     lsf_resource: str | None = None
+
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -122,7 +123,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.TORQUE, "torque", "TORQUE"] = str(QueueSystem.TORQUE)
+    name: Literal[QueueSystem.TORQUE, "torque", "TORQUE"] = "torque"
     qsub_cmd: NonEmptyString | None = None
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
@@ -156,7 +157,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.SLURM, "SLURM", "slurm"] = str(QueueSystem.SLURM)
+    name: Literal[QueueSystem.SLURM, "SLURM", "slurm"] = "slurm"
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
