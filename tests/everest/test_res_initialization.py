@@ -196,8 +196,6 @@ def build_tutorial_dict(config_dir, output_dir):
             ("npv_function", "MOCKED_TEST_CASE", "npv_function"),
         ],
         # Defaulted
-        ErtConfigKeys.QUEUE_SYSTEM: "LOCAL",
-        ErtConfigKeys.QUEUE_OPTION: [("LOCAL", "MAX_RUNNING", 8)],
         ErtConfigKeys.ENSPATH: os.path.join(
             os.path.realpath("mocked_test_case"),
             "everest_output/simulation_results",
@@ -241,7 +239,7 @@ def test_snake_everest_to_ert(copy_snake_oil_to_tmp):
                 "max_runtime": 3600,
                 "queue_system": {
                     "name": "torque",
-                    "queue": "permanent_8",
+                    "queue_name": "permanent_8",
                     "qsub_cmd": "qsub",
                     "qstat_cmd": "qstat",
                     "qdel_cmd": "qdel",
@@ -331,7 +329,7 @@ def test_queue_configuration():
     queue_system:
       max_running: 3
       name: lsf
-      lsf_queue: mr
+      queue_name: mr
       lsf_resource: span = 1 && select[x86 and GNU/Linux]
     """)
 
