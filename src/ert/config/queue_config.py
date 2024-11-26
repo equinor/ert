@@ -5,9 +5,10 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from typing import Annotated
-from dataclasses import asdict, fields, field
-from typing import Any, Literal, Mapping, Optional, no_type_check
+from dataclasses import field
+from copy import copy
+from dataclasses import asdict, fields
+from typing import Any, Literal, Mapping, Optional, no_type_check, Annotated
 
 import pydantic
 from pydantic.dataclasses import dataclass
@@ -17,7 +18,6 @@ from .parsing import (
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
-    MaybeWithContext,
     QueueSystem,
     QueueSystemWithGeneric,
 )
@@ -41,6 +41,7 @@ class QueueOptions:
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: str | None = None
     activate_script: str = field(default_factory=activate_script)
+    queue_name: Optional[NonEmptyString] = None
 
     @staticmethod
     def create_queue_options(
@@ -113,7 +114,6 @@ class LsfQueueOptions(QueueOptions):
         driver_dict = asdict(self)
         driver_dict.pop("name")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
-        driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
         driver_dict.pop("submit_sleep")
         driver_dict.pop("max_running")
@@ -126,7 +126,6 @@ class TorqueQueueOptions(QueueOptions):
     qsub_cmd: NonEmptyString | None = None
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
-    queue: NonEmptyString | None = None
     memory_per_job: NonEmptyString | None = None
     num_cpus_per_node: pydantic.PositiveInt = 1
     num_nodes: pydantic.PositiveInt = 1
@@ -141,7 +140,6 @@ class TorqueQueueOptions(QueueOptions):
     def driver_options(self) -> dict[str, Any]:
         driver_dict = asdict(self)
         driver_dict.pop("name")
-        driver_dict["queue_name"] = driver_dict.pop("queue")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         driver_dict.pop("qstat_options")
@@ -163,12 +161,10 @@ class SlurmQueueOptions(QueueOptions):
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
     sacct: NonEmptyString = "sacct"
-    squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
     memory: NonEmptyString | None = None
     memory_per_cpu: NonEmptyString | None = None
-    partition: NonEmptyString | None = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
     max_runtime: pydantic.NonNegativeFloat | None = None
 
@@ -183,7 +179,6 @@ class SlurmQueueOptions(QueueOptions):
         driver_dict["squeue_cmd"] = driver_dict.pop("squeue")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["include_hosts"] = driver_dict.pop("include_host")
-        driver_dict["queue_name"] = driver_dict.pop("partition")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         return driver_dict
@@ -303,6 +298,27 @@ class QueueConfig:
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
         _log_duplicated_queue_options(raw_queue_options)
         _raise_for_defaulted_invalid_options(raw_queue_options)
+        _raw_queue_options = config_dict.get("QUEUE_OPTION", [])
+        for i, (q_system, *options) in enumerate(copy(_raw_queue_options)):
+            if q_system in [
+                QueueSystem.LSF,
+                QueueSystem.SLURM,
+                QueueSystem.TORQUE,
+            ] and options[0] in ["LSF_QUEUE", "SQUEUE", "QUEUE"]:
+                ConfigWarning.deprecation_warn(
+                    f"Deprecated keyword: {options[0]} for QUEUE_OPTION {q_system}, use: "
+                    f"QUEUE_OPTION GENERIC QUEUE_NAME {options[1] if len(options) >= 2 else ''}",
+                    _raw_queue_options[i],
+                )
+                _raw_queue_options[i] = [
+                    QueueSystemWithGeneric.GENERIC,
+                    "QUEUE_NAME",
+                ] + options[1:]
+        _grouped_queue_options = _group_queue_options_by_queue_system(
+            _raw_queue_options
+        )
+        _log_duplicated_queue_options(_raw_queue_options)
+        _raise_for_defaulted_invalid_options(_raw_queue_options)
 
         all_validated_queue_options = {
             selected_queue_system: QueueOptions.create_queue_options(
@@ -328,7 +344,7 @@ class QueueConfig:
             tags = {
                 fm_name.lower()
                 for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
-                if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
+                if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE3HEAD00"]
             }
             if tags:
                 queue_options.project_code = "+".join(tags)
