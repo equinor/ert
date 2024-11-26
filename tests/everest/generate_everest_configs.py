@@ -1,61 +1,72 @@
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional
 
-from everest.config import (
-    ControlConfig,
-    EverestConfig,
-)
+from everest.config import EverestConfig
 
 
-# @pytest.fixture
 def generate_controls_config(
     name: str = "point",
     type: str = "generic_control",
-    variables: Tuple[Dict[str, str | int | float]] = (
-        {"name": "x"},
-        {"name": "y"},
-        {"name": "z"},
-    ),
-    min: float | None = -1.0,
-    max: float | None = 1.0,
-    initial_guess: float | None = 0.1,
-    pertubation_magnitude: float | None = 0.001,
-    control_type: str | None = None,
-    # ) -> ControlConfig:
+    variables: Optional[List[Dict[str, str | int | float]]] = None,
+    min: Optional[float] = -1.0,
+    max: Optional[float] = 1.0,
+    initial_guess: Optional[float] = 0.1,
+    perturbation_magnitude: Optional[float] = 0.001,
+    control_type: Optional[str] = None,
+    auto_scale: Optional[bool] = None,
+    scaled_range: Optional[List[float | int]] = None,
 ) -> Dict[str, str | int | List[Any] | float]:
+    if variables is None:
+        variables = [
+            {"name": "x"},
+            {"name": "y"},
+            {"name": "z"},
+        ]
+
     config = {
         "name": name,
         "type": type,
         "min": min,
         "max": max,
         "initial_guess": initial_guess,
-        "perturbation_magnitude": pertubation_magnitude,
+        "perturbation_magnitude": perturbation_magnitude,
         "variables": variables,
         "control_type": control_type,
+        "auto_scale": auto_scale,
+        "scaled_range": scaled_range,
     }
-    # return ControlConfig.model_validate(_extract_non_none_from_dict(config))
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
 def generate_objective_function_config(
     name: str = "distance",
-    # ) -> ObjectiveFunctionConfig:
+    weight: Optional[float] = None,
+    normalization: Optional[float] = None,
+    type: Optional[str] = None,
+    alias: Optional[str] = None,
 ) -> Dict[str, str | int | List[Any] | float]:
-    config = {"name": name}
-    # return ObjectiveFunctionConfig.model_validate(_extract_non_none_from_dict(config))
+    config = {
+        "name": name,
+        "weight": weight,
+        "normalization": normalization,
+        "type": type,
+        "alias": alias,
+    }
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
 def generate_optimization_config(
-    algorithm: str | None = "optpp_q_newton",
-    convergence_tolerance: float | None = 0.001,
-    max_batch_num: int | None = 4,
-    constraint_tolerance: float | None = 0.1,
-    perturbation_num: int | None = None,
-    speculative: bool | None = None,
-    # ) -> OptimizationConfig:
+    algorithm: Optional[str] = "optpp_q_newton",
+    convergence_tolerance: Optional[float] = 0.001,
+    max_batch_num: Optional[int] = 4,
+    constraint_tolerance: Optional[float] = None,
+    perturbation_num: Optional[int] = None,
+    speculative: Optional[bool] = None,
+    backend: Optional[str] = None,
+    cvar: Optional[Dict[str, int | float | str]] = None,
+    min_realizations_success: Optional[int] = None,
+    min_pert_success: Optional[int] = None,
+    max_iterations: Optional[int] = None,
 ) -> Dict[str, str | int | List[Any] | float]:
     config = {
         "algorithm": algorithm,
@@ -64,53 +75,63 @@ def generate_optimization_config(
         "constraint_tolerance": constraint_tolerance,
         "perturbation_num": perturbation_num,
         "speculative": speculative,
+        "backend": backend,
+        "cvar": cvar,
+        "min_realizations_success": min_realizations_success,
+        "min_pert_success": min_pert_success,
+        "max_iterations": max_iterations,
     }
-    # return OptimizationConfig.model_validate(_extract_non_none_from_dict(config))
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
 def generate_install_jobs_config(
     name: str = "distance3",
     source: str = "jobs/DISTANCE3",
-    # ) -> InstallJobConfig:
 ) -> Dict[str, str | int | List[Any] | float]:
     config = {
         "name": name,
         "source": source,
     }
-    # return InstallJobConfig.model_validate(_extract_non_none_from_dict(config))
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
 def generate_model_config(
-    realizations: int = 0,
-    realizations_weights: List[float] | None = None,
-    # ) -> ModelConfig:
+    realizations: Optional[List[int]] = None,
+    realizations_weights: Optional[List[float]] = None,
 ) -> Dict[str, str | int | List[Any] | float]:
+    if realizations is None:
+        realizations = [0]
+
     config = {
-        "realizations": [realizations],
+        "realizations": realizations,
         "realizations_weights": realizations_weights,
     }
-    # return ModelConfig.model_validate(_extract_non_none_from_dict(config))
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
-def generate_forward_model_config(
-    forward_models: str = "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance",
-) -> List[str]:
-    return [forward_models]
+def generate_input_constraints_config(
+    weights: Dict[str, int | float],
+    upper_bound: float = 0.4,
+) -> Dict[str, Dict[str, int | float] | int | float]:
+    config = {
+        "weights": weights,
+        "upper_bound": upper_bound,
+    }
+    return config
 
 
-# @pytest.fixture
+def generate_output_constraints_config(
+    name: str = "x-0_coord", lower_bound: float = 0.1, scale: float = 0.1
+) -> Dict[str, str | float | int]:
+    config = {"name": name, "lower_bound": lower_bound, "scale": scale}
+    return config
+
+
 def generate_environment_config(
-    simulation_folder: str | None = "sim_output",
-    log_level: str | None = "debug",
-    random_seed: int | None = 123,
-    output_folder: str | None = None,
-    # ) -> EnvironmentConfig:
+    simulation_folder: Optional[str] = "sim_output",
+    log_level: Optional[str] = "debug",
+    random_seed: Optional[int] = 123,
+    output_folder: Optional[str] = None,
 ) -> Dict[str, str | int | List[Any] | float]:
     config = {
         "simulation_folder": simulation_folder,
@@ -118,72 +139,326 @@ def generate_environment_config(
         "random_seed": random_seed,
         "output_folder": output_folder,
     }
-    # return EnvironmentConfig.model_validate(_extract_non_none_from_dict(config))
     return _extract_non_none_from_dict(config)
 
 
-# @pytest.fixture
+def generate_install_data_config(
+    link: bool = False,
+    source: str = "r{{configpath}}/adv_target_<GEO_ID>.json",
+    target: str = "data/<GEO_ID>/target.json",
+) -> Dict[str, str | int | List[Any] | float]:
+    config = {
+        "link": link,
+        "source": source,
+        "target": target,
+    }
+    return _extract_non_none_from_dict(config)
+
+
+def generate_simulator_config(delete_run_path: bool = True) -> Dict[str, bool]:
+    return {"delete_run_path": delete_run_path}
+
+
 def generate_minimal_everest_config() -> EverestConfig:
     everest_config = {}
     everest_config["controls"] = [generate_controls_config()]
     everest_config["objective_functions"] = [generate_objective_function_config()]
-    everest_config["optimization"] = generate_optimization_config()
+    everest_config["optimization"] = generate_optimization_config(
+        constraint_tolerance=0.1
+    )
     everest_config["model"] = generate_model_config()
     everest_config["environment"] = generate_environment_config()
     everest_config["install_jobs"] = [generate_install_jobs_config()]
-    everest_config["forward_model"] = generate_forward_model_config()
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance"
+    ]
     everest_config["config_path"] = os.path.abspath(
         os.path.join("./test-data", "everest", "math_func", "config_minimal.yml")
     )
     return EverestConfig.model_validate(everest_config)
 
 
-# @pytest.fixture
-def generate_controls_advanced() -> ControlConfig:
-    config = generate_controls_config(
-        initial_guess=0.25,
-        pertubation_magnitude=0.005,
-        variables=[
-            {"name": "x", "index": 0},
-            {"name": "x", "index": 1},
-            {"name": "x", "index": 2},
-        ],
+def generate_auto_scaled_controls_everest_config() -> EverestConfig:
+    everest_config = {}
+    everest_config["controls"] = [
+        generate_controls_config(
+            initial_guess=0.2, auto_scale=True, scaled_range=[0.3, 0.7]
+        )
+    ]
+    everest_config["objective_functions"] = [generate_objective_function_config()]
+    everest_config["optimization"] = generate_optimization_config(max_batch_num=10)
+    everest_config["model"] = generate_model_config()
+    everest_config["environment"] = generate_environment_config(random_seed=999)
+    everest_config["install_jobs"] = [generate_install_jobs_config()]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance --scaling -1 1 0.3 0.7"
+    ]
+    everest_config["input_constraints"] = [
+        generate_input_constraints_config(
+            weights={"point.x": 1.0, "point.y": 1.0}, upper_bound=0.5
+        )
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join(
+            "./test-data", "everest", "math_func", "config_auto_scaled_controls.yml"
+        )
+    )
+    return EverestConfig.model_validate(everest_config)
+
+
+def generate_cvar_everest_config() -> EverestConfig:
+    everest_config = {}
+    variables = [
+        {"name": "x", "initial_guess": 0.0},
+        {"name": "y", "initial_guess": 0.0},
+        {"name": "z", "initial_guess": 0.0},
+    ]
+    everest_config["controls"] = [
+        generate_controls_config(
+            perturbation_magnitude=0.01,
+            min=-2.0,
+            max=2.0,
+            variables=variables,
+            initial_guess=None,
+        )
+    ]
+    everest_config["objective_functions"] = [generate_objective_function_config()]
+    everest_config["optimization"] = generate_optimization_config(
+        max_batch_num=5,
+        backend="scipy",
+        algorithm="slsqp",
+        cvar={"percentile": 0.5},
+        convergence_tolerance=None,
+    )
+    everest_config["model"] = generate_model_config(realizations=[0, 1])
+    everest_config["environment"] = generate_environment_config(
+        random_seed=999, output_folder="distance_output", log_level="info"
+    )
+    everest_config["install_jobs"] = [generate_install_jobs_config()]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_cvar.yml")
+    )
+    return EverestConfig.model_validate(everest_config)
+
+
+def generate_advanced_everest_config() -> EverestConfig:
+    everest_config = {}
+
+    variables = [
+        {"name": "x", "index": 0},
+        {"name": "x", "index": 1},
+        {"name": "x", "index": 2},
+    ]
+    everest_config["controls"] = [
+        generate_controls_config(
+            variables=variables, initial_guess=0.25, perturbation_magnitude=0.005
+        )
+    ]
+    everest_config["objective_functions"] = [generate_objective_function_config()]
+
+    everest_config["optimization"] = generate_optimization_config(
+        convergence_tolerance=0.005,
+        perturbation_num=7,
+        speculative=True,
+        max_batch_num=None,
+    )
+
+    everest_config["model"] = generate_model_config(
+        realizations=[0, 2], realizations_weights=[0.25, 0.75]
+    )
+
+    everest_config["environment"] = generate_environment_config(
+        simulation_folder="scratch/advanced/", output_folder="everest_output/"
+    )
+
+    abs_config_path = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func")
+    )
+    everest_config["install_data"] = [
+        generate_install_data_config(
+            source=f"{abs_config_path}/adv_target_<GEO_ID>.json"
+        )
+    ]
+    everest_config["install_templates"] = []
+    everest_config["wells"] = []
+
+    everest_config["input_constraints"] = [
+        generate_input_constraints_config(
+            weights={"point.x-0": 0, "point.x-1": 0, "point.x-2": 1}
+        )
+    ]
+    everest_config["output_constraints"] = [generate_output_constraints_config()]
+
+    everest_config["install_jobs"] = [
+        generate_install_jobs_config(name="adv_distance3", source="jobs/ADV_DISTANCE3"),
+        generate_install_jobs_config(
+            name="adv_dump_controls", source="jobs/ADV_DUMP_CONTROLS"
+        ),
+    ]
+
+    everest_config["forward_model"] = [
+        "adv_distance3     --point-file point.json --target-file data/<GEO_ID>/target.json --out distance",
+        "adv_dump_controls --controls-file point.json --out-suffix _coord",
+    ]
+
+    everest_config["config_path"] = os.path.join(abs_config_path, "config_advanced.yml")
+    return EverestConfig.model_validate(everest_config)
+
+
+def generate_advanced_scipy_everest_config() -> EverestConfig:
+    config = generate_advanced_everest_config()
+    config.optimization.backend = "scipy"
+    config.optimization.algorithm = "SLSQP"
+    config.optimization.convergence_tolerance = 0.001
+    config.optimization.constraint_tolerance = 0.001
+    config.optimization.max_batch_num = 4
+    config.optimization.backend_options = {"maxiter": 100}
+    config.config_path = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_advanced_scipy.yml")
     )
     return config
 
 
-# @pytest.fixture
-def generate_controls_auto_scaled_controls() -> ControlConfig:
-    config = generate_controls_config(initial_guess=0.2)
-    config.auto_scale = True
-    config.scaled_range = (0.3, 0.7)
-    return config
+def generate_minimal_slow_everest_config() -> EverestConfig:
+    everest_config = {}
+    everest_config["controls"] = [generate_controls_config()]
+    everest_config["objective_functions"] = [generate_objective_function_config()]
+    everest_config["optimization"] = generate_optimization_config()
+    everest_config["model"] = generate_model_config()
+    everest_config["environment"] = generate_environment_config()
+    everest_config["install_jobs"] = [
+        generate_install_jobs_config(name="distance3", source="jobs/DISTANCE3"),
+        generate_install_jobs_config(name="sleep", source="jobs/SLEEP"),
+    ]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance",
+        "sleep --sleep 10",
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_minimal_slow.yml")
+    )
+    return EverestConfig.model_validate(everest_config)
 
 
-# @pytest.fixture
-def generate_controls_cvar() -> ControlConfig:
-    config = generate_controls_config(
-        initial_guess=None,
-        pertubation_magnitude=0.01,
-        variables=[
-            {"name": "x", "initial_guess": 0.0},
-            {"name": "y", "initial_guess": 0.0},
-            {"name": "z", "initial_guess": 0.0},
-        ],
-        min=-2.0,
-        max=2.0,
+def generate_multiobj_everest_config() -> EverestConfig:
+    everest_config = {}
+    everest_config["controls"] = [
+        generate_controls_config(initial_guess=0, perturbation_magnitude=0.01)
+    ]
+    everest_config["objective_functions"] = [
+        generate_objective_function_config(
+            name="distance_p", weight=0.5, normalization=1.5
+        ),
+        generate_objective_function_config(
+            name="distance_q", weight=0.25, normalization=1.0
+        ),
+    ]
+    everest_config["optimization"] = generate_optimization_config(
+        convergence_tolerance=0.005, perturbation_num=5, max_batch_num=3
+    )
+    everest_config["model"] = generate_model_config()
+    everest_config["environment"] = generate_environment_config(
+        output_folder="everest_output_multiobj", random_seed=999
+    )
+    everest_config["install_jobs"] = [generate_install_jobs_config()]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance_p",
+        "distance3 --point-file point.json --target -1.5 -1.5 0.5 --out distance_q",
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_multiobj.yml")
+    )
+    return EverestConfig.model_validate(everest_config)
+
+
+def generate_one_batch_everest_config() -> EverestConfig:
+    config = generate_minimal_everest_config()
+    config.controls[0].initial_guess = 0.0
+    config.optimization.convergence_tolerance = None
+    config.optimization.max_batch_num = 1
+    config.optimization.constraint_tolerance = None
+    config.environment.random_seed = 999
+    config.config_path = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_one_batch.yml")
     )
     return config
 
 
-# @pytest.fixture
-def generate_controls_fm_failure() -> ControlConfig:
-    return generate_controls_config()
+def generate_remove_run_path_everest_config() -> EverestConfig:
+    everest_config = {}
+    everest_config["controls"] = [generate_controls_config(initial_guess=0)]
+    everest_config["objective_functions"] = [generate_objective_function_config()]
+    everest_config["optimization"] = generate_optimization_config(
+        convergence_tolerance=0.005,
+        max_batch_num=None,
+        min_realizations_success=1,
+        min_pert_success=1,
+        max_iterations=1,
+        perturbation_num=2,
+    )
+    everest_config["model"] = generate_model_config()
+    everest_config["environment"] = generate_environment_config(
+        output_folder="everest_output/", simulation_folder="scratch/advanced/"
+    )
+    everest_config["install_jobs"] = [
+        generate_install_jobs_config(name="distance3", source="jobs/DISTANCE3"),
+        generate_install_jobs_config(
+            name="toggle_failure", source="jobs/FAIL_SIMULATION"
+        ),
+    ]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance",
+        "toggle_failure",
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join(
+            "./test-data", "everest", "math_func", "config_remove_run_path.yml"
+        )
+    )
+    everest_config["simulator"] = generate_simulator_config()
+    return EverestConfig.model_validate(everest_config)
 
 
-# @pytest.fixture
-def generate_controls_minimal_slow() -> ControlConfig:
-    return generate_controls_config()
+def generate_stddev_everest_config() -> EverestConfig:
+    everest_config = {}
+    variables = [
+        {"name": "x", "initial_guess": 0.0},
+        {"name": "y", "initial_guess": 0.0},
+        {"name": "z", "initial_guess": 0.0},
+    ]
+    everest_config["controls"] = [
+        generate_controls_config(
+            perturbation_magnitude=0.01, variables=variables, initial_guess=None
+        )
+    ]
+    everest_config["objective_functions"] = [
+        generate_objective_function_config(name="distance", weight=1.0),
+        generate_objective_function_config(
+            name="stddev", weight=1.0, type="stddev", alias="distance"
+        ),
+    ]
+    everest_config["optimization"] = generate_optimization_config(
+        max_batch_num=5,
+        backend="scipy",
+        algorithm="slsqp",
+        convergence_tolerance=0.0001,
+        perturbation_num=3,
+    )
+    everest_config["model"] = generate_model_config(realizations=[0, 1])
+    everest_config["environment"] = generate_environment_config(
+        random_seed=999, output_folder="distance_output", log_level=None
+    )
+    everest_config["install_jobs"] = [generate_install_jobs_config()]
+    everest_config["forward_model"] = [
+        "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
+    ]
+    everest_config["config_path"] = os.path.abspath(
+        os.path.join("./test-data", "everest", "math_func", "config_stddev.yml")
+    )
+    return EverestConfig.model_validate(everest_config)
 
 
 def _extract_non_none_from_dict(config: Dict[str, Any]) -> Dict[str, Any]:
