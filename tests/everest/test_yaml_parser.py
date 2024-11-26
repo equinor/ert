@@ -97,11 +97,12 @@ environment:
   simulation_folder: r{{ scratch }}/simulations
 
 simulator:
-  queue_system: lsf
-  cores: 3
-  name: mr
+  queue_system:
+    name: lsf
+    max_submitt: 3
+    lsf_queue: mr
+    options: span = 1 && select[x86 and GNU/Linux]
   resubmit_limit: 17
-  options: span = 1 && select[x86 and GNU/Linux]
 
 model:
   realizations: [0, 1, 2]
