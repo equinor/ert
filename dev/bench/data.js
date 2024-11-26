@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732613071413,
+  "lastUpdate": 1732619863564,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "19c7192081cfe0f44ffc9e22ad2a24afc3a3eb7e",
-          "message": "Degrade logged warning to info\n\nThis was a workaround to propagate this particular log through\na filter that only propagated warning. Now info logs are also\npropagated so this workaround is no longer needed.",
-          "timestamp": "2024-11-21T08:17:23+01:00",
-          "tree_id": "be05b339489c834c5e849b27a1f644714777aa49",
-          "url": "https://github.com/equinor/ert/commit/19c7192081cfe0f44ffc9e22ad2a24afc3a3eb7e"
-        },
-        "date": 1732173556981,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19129578869824207,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022726353756363466",
-            "extra": "mean: 5.227506610599994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05068456452254919",
             "extra": "mean: 5.135330025400004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "baccfe19b4be2ae90ca8da0ef477c9f0bf060456",
+          "message": "Install everest deps when building readthedocs",
+          "timestamp": "2024-11-26T12:15:48+01:00",
+          "tree_id": "def7e8b8e07d63e37524ec49c0e5e1738fa0bb4b",
+          "url": "https://github.com/equinor/ert/commit/baccfe19b4be2ae90ca8da0ef477c9f0bf060456"
+        },
+        "date": 1732619862701,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1951988419515447,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029686839000548502",
+            "extra": "mean: 5.122981212399997 sec\nrounds: 5"
           }
         ]
       }
