@@ -120,13 +120,6 @@ def generate_input_constraints_config(
     return config
 
 
-def generate_output_constraints_config(
-    name: str = "x-0_coord", lower_bound: float = 0.1, scale: float = 0.1
-) -> Dict[str, str | float | int]:
-    config = {"name": name, "lower_bound": lower_bound, "scale": scale}
-    return config
-
-
 def generate_environment_config(
     simulation_folder: Optional[str] = "sim_output",
     log_level: Optional[str] = "debug",
@@ -140,23 +133,6 @@ def generate_environment_config(
         "output_folder": output_folder,
     }
     return _extract_non_none_from_dict(config)
-
-
-def generate_install_data_config(
-    link: bool = False,
-    source: str = "r{{configpath}}/adv_target_<GEO_ID>.json",
-    target: str = "data/<GEO_ID>/target.json",
-) -> Dict[str, str | int | List[Any] | float]:
-    config = {
-        "link": link,
-        "source": source,
-        "target": target,
-    }
-    return _extract_non_none_from_dict(config)
-
-
-def generate_simulator_config(delete_run_path: bool = True) -> Dict[str, bool]:
-    return {"delete_run_path": delete_run_path}
 
 
 def generate_minimal_everest_config() -> EverestConfig:
@@ -271,17 +247,21 @@ def generate_advanced_everest_config() -> EverestConfig:
     )
 
     everest_config["environment"] = generate_environment_config(
-        simulation_folder="scratch/advanced/", output_folder="everest_output/"
+        simulation_folder="scratch/advanced/",
+        output_folder="everest_output/",
+        random_seed=999,
     )
 
     abs_config_path = os.path.abspath(
         os.path.join("./test-data", "everest", "math_func")
     )
-    everest_config["install_data"] = [
-        generate_install_data_config(
-            source=f"{abs_config_path}/adv_target_<GEO_ID>.json"
-        )
-    ]
+
+    install_data = {
+        "link": False,
+        "source": f"{abs_config_path}/adv_target_<GEO_ID>.json",
+        "target": "data/<GEO_ID>/target.json",
+    }
+    everest_config["install_data"] = [install_data]
     everest_config["install_templates"] = []
     everest_config["wells"] = []
 
@@ -290,7 +270,9 @@ def generate_advanced_everest_config() -> EverestConfig:
             weights={"point.x-0": 0, "point.x-1": 0, "point.x-2": 1}
         )
     ]
-    everest_config["output_constraints"] = [generate_output_constraints_config()]
+    everest_config["output_constraints"] = [
+        {"name": "x-0_coord", "lower_bound": 0.1, "scale": 0.1}
+    ]
 
     everest_config["install_jobs"] = [
         generate_install_jobs_config(name="adv_distance3", source="jobs/ADV_DISTANCE3"),
@@ -316,6 +298,7 @@ def generate_advanced_scipy_everest_config() -> EverestConfig:
     config.optimization.constraint_tolerance = 0.001
     config.optimization.max_batch_num = 4
     config.optimization.backend_options = {"maxiter": 100}
+    config.environment.random_seed = 123
     config.config_path = os.path.abspath(
         os.path.join("./test-data", "everest", "math_func", "config_advanced_scipy.yml")
     )
@@ -418,7 +401,7 @@ def generate_remove_run_path_everest_config() -> EverestConfig:
             "./test-data", "everest", "math_func", "config_remove_run_path.yml"
         )
     )
-    everest_config["simulator"] = generate_simulator_config()
+    everest_config["simulator"] = {"delete_run_path": True}
     return EverestConfig.model_validate(everest_config)
 
 
