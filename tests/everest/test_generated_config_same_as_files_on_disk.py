@@ -38,12 +38,9 @@ def test_generate_advanced_config_same_as_existing_yml():
 
 @pytest.mark.integration_test
 def test_generate_advanced_scipy_config_same_as_existing_yml():
-    path_to_config = os.path.abspath(
+    stored_config = EverestConfig.load_file(
         os.path.join("test-data", "everest", "math_func", "config_advanced_scipy.yml")
     )
-    stored_config = EverestConfig.load_file(path_to_config)
-    stored_config.config_path = path_to_config
-
     config: EverestConfig = generate_advanced_scipy_everest_config_file()
 
     assert config == stored_config
@@ -93,11 +90,9 @@ def test_generate_multiobj_config_same_as_existing_yml():
 
 @pytest.mark.integration_test
 def test_generate_one_batch_config_same_as_existing_yml():
-    path_to_config = os.path.abspath(
+    stored_config = EverestConfig.load_file(
         os.path.join("test-data", "everest", "math_func", "config_one_batch.yml")
     )
-    stored_config = EverestConfig.load_file(path_to_config)
-    stored_config.config_path = path_to_config
     config: EverestConfig = generate_one_batch_everest_config_file()
 
     assert config == stored_config
