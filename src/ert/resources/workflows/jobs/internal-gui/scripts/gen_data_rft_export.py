@@ -133,9 +133,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                         "active for exactly one report step"
                     )
 
-                realizations = ensemble.get_realization_list_with_responses(
-                    response_key
-                )
+                realizations = ensemble.get_realization_list_with_responses()
                 responses = ensemble.load_responses(response_key, tuple(realizations))
                 joined = obs_df.join(
                     responses,

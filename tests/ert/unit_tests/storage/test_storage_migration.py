@@ -166,7 +166,7 @@ def test_that_storage_matches(
 
         summary_data = ensemble.load_responses(
             "summary",
-            tuple(ensemble.get_realization_list_with_responses("summary")),
+            tuple(ensemble.get_realization_list_with_responses()),
         )
         snapshot.assert_match(
             summary_data.sort("time", "response_key", "realization")

@@ -110,9 +110,7 @@ class MeasuredData:
             )
             responses_for_type = ensemble.load_responses(
                 response_type,
-                realizations=tuple(
-                    ensemble.get_realization_list_with_responses(response_type)
-                ),
+                realizations=tuple(ensemble.get_realization_list_with_responses()),
             )
 
             if responses_for_type.is_empty():
