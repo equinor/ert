@@ -234,7 +234,7 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
             f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
         )
     assert (
-        f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
+        "Overwriting QUEUE_OPTION GENERIC QUEUE_NAME: \n Old value:"
         " test_0 \n New value: test_1"
     ) in caplog.text and (
         f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
@@ -257,7 +257,7 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     )
 
     if queue_system == "LSF":
-        assert config_object.queue_config.queue_options.lsf_queue is None
+        assert config_object.queue_config.queue_options.queue_name is None
     if queue_system == "SLURM":
         assert config_object.queue_config.queue_options.squeue == "squeue"
     assert config_object.queue_config.queue_options.max_running == 0

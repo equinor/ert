@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 from abc import abstractmethod
+from copy import copy
 from dataclasses import asdict, fields
 from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
 
@@ -41,6 +42,7 @@ class QueueOptions:
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: Optional[str] = None
     activate_script: str = field(default_factory=activate_script)
+    queue_name: Optional[NonEmptyString] = None
 
     @staticmethod
     def create_queue_options(
@@ -105,7 +107,6 @@ class LsfQueueOptions(QueueOptions):
     bkill_cmd: Optional[NonEmptyString] = None
     bsub_cmd: Optional[NonEmptyString] = None
     exclude_host: Optional[str] = None
-    lsf_queue: Optional[NonEmptyString] = None
     lsf_resource: Optional[str] = None
 
     @property
@@ -113,7 +114,6 @@ class LsfQueueOptions(QueueOptions):
         driver_dict = asdict(self)
         driver_dict.pop("name")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
-        driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
         driver_dict.pop("submit_sleep")
         driver_dict.pop("max_running")
@@ -126,7 +126,6 @@ class TorqueQueueOptions(QueueOptions):
     qsub_cmd: Optional[NonEmptyString] = None
     qstat_cmd: Optional[NonEmptyString] = None
     qdel_cmd: Optional[NonEmptyString] = None
-    queue: Optional[NonEmptyString] = None
     memory_per_job: Optional[NonEmptyString] = None
     num_cpus_per_node: pydantic.PositiveInt = 1
     num_nodes: pydantic.PositiveInt = 1
@@ -141,7 +140,6 @@ class TorqueQueueOptions(QueueOptions):
     def driver_options(self) -> Dict[str, Any]:
         driver_dict = asdict(self)
         driver_dict.pop("name")
-        driver_dict["queue_name"] = driver_dict.pop("queue")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         driver_dict.pop("qstat_options")
@@ -167,7 +165,6 @@ class SlurmQueueOptions(QueueOptions):
     include_host: str = ""
     memory: Optional[NonEmptyString] = None
     memory_per_cpu: Optional[NonEmptyString] = None
-    partition: Optional[NonEmptyString] = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
     max_runtime: Optional[pydantic.NonNegativeFloat] = None
 
@@ -181,7 +178,6 @@ class SlurmQueueOptions(QueueOptions):
         driver_dict["squeue_cmd"] = driver_dict.pop("squeue")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["include_hosts"] = driver_dict.pop("include_host")
-        driver_dict["queue_name"] = driver_dict.pop("partition")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         return driver_dict
@@ -297,6 +293,21 @@ class QueueConfig:
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
         _raw_queue_options = config_dict.get("QUEUE_OPTION", [])
+        for i, (q_system, *options) in enumerate(copy(_raw_queue_options)):
+            if q_system in [
+                QueueSystem.LSF,
+                QueueSystem.SLURM,
+                QueueSystem.TORQUE,
+            ] and options[0] in ["LSF_QUEUE", "SQUEUE", "QUEUE"]:
+                ConfigWarning.deprecation_warn(
+                    f"Deprecated keyword: {options[0]} for QUEUE_OPTION {q_system}, use: "
+                    f"QUEUE_OPTION GENERIC QUEUE_NAME {options[1] if len(options) >= 2 else ''}",
+                    _raw_queue_options[i],
+                )
+                _raw_queue_options[i] = [
+                    QueueSystemWithGeneric.GENERIC,
+                    "QUEUE_NAME",
+                ] + options[1:]
         _grouped_queue_options = _group_queue_options_by_queue_system(
             _raw_queue_options
         )
