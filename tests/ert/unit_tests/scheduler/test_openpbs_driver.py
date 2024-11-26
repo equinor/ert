@@ -407,7 +407,7 @@ async def test_that_qsub_will_retry_and_fail(
     qsub_path.write_text(f"#!/bin/sh\necho {error_msg} >&2\nexit {exit_code}")
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
-    driver._num_pbs_cmd_retries = 2
+    driver._max_pbs_cmd_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
         f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg}"'
@@ -452,7 +452,7 @@ async def test_that_qsub_will_retry_and_succeed(
     )
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
-    driver._num_pbs_cmd_retries = 2
+    driver._max_pbs_cmd_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     await driver.submit(0, "sleep 10")
 
@@ -490,7 +490,7 @@ async def test_that_qdel_will_retry_and_succeed(
     )
     qdel_path.chmod(qdel_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
-    driver._num_pbs_cmd_retries = 2
+    driver._max_pbs_cmd_attempts = 2
     driver._retry_pbs_cmd_interval = 0.2
     driver._iens2jobid[0] = 111
     await driver.kill(0)

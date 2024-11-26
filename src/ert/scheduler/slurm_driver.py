@@ -112,7 +112,7 @@ class SlurmDriver(Driver):
         self._include_hosts = include_hosts
 
         self._sbatch = sbatch_cmd
-        self._sbatch_retries = 1
+        self._max_sbatch_attempts = 1
 
         self._scancel = scancel_cmd
         self._squeue = squeue_cmd
@@ -217,7 +217,7 @@ class SlurmDriver(Driver):
                 sbatch_with_args,
                 retry_on_empty_stdout=True,
                 retry_codes=(),
-                total_attempts=self._sbatch_retries,
+                total_attempts=self._max_sbatch_attempts,
                 retry_interval=self._sleep_time_between_cmd_retries,
             )
             if not process_success:
