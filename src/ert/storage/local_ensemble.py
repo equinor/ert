@@ -291,14 +291,12 @@ class LocalEnsemble(BaseMode):
         exists : List[int]
             Returns the realization numbers with responses
         """
+
+        ensemble_state = self.get_ensemble_state()
         return [
             i
             for i in range(self.ensemble_size)
-            if all(
-                (self._realization_dir(i) / f"{response}.parquet").exists()
-                or (config.has_finalized_keys and config.keys == [])
-                for response, config in self.experiment.response_configuration.items()
-            )
+            if RealizationStorageState.RESPONSES_LOADED in ensemble_state[i]
         ]
 
     def realizations_initialized(self, realizations: List[int]) -> bool:
