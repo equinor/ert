@@ -233,9 +233,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
-    def get_realization_mask_with_responses(
-        self, key: Optional[str] = None
-    ) -> npt.NDArray[np.bool_]:
+    def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
         """
         Mask array indicating realizations with associated responses.
 
@@ -322,9 +320,7 @@ class LocalEnsemble(BaseMode):
 
         return all((responses[real] or parameters[real]) for real in realizations)
 
-    def get_realization_list_with_responses(
-        self, key: Optional[str] = None
-    ) -> List[int]:
+    def get_realization_list_with_responses(self) -> List[int]:
         """
         List of realization indices with associated responses.
 
@@ -339,7 +335,7 @@ class LocalEnsemble(BaseMode):
             List of realization indices with associated responses.
         """
 
-        mask = self.get_realization_mask_with_responses(key)
+        mask = self.get_realization_mask_with_responses()
         return np.where(mask)[0].tolist()
 
     def set_failure(

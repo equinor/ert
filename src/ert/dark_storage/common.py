@@ -125,7 +125,7 @@ def data_for_key(
         if response_type == "summary":
             summary_data = ensemble.load_responses(
                 response_key,
-                tuple(ensemble.get_realization_list_with_responses(response_key)),
+                tuple(ensemble.get_realization_list_with_responses()),
             )
             if summary_data.is_empty():
                 return pd.DataFrame()
@@ -153,7 +153,7 @@ def data_for_key(
                 response_key, report_step = displayed_key_to_response_key["gen_data"](
                     key
                 )
-                mask = ensemble.get_realization_mask_with_responses(response_key)
+                mask = ensemble.get_realization_mask_with_responses()
                 realizations = np.where(mask)[0]
                 data = ensemble.load_responses(response_key, tuple(realizations))
             except ValueError as err:
