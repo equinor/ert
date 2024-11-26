@@ -50,7 +50,7 @@ jobs:
     - name: Run Integration Tests Linux
       if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup
+        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup -sv
 
     - name: Run Integration Tests macOS
       if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
