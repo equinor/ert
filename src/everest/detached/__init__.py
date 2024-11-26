@@ -15,20 +15,10 @@ import requests
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 
-from ert.config import QueueSystem
-from ert.config.queue_config import (
-    LocalQueueOptions,
-    LsfQueueOptions,
-    QueueOptions,
-    SlurmQueueOptions,
-    TorqueQueueOptions,
-    activate_script,
-)
-from ert.plugins import ErtPluginManager
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
-from everest.config import EverestConfig, ServerConfig, SimulatorConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.config_keys import ConfigKeys as CK
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
@@ -56,7 +46,7 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
-    driver = create_driver(get_server_queue_options(config.simulator, config.server))
+    driver = create_driver(config.server.queue_system)
     try:
         args = ["--config-file", str(config.config_path)]
         if debug:
@@ -257,63 +247,6 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
     },
     "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
 }
-
-
-def _find_res_queue_system(
-    simulator: SimulatorConfig | None,
-    server: ServerConfig | None,
-):
-    queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
-    if simulator is not None and simulator.queue_system is not None:
-        queue_system_simulator = simulator.queue_system
-
-    queue_system = queue_system_simulator
-    if server is not None:
-        queue_system = server.queue_system or queue_system
-
-    if queue_system_simulator == CK.LOCAL and queue_system_simulator != queue_system:
-        raise ValueError(
-            f"The simulator is using {CK.LOCAL} as queue system "
-            f"while the everest server is using {queue_system}. "
-            f"If the simulator is using {CK.LOCAL}, so must the everest server."
-        )
-
-    assert queue_system is not None
-    return QueueSystem(queue_system.upper())
-
-
-def get_server_queue_options(
-    simulator: SimulatorConfig | None,
-    server: ServerConfig | None,
-) -> QueueOptions:
-    script = ErtPluginManager().activate_script() or activate_script()
-    queue_system = _find_res_queue_system(simulator, server)
-    ever_queue_config = server if server is not None else simulator
-    if queue_system == QueueSystem.LSF:
-        queue = LsfQueueOptions(
-            activate_script=script,
-            lsf_queue=ever_queue_config.name,
-            lsf_resource=ever_queue_config.options,
-        )
-    elif queue_system == QueueSystem.SLURM:
-        queue = SlurmQueueOptions(
-            activate_script=script,
-            exclude_host=ever_queue_config.exclude_host,
-            include_host=ever_queue_config.include_host,
-            partition=ever_queue_config.name,
-        )
-    elif queue_system == QueueSystem.TORQUE:
-        queue = TorqueQueueOptions(
-            activate_script=script,
-            queue=ever_queue_config.name,
-            keep_qsub_output=ever_queue_config.keep_qsub_output,
-        )
-    elif queue_system == QueueSystem.LOCAL:
-        queue = LocalQueueOptions()
-    else:
-        raise ValueError(f"Unknown queue system: {queue_system}")
-    queue.max_running = 1
-    return queue
 
 
 def _query_server(cert, auth, endpoint):

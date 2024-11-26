@@ -54,6 +54,7 @@ def test_read_file(tmp_path, monkeypatch):
         ConfigKeys.MODEL,
         ConfigKeys.SIMULATOR,
         ConfigKeys.OPTIMIZATION,
+        ConfigKeys.EVERSERVER,
         ConfigKeys.DEFINITIONS,
         ConfigKeys.CONFIGPATH,
     ]

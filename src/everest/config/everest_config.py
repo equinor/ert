@@ -1,6 +1,7 @@
 import logging
 import os
 from argparse import ArgumentParser
+from copy import copy
 from functools import cached_property
 from io import StringIO
 from itertools import chain
@@ -215,7 +216,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 """,
     )
     server: ServerConfig | None = Field(
-        default=None,
+        default_factory=ServerConfig,
         description="""Defines Everest server settings, i.e., which queue system,
             queue name and queue options are used for the everest server.
             The main reason for changing this section is situations where everest
@@ -249,6 +250,25 @@ and environment variables are exposed in the form 'os.NAME', for example:
     )
     config_path: Path = Field()
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_queue_system(self) -> Self:  # pylint: disable=E0213
+        if self.server is None:
+            self.server = ServerConfig(queue_system=copy(self.simulator.queue_system))
+        elif self.server.queue_system is None:
+            self.server.queue_system = copy(self.simulator.queue_system)
+        if (
+            str(self.simulator.queue_system.name).lower() == "local"
+            and str(self.server.queue_system.name).lower()
+            != str(self.simulator.queue_system.name).lower()
+        ):
+            raise ValueError(
+                f"The simulator is using local as queue system "
+                f"while the everest server is using {self.server.queue_system.name}. "
+                f"If the simulator is using local, so must the everest server."
+            )
+        self.server.queue_system.max_running = 1
+        return self
 
     @model_validator(mode="after")
     def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
@@ -745,7 +765,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "model": {"realizations": [0]},
         }
 
-        return EverestConfig.model_validate({**defaults, **kwargs})
+        return cls.model_validate({**defaults, **kwargs})
 
     @staticmethod
     def lint_config_dict(config: dict) -> list["ErrorDetails"]:

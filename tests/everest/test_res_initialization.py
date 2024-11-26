@@ -10,6 +10,12 @@ from ruamel.yaml import YAML
 import everest
 from ert.config import ExtParamConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig, EverestValidationError
 from everest.simulator.everest_to_ert import (
@@ -24,80 +30,77 @@ from tests.everest.utils import (
 
 
 @pytest.mark.parametrize(
-    "config, expected",
+    "config, config_class",
     [
         [
             {
-                "queue_system": "torque",
-                "name": "permanent_8",
-                "qsub_cmd": "qsub",
-                "qstat_cmd": "qstat",
-                "qdel_cmd": "qdel",
-                "keep_qsub_output": 1,
-                "submit_sleep": 0.5,
-                "project_code": "snake_oil_pc",
-                "cores_per_node": 3,
+                "name": "local",
+                "max_running": 0,
+                "submit_sleep": 0.0,
+                "project_code": "",
+                "activate_script": "activate_script",
             },
-            {
-                "project_code": "snake_oil_pc",
-                "qsub_cmd": "qsub",
-                "qstat_cmd": "qstat",
-                "qdel_cmd": "qdel",
-                "keep_qsub_output": True,
-                "queue_name": "permanent_8",
-            },
+            LocalQueueOptions,
         ],
         [
             {
-                "queue_system": "slurm",
-                "name": "default-queue",
-                "exclude_host": "host1,host2,host3,host4",
-                "include_host": "host5,host6,host7,host8",
+                "name": "torque",
+                "qsub_cmd": "qsub",
+                "qstat_cmd": "qstat",
+                "qdel_cmd": "qdel",
+                "queue": "queue",
+                "cluster_label": "cluster_label",
+                "job_prefix": "job_prefix",
+                "keep_qsub_output": False,
             },
-            {
-                "exclude_hosts": "host1,host2,host3,host4",
-                "include_hosts": "host5,host6,host7,host8",
-                "queue_name": "default-queue",
-                "sacct_cmd": "sacct",
-                "sbatch_cmd": "sbatch",
-                "scancel_cmd": "scancel",
-                "scontrol_cmd": "scontrol",
-                "squeue_cmd": "squeue",
-                "squeue_timeout": 2,
-            },
+            TorqueQueueOptions,
         ],
         [
             {
-                "queue_system": "lsf",
-                "name": "mr",
-                "options": "span = 1 && select[x86 and GNU/Linux]",
-                "server": "lx-fastserver01",
+                "name": "slurm",
+                "sbatch": "sbatch",
+                "scancel": "scancel",
+                "scontrol": "scontrol",
+                "sacct": "sacct",
+                "squeue": "squeue",
+                "exclude_host": "exclude_host",
+                "include_host": "include_host",
+                "partition": "some_partition",
+                "squeue_timeout": 2.0,
+                "max_runtime": 10,
             },
+            SlurmQueueOptions,
+        ],
+        [
             {
-                "queue_name": "mr",
-                "resource_requirement": "span = 1 && select[x86 and GNU/Linux]",
+                "name": "lsf",
+                "bhist_cmd": "bhist",
+                "bjobs_cmd": "bjobs",
+                "bkill_cmd": "bkill",
+                "bsub_cmd": "bsub",
+                "exclude_host": "",
+                "lsf_queue": "lsf_queue",
+                "lsf_resource": "",
             },
+            LsfQueueOptions,
         ],
     ],
 )
-def test_everest_to_ert_queue_config(config, expected):
-    general_options = {"resubmit_limit": 7, "cores": 42}
+def test_everest_to_ert_queue_config(config, config_class):
+    """Note that these objects are used directly in the Everest
+    config, and if you have to make changes to this test, it is likely
+    that it is a breaking change to Everest"""
+    general_queue_options = {"max_running": 10}
+    general_options = {"resubmit_limit": 7}
+    config |= general_queue_options
     ever_config = EverestConfig.with_defaults(
         **{
-            "simulator": config | general_options,
+            "simulator": {"queue_system": config} | general_options,
             "model": {"realizations": [0]},
         }
     )
     ert_config = everest_to_ert_config(ever_config)
-
-    qc = ert_config.queue_config
-    qo = qc.queue_options
-    assert qc.queue_system == config["queue_system"].upper()
-    driver_options = qo.driver_options
-    driver_options.pop("activate_script")
-    assert {k: v for k, v in driver_options.items() if v is not None} == expected
-    assert qc.max_submit == general_options["resubmit_limit"] + 1
-    assert qo.max_running == general_options["cores"]
+    assert ert_config.queue_config.queue_options == config_class(**config)
 
 
 def test_everest_to_ert_controls():

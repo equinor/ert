@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ServerConfig, SimulatorConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.cvar_config import CVaRConfig
@@ -287,16 +287,9 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
         assert config.logging_level == lvl_int
 
 
-@pytest.mark.parametrize("server", ["something", "", None])
-def test_deprecation_warning_for_simulator_server(server):
-    config_src = {"simulator": {"server": server}}
-
-    if not server:
-        config = EverestConfig.with_defaults(**config_src)
-    else:
-        with pytest.deprecated_call(
-            match="The simulator server property was deprecated"
-        ):
-            config = EverestConfig.with_defaults(**config_src)
-
-    assert config.simulator.server is None
+@pytest.mark.parametrize("config_class", [SimulatorConfig, ServerConfig])
+@pytest.mark.parametrize("queue_system", ["lsf", "torque", "slurm", "local"])
+def test_removed_queue_options_init(queue_system, config_class):
+    config = {"queue_system": queue_system}
+    with pytest.raises(ValueError, match=f"valid options for {queue_system} are"):
+        config_class(**config)

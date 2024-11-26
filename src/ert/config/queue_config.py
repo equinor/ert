@@ -93,7 +93,7 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
+    name: Literal[QueueSystem.LOCAL, "local"] = "local"
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -102,7 +102,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LSF] = QueueSystem.LSF
+    name: Literal[QueueSystem.LSF, "lsf"] = "lsf"
     bhist_cmd: NonEmptyString | None = None
     bjobs_cmd: NonEmptyString | None = None
     bkill_cmd: NonEmptyString | None = None
@@ -125,7 +125,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
+    name: Literal[QueueSystem.TORQUE, "torque"] = "torque"
     qsub_cmd: NonEmptyString | None = None
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
@@ -146,7 +146,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.SLURM] = QueueSystem.SLURM
+    name: Literal[QueueSystem.SLURM, "slurm"] = "slurm"
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
