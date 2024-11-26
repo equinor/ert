@@ -733,7 +733,14 @@ class LocalEnsemble(BaseMode):
         combined_df_path = self.mount_point / f"{response_type}.parquet"
         if combined_df_path.exists():
             combined_df = polars.read_parquet(combined_df_path)
-            return combined_df.filter(polars.col("realization").is_in(realizations))
+            combined_df = combined_df.filter(
+                polars.col("realization").is_in(realizations)
+            )
+
+            if select_key:
+                combined_df = combined_df.filter(polars.col("response_key") == key)
+
+            return combined_df
 
         loaded = []
         for realization in realizations:
