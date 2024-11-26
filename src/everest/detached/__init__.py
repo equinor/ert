@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import json
 import logging
@@ -58,12 +59,15 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
         args = ["--config-file", str(config.config_path)]
         if debug:
             args.append("--debug")
+        poll_task = asyncio.create_task(driver.poll(), name="poll_task")
         await driver.submit(0, "everserver", *args)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
+        poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
+    poll_task.cancel()
     return driver
 
 
