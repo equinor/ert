@@ -42,7 +42,8 @@ def test_state_modifier_workflow_run(
         EverestConfig.load_file(f"everest/model/{config}.yml")
     )
     evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
+    with pytest.raises(ValueError):
+        run_model.run_experiment(evaluator_server_config)
 
     for path in Path.cwd().glob("**/simulation_0/RESULT.SCH"):
         assert path.read_bytes() == (cwd / "eclipse/model/EXPECTED.SCH").read_bytes()

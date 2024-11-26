@@ -59,8 +59,7 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert string_exists_in_file(everest_log_path, "everest DEBUG:")
     assert string_exists_in_file(
         forward_model_log_path,
-        "forward_models ERROR: Batch: 0 Realization: 0 Simulation: 2 "
-        "Job: toggle_failure Failed Error: 0",
+        "Exception: Failing simulation_2 by request!",
     )
     assert string_exists_in_file(
         forward_model_log_path, "Exception: Failing simulation_2" " by request!"

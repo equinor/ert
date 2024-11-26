@@ -78,19 +78,18 @@ def _get_machine_name() -> str:
         return "localhost"
 
 
-def _sim_monitor(context_status, event=None, shared_data=None):
+def _sim_monitor(context_status, shared_data=None):
     status = context_status["status"]
     shared_data[SIM_PROGRESS_ENDPOINT] = {
         "batch_number": context_status["batch_number"],
         "status": {
-            "running": status.running,
-            "waiting": status.waiting,
-            "pending": status.pending,
-            "complete": status.complete,
-            "failed": status.failed,
+            "running": status.get("Running", 0),
+            "waiting": status.get("Waiting", 0),
+            "pending": status.get("Pending", 0),
+            "complete": status.get("Finished", 0),
+            "failed": status.get("Failed", 0),
         },
         "progress": context_status["progress"],
-        "event": event,
     }
 
     if shared_data[STOP_ENDPOINT]:

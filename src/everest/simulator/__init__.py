@@ -1,7 +1,6 @@
-from ert.simulator.batch_simulator_context import Status
-from everest.simulator.simulator import Simulator
+from everest.simulator.simulator_cache import SimulatorCache
 
-JOB_SUCCESS = "Success"
+JOB_SUCCESS = "Finished"
 JOB_WAITING = "Waiting"
 JOB_RUNNING = "Running"
 JOB_FAILURE = "Failure"
@@ -110,6 +109,5 @@ __all__ = [
     "JOB_RUNNING",
     "JOB_SUCCESS",
     "JOB_WAITING",
-    "Simulator",
-    "Status",
+    "SimulatorCache",
 ]
