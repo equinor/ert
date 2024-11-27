@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732708733236,
+  "lastUpdate": 1732718601745,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "adda9e04c1d2851e660169ef9a376049eea5d550",
-          "message": "Replace Flask with FastAPI",
-          "timestamp": "2024-11-21T14:46:09+01:00",
-          "tree_id": "387891bda11b1f13497a62711084025657b72618",
-          "url": "https://github.com/equinor/ert/commit/adda9e04c1d2851e660169ef9a376049eea5d550"
-        },
-        "date": 1732196883703,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19491331697103567,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018720853496559556",
-            "extra": "mean: 5.130485774600004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03254399607322415",
             "extra": "mean: 5.085665867199992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "9a89ae3b0d33da721d942ba604bcd17684be473e",
+          "message": "Have fm_runner's event reporter shutdown gracefully\n\nThis commit fixes the issue where the logs would be spammed with errors\nrelated to the websocket client being forcefully shut down before\nclosing the connection.\nIt also fixes the issue where the fm_runner was not killing the running\nforward models when sigterm was signaled",
+          "timestamp": "2024-11-27T15:41:26+01:00",
+          "tree_id": "b4a936adfe1c2c401cdfe541060211ad55ca6027",
+          "url": "https://github.com/equinor/ert/commit/9a89ae3b0d33da721d942ba604bcd17684be473e"
+        },
+        "date": 1732718601058,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1898650602845553,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03156183523647813",
+            "extra": "mean: 5.266898493600013 sec\nrounds: 5"
           }
         ]
       }
