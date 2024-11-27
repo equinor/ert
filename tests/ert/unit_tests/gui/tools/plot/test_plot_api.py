@@ -322,10 +322,9 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage):
     time_to_get_metadata = t1 - t0
     time_to_cycle_through_responses = t2 - t1
 
-    assert time_to_get_metadata < 1  # 0.09 on py312 macbook pro m1 max
-    assert time_to_cycle_through_responses < 14  # 4.48 on py312 macbook pro m1 max
-
-    gc.collect()
+    # Local times were about 10% of the asserted times
+    assert time_to_get_metadata < 1
+    assert time_to_cycle_through_responses < 14
 
 
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
@@ -358,8 +357,9 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     total_memory_mb = stats.total_memory_allocated / (1024**2)
     peak_memory_mb = stats.peak_memory_allocated / (1024**2)
 
-    assert total_memory_mb < 5000  # Tested locally to 3579mb on macbook pro m1 max
-    assert peak_memory_mb < 1500  # Tested locally to 840mb on macbook pro m1 max
+    # thresholds are set to about 1.5x local memory used
+    assert total_memory_mb < 5000
+    assert peak_memory_mb < 1500
 
 
 def test_plot_api_handles_urlescape(api_and_storage):
