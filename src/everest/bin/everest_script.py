@@ -52,15 +52,6 @@ def everest_entry(args=None):
             partial(handle_keyboard_interrupt, options=options),
         )
 
-    # Validate ert config
-    try:
-        _ = everest_to_ert_config(options.config)
-    except ValueError as exc:
-        raise SystemExit(f"Config validation error: {exc}") from exc
-
-    if EverestRunModel.create(options.config).check_if_runpath_exists():
-        warn_user_that_runpath_is_nonempty()
-
     asyncio.run(run_everest(options))
 
 
@@ -116,6 +107,16 @@ async def run_everest(options):
             logger.info("Everest forward model contains job {}".format(job_name))
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
+
+        # Validate ert config
+        try:
+            _ = everest_to_ert_config(options.config)
+        except ValueError as exc:
+            raise SystemExit(f"Config validation error: {exc}") from exc
+
+        if EverestRunModel.create(options.config).check_if_runpath_exists():
+            warn_user_that_runpath_is_nonempty()
+
         try:
             output_dir = options.config.output_dir
             config_file = options.config.config_file
