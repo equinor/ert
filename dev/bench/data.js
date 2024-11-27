@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732695418153,
+  "lastUpdate": 1732695922582,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "77cf86fc88bf9178bee2e7b2bcefa6178934d34d",
-          "message": "Increase number of examples for stateful storage test",
-          "timestamp": "2024-11-21T13:49:34+01:00",
-          "tree_id": "34343a1e7384a8ee56f6feb0e37d047a405fd7a5",
-          "url": "https://github.com/equinor/ert/commit/77cf86fc88bf9178bee2e7b2bcefa6178934d34d"
-        },
-        "date": 1732193486007,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19013579343634682,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05824185461817928",
-            "extra": "mean: 5.259398990200009 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035025050932171516",
             "extra": "mean: 5.149135757400001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "distinct": true,
+          "id": "dd7925c48926cce52e2e0cadb3994ec11658cf45",
+          "message": "Remove the everest load entry point",
+          "timestamp": "2024-11-27T09:23:34+01:00",
+          "tree_id": "af2ddaa3ce8c3b0378506b91930c215d5ca470b3",
+          "url": "https://github.com/equinor/ert/commit/dd7925c48926cce52e2e0cadb3994ec11658cf45"
+        },
+        "date": 1732695922113,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1922525504311773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02507621422219319",
+            "extra": "mean: 5.201491464000009 sec\nrounds: 5"
           }
         ]
       }
