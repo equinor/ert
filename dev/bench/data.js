@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732696934294,
+  "lastUpdate": 1732700198805,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "20e9fff2409a4a351887f45e0155dfb2e4208bd7",
-          "message": "Remove unused files from test-data/open_shut_state_modifier",
-          "timestamp": "2024-11-21T14:42:43+01:00",
-          "tree_id": "8ad96d8afe86f8a0934bdc6237f2f3660606d88a",
-          "url": "https://github.com/equinor/ert/commit/20e9fff2409a4a351887f45e0155dfb2e4208bd7"
-        },
-        "date": 1732196674778,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19354800105716952,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03929361310869673",
-            "extra": "mean: 5.166676971800001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029059871232901543",
             "extra": "mean: 5.231342857199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "28c0abd02071268c47353ad4b04c9163d188f900",
+          "message": "Add '-sv' flag when running everest integration tests",
+          "timestamp": "2024-11-27T18:34:44+09:00",
+          "tree_id": "f79c6fd84430f9ab44519d88964e63f223652804",
+          "url": "https://github.com/equinor/ert/commit/28c0abd02071268c47353ad4b04c9163d188f900"
+        },
+        "date": 1732700198161,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19072920572991123,
+            "unit": "iter/sec",
+            "range": "stddev: 0.064560775861534",
+            "extra": "mean: 5.243035518200003 sec\nrounds: 5"
           }
         ]
       }
