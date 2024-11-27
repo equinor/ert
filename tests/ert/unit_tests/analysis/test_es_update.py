@@ -415,7 +415,7 @@ def test_smoother_snapshot_alpha(
                     "index": polars.Series(range(len(data)), dtype=polars.UInt16),
                     "values": data,
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             iens,
         )
     posterior_storage = storage.create_ensemble(
@@ -719,7 +719,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
                     "index": polars.Series(range(len(data)), dtype=polars.UInt16),
                     "values": polars.Series(data, dtype=polars.Float32),
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             iens,
         )
     posterior_ens = storage.create_ensemble(
@@ -782,7 +782,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
                     "index": polars.Series(range(len(data)), dtype=polars.UInt16),
                     "values": polars.Series(data, dtype=polars.Float32),
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             iens,
         )
     posterior_ens = storage.create_ensemble(
@@ -876,7 +876,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
                     "index": polars.Series(range(len(data)), dtype=polars.UInt16),
                     "values": polars.Series(data, dtype=polars.Float32),
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             iens,
         )
     posterior_ens = storage.create_ensemble(

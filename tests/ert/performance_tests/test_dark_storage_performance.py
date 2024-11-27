@@ -141,7 +141,7 @@ def test_direct_dark_performance(
             if ensemble_json.userdata["name"] == "default":
                 ensemble_id_default = ensemble_id
 
-        benchmark(function, storage, ensemble_id_default, key, template_config)
+        function(storage, ensemble_id_default, key, template_config)
 
 
 @pytest.mark.parametrize(
@@ -177,4 +177,4 @@ def test_direct_dark_performance_with_storage(
             if ensemble_json.userdata["name"] == "default":
                 ensemble_id_default = ensemble_id
 
-        benchmark(function, storage, ensemble_id_default, key, template_config)
+        function(storage, ensemble_id_default, key, template_config)

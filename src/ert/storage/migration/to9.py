@@ -4,7 +4,40 @@ from pathlib import Path
 
 import polars
 
-info = "Migrate finalized response keys into configs"
+info = "Migrate finalized response keys into configs, make response datasets have one column per response."
+
+
+def _migrate_responses_to_one_col_per_response(path: Path) -> None:
+    for experiment in path.glob("experiments/*"):
+        ensembles = path.glob("ensembles/*")
+
+        experiment_id = None
+        with open(experiment / "index.json", encoding="utf-8") as f:
+            exp_index = json.load(f)
+            experiment_id = exp_index["id"]
+
+        for ens in ensembles:
+            with open(ens / "index.json", encoding="utf-8") as f:
+                ens_file = json.load(f)
+                if ens_file["experiment_id"] != experiment_id:
+                    continue
+
+            real_dirs = [*ens.glob("realization-*")]
+
+            for real_dir in real_dirs:
+                for df_name, columns in [
+                    ("gen_data", ["report_step", "index"]),
+                    ("summary", ["time"]),
+                ]:
+                    if (real_dir / f"{df_name}.parquet").exists():
+                        df = polars.read_parquet(real_dir / f"{df_name}.parquet")
+                        pivoted = df.pivot(
+                            on="response_key", index=["realization", *columns]
+                        )
+
+                        os.remove(real_dir / f"{df_name}.parquet")
+                        pivoted.write_parquet(real_dir / f"{df_name}.parquet")
+
 
 def _migrate_response_configs_wrt_finalized_keys(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
@@ -62,3 +95,4 @@ def _migrate_response_configs_wrt_finalized_keys(path: Path) -> None:
 
 def migrate(path: Path) -> None:
     _migrate_response_configs_wrt_finalized_keys(path)
+    _migrate_responses_to_one_col_per_response(path)

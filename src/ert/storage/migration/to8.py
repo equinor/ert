@@ -78,7 +78,10 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
                         )
 
                         pandas_df = gen_data_ds.to_dataframe().dropna()
-                        polars_df = polars.from_pandas(pandas_df.reset_index())
+                        polars_df = polars.from_pandas(
+                            pandas_df.reset_index(),
+                            schema_overrides={"values": polars.Float32},
+                        )
                         polars_df = polars_df.rename({"name": "response_key"})
 
                         if "time" in polars_df:
