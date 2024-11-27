@@ -208,7 +208,7 @@ class LegacyEnsemble:
         retries: int = 10,
     ) -> None:
         async with Client(url, token, cert, max_retries=retries) as client:
-            await client._send(event_to_json(event))
+            await client.send(event_to_json(event))
 
     def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
         def event_builder(status: str) -> Event:

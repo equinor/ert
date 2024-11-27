@@ -22,24 +22,24 @@ def reporter():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_init_message_argument(reporter):
+async def test_report_with_init_message_argument(reporter):
     r = reporter
     fmstep1 = ForwardModelStep(
         {"name": "fmstep1", "stdout": "/stdout", "stderr": "/stderr"}, 0
     )
 
-    r.report(Init([fmstep1], 1, 19))
+    await r.report(Init([fmstep1], 1, 19))
 
-    with open(STATUS_file, "r", encoding="utf-8") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         assert "Current host" in f.readline(), "STATUS file missing expected value"
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"name": "fmstep1"' in content, "status.json missing fmstep1"
         assert '"status": "Waiting"' in content, "status.json missing Waiting status"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_start_message_argument(reporter):
+async def test_report_with_successful_start_message_argument(reporter):
     msg = Start(
         ForwardModelStep(
             {
@@ -54,33 +54,33 @@ def test_report_with_successful_start_message_argument(reporter):
     )
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
-    with open(STATUS_file, "r", encoding="utf-8") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         assert "fmstep1" in f.readline(), "STATUS file missing fmstep1"
-    with open(LOG_file, "r", encoding="utf-8") as f:
+    with open(LOG_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         assert (
             "Calling: /bin/sh --foo 1 --bar 2" in f.readline()
         ), """JOB_LOG file missing executable and arguments"""
 
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"status": "Running"' in content, "status.json missing Running status"
         assert '"start_time": null' not in content, "start_time not set"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_failed_start_message_argument(reporter):
+async def test_report_with_failed_start_message_argument(reporter):
     msg = Start(ForwardModelStep({"name": "fmstep1"}, 0)).with_error("massive_failure")
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
-    with open(STATUS_file, "r", encoding="utf-8") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         assert (
             "EXIT: -10/massive_failure" in f.readline()
         ), "STATUS file missing EXIT message"
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
         assert (
@@ -92,29 +92,29 @@ def test_report_with_failed_start_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_exit_message_argument(reporter):
+async def test_report_with_successful_exit_message_argument(reporter):
     msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 0)
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"status": "Success"' in content, "status.json missing Success status"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_failed_exit_message_argument(reporter):
+async def test_report_with_failed_exit_message_argument(reporter):
     msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 1).with_error(
         "massive_failure"
     )
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
-    with open(STATUS_file, "r", encoding="utf-8") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         assert "EXIT: 1/massive_failure" in f.readline()
-    with open(ERROR_file, "r", encoding="utf-8") as f:
+    with open(ERROR_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert "<job>fmstep1</job>" in content, "ERROR file missing fmstep"
         assert (
@@ -123,7 +123,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert (
             "stderr: Not redirected" in content
         ), "ERROR had invalid stderr information"
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
         assert (
@@ -133,16 +133,16 @@ def test_report_with_failed_exit_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_running_message_argument(reporter):
+async def test_report_with_running_message_argument(reporter):
     msg = Running(
         ForwardModelStep({"name": "fmstep1"}, 0),
         ProcessTreeStatus(max_rss=100, rss=10, cpu_seconds=1.1),
     )
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
-    with open(STATUS_json, "r", encoding="utf-8") as f:
+    with open(STATUS_json, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         content = "".join(f.readlines())
         assert '"status": "Running"' in content, "status.json missing status"
         assert (
@@ -155,11 +155,11 @@ def test_report_with_running_message_argument(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_report_with_successful_finish_message_argument(reporter):
+async def test_report_with_successful_finish_message_argument(reporter):
     msg = Finish()
     reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [])
 
-    reporter.report(msg)
+    await reporter.report(msg)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -198,7 +198,7 @@ def test_old_file_deletion(reporter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_status_file_is_correct(reporter):
+async def test_status_file_is_correct(reporter):
     """The STATUS file is a file to which we append data about steps as they
     are run. So this involves multiple reports, and should be tested as
     such.
@@ -213,7 +213,7 @@ def test_status_file_is_correct(reporter):
     exited_j_2 = Exited(j_2, 9).with_error("failed horribly")
 
     for msg in [init, start_j_1, exited_j_1, start_j_2, exited_j_2]:
-        reporter.report(msg)
+        await reporter.report(msg)
 
     expected_j1_line = (
         f"{j_1.name():32}: {start_j_1.timestamp:%H:%M:%S} .... "
@@ -226,7 +226,7 @@ def test_status_file_is_correct(reporter):
         f"EXIT: {exited_j_2.exit_code}/{exited_j_2.error_message}\n"
     )
 
-    with open(STATUS_file, "r", encoding="utf-8") as f:
+    with open(STATUS_file, "r", encoding="utf-8") as f:  # noqa: ASYNC230
         for expected in [
             "Current host",
             expected_j1_line,

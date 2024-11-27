@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import io
 import json
@@ -11,10 +12,19 @@ import sys
 import time
 from datetime import datetime as dt
 from pathlib import Path
-from subprocess import Popen, run
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple, cast
+from subprocess import run
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    cast,
+)
 
-from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
+from psutil import AccessDenied, NoSuchProcess, Process, ZombieProcess
 
 from .io import check_executable
 from .reporting.message import (
@@ -89,9 +99,9 @@ class ForwardModelStep:
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self) -> Generator[Start | Exited | Running | None]:
+    async def run(self) -> AsyncGenerator[Start | Exited | Running | None]:
         try:
-            for msg in self._run():
+            async for msg in self._run():
                 yield msg
         except Exception as e:
             yield Exited(self, exit_code=1).with_error(str(e))
@@ -151,9 +161,8 @@ class ForwardModelStep:
             combined_environment = {**os.environ, **environment}
         return combined_environment
 
-    def _run(self) -> Generator[Start | Exited | Running | None]:
+    async def _run(self) -> AsyncGenerator[Start | Exited | Running | None]:
         start_message = self.create_start_message_and_check_job_files()
-
         yield start_message
         if not start_message.success():
             return
@@ -167,14 +176,14 @@ class ForwardModelStep:
         target_file_mtime: Optional[int] = _get_target_file_ntime(target_file)
 
         try:
-            proc = Popen(
-                arg_list,
+            proc = await asyncio.create_subprocess_exec(
+                *arg_list,
                 stdin=stdin,
                 stdout=stdout,
                 stderr=stderr,
                 env=self._create_environment(),
             )
-            process = Process(proc.pid)
+
         except OSError as e:
             exited_message = self._handle_process_io_error_and_create_exited_message(
                 e, stderr
@@ -186,9 +195,9 @@ class ForwardModelStep:
         exit_code = None
 
         max_memory_usage = 0
-        fm_step_pids = {int(process.pid)}
+        fm_step_pids = {int(proc.pid)}
         while exit_code is None:
-            (memory_rss, cpu_seconds, oom_score) = _get_processtree_data(process)
+            (memory_rss, cpu_seconds, oom_score) = _get_processtree_data(proc.pid)
             max_memory_usage = max(memory_rss, max_memory_usage)
             yield Running(
                 self,
@@ -203,8 +212,10 @@ class ForwardModelStep:
             )
 
             try:
-                exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
-            except TimeoutExpired:
+                exit_code = await asyncio.wait_for(
+                    proc.wait(), timeout=self.MEMORY_POLL_PERIOD
+                )
+            except asyncio.TimeoutError:
                 potential_exited_msg = (
                     self.handle_process_timeout_and_create_exited_msg(exit_code, proc)
                 )
@@ -212,9 +223,11 @@ class ForwardModelStep:
                     yield potential_exited_msg
 
                     return
-                fm_step_pids |= {
-                    int(child.pid) for child in process.children(recursive=True)
-                }
+                with contextlib.suppress(NoSuchProcess):
+                    proccess = Process(proc.pid)
+                    fm_step_pids |= {
+                        int(child.pid) for child in proccess.children(recursive=True)
+                    }
 
         ensure_file_handles_closed([stdin, stdout, stderr])
         exited_message = self._create_exited_message_based_on_exit_code(
@@ -274,7 +287,7 @@ class ForwardModelStep:
         )
 
     def handle_process_timeout_and_create_exited_msg(
-        self, exit_code: Optional[int], proc: Popen[Process]
+        self, exit_code: Optional[int], proc: asyncio.subprocess.Process
     ) -> Exited | None:
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()
@@ -349,7 +362,6 @@ class ForwardModelStep:
 
         if executable_error := check_executable(self.job_data.get("executable")):
             errors.append(executable_error)
-
         return errors
 
     def _check_target_file_is_written(
@@ -428,7 +440,7 @@ def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) 
 
 
 def _get_processtree_data(
-    process: Process,
+    pid: int,
 ) -> Tuple[int, float, Optional[int]]:
     """Obtain the oom_score (the Linux kernel uses this number to
     decide which process to kill first in out-of-memory siturations).
@@ -450,21 +462,19 @@ def _get_processtree_data(
     memory_rss = 0
     cpu_seconds = 0.0
     with contextlib.suppress(ValueError, FileNotFoundError):
-        oom_score = int(
-            Path(f"/proc/{process.pid}/oom_score").read_text(encoding="utf-8")
-        )
-    with (
-        contextlib.suppress(
-            ValueError, NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
-        ),
-        process.oneshot(),
+        oom_score = int(Path(f"/proc/{pid}/oom_score").read_text(encoding="utf-8"))
+    with contextlib.suppress(
+        ValueError, NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
     ):
-        memory_rss = process.memory_info().rss
-        cpu_seconds = process.cpu_times().user
+        process = Process(pid)
+        with process.oneshot():
+            memory_rss = process.memory_info().rss
+            cpu_seconds = process.cpu_times().user
 
     with contextlib.suppress(
         NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
     ):
+        process = Process(pid)
         for child in process.children(recursive=True):
             with contextlib.suppress(
                 ValueError,

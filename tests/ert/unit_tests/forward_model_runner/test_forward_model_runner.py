@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import os.path
@@ -75,13 +76,13 @@ def set_up_environ():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_missing_joblist_json():
+async def test_missing_joblist_json():
     with pytest.raises(KeyError):
-        ForwardModelRunner({})
+        ForwardModelRunner({}, asyncio.Queue())
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_output_rename():
+async def test_run_output_rename():
     fm_step = {
         "name": "TEST_FMSTEP",
         "executable": "mkdir",
@@ -90,17 +91,22 @@ def test_run_output_rename():
     }
     fm_step_list = [fm_step, fm_step, fm_step, fm_step, fm_step]
 
-    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list), event_queue)
+    await fmr.run([])
 
-    for status in enumerate(fmr.run([])):
+    index = 0
+    while not event_queue.empty():
+        status = (index, await event_queue.get())
         if isinstance(status, Start):
             assert status.job is not None
             assert status.job.std_err == f"err.{status.job.index}"
             assert status.job.std_out == f"out.{status.job.index}"
+        index += 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_multiple_ok():
+async def test_run_multiple_ok():
     fm_step_list = []
     dir_list = ["1", "2", "3", "4", "5"]
     for fm_step_index in dir_list:
@@ -112,14 +118,18 @@ def test_run_multiple_ok():
             "argList": ["-p", "-v", fm_step_index],
         }
         fm_step_list.append(fm_step)
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list), event_queue)
+    await fmr.run([])
 
-    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
+    exit_message_count = 0
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Exited):
+            exit_message_count += 1
+            assert event.exit_code == 0
 
-    statuses = [s for s in list(fmr.run([])) if isinstance(s, Exited)]
-
-    assert len(statuses) == 5
-    for status in statuses:
-        assert status.exit_code == 0
+    assert exit_message_count == 5
 
     for dir_number in dir_list:
         assert os.path.isdir(dir_number)
@@ -129,7 +139,7 @@ def test_run_multiple_ok():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given():
+async def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given():
     fm_step_list = []
     file_list = ["1", "2", "3", "4", "5"]
     manifest = {}
@@ -143,18 +153,23 @@ def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_
             "argList": [fm_step_index],
         }
         fm_step_list.append(fm_step)
-    with open("manifest.json", "w", encoding="utf-8") as f:
+    with open("manifest.json", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         json.dump(manifest, f)
 
-    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
-
-    statuses = [s for s in list(fmr.run([])) if isinstance(s, Checksum)]
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list), event_queue)
+    await fmr.run([])
+    statuses = []
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Checksum):
+            statuses.append(event)
     assert len(statuses) == 1
     assert len(statuses[0].data) == 5
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error():
+async def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error():
     fm_step_list = []
     file_name = "test"
     manifest = {"file_1": f"{file_name}"}
@@ -168,12 +183,16 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
             "argList": ["not_test"],
         }
     )
-    with open("manifest.json", "w", encoding="utf-8") as f:
+    with open("manifest.json", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         json.dump(manifest, f)
-
-    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
-
-    checksum_msg = [s for s in list(fmr.run([])) if isinstance(s, Checksum)]
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list), event_queue)
+    await fmr.run([])
+    checksum_msg = []
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Checksum):
+            checksum_msg.append(event)
     assert len(checksum_msg) == 1
     info = checksum_msg[0].data["file_1"]
     assert "md5sum" not in info
@@ -185,7 +204,7 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_multiple_fail_only_runs_one():
+async def test_run_multiple_fail_only_runs_one():
     fm_step_list = []
     for index in range(1, 6):
         fm_step = {
@@ -200,10 +219,14 @@ def test_run_multiple_fail_only_runs_one():
             ],
         }
         fm_step_list.append(fm_step)
-
-    fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
-
-    statuses = [s for s in list(fmr.run([])) if isinstance(s, Exited)]
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(create_jobs_json(fm_step_list), event_queue)
+    await fmr.run([])
+    statuses = []
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Exited):
+            statuses.append(event)
 
     assert len(statuses) == 1
     for i, status in enumerate(statuses):
@@ -211,8 +234,8 @@ def test_run_multiple_fail_only_runs_one():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_exec_env():
-    with open("exec_env.py", "w", encoding="utf-8") as f:
+async def test_exec_env():
+    with open("exec_env.py", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             """#!/usr/bin/env python\n
 import os
@@ -224,7 +247,7 @@ assert exec_env["TEST_ENV"] == "123"
         )
     os.chmod("exec_env.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("EXEC_ENV", "w", encoding="utf-8") as f:
+    with open("EXEC_ENV", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write("EXECUTABLE exec_env.py\n")
         f.write("EXEC_ENV TEST_ENV 123\n")
 
@@ -232,7 +255,7 @@ assert exec_env["TEST_ENV"] == "123"
         name=None, config_file="EXEC_ENV"
     )
 
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
+    with open("jobs.json", mode="w", encoding="utf-8") as fptr:  # noqa: ASYNC230
         ert_config = ErtConfig(forward_model_steps=[forward_model])
         json.dump(
             forward_model_data_to_json(
@@ -245,21 +268,26 @@ assert exec_env["TEST_ENV"] == "123"
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", "r", encoding="utf-8") as f:  # noqa: ASYNC230
         jobs_json = json.load(f)
 
-    for msg in list(ForwardModelRunner(jobs_json).run([])):
-        if isinstance(msg, Start):
-            with open("exec_env_exec_env.json", encoding="utf-8") as f:
+    event_queue = asyncio.Queue()
+    forward_model_runner = ForwardModelRunner(jobs_json, event_queue)
+    await forward_model_runner.run([])
+
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Start):
+            with open("exec_env_exec_env.json", encoding="utf-8") as f:  # noqa: ASYNC230
                 exec_env = json.load(f)
                 assert exec_env["TEST_ENV"] == "123"
-        if isinstance(msg, Exited):
-            assert msg.exit_code == 0
+        if isinstance(event, Exited):
+            assert event.exit_code == 0
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_env_var_available_inside_step_context():
-    with open("run_me.py", "w", encoding="utf-8") as f:
+async def test_env_var_available_inside_step_context():
+    with open("run_me.py", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             """#!/usr/bin/env python\n
 import os
@@ -268,12 +296,12 @@ assert os.environ["TEST_ENV"] == "123"
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("RUN_ENV", "w", encoding="utf-8") as f:
+    with open("RUN_ENV", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write("EXECUTABLE run_me.py\n")
         f.write("ENV TEST_ENV 123\n")
 
     step = _forward_model_step_from_config_file(name=None, config_file="RUN_ENV")
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
+    with open("jobs.json", mode="w", encoding="utf-8") as fptr:  # noqa: ASYNC230
         ert_config = ErtConfig(forward_model_steps=[step])
         json.dump(
             forward_model_data_to_json(
@@ -286,23 +314,26 @@ assert os.environ["TEST_ENV"] == "123"
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", "r", encoding="utf-8") as f:  # noqa: ASYNC230
         jobs_json = json.load(f)
 
     # Check ENV variable not available outside of step context
     assert "TEST_ENV" not in os.environ
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(jobs_json, event_queue)
+    await fmr.run([])
 
-    for msg in list(ForwardModelRunner(jobs_json).run([])):
-        if isinstance(msg, Exited):
-            assert msg.exit_code == 0
-
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Exited):
+            assert event.exit_code == 0
     # Check ENV variable not available outside of step context
     assert "TEST_ENV" not in os.environ
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_default_env_variables_available_inside_fm_step_context():
-    with open("run_me.py", "w", encoding="utf-8") as f:
+async def test_default_env_variables_available_inside_fm_step_context():
+    with open("run_me.py", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             textwrap.dedent(
                 """\
@@ -316,11 +347,11 @@ def test_default_env_variables_available_inside_fm_step_context():
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("RUN_ENV", "w", encoding="utf-8") as f:
+    with open("RUN_ENV", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write("EXECUTABLE run_me.py\n")
 
     step = _forward_model_step_from_config_file(name=None, config_file="RUN_ENV")
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
+    with open("jobs.json", mode="w", encoding="utf-8") as fptr:  # noqa: ASYNC230
         ert_config = ErtConfig(
             forward_model_steps=[step],
             substitutions=Substitutions({"<RUNPATH>": "./"}),
@@ -336,16 +367,20 @@ def test_default_env_variables_available_inside_fm_step_context():
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", "r", encoding="utf-8") as f:  # noqa: ASYNC230
         jobs_json = json.load(f)
 
     # Check default ENV variable not available outside of step context
     for k in ForwardModelStep.default_env:
         assert k not in os.environ
+    event_queue = asyncio.Queue()
+    fmr = ForwardModelRunner(jobs_json, event_queue)
+    await fmr.run([])
 
-    for msg in list(ForwardModelRunner(jobs_json).run([])):
-        if isinstance(msg, Exited):
-            assert msg.exit_code == 0
+    while not event_queue.empty():
+        event = await event_queue.get()
+        if isinstance(event, Exited):
+            assert event.exit_code == 0
 
     # Check default ENV variable not available outside of step context
     for k in ForwardModelStep.default_env:

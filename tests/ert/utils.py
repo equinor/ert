@@ -3,14 +3,12 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import websockets.server
 
 from _ert.forward_model_runner.client import Client
-from _ert.threading import ErtThread
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
 if TYPE_CHECKING:
@@ -61,9 +59,18 @@ def wait_until(func, interval=0.5, timeout=30):
     )
 
 
-def _mock_ws(host, port, messages, delay_startup=0):
-    loop = asyncio.new_event_loop()
-    done = loop.create_future()
+async def async_wait_until(condition, timeout, fail_msg, interval=0.1):
+    t = 0
+    while t < timeout:
+        await asyncio.sleep(interval)
+        if condition():
+            return
+        t += interval
+    raise AssertionError(fail_msg)
+
+
+async def _mock_ws_async(host, port, messages, delay_startup=0):
+    done = asyncio.Future()
 
     async def _handler(websocket, path):
         while True:
@@ -73,33 +80,24 @@ def _mock_ws(host, port, messages, delay_startup=0):
                 done.set_result(None)
                 break
 
-    async def _run_server():
-        await asyncio.sleep(delay_startup)
-        async with websockets.server.serve(_handler, host, port):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
+    await asyncio.sleep(delay_startup)
+    async with websockets.server.serve(_handler, host, port):
+        await done
 
 
-@contextlib.contextmanager
-def _mock_ws_thread(host, port, messages):
-    mock_ws_thread = ErtThread(
-        target=partial(_mock_ws, messages=messages),
-        args=(
-            host,
-            port,
-        ),
+@contextlib.asynccontextmanager
+async def _mock_ws_task(host, port, messages, delay_startup=0):
+    mock_ws_task = asyncio.create_task(
+        _mock_ws_async(host, port, messages, delay_startup)
     )
-    mock_ws_thread.start()
     try:
         yield
     # Make sure to join the thread even if an exception occurs
     finally:
         url = f"ws://{host}:{port}"
-        with Client(url) as client:
-            client.send("stop")
-        mock_ws_thread.join()
+        async with Client(url) as client:
+            await client.send("stop")
+        await mock_ws_task
         messages.pop()
 
 

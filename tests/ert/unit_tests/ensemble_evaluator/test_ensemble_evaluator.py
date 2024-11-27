@@ -172,7 +172,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
 
             event = ForwardModelStepFailure(
                 ensemble=evaluator.ensemble.id_,
@@ -180,7 +180,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 fm_step="0",
                 error_msg="error",
             )
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
 
         def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
             try:
@@ -212,7 +212,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             fm_step="0",
             current_memory_usage=1000,
         )
-        await dispatch._send(event_to_json(event))
+        await dispatch.send(event_to_json(event))
 
     # reconnect new monitor
     async with Monitor(config_info) as new_monitor:
@@ -270,7 +270,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch1._send(event_to_json(event))
+            await dispatch1.send(event_to_json(event))
             # second dispatch endpoint client informs that forward model 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -278,7 +278,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch2._send(event_to_json(event))
+            await dispatch2.send(event_to_json(event))
             # second dispatch endpoint client informs that forward model 1 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -286,7 +286,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 fm_step="1",
                 current_memory_usage=1000,
             )
-            await dispatch2._send(event_to_json(event))
+            await dispatch2.send(event_to_json(event))
 
         final_snapshot = EnsembleSnapshot()
 
@@ -330,12 +330,12 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
             fm_step="0",
             current_memory_usage=1000,
         )
-        await dispatch2._send(event_to_json(event))
+        await dispatch2.send(event_to_json(event))
         # second dispatch endpoint client informs that job 1 is failed
         event = ForwardModelStepFailure(
             ensemble=evaluator.ensemble.id_, real="1", fm_step="1", error_msg="error"
         )
-        await dispatch2._send(event_to_json(event))
+        await dispatch2.send(event_to_json(event))
 
     def check_if_final_snapshot_is_complete(final_snapshot: EnsembleSnapshot) -> bool:
         try:
@@ -408,7 +408,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch1._send(event_to_json(event))
+            await dispatch1.send(event_to_json(event))
             # second dispatch endpoint client informs that real 1 fm 0 is running
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
@@ -416,7 +416,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch2._send(event_to_json(event))
+            await dispatch2.send(event_to_json(event))
             # second dispatch endpoint client informs that real 1 fm 0 is done
             event = ForwardModelStepSuccess(
                 ensemble=evaluator.ensemble.id_,
@@ -424,7 +424,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch2._send(event_to_json(event))
+            await dispatch2.send(event_to_json(event))
             # second dispatch endpoint client informs that real 1 fm 1 is failed
             event = ForwardModelStepFailure(
                 ensemble=evaluator.ensemble.id_,
@@ -432,7 +432,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 fm_step="1",
                 error_msg="error",
             )
-            await dispatch2._send(event_to_json(event))
+            await dispatch2.send(event_to_json(event))
 
             event = await anext(events)
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
@@ -496,17 +496,17 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         assert type(snapshot_event) is EESnapshot
         async with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
             event = EnsembleStarted(ensemble=evaluator.ensemble.id_)
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
             event = RealizationSuccess(
                 ensemble=evaluator.ensemble.id_, real="0", queue_event_type=""
             )
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
             event = RealizationSuccess(
                 ensemble=evaluator.ensemble.id_, real="1", queue_event_type=""
             )
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
             event = EnsembleSucceeded(ensemble=evaluator.ensemble.id_)
-            await dispatch._send(event_to_json(event))
+            await dispatch.send(event_to_json(event))
 
         await monitor.signal_done()
 

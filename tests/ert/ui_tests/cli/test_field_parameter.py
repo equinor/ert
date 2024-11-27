@@ -23,6 +23,7 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
+@pytest.mark.timeout(600)
 def test_field_param_update_using_heat_equation(heat_equation_storage):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:

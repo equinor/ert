@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import os
 import signal
 import sys
@@ -13,12 +15,8 @@ def sigterm_handler(_signo, _stack_frame):
 def main():
     os.nice(19)
     signal.signal(signal.SIGTERM, sigterm_handler)
-    try:
-        job_runner_main(sys.argv)
-    except Exception as e:
-        pgid = os.getpgid(os.getpid())
-        os.killpg(pgid, signal.SIGTERM)
-        raise e
+    with contextlib.suppress(asyncio.CancelledError):
+        asyncio.run(job_runner_main(sys.argv))
 
 
 if __name__ == "__main__":

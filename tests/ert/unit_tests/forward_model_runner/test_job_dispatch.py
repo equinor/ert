@@ -1,37 +1,38 @@
 from __future__ import annotations
 
+import asyncio
 import glob
 import importlib
 import json
 import os
-import signal
 import stat
 import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
-from threading import Lock
-from unittest.mock import mock_open, patch
 
 import pandas as pd
 import psutil
 import pytest
 
 import _ert.forward_model_runner.cli
-from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
+from _ert.forward_model_runner.cli import (
+    JOBS_FILE,
+    ForwardModelRunnerException,
+    _setup_reporters,
+    main,
+)
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive
 from _ert.forward_model_runner.reporting.message import Finish, Init
-from _ert.threading import ErtThread
-from tests.ert.utils import _mock_ws_thread, wait_until
-
-from .test_event_reporter import _wait_until
+from _ert.forward_model_runner.runner import ForwardModelRunner
+from tests.ert.utils import _mock_ws_task, async_wait_until, wait_until
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_terminate_steps():
+async def test_terminate_steps():
     # Executes itself recursively and sleeps for 100 seconds
-    with open("dummy_executable", "w", encoding="utf-8") as f:
+    with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             """#!/usr/bin/env python
 import sys, os, time
@@ -73,11 +74,11 @@ else:
         "ert_pid": "",
     }
 
-    with open(JOBS_FILE, "w", encoding="utf-8") as f:
+    with open(JOBS_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(json.dumps(step_list))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w", encoding="utf-8") as f:
+    with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             dedent(
                 """\
@@ -95,7 +96,7 @@ else:
         "_ert.forward_model_runner.job_dispatch"
     ).origin
     # (we wait for the process below)
-    job_dispatch_process = Popen(
+    job_dispatch_process = Popen(  # noqa: ASYNC220
         [
             os.getcwd() + "/setsid",
             sys.executable,
@@ -113,7 +114,8 @@ else:
 
     wait_until(lambda: len(p.children(recursive=True)) == 0)
 
-    os.wait()  # allow os to clean up zombie processes
+    # allow os to clean up zombie processes
+    os.wait()  # noqa: ASYNC222
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -277,26 +279,29 @@ def test_job_dispatch_run_subset_specified_as_parameter():
     assert os.path.isfile("step_C.out")
 
 
-def test_no_jobs_json_file_raises_IOError(tmp_path):
+async def test_no_jobs_json_file_raises_IOError(tmp_path):
     with pytest.raises(IOError):
-        main(["script.py", str(tmp_path)])
+        await main(["script.py", str(tmp_path)])
 
 
-def test_invalid_jobs_json_raises_OSError(tmp_path):
+async def test_invalid_jobs_json_raises_OSError(tmp_path):
     (tmp_path / JOBS_FILE).write_text("not json")
 
     with pytest.raises(OSError):
-        main(["script.py", str(tmp_path)])
+        await main(["script.py", str(tmp_path)])
 
 
-def test_missing_directory_exits(tmp_path):
+async def test_missing_directory_exits(tmp_path):
     with pytest.raises(SystemExit):
-        main(["script.py", str(tmp_path / "non_existent")])
+        await main(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
-    lock = Lock()
-    lock.acquire()
+async def test_retry_of_jobs_json_file_read(
+    unused_tcp_port, tmp_path, monkeypatch, caplog
+):
+    lock = asyncio.Lock()
+    await lock.acquire()
+
     monkeypatch.setattr(_ert.forward_model_runner.cli, "_wait_for_retry", lock.acquire)
     jobs_json = json.dumps(
         {
@@ -306,24 +311,26 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
         }
     )
 
-    with _mock_ws_thread("localhost", unused_tcp_port, []):
-        thread = ErtThread(target=main, args=[["script.py", str(tmp_path)]])
-        thread.start()
-        _wait_until(
+    async with _mock_ws_task("localhost", unused_tcp_port, []):
+        fm_runner_task = asyncio.create_task(main(["script.py", str(tmp_path)]))
+
+        await async_wait_until(
             lambda: f"Could not find file {JOBS_FILE}, retrying" in caplog.text,
             2,
             "Did not get expected log message from missing jobs.json",
         )
         (tmp_path / JOBS_FILE).write_text(jobs_json)
+        await asyncio.sleep(0)
         lock.release()
-        thread.join()
+
+        await fm_runner_task
 
 
 @pytest.mark.parametrize(
     "is_interactive_run, ens_id",
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
-def test_setup_reporters(is_interactive_run, ens_id):
+async def test_setup_reporters(is_interactive_run, ens_id):
     reporters = _setup_reporters(is_interactive_run, ens_id, "")
 
     if not is_interactive_run and not ens_id:
@@ -338,29 +345,32 @@ def test_setup_reporters(is_interactive_run, ens_id):
         assert len(reporters) == 1
         assert any(isinstance(r, Interactive) for r in reporters)
 
+    for reporter in reporters:
+        reporter.cancel()
+
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+async def test_job_dispatch_kills_itself_after_unsuccessful_job(
+    unused_tcp_port, monkeypatch
+):
     host = "localhost"
     port = unused_tcp_port
-    jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
+    jobs_obj = {
+        "ens_id": "_id_",
+        "dispatch_url": f"ws://localhost:{port}",
+        "jobList": [],
+    }
+    with open("jobs.json", mode="w+", encoding="utf-8") as f:  # noqa: ASYNC230
+        json.dump(jobs_obj, f)
 
-    with (
-        patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg,
-        patch("_ert.forward_model_runner.cli.os.getpgid") as mock_getpgid,
-        patch("_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)),
-        patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner,
-    ):
-        mock_runner.return_value.run.return_value = [
-            Init([], 0, 0),
-            Finish().with_error("overall bad run"),
-        ]
-        mock_getpgid.return_value = 17
+    async def mock_run_method(self: ForwardModelRunner, *args, **kwargs):
+        await self.put_event(Init([], 0, 0))
+        await self.put_event(Finish().with_error("overall bad run"))
 
-        with _mock_ws_thread(host, port, []):
-            main(["script.py"])
-
-        mock_killpg.assert_called_with(17, signal.SIGKILL)
+    monkeypatch.setattr(ForwardModelRunner, "run", mock_run_method)
+    async with _mock_ws_task(host, port, []):
+        with pytest.raises(ForwardModelRunnerException):
+            await main(["script.py"])
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")

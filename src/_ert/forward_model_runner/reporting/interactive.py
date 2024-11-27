@@ -26,7 +26,10 @@ class Interactive(Reporter):
             )
         return f"Running job: {msg.job.name()} ... "
 
-    def report(self, msg: Message):
+    async def report(self, msg: Message):
         _msg = self._report(msg)
         if _msg is not None:
             print(_msg)
+
+    def cancel(self):
+        pass
