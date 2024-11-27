@@ -311,8 +311,7 @@ class RunDialog(QFrame):
 
             widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
-            widget.itemClicked.connect(self._select_real)
-
+            self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
                 widget, f"Realizations for iteration {index.internalPointer().id_}"
             )
@@ -321,23 +320,22 @@ class RunDialog(QFrame):
 
     @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
-        real = index.row()
-        iter_ = index.model().get_iter()  # type: ignore
-        exec_hosts = None
+        if index.isValid():
+            real = index.row()
+            iter_ = index.model().get_iter()  # type: ignore
+            exec_hosts = None
 
-        iter_node = self._snapshot_model.root.children.get(str(iter_), None)
-        if iter_node:
-            real_node = iter_node.children.get(str(real), None)
-            if real_node:
-                exec_hosts = real_node.data.exec_hosts
+            iter_node = self._snapshot_model.root.children.get(str(iter_), None)
+            if iter_node:
+                real_node = iter_node.children.get(str(real), None)
+                if real_node:
+                    exec_hosts = real_node.data.exec_hosts
 
-        self._fm_step_overview.set_realization(iter_, real)
-        text = (
-            f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
-        )
-        if exec_hosts and exec_hosts != "-":
-            text += f", assigned to host: {exec_hosts}"
-        self._fm_step_label.setText(text)
+            self._fm_step_overview.set_realization(iter_, real)
+            text = f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
+            if exec_hosts and exec_hosts != "-":
+                text += f", assigned to host: {exec_hosts}"
+            self._fm_step_label.setText(text)
 
     def run_experiment(self, restart: bool = False) -> None:
         self._restart = restart
