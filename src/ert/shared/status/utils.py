@@ -1,7 +1,10 @@
+import contextlib
 import math
 import os
 import resource
+import shutil
 import sys
+from pathlib import Path
 
 
 def byte_with_unit(byte_count: float) -> str:
@@ -82,3 +85,21 @@ def get_ert_memory_usage() -> int:
         rss_scale = 1000
 
     return usage.ru_maxrss // rss_scale
+
+
+def disk_space_status(runpath: str):
+    with contextlib.suppress(Exception):
+        mount_dir = _get_mount_directory(runpath)
+        print(mount_dir)
+        total_space, used_space, free_space = shutil.disk_usage(mount_dir)
+        percentage_used = used_space / total_space
+        return percentage_used
+
+
+def _get_mount_directory(runpath: str) -> Path:
+    path = Path(runpath).absolute()
+
+    while not path.is_mount():
+        path = path.parent
+
+    return path
