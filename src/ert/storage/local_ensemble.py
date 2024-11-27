@@ -435,6 +435,8 @@ class LocalEnsemble(BaseMode):
             List of realization states.
         """
 
+        response_configs = self.experiment.response_configuration
+
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
             Returns true if all parameters in the experiment have
@@ -478,7 +480,7 @@ class LocalEnsemble(BaseMode):
                 True if responses exist for realization.
             """
 
-            if not self.experiment.response_configuration:
+            if not response_configs:
                 return True
             path = self._realization_dir(realization)
 
@@ -493,8 +495,7 @@ class LocalEnsemble(BaseMode):
                 return _has_response(key)
 
             is_expecting_any_responses = any(
-                bool(config.keys)
-                for config in self.experiment.response_configuration.values()
+                bool(config.keys) for config in response_configs.values()
             )
 
             if not is_expecting_any_responses:
@@ -502,7 +503,7 @@ class LocalEnsemble(BaseMode):
 
             non_empty_response_configs = [
                 response
-                for response, config in self.experiment.response_configuration.items()
+                for response, config in response_configs.items()
                 if bool(config.keys)
             ]
 
@@ -896,10 +897,11 @@ class LocalEnsemble(BaseMode):
     def get_response_state(
         self, realization: int
     ) -> Dict[str, RealizationStorageState]:
+        response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
             e: RealizationStorageState.RESPONSES_LOADED
             if (path / f"{e}.parquet").exists()
             else RealizationStorageState.UNDEFINED
-            for e in self.experiment.response_configuration
+            for e in response_configs
         }
