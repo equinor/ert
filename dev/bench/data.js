@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732719514566,
+  "lastUpdate": 1732735848221,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "52b1e2c274fc2839cd36345431d4eef6d06fbc33",
-          "message": "Fix tests writing files to the source tree",
-          "timestamp": "2024-11-22T10:02:07+01:00",
-          "tree_id": "e5e165b82f21e98522fa79e077915bbbd3bcd16c",
-          "url": "https://github.com/equinor/ert/commit/52b1e2c274fc2839cd36345431d4eef6d06fbc33"
-        },
-        "date": 1732266244625,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19213493756311287,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03003362364688835",
-            "extra": "mean: 5.204675488400011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.032388740798183685",
             "extra": "mean: 5.202973653400011 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "403a55e5348ff3e0b3f3e4b28cfa1ac2127562f8",
+          "message": "Make sure driver is polled for status",
+          "timestamp": "2024-11-27T20:28:56+01:00",
+          "tree_id": "a249a41a37dc21fc4469373e89369e91363a7bb5",
+          "url": "https://github.com/equinor/ert/commit/403a55e5348ff3e0b3f3e4b28cfa1ac2127562f8"
+        },
+        "date": 1732735847739,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18800103317336436,
+            "unit": "iter/sec",
+            "range": "stddev: 0.012209625654044398",
+            "extra": "mean: 5.319119704399998 sec\nrounds: 5"
           }
         ]
       }
