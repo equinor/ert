@@ -10,7 +10,6 @@ from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
 from everest.bin.everexport_script import everexport_entry
 from everest.bin.everlint_script import lint_entry
-from everest.bin.everload_script import everload_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
@@ -131,10 +130,6 @@ class EverestMain(object):
     def lint(self, args):
         """Validate a config file"""
         lint_entry(args)
-
-    def load(self, args):
-        """Load Eclipse data from an existing simulation folder"""
-        everload_entry(args)
 
     def render(self, args):
         """Display the configuration data loaded from a config file"""
