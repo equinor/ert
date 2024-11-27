@@ -137,7 +137,7 @@ def main(args):
     )
 
     job_runner = ForwardModelRunner(jobs_data)
-
+    signal.signal(signal.SIGTERM, lambda _, __: _stop_reporters_and_sigkill(reporters))
     for job_status in job_runner.run(parsed_args.job):
         logger.info(f"Job status: {job_status}")
         for reporter in reporters:
@@ -147,9 +147,19 @@ def main(args):
                 print(
                     f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
                 )
-                pgid = os.getpgid(os.getpid())
-                os.killpg(pgid, signal.SIGKILL)
+                _stop_reporters_and_sigkill(reporters)
 
         if isinstance(job_status, Finish) and not job_status.success():
-            pgid = os.getpgid(os.getpid())
-            os.killpg(pgid, signal.SIGKILL)
+            _stop_reporters_and_sigkill(reporters)
+
+
+def _stop_reporters_and_sigkill(reporters):
+    _stop_reporters(reporters)
+    pgid = os.getpgid(os.getpid())
+    os.killpg(pgid, signal.SIGKILL)
+
+
+def _stop_reporters(reporters: typing.Iterable[reporting.Reporter]) -> None:
+    for reporter in reporters:
+        if isinstance(reporter, reporting.Event):
+            reporter.stop()

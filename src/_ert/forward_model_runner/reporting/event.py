@@ -83,6 +83,15 @@ class Event(Reporter):
         # seconds to timeout the reporter the thread after Finish() was received
         self._reporter_timeout = 60
 
+    def stop(self) -> None:
+        self._event_queue.put(Event._sentinel)
+        with self._timestamp_lock:
+            self._timeout_timestamp = datetime.now() + timedelta(
+                seconds=self._reporter_timeout
+            )
+        if self._event_publisher_thread.is_alive():
+            self._event_publisher_thread.join()
+
     def _event_publisher(self):
         logger.debug("Publishing event.")
         with Client(
@@ -178,13 +187,7 @@ class Event(Reporter):
             self._dump_event(event)
 
     def _finished_handler(self, _):
-        self._event_queue.put(Event._sentinel)
-        with self._timestamp_lock:
-            self._timeout_timestamp = datetime.now() + timedelta(
-                seconds=self._reporter_timeout
-            )
-        if self._event_publisher_thread.is_alive():
-            self._event_publisher_thread.join()
+        self.stop()
 
     def _checksum_handler(self, msg: Checksum):
         fm_checksum = ForwardModelStepChecksum(

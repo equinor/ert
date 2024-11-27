@@ -306,9 +306,7 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
         }
     )
 
-    with _mock_ws_thread("localhost", unused_tcp_port, []):
-        thread = ErtThread(target=main, args=[["script.py", str(tmp_path)]])
-        thread.start()
+    def create_jobs_file_after_lock():
         _wait_until(
             lambda: f"Could not find file {JOBS_FILE}, retrying" in caplog.text,
             2,
@@ -316,6 +314,11 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
         )
         (tmp_path / JOBS_FILE).write_text(jobs_json)
         lock.release()
+
+    with _mock_ws_thread("localhost", unused_tcp_port, []):
+        thread = ErtThread(target=create_jobs_file_after_lock)
+        thread.start()
+        main(args=["script.py", str(tmp_path)])
         thread.join()
 
 
