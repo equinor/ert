@@ -85,25 +85,31 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
+            design_matrix_err: str = ""
             if design_matrix.design_matrix_df is None:
-                design_matrix.read_design_matrix()
+                try:
+                    design_matrix.read_design_matrix()
+                except (ValueError, AttributeError) as exc:
+                    design_matrix_err = str(exc)
+            if design_matrix_err:
+                layout.addRow("Design Matrix", QLabel(design_matrix_err))
+            else:
+                if design_matrix.active_realizations:
+                    self._active_realizations_field.setText(
+                        ActiveRange(design_matrix.active_realizations).rangestring
+                    )
+                show_dm_param_button = QPushButton("Show parameters")
+                show_dm_param_button.setObjectName("show-dm-parameters")
+                show_dm_param_button.setMinimumWidth(50)
 
-            if design_matrix.active_realizations:
-                self._active_realizations_field.setText(
-                    ActiveRange(design_matrix.active_realizations).rangestring
+                button_layout = QHBoxLayout()
+                button_layout.addWidget(show_dm_param_button)
+                button_layout.addStretch()  # Add stretch to push the button to the left
+
+                layout.addRow("Design Matrix", button_layout)
+                show_dm_param_button.clicked.connect(
+                    lambda: self.on_show_dm_params_clicked(design_matrix)
                 )
-            show_dm_param_button = QPushButton("Show parameters")
-            show_dm_param_button.setObjectName("show-dm-parameters")
-            show_dm_param_button.setMinimumWidth(50)
-
-            button_layout = QHBoxLayout()
-            button_layout.addWidget(show_dm_param_button)
-            button_layout.addStretch()  # Add stretch to push the button to the left
-
-            layout.addRow("Design Matrix", button_layout)
-            show_dm_param_button.clicked.connect(
-                lambda: self.on_show_dm_params_clicked(design_matrix)
-            )
 
         self.setLayout(layout)
 
