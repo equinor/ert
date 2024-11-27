@@ -105,20 +105,20 @@ class DesignMatrix:
             design_keys = [e.name for e in design_parameter_group.transform_functions]
 
         design_group_added = False
-        for genkw_group in existing_parameters:
-            if not isinstance(genkw_group, GenKwConfig):
-                new_param_config += [genkw_group]
+        for parameter_group in existing_parameters:
+            if not isinstance(parameter_group, GenKwConfig):
+                new_param_config += [parameter_group]
                 continue
-            existing_keys = [e.name for e in genkw_group.transform_functions]
+            existing_keys = [e.name for e in parameter_group.transform_functions]
             if set(existing_keys) == set(design_keys):
-                design_parameter_group.name = genkw_group.name
+                design_parameter_group.name = parameter_group.name
                 design_group_added = True
             elif set(design_keys) & set(existing_keys):
                 raise ConfigValidationError(
                     "Overlapping parameter names found in design matrix!"
                 )
             else:
-                new_param_config += [genkw_group]
+                new_param_config += [parameter_group]
         if not design_group_added:
             new_param_config += [design_parameter_group]
         return new_param_config, design_parameter_group
