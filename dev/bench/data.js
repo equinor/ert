@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732718601745,
+  "lastUpdate": 1732719514566,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "8b4dc2a7d100700641ea5c44c54c9ba0c23d2d65",
-          "message": "Make find_smry() precise\n\nThis solves a bug where find_unsmry() would not be able to locate\nthe correct summary file even if it has the correct base for the\nEclipse deck",
-          "timestamp": "2024-11-22T09:13:20+01:00",
-          "tree_id": "bdbdfce8161878af0b6c38dba42059ecb45800a2",
-          "url": "https://github.com/equinor/ert/commit/8b4dc2a7d100700641ea5c44c54c9ba0c23d2d65"
-        },
-        "date": 1732263450247,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19198470497849743,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03420532938387256",
-            "extra": "mean: 5.208748270399985 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03156183523647813",
             "extra": "mean: 5.266898493600013 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86219529+AugustoMagalhaes@users.noreply.github.com",
+            "name": "AugustoMagalhaes",
+            "username": "AugustoMagalhaes"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e0f7931d1cd8f8105d250e59bc7be24c9eddaa8",
+          "message": "Select first realizations by default in gui\n\n* Select first realizations by default in gui\r\n\r\nCo-authored-by: Andreas Eknes Lie <andrli@equinor.com>",
+          "timestamp": "2024-11-27T15:56:41+01:00",
+          "tree_id": "fdb807023a605162266a8b86aed692f0a3bf9467",
+          "url": "https://github.com/equinor/ert/commit/7e0f7931d1cd8f8105d250e59bc7be24c9eddaa8"
+        },
+        "date": 1732719513642,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1921977827711131,
+            "unit": "iter/sec",
+            "range": "stddev: 0.032388740798183685",
+            "extra": "mean: 5.202973653400011 sec\nrounds: 5"
           }
         ]
       }
