@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732700198805,
+  "lastUpdate": 1732708733236,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "430a782d8fde5833ccffb927fbd332a94dc7d0e5",
-          "message": "Remove unused files from test-data/eclipse",
-          "timestamp": "2024-11-21T14:44:04+01:00",
-          "tree_id": "a0ee072205f61bed5c84b72c51ebec6db84b9fc9",
-          "url": "https://github.com/equinor/ert/commit/430a782d8fde5833ccffb927fbd332a94dc7d0e5"
-        },
-        "date": 1732196754364,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1919791632094739,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02833289490247708",
-            "extra": "mean: 5.2088986288 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.064560775861534",
             "extra": "mean: 5.243035518200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "25e431fb013c3ae78b10a3fb95485df8292e586b",
+          "message": "Inject plugin step config into jobs-json for steps\n\nGeneral configuration using key-values via the plugin system for\nindividual steps will be merged with environment property of each\nForwardModelStep that is dumped as json in every runpath.",
+          "timestamp": "2024-11-27T12:56:58+01:00",
+          "tree_id": "db45877f059d3bc6ce1a35a11035871aa3e4e697",
+          "url": "https://github.com/equinor/ert/commit/25e431fb013c3ae78b10a3fb95485df8292e586b"
+        },
+        "date": 1732708732581,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19663108550829128,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03254399607322415",
+            "extra": "mean: 5.085665867199992 sec\nrounds: 5"
           }
         ]
       }
