@@ -88,16 +88,21 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             gendatas = []
             gen_obs = ert_config.observations["gen_data"]
             for response_key, df in gen_obs.group_by("response_key"):
-                gendata_df = make_gen_data(df["index"].max() + 1)
+                gendata_df = make_gen_data(response_key[0], df["index"].max() + 1)
                 gendata_df = gendata_df.insert_column(
                     0,
                     polars.Series(np.full(len(gendata_df), response_key)).alias(
                         "response_key"
                     ),
                 )
-                gendatas.append(gendata_df)
+                gendatas.append((response_key, gendata_df))
 
-            source.save_response("gen_data", polars.concat(gendatas), real)
+            gendatas.sort(key=lambda info: info[0])
+
+            wide_gendatas = polars.concat([df for _, df in gendatas]).pivot(
+                on="response_key", index=["report_step", "index"]
+            )
+            source.save_response("gen_data", wide_gendatas, real)
 
             obs_time_list = ens_config.refcase.all_dates
 
@@ -122,13 +127,15 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
 
 
-def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> polars.DataFrame:
+def make_gen_data(
+    response_key: str, obs: int, min_val: float = 0, max_val: float = 5
+) -> polars.DataFrame:
     data = np.random.default_rng().uniform(min_val, max_val, obs)
     return polars.DataFrame(
         {
             "report_step": polars.Series(np.full(len(data), 0), dtype=polars.UInt16),
             "index": polars.Series(range(len(data)), dtype=polars.UInt16),
-            "values": data,
+            "values": polars.Series(data, dtype=polars.Float32),
         }
     )
 
@@ -147,9 +154,9 @@ def make_summary_data(
             "time": polars.Series(
                 np.tile(dates, len(obs_keys)).tolist()
             ).dt.cast_time_unit("ms"),
-            "values": data,
+            "values": polars.Series(data, dtype=polars.Float32),
         }
-    )
+    ).pivot(on="response_key", index="time")
 
 
 @pytest.mark.limit_memory("130 MB")

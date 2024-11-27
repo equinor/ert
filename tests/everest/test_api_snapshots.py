@@ -112,7 +112,7 @@ def test_api_summary_snapshot(snapshot, cached_example):
                     [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
                 ),
             }
-        )
+        ).pivot(on="response_key", index="time", sort_columns=True)
         for ens in experiment.ensembles:
             for real in range(ens.ensemble_size):
                 ens.save_response("summary", smry_data.clone(), real)

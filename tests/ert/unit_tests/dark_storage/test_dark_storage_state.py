@@ -62,9 +62,7 @@ class DarkStorageStateTest(StatefulStorageTest):
     def get_responses_through_client(self, model_ensemble):
         response = self.client.get(f"/ensembles/{model_ensemble.uuid}/responses")
         response_names = {
-            k
-            for r in model_ensemble.response_values.values()
-            for k in r["response_key"]
+            k for r in model_ensemble.response_values.values() for k in r.columns[2:]
         }
         assert set(response.json().keys()) == response_names
 

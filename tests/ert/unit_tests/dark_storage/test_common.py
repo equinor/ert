@@ -95,7 +95,7 @@ def test_data_for_key_returns_empty_gen_data_config(tmp_path):
                     "index": polars.Series([0], dtype=polars.UInt16),
                     "values": polars.Series([0.0], dtype=polars.Float32),
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             0,
         )
         ensemble.refresh_ensemble_state()

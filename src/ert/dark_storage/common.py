@@ -132,17 +132,15 @@ def data_for_key(
             if summary_data.is_empty():
                 return pd.DataFrame()
 
-            df = (
-                summary_data.rename({"time": "Date", "realization": "Realization"})
-                .drop("response_key")
+            data = (
+                summary_data.pivot(
+                    on="time", values=response_key, aggregate_function="mean"
+                )
+                .rename({"realization": "Realization"})
                 .to_pandas()
             )
-            df = df.set_index(["Date", "Realization"])
-            # This performs the same aggragation by mean of duplicate values
-            # as in ert/analysis/_es_update.py
-            df = df.groupby(["Date", "Realization"]).mean()
-            data = df.unstack(level="Date")
-            data.columns = data.columns.droplevel(0)
+            data.set_index("Realization", inplace=True)
+            data.columns = data.columns.astype("datetime64[ms]")
             try:
                 return data.astype(float)
             except ValueError:
@@ -165,8 +163,8 @@ def data_for_key(
 
             try:
                 vals = data.filter(polars.col("report_step").eq(report_step))
-                pivoted = vals.drop("response_key", "report_step").pivot(
-                    on="index", values="values"
+                pivoted = vals.drop(["report_step"]).pivot(
+                    on=["index"], values=response_key, aggregate_function="mean"
                 )
                 data = pivoted.to_pandas().set_index("realization")
                 data.columns = data.columns.astype(int)

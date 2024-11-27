@@ -58,6 +58,9 @@ class SummaryConfig(ResponseConfig):
             }
         )
         df = df.explode("values", "time")
+        df = df.pivot(
+            on="response_key", index=self.primary_key, aggregate_function="mean"
+        )
         return df
 
     @property

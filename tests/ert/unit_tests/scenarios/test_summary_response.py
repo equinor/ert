@@ -247,23 +247,20 @@ def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
 
     responses = prior_ensemble.load_responses("summary", (0, 1, 2))
     assert np.isclose(
-        [-1.6038368, 0.06409992, 0.7408913], responses["values"].to_numpy()
+        [-1.6038368, 0.06409992, 0.7408913], responses["FOPR"].to_numpy()
     ).all()
 
-    assert responses[["realization", "response_key", "time"]].to_dicts() == [
+    assert responses[["realization", "time"]].to_dicts() == [
         {
             "realization": 0,
-            "response_key": "FOPR",
             "time": datetime(2500, 9, 10, 0, 0),
         },
         {
             "realization": 1,
-            "response_key": "FOPR",
             "time": datetime(2500, 9, 10, 0, 0),
         },
         {
             "realization": 2,
-            "response_key": "FOPR",
             "time": datetime(2500, 9, 10, 0, 0),
         },
     ]

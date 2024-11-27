@@ -85,7 +85,9 @@ def test_that_loading_non_existing_ensemble_throws(tmp_path):
 
 def test_that_saving_empty_responses_fails_nicely(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment()
+        experiment = storage.create_experiment(
+            responses=[SummaryConfig(keys=["*"]), GenDataConfig(keys=["one", "two"])]
+        )
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
@@ -93,25 +95,20 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
         # Test for entirely empty dataset
         with pytest.raises(
             ValueError,
-            match="Dataset for response group 'RESPONSE' must contain a 'values' variable",
+            match="Dataset for response type 'summary' must contain values for at least one response key",
         ):
-            ensemble.save_response("RESPONSE", polars.DataFrame(), 0)
+            ensemble.save_response("summary", polars.DataFrame(), 0)
 
-        # Test for dataset with 'values' but no actual data
+        # Test for dataset with response value columns but no actual data
         empty_data = polars.DataFrame(
-            {
-                "response_key": [],
-                "report_step": [],
-                "index": [],
-                "values": [],
-            }
+            {"report_step": [], "index": [], "one": [], "two": []}
         )
 
         with pytest.raises(
             ValueError,
-            match="Responses RESPONSE are empty. Cannot proceed with saving to storage.",
+            match="Responses gen_data are empty. Cannot proceed with saving to storage.",
         ):
-            ensemble.save_response("RESPONSE", empty_data, 0)
+            ensemble.save_response("gen_data", empty_data, 0)
 
 
 def test_that_saving_response_updates_configs(tmp_path):
@@ -133,7 +130,7 @@ def test_that_saving_response_updates_configs(tmp_path):
                     [0.0, 1.0, 2.0, 3.0, 4.0], dtype=polars.Float32
                 ),
             }
-        )
+        ).pivot(on="response_key", index="time")
 
         mapping_before = experiment.response_key_to_response_type
         smry_config_before = experiment.response_configuration["summary"]
@@ -314,7 +311,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
                 [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
             ),
         }
-    )
+    ).pivot(on="response_key", index="time")
 
     ens.save_response("summary", smry_data, 0)
     assert read_smry_config.keys == ["*", "FOPR"]
@@ -909,7 +906,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_ensemble.response_values[summary.name] = ds
 
         model_experiment = self.model[storage_experiment.id]
-        response_keys = set(ds["response_key"].unique())
+        response_keys = ds.columns[2:]
 
         model_smry_config = next(
             config for config in model_experiment.responses if config.name == "summary"

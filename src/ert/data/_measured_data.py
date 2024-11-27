@@ -118,10 +118,19 @@ class MeasuredData:
                     f"No response loaded for observation type: {response_type}"
                 )
 
+            # Make realizations into columns,
+            # and add response_key column
+            unpivoted = responses_for_type.unpivot(
+                on=response_cls.keys,
+                variable_name="response_key",
+                value_name="values",
+                index=["realization", *response_cls.primary_key],
+            )
+
             # Note that if there are duplicate entries for one
             # response at one index, they are aggregated together
             # with "mean" by default
-            pivoted = responses_for_type.pivot(
+            pivoted = unpivoted.pivot(
                 on="realization",
                 index=["response_key", *response_cls.primary_key],
                 aggregate_function="mean",

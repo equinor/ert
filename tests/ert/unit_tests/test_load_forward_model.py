@@ -181,8 +181,8 @@ def test_load_forward_model_gen_data(setup_case):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
-    filter_cond = polars.col("report_step").eq(0), polars.col("values").is_not_nan()
-    assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
+    filter_cond = polars.col("report_step").eq(0), polars.col("RESPONSE").is_not_nan()
+    assert df.filter(filter_cond)["RESPONSE"].to_list() == [1.0, 3.0]
 
 
 def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
@@ -202,7 +202,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
-    assert df["values"].to_list() == [1.0]
+    assert df["RESPONSE"].to_list() == [1.0]
 
 
 def test_that_all_deactivated_values_are_loaded(setup_case):
@@ -222,7 +222,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     response = prior_ensemble.load_responses("RESPONSE", (0,))
-    assert np.isnan(response[0]["values"].to_list())
+    assert np.isnan(response[0]["RESPONSE"].to_list())
     assert len(response) == 1
 
 
@@ -265,8 +265,8 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
-    df_no_nans = df.filter(polars.col("values").is_not_nan())
-    assert df_no_nans["values"].to_list() == [1.0, 3.0]
+    df_no_nans = df.filter(polars.col("RESPONSE").is_not_nan())
+    assert df_no_nans["RESPONSE"].to_list() == [1.0, 3.0]
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
@@ -338,5 +338,5 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
     )
     facade.load_from_run_path(run_path_format, prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
-    df_no_nans = df.filter(polars.col("values").is_not_nan())
-    assert df_no_nans["values"].to_list() == [1.0, 3.0]
+    df_no_nans = df.filter(polars.col("RESPONSE").is_not_nan())
+    assert df_no_nans["RESPONSE"].to_list() == [1.0, 3.0]

@@ -186,6 +186,13 @@ class GenDataConfig(ResponseConfig):
                 )
 
         combined = polars.concat(datasets_per_name)
+
+        if combined.is_empty():
+            raise InvalidResponseFile(
+                f"No data found within response files: {', '.join(self.input_files)}"
+            )
+
+        combined = combined.pivot(on="response_key", index=self.primary_key)
         return combined
 
     def get_args_for_key(self, key: str) -> tuple[str | None, list[int] | None]:
