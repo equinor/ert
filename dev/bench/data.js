@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732695922582,
+  "lastUpdate": 1732696934294,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "01063e214ad939b6c5ea55dddf4bc332ac750d07",
-          "message": "Remove unused dependencies dask, deprecation, testpath",
-          "timestamp": "2024-11-21T14:40:02+01:00",
-          "tree_id": "b0c2fb96a44655a5dc29174c4936862f506f2870",
-          "url": "https://github.com/equinor/ert/commit/01063e214ad939b6c5ea55dddf4bc332ac750d07"
-        },
-        "date": 1732196519460,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1980623859344135,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024672064553451997",
-            "extra": "mean: 5.048914236200005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02507621422219319",
             "extra": "mean: 5.201491464000009 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "447d647c224ffc7f94fcd905d4597aff55a766f4",
+          "message": "Use explicit everest config components when creating ropt config object",
+          "timestamp": "2024-11-27T17:40:26+09:00",
+          "tree_id": "eb504b41594721a723b792d04ac07834cf0bf29b",
+          "url": "https://github.com/equinor/ert/commit/447d647c224ffc7f94fcd905d4597aff55a766f4"
+        },
+        "date": 1732696933729,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19115550773424858,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029059871232901543",
+            "extra": "mean: 5.231342857199996 sec\nrounds: 5"
           }
         ]
       }
