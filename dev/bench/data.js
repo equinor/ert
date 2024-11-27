@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732630988599,
+  "lastUpdate": 1732695418153,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "e7640838cac5784f9d40fefcd3d8caa74c9b5548",
-          "message": "Avoid forward model crash after MPI NOSIM E100 run\n\nThis fixes a regression from 2453a2c.",
-          "timestamp": "2024-11-21T11:39:04+01:00",
-          "tree_id": "b9cea9f34e4d59053df4c511b7413986474c8d8c",
-          "url": "https://github.com/equinor/ert/commit/e7640838cac5784f9d40fefcd3d8caa74c9b5548"
-        },
-        "date": 1732185666635,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1907670810820264,
-            "unit": "iter/sec",
-            "range": "stddev: 0.036638804131725995",
-            "extra": "mean: 5.241994553400008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04663167774807077",
             "extra": "mean: 5.199224511 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "398aa3e77980a329bc9a91e5a540fb2cc99ea03e",
+          "message": "Unpin hypothesis",
+          "timestamp": "2024-11-27T09:15:00+01:00",
+          "tree_id": "c2d72160ec8103e25d449d1fb65a240b51acf709",
+          "url": "https://github.com/equinor/ert/commit/398aa3e77980a329bc9a91e5a540fb2cc99ea03e"
+        },
+        "date": 1732695417284,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1942073480123078,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035025050932171516",
+            "extra": "mean: 5.149135757400001 sec\nrounds: 5"
           }
         ]
       }
