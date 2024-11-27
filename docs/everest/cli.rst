@@ -124,15 +124,6 @@ The command above is equivalent to having the following export section defined i
     export:
       batches: []
 
-==============
-Everest `load`
-==============
-
-.. argparse::
-    :module: everest.bin.everload_script
-    :func: _build_args_parser
-    :prog: everload_entry
-
 
 ==============
 Everest `lint`
