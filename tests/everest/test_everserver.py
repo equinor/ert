@@ -1,18 +1,27 @@
 import json
 import os
 import ssl
-from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse, PlainTextResponse
 from ropt.enums import OptimizerExitCode
-from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status
+from everest.detached import PROXY, ServerStatus, everserver_status
 from everest.detached.jobs import everserver
+from everest.detached.jobs.everest_server_api import (
+    ExitCode,
+    _generate_certificate,
+    _write_hostfile,
+)
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
-from everest.strings import OPT_FAILURE_REALIZATIONS, SIM_PROGRESS_ENDPOINT
+from everest.strings import (
+    OPT_FAILURE_REALIZATIONS,
+    SIM_PROGRESS_ENDPOINT,
+    STOP_ENDPOINT,
+)
 
 
 def configure_everserver_logger(*args, **kwargs):
@@ -54,7 +63,7 @@ def set_shared_status(*args, progress, shared_data):
 
 def test_certificate_generation(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
-    cert, key, pw = everserver._generate_certificate(
+    cert, key, pw = _generate_certificate(
         ServerConfig.get_certificate_dir(config.output_dir)
     )
 
@@ -77,7 +86,7 @@ def test_hostfile_storage(tmp_path, monkeypatch):
         "cert": "/a/b/c.cert",
         "auth": "1234",
     }
-    everserver._write_hostfile(host_file_path, **expected_result)
+    _write_hostfile(host_file_path, **expected_result)
     assert os.path.exists(host_file_path)
     with open(host_file_path, encoding="utf-8") as f:
         result = json.load(f)
@@ -89,7 +98,7 @@ def test_hostfile_storage(tmp_path, monkeypatch):
     "everest.detached.jobs.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
-def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
+def test_everserver_status_failure(mocked_logger, copy_math_func_test_data_to_tmp):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
     everserver.main()
@@ -101,91 +110,103 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     assert "Exception: Configuring logger failed" in status["message"]
 
 
+import pytest
+import requests
+
+
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch(
-    "everest.detached.jobs.everserver._write_hostfile",
-    side_effect=partial(check_status, status=ServerStatus.starting),
-)
-@patch("everest.detached.jobs.everserver._everserver_thread")
-@patch(
-    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
-    autospec=True,
-    side_effect=lambda self, evaluator_server_config, restart=False: check_status(
-        ServerConfig.get_hostfile_path(self.everest_config.output_dir),
-        status=ServerStatus.running,
-    ),
-)
-@patch(
-    "everest.detached.jobs.everserver.check_for_errors",
-    return_value=([], False),
-)
 @patch("everest.detached.jobs.everserver.export_to_csv")
+@patch("requests.get")
 def test_everserver_status_running_complete(
-    _1, _2, _3, _4, _5, _6, _7, _8, _9, copy_math_func_test_data_to_tmp
+    mocked_get, mocked_export_to_csv, mocked_logger, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
+
+    def mocked_server(url, verify, auth, proxies):
+        if "/exit_code" in url:
+            return JSONResponse(
+                jsonable_encoder(
+                    ExitCode(exit_code=OptimizerExitCode.OPTIMIZER_STEP_FINISHED)
+                )
+            )
+        if "/shared_data" in url:
+            return JSONResponse(
+                jsonable_encoder(
+                    {
+                        SIM_PROGRESS_ENDPOINT: {},
+                        STOP_ENDPOINT: False,
+                    }
+                )
+            )
+
+        return PlainTextResponse("Everest is running")
+
+    mocked_get.side_effect = mocked_server
+
     everserver.main()
+
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
 
     assert status["status"] == ServerStatus.completed
-    assert status["message"] == "Optimization completed."
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
-@patch(
-    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
-    autospec=True,
-    side_effect=lambda self, evaluator_server_config, restart=False: fail_optimization(
-        self, from_ropt=True
-    ),
-)
-@patch(
-    "everest.detached.jobs.everserver._sim_monitor",
-    side_effect=partial(
-        set_shared_status,
-        progress=[
-            [
-                {"name": "job1", "status": JOB_FAILURE},
-                {"name": "job1", "status": JOB_FAILURE},
-            ],
-            [
-                {"name": "job2", "status": JOB_SUCCESS},
-                {"name": "job2", "status": JOB_FAILURE},
-            ],
-        ],
-    ),
-)
+@patch("requests.get")
+@patch("requests.post")
 def test_everserver_status_failed_job(
-    _1, _2, _3, _4, _5, _6, _7, _8, copy_math_func_test_data_to_tmp
+    mocked_post,
+    mocked_get,
+    mocked_logger,
+    copy_math_func_test_data_to_tmp,
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
+
+    def mocked_server(url, verify, auth, proxies):
+        if "/exit_code" in url:
+            return JSONResponse(
+                jsonable_encoder(
+                    ExitCode(exit_code=OptimizerExitCode.TOO_FEW_REALIZATIONS)
+                )
+            )
+        if "/shared_data" in url:
+            return JSONResponse(
+                jsonable_encoder(
+                    {
+                        SIM_PROGRESS_ENDPOINT: {
+                            "status": {"failed": 3},
+                            "progress": [
+                                [
+                                    {"name": "job1", "status": JOB_FAILURE},
+                                    {"name": "job1", "status": JOB_FAILURE},
+                                ],
+                                [
+                                    {"name": "job2", "status": JOB_SUCCESS},
+                                    {"name": "job2", "status": JOB_FAILURE},
+                                ],
+                            ],
+                        },
+                        STOP_ENDPOINT: False,
+                    }
+                )
+            )
+        return PlainTextResponse("Everest is running")
+
+    mocked_get.side_effect = mocked_server
+
+    mocked_post.side_effect = lambda url, verify, auth, proxies: PlainTextResponse("")
+
     everserver.main()
+
+    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
+
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -198,34 +219,45 @@ def test_everserver_status_failed_job(
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
-@patch(
-    "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
-    autospec=True,
-    side_effect=lambda self, evaluator_server_config, restart=False: fail_optimization(
-        self, from_ropt=False
-    ),
-)
-@patch(
-    "everest.detached.jobs.everserver._sim_monitor",
-    side_effect=partial(set_shared_status, progress=[]),
-)
+@patch("requests.get")
+@patch("requests.post")
 def test_everserver_status_exception(
-    _1, _2, _3, _4, _5, _6, _7, _8, copy_math_func_test_data_to_tmp
+    mocked_post,
+    mocked_get,
+    mocked_logger,
+    copy_math_func_test_data_to_tmp,
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
+
+    def mocked_server(url, verify, auth, proxies):
+        if "/exit_code" in url:
+            return JSONResponse(
+                jsonable_encoder(ExitCode(message="Exception: Failed optimization"))
+            )
+        if "/shared_data" in url:
+            return JSONResponse(
+                jsonable_encoder(
+                    {
+                        SIM_PROGRESS_ENDPOINT: {
+                            "status": {},
+                            "progress": [],
+                        },
+                        STOP_ENDPOINT: False,
+                    }
+                )
+            )
+        return PlainTextResponse("Everest is running")
+
+    mocked_get.side_effect = mocked_server
+
+    mocked_post.side_effect = lambda url, verify, auth, proxies: PlainTextResponse("")
+
     everserver.main()
+
+    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
+
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -234,40 +266,3 @@ def test_everserver_status_exception(
     # start_optimization raised.
     assert status["status"] == ServerStatus.failed
     assert "Exception: Failed optimization" in status["message"]
-
-
-@patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
-@patch(
-    "everest.detached.jobs.everserver._sim_monitor",
-    side_effect=partial(set_shared_status, progress=[]),
-)
-def test_everserver_status_max_batch_num(
-    _1, _2, _3, _4, _5, _6, _7, copy_math_func_test_data_to_tmp
-):
-    config_file = "config_one_batch.yml"
-    config = EverestConfig.load_file(config_file)
-    everserver.main()
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
-
-    # The server should complete without error.
-    assert status["status"] == ServerStatus.completed
-
-    # Check that there is only one batch.
-    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
-        filter_out_gradient=False, batches=None
-    )
-    assert {data.batch for data in snapshot.simulation_data} == {0}

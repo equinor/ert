@@ -11,12 +11,12 @@ import shutil
 from collections import defaultdict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from enum import IntEnum
 from pathlib import Path
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Literal,
     Protocol,
 )
 
@@ -147,6 +147,10 @@ class OptimalResult:
         )
 
 
+class EverestRunModelExitCode(IntEnum):
+    MAX_BATCH_NUM_REACHED = 1
+
+
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
@@ -175,9 +179,7 @@ class EverestRunModel(BaseRunModel):
         )
         self._display_all_jobs = display_all_jobs
         self._result: OptimalResult | None = None
-        self._exit_code: Literal["max_batch_num_reached"] | OptimizerExitCode | None = (
-            None
-        )
+        self._exit_code: EverestRunModelExitCode | OptimizerExitCode | None = None
         self._max_batch_num_reached = False
         self._simulator_cache: SimulatorCache | None = None
         if (
@@ -285,7 +287,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         self._exit_code = (
-            "max_batch_num_reached"
+            EverestRunModelExitCode.MAX_BATCH_NUM_REACHED
             if self._max_batch_num_reached
             else optimizer_exit_code
         )
@@ -431,7 +433,7 @@ class EverestRunModel(BaseRunModel):
     @property
     def exit_code(
         self,
-    ) -> Literal["max_batch_num_reached"] | OptimizerExitCode | None:
+    ) -> EverestRunModelExitCode | OptimizerExitCode | None:
         return self._exit_code
 
     @property

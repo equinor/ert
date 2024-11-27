@@ -60,7 +60,7 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
         raise e
 
     server_status = everserver_status(status_path)
-    assert ServerStatus.running == server_status["status"]
+    assert server_status["status"] in [ServerStatus.running, ServerStatus.starting]
 
     url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
