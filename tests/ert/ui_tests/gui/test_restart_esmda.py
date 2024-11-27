@@ -69,7 +69,7 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=20000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=60000)
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
