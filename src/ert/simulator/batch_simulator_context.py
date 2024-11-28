@@ -282,7 +282,7 @@ class BatchContext:
             d = {}
             for key in self.result_keys:
                 data = self.ensemble.load_responses(key, (sim_id,))
-                d[key] = data["values"].to_numpy()
+                d[key] = data[key].to_numpy()
             res.append(d)
 
         return res

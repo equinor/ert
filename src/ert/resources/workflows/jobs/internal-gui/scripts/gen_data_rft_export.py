@@ -135,6 +135,13 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
                 realizations = ensemble.get_realization_list_with_responses()
                 responses = ensemble.load_responses(response_key, tuple(realizations))
+
+                responses = responses.unpivot(
+                    on=response_key,
+                    variable_name="response_key",
+                    value_name="values",
+                    index=["realization", "report_step", "index"],
+                )
                 joined = obs_df.join(
                     responses,
                     on=["response_key", "report_step", "index"],

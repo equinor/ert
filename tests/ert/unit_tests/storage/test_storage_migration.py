@@ -125,6 +125,11 @@ def test_that_storage_matches(
         response_config = experiment.response_configuration
         response_config["summary"].refcase = {}
 
+        assert all(
+            "has_finalized_keys" in config
+            for config in experiment.response_info.values()
+        )
+
         with open(
             experiment._path / experiment._responses_file, "w", encoding="utf-8"
         ) as f:
@@ -169,9 +174,9 @@ def test_that_storage_matches(
             tuple(ensemble.get_realization_list_with_responses()),
         )
         snapshot.assert_match(
-            summary_data.sort("time", "response_key", "realization")
+            summary_data.sort("time", "realization")
             .to_pandas()
-            .set_index(["time", "response_key", "realization"])
+            .set_index(["time", "realization"])
             .transform(np.sort)
             .to_csv(),
             "summary_data",
@@ -188,14 +193,15 @@ def test_that_storage_matches(
             "gen_data", tuple(range(ensemble.ensemble_size))
         )
         snapshot.assert_match(
-            gen_data.sort(["realization", "response_key", "report_step", "index"])
+            gen_data.sort(["realization", "report_step", "index"])
             .to_pandas()
-            .set_index(["realization", "response_key", "report_step", "index"])
+            .set_index(["realization", "report_step", "index"])
             .to_csv(),
             "gen_data",
         )
 
-        assert not ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("gen_data")
         ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
         assert ensemble.experiment._has_finalized_response_keys("summary")
         assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
