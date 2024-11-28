@@ -209,8 +209,7 @@ class EverestRunModel(BaseRunModel):
             storage,
             config.queue_config,
             status_queue,
-            active_realizations=[True] * config.model_config.num_realizations,
-            minimum_required_realizations=config.model_config.num_realizations,  # OK?
+            active_realizations=[],  # Set dynamically in run_forward_model()
         )
 
         self.num_retries_per_iter = 0  # OK?
@@ -383,7 +382,6 @@ class EverestRunModel(BaseRunModel):
         )
 
         ropt_output_folder = Path(self.everest_config.optimization_output_dir)
-        ropt_evaluator_fn = self.create_forward_model_evaluator_function()
 
         # Initialize the optimizer with output tables. `min_header_len` is set
         # to ensure that all tables have the same number of header lines,
@@ -391,7 +389,9 @@ class EverestRunModel(BaseRunModel):
         # set because ropt reports minimization results, while everest wants
         # maximization results, necessitating a conversion step.
         optimizer = (
-            BasicOptimizer(enopt_config=self.ropt_config, evaluator=ropt_evaluator_fn)
+            BasicOptimizer(
+                enopt_config=self.ropt_config, evaluator=self.run_forward_model
+            )
             .add_table(
                 columns=RESULT_COLUMNS,
                 path=ropt_output_folder / "results.txt",
@@ -582,134 +582,136 @@ class EverestRunModel(BaseRunModel):
                     control_name, sim_id, ExtParamConfig.to_dataset(control)
                 )
 
-    def create_forward_model_evaluator_function(self) -> Evaluator:
+    def run_forward_model(
+        self, control_values: NDArray[np.float64], metadata: EvaluatorContext
+    ) -> EvaluatorResult:
         def _slug(entity: str) -> str:
             entity = " ".join(str(entity).split())
             return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
-        def run_forward_model(
-            control_values: NDArray[np.float64], metadata: EvaluatorContext
-        ) -> EvaluatorResult:
-            nonlocal self
-            self.status = None  # Reset the current run status
-            assert metadata.config.realizations.names
-            realization_ids = [
-                metadata.config.realizations.names[realization]
-                for realization in metadata.realizations
-            ]
-            case_data, active, cached = self.init_case_data(
-                control_values=control_values,
-                metadata=metadata,
-                realization_ids=realization_ids,
-            )
-            assert self._experiment
-            ensemble = self._experiment.create_ensemble(
-                name=f"batch_{self.batch_id}",
-                ensemble_size=len(case_data),
-            )
-            for sim_id, (geo_id, controls) in enumerate(case_data):
-                assert isinstance(geo_id, int)
-                self._setup_sim(sim_id, controls, ensemble)
+        self.status = None  # Reset the current run status
+        assert metadata.config.realizations.names
+        realization_ids = [
+            metadata.config.realizations.names[realization]
+            for realization in metadata.realizations
+        ]
+        case_data, active, cached = self.init_case_data(
+            control_values=control_values,
+            metadata=metadata,
+            realization_ids=realization_ids,
+        )
+        assert self._experiment
+        ensemble = self._experiment.create_ensemble(
+            name=f"batch_{self.batch_id}",
+            ensemble_size=len(case_data),
+        )
+        for sim_id, (geo_id, controls) in enumerate(case_data):
+            assert isinstance(geo_id, int)
+            self._setup_sim(sim_id, controls, ensemble)
 
-            substitutions = self.ert_config.substitutions
-            # fill in the missing geo_id data
-            substitutions["<CASE_NAME>"] = _slug(ensemble.name)
-            self.active_realizations = [True] * len(case_data)
-            for sim_id, (geo_id, _) in enumerate(case_data):
-                if self.active_realizations[sim_id]:
-                    substitutions[f"<GEO_ID_{sim_id}_0>"] = str(geo_id)
+        substitutions = self.ert_config.substitutions
+        # fill in the missing geo_id data
+        substitutions["<CASE_NAME>"] = _slug(ensemble.name)
+        self.active_realizations = [True] * len(case_data)
+        for sim_id, (geo_id, _) in enumerate(case_data):
+            if self.active_realizations[sim_id]:
+                substitutions[f"<GEO_ID_{sim_id}_0>"] = str(geo_id)
 
-            run_paths = Runpaths(
-                jobname_format=self.ert_config.model_config.jobname_format_string,
-                runpath_format=self.ert_config.model_config.runpath_format_string,
-                filename=str(self.ert_config.runpath_file),
-                substitutions=substitutions,
-                eclbase=self.ert_config.model_config.eclbase_format_string,
-            )
-            run_args = create_run_arguments(
-                run_paths,
-                self.active_realizations,
-                ensemble=ensemble,
-            )
+        # TODO: This causes problems with `test_remove_run_path`` Setting it to
+        # zero fixes that, but breaks `test_state_modifier_workflow_run`. There
+        # seems to be a disagreement on how everest and ert handle/define failed
+        # realizations.
+        self.minimum_required_realizations = len(self.active_realizations)
 
-            self._context_env.update(
-                {
-                    "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
-                    "_ERT_ENSEMBLE_ID": str(ensemble.id),
-                    "_ERT_SIMULATION_MODE": "batch_simulation",
-                }
-            )
-            assert self.eval_server_cfg
-            self._evaluate_and_postprocess(run_args, ensemble, self.eval_server_cfg)
+        run_paths = Runpaths(
+            jobname_format=self.ert_config.model_config.jobname_format_string,
+            runpath_format=self.ert_config.model_config.runpath_format_string,
+            filename=str(self.ert_config.runpath_file),
+            substitutions=substitutions,
+            eclbase=self.ert_config.model_config.eclbase_format_string,
+        )
+        run_args = create_run_arguments(
+            run_paths,
+            self.active_realizations,
+            ensemble=ensemble,
+        )
 
-            self._delete_runpath(run_args)
-            # gather results
-            results: List[Dict[str, "npt.NDArray[np.float64]"]] = []
-            for sim_id, successful in enumerate(self.active_realizations):
-                if not successful:
-                    logger.error(f"Simulation {sim_id} failed.")
-                    results.append({})
-                    continue
-                d = {}
-                for key in self.everest_config.result_names:
-                    data = ensemble.load_responses(key, (sim_id,))
-                    d[key] = data["values"].to_numpy()
-                results.append(d)
+        self._context_env.update(
+            {
+                "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
+                "_ERT_ENSEMBLE_ID": str(ensemble.id),
+                "_ERT_SIMULATION_MODE": "batch_simulation",
+            }
+        )
+        assert self.eval_server_cfg
+        self._evaluate_and_postprocess(run_args, ensemble, self.eval_server_cfg)
 
-            for fnc_name, alias in self.everest_config.function_aliases.items():
-                for result in results:
-                    result[fnc_name] = result[alias]
+        self._delete_runpath(run_args)
+        # gather results
+        results: List[Dict[str, "npt.NDArray[np.float64]"]] = []
+        for sim_id, successful in enumerate(self.active_realizations):
+            if not successful:
+                logger.error(f"Simulation {sim_id} failed.")
+                results.append({})
+                continue
+            d = {}
+            for key in self.everest_config.result_names:
+                data = ensemble.load_responses(key, (sim_id,))
+                d[key] = data["values"].to_numpy()
+            results.append(d)
 
-            objectives = self._get_active_results(
+        for fnc_name, alias in self.everest_config.function_aliases.items():
+            for result in results:
+                result[fnc_name] = result[alias]
+
+        objectives = self._get_active_results(
+            results,
+            metadata.config.objective_functions.names,  # type: ignore
+            control_values,
+            active,
+        )
+
+        constraints = None
+        if metadata.config.nonlinear_constraints is not None:
+            constraints = self._get_active_results(
                 results,
-                metadata.config.objective_functions.names,  # type: ignore
+                metadata.config.nonlinear_constraints.names,  # type: ignore
                 control_values,
                 active,
             )
 
-            constraints = None
-            if metadata.config.nonlinear_constraints is not None:
-                constraints = self._get_active_results(
-                    results,
-                    metadata.config.nonlinear_constraints.names,  # type: ignore
-                    control_values,
-                    active,
+        if self._simulator_cache is not None:
+            for sim_idx, cache_id in cached.items():
+                objectives[sim_idx, ...] = self._simulator_cache.get_objectives(
+                    cache_id
                 )
-
-            if self._simulator_cache is not None:
-                for sim_idx, cache_id in cached.items():
-                    objectives[sim_idx, ...] = self._simulator_cache.get_objectives(
+                if constraints is not None:
+                    constraints[sim_idx, ...] = self._simulator_cache.get_constraints(
                         cache_id
                     )
-                    if constraints is not None:
-                        constraints[sim_idx, ...] = (
-                            self._simulator_cache.get_constraints(cache_id)
-                        )
 
-            sim_ids = np.empty(control_values.shape[0], dtype=np.intc)
-            sim_ids.fill(-1)
-            sim_ids[active] = np.arange(len(results), dtype=np.intc)
+        sim_ids = np.empty(control_values.shape[0], dtype=np.intc)
+        sim_ids.fill(-1)
+        sim_ids[active] = np.arange(len(results), dtype=np.intc)
 
-            # Add the results from active simulations to the cache:
-            if self._simulator_cache is not None:
-                for sim_idx, real_id in enumerate(realization_ids):
-                    if active[sim_idx]:
-                        self._simulator_cache.add_simulation_results(
-                            sim_idx, real_id, control_values, objectives, constraints
-                        )
-            self.batch_id += 1
+        # Add the results from active simulations to the cache:
+        if self._simulator_cache is not None:
+            for sim_idx, real_id in enumerate(realization_ids):
+                if active[sim_idx]:
+                    self._simulator_cache.add_simulation_results(
+                        sim_idx, real_id, control_values, objectives, constraints
+                    )
+        self.batch_id += 1
 
-            # Note the negative sign for the objective results. Everest aims to do a
-            # maximization, while the standard practice of minimizing is followed by
-            # ropt. Therefore we will minimize the negative of the objectives:
-            return EvaluatorResult(
-                objectives=-objectives,
-                constraints=constraints,
-                batch_id=self.batch_id,
-                evaluation_ids=sim_ids,
-            )
-
-        return run_forward_model
+        # Note the negative sign for the objective results. Everest aims to do a
+        # maximization, while the standard practice of minimizing is followed by
+        # ropt. Therefore we will minimize the negative of the objectives:
+        return EvaluatorResult(
+            objectives=-objectives,
+            constraints=constraints,
+            batch_id=self.batch_id,
+            evaluation_ids=sim_ids,
+        )
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         super().send_snapshot_event(event, iteration)
