@@ -86,7 +86,7 @@ def test_hostfile_storage(tmp_path, monkeypatch):
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch(
-    "everest.detached.jobs.everserver.configure_logger",
+    "everest.detached.jobs.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
 def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
@@ -102,7 +102,7 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver.configure_logger")
+@patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
     "everest.detached.jobs.everserver._generate_certificate",
@@ -145,7 +145,7 @@ def test_everserver_status_running_complete(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver.configure_logger")
+@patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
     "everest.detached.jobs.everserver._generate_certificate",
@@ -197,7 +197,7 @@ def test_everserver_status_failed_job(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver.configure_logger")
+@patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
     "everest.detached.jobs.everserver._generate_certificate",
@@ -237,7 +237,7 @@ def test_everserver_status_exception(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
-@patch("everest.detached.jobs.everserver.configure_logger")
+@patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.detached.jobs.everserver._generate_authentication")
 @patch(
     "everest.detached.jobs.everserver._generate_certificate",

@@ -13,7 +13,7 @@ from everest.bin.everlint_script import lint_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
-from everest.util import configure_logger
+from everest.util import get_azure_logging_handler
 
 
 def _create_dump_action(dumps, extended=False):
@@ -86,11 +86,12 @@ class EverestMain(object):
         if not hasattr(self, parsed_args.command):
             parser.error("Unrecognized command")
 
-        # Somewhere some logging to the root is done, this leads to logging going to
-        # the console. Install a null handler to prevent this:
-        null_handler = logging.NullHandler()
-        logging.getLogger().addHandler(null_handler)
-        logger = configure_logger("everest_main", log_to_azure=True)
+        # Setup logging to azure:
+        logger = logging.getLogger("everest_main")
+        azure_handler = get_azure_logging_handler()
+        if azure_handler:
+            logger.addHandler(azure_handler)
+
         logger.info(f"Started everest with {parsed_args}")
         # Use dispatch pattern to invoke method with same name
         getattr(self, parsed_args.command)(args[2:])

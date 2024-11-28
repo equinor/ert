@@ -9,6 +9,8 @@ import traceback
 from base64 import b64encode
 from datetime import datetime, timedelta
 from functools import partial
+from pathlib import Path
+from typing import Any
 
 import uvicorn
 from cryptography import x509
@@ -39,13 +41,14 @@ from everest.detached import ServerStatus, get_opt_status, update_everserver_sta
 from everest.export import check_for_errors
 from everest.simulator import JOB_FAILURE
 from everest.strings import (
+    DEFAULT_LOGGING_FORMAT,
     EVEREST,
     OPT_FAILURE_REALIZATIONS,
     OPT_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ENDPOINT,
     STOP_ENDPOINT,
 )
-from everest.util import configure_logger, makedirs_if_needed, version_info
+from everest.util import get_azure_logging_handler, makedirs_if_needed, version_info
 
 
 def _get_machine_name() -> str:
@@ -159,6 +162,7 @@ def _everserver_thread(shared_data, server_config) -> None:
         ssl_certfile=server_config["cert_path"],
         ssl_version=ssl.PROTOCOL_SSLv23,
         ssl_keyfile_password=server_config["key_passwd"],
+        log_level=logging.CRITICAL,
     )
 
 
@@ -193,41 +197,51 @@ def _write_hostfile(host_file_path, host, port, cert, auth) -> None:
         f.write(json_string)
 
 
-def _configure_loggers(
-    detached_node_dir: str,
-    everest_logs_dir: str,
-    logging_level: int,
-) -> None:
-    configure_logger(
-        name="res",
-        file_path=os.path.join(detached_node_dir, "simulations.log"),
-        log_level=logging.INFO,
-    )
+def _configure_loggers(config: EverestConfig) -> None:
+    def _make_handler(path: Path, log_level: str | int = "INFO") -> dict[str, Any]:
+        makedirs_if_needed(path.parent)
+        return {
+            "class": "logging.FileHandler",
+            "formatter": "default",
+            "level": log_level,
+            "filename": path,
+        }
 
-    configure_logger(
-        name="everserver",
-        file_path=os.path.join(detached_node_dir, "endpoint.log"),
-        log_level=logging.INFO,
-    )
+    detached_dir = Path(ServerConfig.get_detached_node_dir(config.output_dir))
+    log_dir = Path(config.log_dir)
+    logging_dict = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "root": {"level": "NOTSET", "class": "logging.NullHandler"},
+            "res": _make_handler(detached_dir / "simulations.log"),
+            "everserver": _make_handler(detached_dir / "endpoint.log"),
+            "everest": _make_handler(log_dir / "everest.log", config.logging_level),
+            "forward_models": _make_handler(
+                log_dir / "forward_models.log", config.logging_level
+            ),
+        },
+        "loggers": {
+            "": {"handlers": ["root"], "level": "NOTSET"},
+            "res": {"handlers": ["res"]},
+            "everserver": {"handlers": ["everserver"]},
+            "everest": {"handlers": ["everest"]},
+            "forward_models": {"handlers": ["forward_models"]},
+        },
+        "formatters": {
+            "default": {"format": DEFAULT_LOGGING_FORMAT},
+        },
+    }
 
-    configure_logger(
-        name=EVEREST,
-        file_path=os.path.join(everest_logs_dir, "everest.log"),
-        log_level=logging_level,
-        log_to_azure=True,
-    )
+    azure_handler = get_azure_logging_handler()
+    if azure_handler:
+        logging_dict["handlers"]["azure"] = {
+            "class": "azure_handler",
+            "level": config.logging_level,
+        }
+        logging_dict["loggers"]["everest"]["handlers"].append("azure")
 
-    configure_logger(
-        name="forward_models",
-        file_path=os.path.join(everest_logs_dir, "forward_models.log"),
-        log_level=logging_level,
-    )
-
-    configure_logger(
-        name="ropt",
-        file_path=os.path.join(everest_logs_dir, "ropt.log"),
-        log_level=logging_level,
-    )
+    logging.config.dictConfig(logging_dict)
 
 
 def main():
@@ -238,16 +252,11 @@ def main():
     config = EverestConfig.load_file(options.config_file)
     if options.debug:
         config.logging_level = "debug"
-    detached_dir = ServerConfig.get_detached_node_dir(config.output_dir)
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     host_file = ServerConfig.get_hostfile_path(config.output_dir)
 
     try:
-        _configure_loggers(
-            detached_node_dir=detached_dir,
-            everest_logs_dir=config.log_dir,
-            logging_level=config.logging_level,
-        )
+        _configure_loggers(config)
         update_everserver_status(status_path, ServerStatus.starting)
         logging.getLogger(EVEREST).info(version_info())
         logging.getLogger(EVEREST).info(
