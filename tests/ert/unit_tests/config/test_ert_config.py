@@ -860,6 +860,7 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -887,6 +888,7 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
     assert "FOO" not in step_json["jobList"][0]["environment"]
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -914,6 +916,7 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -941,6 +944,7 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "{'a_dict_as_value': 1}"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -973,6 +977,7 @@ def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
     # It is up to forward_model_runner to define behaviour here
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -1003,6 +1008,7 @@ def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
@@ -1031,6 +1037,7 @@ def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
     assert step_json["jobList"][0]["environment"]["FOO"] == "define_works"
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
