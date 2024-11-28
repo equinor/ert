@@ -58,7 +58,7 @@ class ParameterConfig(ABC):
         random_seed: int,
         ensemble_size: int,
     ) -> xr.Dataset:
-        return self.read_from_runpath(Path(), real_nr)
+        return self.read_from_runpath(Path(), real_nr, 0)
 
     @abstractmethod
     def __len__(self) -> int:
@@ -69,6 +69,7 @@ class ParameterConfig(ABC):
         self,
         run_path: Path,
         real_nr: int,
+        iteration: int,
     ) -> xr.Dataset:
         """
         This function is responsible for converting the parameter

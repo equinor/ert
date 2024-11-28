@@ -9,6 +9,8 @@ import xarray as xr
 import xtgeo
 from typing_extensions import Self
 
+from ert.substitutions import substitute_runpath_name
+
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
@@ -97,10 +99,10 @@ class SurfaceConfig(ParameterConfig):
     def __len__(self) -> int:
         return self.ncol * self.nrow
 
-    def read_from_runpath(self, run_path: Path, real_nr: int) -> xr.Dataset:
-        file_name = self.forward_init_file
-        if "%d" in file_name:
-            file_name = file_name % real_nr  # noqa
+    def read_from_runpath(
+        self, run_path: Path, real_nr: int, iteration: int
+    ) -> xr.Dataset:
+        file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
         file_path = run_path / file_name
         if not file_path.exists():
             raise ValueError(
@@ -137,7 +139,9 @@ class SurfaceConfig(ParameterConfig):
             values=data.values,
         )
 
-        file_path = run_path / self.output_file
+        file_path = run_path / substitute_runpath_name(
+            str(self.output_file), real_nr, ensemble.iteration
+        )
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_file(file_path, fformat="irap_ascii")
 

@@ -364,3 +364,40 @@ def global_grids(draw):
 
 
 egrids = st.builds(EGrid, file_heads, global_grids())
+
+
+def simple_grid(dims: Tuple[int, int, int] = (2, 2, 2)):
+    corner_size = (dims[0] + 1) * (dims[1] + 1) * 6
+    coord = np.zeros(
+        shape=corner_size,
+        dtype=np.float32,
+    )
+    zcorn = np.zeros(
+        shape=8 * dims[0] * dims[1] * dims[2],
+        dtype=np.float32,
+    )
+    return EGrid(
+        Filehead(
+            0,
+            2000,
+            0,
+            TypeOfGrid.CORNER_POINT,
+            RockModel.SINGLE_PERMEABILITY_POROSITY,
+            GridFormat.IRREGULAR_CORNER_POINT,
+        ),
+        GlobalGrid(
+            coord=coord,
+            zcorn=zcorn,
+            actnum=None,
+            grid_head=GridHead(
+                TypeOfGrid.CORNER_POINT,
+                *dims,
+                0,
+                1,
+                1,
+                CoordinateType.CARTESIAN,
+                (0, 0, 0),
+                (0, 0, 0),
+            ),
+        ),
+    )

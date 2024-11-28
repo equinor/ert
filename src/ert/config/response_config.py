@@ -24,7 +24,7 @@ class ResponseConfig(ABC):
     has_finalized_keys: bool = False
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int) -> polars.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
         """Reads the data for the response from run_path.
 
         Raises:

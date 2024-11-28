@@ -893,7 +893,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
 
         try:
-            ds = summary.read_from_file(self.tmpdir, self.iens_to_edit)
+            ds = summary.read_from_file(self.tmpdir, self.iens_to_edit, 0)
         except Exception as e:  # no match in keys
             assume(False)
             raise AssertionError() from e

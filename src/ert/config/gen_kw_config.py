@@ -24,6 +24,8 @@ import xarray as xr
 from scipy.stats import norm
 from typing_extensions import Self
 
+from ert.substitutions import substitute_runpath_name
+
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig, parse_config
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
@@ -234,7 +236,7 @@ class GenKwConfig(ParameterConfig):
         self, real_nr: int, random_seed: int, ensemble_size: int
     ) -> xr.Dataset:
         if self.forward_init_file:
-            return self.read_from_runpath(Path(), real_nr)
+            return self.read_from_runpath(Path(), real_nr, 0)
 
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
@@ -256,14 +258,14 @@ class GenKwConfig(ParameterConfig):
         self,
         run_path: Path,
         real_nr: int,
+        iteration: int,
     ) -> xr.Dataset:
         keys = [e.name for e in self.transform_functions]
         if not self.forward_init_file:
             raise ValueError("loading gen_kw values requires forward_init_file")
 
         parameter_value = self._values_from_file(
-            real_nr,
-            self.forward_init_file,
+            substitute_runpath_name(self.forward_init_file, real_nr, iteration),
             keys,
         )
 
@@ -300,7 +302,9 @@ class GenKwConfig(ParameterConfig):
         }
 
         if self.template_file is not None and self.output_file is not None:
-            target_file = self.output_file
+            target_file = substitute_runpath_name(
+                self.output_file, real_nr, ensemble.iteration
+            )
             if target_file.startswith("/"):
                 target_file = target_file[1:]
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
@@ -378,10 +382,7 @@ class GenKwConfig(ParameterConfig):
         return array
 
     @staticmethod
-    def _values_from_file(
-        realization: int, name_format: str, keys: List[str]
-    ) -> npt.NDArray[np.double]:
-        file_name = name_format % realization
+    def _values_from_file(file_name: str, keys: List[str]) -> npt.NDArray[np.double]:
         df = pd.read_csv(file_name, sep=r"\s+", header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values

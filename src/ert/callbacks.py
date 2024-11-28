@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 async def _read_parameters(
     run_path: str,
     realization: int,
+    iteration: int,
     ensemble: Ensemble,
 ) -> LoadResult:
     result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -28,7 +29,7 @@ async def _read_parameters(
         try:
             start_time = time.perf_counter()
             logger.debug(f"Starting to load parameter: {config.name}")
-            ds = config.read_from_runpath(Path(run_path), realization)
+            ds = config.read_from_runpath(Path(run_path), realization, iteration)
             await asyncio.sleep(0)
             logger.debug(
                 f"Loaded {config.name}",
@@ -60,7 +61,7 @@ async def _write_responses_to_storage(
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.response_type}")
             try:
-                ds = config.read_from_file(run_path, realization)
+                ds = config.read_from_file(run_path, realization, ensemble.iteration)
             except (FileNotFoundError, InvalidResponseFile) as err:
                 errors.append(str(err))
                 logger.warning(f"Failed to write: {realization}: {err}")
@@ -105,6 +106,7 @@ async def forward_model_ok(
             parameters_result = await _read_parameters(
                 run_path,
                 realization,
+                iter,
                 ensemble,
             )
 
