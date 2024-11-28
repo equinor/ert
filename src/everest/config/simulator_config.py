@@ -1,26 +1,16 @@
-import warnings
-from typing import Literal, Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, field_validator
 
-from .has_ert_queue_options import HasErtQueueOptions
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
 
 
-class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: ignore
-    name: Optional[str] = Field(
-        default=None, description="Specifies which queue to use"
-    )
-    cores: Optional[PositiveInt] = Field(
-        default=None,
-        description="""Defines the number of simultaneously running forward models.
-
-    When using queue system lsf, this corresponds to number of nodes used at one
-    time, whereas when using the local queue system, cores refers to the number of
-    cores you want to use on your system.
-
-    This number is specified in Ert as MAX_RUNNING.
-    """,
-    )
+class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
     cores_per_node: Optional[PositiveInt] = Field(
         default=None,
         description="""defines the number of CPUs when running
@@ -35,24 +25,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         description="Whether the batch folder for a successful simulation "
         "needs to be deleted.",
     )
-    exclude_host: Optional[str] = Field(
-        "",
-        description="""Comma separated list of nodes that should be
-                 excluded from the slurm run.""",
-    )
-    include_host: Optional[str] = Field(
-        "",
-        description="""Comma separated list of nodes that
-                should be included in the slurm run""",
-    )
-    max_memory: Optional[str] = Field(
-        default=None,
-        description="Maximum memory usage for a slurm job.",
-    )
-    max_memory_cpu: Optional[str] = Field(
-        default=None,
-        description="Maximum memory usage per cpu for a slurm job.",
-    )
     max_runtime: Optional[NonNegativeInt] = Field(
         default=None,
         description="""Maximum allowed running time of a forward model. When
@@ -60,15 +32,13 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         A value of 0 means unlimited runtime.
         """,
     )
-    options: Optional[str] = Field(
+    queue_system: Union[
+        LocalQueueOptions, LsfQueueOptions, SlurmQueueOptions, TorqueQueueOptions, None
+    ] = Field(
         default=None,
-        description="""Used to specify options to LSF.
-        Examples to set memory requirement is:
-        * rusage[mem=1000]""",
-    )
-    queue_system: Optional[Literal["lsf", "local", "slurm", "torque"]] = Field(
-        default="local",
-        description="Defines which queue system the everest server runs on.",
+        description="Defines which queue system the everest submits jobs to",
+        discriminator="name",
+        validate_default=True,
     )
     resubmit_limit: Optional[NonNegativeInt] = Field(
         default=None,
@@ -80,34 +50,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
     might make sense to resubmit a forward model in case it fails.
     resumbit_limit defines the number of times we will resubmit a failing forward model.
     If not specified, a default value of 1 will be used.""",
-    )
-    sbatch: Optional[str] = Field(
-        default=None,
-        description="sbatch executable to be used by the slurm queue interface.",
-    )
-    scancel: Optional[str] = Field(
-        default=None,
-        description="scancel executable to be used by the slurm queue interface.",
-    )
-    scontrol: Optional[str] = Field(
-        default=None,
-        description="scontrol executable to be used by the slurm queue interface.",
-    )
-    squeue: Optional[str] = Field(
-        default=None,
-        description="squeue executable to be used by the slurm queue interface.",
-    )
-    server: Optional[str] = Field(
-        default=None,
-        description="Name of LSF server to use. This option is deprecated and no longer required",
-    )
-    slurm_timeout: Optional[int] = Field(
-        default=None,
-        description="Timeout for cached status used by the slurm queue interface",
-    )
-    squeue_timeout: Optional[int] = Field(
-        default=None,
-        description="Timeout for cached status used by the slurm queue interface.",
     )
     enable_cache: bool = Field(
         default=False,
@@ -122,50 +64,10 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         the most common use of a standard optimization with a continuous
         optimizer.""",
     )
-    qsub_cmd: Optional[str] = Field(default="qsub", description="The submit command")
-    qstat_cmd: Optional[str] = Field(default="qstat", description="The query command")
-    qdel_cmd: Optional[str] = Field(default="qdel", description="The kill command")
-    qstat_options: Optional[str] = Field(
-        default="-x",
-        description="Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.",
-    )
-    cluster_label: Optional[str] = Field(
-        default=None,
-        description="The name of the cluster you are running simulations in.",
-    )
-    memory_per_job: Optional[str] = Field(
-        default=None,
-        description="""You can specify the amount of memory you will need for running your job. This will ensure that not too many jobs will run on a single shared memory node at once, possibly crashing the compute node if it runs out of memory.
-    You can get an indication of the memory requirement by watching the course of a local run using the htop utility. Whether you should set the peak memory usage as your requirement or a lower figure depends on how simultaneously each job will run.
-    The option to be supplied will be used as a string in the qsub argument. You must specify the unit, either gb or mb.
-    """,
-    )
-    keep_qsub_output: Optional[int] = Field(
-        default=0,
-        description="Set to 1 to keep error messages from qsub. Usually only to be used if somethign is seriously wrong with the queue environment/setup.",
-    )
-    submit_sleep: Optional[float] = Field(
-        default=0.5,
-        description="To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5",
-    )
-    queue_query_timeout: Optional[int] = Field(
-        default=126,
-        description="""
-    The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may intermittently not respond and give error messages when submitting jobs or asking for job statuses. The timeout (in seconds) determines how long ERT will wait before it will give up. Applies to job submission (qsub) and job status queries (qstat). Default is 126 seconds.
-    ERT will do exponential sleeps, starting at 2 seconds, and the provided timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64 in order to be explicit about the number of retries. Set to zero to disallow flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two re-attempts. Example allowing six retries:
-    """,
-    )
-    project_code: Optional[str] = Field(
-        default=None,
-        description="String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.",
-    )
 
-    @field_validator("server")
+    @field_validator("queue_system", mode="before")
     @classmethod
-    def validate_server(cls, server):  # pylint: disable=E0213
-        if server is not None and server:
-            warnings.warn(
-                "The simulator server property was deprecated and is no longer needed",
-                DeprecationWarning,
-                stacklevel=1,
-            )
+    def default_local_queue(cls, v):
+        if v is None:
+            return LocalQueueOptions(max_running=8)
+        return v
