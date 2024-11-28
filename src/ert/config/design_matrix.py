@@ -36,7 +36,7 @@ class DesignMatrix:
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.xls_filename}: {exc}",
-                self.xls_filename,
+                str(self.xls_filename),
             ) from exc
 
     @classmethod
