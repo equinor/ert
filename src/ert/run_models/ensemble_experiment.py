@@ -77,8 +77,6 @@ class EnsembleExperiment(BaseRunModel):
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-            assert design_matrix.active_realizations is not None
-            self.active_realizations = design_matrix.active_realizations
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,

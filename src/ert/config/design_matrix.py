@@ -97,8 +97,6 @@ class DesignMatrix:
         Returns:
             tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters and the dedicated design matrix group
         """
-        if self.parameter_configuration is None:
-            self.read_design_matrix()
 
         if self.parameter_configuration is None or not isinstance(
             self.parameter_configuration[DESIGN_MATRIX_GROUP], GenKwConfig
@@ -141,26 +139,23 @@ class DesignMatrix:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
-        try:
-            param_names = (
-                pd.read_excel(
-                    self.xls_filename,
-                    sheet_name=self.design_sheet,
-                    nrows=1,
-                    header=None,
-                    dtype="string",
-                )
-                .iloc[0]
-                .apply(lambda x: x.strip() if isinstance(x, str) else x)
-            )
-            design_matrix_df = DesignMatrix._read_excel(
+        param_names = (
+            pd.read_excel(
                 self.xls_filename,
-                self.design_sheet,
+                sheet_name=self.design_sheet,
+                nrows=1,
                 header=None,
-                skiprows=1,
+                dtype="string",
             )
-        except (ValueError, AttributeError) as exc:
-            raise ValueError(f"Error reading design matrix: {exc}") from exc
+            .iloc[0]
+            .apply(lambda x: x.strip() if isinstance(x, str) else x)
+        )
+        design_matrix_df = DesignMatrix._read_excel(
+            self.xls_filename,
+            self.design_sheet,
+            header=None,
+            skiprows=1,
+        )
         design_matrix_df.columns = param_names.to_list()
 
         if "REAL" in design_matrix_df.columns:
