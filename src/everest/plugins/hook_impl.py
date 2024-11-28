@@ -7,35 +7,6 @@ def visualize_data(api):
 
 
 @hookimpl
-def default_site_config_lines():
-    return [
-        "JOB_SCRIPT job_dispatch.py",
-        "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-        "",
-    ]
-
-
-@hookimpl
-def site_config_lines():
-    return None
-
-
-@hookimpl
-def ecl100_config_path():
-    return None
-
-
-@hookimpl
-def ecl300_config_path():
-    return None
-
-
-@hookimpl
-def flow_config_path():
-    return None
-
-
-@hookimpl
 def lint_forward_model():
     return None
 
