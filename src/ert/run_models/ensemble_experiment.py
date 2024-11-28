@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
+from ert.config import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, StatusEvents
+from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, QueueConfig
@@ -69,9 +70,12 @@ class EnsembleExperiment(BaseRunModel):
         design_matrix = self.ert_config.analysis_config.design_matrix
         design_matrix_group = None
         if design_matrix is not None:
-            parameters_config, design_matrix_group = (
-                design_matrix.merge_with_existing_parameters(parameters_config)
-            )
+            try:
+                parameters_config, design_matrix_group = (
+                    design_matrix.merge_with_existing_parameters(parameters_config)
+                )
+            except ConfigValidationError as exc:
+                raise ErtRunError("Failed to merge design matrix parameters") from exc
 
             assert design_matrix.active_realizations is not None
             self.active_realizations = design_matrix.active_realizations
