@@ -118,7 +118,8 @@ def data_for_key(
     response_key = next((k for k in response_key_to_response_type if k == key), None)
     if response_key is None:
         response_key = next(
-            (k for k in response_key_to_response_type if k in key), None
+            (k for k in response_key_to_response_type if k in key and key != f"{k}H"),
+            None,
         )
 
     if response_key is not None:
