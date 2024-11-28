@@ -197,8 +197,10 @@ def _write_hostfile(host_file_path, host, port, cert, auth) -> None:
         f.write(json_string)
 
 
-def _configure_loggers(config: EverestConfig) -> None:
-    def _make_handler(path: Path, log_level: str | int = "INFO") -> dict[str, Any]:
+def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) -> None:
+    def make_handler_config(
+        path: Path, log_level: str | int = "INFO"
+    ) -> dict[str, Any]:
         makedirs_if_needed(path.parent)
         return {
             "class": "logging.FileHandler",
@@ -207,18 +209,16 @@ def _configure_loggers(config: EverestConfig) -> None:
             "filename": path,
         }
 
-    detached_dir = Path(ServerConfig.get_detached_node_dir(config.output_dir))
-    log_dir = Path(config.log_dir)
-    logging_dict = {
+    logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
         "handlers": {
             "root": {"level": "NOTSET", "class": "logging.NullHandler"},
-            "res": _make_handler(detached_dir / "simulations.log"),
-            "everserver": _make_handler(detached_dir / "endpoint.log"),
-            "everest": _make_handler(log_dir / "everest.log", config.logging_level),
-            "forward_models": _make_handler(
-                log_dir / "forward_models.log", config.logging_level
+            "res": make_handler_config(detached_dir / "simulations.log"),
+            "everserver": make_handler_config(detached_dir / "endpoint.log"),
+            "everest": make_handler_config(log_dir / "everest.log", logging_level),
+            "forward_models": make_handler_config(
+                log_dir / "forward_models.log", logging_level
             ),
         },
         "loggers": {
@@ -235,13 +235,13 @@ def _configure_loggers(config: EverestConfig) -> None:
 
     azure_handler = get_azure_logging_handler()
     if azure_handler:
-        logging_dict["handlers"]["azure"] = {
+        logging_config["handlers"]["azure"] = {
             "class": "azure_handler",
-            "level": config.logging_level,
+            "level": logging_level,
         }
-        logging_dict["loggers"]["everest"]["handlers"].append("azure")
+        logging_config["loggers"]["everest"]["handlers"].append("azure")
 
-    logging.config.dictConfig(logging_dict)
+    logging.config.dictConfig(logging_config)
 
 
 def main():
@@ -256,7 +256,16 @@ def main():
     host_file = ServerConfig.get_hostfile_path(config.output_dir)
 
     try:
-        _configure_loggers(config)
+        _configure_loggers(
+            detached_dir=Path(ServerConfig.get_detached_node_dir(config.output_dir)),
+            log_dir=(
+                Path(config.output_dir) / "logs"
+                if config.log_dir is None
+                else Path(config.log_dir)
+            ),
+            logging_level=config.logging_level,
+        )
+
         update_everserver_status(status_path, ServerStatus.starting)
         logging.getLogger(EVEREST).info(version_info())
         logging.getLogger(EVEREST).info(
