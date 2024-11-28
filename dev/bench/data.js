@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732782972959,
+  "lastUpdate": 1732783002362,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "233bee235736095eff9e97567622e60e55da20a3",
-          "message": "Add memory test for some plotapi endpoints",
-          "timestamp": "2024-11-25T09:15:13+01:00",
-          "tree_id": "498b2b1431e8ba8f6fea597a9670bc0d1a1ce266",
-          "url": "https://github.com/equinor/ert/commit/233bee235736095eff9e97567622e60e55da20a3"
-        },
-        "date": 1732522623991,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1922964332479814,
-            "unit": "iter/sec",
-            "range": "stddev: 0.045695956206649124",
-            "extra": "mean: 5.2003044628 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.049536419705268814",
             "extra": "mean: 5.138384517399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68c2de998a110df4c297353256982b487ddab767",
+          "message": "Add time&mem test for snake oil plotting",
+          "timestamp": "2024-11-28T09:34:45+01:00",
+          "tree_id": "9ef010a445c0afb2780e07e62c392418c025ffff",
+          "url": "https://github.com/equinor/ert/commit/68c2de998a110df4c297353256982b487ddab767"
+        },
+        "date": 1732783001315,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1923963015343426,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02450197563491844",
+            "extra": "mean: 5.1976051100000005 sec\nrounds: 5"
           }
         ]
       }
