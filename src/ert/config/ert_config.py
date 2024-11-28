@@ -1127,6 +1127,7 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
     num_cpus = config_dict.get("NUM_CPU")
     if num_cpus is None and "DATA_FILE" in config_dict:
         num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
+        logger.info(f"Parsed NUM_CPU={num_cpus} from DATA-file")
     if num_cpus is None:
         num_cpus = 1
     subst_list["<NUM_CPU>"] = str(num_cpus)
