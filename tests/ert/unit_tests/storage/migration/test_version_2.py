@@ -24,10 +24,19 @@ def test_migrate_responses(setup_case, set_ert_config):
         response_info = json.loads(
             (experiment._path / "responses.json").read_text(encoding="utf-8")
         )
-        assert (
-            experiment.response_configuration
-            == ert_config.ensemble_config.response_configs
-        )
+
+        response_config_exp = experiment.response_configuration
+        response_config_ens = ert_config.ensemble_config.response_configs
+
+        # From storage v9 and onwards the response config is mutated
+        # when migrating an existing experiment, because we check that the
+        # keys in response.json are aligned with the dataset.
+        response_config_ens["summary"].has_finalized_keys = response_config_exp[
+            "summary"
+        ].has_finalized_keys
+        response_config_ens["summary"].keys = response_config_exp["summary"].keys
+
+        assert response_config_exp == response_config_ens
 
     assert set(response_info) == {
         "gen_data",
