@@ -128,11 +128,11 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
         "for simulation and output, as well as the level of detail in Everest-logs",
     )
     wells: List[WellConfig] = Field(
-        default_factory=lambda: [],
+        default_factory=list,
         description="A list of well configurations, all with unique names.",
     )
     definitions: Optional[dict] = Field(
-        default_factory=lambda: {},
+        default_factory=dict,
         description="""Section for specifying variables.
 
 Used to specify variables that will be replaced in the file when encountered.
