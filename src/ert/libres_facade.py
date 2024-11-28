@@ -107,10 +107,6 @@ class LibresFacade:
     def get_gen_kw(self) -> List[str]:
         return self.config.ensemble_config.get_keylist_gen_kw()
 
-    @property
-    def grid_file(self) -> Optional[str]:
-        return self.config.ensemble_config.grid_file
-
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations
 
