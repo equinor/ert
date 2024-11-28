@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732791990436,
+  "lastUpdate": 1732798537063,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "fe9926bd34c7298c0ace0c4b73774cda935fa734",
-          "message": "Cache ensemble_state",
-          "timestamp": "2024-11-25T13:41:37+01:00",
-          "tree_id": "40aba6e79af3ce1084741be3dfa0249af639eb2d",
-          "url": "https://github.com/equinor/ert/commit/fe9926bd34c7298c0ace0c4b73774cda935fa734"
-        },
-        "date": 1732538611765,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1919068643083932,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05743047757617601",
-            "extra": "mean: 5.210861026799989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0398985068486518",
             "extra": "mean: 5.144405493000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "c3b10c4b775dc1cbffaac11b13cd27ea510c28fa",
+          "message": "Simplify ensemble evaluator shutdown timeout",
+          "timestamp": "2024-11-28T13:53:44+01:00",
+          "tree_id": "dddbb72c8d9a85209b7a63881b8ffe921fee594f",
+          "url": "https://github.com/equinor/ert/commit/c3b10c4b775dc1cbffaac11b13cd27ea510c28fa"
+        },
+        "date": 1732798536499,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18949106549432843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04941772022760424",
+            "extra": "mean: 5.27729366760002 sec\nrounds: 5"
           }
         ]
       }
