@@ -38,6 +38,8 @@ def copy_shared(tmp_path, block_storage_path):
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "11.1.8",
+        "11.0.8",
         "10.3.1",
         "10.2.8",
         "10.1.3",
@@ -127,6 +129,11 @@ def test_that_storage_matches(
         response_config = experiment.response_configuration
         response_config["summary"].refcase = {}
 
+        assert all(
+            "has_finalized_keys" in config
+            for config in experiment.response_info.values()
+        )
+
         with open(
             experiment._path / experiment._responses_file, "w", encoding="utf-8"
         ) as f:
@@ -197,7 +204,8 @@ def test_that_storage_matches(
             "gen_data",
         )
 
-        assert not ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("gen_data")
         ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
         assert ensemble.experiment._has_finalized_response_keys("summary")
         assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
@@ -208,6 +216,8 @@ def test_that_storage_matches(
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "11.1.8",
+        "11.0.8",
         "10.3.1",
         "10.2.8",
         "10.1.3",
@@ -457,3 +467,99 @@ def test_that_manual_update_from_migrated_storage_works(
                 list(experiment.observation_keys),
                 list(ert_config.ensemble_config.parameters),
             )
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "11.1.8",
+        "10.3.1",
+        "10.0.3",
+        "9.0.17",
+        "8.4.9",
+        "8.4.8",
+        "8.4.7",
+        "8.4.6",
+        "8.4.5",
+        "8.4.4",
+        "8.4.3",
+        "8.4.2",
+        "8.4.1",
+        "8.4.0",
+        "8.3.1",
+        "8.3.0",
+        "8.2.1",
+        "8.2.0",
+        "8.1.1",
+        "8.1.0",
+        "8.0.13",
+        "8.0.12",
+        "8.0.11",
+        "8.0.10",
+        "8.0.9",
+        "8.0.8",
+        "8.0.7",
+        "8.0.6",
+        "8.0.4",
+        "8.0.3",
+        "8.0.2",
+        "8.0.1",
+        "8.0.0",
+        "7.0.4",
+        "7.0.3",
+        "7.0.2",
+        "7.0.1",
+        "7.0.0",
+        "6.0.8",
+        "6.0.7",
+        "6.0.6",
+        "6.0.4",
+        "6.0.3",
+        "6.0.1",
+        "6.0.0",
+        "5.0.11",
+        "5.0.9",
+        "5.0.8",
+        "5.0.7",
+        "5.0.6",
+        "5.0.5",
+        "5.0.4",
+        "5.0.2",
+        "5.0.1",
+        "5.0.0",
+    ],
+)
+def test_migrate_storage_with_no_responses(
+    tmp_path,
+    block_storage_path,
+    monkeypatch,
+    ert_version,
+):
+    storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        storage_path,
+    )
+    [ensemble_id] = os.listdir(storage_path / "ensembles")
+
+    # Remove all realization-*/TOP.nc, and only some realization-*/BPC.nc
+    for real_dir in (storage_path / "ensembles" / ensemble_id).glob("realization-*"):
+        gen_data_file = next(
+            file for file in os.listdir(real_dir) if "gen" in file.lower()
+        )
+
+        os.remove(real_dir / gen_data_file)
+
+        summary_file = next(
+            file for file in os.listdir(real_dir) if "summary" in file.lower()
+        )
+
+        os.remove(real_dir / summary_file)
+
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    local_storage_set_ert_config(ert_config)
+
+    open_storage(f"storage-{ert_version}", "w")
