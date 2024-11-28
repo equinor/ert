@@ -6,17 +6,10 @@ import numpy as np
 import pytest
 import xtgeo
 
-from ert.libres_facade import LibresFacade
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
 from .run_cli import run_cli
-
-
-def load_from_forward_model(ert_config, ensemble):
-    facade = LibresFacade.from_config_file(ert_config)
-    realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations)
 
 
 @pytest.mark.usefixtures("set_site_config")

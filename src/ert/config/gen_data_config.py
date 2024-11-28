@@ -122,10 +122,10 @@ class GenDataConfig(ResponseConfig):
     def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
         def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
             try:
-                data = np.loadtxt(_run_path / filename, ndmin=1)
+                data = np.loadtxt(filename, ndmin=1)
             except ValueError as err:
                 raise InvalidResponseFile(str(err)) from err
-            active_information_file = _run_path / (str(filename) + "_active")
+            active_information_file = filename.parent / (filename.name + "_active")
             if active_information_file.exists():
                 try:
                     active_list = np.loadtxt(active_information_file)

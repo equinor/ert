@@ -39,7 +39,7 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
             model_config=ert_config.model_config,
             runpaths=run_paths(ert_config),
         )
-        return ert_config, prior_ensemble
+        return prior_ensemble
 
     yield func
 
@@ -75,15 +75,16 @@ def test_load_forward_model(snake_oil_default_storage):
     facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
-    realizations = [False] * facade.get_ensemble_size()
-    realizations[realisation_number] = True
-
     with open_storage(facade.enspath, mode="w") as storage:
         # 'load_from_forward_model' requires the ensemble to be writeable...
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         default = experiment.get_ensemble_by_name("default_0")
 
-        loaded = facade.load_from_forward_model(default, realizations)
+        loaded = LibresFacade.load_from_run_path(
+            "storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
+            default,
+            [realisation_number],
+        )
         assert loaded == 1
         assert default.get_realization_mask_with_responses()[
             realisation_number
@@ -151,9 +152,10 @@ def test_load_forward_model_summary(
         model_config=ert_config.model_config,
         runpaths=run_paths(ert_config),
     )
-    facade = LibresFacade(ert_config)
     with caplog.at_level(logging.ERROR):
-        loaded = facade.load_from_forward_model(prior_ensemble, [True])
+        loaded = LibresFacade.load_from_run_path(
+            ert_config.model_config.runpath_format_string, prior_ensemble, [0]
+        )
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
     if expected_log_message:
@@ -168,7 +170,7 @@ def test_load_forward_model_gen_data(setup_case):
         """
     )
 
-    config, prior_ensemble = setup_case(config_text)
+    prior_ensemble = setup_case(config_text)
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "2", "3"]))
@@ -177,8 +179,7 @@ def test_load_forward_model_gen_data(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade(config)
-    facade.load_from_forward_model(prior_ensemble, [True])
+    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
     filter_cond = polars.col("report_step").eq(0), polars.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
@@ -191,7 +192,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    config, prior_ensemble = setup_case(config_text)
+    prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -199,8 +200,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1"]))
 
-    facade = LibresFacade(config)
-    facade.load_from_forward_model(prior_ensemble, [True])
+    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     assert df["values"].to_list() == [1.0]
 
@@ -212,7 +212,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
         """
     )
-    config, prior_ensemble = setup_case(config_text)
+    prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response_0.out", "w", encoding="utf-8") as fout:
@@ -220,8 +220,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["0"]))
 
-    facade = LibresFacade(config)
-    facade.load_from_forward_model(prior_ensemble, [True])
+    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     response = prior_ensemble.load_responses("RESPONSE", (0,))
     assert np.isnan(response[0]["values"].to_list())
     assert len(response) == 1
@@ -264,8 +263,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade.from_config_file("config.ert")
-    facade.load_from_forward_model(prior_ensemble, [True])
+    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(polars.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
@@ -282,12 +280,13 @@ def test_that_the_states_are_set_correctly():
     experiment = storage.get_experiment_by_name("ensemble-experiment")
     ensemble = experiment.get_ensemble_by_name("default_0")
     ensemble_size = facade.get_ensemble_size()
-    realizations = np.array([True] * ensemble_size)
 
     new_ensemble = storage.create_ensemble(
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
-    facade.load_from_forward_model(new_ensemble, realizations)
+    LibresFacade.load_from_run_path(
+        facade.run_path, new_ensemble, list(range(ensemble_size))
+    )
     assert not new_ensemble.is_initalized()
     assert new_ensemble.has_data()
 

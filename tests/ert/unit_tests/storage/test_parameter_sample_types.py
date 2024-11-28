@@ -9,12 +9,13 @@ import numpy as np
 import pytest
 from resdata.geometry import Surface
 
+from ert import LibresFacade
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 
-from .create_runpath import create_runpath, load_from_forward_model
+from .create_runpath import create_runpath
 
 
 @pytest.fixture
@@ -94,7 +95,12 @@ def test_surface_param(
         assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
-        assert load_from_forward_model("config.ert", fs) == expect_num_loaded
+        assert (
+            LibresFacade.load_from_run_path(
+                "simulations/realization-<IENS>/iter-0", fs, [0]
+            )
+            == expect_num_loaded
+        )
         assert error in "".join(caplog.messages)
 
         # Assert that the data has been written to runpath

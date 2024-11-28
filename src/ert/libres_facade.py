@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 import warnings
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -36,8 +35,6 @@ from .plugins import ErtPluginContext
 _logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from ert.config import (
         EnkfObs,
         WorkflowJob,
@@ -124,23 +121,6 @@ class LibresFacade:
     @property
     def resolved_run_path(self) -> str:
         return str(Path(self.config.model_config.runpath_format_string).resolve())
-
-    def load_from_forward_model(
-        self,
-        ensemble: Ensemble,
-        realisations: npt.NDArray[np.bool_],
-    ) -> int:
-        t = time.perf_counter()
-        nr_loaded = self.load_from_run_path(
-            self.resolved_run_path,
-            ensemble,
-            [r for r, active in enumerate(realisations) if active],
-        )
-        ensemble.refresh_ensemble_state()
-        _logger.debug(
-            f"load_from_forward_model() time_used {(time.perf_counter() - t):.4f}s"
-        )
-        return nr_loaded
 
     @staticmethod
     def load_from_run_path(
