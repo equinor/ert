@@ -57,7 +57,6 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     if len(parameters) == 2:
         new_config_parameters, design_group = (
             design_matrix.merge_with_existing_parameters([extra_genkw_config])
@@ -93,7 +92,6 @@ def test_reading_design_matrix(tmp_path):
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     design_params = design_matrix.parameter_configuration.get(DESIGN_MATRIX_GROUP, [])
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
     assert design_matrix.num_realizations == 3
@@ -132,9 +130,9 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -168,9 +166,9 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -204,9 +202,9 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -250,9 +248,9 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 def test_default_values_used(tmp_path):
@@ -272,7 +270,6 @@ def test_default_values_used(tmp_path):
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     df = design_matrix.design_matrix_df
     np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "one"], np.array([1, 1, 1, 1]))
     np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0, 1]))
