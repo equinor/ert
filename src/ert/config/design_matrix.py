@@ -117,6 +117,14 @@ class DesignMatrix:
                 continue
             existing_keys = [e.name for e in parameter_group.transform_functions]
             if set(existing_keys) == set(design_keys):
+                if design_group_added:
+                    raise ConfigValidationError(
+                        (
+                            "Multiple overlapping groups with design matrix found in existing parameters!\n"
+                            f"{design_parameter_group.name} and {parameter_group.name}"
+                        )
+                    )
+
                 design_parameter_group.name = parameter_group.name
                 design_group_added = True
             elif set(design_keys) & set(existing_keys):
@@ -129,8 +137,6 @@ class DesignMatrix:
                 )
             else:
                 new_param_config += [parameter_group]
-        if not design_group_added:
-            new_param_config += [design_parameter_group]
         return new_param_config, design_parameter_group
 
     def read_design_matrix(
