@@ -125,6 +125,11 @@ def test_that_storage_matches(
         response_config = experiment.response_configuration
         response_config["summary"].refcase = {}
 
+        assert all(
+            "has_finalized_keys" in config
+            for config in experiment.response_info.values()
+        )
+
         with open(
             experiment._path / experiment._responses_file, "w", encoding="utf-8"
         ) as f:
@@ -195,7 +200,8 @@ def test_that_storage_matches(
             "gen_data",
         )
 
-        assert not ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("summary")
+        assert ensemble.experiment._has_finalized_response_keys("gen_data")
         ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
         assert ensemble.experiment._has_finalized_response_keys("summary")
         assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
