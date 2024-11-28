@@ -66,24 +66,25 @@ def ert_config(tmpdir):
         yield ErtConfig.from_file("config.ert")
 
 
-def create_responses(config_file, prior_ensemble, response_times):
+def create_responses(prior_ensemble, response_times):
     cwd = Path().absolute()
     rng = np.random.default_rng(seed=1234)
+    base_path = cwd / "simulations" / "realization-<IENS>" / "iter-0"
     for i, response_time in enumerate(response_times):
-        sim_path = cwd / "simulations" / f"realization-{i}" / "iter-0"
+        sim_path = Path(str(base_path).replace("<IENS>", str(i)))
         sim_path.mkdir(parents=True, exist_ok=True)
         os.chdir(sim_path)
         run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
     os.chdir(cwd)
-    facade = LibresFacade.from_config_file(config_file)
-    facade.load_from_forward_model(prior_ensemble, [True] * facade.get_ensemble_size())
+    LibresFacade.load_from_run_path(
+        str(base_path), prior_ensemble, range(len(response_times))
+    )
 
 
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     create_responses(
-        ert_config.user_config_file,
         prior_ensemble,
         ert_config.model_config.num_realizations * [[datetime(2014, 9, 9)]],
     )
@@ -112,7 +113,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
         [datetime(2014, 9, 9)],
         [datetime(2017, 9, 9)],
     ]
-    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
+    create_responses(prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
@@ -144,7 +145,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
-    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
+    create_responses(prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
@@ -190,7 +191,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9), datetime(1988, 9, 9)],
     ]
-    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
+    create_responses(prior_ensemble, response_times)
 
     target_ensemble = storage.create_ensemble(
         prior_ensemble.experiment_id,
@@ -216,7 +217,7 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
         [datetime(2014, 9, 9)],
         [datetime(2017, 9, 9)],
     ]
-    create_responses(ert_config.user_config_file, prior_ensemble, response_times)
+    create_responses(prior_ensemble, response_times)
 
     measured_data = MeasuredData(prior_ensemble)
 
@@ -240,7 +241,6 @@ def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
     create_responses(
-        ert_config.user_config_file,
         prior_ensemble,
         ert_config.model_config.num_realizations * [[datetime(2500, 9, 9)]],
     )

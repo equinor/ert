@@ -2,7 +2,6 @@ from typing import Optional, Tuple
 
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, sample_prior
-from ert.libres_facade import LibresFacade
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble
@@ -57,9 +56,3 @@ def create_runpath(
         runpaths=runpaths,
     )
     return ert_config.ensemble_config, ensemble
-
-
-def load_from_forward_model(ert_config, ensemble):
-    facade = LibresFacade.from_config_file(ert_config)
-    realizations = [True] * facade.get_ensemble_size()
-    return facade.load_from_forward_model(ensemble, realizations)
