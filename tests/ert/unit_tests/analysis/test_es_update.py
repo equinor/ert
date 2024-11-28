@@ -669,6 +669,35 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         assert scaled_errors_without_autoscale.tolist() == [1, 2]
 
 
+def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
+    observations_and_responses = polars.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+            "observations": polars.Series([2, 4, 3, 3], dtype=polars.Float32),
+            "std": polars.Series([1, 2, 1, 1], dtype=polars.Float32),
+            "1": polars.Series([1, 4, 7, 8], dtype=polars.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
+    _mock_load_observations_and_responses(
+        observations_and_responses,
+        alpha=1,
+        std_cutoff=0.05,
+        global_std_scaling=1,
+        auto_scale_observations=[["OOOPS1*"]],
+        progress_callback=lambda _: None,
+        ensemble=ensemble,
+    )
+    logged_messages = str(caplog.messages)  # NB: The code also prints to the terminal
+    assert "Could not auto-scale the observations" in logged_messages
+    assert "OOPS" in logged_messages
+    assert "obs1_1" in logged_messages
+
+
 @pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(keys=["RESPONSE"])
