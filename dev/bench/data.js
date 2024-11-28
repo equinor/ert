@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732786496580,
+  "lastUpdate": 1732791990436,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "augustommg@gmail.com",
-            "name": "AugustoMagalhaes",
-            "username": "AugustoMagalhaes"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "3a8ffd836cdbc65fa99523e1b3286051077d7f74",
-          "message": "Adds teardown to avoid flaky tests with run_dialog",
-          "timestamp": "2024-11-25T10:50:12+01:00",
-          "tree_id": "f66ea5e49082bb599d2e173dfd345da9c1882f53",
-          "url": "https://github.com/equinor/ert/commit/3a8ffd836cdbc65fa99523e1b3286051077d7f74"
-        },
-        "date": 1732528323270,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19456414570711983,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030891273185742755",
-            "extra": "mean: 5.139693114399989 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03417556641816042",
             "extra": "mean: 5.116693353 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "af3600938b9d49683035a1d32eed43af53131cf7",
+          "message": "Ensure tests run in clean directory\n\nNot doing this causes tests to step on each others toes, yielding\nflakyness",
+          "timestamp": "2024-11-28T12:04:39+01:00",
+          "tree_id": "0d2f0d1bf861c30c163c70cf62fbb17b5f6a3619",
+          "url": "https://github.com/equinor/ert/commit/af3600938b9d49683035a1d32eed43af53131cf7"
+        },
+        "date": 1732791989925,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19438592104776742,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0398985068486518",
+            "extra": "mean: 5.144405493000005 sec\nrounds: 5"
           }
         ]
       }
