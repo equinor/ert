@@ -37,7 +37,6 @@ _logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from ert.config import (
         EnkfObs,
-        WorkflowJob,
     )
     from ert.storage import Ensemble, Storage
 
@@ -209,9 +208,6 @@ class LibresFacade:
         misfit.index = misfit.index.astype(int)
 
         return misfit
-
-    def get_workflow_job(self, name: str) -> Optional["WorkflowJob"]:
-        return self.config.workflow_jobs.get(name)
 
     def run_ertscript(  # type: ignore
         self,
