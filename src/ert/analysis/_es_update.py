@@ -268,11 +268,19 @@ def _load_observations_and_responses(
                 )
             )
 
-        scaling_factors_df = polars.concat(scaling_factors_dfs)
-        ensemble.save_observation_scaling_factors(scaling_factors_df)
+        if len(scaling_factors_dfs):
+            scaling_factors_df = polars.concat(scaling_factors_dfs)
+            ensemble.save_observation_scaling_factors(scaling_factors_df)
 
-        # Recompute with updated scales
-        scaled_errors = errors * scaling
+            # Recompute with updated scales
+            scaled_errors = errors * scaling
+        else:
+            msg = (
+                f"WARNING: Could not auto-scale the observations {auto_scale_observations}. "
+                f"No match with existing active observations {obs_keys}"
+            )
+            logger.warning(msg)
+            print(msg)
 
     update_snapshot = []
     for (
