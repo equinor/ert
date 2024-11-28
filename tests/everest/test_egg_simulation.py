@@ -12,7 +12,6 @@ from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames, export_data
-from everest.plugins.site_config_env import PluginSiteConfigEnv
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
@@ -680,12 +679,11 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    with PluginSiteConfigEnv():
-        run_model = EverestRunModel.create(
-            config, simulation_callback=cbtracker.sweetcallbackofmine
-        )
-        evaluator_server_config = EvaluatorServerConfig()
-        run_model.run_experiment(evaluator_server_config)
+    run_model = EverestRunModel.create(
+        config, simulation_callback=cbtracker.sweetcallbackofmine
+    )
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
     # TODO: The comparison is currently disabled because we know it would
@@ -812,12 +810,11 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
             self.called = True
 
     cbtracker = CBTracker()
-    with PluginSiteConfigEnv():
-        run_model = EverestRunModel.create(
-            config, simulation_callback=cbtracker.sweetcallbackofmine
-        )
-        evaluator_server_config = EvaluatorServerConfig()
-        run_model.run_experiment(evaluator_server_config)
+    run_model = EverestRunModel.create(
+        config, simulation_callback=cbtracker.sweetcallbackofmine
+    )
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
 
