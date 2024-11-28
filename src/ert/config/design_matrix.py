@@ -31,6 +31,14 @@ class DesignMatrix:
         self.design_matrix_df: Optional[pd.DataFrame] = None
         self.parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
 
+        try:
+            self.read_design_matrix()
+        except (ValueError, AttributeError) as exc:
+            raise ConfigValidationError.with_context(
+                f"Error reading design matrix {self.xls_filename}: {exc}",
+                self.xls_filename,
+            ) from exc
+
     @classmethod
     def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
         filename = Path(config_list[0])
