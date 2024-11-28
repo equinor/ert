@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732780965099,
+  "lastUpdate": 1732782659168,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "edc56e1fc70ea098d3c1948ad62d21642a9f7dbf",
-          "message": "Clean up everest tests",
-          "timestamp": "2024-11-25T08:01:26+01:00",
-          "tree_id": "5d3f19ef64eee0ad1276f3cd19f74f71f0483f78",
-          "url": "https://github.com/equinor/ert/commit/edc56e1fc70ea098d3c1948ad62d21642a9f7dbf"
-        },
-        "date": 1732518192042,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1970148106735814,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02709782905823896",
-            "extra": "mean: 5.0757605308000056 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03026455207052366",
             "extra": "mean: 5.160404338799998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dfffa695ea16d40c8f3817c097d720060deade8e",
+          "message": "Fix manifest having too many files and not substituting\n\nAlso makes substitution of <IENS> and <ITER> for\r\nall parameters and responses",
+          "timestamp": "2024-11-28T08:29:12Z",
+          "tree_id": "06a8bdaca3463bb2246ae982c61b63f28bd9560a",
+          "url": "https://github.com/equinor/ert/commit/dfffa695ea16d40c8f3817c097d720060deade8e"
+        },
+        "date": 1732782658775,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1950929591724109,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04992714006316286",
+            "extra": "mean: 5.125761607400003 sec\nrounds: 5"
           }
         ]
       }
