@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 8
+_LOCAL_STORAGE_VERSION = 9
 
 
 class _Migrations(BaseModel):
@@ -472,6 +472,7 @@ class LocalStorage(BaseMode):
             to6,
             to7,
             to8,
+            to9,
         )
 
         try:
@@ -516,7 +517,7 @@ class LocalStorage(BaseMode):
 
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(
-                    enumerate([to2, to3, to4, to5, to6, to7, to8], start=1)
+                    enumerate([to2, to3, to4, to5, to6, to7, to8, to9], start=1)
                 )
                 for from_version, migration in migrations[version - 1 :]:
                     print(f"* Updating storage to version: {from_version+1}")
