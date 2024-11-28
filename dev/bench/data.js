@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732782659168,
+  "lastUpdate": 1732782863981,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "306f821714c2cc7185da25f5438ca93cb85d76d3",
-          "message": "Replace jobs dir with a symlink",
-          "timestamp": "2024-11-25T08:02:24+01:00",
-          "tree_id": "ff9aea94ef44504282919cae68bacd7a3b1c2946",
-          "url": "https://github.com/equinor/ert/commit/306f821714c2cc7185da25f5438ca93cb85d76d3"
-        },
-        "date": 1732518252425,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1911202641427395,
-            "unit": "iter/sec",
-            "range": "stddev: 0.035086335938649585",
-            "extra": "mean: 5.232307544599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04992714006316286",
             "extra": "mean: 5.125761607400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "b556d87540a2064534233622246473533b6d6773",
+          "message": "Mention runpath in copy_file docs",
+          "timestamp": "2024-11-28T09:32:34+01:00",
+          "tree_id": "63b9725924970e16005d095388657f894c95e67d",
+          "url": "https://github.com/equinor/ert/commit/b556d87540a2064534233622246473533b6d6773"
+        },
+        "date": 1732782863397,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19532027537208577,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018070202769042913",
+            "extra": "mean: 5.119796181399994 sec\nrounds: 5"
           }
         ]
       }
