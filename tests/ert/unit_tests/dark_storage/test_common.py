@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 import polars
 import pytest
@@ -71,6 +73,32 @@ def test_data_for_key_gives_mean_for_duplicate_values(tmp_path):
         assert df[pd.Timestamp("2014-01-16 05:00:00")][0] == pytest.approx(
             (value1 + value2) / 2
         )
+
+
+def test_data_for_key_doesnt_mistake_history_for_response(tmp_path):
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        summary_config = SummaryConfig(
+            name="summary", input_files=["CASE"], keys=["FGPR"]
+        )
+        experiment = storage.create_experiment(responses=[summary_config])
+        ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
+        ensemble.save_response(
+            "summary",
+            polars.DataFrame(
+                {
+                    "response_key": ["FGPR", "FGPR"],
+                    "time": polars.Series(
+                        [datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2)],
+                        dtype=polars.Datetime("ms"),
+                    ),
+                    "values": polars.Series([0.0, 1.0], dtype=polars.Float32),
+                }
+            ),
+            0,
+        )
+        ensemble.refresh_ensemble_state()
+
+        assert data_for_key(ensemble, "FGPRH").empty
 
 
 def test_data_for_key_returns_empty_gen_data_config(tmp_path):
