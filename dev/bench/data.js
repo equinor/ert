@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732783002362,
+  "lastUpdate": 1732783579968,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "0a4bad63a11f0f9d6ea1671415ae55383a64c87e",
-          "message": "Remove --iter-num from ert cli (#9276)\n\nThis option is no longer available\r\nand is ignored by the application",
-          "timestamp": "2024-11-25T09:16:39+01:00",
-          "tree_id": "b38ac7bd4324447cb3c714bc3c24aed70254dd8d",
-          "url": "https://github.com/equinor/ert/commit/0a4bad63a11f0f9d6ea1671415ae55383a64c87e"
-        },
-        "date": 1732522714364,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18962108509115977,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03051962987155439",
-            "extra": "mean: 5.2736751270000015 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02450197563491844",
             "extra": "mean: 5.1976051100000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "53eea27b8b6c7a004ecf1ce485cb7ef1b5683f64",
+          "message": "Remove realizations_initialized\n\nused in test only",
+          "timestamp": "2024-11-28T09:44:26+01:00",
+          "tree_id": "2eaaa7daa6c7e385f66841349c2c75b11e2d3b76",
+          "url": "https://github.com/equinor/ert/commit/53eea27b8b6c7a004ecf1ce485cb7ef1b5683f64"
+        },
+        "date": 1732783579492,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19410179268395863,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04247093091351129",
+            "extra": "mean: 5.151935931000002 sec\nrounds: 5"
           }
         ]
       }
