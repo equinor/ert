@@ -9,6 +9,7 @@ import everest
 from ert.config import ErtConfig, ExtParamConfig
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
+from ert.plugins import ErtPluginContext
 from everest.config import EverestConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
@@ -484,11 +485,11 @@ def _everest_to_ert_config_dict(
 
 
 def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
-    config_dict = _everest_to_ert_config_dict(
-        ever_config, site_config=ErtConfig.read_site_config()
-    )
-
-    ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
+    with ErtPluginContext():
+        config_dict = _everest_to_ert_config_dict(
+            ever_config, site_config=ErtConfig.read_site_config()
+        )
+        ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
     ens_config = ert_config.ensemble_config
 
     def _get_variables(
