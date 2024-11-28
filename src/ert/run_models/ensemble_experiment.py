@@ -75,7 +75,7 @@ class EnsembleExperiment(BaseRunModel):
                     design_matrix.merge_with_existing_parameters(parameters_config)
                 )
             except ConfigValidationError as exc:
-                raise ErtRunError("Failed to merge design matrix parameters") from exc
+                raise ErtRunError(str(exc)) from exc
 
             assert design_matrix.active_realizations is not None
             self.active_realizations = design_matrix.active_realizations

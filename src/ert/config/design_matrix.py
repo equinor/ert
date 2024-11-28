@@ -123,7 +123,11 @@ class DesignMatrix:
                 design_group_added = True
             elif set(design_keys) & set(existing_keys):
                 raise ConfigValidationError(
-                    "Overlapping parameter names found in design matrix!"
+                    (
+                        "Overlapping parameter names found in design matrix!\n"
+                        f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
+                        "\nThey need to much exactly or not at all."
+                    )
                 )
             else:
                 new_param_config += [parameter_group]
