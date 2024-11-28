@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732798696742,
+  "lastUpdate": 1732802824687,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "4485f41bc30417fc3d4dd36bd5d43ce62099c373",
-          "message": "Mark a test as flaky\n\nThis is a very rare occurence, reruns should be sufficient",
-          "timestamp": "2024-11-25T15:24:58+01:00",
-          "tree_id": "5a632a6a172c30eeae62f608cabe96b6c9226881",
-          "url": "https://github.com/equinor/ert/commit/4485f41bc30417fc3d4dd36bd5d43ce62099c373"
-        },
-        "date": 1732544805756,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18920632357885153,
-            "unit": "iter/sec",
-            "range": "stddev: 0.11250853964733565",
-            "extra": "mean: 5.2852356151999915 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06980627750871395",
             "extra": "mean: 5.282843556199987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oyveid@equinor.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "f6b7bd63554a9d9fe34cd479dca9869705262910",
+          "message": "Make sure site config is loaded for Everest",
+          "timestamp": "2024-11-28T15:05:14+01:00",
+          "tree_id": "83b0de76f9a2c4ad440ce377b6146fedbe2bdf78",
+          "url": "https://github.com/equinor/ert/commit/f6b7bd63554a9d9fe34cd479dca9869705262910"
+        },
+        "date": 1732802823848,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19147649349749385,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03555141279673454",
+            "extra": "mean: 5.222573182400003 sec\nrounds: 5"
           }
         ]
       }
