@@ -1,5 +1,7 @@
+import contextlib
 import gc
 import os
+import time
 from datetime import datetime, timedelta
 from textwrap import dedent
 from typing import Dict
@@ -11,6 +13,7 @@ import pandas as pd
 import polars
 import pytest
 import xarray as xr
+from httpx import RequestError
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
@@ -198,6 +201,21 @@ def api_and_storage(monkeypatch, tmp_path):
     gc.collect()
 
 
+@pytest.fixture
+def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
+    with open_storage(snake_oil_case_storage.ens_path, mode="r") as storage:
+        monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+
+        api = PlotApi()
+        yield api, storage
+
+    if enkf._storage is not None:
+        enkf._storage.close()
+    enkf._storage = None
+    gc.collect()
+
+
 @pytest.mark.parametrize(
     "num_reals, num_dates, num_keys, max_memory_mb",
     [  # Tested 24.11.22 on macbook pro M1 max
@@ -273,6 +291,75 @@ def test_plot_api_big_summary_memory_usage(
     os.remove("memray.bin")
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
+
+
+def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage):
+    api, _ = api_and_snake_oil_storage
+    t0 = time.time()
+    key_infos = api.all_data_type_keys()
+    all_ensembles = api.get_all_ensembles()
+    t1 = time.time()
+    # Cycle through all ensembles and get all responses
+    for key_info in key_infos:
+        for ensemble in all_ensembles:
+            api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
+
+        if key_info.observations:
+            with contextlib.suppress(RequestError, TimeoutError):
+                api.observations_for_key(
+                    [ens.id for ens in all_ensembles], key_info.key
+                )
+
+        # Note: Does not test for fields
+        if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
+            with contextlib.suppress(RequestError, TimeoutError):
+                api.history_data(
+                    key_info.key,
+                    [e.id for e in all_ensembles],
+                )
+
+    t2 = time.time()
+    time_to_get_metadata = t1 - t0
+    time_to_cycle_through_responses = t2 - t1
+
+    # Local times were about 10% of the asserted times
+    assert time_to_get_metadata < 1
+    assert time_to_cycle_through_responses < 14
+
+
+def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
+    api, _ = api_and_snake_oil_storage
+
+    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
+        key_infos = api.all_data_type_keys()
+        all_ensembles = api.get_all_ensembles()
+        # Cycle through all ensembles and get all responses
+        for key_info in key_infos:
+            for ensemble in all_ensembles:
+                api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
+
+            if key_info.observations:
+                with contextlib.suppress(RequestError, TimeoutError):
+                    api.observations_for_key(
+                        [ens.id for ens in all_ensembles], key_info.key
+                    )
+
+            # Note: Does not test for fields
+            if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
+                with contextlib.suppress(RequestError, TimeoutError):
+                    api.history_data(
+                        key_info.key,
+                        [e.id for e in all_ensembles],
+                    )
+
+    stats = memray._memray.compute_statistics("memray.bin")
+    os.remove("memray.bin")
+    total_memory_mb = stats.total_memory_allocated / (1024**2)
+    peak_memory_mb = stats.peak_memory_allocated / (1024**2)
+
+    # thresholds are set to about 1.5x local memory used
+    assert total_memory_mb < 5000
+    assert peak_memory_mb < 1500
 
 
 def test_plot_api_handles_urlescape(api_and_storage):
