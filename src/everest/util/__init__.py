@@ -6,7 +6,7 @@ from ropt.version import version as ropt_version
 
 from ert.shared.version import version as ert_version
 from everest.plugins.everest_plugin_manager import EverestPluginManager
-from everest.strings import DATE_FORMAT, DEFAULT_LOGGING_FORMAT, EVEREST
+from everest.strings import DATE_FORMAT, EVEREST
 from everest.util.async_run import async_run  # noqa
 
 try:
@@ -28,30 +28,6 @@ def get_azure_logging_handler():
     handles = pm.hook.add_log_handle_to_root()
     if handles:
         return handles[0]
-
-
-def configure_logger(
-    name=None,
-    file_path=None,
-    log_level=None,
-    formatter=DEFAULT_LOGGING_FORMAT,
-    log_to_azure=False,
-) -> logging.Logger:
-    logger = logging.getLogger(name)
-
-    logger.setLevel(log_level or logging.INFO)
-    if file_path is not None:
-        makedirs_if_needed(os.path.dirname(file_path))
-        handler = logging.FileHandler(file_path)
-        handler.setFormatter(logging.Formatter(formatter))
-        logger.addHandler(handler)
-
-    # Setup azure logging if needed
-    azure_handler = get_azure_logging_handler()
-    if log_to_azure and azure_handler:
-        logger.addHandler(azure_handler)
-
-    return logger
 
 
 def version_info():
