@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732870064611,
+  "lastUpdate": 1732870099032,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "bb0318635e275ed426e597f8c91a63a581bd7565",
-          "message": "Remove multi-realization save logic\n\n(testing)",
-          "timestamp": "2024-11-26T08:46:16+01:00",
-          "tree_id": "83ff05c81684940f2ddf2b1c85f0f065892318fd",
-          "url": "https://github.com/equinor/ert/commit/bb0318635e275ed426e597f8c91a63a581bd7565"
-        },
-        "date": 1732607291835,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19237468187030143,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05902346462649664",
-            "extra": "mean: 5.198189232999994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07491276480983348",
             "extra": "mean: 5.2417254328000125 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oyveid@equinor.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "f39a174f5e8559503f57129f7e08c9f95196bf44",
+          "message": "Replace everest site config manager with ert",
+          "timestamp": "2024-11-29T09:46:27+01:00",
+          "tree_id": "b53ebf3b45565e26d3de33eab288783e9ac017af",
+          "url": "https://github.com/equinor/ert/commit/f39a174f5e8559503f57129f7e08c9f95196bf44"
+        },
+        "date": 1732870098320,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19133164376739084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014603867025298803",
+            "extra": "mean: 5.22652698899999 sec\nrounds: 5"
           }
         ]
       }
