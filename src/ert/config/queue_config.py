@@ -300,11 +300,6 @@ class QueueConfig:
                 or (q_system == QueueSystem.SLURM and options[0] == "PARTITION")
                 or (q_system == QueueSystem.TORQUE and options[0] == "QUEUE")
             ):
-                ConfigWarning.deprecation_warn(
-                    f"Deprecated keyword: {options[0]} for QUEUE_OPTION {q_system}, use: "
-                    f"QUEUE_OPTION GENERIC QUEUE_NAME {options[1] if len(options) >= 2 else ''}",
-                    _raw_queue_options[i],
-                )
                 _raw_queue_options[i] = [
                     QueueSystemWithGeneric.GENERIC,
                     "QUEUE_NAME",

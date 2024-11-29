@@ -525,7 +525,7 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
 
 
 @pytest.mark.parametrize(
-        "queue_system, queue_option",
+    "queue_system, queue_option",
     (
         ("LSF", "LSF_QUEUE"),
         ("TORQUE", "QUEUE"),
@@ -533,9 +533,9 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
     ),
 )
 def test_deprecated_queue_name_initialization(queue_system, queue_option):
-    with pytest.warns(
-        ConfigWarning, match="Deprecated .* use: QUEUE_OPTION GENERIC QUEUE_NAME"
-    ):
+    assert (
         QueueConfig.from_dict(
             {"QUEUE_OPTION": [[queue_system, queue_option, "some_name"]]}
-        )
+        ).queue_options.queue_name
+        == "some_name"
+    )
