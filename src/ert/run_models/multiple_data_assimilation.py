@@ -99,14 +99,6 @@ class MultipleDataAssimilation(UpdateRunModel):
                         f"Experiment misconfigured, got starting iteration: {self.start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
-
-                self.set_env_key("_ERT_ITERATION", str(self.start_iteration))
-                self.set_env_key(
-                    "_IS_FINAL_ITERATION",
-                    "True"
-                    if (self.start_iteration == self._total_iterations - 1)
-                    else "False",
-                )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
                     f"Prior ensemble with ID: {id} does not exists"
