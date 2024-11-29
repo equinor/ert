@@ -102,8 +102,8 @@ def _get_num_cpu(
 
     """
     parser = _Parser(lines_iter)
+    slaves_num_cpu = None
     try:
-        slaves_num_cpu = None
         while (words := parser.next_line(None)) is not None:
             if not words:
                 continue
@@ -177,6 +177,18 @@ def _split_line(line: str) -> Iterator[str]:
 
     >>> list(_split_line("3 1.0 3*4 PORO 3*INC 'HELLO WORLD ' 3*'NAME'"))
     ['3', '1.0', '3*4', 'PORO', '3*INC', 'HELLO WORLD ', '3*', 'NAME']
+    >>> list(_split_line("KEYWORD 3.14/"))
+    ['KEYWORD', '3.14', '/']
+    >>> list(_split_line("KEYWORD '3.14/'"))
+    ['KEYWORD', '3.14/']
+    >>> list(_split_line("KEYWORD '3.14'/"))
+    ['KEYWORD', '3.14', '/']
+    >>> list(_split_line("ALLPROPS/"))
+    ['ALLPROPS', '/']
+    >>> list(_split_line("ALLPROPS -- A comment"))
+    ['ALLPROPS']
+    >>> list(_split_line("ALLPROPS / Also a comment"))
+    ['ALLPROPS', '/']
     """
     value = ""
     inside_str = None
@@ -198,6 +210,13 @@ def _split_line(line: str) -> Iterator[str]:
         elif value and value[-1] == "-" and char == "-":
             # a comment
             value = value[0:-1]
+            break
+        elif char == "/":
+            # End of statement
+            if value:
+                yield value
+                value = ""
+            yield "/"
             break
         elif char.isspace():
             # delimiting space
