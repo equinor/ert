@@ -258,10 +258,10 @@ class _DetachedMonitor:
             for job_idx, job in enumerate(queue):
                 if job_idx not in job_progress:
                     job_progress[job_idx] = JobProgress(name=job["name"])
-                simulation = int(job["simulation"])
+                realization = int(job["realization"])
                 status = job["status"]
                 if status in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
-                    job_progress[job_idx].status[status].append(simulation)
+                    job_progress[job_idx].status[status].append(realization)
         return job_progress.values()
 
     def _filter_jobs(self, progress):

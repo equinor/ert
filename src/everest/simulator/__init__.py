@@ -3,7 +3,7 @@ from everest.simulator.simulator_cache import SimulatorCache
 JOB_SUCCESS = "Finished"
 JOB_WAITING = "Waiting"
 JOB_RUNNING = "Running"
-JOB_FAILURE = "Failure"
+JOB_FAILURE = "Failed"
 
 
 DEFAULT_DATA_SUMMARY_KEYS = ("YEAR", "YEARS" "TCPU", "TCPUDAY", "MONTH", "DAY")
