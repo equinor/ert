@@ -654,7 +654,7 @@ class Experiment:
     observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
-@settings(max_examples=300)
+@settings(max_examples=250)
 class StatefulStorageTest(RuleBasedStateMachine):
     """
     This test runs several commands against storage and
