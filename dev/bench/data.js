@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732802824687,
+  "lastUpdate": 1732864642785,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "6a4bcd2e86a23b9eaea0b8a1510694bdb5aab5b3",
-          "message": "Ignore expected warnings in test",
-          "timestamp": "2024-11-25T15:33:23+01:00",
-          "tree_id": "bcf641507e38dd1b66694da593058f34a9ff391b",
-          "url": "https://github.com/equinor/ert/commit/6a4bcd2e86a23b9eaea0b8a1510694bdb5aab5b3"
-        },
-        "date": 1732545313755,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19432645749479735,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05835965963870035",
-            "extra": "mean: 5.145979672000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03555141279673454",
             "extra": "mean: 5.222573182400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d176350d66a30f633d211d8a7108b35826c80392",
+          "message": "Suppress everest logger output to the console (#9371)\n\nSuppress everest logger output to the console",
+          "timestamp": "2024-11-29T08:15:33+01:00",
+          "tree_id": "76df32021bf81680ae86d8a335f262781c8dd4f9",
+          "url": "https://github.com/equinor/ert/commit/d176350d66a30f633d211d8a7108b35826c80392"
+        },
+        "date": 1732864642264,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1968155059439951,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02789146693841389",
+            "extra": "mean: 5.08090048700002 sec\nrounds: 5"
           }
         ]
       }
