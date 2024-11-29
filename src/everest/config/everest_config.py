@@ -756,7 +756,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "config_path": ".",
         }
 
-        return EverestConfig.model_validate({**defaults, **kwargs})
+        return cls.model_validate({**defaults, **kwargs})
 
     @staticmethod
     def lint_config_dict(config: dict) -> List["ErrorDetails"]:

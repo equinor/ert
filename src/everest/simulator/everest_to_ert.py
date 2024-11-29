@@ -489,6 +489,7 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
         )
         ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
     ert_config.queue_config.queue_options = ever_config.simulator.queue_system
+    ert_config.queue_config.queue_system = ever_config.simulator.queue_system.name
     ens_config = ert_config.ensemble_config
 
     def _get_variables(
