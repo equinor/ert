@@ -158,6 +158,10 @@ The following is a list of available LSF configuration options:
 
     QUEUE_OPTION LSF LSF_QUEUE name_of_queue
 
+.. note::
+  It is preferred to use the generic option instead:
+  QUEUE_OPTION GENERIC QUEUE_NAME name_of_queue
+
 .. _lsf_resource:
 .. topic:: LSF_RESOURCE
 
@@ -263,6 +267,10 @@ The following is a list of all queue-specific configuration options:
   The name of the queue you are running simulations in. Example::
 
     QUEUE_OPTION TORQUE QUEUE name_of_queue
+
+.. note::
+  It is preferred to use the generic option instead:
+  QUEUE_OPTION GENERIC QUEUE_NAME name_of_queue
 
 .. _torque_cluster_label:
 .. topic:: CLUSTER_LABEL
@@ -428,6 +436,10 @@ only the most necessary options have been added.
 
     QUEUE_OPTION SLURM PARTITION foo
 
+.. note::
+  It is preferred to use the generic option instead:
+  QUEUE_OPTION GENERIC QUEUE_NAME name_of_queue
+
 .. _slurm_squeue_timeout:
 .. topic:: SQUEUE_TIMEOUT
 
@@ -515,6 +527,7 @@ the `GENERIC` keyword. ::
     QUEUE_SYSTEM LSF
     QUEUE_OPTION GENERIC MAX_RUNNING 10
     QUEUE_OPTION GENERIC SUBMIT_SLEEP 2
+    QUEUE_OPTION GENERIC QUEUE_NAME some_name
 
 Is equivalent to::
 
