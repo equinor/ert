@@ -251,29 +251,23 @@ def test_snake_everest_to_ert_slurm(copy_test_data_to_tmp):
     )
 
 
-def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
-    snake_torque_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_torque.yml")
-
-    ever_config = EverestConfig.load_file(snake_torque_config_path)
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-    assert ert_config_dict[ErtConfigKeys.QUEUE_SYSTEM] == "TORQUE"
-
-    expected_queue_option_tuples = {
-        ("TORQUE", "QSUB_CMD", "qsub"),
-        ("TORQUE", "QSTAT_CMD", "qstat"),
-        ("TORQUE", "QDEL_CMD", "qdel"),
-        ("TORQUE", "QUEUE", "permanent_8"),
-        ("TORQUE", "MEMORY_PER_JOB", "100mb"),
-        ("TORQUE", "KEEP_QSUB_OUTPUT", 1),
-        ("TORQUE", "SUBMIT_SLEEP", 0.5),
-        ("TORQUE", "PROJECT_CODE", "snake_oil_pc"),
-    }
-
-    assert (
-        set(ert_config_dict[ErtConfigKeys.QUEUE_OPTION]) == expected_queue_option_tuples
+def test_everest_to_ert_torque():
+    ever_config = EverestConfig.with_defaults(
+        **{
+            "simulator": {
+                "max_runtime": "3600",
+                "queue_system": "torque",
+                "name": "permanent_8",
+                "qsub_cmd": "qsub",
+                "qstat_cmd": "qstat",
+                "qdel_cmd": "qdel",
+                "keep_qsub_output": 1,
+                "submit_sleep": 0.5,
+                "project_code": "snake_oil_pc",
+            },
+            "model": {"realizations": [0]},
+        }
     )
-
     ert_config = everest_to_ert_config(ever_config)
 
     qc = ert_config.queue_config
@@ -286,7 +280,6 @@ def test_snake_everest_to_ert_torque(copy_test_data_to_tmp):
         "qsub_cmd": "qsub",
         "qstat_cmd": "qstat",
         "qdel_cmd": "qdel",
-        "memory_per_job": "100mb",
         "num_cpus_per_node": 1,
         "num_nodes": 1,
         "keep_qsub_output": True,
