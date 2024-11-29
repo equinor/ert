@@ -282,7 +282,6 @@ def test_save_parameters_to_storage_from_design_dataframe(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
             parameters=[design_matrix.parameter_configuration[DESIGN_MATRIX_GROUP]]

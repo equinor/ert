@@ -114,11 +114,7 @@ class EnsembleExperiment(BaseRunModel):
             random_seed=self.random_seed,
         )
 
-        if (
-            design_matrix_group is not None
-            and design_matrix is not None
-            and design_matrix.design_matrix_df is not None
-        ):
+        if design_matrix_group is not None and design_matrix is not None:
             save_design_matrix_to_ensemble(
                 design_matrix.design_matrix_df,
                 self.ensemble,

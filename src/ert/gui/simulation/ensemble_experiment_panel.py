@@ -85,10 +85,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
-            if design_matrix.active_realizations:
-                self._active_realizations_field.setText(
-                    ActiveRange(design_matrix.active_realizations).rangestring
-                )
+            self._active_realizations_field.setText(
+                ActiveRange(design_matrix.active_realizations).rangestring
+            )
             show_dm_param_button = QPushButton("Show parameters")
             show_dm_param_button.setObjectName("show-dm-parameters")
             show_dm_param_button.setMinimumWidth(50)
@@ -117,20 +116,14 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
     def on_show_dm_params_clicked(self, design_matrix: DesignMatrix) -> None:
-        assert design_matrix is not None
-
-        if (
-            design_matrix.design_matrix_df is not None
-            and not design_matrix.design_matrix_df.empty
-        ):
-            viewer = DesignMatrixPanel(
-                design_matrix.design_matrix_df,
-                design_matrix.xls_filename.name,
-            )
-            viewer.setMinimumHeight(500)
-            viewer.setMinimumWidth(1000)
-            viewer.adjustSize()
-            viewer.exec_()
+        viewer = DesignMatrixPanel(
+            design_matrix.design_matrix_df,
+            design_matrix.xls_filename.name,
+        )
+        viewer.setMinimumHeight(500)
+        viewer.setMinimumWidth(1000)
+        viewer.adjustSize()
+        viewer.exec_()
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:

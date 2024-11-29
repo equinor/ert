@@ -26,13 +26,12 @@ class DesignMatrix:
     default_sheet: str
 
     def __post_init__(self) -> None:
-        self.num_realizations: Optional[int] = None
-        self.active_realizations: Optional[List[bool]] = None
-        self.design_matrix_df: Optional[pd.DataFrame] = None
-        self.parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
-
         try:
-            self.read_design_matrix()
+            (
+                self.active_realizations,
+                self.design_matrix_df,
+                self.parameter_configuration,
+            ) = self.read_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.xls_filename}: {exc}",
@@ -98,11 +97,6 @@ class DesignMatrix:
             tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters and the dedicated design matrix group
         """
 
-        if self.parameter_configuration is None or not isinstance(
-            self.parameter_configuration[DESIGN_MATRIX_GROUP], GenKwConfig
-        ):
-            return existing_parameters, None
-
         new_param_config: List[ParameterConfig] = []
 
         design_parameter_group = self.parameter_configuration[DESIGN_MATRIX_GROUP]
@@ -141,7 +135,7 @@ class DesignMatrix:
 
     def read_design_matrix(
         self,
-    ) -> None:
+    ) -> tuple[List[bool], pd.DataFrame, Dict[str, ParameterConfig]]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
@@ -205,11 +199,11 @@ class DesignMatrix:
             [[DESIGN_MATRIX_GROUP], design_matrix_df.columns]
         )
         reals = design_matrix_df.index.tolist()
-        self.num_realizations = len(reals)
-        self.active_realizations = [x in reals for x in range(max(reals) + 1)]
-
-        self.design_matrix_df = design_matrix_df
-        self.parameter_configuration = parameter_configuration
+        return (
+            [x in reals for x in range(max(reals) + 1)],
+            design_matrix_df,
+            parameter_configuration,
+        )
 
     @staticmethod
     def _read_excel(
