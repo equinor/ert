@@ -29,8 +29,12 @@ from typing import (
     Union,
 )
 
+import numpy as np
 import seba_sqlite.sqlite_storage
+from numpy import float64
+from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
+from ropt.evaluator import Evaluator, EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
 from seba_sqlite import SqliteStorage
@@ -58,10 +62,6 @@ if TYPE_CHECKING:
 
     from ert.storage import Ensemble, Experiment
 
-import numpy as np
-from numpy import float64
-from numpy._typing import NDArray
-from ropt.evaluator import Evaluator, EvaluatorContext, EvaluatorResult
 
 # A number of settings for the table reporters:
 RESULT_COLUMNS = {
@@ -131,17 +131,6 @@ class JobProgress(TypedDict):
     end_time: Optional[datetime.datetime]
     realization: str
     simulation: str
-
-
-class MonitorThreadErrorCallback(Protocol):
-    def __call__(
-        self,
-        batch: int,
-        simulation: Any,
-        realization: str,
-        fm_name: str,
-        error_path: str,
-    ) -> None: ...
 
 
 class SimulationCallback(Protocol):

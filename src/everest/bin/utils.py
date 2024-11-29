@@ -161,7 +161,6 @@ class _DetachedMonitor:
                         self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 sim_progress = status[SIM_PROGRESS_ID]
-                sim_progress["status"] = sim_progress["status"]
                 sim_progress["progress"] = self._filter_jobs(sim_progress["progress"])
                 msg, batch = self.get_fm_progress(sim_progress)
                 if msg.strip():
