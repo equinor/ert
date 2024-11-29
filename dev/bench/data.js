@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732878444958,
+  "lastUpdate": 1732879350919,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "baccfe19b4be2ae90ca8da0ef477c9f0bf060456",
-          "message": "Install everest deps when building readthedocs",
-          "timestamp": "2024-11-26T12:15:48+01:00",
-          "tree_id": "def7e8b8e07d63e37524ec49c0e5e1738fa0bb4b",
-          "url": "https://github.com/equinor/ert/commit/baccfe19b4be2ae90ca8da0ef477c9f0bf060456"
-        },
-        "date": 1732619862701,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1951988419515447,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029686839000548502",
-            "extra": "mean: 5.122981212399997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04723139479139347",
             "extra": "mean: 5.0691810295999975 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "105e41a754091570d234a7e251f88acf40b9c9f4",
+          "message": "Make sure that migrations use correct dtypes",
+          "timestamp": "2024-11-29T12:20:40+01:00",
+          "tree_id": "eb258b2fc42c35cb54c73f5be5d8b40cd39f543c",
+          "url": "https://github.com/equinor/ert/commit/105e41a754091570d234a7e251f88acf40b9c9f4"
+        },
+        "date": 1732879350277,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1923995306790705,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03137511752879723",
+            "extra": "mean: 5.197517875800003 sec\nrounds: 5"
           }
         ]
       }
