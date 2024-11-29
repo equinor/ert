@@ -34,7 +34,7 @@ import seba_sqlite.sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
-from ropt.evaluator import Evaluator, EvaluatorContext, EvaluatorResult
+from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
 from seba_sqlite import SqliteStorage
@@ -390,7 +390,7 @@ class EverestRunModel(BaseRunModel):
         # maximization results, necessitating a conversion step.
         optimizer = (
             BasicOptimizer(
-                enopt_config=self.ropt_config, evaluator=self.run_forward_model
+                enopt_config=self.ropt_config, evaluator=self._forward_model_evaluator
             )
             .add_table(
                 columns=RESULT_COLUMNS,
@@ -582,7 +582,7 @@ class EverestRunModel(BaseRunModel):
                     control_name, sim_id, ExtParamConfig.to_dataset(control)
                 )
 
-    def run_forward_model(
+    def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], metadata: EvaluatorContext
     ) -> EvaluatorResult:
         def _slug(entity: str) -> str:
@@ -616,12 +616,6 @@ class EverestRunModel(BaseRunModel):
         for sim_id, (geo_id, _) in enumerate(case_data):
             if self.active_realizations[sim_id]:
                 substitutions[f"<GEO_ID_{sim_id}_0>"] = str(geo_id)
-
-        # TODO: This causes problems with `test_remove_run_path`` Setting it to
-        # zero fixes that, but breaks `test_state_modifier_workflow_run`. There
-        # seems to be a disagreement on how everest and ert handle/define failed
-        # realizations.
-        self.minimum_required_realizations = len(self.active_realizations)
 
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,

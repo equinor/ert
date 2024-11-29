@@ -31,8 +31,8 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     )
 
     # Modify the forward model function to track number of calls:
-    original_call = run_model.run_forward_model
-    run_model.run_forward_model = new_call
+    original_call = run_model._forward_model_evaluator
+    run_model._forward_model_evaluator = new_call
 
     # First run populates the cache:
     run_model.run_experiment(evaluator_server_config)
