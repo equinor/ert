@@ -10,36 +10,44 @@ from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
     "parameters, error_msg",
     [
         pytest.param(
-            ["a", "b"],
+            {"COEFFS": ["a", "b"]},
             "",
             id="genkw_replaced",
         ),
         pytest.param(
-            ["a"],
+            {"COEFFS": ["a"]},
             "Overlapping parameter names found in design matrix!",
-            id="error",
+            id="ValidationErrorOverlapping",
         ),
         pytest.param(
-            [],
+            {"COEFFS": ["aa", "bb"], "COEFFS2": ["cc", "dd"]},
             "",
             id="DESIGN_MATRIX_GROUP",
+        ),
+        pytest.param(
+            {"COEFFS": ["a", "b"], "COEFFS2": ["a", "b"]},
+            "Multiple overlapping groups with design matrix found in existing parameters!",
+            id="ValidationErrorMultipleGroups",
         ),
     ],
 )
 def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg):
-    extra_genkw_config = None
+    extra_genkw_config = []
     if parameters:
-        extra_genkw_config = GenKwConfig(
-            name="COEFFS",
-            forward_init=False,
-            template_file="",
-            transform_function_definitions=[
-                TransformFunctionDefinition(param, "UNIFORM", [0, 1])
-                for param in parameters
-            ],
-            output_file="kw.txt",
-            update=True,
-        )
+        for group_name in parameters:
+            extra_genkw_config.append(
+                GenKwConfig(
+                    name=group_name,
+                    forward_init=False,
+                    template_file="",
+                    transform_function_definitions=[
+                        TransformFunctionDefinition(param, "UNIFORM", [0, 1])
+                        for param in parameters[group_name]
+                    ],
+                    output_file="kw.txt",
+                    update=True,
+                )
+            )
 
     realizations = [0, 1, 2]
     design_path = tmp_path / "design_matrix.xlsx"
@@ -57,18 +65,18 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    if len(parameters) == 2:
+    if error_msg:
+        with pytest.raises(ValueError, match=error_msg):
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+    elif len(parameters) == 1:
         new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters([extra_genkw_config])
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
         )
         assert len(new_config_parameters) == 0
         assert design_group.name == "COEFFS"
-    elif len(parameters) == 1:
-        with pytest.raises(ValueError, match=error_msg):
-            design_matrix.merge_with_existing_parameters([extra_genkw_config])
-    else:
+    elif len(parameters) == 2:
         new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters([extra_genkw_config])
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
         )
         assert len(new_config_parameters) == 2
         assert design_group.name == DESIGN_MATRIX_GROUP
