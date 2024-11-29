@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732864642785,
+  "lastUpdate": 1732870064611,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "oyveid@equinor.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "c0cb78880bca1cdc045935f60f1e157ea60746b2",
-          "message": "Remove report_steps\n\nThis was a remnant from when we could not load different summary\nfiles with different report_steps. This is no longer the case, so\nthis is just a complication.",
-          "timestamp": "2024-11-25T16:46:14+01:00",
-          "tree_id": "9ab87e9eff109b50a44da1ad82093c5c8b88667d",
-          "url": "https://github.com/equinor/ert/commit/c0cb78880bca1cdc045935f60f1e157ea60746b2"
-        },
-        "date": 1732549685308,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19593875553165482,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021031451449080443",
-            "extra": "mean: 5.1036355584000095 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02789146693841389",
             "extra": "mean: 5.08090048700002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "1df489a295c252968d777f973eb8be911f9ed0e1",
+          "message": "Remove lambda function",
+          "timestamp": "2024-11-29T09:45:49+01:00",
+          "tree_id": "f140d3e959289822806f63ddcf95ac707cb819fd",
+          "url": "https://github.com/equinor/ert/commit/1df489a295c252968d777f973eb8be911f9ed0e1"
+        },
+        "date": 1732870064072,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19077687544305852,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07491276480983348",
+            "extra": "mean: 5.2417254328000125 sec\nrounds: 5"
           }
         ]
       }
