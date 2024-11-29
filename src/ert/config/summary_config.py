@@ -82,8 +82,9 @@ class SummaryConfig(ResponseConfig):
                     "In order to use summary responses, ECLBASE has to be set."
                 )
             time_map = set(refcase.dates) if refcase is not None else None
-            forward_model = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
-            names = [fm_step[0] for fm_step in forward_model]
+            fm_steps = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
+            sim_steps = config_dict.get(ConfigKeys.SIMULATION_JOB, [])
+            names = [fm_step[0] for fm_step in fm_steps + sim_steps]
             simulation_step_exists = any(
                 any(sim in _name.lower() for sim in ["eclipse", "flow"])
                 for _name in names
