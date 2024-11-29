@@ -1820,10 +1820,22 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
 
 
 @pytest.mark.parametrize(
-    "job_name", ["eclipse", "eclipse100", "flow", "FLOW", "ECLIPSE100"]
+    "job_name, key",
+    [
+        ("eclipse", "FORWARD_MODEL"),
+        ("eclipse100", "FORWARD_MODEL"),
+        ("flow", "FORWARD_MODEL"),
+        ("FLOW", "FORWARD_MODEL"),
+        ("ECLIPSE100", "FORWARD_MODEL"),
+        ("eclipse", "SIMULATION_JOB"),
+        ("eclipse100", "SIMULATION_JOB"),
+        ("flow", "SIMULATION_JOB"),
+        ("FLOW", "SIMULATION_JOB"),
+        ("ECLIPSE100", "SIMULATION_JOB"),
+    ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name, key):
     with open("job_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
 
@@ -1834,9 +1846,7 @@ def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
         fout.write("ECLBASE RESULT_SUMMARY\n")
 
         fout.write(f"INSTALL_JOB {job_name} job_file\n")
-        fout.write(
-            f"FORWARD_MODEL {job_name}(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
-        )
+        fout.write(f"{key} {job_name} (<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n")
     # Check no warning is logged when config contains
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
     with warnings.catch_warnings():
