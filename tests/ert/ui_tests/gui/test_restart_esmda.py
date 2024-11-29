@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QCheckBox, QComboBox, QWidget
 from ert.gui.ertwidgets import StringBox
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.run_models import MultipleDataAssimilation
+from ert.run_models import MultipleDataAssimilation, SingleTestRun
 
 from .conftest import get_child
 
@@ -38,6 +38,44 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
     )
+
+
+def test_active_realizations_esmda(opened_main_window_poly, qtbot):
+    """This runs a single test run and then verifies that this does
+    not interfere with the activate realizations in the es_mda panel
+    unless the restart from that specific ensemble is checked.
+    """
+    gui = opened_main_window_poly
+
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
+    simulation_mode_combo.setCurrentText(SingleTestRun.name())
+
+    single_test_run_panel = gui.findChild(QWidget, name="Single_test_run_panel")
+    assert single_test_run_panel
+    run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+    run_dialog = gui.findChild(RunDialog)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=15000)
+    assert (
+        run_dialog._total_progress_label.text()
+        == "Total progress 100% — Experiment completed."
+    )
+
+    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.name())
+    es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
+    assert es_mda_panel
+    active_reals = gui.findChild(StringBox, "active_realizations_box")
+    assert active_reals.text() == "0-19"
+
+    restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
+    assert restart_checkbox
+    assert not restart_checkbox.isChecked()
+    restart_checkbox.click()
+    assert active_reals.text() == "0"
+    restart_checkbox.click()
+    assert active_reals.text() == "0-19"
 
 
 def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
