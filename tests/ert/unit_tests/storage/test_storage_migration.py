@@ -5,9 +5,11 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import polars
 import pytest
 from packaging import version
 
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from ert.storage.local_storage import (
@@ -355,3 +357,97 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     assert (
         tmp_path / "storage" / "_blockfs_backup" / "ensembles" / "ens_dummy.txt"
     ).exists()
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "10.3.1",
+        "8.4.5",
+        "8.0.11",
+        "6.0.5",
+        "5.0.0",
+    ],
+)
+def test_that_manual_update_from_migrated_storage_works(
+    tmp_path,
+    block_storage_path,
+    snapshot,
+    monkeypatch,
+    ert_version,
+):
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        tmp_path / "all_data_types" / f"storage-{ert_version}",
+    )
+    monkeypatch.chdir(tmp_path / "all_data_types")
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    local_storage_set_ert_config(ert_config)
+    # To make sure all tests run against the same snapshot
+    snapshot.snapshot_dir = snapshot.snapshot_dir.parent
+    with open_storage(f"storage-{ert_version}", "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+        prior_ens = ensembles[0]
+
+        assert set(experiment.observations["gen_data"].schema.items()) == {
+            ("index", polars.UInt16),
+            ("observation_key", polars.String),
+            ("observations", polars.Float32),
+            ("report_step", polars.UInt16),
+            ("response_key", polars.String),
+            ("std", polars.Float32),
+        }
+
+        assert set(experiment.observations["summary"].schema.items()) == {
+            ("observation_key", polars.String),
+            ("observations", polars.Float32),
+            ("response_key", polars.String),
+            ("std", polars.Float32),
+            ("time", polars.Datetime(time_unit="ms")),
+        }
+
+        prior_gendata = prior_ens.load_responses(
+            "gen_data", tuple(range(prior_ens.ensemble_size))
+        )
+        prior_smry = prior_ens.load_responses(
+            "summary", tuple(range(prior_ens.ensemble_size))
+        )
+
+        assert set(prior_gendata.schema.items()) == {
+            ("response_key", polars.String),
+            ("index", polars.UInt16),
+            ("realization", polars.UInt16),
+            ("report_step", polars.UInt16),
+            ("values", polars.Float32),
+        }
+
+        assert set(prior_smry.schema.items()) == {
+            ("response_key", polars.String),
+            ("time", polars.Datetime(time_unit="ms")),
+            ("realization", polars.UInt16),
+            ("values", polars.Float32),
+        }
+
+        posterior_ens = storage.create_ensemble(
+            prior_ens.experiment_id,
+            ensemble_size=prior_ens.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior_ens,
+        )
+
+        with pytest.raises(
+            ErtAnalysisError, match="No active observations for update step"
+        ):
+            smoother_update(
+                prior_ens,
+                posterior_ens,
+                list(experiment.observation_keys),
+                list(ert_config.ensemble_config.parameters),
+            )

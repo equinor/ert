@@ -22,7 +22,22 @@ class ObservationDatasetInfo:
         response_key = ds.attrs["response"]
         response_type = "summary" if response_key == "summary" else "gen_data"
 
-        df = polars.from_pandas(ds.to_dataframe().dropna().reset_index())
+        df = polars.from_pandas(
+            ds.to_dataframe().dropna().reset_index(),
+            schema_overrides={
+                "report_step": polars.UInt16,
+                "index": polars.UInt16,
+                "observations": polars.Float32,
+                "std": polars.Float32,
+            }
+            if response_type == "gen_data"
+            else {
+                "time": polars.Datetime("ms"),  # type: ignore
+                "observations": polars.Float32,
+                "std": polars.Float32,
+            },
+        )
+
         df = df.with_columns(observation_key=polars.lit(observation_key))
 
         primary_key = (
@@ -30,21 +45,11 @@ class ObservationDatasetInfo:
         )
         if response_type == "summary":
             df = df.rename({"name": "response_key"})
-            df = df.with_columns(polars.col("time").dt.cast_time_unit("ms"))
 
         if response_type == "gen_data":
             df = df.with_columns(
-                polars.col("report_step").cast(polars.UInt16),
-                polars.col("index").cast(polars.UInt16),
                 response_key=polars.lit(response_key),
             )
-
-        df = df.with_columns(
-            [
-                polars.col("std").cast(polars.Float32),
-                polars.col("observations").cast(polars.Float32),
-            ]
-        )
 
         df = df[
             ["response_key", "observation_key", *primary_key, "observations", "std"]
@@ -71,26 +76,37 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
             real_dirs = [*ens.glob("realization-*")]
 
             for real_dir in real_dirs:
-                for ds_name in ["gen_data", "summary"]:
-                    if (real_dir / f"{ds_name}.nc").exists():
-                        gen_data_ds = xr.open_dataset(
-                            real_dir / f"{ds_name}.nc", engine="scipy"
+                for response_type, schema_overrides in [
+                    (
+                        "gen_data",
+                        {
+                            "realization": polars.UInt16,
+                            "report_step": polars.UInt16,
+                            "index": polars.UInt16,
+                            "values": polars.Float32,
+                        },
+                    ),
+                    (
+                        "summary",
+                        {
+                            "realization": polars.UInt16,
+                            "time": polars.Datetime("ms"),
+                            "values": polars.Float32,
+                        },
+                    ),
+                ]:
+                    if (real_dir / f"{response_type}.nc").exists():
+                        xr_ds = xr.open_dataset(
+                            real_dir / f"{response_type}.nc",
+                            engine="scipy",
                         )
 
-                        pandas_df = gen_data_ds.to_dataframe().dropna().reset_index()
+                        pandas_df = xr_ds.to_dataframe().dropna().reset_index()
                         polars_df = polars.from_pandas(
                             pandas_df,
-                            schema_overrides={
-                                "values": polars.Float32,
-                                "realization": polars.UInt16,
-                            },
+                            schema_overrides=schema_overrides,  # type: ignore
                         )
                         polars_df = polars_df.rename({"name": "response_key"})
-
-                        if "time" in polars_df:
-                            polars_df = polars_df.with_columns(
-                                polars.col("time").dt.cast_time_unit("ms")
-                            )
 
                         # Ensure "response_key" is the first column
                         polars_df = polars_df.select(
@@ -101,9 +117,9 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
                                 if col != "response_key"
                             ]
                         )
-                        polars_df.write_parquet(real_dir / f"{ds_name}.parquet")
+                        polars_df.write_parquet(real_dir / f"{response_type}.parquet")
 
-                        os.remove(real_dir / f"{ds_name}.nc")
+                        os.remove(real_dir / f"{response_type}.nc")
 
 
 def _migrate_observations_to_grouped_parquet(path: Path) -> None:
