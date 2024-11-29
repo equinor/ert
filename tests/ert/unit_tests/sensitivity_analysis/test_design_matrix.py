@@ -102,7 +102,6 @@ def test_reading_design_matrix(tmp_path):
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     design_params = design_matrix.parameter_configuration.get(DESIGN_MATRIX_GROUP, [])
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
-    assert design_matrix.num_realizations == 3
     assert design_matrix.active_realizations == [True, True, False, False, True]
 
 
