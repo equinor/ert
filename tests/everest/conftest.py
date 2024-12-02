@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 from copy import deepcopy
 from pathlib import Path
 from typing import Callable, Dict, Iterator, Optional, Union
@@ -8,6 +9,8 @@ import pytest
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.everest_run_model import EverestRunModel
+from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
 from tests.everest.utils import relpath
 
@@ -144,3 +147,52 @@ def evaluator_server_config_generator():
         )
 
     return create_evaluator_server_config
+
+
+@pytest.fixture
+def cached_example(pytestconfig, evaluator_server_config_generator):
+    cache = pytestconfig.cache
+
+    def run_config(test_data_case: str):
+        if cache.get(f"cached_example:{test_data_case}", None) is None:
+            my_tmpdir = Path(tempfile.mkdtemp())
+            config_path = (
+                Path(__file__) / f"../../../test-data/everest/{test_data_case}"
+            ).resolve()
+            config_file = config_path.name
+
+            shutil.copytree(config_path.parent, my_tmpdir / "everest")
+            config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
+            run_model = EverestRunModel.create(config)
+            evaluator_server_config = evaluator_server_config_generator(run_model)
+            try:
+                run_model.run_experiment(evaluator_server_config)
+            except Exception as e:
+                raise Exception(f"Failed running {config_path} with error: {e}") from e
+
+            result_path = my_tmpdir / "everest"
+
+            optimal_result = run_model.result
+            optimal_result_json = {
+                "batch": optimal_result.batch,
+                "controls": optimal_result.controls,
+                "total_objective": optimal_result.total_objective,
+            }
+
+            cache.set(
+                f"cached_example:{test_data_case}",
+                (str(result_path), config_file, optimal_result_json),
+            )
+
+        result_path, config_file, optimal_result_json = cache.get(
+            f"cached_example:{test_data_case}", (None, None, None)
+        )
+
+        copied_tmpdir = tempfile.mkdtemp()
+        shutil.copytree(result_path, Path(copied_tmpdir) / "everest")
+        copied_path = str(Path(copied_tmpdir) / "everest")
+        os.chdir(copied_path)
+
+        return copied_path, config_file, optimal_result_json
+
+    return run_config

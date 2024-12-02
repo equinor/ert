@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict
 
 import orjson
@@ -7,7 +8,7 @@ import polars
 import pytest
 
 from ert.config import SummaryConfig
-from ert.run_models.everest_run_model import EverestRunModel
+from ert.storage import open_storage
 from everest.api import EverestDataAPI
 from everest.config import EverestConfig
 
@@ -62,24 +63,11 @@ def make_api_snapshot(api) -> Dict[str, Any]:
         "config_stddev.yml",
     ],
 )
-def test_api_snapshots(
-    config_file,
-    copy_math_func_test_data_to_tmp,
-    evaluator_server_config_generator,
-    snapshot,
-):
-    config = EverestConfig.load_file(config_file)
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
-
-    optimal_result = run_model.result
-    optimal_result_json = {
-        "batch": optimal_result.batch,
-        "controls": optimal_result.controls,
-        "total_objective": optimal_result.total_objective,
-    }
-
+def test_api_snapshots(config_file, snapshot, cached_example):
+    config_path, config_file, optimal_result_json = cached_example(
+        f"math_func/{config_file}"
+    )
+    config = EverestConfig.load_file(Path(config_path) / config_file)
     api = EverestDataAPI(config)
     json_snapshot = make_api_snapshot(api)
     json_snapshot["optimal_result_json"] = optimal_result_json
@@ -94,43 +82,40 @@ def test_api_snapshots(
     snapshot.assert_match(snapshot_str, "snapshot.json")
 
 
-def test_api_summary_snapshot(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator, snapshot
-):
-    config = EverestConfig.load_file("config_minimal.yml")
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
+def test_api_summary_snapshot(snapshot, cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    # Save some summary data to each ensemble
-    experiment = next(run_model._storage.experiments)
+    with open_storage(config.storage_dir, mode="w") as storage:
+        # Save some summary data to each ensemble
+        experiment = next(storage.experiments)
 
-    response_config = experiment.response_configuration
-    response_config["summary"] = SummaryConfig(keys=["*"])
+        response_config = experiment.response_configuration
+        response_config["summary"] = SummaryConfig(keys=["*"])
 
-    experiment._storage._write_transaction(
-        experiment._path / experiment._responses_file,
-        json.dumps(
-            {c.response_type: c.to_dict() for c in response_config.values()},
-            default=str,
-            indent=2,
-        ).encode("utf-8"),
-    )
+        experiment._storage._write_transaction(
+            experiment._path / experiment._responses_file,
+            json.dumps(
+                {c.response_type: c.to_dict() for c in response_config.values()},
+                default=str,
+                indent=2,
+            ).encode("utf-8"),
+        )
 
-    smry_data = polars.DataFrame(
-        {
-            "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
-            "time": polars.Series(
-                [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
-            ).dt.cast_time_unit("ms"),
-            "values": polars.Series(
-                [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
-            ),
-        }
-    )
-    for ens in experiment.ensembles:
-        for real in range(ens.ensemble_size):
-            ens.save_response("summary", smry_data.clone(), real)
+        smry_data = polars.DataFrame(
+            {
+                "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
+                "time": polars.Series(
+                    [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
+                ).dt.cast_time_unit("ms"),
+                "values": polars.Series(
+                    [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
+                ),
+            }
+        )
+        for ens in experiment.ensembles:
+            for real in range(ens.ensemble_size):
+                ens.save_response("summary", smry_data.clone(), real)
 
     api = EverestDataAPI(config)
     dicts = polars.from_pandas(api.summary_values()).to_dicts()
