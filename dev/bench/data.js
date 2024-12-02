@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733133958121,
+  "lastUpdate": 1733134672961,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "dc5ab03d3013b896c85ee095da20a89db375928b",
-          "message": "Remove excess minimum realizations validation in baserunmodel\n\nThis commit removes the additional validation `validate_active_realizations_count` which checked that the number of  realizations to run was greater than the minimum required realizations count.\nThis validation is already done in `model_factory::_setup_ensemble_experiment`",
-          "timestamp": "2024-11-26T14:12:41+01:00",
-          "tree_id": "d248292d4d0450a5c669c1d0527461d91c22dcad",
-          "url": "https://github.com/equinor/ert/commit/dc5ab03d3013b896c85ee095da20a89db375928b"
-        },
-        "date": 1732626874798,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19477501413344553,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04043459587765664",
-            "extra": "mean: 5.134128750800005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.046897176649856",
             "extra": "mean: 5.224974742600006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "0d1430ed21320779649478c0617ec0401260d722",
+          "message": "Add also the simulation jobs to the list of possible simulator instances.\n\nEverest is adding SIMULATION_JOB key and not FORWARD_MODEL key for the steps in the forward model",
+          "timestamp": "2024-12-02T19:16:01+09:00",
+          "tree_id": "be0fcbea412d0eaf4ee25c7aaf752e3bad712685",
+          "url": "https://github.com/equinor/ert/commit/0d1430ed21320779649478c0617ec0401260d722"
+        },
+        "date": 1733134672326,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19036200242006743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036633390621088266",
+            "extra": "mean: 5.253149196200002 sec\nrounds: 5"
           }
         ]
       }
