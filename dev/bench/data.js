@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733142334794,
+  "lastUpdate": 1733142466097,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "447d647c224ffc7f94fcd905d4597aff55a766f4",
-          "message": "Use explicit everest config components when creating ropt config object",
-          "timestamp": "2024-11-27T17:40:26+09:00",
-          "tree_id": "eb504b41594721a723b792d04ac07834cf0bf29b",
-          "url": "https://github.com/equinor/ert/commit/447d647c224ffc7f94fcd905d4597aff55a766f4"
-        },
-        "date": 1732696933729,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19115550773424858,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029059871232901543",
-            "extra": "mean: 5.231342857199996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029801264624543234",
             "extra": "mean: 5.222922112200007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a84a98e4447dbf7101d8661fbfcc6ee525181f6",
+          "message": "Update ropt to 0.10.0 (#9405)\n\n* Update ropt to 0.10.0\r\n\r\n* Run ruff format",
+          "timestamp": "2024-12-02T13:25:53+01:00",
+          "tree_id": "a0364d4dc7359bc7379ab7a1db23f87199cfa99f",
+          "url": "https://github.com/equinor/ert/commit/3a84a98e4447dbf7101d8661fbfcc6ee525181f6"
+        },
+        "date": 1733142465450,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19563369033055503,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03777665863641594",
+            "extra": "mean: 5.111594011799997 sec\nrounds: 5"
           }
         ]
       }
