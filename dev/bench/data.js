@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733142466097,
+  "lastUpdate": 1733150918529,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "28c0abd02071268c47353ad4b04c9163d188f900",
-          "message": "Add '-sv' flag when running everest integration tests",
-          "timestamp": "2024-11-27T18:34:44+09:00",
-          "tree_id": "f79c6fd84430f9ab44519d88964e63f223652804",
-          "url": "https://github.com/equinor/ert/commit/28c0abd02071268c47353ad4b04c9163d188f900"
-        },
-        "date": 1732700198161,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19072920572991123,
-            "unit": "iter/sec",
-            "range": "stddev: 0.064560775861534",
-            "extra": "mean: 5.243035518200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03777665863641594",
             "extra": "mean: 5.111594011799997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "22687ea7c012ab36176ad48cff53884726f55273",
+          "message": "Remove test_api.py\n\nBehavior of plot API is still locked in by snapshots in `test_api_snapshots.py`",
+          "timestamp": "2024-12-02T15:46:46+01:00",
+          "tree_id": "d4179bc83fb0e947b7c3a72289fd2a8071229cdb",
+          "url": "https://github.com/equinor/ert/commit/22687ea7c012ab36176ad48cff53884726f55273"
+        },
+        "date": 1733150917551,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19379841736524772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.007068278583113922",
+            "extra": "mean: 5.160000858600003 sec\nrounds: 5"
           }
         ]
       }
