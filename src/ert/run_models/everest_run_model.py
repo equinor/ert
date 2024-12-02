@@ -660,7 +660,7 @@ class EverestRunModel(BaseRunModel):
 
         objectives = self._get_active_results(
             results,
-            metadata.config.objective_functions.names,  # type: ignore
+            metadata.config.objectives.names,  # type: ignore
             control_values,
             active,
         )
