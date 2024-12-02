@@ -4,6 +4,7 @@ import argparse
 import locale
 import logging
 import logging.config
+import multiprocessing
 import os
 import re
 import resource
@@ -704,4 +705,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if (
+        sys.platform == "linux"
+        and multiprocessing.get_start_method(allow_none=True) != "forkserver"
+    ):
+        multiprocessing.set_start_method("forkserver")
     main()
