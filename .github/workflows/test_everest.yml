@@ -40,22 +40,22 @@ jobs:
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 -m "not integration_test" --dist loadgroup -sv
+        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test" --dist loadgroup -sv
 
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 -m "not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
 
     - name: Run Integration Tests Linux
       if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 -m "integration_test" --dist loadgroup -sv
+        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test" --dist loadgroup -sv
 
     - name: Run Integration Tests macOS
       if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
@@ -68,9 +68,37 @@ jobs:
       if: inputs.test-type == 'everest-models-test'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        python -m pytest tests/everest -n 4 -m everest_models_test --dist loadgroup
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup
 
     - name: Test docs entry point
       if: inputs.test-type == 'everest-docs-entry-test'
       run: |
         python -m everest.docs
+
+    - name: Upload coverage to Codecov
+      id: codecov1
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+    - name: codecov retry sleep
+      if: steps.codecov1.outcome == 'failure'
+      run: |
+        sleep 30
+    - name: Codecov retry
+      uses: codecov/codecov-action@v4
+      if: steps.codecov1.outcome == 'failure'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: cov1.xml,cov2.xml
+        flags: ${{ inputs.test-type }}
+        fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
