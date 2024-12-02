@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733141192478,
+  "lastUpdate": 1733142334794,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "distinct": true,
-          "id": "dd7925c48926cce52e2e0cadb3994ec11658cf45",
-          "message": "Remove the everest load entry point",
-          "timestamp": "2024-11-27T09:23:34+01:00",
-          "tree_id": "af2ddaa3ce8c3b0378506b91930c215d5ca470b3",
-          "url": "https://github.com/equinor/ert/commit/dd7925c48926cce52e2e0cadb3994ec11658cf45"
-        },
-        "date": 1732695922113,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1922525504311773,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02507621422219319",
-            "extra": "mean: 5.201491464000009 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03441055395684877",
             "extra": "mean: 5.295852246599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "2ef40b4278dd51c4053731283dc8971dda821230",
+          "message": "Make it possible to have multiline statements in config",
+          "timestamp": "2024-12-02T13:23:38+01:00",
+          "tree_id": "3de8fba5f73c16034f691bb7f73045152a5f2937",
+          "url": "https://github.com/equinor/ert/commit/2ef40b4278dd51c4053731283dc8971dda821230"
+        },
+        "date": 1733142333408,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19146370145251476,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029801264624543234",
+            "extra": "mean: 5.222922112200007 sec\nrounds: 5"
           }
         ]
       }
