@@ -472,9 +472,7 @@ def _parse_optimization(
             constraint_count = len(
                 ropt_config.get("nonlinear_constraints", {}).get("names", [])
             )
-            ropt_config["objectives"]["realization_filters"] = (
-                objective_count * [0]
-            )
+            ropt_config["objectives"]["realization_filters"] = objective_count * [0]
             if constraint_count > 0:
                 ropt_config["nonlinear_constraints"]["realization_filters"] = (
                     constraint_count * [0]
