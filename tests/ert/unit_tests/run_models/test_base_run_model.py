@@ -280,7 +280,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
 def test_get_current_status(
     initial_active_realizations,
     new_active_realizations,
-    real_status_dict: dict[str, str],
+    real_status_dict,
     expected_result,
 ):
     """Active realizations gets changed when we choose to rerun, and the result from the previous run should be included in the current_status."""
