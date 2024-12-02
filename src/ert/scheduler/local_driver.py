@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import os
 import signal
 from asyncio.subprocess import Process
 from contextlib import suppress
@@ -106,7 +105,7 @@ class LocalDriver(Driver):
         return await asyncio.create_subprocess_exec(
             executable,
             *args,
-            preexec_fn=os.setpgrp,
+            start_new_session=True,
         )
 
     @staticmethod
