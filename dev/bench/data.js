@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732879350919,
+  "lastUpdate": 1733128453978,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "67e756dc9e56d73679877b190343600c21d397b5",
-          "message": "Fix extra requirements for readthedocs build",
-          "timestamp": "2024-11-26T12:40:01+01:00",
-          "tree_id": "b3d67e2db5934891c684b168d6874e1f71cbb720",
-          "url": "https://github.com/equinor/ert/commit/67e756dc9e56d73679877b190343600c21d397b5"
-        },
-        "date": 1732621313463,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1941991921705421,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01528226801816358",
-            "extra": "mean: 5.149352007200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03137511752879723",
             "extra": "mean: 5.197517875800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "6197ed4ebca19c46cd44b1080c6ce60fb9f59222",
+          "message": "Reduce examples ran in storage test",
+          "timestamp": "2024-12-02T09:32:16+01:00",
+          "tree_id": "7492c002fb1833ea645140662fdadabb22a49d8c",
+          "url": "https://github.com/equinor/ert/commit/6197ed4ebca19c46cd44b1080c6ce60fb9f59222"
+        },
+        "date": 1733128453040,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19529733591711776,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02977841711705624",
+            "extra": "mean: 5.120397548199992 sec\nrounds: 5"
           }
         ]
       }
