@@ -159,7 +159,7 @@ class Simulator(BatchSimulator):
             for result in results:
                 result[fnc_name] = result[alias]
 
-        names = metadata.config.objective_functions.names
+        names = metadata.config.objectives.names
         objectives = self._get_active_results(
             results,
             names,  # type: ignore

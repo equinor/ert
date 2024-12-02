@@ -206,7 +206,7 @@ def test_everest2ropt_cvar():
 
     ropt_config = everest2ropt(EverestConfig.model_validate(config_dict))
 
-    assert ropt_config.objective_functions.realization_filters == [0]
+    assert ropt_config.objectives.realization_filters == [0]
     assert len(ropt_config.realization_filters) == 1
     assert ropt_config.realization_filters[0].method == "sort-objective"
     assert ropt_config.realization_filters[0].options["sort"] == [0]
@@ -218,7 +218,7 @@ def test_everest2ropt_cvar():
     }
 
     ropt_config = everest2ropt(EverestConfig.model_validate(config_dict))
-    assert ropt_config.objective_functions.realization_filters == [0]
+    assert ropt_config.objectives.realization_filters == [0]
     assert len(ropt_config.realization_filters) == 1
     assert ropt_config.realization_filters[0].method == "cvar-objective"
     assert ropt_config.realization_filters[0].options["sort"] == [0]

@@ -278,7 +278,7 @@ def _parse_objectives(objective_functions: List[ObjectiveFunctionConfig], ropt_c
             transforms.append({"method": objective_type})
         transform_indices.append(transform_idx)
 
-    ropt_config["objective_functions"] = {
+    ropt_config["objectives"] = {
         "names": names,
         "weights": weights,
         "scales": scales,
@@ -286,7 +286,7 @@ def _parse_objectives(objective_functions: List[ObjectiveFunctionConfig], ropt_c
     }
     if transforms:
         # Only needed if we specified at least one objective type:
-        ropt_config["objective_functions"]["function_transforms"] = transform_indices
+        ropt_config["objectives"]["function_transforms"] = transform_indices
         ropt_config["function_transforms"] = transforms
 
 
@@ -468,11 +468,11 @@ def _parse_optimization(
             # indices to any realization filters that should be applied. In this
             # case, we want all objectives and constraints to refer to the same
             # filter implementing cvar:
-            objective_count = len(ropt_config["objective_functions"]["names"])
+            objective_count = len(ropt_config["objectives"]["names"])
             constraint_count = len(
                 ropt_config.get("nonlinear_constraints", {}).get("names", [])
             )
-            ropt_config["objective_functions"]["realization_filters"] = (
+            ropt_config["objectives"]["realization_filters"] = (
                 objective_count * [0]
             )
             if constraint_count > 0:
