@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733137370344,
+  "lastUpdate": 1733141192478,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "398aa3e77980a329bc9a91e5a540fb2cc99ea03e",
-          "message": "Unpin hypothesis",
-          "timestamp": "2024-11-27T09:15:00+01:00",
-          "tree_id": "c2d72160ec8103e25d449d1fb65a240b51acf709",
-          "url": "https://github.com/equinor/ert/commit/398aa3e77980a329bc9a91e5a540fb2cc99ea03e"
-        },
-        "date": 1732695417284,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1942073480123078,
-            "unit": "iter/sec",
-            "range": "stddev: 0.035025050932171516",
-            "extra": "mean: 5.149135757400001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02435365875604968",
             "extra": "mean: 5.213373702399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "ef9b3b8e3b8c6dd0981853032762742dfaa915bc",
+          "message": "Fix _storage_main `terminate_on_parent_death` not working on mac\n\nPrior to this commit, the `terminate_on_parent_death` function was only usable on linux, due to it using the prctl command.\nThis commit creates a new thread which polls the parent process, and signals terminate when it can no longer find the parent.",
+          "timestamp": "2024-12-02T13:04:34+01:00",
+          "tree_id": "ec5397136b5122e8f34c11d9e0df672a3d93affe",
+          "url": "https://github.com/equinor/ert/commit/ef9b3b8e3b8c6dd0981853032762742dfaa915bc"
+        },
+        "date": 1733141191570,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.18882702036145596,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03441055395684877",
+            "extra": "mean: 5.295852246599997 sec\nrounds: 5"
           }
         ]
       }
