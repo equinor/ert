@@ -336,7 +336,20 @@ def load_simulation_data(
             experiment = experiments[0]
 
             ensemble = experiment.get_ensemble_by_name(case_name)
-            return ensemble.load_all_summary_data()
+            realizations = ensemble.get_realization_list_with_responses()
+            try:
+                df_pl = ensemble.load_responses("summary", tuple(realizations))
+            except (ValueError, KeyError):
+                return pd.DataFrame()
+            df_pl = df_pl.pivot(
+                on="response_key", index=["realization", "time"], sort_columns=True
+            )
+            df_pl = df_pl.rename({"time": "Date", "realization": "Realization"})
+            return (
+                df_pl.to_pandas()
+                .set_index(["Realization", "Date"])
+                .sort_values(by=["Date", "Realization"])
+            )
 
         batches = {elem[MetaDataColumnNames.BATCH] for elem in metadata}
         batch_data = []

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-import pandas as pd
+import polars as pl
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
@@ -154,48 +154,49 @@ class EverestDataAPI:
     def summary_values(self, batches=None, keys=None):
         if batches is None:
             batches = self.batches
-        simulations = self.simulations
         data_frames = []
         storage = open_storage(self._config.storage_dir, "r")
         experiment = next(storage.experiments)
         for batch_id in batches:
             ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
-            summary = ensemble.load_all_summary_data()
-            if not summary.empty:
-                columns = set(summary.columns)
-                if keys is not None:
-                    columns = columns.intersection(set(keys))
-                    summary = summary[list(columns)]
-                summary = summary.dropna(axis=0, how="all", subset=columns)
-                summary = summary.dropna(axis=1, how="all")
-                summary = summary[
-                    summary.index.get_level_values("Realization").isin(simulations)
-                ]
-                summary.reset_index(inplace=True)
-                summary["batch"] = batch_id
+            try:
+                summary = ensemble.load_responses(
+                    key="summary",
+                    realizations=tuple(self.simulations),
+                )
+            except (ValueError, KeyError):
+                summary = pl.DataFrame()
+
+            if not summary.is_empty():
+                summary = summary.pivot(
+                    on="response_key", index=["realization", "time"], sort_columns=True
+                )
                 # The 'Realization' column exported by ert are
                 # the 'simulations' of everest.
-                summary.rename(
-                    columns={"Realization": "simulation", "Date": "date"}, inplace=True
+                summary = summary.rename({"time": "date", "realization": "simulation"})
+                if keys is not None:
+                    columns = set(summary.columns).intersection(set(keys))
+                    summary = summary[["date", "simulation", *list(columns)]]
+                summary = summary.with_columns(
+                    pl.Series("batch", [batch_id] * summary.shape[0])
                 )
                 # The realization ID as defined by Everest must be
                 # retrieved via the seba snapshot.
                 realization_map = {
-                    str(sim.simulation): sim.realization
+                    sim.simulation: sim.realization
                     for sim in self._snapshot.simulation_data
                     if sim.batch == batch_id
                 }
-                summary["realization"] = (
-                    summary["simulation"].astype(str).map(realization_map)
+                realizations = pl.Series(
+                    "realization",
+                    [realization_map.get(str(sim)) for sim in summary["simulation"]],
                 )
-                # If possible, convert the realization id to integer.
-                summary["realization"] = pd.to_numeric(
-                    summary["realization"], errors="ignore", downcast="integer"
-                )
+                realizations = realizations.cast(pl.Int64, strict=False)
+                summary = summary.with_columns(realizations)
 
             data_frames.append(summary)
         storage.close()
-        return pd.concat(data_frames)
+        return pl.concat(data_frames)
 
     @property
     def output_folder(self):
