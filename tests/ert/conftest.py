@@ -1,5 +1,6 @@
 import fileinput
 import logging
+import multiprocessing
 import os
 import resource
 import shutil
@@ -485,3 +486,12 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_multiprocessing_method():
+    if (
+        sys.platform == "linux"
+        and multiprocessing.get_start_method(allow_none=True) != "forkserver"
+    ):
+        multiprocessing.set_start_method("forkserver")
