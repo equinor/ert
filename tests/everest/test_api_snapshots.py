@@ -133,7 +133,7 @@ def test_api_summary_snapshot(
             ens.save_response("summary", smry_data.clone(), real)
 
     api = EverestDataAPI(config)
-    dicts = polars.from_pandas(api.summary_values()).to_dicts()
+    dicts = api.summary_values().to_dicts()
     snapshot.assert_match(
         orjson.dumps(dicts, option=orjson.OPT_INDENT_2).decode("utf-8").strip() + "\n",
         "snapshot.json",
