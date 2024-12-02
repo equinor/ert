@@ -15,13 +15,12 @@ from .schema_dict import SchemaItemDict
 from .types import Defines, FileContextToken, Instruction, MaybeWithContext
 
 grammar = r"""
-WHITESPACE: (" "|"\t")+
-%ignore WHITESPACE
-
 %import common.CNAME
 %import common.SIGNED_NUMBER    -> NUMBER
 %import common.NEWLINE          -> NEWLINE
 
+WHITESPACE: (" "|"\t"|"\\"NEWLINE)+
+%ignore WHITESPACE
 
 _STRING_INNER: /.+?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
