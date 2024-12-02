@@ -1,6 +1,4 @@
 import copy
-import datetime
-import json
 import logging
 import os
 import os.path
@@ -15,8 +13,6 @@ from ert.config.ert_config import (
     _forward_model_step_from_config_file,
     forward_model_data_to_json,
 )
-from ert.constant_filenames import JOBS_FILE
-from ert.simulator.forward_model_status import ForwardModelStatus
 from ert.substitutions import Substitutions
 
 
@@ -393,53 +389,6 @@ def test_various_null_fields(fm_step_list, context):
     ]:
         fm_step_list[0][key] = None
         run_all(fm_step_list, context)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_status_file(fm_step_list, context):
-    run_id = "test_no_jobs_id"
-    ert_config = ErtConfig(
-        forward_model_steps=set_up_forward_model(fm_step_list),
-        substitutions=context,
-    )
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
-        forward_model_steps=ert_config.forward_model_steps,
-        env_vars=ert_config.env_vars,
-        user_config_file=ert_config.user_config_file,
-        run_id=run_id,
-    )
-    with open(JOBS_FILE, "w", encoding="utf-8") as fp:
-        json.dump(
-            data,
-            fp,
-        )
-
-    with open("status.json", "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "start_time": None,
-                "jobs": [
-                    {
-                        "status": "Success",
-                        "start_time": 1519653419.0,
-                        "end_time": 1519653419.0,
-                        "name": "SQUARE_PARAMS",
-                        "error": None,
-                        "current_memory_usage": 2000,
-                        "max_memory_usage": 3000,
-                    }
-                ],
-                "end_time": None,
-                "run_id": "",
-            },
-            f,
-        )
-
-    status = ForwardModelStatus.try_load("")
-    for step in status.steps:
-        assert isinstance(step.start_time, datetime.datetime)
-        assert isinstance(step.end_time, datetime.datetime)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

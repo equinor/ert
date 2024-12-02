@@ -87,7 +87,7 @@ install_data:
     target: templates
 
 forward_model:
-  - well_swapping --priorities well_priorities.json --constraints swapping_constraints.json --cases wells.json --output well_swap_output.json --config files/well_swap_config.yml
+  - well_swapping run --priorities well_priorities.json --constraints swapping_constraints.json --cases wells.json --output well_swap_output.json --config files/well_swap_config.yml
 
   ####################################
   # FROM HERE ON, NOTHING NEW...

@@ -413,6 +413,12 @@ class BaseRunModel(ABC):
             False
         ) - self._initial_realizations_mask.count(False)
 
+    def get_current_snapshot(self) -> EnsembleSnapshot:
+        if self._iter_snapshot.keys():
+            current_iter = max(list(self._iter_snapshot.keys()))
+            return self._iter_snapshot[current_iter]
+        return EnsembleSnapshot()
+
     def get_memory_consumption(self) -> int:
         max_memory_consumption: int = 0
         if self._iter_snapshot.keys():

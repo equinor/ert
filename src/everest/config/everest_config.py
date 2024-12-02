@@ -6,6 +6,7 @@ from io import StringIO
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
+    Dict,
     List,
     Literal,
     Optional,
@@ -658,6 +659,40 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @property
     def log_dir(self):
         return self._get_output_subdirectory(OPTIMIZATION_LOG_DIR)
+
+    @property
+    def control_names(self):
+        controls = self.controls or []
+        return [control.name for control in controls]
+
+    @property
+    def result_names(self):
+        objectives_names = [
+            objective.name
+            for objective in self.objective_functions
+            if objective.alias is None
+        ]
+        constraint_names = [
+            constraint.name for constraint in (self.output_constraints or [])
+        ]
+        return objectives_names + constraint_names
+
+    @property
+    def function_aliases(self) -> Dict[str, str]:
+        aliases = {
+            objective.name: objective.alias
+            for objective in self.objective_functions
+            if objective.alias is not None
+        }
+        constraints = self.output_constraints or []
+        for constraint in constraints:
+            if (
+                constraint.upper_bound is not None
+                and constraint.lower_bound is not None
+            ):
+                aliases[f"{constraint.name}:lower"] = constraint.name
+                aliases[f"{constraint.name}:upper"] = constraint.name
+        return aliases
 
     @property
     def export_path(self):

@@ -40,7 +40,7 @@ def query_server_mock(cert, auth, endpoint):
             "end_time": end_time,
             "name": name,
             "error": error,
-            "simulation": 0,
+            "realization": 0,
         }
 
     shell_cmd_jobs = [build_job(name=command) for command in all_shell_script_fm_steps]
@@ -60,7 +60,6 @@ def query_server_mock(cert, auth, endpoint):
             },
             "progress": [all_jobs],
             "batch_number": "0",
-            "event": "end",
         }
     else:
         raise Exception("Stop! Hands in the air!")
