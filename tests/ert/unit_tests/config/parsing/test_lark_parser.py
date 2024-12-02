@@ -68,6 +68,22 @@ def test_that_realisation_is_a_alias_of_realization():
     assert config["NUM_REALIZATIONS"] == 1
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_new_line_can_be_escaped():
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                NUM_REALIZATIONS \
+                        1
+                """
+            )
+        )
+
+    config = parse("config.ert", schema=init_user_config_schema())
+    assert config["NUM_REALIZATIONS"] == 1
+
+
 @pytest.mark.filterwarnings(
     "ignore:.*Using DEFINE with substitution strings that are not of the form '<KEY>'.*:ert.config.ConfigWarning"
 )
@@ -79,7 +95,13 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
         NUM_REALIZATIONS  1
         DEFINE <A> 2
         DEFINE <B> 5
-        FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <F>=<B>, <E>=<O>, R=Hello, <R>=R)
+        FORWARD_MODEL MAKE_SYMLINK( \\
+                <U>=<A>, \\
+                <F>=<B>, \\
+                <E>=<O>, \\
+                R=Hello, \\
+                <R>=R \\
+        )
         DEFINE <B> 10
         DEFINE B <A>
         DEFINE D <A>

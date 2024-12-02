@@ -19,6 +19,7 @@ This chapter sets out everything you need to know to configure ERT.
 .. toctree::
    :maxdepth: 2
 
+   syntax
    data_types
    forward_model
    observations
