@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733134672961,
+  "lastUpdate": 1733134790490,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "d7829aca719d2016e4884ef38e464a318444f18b",
-          "message": "Initialize ert config with plugins when starting webviz ert",
-          "timestamp": "2024-11-26T14:30:14+01:00",
-          "tree_id": "824133a85bc64e939f99759d96c5bb5ae006c2e7",
-          "url": "https://github.com/equinor/ert/commit/d7829aca719d2016e4884ef38e464a318444f18b"
-        },
-        "date": 1732627926837,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1908070904512115,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03657527773268285",
-            "extra": "mean: 5.240895386199997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.036633390621088266",
             "extra": "mean: 5.253149196200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b5a1805e6517c52fc9007b0e4cd7ed862c452fe0",
+          "message": "Use ensemble evaluator in everest in place of BatchSimulator\n\n* Use ensemble evaluator in everest in place of BatchSimulator\r\n\r\n* Fix test_simulator_cache Co-authored-by: Peter Verveer <pieter.verveer@tno.nl>",
+          "timestamp": "2024-12-02T12:17:55+02:00",
+          "tree_id": "4b0da21e8f1407f01ded1dbb2640cc45547c5c36",
+          "url": "https://github.com/equinor/ert/commit/b5a1805e6517c52fc9007b0e4cd7ed862c452fe0"
+        },
+        "date": 1733134789517,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1973472987219686,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04097912290169314",
+            "extra": "mean: 5.067208958399999 sec\nrounds: 5"
           }
         ]
       }
