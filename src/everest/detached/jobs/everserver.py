@@ -50,6 +50,8 @@ from everest.strings import (
 )
 from everest.util import get_azure_logging_handler, makedirs_if_needed, version_info
 
+azure_handler = get_azure_logging_handler()
+
 
 def _get_machine_name() -> str:
     """Returns a name that can be used to identify this machine in a network
@@ -232,10 +234,9 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
         },
     }
 
-    azure_handler = get_azure_logging_handler()
     if azure_handler:
         logging_config["handlers"]["azure"] = {
-            "class": "azure_handler",
+            "class": "everest.detached.jobs.everserver.azure_handler",
             "level": logging_level,
         }
         logging_config["loggers"]["everest"]["handlers"].append("azure")
