@@ -31,6 +31,7 @@ def empty_case(facade, storage):
     )
 
 
+@pytest.mark.integration_test
 def test_keyword_type_checks(snake_oil_default_storage):
     assert (
         "BPR:1,3,8"
@@ -40,6 +41,7 @@ def test_keyword_type_checks(snake_oil_default_storage):
     )
 
 
+@pytest.mark.integration_test
 def test_keyword_type_checks_missing_key(snake_oil_default_storage):
     assert (
         "nokey"
