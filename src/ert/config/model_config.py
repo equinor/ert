@@ -8,7 +8,13 @@ from typing import List, Optional, no_type_check
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, HistorySource
+from .parsing import (
+    ConfigDict,
+    ConfigKeys,
+    ConfigValidationError,
+    ConfigWarning,
+    HistorySource,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +76,13 @@ class ModelConfig:
             )
         result = _replace_runpath_format(runpath_format_string)
         if not any(x in result for x in ["<ITER>", "<IENS>"]):
-            logger.warning(
+            msg = (
                 "RUNPATH keyword contains no value placeholders: "
                 f"`{runpath_format_string}`. Valid example: "
                 f"`{DEFAULT_RUNPATH}` "
             )
+            ConfigWarning.warn(msg)
+            logger.warning(msg)
         return result
 
     @field_validator("jobname_format_string", mode="before")
