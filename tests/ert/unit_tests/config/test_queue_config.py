@@ -406,6 +406,29 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
     assert options.activate_script == expected
 
 
+@pytest.mark.parametrize(
+    "env, expected",
+    [
+        ("my_env", 'eval "$(conda shell.bash hook)" && conda activate my_env'),
+    ],
+)
+def test_conda_activate_script_generation(expected, monkeypatch, env):
+    monkeypatch.setenv("CONDA_ENV", env)
+    options = QueueOptions(name="local")
+    assert options.activate_script == expected
+
+
+@pytest.mark.parametrize(
+    "env, expected",
+    [("my_env", "source my_env/bin/activate")],
+)
+def test_multiple_activate_script_generation(expected, monkeypatch, env):
+    monkeypatch.setenv("VIRTUAL_ENV", env)
+    monkeypatch.setenv("CONDA_ENV", env)
+    options = QueueOptions(name="local")
+    assert options.activate_script == expected
+
+
 def test_default_max_runtime_is_unlimited():
     assert QueueConfig.from_dict({}).max_runtime is None
     assert QueueConfig().max_runtime is None
