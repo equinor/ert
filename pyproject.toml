@@ -29,7 +29,6 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "aiohttp",
-    "backports-datetime_fromisoformat; python_version < '3.11'",
     "cryptography",
     "dnspython >= 2",
     "fastapi",
