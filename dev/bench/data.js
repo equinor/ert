@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733222699357,
+  "lastUpdate": 1733225927268,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "403a55e5348ff3e0b3f3e4b28cfa1ac2127562f8",
-          "message": "Make sure driver is polled for status",
-          "timestamp": "2024-11-27T20:28:56+01:00",
-          "tree_id": "a249a41a37dc21fc4469373e89369e91363a7bb5",
-          "url": "https://github.com/equinor/ert/commit/403a55e5348ff3e0b3f3e4b28cfa1ac2127562f8"
-        },
-        "date": 1732735847739,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18800103317336436,
-            "unit": "iter/sec",
-            "range": "stddev: 0.012209625654044398",
-            "extra": "mean: 5.319119704399998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.052400916188259684",
             "extra": "mean: 4.994133332399997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "691b3e84de16d4dc0879931ee708f12dca4836fa",
+          "message": "Upgrade setup-uv v3 -> v4",
+          "timestamp": "2024-12-03T12:36:57+01:00",
+          "tree_id": "b660a2e572c6e3ab66634a62c67fea4bb7f86283",
+          "url": "https://github.com/equinor/ert/commit/691b3e84de16d4dc0879931ee708f12dca4836fa"
+        },
+        "date": 1733225926766,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.1971483820287773,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02822813196409",
+            "extra": "mean: 5.072321617399996 sec\nrounds: 5"
           }
         ]
       }
