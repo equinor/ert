@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733212297523,
+  "lastUpdate": 1733216447075,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "9a89ae3b0d33da721d942ba604bcd17684be473e",
-          "message": "Have fm_runner's event reporter shutdown gracefully\n\nThis commit fixes the issue where the logs would be spammed with errors\nrelated to the websocket client being forcefully shut down before\nclosing the connection.\nIt also fixes the issue where the fm_runner was not killing the running\nforward models when sigterm was signaled",
-          "timestamp": "2024-11-27T15:41:26+01:00",
-          "tree_id": "b4a936adfe1c2c401cdfe541060211ad55ca6027",
-          "url": "https://github.com/equinor/ert/commit/9a89ae3b0d33da721d942ba604bcd17684be473e"
-        },
-        "date": 1732718601058,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1898650602845553,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03156183523647813",
-            "extra": "mean: 5.266898493600013 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0332584550921401",
             "extra": "mean: 5.125558683599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "ec8b5cc05487895058c45c0d9b9db863901655f0",
+          "message": "Add coverage gathering of everest",
+          "timestamp": "2024-12-03T09:58:52+01:00",
+          "tree_id": "1cbec251b07c0a9d82460a48da04c2fbfa95ae5e",
+          "url": "https://github.com/equinor/ert/commit/ec8b5cc05487895058c45c0d9b9db863901655f0"
+        },
+        "date": 1733216446585,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19484407227573639,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025283097746221977",
+            "extra": "mean: 5.132309073200008 sec\nrounds: 5"
           }
         ]
       }
