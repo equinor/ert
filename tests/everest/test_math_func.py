@@ -235,6 +235,7 @@ def test_remove_run_path(
     ), "Simulation folder should be there, something went wrong and was removed"
 
 
+@pytest.mark.integration_test
 def test_math_func_auto_scaled_controls(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
