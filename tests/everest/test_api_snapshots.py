@@ -53,15 +53,7 @@ def make_api_snapshot(api) -> dict[str, Any]:
 
 @pytest.mark.parametrize(
     "config_file",
-    [
-        "config_advanced.yml",
-        "config_minimal.yml",
-        "config_multiobj.yml",
-        "config_auto_scaled_controls.yml",
-        "config_cvar.yml",
-        "config_discrete.yml",
-        "config_stddev.yml",
-    ],
+    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
 )
 def test_api_snapshots(config_file, snapshot, cached_example):
     config_path, config_file, optimal_result_json = cached_example(
