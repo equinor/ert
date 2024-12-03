@@ -7,7 +7,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, SimulatorConfig
 
-CONFIG_FILE = "config_advanced_scipy.yml"
+CONFIG_FILE = "config_advanced.yml"
 
 
 def test_simulator_cache(copy_math_func_test_data_to_tmp):
