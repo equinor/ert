@@ -8,7 +8,7 @@ import tempfile
 import typing
 import warnings
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 
 from cryptography import x509
@@ -71,8 +71,8 @@ def _generate_certificate(
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.utcnow())
-        .not_valid_after(datetime.utcnow() + timedelta(days=365))  # 1 year
+        .not_valid_before(datetime.now(UTC))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=365))  # 1 year
         .add_extension(
             x509.SubjectAlternativeName(
                 [

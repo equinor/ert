@@ -186,7 +186,7 @@ def test_plot_api_request_errors(api):
 def api_and_storage(monkeypatch, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
         api = PlotApi()
         yield api, storage
     if enkf._storage is not None:

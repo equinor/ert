@@ -23,7 +23,7 @@ def _mock_ws(host, port, messages, delay_startup=0):
     loop = new_event_loop()
     done = loop.create_future()
 
-    async def _handler(websocket, path):
+    async def _handler(websocket):
         while True:
             msg = await websocket.recv()
             messages.append(msg)
