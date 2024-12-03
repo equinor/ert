@@ -1,5 +1,4 @@
 import logging
-import sys
 import typing
 from collections import defaultdict
 from datetime import datetime
@@ -48,11 +47,6 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
 logger = logging.getLogger(__name__)
-
-if sys.version_info < (3, 11):
-    from backports.datetime_fromisoformat import MonkeyPatch  # type: ignore
-
-    MonkeyPatch.patch_fromisoformat()
 
 
 class UnsupportedOperationException(ValueError):
