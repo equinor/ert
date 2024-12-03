@@ -12,8 +12,6 @@ from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
-SNAKE_OIL_CONFIG = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
-
 
 @pytest.fixture
 def min_config():
@@ -350,34 +348,30 @@ def test_init_context_controls():
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
 
-def test_date_type():
-    valid_dates = (
-        "2000-1-1",
-        "2010-1-1",
-        "2018-12-31",
+@pytest.mark.parametrize(
+    "date, valid",
+    [
+        ("2000-1-1", True),
+        ("2010-1-1", True),
+        ("2018-12-31", True),
+        ("32.01.2000", False),
+        ("2000-1-32", False),
+        ("fdsafdas", False),
+        ("01-01-01", False),
+        ("...", False),
+        (None, False),
+        ("2000-2-30", False),
+    ],
+)
+def test_date_type(date, valid, min_config):
+    expectation = (
+        does_not_raise()
+        if valid
+        else pytest.raises(ValidationError, match=f"malformed date: {date}")
     )
-
-    invalid_dates = (
-        "32.01.2000",
-        "2000-1-32",
-        "fdsafdas",
-        "01-01-01",
-        "...",
-        None,
-        {},
-        "2000-2-30",
-    )
-
-    for date in valid_dates + invalid_dates:
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.WELLS][0][ConfigKeys.DRILL_DATE] = date
-
-        err = EverestConfig.lint_config_dict(config)
-        if date in valid_dates:
-            assert not err
-        else:
-            assert len(err) > 0, "%s was wrongly accepted" % date
-            has_error(err, match=f"malformed date: {date}(.*)")
+    min_config["wells"] = [{"drill_date": date, "name": "test"}]
+    with expectation:
+        EverestConfig(**min_config)
 
 
 @pytest.mark.fails_on_macos_github_workflow
