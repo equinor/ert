@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733232184730,
+  "lastUpdate": 1733232260145,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "b556d87540a2064534233622246473533b6d6773",
-          "message": "Mention runpath in copy_file docs",
-          "timestamp": "2024-11-28T09:32:34+01:00",
-          "tree_id": "63b9725924970e16005d095388657f894c95e67d",
-          "url": "https://github.com/equinor/ert/commit/b556d87540a2064534233622246473533b6d6773"
-        },
-        "date": 1732782863397,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19532027537208577,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018070202769042913",
-            "extra": "mean: 5.119796181399994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.039980224908260774",
             "extra": "mean: 4.729608304800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "309a5353a9bc25b7adc98a83e6fd9c5f6747eb40",
+          "message": "Revert \"Use uvloop for asyncio\"\n\nThis reverts commit d11ba38bd8f93808ae60d320e03ab10725294dec.\nThis was done due to issues with uvloop when attempting to use uvloop\nfor our tests",
+          "timestamp": "2024-12-03T14:22:23+01:00",
+          "tree_id": "1559784effd3f73924a6b411e2abf7b36a4c6ec9",
+          "url": "https://github.com/equinor/ert/commit/309a5353a9bc25b7adc98a83e6fd9c5f6747eb40"
+        },
+        "date": 1733232259426,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2115476281274497,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02510521401801525",
+            "extra": "mean: 4.7270678894000016 sec\nrounds: 5"
           }
         ]
       }
