@@ -1,8 +1,13 @@
 import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig
-from everest.config.input_constraint_config import InputConstraintConfig
+from everest.config import (
+    ControlConfig,
+    EverestConfig,
+    InputConstraintConfig,
+    InstallJobConfig,
+    OptimizationConfig,
+)
 
 
 @pytest.mark.integration_test
@@ -11,22 +16,29 @@ def test_discrete_optimizer(
 ):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
-    config.controls[0].min = 0
-    config.controls[0].max = 10
-    config.controls[0].control_type = "integer"
-    config.controls[0].initial_guess = 0
-    config.controls[0].variables.pop()
+    config.controls = [
+        ControlConfig(
+            name="point",
+            type="generic_control",
+            min=0,
+            max=10,
+            control_type="integer",
+            initial_guess=0,
+            variables=[{"name": "x"}, {"name": "y"}],
+        )
+    ]
     config.input_constraints = [
         InputConstraintConfig(weights={"point.x": 1.0, "point.y": 1.0}, upper_bound=10)
     ]
-    config.optimization.backend = "scipy"
-    config.optimization.algorithm = "differential_evolution"
-    config.optimization.max_function_evaluations = 4
-    config.optimization.parallel = False
-    config.optimization.backend_options = {"seed": 9}
-    config.install_jobs[0].name = "discrete"
-    config.install_jobs[0].source = "jobs/DISCRETE"
-    config.forward_model[0] = "discrete --point-file point.json --out distance"
+    config.optimization = OptimizationConfig(
+        backend="scipy",
+        algorithm="differential_evolution",
+        max_function_evaluations=4,
+        parallel=False,
+        backend_options={"seed": 9},
+    )
+    config.install_jobs = [InstallJobConfig(name="discrete", source="jobs/DISCRETE")]
+    config.forward_model = ["discrete --point-file point.json --out distance"]
 
     # Act
     run_model = EverestRunModel.create(config)
