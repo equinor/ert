@@ -1,7 +1,7 @@
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
-CONFIG_FILE_ADVANCED = "config_advanced_scipy.yml"
+CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
 def test_fix_control(
