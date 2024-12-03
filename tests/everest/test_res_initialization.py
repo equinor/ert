@@ -1,9 +1,10 @@
 import itertools
 import os
 from pathlib import Path
-from unittest.mock import patch
+from textwrap import dedent
 
 import pytest
+import yaml
 from ruamel.yaml import YAML
 
 import everest
@@ -18,7 +19,6 @@ from everest.simulator.everest_to_ert import (
     everest_to_ert_config,
 )
 from tests.everest.utils import (
-    everest_default_jobs,
     hide_opm,
     skipif_no_everest_models,
     skipif_no_opm,
@@ -27,64 +27,6 @@ from tests.everest.utils import (
 SNAKE_CONFIG_DIR = "snake_oil/everest/model"
 SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
-
-
-def build_tutorial_dict(config_dir, output_dir):
-    # Expected config extracted from unittest.mocked_test_case.yml
-    return {
-        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", config_dir)],
-        ErtConfigKeys.NUM_REALIZATIONS: 2,
-        ErtConfigKeys.MAX_RUNTIME: 3600,
-        ErtConfigKeys.ECLBASE: "eclipse/ECL",
-        ErtConfigKeys.RUNPATH: os.path.join(
-            output_dir,
-            "simulations_{}".format(os.environ.get("USER")),
-            "<CASE_NAME>",
-            "geo_realization_<GEO_ID>",
-            "simulation_<IENS>",
-        ),
-        ErtConfigKeys.RUNPATH_FILE: os.path.join(
-            os.path.realpath("mocked_test_case"),
-            "everest_output/.res_runpath_list",
-        ),
-        ErtConfigKeys.RANDOM_SEED: 999,
-        ErtConfigKeys.INSTALL_JOB: [
-            ("well_order", os.path.join(config_dir, "jobs/WELL_ORDER_MOCK")),
-            ("res_mock", os.path.join(config_dir, "jobs/RES_MOCK")),
-            ("npv_function", os.path.join(config_dir, "jobs/NPV_FUNCTION_MOCK")),
-            *everest_default_jobs(output_dir),
-        ],
-        ErtConfigKeys.SIMULATION_JOB: [
-            (
-                "copy_file",
-                os.path.realpath(
-                    "mocked_test_case/everest_output/" ".internal_data/wells.json"
-                ),
-                "wells.json",
-            ),
-            (
-                "well_order",
-                "well_order.json",
-                "SCHEDULE.INC",
-                "ordered_wells.json",
-            ),
-            ("res_mock", "MOCKED_TEST_CASE"),
-            ("npv_function", "MOCKED_TEST_CASE", "npv_function"),
-        ],
-        # Defaulted
-        ErtConfigKeys.QUEUE_SYSTEM: "LOCAL",
-        ErtConfigKeys.QUEUE_OPTION: [("LOCAL", "MAX_RUNNING", 8)],
-        ErtConfigKeys.ENSPATH: os.path.join(
-            os.path.realpath("mocked_test_case"),
-            "everest_output/simulation_results",
-        ),
-        ErtConfigKeys.GEN_DATA: [
-            (
-                "npv_function",
-                "RESULT_FILE:npv_function",
-            ),
-        ],
-    }
 
 
 @pytest.mark.parametrize(
@@ -167,27 +109,33 @@ def test_everest_to_ert_queue_config(config, expected):
     assert qo.max_running == general_options["cores"]
 
 
-@patch.dict("os.environ", {"USER": "NO_USERNAME"})
-def test_tutorial_everest_to_ert(copy_test_data_to_tmp):
-    tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
-    # Load config file
-    ever_config_dict = EverestConfig.load_file(tutorial_config_path)
-
-    output_dir = ever_config_dict.output_dir
-    tutorial_dict = build_tutorial_dict(
-        os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
-    )
-
-    # Transform to res dict and verify equality
-    ert_config_dict = _everest_to_ert_config_dict(ever_config_dict)
-    assert tutorial_dict == ert_config_dict
-
-    # Instantiate res
-    ErtConfig.with_plugins().from_dict(
-        config_dict=_everest_to_ert_config_dict(
-            ever_config_dict, site_config=ErtConfig.read_site_config()
+@pytest.mark.parametrize(
+    "name",
+    [
+        "render",
+        "recovery_factor",
+        "wdreorder",
+        "wdfilter",
+        "wdupdate",
+        "wdset",
+        "wdcompl",
+        "wddatefilter",
+    ],
+)
+def test_default_installed_jobs(tmp_path, monkeypatch, name):
+    monkeypatch.chdir(tmp_path)
+    ever_config_dict = EverestConfig.with_defaults(
+        **yaml.safe_load(
+            dedent(f"""
+    model: {{"realizations": [0]}}
+    forward_model:
+      - {name}
+    """)
         )
     )
+    config = everest_to_ert_config(ever_config_dict)
+    # Index 0 is the copy job for wells.json
+    assert config.forward_model_steps[1].name == name
 
 
 @skipif_no_opm

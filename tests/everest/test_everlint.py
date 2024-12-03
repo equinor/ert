@@ -7,7 +7,6 @@ import pytest
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.jobs import script_names
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
@@ -511,13 +510,6 @@ def test_init_context_controls():
         variable = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES][0]
         variable[ConfigKeys.NAME] = "my.name"
         assert len(EverestConfig.lint_config_dict(config)) > 0
-
-
-def test_default_jobs():
-    config_file = relpath("test_data/mocked_test_case/mocked_test_case.yml")
-    config = EverestConfig.load_file(config_file)
-    config.forward_model += script_names
-    assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
 
 def test_date_type():
