@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733232260145,
+  "lastUpdate": 1733235997346,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "8848f373b965f02af91bb185c1afabf90d5897f6",
-          "message": "Avoid using .response_configuration within loops",
-          "timestamp": "2024-11-28T09:34:26+01:00",
-          "tree_id": "e67fbe7463f11ea2e5d68060e0a91cd540018b4e",
-          "url": "https://github.com/equinor/ert/commit/8848f373b965f02af91bb185c1afabf90d5897f6"
-        },
-        "date": 1732782972499,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1946136955328512,
-            "unit": "iter/sec",
-            "range": "stddev: 0.049536419705268814",
-            "extra": "mean: 5.138384517399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02510521401801525",
             "extra": "mean: 4.7270678894000016 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "c4b5b67b99ed627ae149da0365e4e6593eec9c13",
+          "message": "Use forkserver instead of fork for multiprocessing\n\nPolars gives warnings if using fork.\npreexec_fn in create_subprocess_exec is unsafe using fork.\npython 3.14 will set forkserver as default on linux/bsd.",
+          "timestamp": "2024-12-03T15:24:43+01:00",
+          "tree_id": "c413e03f43c4c7d84b340fb1350031734613a2ca",
+          "url": "https://github.com/equinor/ert/commit/c4b5b67b99ed627ae149da0365e4e6593eec9c13"
+        },
+        "date": 1733235996444,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2166364306550501,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025677284970481586",
+            "extra": "mean: 4.616028785999982 sec\nrounds: 5"
           }
         ]
       }
