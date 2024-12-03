@@ -302,7 +302,11 @@ def get_server_queue_options(
             partition=ever_queue_config.name,
         )
     elif queue_system == QueueSystem.TORQUE:
-        queue = TorqueQueueOptions(activate_script=script)
+        queue = TorqueQueueOptions(
+            activate_script=script,
+            queue=ever_queue_config.name,
+            keep_qsub_output=ever_queue_config.keep_qsub_output,
+        )
     elif queue_system == QueueSystem.LOCAL:
         queue = LocalQueueOptions()
     else:
