@@ -28,9 +28,12 @@ NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
 
 def activate_script() -> str:
     venv = os.environ.get("VIRTUAL_ENV")
-    if not venv:
-        return ""
-    return f"source {venv}/bin/activate"
+    if venv:
+        return f"source {venv}/bin/activate"
+    conda_env = os.environ.get("CONDA_ENV")
+    if conda_env:
+        return f'eval "$(conda shell.bash hook)" && conda activate {conda_env}'
+    return ""
 
 
 @pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
