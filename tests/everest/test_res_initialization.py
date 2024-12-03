@@ -136,6 +136,11 @@ def test_everest_to_ert_controls():
         "wdset",
         "wdcompl",
         "wddatefilter",
+        "make_directory",
+        "copy_directory",
+        "copy_file",
+        "move_file",
+        "symlink",
     ],
 )
 def test_default_installed_jobs(tmp_path, monkeypatch, name):
