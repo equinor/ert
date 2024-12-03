@@ -7,14 +7,13 @@ import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest import ConfigKeys as CK
-from everest.config import EverestConfig
+from everest.config import EverestConfig, InputConstraintConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export_data
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
-CONFIG_AUTO_SCALED_CONTROLS = "config_auto_scaled_controls.yml"
 CONFIG_FILE_REMOVE_RUN_PATH = "config_remove_run_path.yml"
 
 
@@ -239,13 +238,23 @@ def test_remove_run_path(
 def test_math_func_auto_scaled_controls(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
-    config = EverestConfig.load_file(CONFIG_AUTO_SCALED_CONTROLS)
+    # Arrange
+    config = EverestConfig.load_file("config_minimal.yml")
+    config.controls[0].auto_scale = True
+    config.controls[0].scaled_range = [0.3, 0.7]
+    config.controls[0].initial_guess = 0.2
+    config.input_constraints = [
+        InputConstraintConfig(weights={"point.x": 1.0, "point.y": 1.0}, upper_bound=0.5)
+    ]
+    config.optimization.max_batch_num = 10
+    config.forward_model[0] += " --scaling -1 1 0.3 0.7"
 
+    # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)
     run_model.run_experiment(evaluator_server_config)
 
-    # Check resulting points
+    # Assert
     x, y, z = (run_model.result.controls["point_" + p] for p in ("x", "y", "z"))
 
     assert x == pytest.approx(0.25, abs=0.05)
