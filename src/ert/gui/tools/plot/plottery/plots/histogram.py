@@ -121,7 +121,7 @@ def plotHistogram(
         if use_log_scale:
             axes[ensemble.name].set_xscale("log")
 
-        if not data[ensemble.name].empty:
+        if ensemble.name in data and not data[ensemble.name].empty:
             if categorical:
                 config.addLegendItem(
                     ensemble.name,

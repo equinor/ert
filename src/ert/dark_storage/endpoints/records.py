@@ -66,7 +66,12 @@ async def get_record_observations(
                 "text/csv": {},
                 "application/x-parquet": {},
             }
-        }
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "content": {
+                "application/json": {"example": {"error": "Unauthorized access"}}
+            },
+        },
     },
 )
 async def get_ensemble_record(
@@ -77,7 +82,10 @@ async def get_ensemble_record(
     accept: Annotated[Union[str, None], Header()] = None,
 ) -> Any:
     name = unquote(name)
-    dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
+    try:
+        dataframe = data_for_key(storage.get_ensemble(ensemble_id), name)
+    except PermissionError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]

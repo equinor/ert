@@ -89,6 +89,8 @@ class PlotApi:
 
     @staticmethod
     def _check_response(response: httpx._models.Response) -> None:
+        if response.status_code == httpx.codes.UNAUTHORIZED:
+            raise httpx.RequestError(message=f"{response.text}")
         if response.status_code != httpx.codes.OK:
             raise httpx.RequestError(
                 f" Please report this error and try restarting the application."

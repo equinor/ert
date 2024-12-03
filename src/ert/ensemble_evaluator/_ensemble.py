@@ -303,7 +303,10 @@ class LegacyEnsemble:
 
             self._scheduler.add_dispatch_information_to_jobs_file()
             result = await self._scheduler.execute(min_required_realizations)
-
+        except PermissionError as error:
+            logger.exception((f"Unexpected exception in ensemble: \n {error!s}"))
+            await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
+            return
         except Exception as exc:
             logger.exception(
                 (
