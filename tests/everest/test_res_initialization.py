@@ -1,16 +1,15 @@
 import itertools
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from ruamel.yaml import YAML
 
 import everest
-from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
-from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.well_config import WellConfig
 from everest.config.workflow_config import WorkflowConfig
@@ -217,48 +216,35 @@ def test_combined_wells_everest_to_ert(copy_test_data_to_tmp):
     assert any(inj_in_strings)
 
 
-@patch.dict("os.environ", {"USER": "NO_USERNAME"})
-def test_install_data_no_init(copy_test_data_to_tmp):
+@pytest.mark.parametrize(
+    "source, target, symlink, cmd",
+    [
+        ["source_file", "target_file", True, "symlink"],
+        ["source_file", "target_file", False, "copy_file"],
+        ["source_folder", "target_folder", False, "copy_directory"],
+    ],
+)
+def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatch):
     """
-    TODO: When default jobs are handled in Everest this test should be
-    deleted as it is superseded by test_install_data.
+    Configure the everest config with the install_data section and check that the
+    correct ert forward models are created
     """
-    sources = 2 * ["eclipse/refcase/TNO_REEK.SMSPEC"] + 2 * ["eclipse/refcase"]
-    targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
-    links = [True, False, True, False]
-    cmd_list = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = list(zip(sources, targets, links, cmd_list, strict=False))
-    tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
-    for source, target, link, cmd in test_base[1:2]:
-        ever_config = EverestConfig.load_file(tutorial_config_path)
+    monkeypatch.chdir(tmp_path)
+    Path("source_file").touch()
+    Path.mkdir("source_folder")
+    ever_config = EverestConfig.with_defaults(
+        **{
+            "model": {"realizations": [0]},
+            "install_data": [{"source": source, "target": target, "link": symlink}],
+        }
+    )
 
-        if ever_config.install_data is None:
-            ever_config.install_data = []
+    errors = EverestConfig.lint_config_dict(ever_config.to_dict())
+    assert len(errors) == 0
 
-        ever_config.install_data.append(
-            InstallDataConfig(
-                source=source,
-                target=target,
-                link=link,
-            )
-        )
-
-        errors = EverestConfig.lint_config_dict(ever_config.to_dict())
-        assert len(errors) == 0
-
-        ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-        output_dir = ever_config.output_dir
-        tutorial_dict = build_tutorial_dict(
-            os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
-        )
-
-        config_dir = ever_config.config_directory
-        tutorial_dict[ErtConfigKeys.SIMULATION_JOB].insert(
-            0,
-            (cmd, os.path.join(config_dir, source), target),
-        )
-        assert tutorial_dict == ert_config_dict
+    ert_config = everest_to_ert_config(ever_config)
+    expected_fm = next(val for val in ert_config.forward_model_steps if val.name == cmd)
+    assert expected_fm.arglist == (f"./{source}", target)
 
 
 @skipif_no_opm
@@ -319,57 +305,6 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     res_conf = _everest_to_ert_config_dict(everconf)
 
     assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0])
-
-
-@pytest.mark.requires_eclipse
-def test_install_data(copy_test_data_to_tmp):
-    """
-    TODO: When default jobs are handled in Everest this test should not
-    be a simulation test.
-    """
-
-    sources = 2 * ["eclipse/refcase/TNO_REEK.SMSPEC"] + 2 * ["eclipse/refcase"]
-    targets = 2 * ["REEK.SMSPEC"] + 2 * ["tno_refcase"]
-    links = [True, False, True, False]
-    cmds = ["symlink", "copy_file", "symlink", "copy_directory"]
-    test_base = zip(sources, targets, links, cmds, strict=False)
-    tutorial_config_path = os.path.join(TUTORIAL_CONFIG_DIR, "mocked_test_case.yml")
-    for source, target, link, cmd in test_base:
-        ever_config = EverestConfig.load_file(tutorial_config_path)
-
-        if ever_config.install_data is None:
-            ever_config.install_data = []
-
-        ever_config.install_data.append(
-            InstallDataConfig(
-                source=source,
-                target=target,
-                link=link,
-            )
-        )
-
-        errors = EverestConfig.lint_config_dict(ever_config.to_dict())
-        assert len(errors) == 0
-
-        ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-        output_dir = ever_config.output_dir
-        tutorial_dict = build_tutorial_dict(
-            os.path.abspath(TUTORIAL_CONFIG_DIR), output_dir
-        )
-        config_dir = ever_config.config_directory
-        tutorial_dict[ErtConfigKeys.SIMULATION_JOB].insert(
-            0,
-            (cmd, os.path.join(config_dir, source), target),
-        )
-        assert tutorial_dict == ert_config_dict
-
-        # Instantiate res
-        ErtConfig.with_plugins().from_dict(
-            config_dict=_everest_to_ert_config_dict(
-                ever_config, site_config=ErtConfig.read_site_config()
-            )
-        )
 
 
 @pytest.mark.parametrize(
