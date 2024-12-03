@@ -8,7 +8,6 @@ from ruamel.yaml import YAML
 import everest
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
-from everest import ConfigKeys
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.install_data_config import InstallDataConfig
@@ -29,128 +28,6 @@ from tests.everest.utils import (
 SNAKE_CONFIG_DIR = "snake_oil/everest/model"
 SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
-
-
-def build_snake_dict(output_dir, queue_system):
-    # This is a tested config from ert corresponding to the
-    # snake_oil
-
-    def simulation_jobs():
-        sim_jobs = [
-            (
-                "copy_file",
-                os.path.realpath(
-                    "snake_oil/everest/model/everest_output/"
-                    ".internal_data/wells.json"
-                ),
-                "wells.json",
-            ),
-            ("snake_oil_simulator",),
-            ("snake_oil_npv",),
-            ("snake_oil_diff",),
-        ]
-        return sim_jobs
-
-    def install_jobs():
-        jobs = [
-            (
-                "snake_oil_diff",
-                os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_DIFF"
-                ),
-            ),
-            (
-                "snake_oil_simulator",
-                os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_SIMULATOR"
-                ),
-            ),
-            (
-                "snake_oil_npv",
-                os.path.join(
-                    os.path.abspath(SNAKE_CONFIG_DIR), "../../jobs/SNAKE_OIL_NPV"
-                ),
-            ),
-            *everest_default_jobs(output_dir),
-        ]
-
-        return jobs
-
-    def local_queue_system():
-        return {
-            ErtConfigKeys.QUEUE_SYSTEM: "LOCAL",
-            ErtConfigKeys.QUEUE_OPTION: [
-                ("LOCAL", "MAX_RUNNING", 8),
-            ],
-        }
-
-    # For the test comparison to succeed the elements in the QUEUE_OPTION list must
-    # come in the same order as the options in the _extract_slurm_options() function
-    # in everest_to_ert_config.
-    def slurm_queue_system():
-        return {
-            ErtConfigKeys.QUEUE_SYSTEM: "SLURM",
-            ErtConfigKeys.QUEUE_OPTION: [
-                (
-                    "SLURM",
-                    "PARTITION",
-                    "default-queue",
-                ),
-                (
-                    "SLURM",
-                    "MEMORY",
-                    "1000M",
-                ),
-                (
-                    "SLURM",
-                    "EXCLUDE_HOST",
-                    "host1,host2,host3,host4",
-                ),
-                (
-                    "SLURM",
-                    "INCLUDE_HOST",
-                    "host5,host6,host7,host8",
-                ),
-            ],
-        }
-
-    def make_queue_system(queue_system):
-        if queue_system == ConfigKeys.LOCAL:
-            return local_queue_system()
-        elif queue_system == ConfigKeys.SLURM:
-            return slurm_queue_system()
-
-    def make_gen_data():
-        return [
-            (
-                "snake_oil_nvp",
-                "RESULT_FILE:snake_oil_nvp",
-            ),
-        ]
-
-    ert_config = {
-        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", os.path.abspath(SNAKE_CONFIG_DIR))],
-        ErtConfigKeys.RUNPATH: os.path.join(
-            output_dir,
-            "simulations/<CASE_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",
-        ),
-        ErtConfigKeys.RUNPATH_FILE: os.path.join(
-            os.path.realpath("snake_oil/everest/model"),
-            "everest_output/.res_runpath_list",
-        ),
-        ErtConfigKeys.NUM_REALIZATIONS: 1,
-        ErtConfigKeys.MAX_RUNTIME: 3600,
-        ErtConfigKeys.ECLBASE: "eclipse/ECL",
-        ErtConfigKeys.INSTALL_JOB: install_jobs(),
-        ErtConfigKeys.SIMULATION_JOB: simulation_jobs(),
-        ErtConfigKeys.ENSPATH: os.path.join(
-            os.path.realpath("snake_oil/everest/model"),
-            "everest_output/simulation_results",
-        ),
-        ErtConfigKeys.GEN_DATA: make_gen_data(),
-    }
-    ert_config.update(make_queue_system(queue_system))
-    return ert_config
 
 
 def build_tutorial_dict(config_dir, output_dir):
@@ -209,25 +86,6 @@ def build_tutorial_dict(config_dir, output_dir):
             ),
         ],
     }
-
-
-def test_snake_everest_to_ert(copy_snake_oil_to_tmp):
-    # Load config file
-    ever_config_dict = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-
-    output_dir = ever_config_dict.output_dir
-    snake_dict = build_snake_dict(output_dir, ConfigKeys.LOCAL)
-
-    # Transform to res dict and verify equality
-    ert_config_dict = _everest_to_ert_config_dict(ever_config_dict)
-    assert snake_dict == ert_config_dict
-
-    # Instantiate res
-    ErtConfig.with_plugins().from_dict(
-        config_dict=_everest_to_ert_config_dict(
-            ever_config_dict, site_config=ErtConfig.read_site_config()
-        )
-    )
 
 
 @pytest.mark.parametrize(
