@@ -11,7 +11,6 @@ import everest
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
-from everest.config.well_config import WellConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     everest_to_ert_config,
@@ -134,30 +133,20 @@ def test_default_installed_jobs(tmp_path, monkeypatch, name):
     assert config.forward_model_steps[1].name == name
 
 
-@skipif_no_opm
-def test_combined_wells_everest_to_ert(copy_test_data_to_tmp):
-    config_mocked_multi_batch = os.path.join(
-        TUTORIAL_CONFIG_DIR, "mocked_multi_batch.yml"
+def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    ever_config_dict = EverestConfig.with_defaults(
+        **yaml.safe_load(
+            dedent("""
+    model: {"realizations": [0], data_file: my_file}
+    wells: [{ name: fakename}]
+    definitions: {eclbase: my_test_case}
+    """)
+        )
     )
-    # Load config file
-    ever_config_dict = EverestConfig.load_file(config_mocked_multi_batch)
-
-    # Add a dummy well name to the everest config
-    assert ever_config_dict.wells is not None
-    ever_config_dict.wells.append(WellConfig(name="fakename"))
-    ert_config_dict = _everest_to_ert_config_dict(ever_config_dict)
-
-    # Check whether dummy name is in the summary keys
-    fakename_in_strings = [
-        "fakename" in string for string in ert_config_dict[ErtConfigKeys.SUMMARY][0]
-    ]
-    assert any(fakename_in_strings)
-
-    # Check whether data file specific well is in the summary keys
-    inj_in_strings = [
-        "INJ" in string for string in ert_config_dict[ErtConfigKeys.SUMMARY][0]
-    ]
-    assert any(inj_in_strings)
+    config = everest_to_ert_config(ever_config_dict)
+    assert "WOPR:fakename" in config.ensemble_config.response_configs["summary"].keys
 
 
 @pytest.mark.parametrize(
