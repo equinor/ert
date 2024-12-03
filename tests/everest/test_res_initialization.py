@@ -8,6 +8,7 @@ import yaml
 from ruamel.yaml import YAML
 
 import everest
+from ert.config import ExtParamConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
@@ -102,6 +103,28 @@ def test_everest_to_ert_queue_config(config, expected):
     assert {k: v for k, v in driver_options.items() if v is not None} == expected
     assert qc.max_submit == general_options["resubmit_limit"] + 1
     assert qo.max_running == general_options["cores"]
+
+
+def test_everest_to_ert_controls():
+    ever_config = EverestConfig.with_defaults(
+        **yaml.safe_load(
+            dedent("""
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    """)
+        )
+    )
+    config = everest_to_ert_config(ever_config)
+    assert config.ensemble_config["my_control"] == ExtParamConfig(
+        input_keys=["test"], name="my_control", output_file="my_control.json"
+    )
 
 
 @pytest.mark.parametrize(
