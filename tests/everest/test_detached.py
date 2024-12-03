@@ -12,6 +12,7 @@ from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
     SlurmQueueOptions,
+    TorqueQueueOptions,
     activate_script,
 )
 from ert.scheduler.event import FinishedEvent
@@ -197,8 +198,10 @@ def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
     [
         ("lsf", 2, None),
         ("slurm", 4, None),
+        ("torque", 6, None),
         ("lsf", 3, "test_lsf"),
         ("slurm", 5, "test_slurm"),
+        ("torque", 7, "test_torque"),
     ],
 )
 def test_everserver_queue_config_equal_to_run_config(
@@ -301,6 +304,14 @@ def test_generate_queue_options_no_config():
         (
             {"options": "ever_opt_1", "queue_system": "lsf"},
             LsfQueueOptions(max_running=1, lsf_resource="ever_opt_1"),
+        ),
+        (
+            {
+                "options": "ever_opt_1",
+                "queue_system": "torque",
+                "keep_qsub_output": "1",
+            },
+            TorqueQueueOptions(max_running=1, keep_qsub_output=True),
         ),
     ],
 )
