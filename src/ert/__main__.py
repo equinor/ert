@@ -13,7 +13,6 @@ from argparse import ArgumentParser, ArgumentTypeError
 from typing import Any, Dict, Optional, Sequence, Union
 from uuid import UUID
 
-import uvloop
 import yaml
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 from opentelemetry.trace import Status, StatusCode
@@ -636,7 +635,6 @@ def log_process_usage() -> None:
 
 @tracer.start_as_current_span("ert.application.start")
 def main() -> None:
-    uvloop.install()
     span = trace.get_current_span()
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     locale.setlocale(locale.LC_NUMERIC, "C")
