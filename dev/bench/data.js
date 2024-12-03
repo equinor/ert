@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733235997346,
+  "lastUpdate": 1733239422341,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "68c2de998a110df4c297353256982b487ddab767",
-          "message": "Add time&mem test for snake oil plotting",
-          "timestamp": "2024-11-28T09:34:45+01:00",
-          "tree_id": "9ef010a445c0afb2780e07e62c392418c025ffff",
-          "url": "https://github.com/equinor/ert/commit/68c2de998a110df4c297353256982b487ddab767"
-        },
-        "date": 1732783001315,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1923963015343426,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02450197563491844",
-            "extra": "mean: 5.1976051100000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025677284970481586",
             "extra": "mean: 4.616028785999982 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "13fdda268cf349fe5b3c328a8004cd6de67efa40",
+          "message": "Fix the azure logging handler in Everest\n\n* Fix the azure logging handler in Everest\r\n\r\nCo-authored-by: DanSava <dan.sava42@gmail.com>",
+          "timestamp": "2024-12-03T17:21:47+02:00",
+          "tree_id": "42d983a6caf0663e408a354e283e628097c4dc9d",
+          "url": "https://github.com/equinor/ert/commit/13fdda268cf349fe5b3c328a8004cd6de67efa40"
+        },
+        "date": 1733239420814,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21449748614004083,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03604122720208032",
+            "extra": "mean: 4.662059299600003 sec\nrounds: 5"
           }
         ]
       }
