@@ -208,6 +208,12 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
             "filename": path,
         }
 
+    def azure_handler():
+        azure_handler = get_azure_logging_handler()
+        if azure_handler:
+            return azure_handler
+        return logging.NullHandler()
+
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -219,26 +225,19 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
             "forward_models": make_handler_config(
                 log_dir / "forward_models.log", logging_level
             ),
+            "azure_handler": {"()": azure_handler},
         },
         "loggers": {
             "": {"handlers": ["root"], "level": "NOTSET"},
             "res": {"handlers": ["res"]},
             "everserver": {"handlers": ["everserver"]},
-            "everest": {"handlers": ["everest"]},
+            "everest": {"handlers": ["everest", "azure_handler"]},
             "forward_models": {"handlers": ["forward_models"]},
         },
         "formatters": {
             "default": {"format": DEFAULT_LOGGING_FORMAT},
         },
     }
-
-    azure_handler = get_azure_logging_handler()
-    if azure_handler:
-        logging_config["handlers"]["azure"] = {
-            "class": "azure_handler",
-            "level": logging_level,
-        }
-        logging_config["loggers"]["everest"]["handlers"].append("azure")
 
     logging.config.dictConfig(logging_config)
 
