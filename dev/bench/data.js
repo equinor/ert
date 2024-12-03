@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733225927268,
+  "lastUpdate": 1733227397432,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "2d3301d3bd93544902f536b99aad29a2b1f222b7",
-          "message": "Log that NUM_CPU was parsed from DATA",
-          "timestamp": "2024-11-28T08:41:45+01:00",
-          "tree_id": "e85aa4b36b558686e2b63e3aeeae3ade3eb81adb",
-          "url": "https://github.com/equinor/ert/commit/2d3301d3bd93544902f536b99aad29a2b1f222b7"
-        },
-        "date": 1732779814313,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19545313991014893,
-            "unit": "iter/sec",
-            "range": "stddev: 0.021148194854071628",
-            "extra": "mean: 5.116315861999999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02822813196409",
             "extra": "mean: 5.072321617399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "0ee3d4906ebf32a15be67979dea908cd3a95d4f5",
+          "message": "Make local_driver use start_new_session when spawning children\n\nThis makes it more in line with lsf driver.\npreexec_fn can also deadlock when using fork method for multiprocessing\nmodule.",
+          "timestamp": "2024-12-03T13:01:27+01:00",
+          "tree_id": "258fc63207c210f5c9dcff0c590298ce01dc5a12",
+          "url": "https://github.com/equinor/ert/commit/0ee3d4906ebf32a15be67979dea908cd3a95d4f5"
+        },
+        "date": 1733227396920,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.19343094337051872,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014114403390293724",
+            "extra": "mean: 5.169803665199993 sec\nrounds: 5"
           }
         ]
       }
