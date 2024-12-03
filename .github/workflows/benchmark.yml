@@ -31,7 +31,7 @@ jobs:
         id: setup_python
         with:
           # pin this to maintain comparable benchmark results
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
