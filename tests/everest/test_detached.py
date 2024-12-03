@@ -15,8 +15,7 @@ from ert.config.queue_config import (
     activate_script,
 )
 from ert.scheduler.event import FinishedEvent
-from everest.config import EverestConfig
-from everest.config.install_job_config import InstallJobConfig
+from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys as CK
