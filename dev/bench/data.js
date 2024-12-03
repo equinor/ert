@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733216447075,
+  "lastUpdate": 1733222699357,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "86219529+AugustoMagalhaes@users.noreply.github.com",
-            "name": "AugustoMagalhaes",
-            "username": "AugustoMagalhaes"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "7e0f7931d1cd8f8105d250e59bc7be24c9eddaa8",
-          "message": "Select first realizations by default in gui\n\n* Select first realizations by default in gui\r\n\r\nCo-authored-by: Andreas Eknes Lie <andrli@equinor.com>",
-          "timestamp": "2024-11-27T15:56:41+01:00",
-          "tree_id": "fdb807023a605162266a8b86aed692f0a3bf9467",
-          "url": "https://github.com/equinor/ert/commit/7e0f7931d1cd8f8105d250e59bc7be24c9eddaa8"
-        },
-        "date": 1732719513642,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1921977827711131,
-            "unit": "iter/sec",
-            "range": "stddev: 0.032388740798183685",
-            "extra": "mean: 5.202973653400011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025283097746221977",
             "extra": "mean: 5.132309073200008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "eea080c93eec1b812a917f5c2016fc81f8d3f352",
+          "message": "Ignore erroneous auto-scale configuration, but warn",
+          "timestamp": "2024-12-03T11:43:07+01:00",
+          "tree_id": "ac4f4a4ffdb746233a6165e9ae1af4b2baa72ad6",
+          "url": "https://github.com/equinor/ert/commit/eea080c93eec1b812a917f5c2016fc81f8d3f352"
+        },
+        "date": 1733222698752,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.20023494236975783,
+            "unit": "iter/sec",
+            "range": "stddev: 0.052400916188259684",
+            "extra": "mean: 4.994133332399997 sec\nrounds: 5"
           }
         ]
       }
