@@ -1,15 +1,20 @@
 import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig
-
-CONFIG_FILE_STDDEV = "config_stddev.yml"
+from everest.config import EverestConfig, ObjectiveFunctionConfig
 
 
-def test_mathfunc_stddev(
+@pytest.mark.integration_test
+def test_objective_type(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
-    config = EverestConfig.load_file(CONFIG_FILE_STDDEV)
+    config = EverestConfig.load_file("config_minimal.yml")
+    config.objective_functions = [
+        ObjectiveFunctionConfig(name="distance", weight=1.0),
+        ObjectiveFunctionConfig(
+            name="stddev", weight=1.0, type="stddev", alias="distance"
+        ),
+    ]
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)
