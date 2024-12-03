@@ -1,7 +1,11 @@
 import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig, ObjectiveFunctionConfig
+from everest.config import (
+    EverestConfig,
+    ModelConfig,
+    ObjectiveFunctionConfig,
+)
 
 
 @pytest.mark.integration_test
@@ -15,6 +19,10 @@ def test_objective_type(
         ObjectiveFunctionConfig(
             name="stddev", weight=1.0, type="stddev", alias="distance"
         ),
+    ]
+    config.model = ModelConfig(realizations=[0, 1])
+    config.forward_model = [
+        "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
     ]
 
     # Act
