@@ -49,7 +49,7 @@ class Driver(ABC):
         executable: str,
         /,
         *args: str,
-        name: str = "dummy",
+        name: Optional[str] = None,
         runpath: Optional[Path] = None,
         num_cpu: Optional[int] = 1,
         realization_memory: Optional[int] = 0,

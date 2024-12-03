@@ -228,13 +228,15 @@ class OpenPBSDriver(Driver):
         executable: str,
         /,
         *args: str,
-        name: str = "dummy",
+        name: Optional[str] = None,
         runpath: Optional[Path] = None,
         num_cpu: Optional[int] = 1,
         realization_memory: Optional[int] = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
+        if name is None:
+            name = Path(executable).name
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-A", self._project_code] if self._project_code else []
