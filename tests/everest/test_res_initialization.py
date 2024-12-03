@@ -22,8 +22,6 @@ from tests.everest.utils import (
     skipif_no_opm,
 )
 
-TUTORIAL_CONFIG_DIR = "mocked_test_case"
-
 
 @pytest.mark.parametrize(
     "config, expected",
