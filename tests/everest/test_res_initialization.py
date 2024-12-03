@@ -13,7 +13,6 @@ from everest import ConfigKeys as CK
 from everest.config import EverestConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.well_config import WellConfig
-from everest.config.workflow_config import WorkflowConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     everest_to_ert_config,
@@ -322,22 +321,22 @@ def test_workflow_job(copy_snake_oil_to_tmp):
     )
 
 
-def test_workflows(copy_snake_oil_to_tmp):
-    workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-    ever_config.install_workflow_jobs = workflow_jobs
-    ever_config.workflows = WorkflowConfig.model_validate(
-        {"pre_simulation": ["test -i in -o out"]}
+def test_workflows(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
+    workflow_jobs = [{"name": "my_test", "source": "TEST"}]
+    workflow = {"pre_simulation": ["my_test"]}
+    ever_config = EverestConfig.with_defaults(
+        **{
+            "workflows": workflow,
+            "model": {"realizations": [0]},
+            "install_workflow_jobs": workflow_jobs,
+        }
     )
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    workflows = ert_config_dict.get(ErtConfigKeys.LOAD_WORKFLOW)
-    assert workflows is not None
-    name = os.path.join(ever_config.config_directory, ".pre_simulation.workflow")
-    assert os.path.exists(name)
-    assert workflows[0] == (name, "pre_simulation")
-    hooks = ert_config_dict.get(ErtConfigKeys.HOOK_WORKFLOW)
-    assert hooks is not None
-    assert hooks[0] == ("pre_simulation", "PRE_SIMULATION")
+    ert_config = everest_to_ert_config(ever_config)
+    jobs = ert_config.workflows.get("pre_simulation")
+    assert jobs.cmd_list[0][0].name == "my_test"
+    assert jobs.cmd_list[0][0].executable == "echo"
 
 
 def test_user_config_jobs_precedence(copy_snake_oil_to_tmp):
