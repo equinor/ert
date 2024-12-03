@@ -64,7 +64,7 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
         ) from err
 
     kwargs: Dict[str, Any] = {"verbose": args.verbose}
-    ert_config = ErtConfig.from_file(args.config)
+    ert_config = ErtConfig.with_plugins().from_file(args.config)
     os.chdir(ert_config.config_path)
     ens_path = ert_config.ens_path
 
