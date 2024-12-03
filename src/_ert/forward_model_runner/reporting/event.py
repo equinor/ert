@@ -67,7 +67,6 @@ class Event(Reporter):
                 self._cert = f.read()
         else:
             self._cert = None
-
         self._statemachine = StateMachine()
         self._statemachine.add_handler((Init,), self._init_handler)
         self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
@@ -163,6 +162,7 @@ class Event(Reporter):
             if msg.success():
                 logger.debug(f"Job {job_name} exited successfully")
                 self._dump_event(ForwardModelStepSuccess(**job_msg))
+
             else:
                 logger.error(
                     _JOB_EXIT_FAILED_STRING.format(

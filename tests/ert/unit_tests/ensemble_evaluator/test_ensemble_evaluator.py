@@ -298,7 +298,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 )
                 assert (
                     snapshot.get_fm_step("1", "0")["status"]
-                    == FORWARD_MODEL_STATE_RUNNING
+                    == FORWARD_MODEL_STATE_FINISHED
                 )
                 assert (
                     snapshot.get_fm_step("1", "1")["status"]

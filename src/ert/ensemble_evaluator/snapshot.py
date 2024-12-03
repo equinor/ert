@@ -276,7 +276,6 @@ class EnsembleSnapshot:
     ) -> "EnsembleSnapshot":
         e_type = type(event)
         timestamp = event.time
-
         if source_snapshot is None:
             source_snapshot = EnsembleSnapshot()
         if e_type in get_args(RealizationEvent):
@@ -364,7 +363,9 @@ class EnsembleSnapshot:
                 event.fm_step,
                 fm,
             )
-
+            self._make_sure_previous_fm_is_not_running(
+                event.real, event.fm_step, source_snapshot
+            )
         elif e_type in get_args(EnsembleEvent):
             event = cast(EnsembleEvent, event)
             self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
@@ -384,6 +385,46 @@ class EnsembleSnapshot:
     ) -> "EnsembleSnapshot":
         self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
+
+    def _make_sure_previous_fm_is_not_running(
+        self, real_id: str, fm_step_id: str, source_snapshot: "EnsembleSnapshot"
+    ) -> None:
+        if fm_step_id == "0":
+            return
+        previous_fm_step_id = str(int(fm_step_id) - 1)
+        previous_fm_step = source_snapshot._fm_step_snapshots[
+            real_id, previous_fm_step_id
+        ]
+        current_fm_start_time_from_source_snapshot = source_snapshot._fm_step_snapshots[
+            real_id, fm_step_id
+        ].get("start_time")
+        current_fm_start_time_from_update_snapshot = self._fm_step_snapshots[
+            real_id, fm_step_id
+        ].get("start_time")
+        if "status" in previous_fm_step and previous_fm_step["status"] not in [
+            "Failed",
+            "Finished",
+        ]:
+            logger.error(
+                (
+                    f"Did not get finished event for {real_id=} {previous_fm_step_id=}, "
+                    "but next fm was started so we assume it finished successfully and carry on."
+                )
+            )
+            self._fm_step_snapshots[real_id, previous_fm_step_id]["status"] = "Finished"
+            self._fm_step_snapshots[real_id, previous_fm_step_id]["end_time"] = (
+                current_fm_start_time_from_source_snapshot
+                or current_fm_start_time_from_update_snapshot
+            )
+            previous_fm_step["status"] = "Finished"
+            previous_fm_step["end_time"] = (
+                current_fm_start_time_from_source_snapshot
+                or current_fm_start_time_from_update_snapshot
+            )
+            # might affect many of the previous FMs
+            self._make_sure_previous_fm_is_not_running(
+                real_id, previous_fm_step_id, source_snapshot
+            )
 
 
 class FMStepSnapshot(TypedDict, total=False):
