@@ -190,7 +190,9 @@ class Job:
         self.returncode.cancel()
 
     async def _verify_checksum(
-        self, checksum_lock: asyncio.Lock, timeout: Optional[int] = None
+        self,
+        checksum_lock: asyncio.Lock,
+        timeout: Optional[int] = None,  # noqa: ASYNC109
     ) -> None:
         if timeout is None:
             timeout = self.DEFAULT_CHECKSUM_TIMEOUT
