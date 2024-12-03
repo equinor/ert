@@ -22,7 +22,6 @@ from everest.simulator.everest_to_ert import (
 from tests.everest.utils import (
     everest_default_jobs,
     hide_opm,
-    relpath,
     skipif_no_everest_models,
     skipif_no_opm,
 )
@@ -231,31 +230,11 @@ def test_snake_everest_to_ert(copy_snake_oil_to_tmp):
     )
 
 
-def test_snake_everest_to_ert_slurm(copy_test_data_to_tmp):
-    snake_slurm_config_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_slurm.yml")
-    # Load config file
-    ever_config_dict = EverestConfig.load_file(snake_slurm_config_path)
-
-    output_dir = ever_config_dict.output_dir
-    snake_dict = build_snake_dict(output_dir, ConfigKeys.SLURM)
-
-    # Transform to res dict and verify equality
-    ert_config_dict = _everest_to_ert_config_dict(ever_config_dict)
-    assert snake_dict == ert_config_dict
-
-    # Instantiate res
-    ErtConfig.with_plugins().from_dict(
-        config_dict=_everest_to_ert_config_dict(
-            ever_config_dict, site_config=ErtConfig.read_site_config()
-        )
-    )
-
-
-def test_everest_to_ert_torque():
-    ever_config = EverestConfig.with_defaults(
-        **{
-            "simulator": {
-                "max_runtime": "3600",
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        [
+            {
                 "queue_system": "torque",
                 "name": "permanent_8",
                 "qsub_cmd": "qsub",
@@ -264,7 +243,58 @@ def test_everest_to_ert_torque():
                 "keep_qsub_output": 1,
                 "submit_sleep": 0.5,
                 "project_code": "snake_oil_pc",
+                "cores_per_node": 3,
             },
+            {
+                "project_code": "snake_oil_pc",
+                "qsub_cmd": "qsub",
+                "qstat_cmd": "qstat",
+                "qdel_cmd": "qdel",
+                "num_cpus_per_node": 3,
+                "num_nodes": 1,
+                "keep_qsub_output": True,
+                "queue_name": "permanent_8",
+            },
+        ],
+        [
+            {
+                "queue_system": "slurm",
+                "name": "default-queue",
+                "max_memory": "1000M",
+                "exclude_host": "host1,host2,host3,host4",
+                "include_host": "host5,host6,host7,host8",
+            },
+            {
+                "exclude_hosts": "host1,host2,host3,host4",
+                "include_hosts": "host5,host6,host7,host8",
+                "memory": "1000M",
+                "queue_name": "default-queue",
+                "sbatch_cmd": "sbatch",
+                "scancel_cmd": "scancel",
+                "scontrol_cmd": "scontrol",
+                "squeue_cmd": "squeue",
+                "squeue_timeout": 2,
+            },
+        ],
+        [
+            {
+                "queue_system": "lsf",
+                "name": "mr",
+                "options": "span = 1 && select[x86 and GNU/Linux]",
+                "server": "lx-fastserver01",
+            },
+            {
+                "queue_name": "mr",
+                "resource_requirement": "span = 1 && select[x86 and GNU/Linux]",
+            },
+        ],
+    ],
+)
+def test_everest_to_ert_queue_config(config, expected):
+    general_options = {"resubmit_limit": 7, "cores": 42}
+    ever_config = EverestConfig.with_defaults(
+        **{
+            "simulator": config | general_options,
             "model": {"realizations": [0]},
         }
     )
@@ -272,19 +302,12 @@ def test_everest_to_ert_torque():
 
     qc = ert_config.queue_config
     qo = qc.queue_options
-    assert qc.queue_system == "TORQUE"
+    assert qc.queue_system == config["queue_system"].upper()
     driver_options = qo.driver_options
     driver_options.pop("activate_script")
-    assert {k: v for k, v in driver_options.items() if v is not None} == {
-        "project_code": "snake_oil_pc",
-        "qsub_cmd": "qsub",
-        "qstat_cmd": "qstat",
-        "qdel_cmd": "qdel",
-        "num_cpus_per_node": 1,
-        "num_nodes": 1,
-        "keep_qsub_output": True,
-        "queue_name": "permanent_8",
-    }
+    assert {k: v for k, v in driver_options.items() if v is not None} == expected
+    assert qc.max_submit == general_options["resubmit_limit"] + 1
+    assert qo.max_running == general_options["cores"]
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
@@ -334,52 +357,6 @@ def test_combined_wells_everest_to_ert(copy_test_data_to_tmp):
         "INJ" in string for string in ert_config_dict[ErtConfigKeys.SUMMARY][0]
     ]
     assert any(inj_in_strings)
-
-
-def test_lsf_queue_system(copy_test_data_to_tmp):
-    snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
-    ever_config = EverestConfig.load_file(snake_all_path)
-
-    assert ever_config.simulator.queue_system == ConfigKeys.LSF
-
-    ert_config = _everest_to_ert_config_dict(ever_config)
-
-    queue_system = ert_config[ErtConfigKeys.QUEUE_SYSTEM]
-    assert queue_system == "LSF"
-
-
-def test_queue_configuration(copy_test_data_to_tmp):
-    snake_all_path = os.path.join(SNAKE_CONFIG_DIR, "snake_oil_all.yml")
-    ever_config = EverestConfig.load_file(snake_all_path)
-
-    assert ever_config.simulator.cores == 3
-
-    ert_config = _everest_to_ert_config_dict(ever_config)
-
-    assert ert_config[ErtConfigKeys.MAX_SUBMIT] == 17 + 1
-
-    expected_options = [
-        ("LSF", "MAX_RUNNING", 3),
-        ("LSF", "LSF_QUEUE", "mr"),
-        ("LSF", "LSF_RESOURCE", "span = 1 && select[x86 and GNU/Linux]"),
-    ]
-
-    options = ert_config[ErtConfigKeys.QUEUE_OPTION]
-    assert options == expected_options
-
-
-def test_queue_config():
-    config_file = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
-
-    config = EverestConfig.load_file(config_file)
-
-    assert config.simulator.name == "mr"
-    assert config.simulator.resubmit_limit == 17
-    assert config.simulator.cores == 3
-    assert config.simulator.queue_system == "lsf"
-    assert config.simulator.server is None
-    opts = "span = 1 && select[x86 and GNU/Linux]"
-    assert opts == config.simulator.options
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME"})
@@ -638,18 +615,3 @@ def test_user_config_jobs_precedence(copy_snake_oil_to_tmp):
     ]
     assert len(job) == 1
     assert job[0][1] == os.path.join(config_dir, "expected_source")
-
-
-def test_user_config_num_cpu(copy_snake_oil_to_tmp):
-    # Load config file
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-
-    # Transform to res dict
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    assert ErtConfigKeys.NUM_CPU not in ert_config_dict
-
-    ever_config.simulator.cores_per_node = 2
-    # Transform to res dict
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    assert ErtConfigKeys.NUM_CPU in ert_config_dict
-    assert ert_config_dict[ErtConfigKeys.NUM_CPU] == 2
