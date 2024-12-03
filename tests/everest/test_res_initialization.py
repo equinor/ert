@@ -11,7 +11,6 @@ import everest
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys as CK
 from everest.config import EverestConfig
-from everest.config.install_job_config import InstallJobConfig
 from everest.config.well_config import WellConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
@@ -23,8 +22,6 @@ from tests.everest.utils import (
     skipif_no_opm,
 )
 
-SNAKE_CONFIG_DIR = "snake_oil/everest/model"
-SNAKE_CONFIG_PATH = os.path.join(SNAKE_CONFIG_DIR, "snake_oil.yml")
 TUTORIAL_CONFIG_DIR = "mocked_test_case"
 
 
@@ -308,17 +305,16 @@ def test_install_data_with_invalid_templates(
     assert expected_error_msg in str(exc_info.value)
 
 
-def test_workflow_job(copy_snake_oil_to_tmp):
-    workflow_jobs = [{"name": "test", "source": "jobs/TEST"}]
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-    ever_config.install_workflow_jobs = workflow_jobs
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-    jobs = ert_config_dict.get(ErtConfigKeys.LOAD_WORKFLOW_JOB)
-    assert jobs is not None
-    assert jobs[0] == (
-        os.path.join(ever_config.config_directory, workflow_jobs[0]["source"]),
-        workflow_jobs[0]["name"],
+def test_workflow_job(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
+    workflow_jobs = [{"name": "test", "source": "TEST"}]
+    ever_config = EverestConfig.with_defaults(
+        **{"install_workflow_jobs": workflow_jobs, "model": {"realizations": [0]}}
     )
+    ert_config = everest_to_ert_config(ever_config)
+    jobs = ert_config.workflow_jobs.get("test")
+    assert jobs.executable == "echo"
 
 
 def test_workflows(tmp_path, monkeypatch):
@@ -339,19 +335,23 @@ def test_workflows(tmp_path, monkeypatch):
     assert jobs.cmd_list[0][0].executable == "echo"
 
 
-def test_user_config_jobs_precedence(copy_snake_oil_to_tmp):
-    # Load config file
-    ever_config = EverestConfig.load_file(SNAKE_CONFIG_PATH)
-    first_job = everest.jobs.script_names[0]
-
-    existing_standard_job = InstallJobConfig(name=first_job, source="expected_source")
-    ever_config.install_jobs.append(existing_standard_job)
-    config_dir = ever_config.config_directory
-    # Transform to res dict
-    ert_config_dict = _everest_to_ert_config_dict(ever_config)
-
-    job = [
-        job for job in ert_config_dict[ErtConfigKeys.INSTALL_JOB] if job[0] == first_job
-    ]
-    assert len(job) == 1
-    assert job[0][1] == os.path.join(config_dir, "expected_source")
+def test_user_config_jobs_precedence(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    existing_job = "recovery_factor"
+    ert_config = everest_to_ert_config(
+        EverestConfig.with_defaults(**{"model": {"realizations": [0]}})
+    )
+    assert existing_job in ert_config.installed_forward_model_steps
+    Path("my_custom").write_text("EXECUTABLE echo", encoding="utf-8")
+    ever_config = EverestConfig.with_defaults(
+        **{
+            "model": {"realizations": [0]},
+            "install_jobs": [{"name": existing_job, "source": "my_custom"}],
+        }
+    )
+    assert (
+        everest_to_ert_config(ever_config)
+        .installed_forward_model_steps.get(existing_job)
+        .executable
+        == "echo"
+    )
