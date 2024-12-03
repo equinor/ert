@@ -86,7 +86,10 @@ class StorageService(BaseService):
         )
 
     @classmethod
-    async def async_session(cls, timeout: Optional[int] = None) -> httpx.AsyncClient:
+    async def async_session(
+        cls,
+        timeout: Optional[int] = None,  # noqa: ASYNC109
+    ) -> httpx.AsyncClient:
         """
         Start a HTTP transaction with the server
         """
