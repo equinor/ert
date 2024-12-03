@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -905,3 +905,82 @@ class LocalEnsemble(BaseMode):
             else RealizationStorageState.UNDEFINED
             for e in self.experiment.response_configuration
         }
+
+    def get_observations_and_responses(
+        self,
+        selected_observations: Iterable[str],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> polars.DataFrame:
+        """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
+        observations_by_type = self.experiment.observations
+
+        dfs = []
+        for (
+            response_type,
+            response_cls,
+        ) in self.experiment.response_configuration.items():
+            if response_type not in observations_by_type:
+                continue
+
+            observations_for_type = observations_by_type[response_type].filter(
+                polars.col("observation_key").is_in(list(selected_observations))
+            )
+            responses_for_type = self.load_responses(
+                response_type, realizations=tuple(iens_active_index)
+            )
+
+            # Note that if there are duplicate entries for one
+            # response at one index, they are aggregated together
+            # with "mean" by default
+            pivoted = responses_for_type.pivot(
+                on="realization",
+                index=["response_key", *response_cls.primary_key],
+                aggregate_function="mean",
+            )
+
+            # We need to either assume that if there is a time column
+            # we will approx-join that, or we could specify in response configs
+            # that there is a column that requires an approx "asof" join.
+            # Suggest we simplify and assume that there is always only
+            # one "time" column, which we will reindex towards the response dataset
+            # with a given resolution
+            if "time" in pivoted:
+                joined = observations_for_type.join_asof(
+                    pivoted,
+                    by=["response_key", *response_cls.primary_key],
+                    on="time",
+                    tolerance="1s",
+                )
+            else:
+                joined = observations_for_type.join(
+                    pivoted,
+                    how="left",
+                    on=["response_key", *response_cls.primary_key],
+                )
+
+            joined = (
+                joined.with_columns(
+                    polars.concat_str(response_cls.primary_key, separator=", ").alias(
+                        "__tmp_index_key__"  # Avoid potential collisions w/ primary key
+                    )
+                )
+                .drop(response_cls.primary_key)
+                .rename({"__tmp_index_key__": "index"})
+            )
+
+            first_columns = [
+                "response_key",
+                "index",
+                "observation_key",
+                "observations",
+                "std",
+            ]
+            joined = joined.select(
+                first_columns + [c for c in joined.columns if c not in first_columns]
+            )
+
+            dfs.append(joined)
+
+        self.load_responses.cache_clear()
+        # cols: response_key, index, observation_key, observations, std, *[1, ...nreals]
+        return polars.concat(dfs)
