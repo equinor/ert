@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733229221196,
+  "lastUpdate": 1733232184730,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "dfffa695ea16d40c8f3817c097d720060deade8e",
-          "message": "Fix manifest having too many files and not substituting\n\nAlso makes substitution of <IENS> and <ITER> for\r\nall parameters and responses",
-          "timestamp": "2024-11-28T08:29:12Z",
-          "tree_id": "06a8bdaca3463bb2246ae982c61b63f28bd9560a",
-          "url": "https://github.com/equinor/ert/commit/dfffa695ea16d40c8f3817c097d720060deade8e"
-        },
-        "date": 1732782658775,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1950929591724109,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04992714006316286",
-            "extra": "mean: 5.125761607400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026973425817297007",
             "extra": "mean: 4.596638478599994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "03ee39ab21d16857039cd11342728d2a16f4207b",
+          "message": "Fix import that does not work in python 3.10\n\nReplace UTC with timezone.utc",
+          "timestamp": "2024-12-03T14:21:13+01:00",
+          "tree_id": "c6a55df98a348dcc5cc7f20ae7cee3436d9c53bc",
+          "url": "https://github.com/equinor/ert/commit/03ee39ab21d16857039cd11342728d2a16f4207b"
+        },
+        "date": 1733232184193,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21143399951008976,
+            "unit": "iter/sec",
+            "range": "stddev: 0.039980224908260774",
+            "extra": "mean: 4.729608304800001 sec\nrounds: 5"
           }
         ]
       }
