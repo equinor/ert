@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733150918529,
+  "lastUpdate": 1733212297523,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "25e431fb013c3ae78b10a3fb95485df8292e586b",
-          "message": "Inject plugin step config into jobs-json for steps\n\nGeneral configuration using key-values via the plugin system for\nindividual steps will be merged with environment property of each\nForwardModelStep that is dumped as json in every runpath.",
-          "timestamp": "2024-11-27T12:56:58+01:00",
-          "tree_id": "db45877f059d3bc6ce1a35a11035871aa3e4e697",
-          "url": "https://github.com/equinor/ert/commit/25e431fb013c3ae78b10a3fb95485df8292e586b"
-        },
-        "date": 1732708732581,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19663108550829128,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03254399607322415",
-            "extra": "mean: 5.085665867199992 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.007068278583113922",
             "extra": "mean: 5.160000858600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "c686535222988ea6f4d6ad1bc3ad8c1e6caaf254",
+          "message": "Add fixture for caching everest test-data example",
+          "timestamp": "2024-12-03T08:49:40+01:00",
+          "tree_id": "d03846a637490986ce2db911aa7537a7cb53b6f2",
+          "url": "https://github.com/equinor/ert/commit/c686535222988ea6f4d6ad1bc3ad8c1e6caaf254"
+        },
+        "date": 1733212296587,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.195100683014254,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0332584550921401",
+            "extra": "mean: 5.125558683599996 sec\nrounds: 5"
           }
         ]
       }
