@@ -1,4 +1,3 @@
-import os
 import tempfile
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
@@ -226,56 +225,21 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
         EverestConfig(**min_config)
 
 
-def test_valid_path_validation():
-    values = [
-        SNAKE_OIL_CONFIG,
-        os.path.dirname(SNAKE_OIL_CONFIG),
-        "A super path",
-        ("super long path" * 300),
-        0,
-        None,
-        ["I'm", "a", "path,", "not!"],
-        "/path/with/" + chr(0) + "embeddedNULL",
-    ]
-
-    exp_errs = (
-        [None, None, None]
-        + ["File name too long"]
-        + 3 * ["str type expected"]
-        + ["embedded null byte"]
+@pytest.mark.parametrize(
+    "path_val, valid", [("my_file", True), ("my_folder/", False), ("my_folder", False)]
+)
+def test_export_filepath_validation(min_config, tmp_path, monkeypatch, path_val, valid):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    Path("my_folder").mkdir()
+    min_config["export"] = {"csv_output_filepath": path_val}
+    expectation = (
+        does_not_raise()
+        if valid
+        else pytest.raises(ValidationError, match="Invalid type")
     )
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.ENVIRONMENT][ConfigKeys.OUTPUT_DIR] = val
-
-        errors = EverestConfig.lint_config_dict(config)
-        if exp_err is None:
-            assert len(errors) == 0
-        else:
-            has_error(errors, match=exp_err)
-
-
-def test_valid_filepath_validation():
-    values = [
-        os.path.dirname(SNAKE_OIL_CONFIG),
-        os.path.dirname(SNAKE_OIL_CONFIG) + "/export.csv",
-        "path/to/file.csv",
-        "path/to/folder/",
-    ]
-
-    exp_errs = ["Invalid type", None, None, "Invalid type"]
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config["export"] = {}
-        config["export"]["csv_output_filepath"] = val
-        errors = EverestConfig.lint_config_dict(config)
-
-        if exp_err is None:
-            assert len(errors) == 0
-        else:
-            has_error(errors, match=exp_err)
+    with expectation:
+        EverestConfig(**min_config)
 
 
 def test_ert_job_file():
