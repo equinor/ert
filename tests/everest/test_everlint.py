@@ -1,5 +1,7 @@
 import os
 import tempfile
+from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -145,6 +147,10 @@ def test_extra_key(min_config):
             {"forward_model": ["not_a_job"]},
             "unknown job not_a_job",
         ),
+        (
+            {"model": {"realizations": [-1]}},
+            "greater than or equal to 0",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -166,25 +172,30 @@ def test_empty_list(min_config):
     assert len(errors) == 0
 
 
-def test_validator_lint_value_error_msg():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.MODEL][ConfigKeys.REALIZATIONS][1] = -1  # invalid value
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 1
-    has_error(errors, match="(.*) value is greater than or equal to 0")
-
-
-def test_bool_validation():
-    values = [True, False, 0, 1, "True", ["I'm", [True for real in []]]]
-    exp_errs = 2 * [None] + 4 * ["(.*) could not be parsed to a boolean"]
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.LINK] = val
-
-        errors = EverestConfig.lint_config_dict(config)
-        if exp_err is not None:
-            has_error(errors, match=exp_err)
+@pytest.mark.parametrize(
+    "value, valid",
+    [
+        (True, True),
+        (False, True),
+        (0, False),
+        (1, False),
+        ("True", False),
+        (["I`m", []], False),
+    ],
+)
+def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    min_config["install_data"] = [
+        {"source": "my_file", "target": "irrelephant", "link": value}
+    ]
+    expectation = (
+        does_not_raise()
+        if valid
+        else pytest.raises(ValidationError, match="could not be parsed to a boolean")
+    )
+    with expectation:
+        EverestConfig(**min_config)
 
 
 def test_simulation_spec():
