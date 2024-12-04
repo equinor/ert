@@ -472,8 +472,14 @@ def test_run_dialog_memory_usage_showing(
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
+                        .add_fm_step(
+                            fm_step_id="1",
+                            index="1",
+                            name="fm_step_1",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
                         .build(
-                            ["0"],
+                            ["0", "1"],
                             status=state.REALIZATION_STATE_UNKNOWN,
                             exec_hosts="COMP_01",
                         )
@@ -503,7 +509,13 @@ def test_run_dialog_memory_usage_showing(
                             name="fm_step_0",
                             status=state.FORWARD_MODEL_STATE_START,
                         )
-                        .build(["0"], status=state.REALIZATION_STATE_UNKNOWN)
+                        .add_fm_step(
+                            fm_step_id="1",
+                            index="1",
+                            name="fm_step_1",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], status=state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
                     current_iteration=0,
@@ -541,12 +553,15 @@ def test_run_dialog_fm_label_show_correct_info(
     fm_step_model = run_dialog._fm_step_overview.model()
     assert fm_step_model._real == 0
 
+    # default selection should yield realization 0, iteration 0
     fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
     assert "Realization id 0 in iteration 0" in fm_step_label.text()
 
-    realization_box._item_clicked(run_dialog._fm_step_overview.model().index(0, 0))
+    # clicking realization 1 should update fm_label with realization 1, iteration 0
+    realization_box._item_clicked(run_dialog._fm_step_overview.model().index(1, 0))
+
     assert (
-        fm_step_label.text() == f"Realization id 0 in iteration 0{expected_host_info}"
+        fm_step_label.text() == f"Realization id 1 in iteration 0{expected_host_info}"
     )
 
 
