@@ -928,11 +928,6 @@ def test_that_non_existing_workflow_jobs_cause_error():
     ["objective", "forward_model", "warning_msg"],
     [
         (
-            ["rf"],
-            ["well_trajectory -c Something -E Something", "rf -s TEST -o rf"],
-            None,
-        ),
-        (
             ["npv", "rf"],
             ["rf -s TEST -o rf"],
             "Warning: Forward model might not write the required output file for \\['npv'\\]",

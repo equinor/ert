@@ -31,7 +31,7 @@ def fail_optimization(self, from_ropt=False):
     # call the provided simulation callback, which has access to the shared_data
     # variable in the eversever main function. Patch that callback to modify
     # shared_data (see set_shared_status() below).
-    self._sim_callback(None)
+    self._sim_callback(None, None)
     if from_ropt:
         self._exit_code = OptimizerExitCode.TOO_FEW_REALIZATIONS
         return OptimizerExitCode.TOO_FEW_REALIZATIONS
@@ -39,7 +39,7 @@ def fail_optimization(self, from_ropt=False):
     raise Exception("Failed optimization")
 
 
-def set_shared_status(*args, progress, shared_data):
+def set_shared_status(context_status, event, shared_data, progress):
     # Patch _sim_monitor with this to access the shared_data variable in the
     # everserver main function.
     failed = len(

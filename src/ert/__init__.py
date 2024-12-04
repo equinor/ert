@@ -15,11 +15,14 @@ from .config import (
 )
 from .data import MeasuredData
 from .libres_facade import LibresFacade
+from .simulator import BatchSimulator, BatchContext, JobStatus
 from .workflow_runner import WorkflowRunner
 from .plugins import plugin
 from .scheduler import JobState
 
 __all__ = [
+    "BatchContext",
+    "BatchSimulator",
     "ErtScript",
     "ForwardModelStepDocumentation",
     "ForwardModelStepJSON",
@@ -27,6 +30,7 @@ __all__ = [
     "ForwardModelStepValidationError",
     "ForwardModelStepWarning",
     "JobState",
+    "JobStatus",
     "LibresFacade",
     "MeasuredData",
     "WorkflowRunner",
