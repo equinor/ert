@@ -99,6 +99,10 @@ def test_extra_key(min_config):
             {"controls": [{"variables": []}]},
             "Value should have at least 1 item after validation, not 0",
         ),
+        (
+            {"config_path": "does_not_exist"},
+            "no such file or directory .*/does_not_exist",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -106,22 +110,6 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
-
-
-def test_non_existent_dir():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-
-    config[ConfigKeys.CONFIGPATH] = Path(
-        config[ConfigKeys.CONFIGPATH] + "fndjffdsn/is/no/dir/"
-    )
-
-    retrieved_dir = str(config[ConfigKeys.CONFIGPATH].parent)
-    assert bool(retrieved_dir)
-    assert not os.path.isdir(retrieved_dir)
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    has_error(errors, match="No such file or directory (.*)")
 
 
 def test_non_existent_file():
@@ -307,25 +295,6 @@ def test_existing_file_validation():
         jobs[0][ConfigKeys.SOURCE] = val
 
         errors = EverestConfig.lint_config_dict(config)
-        if exp_err is None:
-            assert len(errors) == 0
-        else:
-            has_error(errors, match=exp_err)
-
-
-def test_existing_dir_validation():
-    values = [
-        SNAKE_OIL_CONFIG,
-        "I'm not a path!",
-    ]
-
-    exp_errs = [None, "no such file or directory (.*)"]
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.CONFIGPATH] = Path(val)
-        errors = EverestConfig.lint_config_dict(config)
-
         if exp_err is None:
             assert len(errors) == 0
         else:
