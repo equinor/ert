@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733239422341,
+  "lastUpdate": 1733302328142,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "53eea27b8b6c7a004ecf1ce485cb7ef1b5683f64",
-          "message": "Remove realizations_initialized\n\nused in test only",
-          "timestamp": "2024-11-28T09:44:26+01:00",
-          "tree_id": "2eaaa7daa6c7e385f66841349c2c75b11e2d3b76",
-          "url": "https://github.com/equinor/ert/commit/53eea27b8b6c7a004ecf1ce485cb7ef1b5683f64"
-        },
-        "date": 1732783579492,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19410179268395863,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04247093091351129",
-            "extra": "mean: 5.151935931000002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03604122720208032",
             "extra": "mean: 4.662059299600003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "831e34bdc8f008ba477059001b77c014bbd4dcac",
+          "message": "Add more DATA parsing tests for num_cpu",
+          "timestamp": "2024-12-04T09:50:16+01:00",
+          "tree_id": "d1d3dd485e25ceb50a309471ed11c66920eca776",
+          "url": "https://github.com/equinor/ert/commit/831e34bdc8f008ba477059001b77c014bbd4dcac"
+        },
+        "date": 1733302327211,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21041206438626736,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030678677762065683",
+            "extra": "mean: 4.7525791970000055 sec\nrounds: 5"
           }
         ]
       }
