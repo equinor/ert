@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733302328142,
+  "lastUpdate": 1733302843572,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "9c0df14d0288e9827ca4aab20fcc240255a82191",
-          "message": "Only get processtree once per report",
-          "timestamp": "2024-11-28T10:33:02+01:00",
-          "tree_id": "3a1c9c1eccf762eea8a18eb2b1672ce2a90dfb72",
-          "url": "https://github.com/equinor/ert/commit/9c0df14d0288e9827ca4aab20fcc240255a82191"
-        },
-        "date": 1732786495679,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1954387200893491,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03417556641816042",
-            "extra": "mean: 5.116693353 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030678677762065683",
             "extra": "mean: 4.7525791970000055 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "11fbe8046a071ecac07efb99f134776ee039178d",
+          "message": "Fix everest doc test failing due to missing coverage",
+          "timestamp": "2024-12-04T09:58:55+01:00",
+          "tree_id": "b4f645cd904b06e00c999d1e9461bcc453495bd8",
+          "url": "https://github.com/equinor/ert/commit/11fbe8046a071ecac07efb99f134776ee039178d"
+        },
+        "date": 1733302843052,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21174496168005535,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09191409000932561",
+            "extra": "mean: 4.722662546800007 sec\nrounds: 5"
           }
         ]
       }
