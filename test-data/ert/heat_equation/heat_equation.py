@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Partial Differential Equations to use as forward models."""
 
+import json
 import sys
 
 import geostat
@@ -51,16 +52,28 @@ def heat_equation(
     return u_
 
 
-def sample_prior_conductivity(ensemble_size, nx, rng):
+def sample_prior_conductivity(ensemble_size, nx, rng, corr_length):
     mesh = np.meshgrid(np.linspace(0, 1, nx), np.linspace(0, 1, nx))
-    return np.exp(geostat.gaussian_fields(mesh, rng, ensemble_size, r=0.8))
+    return np.exp(geostat.gaussian_fields(mesh, rng, ensemble_size, r=corr_length))
+
+
+def load_parameters(filename):
+    with open(filename, encoding="utf-8") as f:
+        return json.load(f)
 
 
 if __name__ == "__main__":
     iens = int(sys.argv[1])
     iteration = int(sys.argv[2])
     rng = np.random.default_rng(iens)
-    cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(nx, nx)
+
+    parameters = load_parameters("parameters.json")
+    init_temp_scale = parameters["INIT_TEMP_SCALE"]
+    corr_length = parameters["CORR_LENGTH"]
+
+    cond = sample_prior_conductivity(
+        ensemble_size=1, nx=nx, rng=rng, corr_length=float(corr_length["x"])
+    ).reshape(nx, nx)
 
     if iteration == 0:
         resfo.write(
@@ -78,7 +91,9 @@ if __name__ == "__main__":
     # Note that this could be avoided if we used an implicit solver.
     dt = dx**2 / (4 * max(np.max(cond), np.max(cond)))
 
-    response = heat_equation(u_init, cond, dx, dt, k_start, k_end, rng)
+    scaled_u_init = u_init * float(init_temp_scale["x"])
+
+    response = heat_equation(scaled_u_init, cond, dx, dt, k_start, k_end, rng)
 
     index = sorted((obs.x, obs.y) for obs in obs_coordinates)
     for time_step in obs_times:
