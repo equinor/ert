@@ -6,24 +6,18 @@ import resource
 import shutil
 import sys
 from argparse import ArgumentParser
+from importlib.resources import files
 from pathlib import Path
 from unittest.mock import MagicMock
-
-from qtpy.QtWidgets import QApplication
-
-from _ert.threading import set_signal_handler
-
-if sys.version_info >= (3, 9):
-    from importlib.resources import files
-else:
-    from importlib_resources import files
 
 import pytest
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from qtpy.QtCore import QDir
+from qtpy.QtWidgets import QApplication
 
 import _ert.forward_model_runner.cli
+from _ert.threading import set_signal_handler
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig

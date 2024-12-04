@@ -1,4 +1,4 @@
-from ert.enum_shim import StrEnum
+from enum import StrEnum
 
 
 class ForwardModelStepKeys(StrEnum):

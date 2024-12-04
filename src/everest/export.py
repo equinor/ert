@@ -1,6 +1,6 @@
 import os
 import re
-import sys
+from enum import StrEnum
 from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
@@ -10,15 +10,6 @@ from seba_sqlite.snapshot import SebaSnapshot
 from ert.storage import open_storage
 from everest.config import ExportConfig
 from everest.strings import STORAGE_DIR
-
-if sys.version_info < (3, 11):
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        pass
-
-else:
-    from enum import StrEnum
 
 
 class MetaDataColumnNames(StrEnum):
