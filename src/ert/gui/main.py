@@ -2,16 +2,10 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
+from collections import Counter
+from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
 from typing import Optional, Tuple
-
-if sys.version_info >= (3, 9):
-    from importlib.resources import files
-else:
-    from importlib_resources import files
-
-from collections import Counter
 
 from qtpy.QtCore import QDir
 from qtpy.QtGui import QIcon
