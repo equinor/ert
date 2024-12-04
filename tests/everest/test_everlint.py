@@ -1,4 +1,3 @@
-import tempfile
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -242,20 +241,21 @@ def test_export_filepath_validation(min_config, tmp_path, monkeypatch, path_val,
         EverestConfig(**min_config)
 
 
-def test_ert_job_file():
-    content = [
+@pytest.mark.parametrize(
+    "content, error",
+    [
         ("ARGUMENT 1\n", "missing EXECUTABLE (.*)"),
         ("EXECUTABLE /no/such/path\n", "No such executable (.*)"),
-        ("EXECUTABLE %s\n" % SNAKE_OIL_CONFIG, "(.*)_oil_all.yml is not executable"),
-    ]
-    for cnt, err in content:
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as f:
-            f.write(cnt)
-            config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-            config[ConfigKeys.INSTALL_JOBS][0][ConfigKeys.SOURCE] = f.name
-
-            errors = EverestConfig.lint_config_dict(config)
-            has_error(errors, match=err)
+        ("EXECUTABLE my_file\n", "(.*)my_file is not executable"),
+    ],
+)
+def test_ert_job_file(tmp_path, monkeypatch, min_config, content, error):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    Path("ert_job_file").write_text(content, encoding="utf-8")
+    min_config["install_jobs"] = [{"source": "ert_job_file", "name": "irrelephant"}]
+    with pytest.raises(ValidationError, match=error):
+        EverestConfig(**min_config)
 
 
 def test_well_ref_validation():
