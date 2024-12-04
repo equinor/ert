@@ -133,6 +133,14 @@ def test_extra_key(min_config):
             {"install_data": [{"source": None, "target": "not_relevant"}]},
             "source\n  Input should be a valid string",
         ),
+        (
+            {"install_data": [{"source": ["a", "b"], "target": "not_relevant"}]},
+            "source\n  Input should be a valid string",
+        ),
+        (
+            {"install_data": [{"source": "not a file", "target": "not_relevant"}]},
+            "No such file or directory",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -146,24 +154,6 @@ def test_no_list(min_config):
     min_config[ConfigKeys.INSTALL_DATA] = None
     errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
-
-
-def test_malformed_list():
-    invalid_values = [["a", "b"], None, "not a file for sure?"]
-    exp_errs = [
-        "str type expected",
-        "none is not an allowed value",
-        "No such file or directory (.*)",
-    ]
-
-    for invalid_val, exp_err in zip(invalid_values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.SOURCE] = invalid_val
-
-        errors = EverestConfig.lint_config_dict(config)
-
-        assert len(errors) > 0
-        has_error(errors, match=exp_err)
 
 
 def test_empty_list(min_config):
@@ -226,34 +216,6 @@ def test_simulation_spec():
     )
     errors = EverestConfig.lint_config_dict(config)
     assert not errors
-
-
-def test_existing_path_validation():
-    values = [
-        SNAKE_OIL_CONFIG,
-        os.path.split(SNAKE_OIL_CONFIG)[0],
-        "A super path",
-        0,
-        None,
-        ["I'm", "a", "path,", "not!"],
-    ]
-
-    exp_errs = (
-        2 * [None]
-        + 2 * ["No such file or directory (.*)"]
-        + ["none is not an allowed value"]
-        + ["str type expected"]
-    )
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.SOURCE] = val
-
-        errors = EverestConfig.lint_config_dict(config)
-        if exp_err is None:
-            assert len(errors) == 0
-        else:
-            has_error(errors, match=exp_err)
 
 
 def test_existing_file_validation():
