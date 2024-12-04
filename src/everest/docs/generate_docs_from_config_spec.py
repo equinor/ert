@@ -37,12 +37,6 @@ class ParsedField:
         )
 
     def clean_type(self) -> str:
-        if sys.version_info < (3, 10):
-            self.type = self.type.replace("Annotated[int, Ge(ge=0)]", "NonNegativeInt")
-            self.type = self.type.replace("Annotated[int, Gt(gt=0)]", "PositiveInt")
-            self.type = self.type.replace("Annotated[float, Gt(gt=0)]", "PositiveFloat")
-            self.type = re.sub(r"Union\[(.+),\s+NoneType\]", r"Optional[\1]", self.type)
-
         self.type = self.type.replace("Annotated[int, Ge]", "NonNegativeInt")
         self.type = self.type.replace("Annotated[int, Gt]", "PositiveInt")
         self.type = self.type.replace("Annotated[float, Gt]", "PositiveFloat")

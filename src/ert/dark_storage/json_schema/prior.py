@@ -1,12 +1,6 @@
-import sys
-from typing import Union
+from typing import Literal, Union
 
 from pydantic import BaseModel
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 
 class PriorConst(BaseModel):

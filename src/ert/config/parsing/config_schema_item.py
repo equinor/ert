@@ -1,11 +1,10 @@
 import os
 import shutil
+from enum import EnumType
 from typing import List, Mapping, Optional, TypeVar, Union
 
 from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
 from pydantic.dataclasses import dataclass
-
-from ert.enum_shim import EnumType
 
 from .config_errors import ConfigValidationError
 from .context_values import (
