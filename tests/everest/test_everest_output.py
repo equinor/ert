@@ -43,7 +43,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(
 
 
 @pytest.mark.integration_test
-def test_everest_output(copy_mocked_test_data_to_tmp):
+async def test_everest_output(copy_mocked_test_data_to_tmp):
     config_folder = os.getcwd()
     config = EverestConfig.load_file("mocked_test_case.yml")
     everest_output_dir = config.output_dir
@@ -75,7 +75,7 @@ def test_everest_output(copy_mocked_test_data_to_tmp):
     assert "storage" not in initial_folders
     assert DETACHED_NODE_DIR not in initial_folders
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    start_server(config)
+    await start_server(config)
 
     (path, folders, files) = next(os.walk(config_folder))
     # Check we are looking at the config folder
@@ -92,7 +92,7 @@ def test_everest_output(copy_mocked_test_data_to_tmp):
     # Check storage folder no longer created in the config folder
     assert "storage" not in final_folders
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    start_server(config)
+    await start_server(config)
     final_files = os.listdir(config_folder)
 
     # verify two everest_output dirs present
