@@ -7,9 +7,8 @@ import pytest
 from pydantic import BaseModel
 
 from ert import ForwardModelStepPlugin
-from everest.config import EverestConfig
+from ert.config import ErtConfig
 from everest.plugins import hook_impl, hook_specs, hookimpl
-from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
 
@@ -37,16 +36,12 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
     yield register_plugin_hooks
 
 
-def test_everest_models_jobs(copy_snake_oil_to_tmp):
+def test_everest_models_jobs():
     everest_models = pytest.importorskip("everest_models")
-    ert_config = everest_to_ert_config(
-        EverestConfig.load_file("snake_oil/everest/model/snake_oil.yml")
-    )
-
     jobs = everest_models.forward_models.get_forward_models()
     assert bool(jobs)
     for job in jobs:
-        job_class = ert_config.installed_forward_model_steps.get(job)
+        job_class = ErtConfig.with_plugins().PREINSTALLED_FORWARD_MODEL_STEPS.get(job)
         assert job_class is not None
         assert isinstance(job_class, ForwardModelStepPlugin)
 
