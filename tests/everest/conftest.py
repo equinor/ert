@@ -112,13 +112,6 @@ def copy_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def copy_snake_oil_to_tmp(tmp_path, monkeypatch):
-    path = relpath("test_data", "snake_oil")
-    shutil.copytree(path, tmp_path / "snake_oil", dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
-
-
-@pytest.fixture
 def copy_template_test_data_to_tmp(tmp_path, monkeypatch):
     path = relpath("test_data", "templating")
     shutil.copytree(path, tmp_path, dirs_exist_ok=True)
