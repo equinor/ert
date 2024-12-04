@@ -76,6 +76,7 @@ jobs:
         python -m everest.docs
 
     - name: Upload coverage to Codecov
+      if: inputs.test-type != 'everest-docs-entry-test'
       id: codecov1
       uses: codecov/codecov-action@v4
       continue-on-error: true
@@ -85,12 +86,12 @@ jobs:
         files: cov1.xml,cov2.xml
         flags: ${{ inputs.test-type }}
     - name: codecov retry sleep
-      if: steps.codecov1.outcome == 'failure'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test'
       run: |
         sleep 30
     - name: Codecov retry
       uses: codecov/codecov-action@v4
-      if: steps.codecov1.outcome == 'failure'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: cov1.xml,cov2.xml
@@ -98,7 +99,7 @@ jobs:
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
+      if: ${{ !cancelled() && inputs.test-type != 'everest-docs-entry-test' }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
