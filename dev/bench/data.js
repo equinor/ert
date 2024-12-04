@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733302843572,
+  "lastUpdate": 1733305611019,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "af3600938b9d49683035a1d32eed43af53131cf7",
-          "message": "Ensure tests run in clean directory\n\nNot doing this causes tests to step on each others toes, yielding\nflakyness",
-          "timestamp": "2024-11-28T12:04:39+01:00",
-          "tree_id": "0d2f0d1bf861c30c163c70cf62fbb17b5f6a3619",
-          "url": "https://github.com/equinor/ert/commit/af3600938b9d49683035a1d32eed43af53131cf7"
-        },
-        "date": 1732791989925,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19438592104776742,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0398985068486518",
-            "extra": "mean: 5.144405493000005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09191409000932561",
             "extra": "mean: 4.722662546800007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "dcf56325e626f4c5c6fe101674e274fa27ef23d3",
+          "message": "Fix failing everest test due to doc not generating cov",
+          "timestamp": "2024-12-04T10:45:02+01:00",
+          "tree_id": "aa76c2fbffbc5342f9fe4793753a74c120ccf1a5",
+          "url": "https://github.com/equinor/ert/commit/dcf56325e626f4c5c6fe101674e274fa27ef23d3"
+        },
+        "date": 1733305610478,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21572534969006749,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030114381515328442",
+            "extra": "mean: 4.63552383359999 sec\nrounds: 5"
           }
         ]
       }
