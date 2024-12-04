@@ -119,6 +119,17 @@ def test_extra_key(min_config):
             {"model": {"realizations": ["apekatt"]}},
             "should be a valid integer",
         ),
+        (
+            {
+                "install_data": [
+                    {
+                        "source": "not_relevant",
+                        "target": ["Who am I?", "Not a string..."],
+                    }
+                ]
+            },
+            "target\n.* should be a valid string",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -126,16 +137,6 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
-
-
-def test_invalid_string():
-    invalid_value = ["Who am I?", "Not a string.."]
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.INSTALL_DATA][0][ConfigKeys.TARGET] = invalid_value
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    has_error(errors, match="str type expected")
 
 
 def test_no_list():
