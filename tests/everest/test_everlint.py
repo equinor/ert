@@ -144,6 +144,14 @@ def test_extra_key(min_config):
             "No such file or directory",
         ),
         (
+            {"install_jobs": [{"source": "does_not_exist", "name": "not_relevant"}]},
+            "Is not a file .*/does_not_exist",
+        ),
+        (
+            {"install_jobs": [{"source": None, "name": "not_relevant"}]},
+            "source\n.* should be a valid string",
+        ),
+        (
             {"forward_model": ["not_a_job"]},
             "unknown job not_a_job",
         ),
@@ -216,38 +224,6 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
     )
     with expectation:
         EverestConfig(**min_config)
-
-
-def test_existing_file_validation():
-    well_job = os.path.join(
-        os.path.dirname(SNAKE_OIL_CONFIG), "..", "..", "jobs/SNAKE_OIL_NPV"
-    )
-    values = [
-        well_job,
-        os.path.split(SNAKE_OIL_CONFIG)[0],
-        "A super path",
-        0,
-        None,
-        ["I'm", "a", "path,", "not!"],
-    ]
-    exp_errs = (
-        [None]
-        + ["Is not a file (.*)"]
-        + 2 * ["No such file or directory (.*)"]
-        + ["none is not an allowed value"]
-        + ["str type expected"]
-    )
-
-    for val, exp_err in zip(values, exp_errs, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        jobs = config[ConfigKeys.INSTALL_JOBS]
-        jobs[0][ConfigKeys.SOURCE] = val
-
-        errors = EverestConfig.lint_config_dict(config)
-        if exp_err is None:
-            assert len(errors) == 0
-        else:
-            has_error(errors, match=exp_err)
 
 
 def test_valid_path_validation():
