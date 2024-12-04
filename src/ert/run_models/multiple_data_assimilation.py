@@ -7,7 +7,7 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
@@ -104,6 +104,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                     f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -126,6 +127,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 np.array(self.active_realizations, dtype=bool),
                 ensemble=prior,
             )
+
             sample_prior(
                 prior,
                 np.where(self.active_realizations)[0],
@@ -156,6 +158,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 evaluator_server_config,
             )
             prior = posterior
+
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @staticmethod
     def parse_weights(weights: str) -> List[float]:

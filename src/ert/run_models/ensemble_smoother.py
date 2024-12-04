@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
@@ -62,6 +62,7 @@ class EnsembleSmoother(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -107,6 +108,7 @@ class EnsembleSmoother(UpdateRunModel):
             posterior,
             evaluator_server_config,
         )
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:

@@ -559,6 +559,79 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
         run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
 
 
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_pre_post_experiment_hook_works(
+    monkeypatch,
+):
+    monkeypatch.setattr(_ert.threading, "_can_raise", False)
+
+    # The executable
+    with open("hello_post_exp.sh", "w", encoding="utf-8") as f:
+        f.write(
+            dedent("""#!/bin/bash
+                echo "just sending regards" > from_post_experiment.txt
+        """)
+        )
+    os.chmod("hello_post_exp.sh", 0o755)
+
+    # The workflow job
+    with open("SAY_HELLO_POST_EXP", "w", encoding="utf-8") as s:
+        s.write("""
+               INTERNAL False
+               EXECUTABLE hello_post_exp.sh
+           """)
+
+    # The workflow
+    with open("SAY_HELLO_POST_EXP.wf", "w", encoding="utf-8") as s:
+        s.write("""dump_final_ensemble_id""")
+
+    # The executable
+    with open("hello_pre_exp.sh", "w", encoding="utf-8") as f:
+        f.write(
+            dedent("""#!/bin/bash
+                echo "first" > from_pre_experiment.txt
+        """)
+        )
+    os.chmod("hello_pre_exp.sh", 0o755)
+
+    # The workflow job
+    with open("SAY_HELLO_PRE_EXP", "w", encoding="utf-8") as s:
+        s.write("""
+               INTERNAL False
+               EXECUTABLE hello_pre_exp.sh
+           """)
+
+    # The workflow
+    with open("SAY_HELLO_PRE_EXP.wf", "w", encoding="utf-8") as s:
+        s.write("""dump_first_ensemble_id""")
+
+    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                    NUM_REALIZATIONS 2
+
+                    LOAD_WORKFLOW_JOB SAY_HELLO_POST_EXP dump_final_ensemble_id
+                    LOAD_WORKFLOW SAY_HELLO_POST_EXP.wf POST_EXPERIMENT_DUMP
+                    HOOK_WORKFLOW POST_EXPERIMENT_DUMP POST_EXPERIMENT
+
+                    LOAD_WORKFLOW_JOB SAY_HELLO_PRE_EXP dump_first_ensemble_id
+                    LOAD_WORKFLOW SAY_HELLO_PRE_EXP.wf PRE_EXPERIMENT_DUMP
+                    HOOK_WORKFLOW PRE_EXPERIMENT_DUMP PRE_EXPERIMENT
+                """
+            )
+        )
+
+    run_cli(ITERATIVE_ENSEMBLE_SMOOTHER_MODE, "--disable-monitor", "poly.ert")
+
+    assert (Path(os.getcwd()) / "from_pre_experiment.txt").read_text(
+        "utf-8"
+    ) == "first\n"
+    assert (Path(os.getcwd()) / "from_post_experiment.txt").read_text(
+        "utf-8"
+    ) == "just sending regards\n"
+
+
 @pytest.fixture(name="mock_cli_run")
 def fixture_mock_cli_run(monkeypatch):
     end_event = Mock()

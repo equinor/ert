@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import numpy as np
 
+from ert.config import HookRuntime
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
@@ -64,6 +65,7 @@ class EnsembleExperiment(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         if not restart:
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -89,17 +91,18 @@ class EnsembleExperiment(BaseRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=self.ensemble,
         )
+
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
-
         self._evaluate_and_postprocess(
             run_args,
             self.ensemble,
             evaluator_server_config,
         )
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:
