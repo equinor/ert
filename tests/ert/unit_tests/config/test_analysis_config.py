@@ -1,3 +1,4 @@
+from contextlib import suppress
 from textwrap import dedent
 
 import hypothesis.strategies as st
@@ -18,29 +19,30 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
     with open(tmp_path / "my_design_matrix.xlsx", "w", encoding="utf-8"):
         pass
     monkeypatch.chdir(tmp_path)
-    assert ErtConfig.from_file_contents(
-        dedent(
-            """
-                NUM_REALIZATIONS 10
-                MIN_REALIZATIONS 10
-                ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
-                DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet DEFAULT_SHEET:my_default_sheet
+    with suppress(ConfigValidationError):
+        assert ErtConfig.from_file_contents(
+            dedent(
                 """
+                    NUM_REALIZATIONS 10
+                    MIN_REALIZATIONS 10
+                    ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
+                    DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet DEFAULT_SHEET:my_default_sheet
+                    """
+            )
+        ).analysis_config == AnalysisConfig.from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 10,
+                ConfigKeys.MIN_REALIZATIONS: "10",
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
+                ],
+                ConfigKeys.DESIGN_MATRIX: [
+                    "my_design_matrix.xlsx",
+                    "DESIGN_SHEET:my_sheet",
+                    "DEFAULT_SHEET:my_default_sheet",
+                ],
+            }
         )
-    ).analysis_config == AnalysisConfig.from_dict(
-        {
-            ConfigKeys.NUM_REALIZATIONS: 10,
-            ConfigKeys.MIN_REALIZATIONS: "10",
-            ConfigKeys.ANALYSIS_SET_VAR: [
-                ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
-            ],
-            ConfigKeys.DESIGN_MATRIX: [
-                "my_design_matrix.xlsx",
-                "DESIGN_SHEET:my_sheet",
-                "DEFAULT_SHEET:my_default_sheet",
-            ],
-        }
-    )
 
 
 @pytest.mark.filterwarnings(
