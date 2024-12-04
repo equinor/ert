@@ -50,7 +50,7 @@ class TestEnsemble(Ensemble):
             cert=config.cert,
             token=config.token,
             max_retries=1,
-            dealer_name="eval_dispatch",
+            dealer_name="dispatch_eval",
         ) as dispatch:
             event = EnsembleStarted(ensemble=self.id_)
             await dispatch._send(event_to_json(event))

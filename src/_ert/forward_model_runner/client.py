@@ -97,6 +97,7 @@ class Client:
             )
             if ack.decode() != "ACK":
                 raise ClientConnectionError("No Ack for connect")
+            print(f"{self.dispatch_id=} CONNECTED to {self.url=}")
         except asyncio.TimeoutError as exc:
             logger.warning("Failed to get acknowledgment on dealer connect!")
             self.term()
