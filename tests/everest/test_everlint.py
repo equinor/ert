@@ -12,17 +12,6 @@ from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
-OPTIONAL_TOP_KEYS = (
-    ConfigKeys.OUTPUT_CONSTRAINTS,
-    ConfigKeys.INPUT_CONSTRAINTS,
-    ConfigKeys.INSTALL_JOBS,
-    ConfigKeys.INSTALL_DATA,
-    ConfigKeys.FORWARD_MODEL,
-    ConfigKeys.SIMULATOR,
-    ConfigKeys.DEFINITIONS,
-)
-
-
 SNAKE_OIL_CONFIG = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
 
 
@@ -63,20 +52,21 @@ def test_missing_key(required_key, min_config):
     assert errors[0]["loc"][0] == required_key
 
 
-def test_removing_optional_key():
-    for key in OPTIONAL_TOP_KEYS:
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-
-        if key in config:
-            config.pop(key)
-
-            # NOTE: Installing jobs are optional, but not if you want to run
-            # imported jobs! At least until Everest comes with a default set of
-            # jobs.
-            if key == ConfigKeys.INSTALL_JOBS:
-                config.pop(ConfigKeys.FORWARD_MODEL)
-
-            assert len(EverestConfig.lint_config_dict(config)) == 0
+@pytest.mark.parametrize(
+    "optional_key",
+    (
+        ConfigKeys.OUTPUT_CONSTRAINTS,
+        ConfigKeys.INPUT_CONSTRAINTS,
+        ConfigKeys.INSTALL_JOBS,
+        ConfigKeys.INSTALL_DATA,
+        ConfigKeys.FORWARD_MODEL,
+        ConfigKeys.SIMULATOR,
+        ConfigKeys.DEFINITIONS,
+    ),
+)
+def test_optional_keys(optional_key, min_config):
+    assert optional_key not in min_config
+    assert not EverestConfig.lint_config_dict(min_config)
 
 
 def test_extra_key():
