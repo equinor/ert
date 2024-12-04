@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733305611019,
+  "lastUpdate": 1733313901029,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "c3b10c4b775dc1cbffaac11b13cd27ea510c28fa",
-          "message": "Simplify ensemble evaluator shutdown timeout",
-          "timestamp": "2024-11-28T13:53:44+01:00",
-          "tree_id": "dddbb72c8d9a85209b7a63881b8ffe921fee594f",
-          "url": "https://github.com/equinor/ert/commit/c3b10c4b775dc1cbffaac11b13cd27ea510c28fa"
-        },
-        "date": 1732798536499,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18949106549432843,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04941772022760424",
-            "extra": "mean: 5.27729366760002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030114381515328442",
             "extra": "mean: 4.63552383359999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "0ba06268022b87fa46649581e9a5f3bd5b5b2c19",
+          "message": "Remove backport of datetime functions\n\nThis is no longer needed as python <3.11 is not supported anymore",
+          "timestamp": "2024-12-04T13:02:52+01:00",
+          "tree_id": "be197d4e9a45e95c6d5544842c721de218fa4b7b",
+          "url": "https://github.com/equinor/ert/commit/0ba06268022b87fa46649581e9a5f3bd5b5b2c19"
+        },
+        "date": 1733313900339,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21409340979839384,
+            "unit": "iter/sec",
+            "range": "stddev: 0.042338890828999935",
+            "extra": "mean: 4.670858392800011 sec\nrounds: 5"
           }
         ]
       }
