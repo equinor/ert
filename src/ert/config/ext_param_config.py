@@ -144,9 +144,6 @@ class ExtParamConfig(ParameterConfig):
         else:
             return key in self.input_keys
 
-    def __repr__(self) -> str:
-        return f"ExtParamConfig(keys={self.input_keys})"
-
     def __getitem__(self, index: str) -> List[str]:
         """Retrieve an item from the configuration
 
