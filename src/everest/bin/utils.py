@@ -11,6 +11,7 @@ from colorama import Fore
 from pandas import DataFrame
 
 from ert.resources import all_shell_script_fm_steps
+from ert.simulator.batch_simulator_context import Status
 from everest.config import EverestConfig
 from everest.detached import (
     OPT_PROGRESS_ID,
@@ -161,6 +162,7 @@ class _DetachedMonitor:
                         self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 sim_progress = status[SIM_PROGRESS_ID]
+                sim_progress["status"] = Status(**sim_progress["status"])
                 sim_progress["progress"] = self._filter_jobs(sim_progress["progress"])
                 msg, batch = self.get_fm_progress(sim_progress)
                 if msg.strip():
@@ -222,15 +224,14 @@ class _DetachedMonitor:
         colors = [
             Fore.BLACK,
             Fore.BLACK,
-            Fore.BLUE if status["running"] > 0 else Fore.BLACK,
-            Fore.GREEN if status["complete"] > 0 else Fore.BLACK,
-            Fore.RED if status["failed"] > 0 else Fore.BLACK,
+            Fore.BLUE if status[2] > 0 else Fore.BLACK,
+            Fore.GREEN if status[3] > 0 else Fore.BLACK,
+            Fore.RED if status[4] > 0 else Fore.BLACK,
         ]
         labels = ("Waiting", "Pending", "Running", "Complete", "FAILED")
-        values = [status.get(ls.lower(), 0) for ls in labels]
         return " | ".join(
             f"{color}{key}: {value}{Fore.RESET}"
-            for color, key, value in zip(colors, labels, values, strict=False)
+            for color, key, value in zip(colors, labels, status, strict=False)
         )
 
     @classmethod
@@ -258,10 +259,10 @@ class _DetachedMonitor:
             for job_idx, job in enumerate(queue):
                 if job_idx not in job_progress:
                     job_progress[job_idx] = JobProgress(name=job["name"])
-                realization = int(job["realization"])
+                simulation = int(job["simulation"])
                 status = job["status"]
                 if status in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
-                    job_progress[job_idx].status[status].append(realization)
+                    job_progress[job_idx].status[status].append(simulation)
         return job_progress.values()
 
     def _filter_jobs(self, progress):

@@ -43,7 +43,6 @@ def test_state_modifier_workflow_run(
     )
     evaluator_server_config = evaluator_server_config_generator(run_model)
     run_model.run_experiment(evaluator_server_config)
-    paths = list(Path.cwd().glob("**/simulation_0/RESULT.SCH"))
-    assert paths
-    for path in paths:
+
+    for path in Path.cwd().glob("**/simulation_0/RESULT.SCH"):
         assert path.read_bytes() == (cwd / "eclipse/model/EXPECTED.SCH").read_bytes()
