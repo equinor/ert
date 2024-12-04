@@ -75,29 +75,25 @@ def test_extra_key(min_config):
         EverestConfig.with_defaults(**min_config | {"extra": "extra"})
 
 
-def test_no_data():
-    # empty required dict
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.OBJECTIVE_FUNCTIONS].append({})
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    assert has_error(errors, match="Field required")  # no name
-
-    # empty required shallow dict
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.INPUT_CONSTRAINTS][0][ConfigKeys.WEIGHTS] = {}
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    assert has_error(errors, match="(.*) weight data required for input constraints")
-
-    # empty required list
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES] = []
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    assert has_error(
-        errors, match="Value should have at least 1 item after validation, not 0"
-    )
+@pytest.mark.parametrize(
+    "extra_config, expected",
+    [
+        ({"objective_functions": [{}]}, "Field required"),
+        (
+            {"input_constraints": [{"weights": {}}]},
+            "(.*) weight data required for input constraints",
+        ),
+        (
+            {"controls": [{"variables": []}]},
+            "Value should have at least 1 item after validation, not 0",
+        ),
+    ],
+)
+def test_invalid_subconfig(extra_config, min_config, expected):
+    for k, v in extra_config.items():
+        min_config[k] = v
+    with pytest.raises(ValidationError, match=expected):
+        EverestConfig(**min_config)
 
 
 def test_invalid_shallow_value():
