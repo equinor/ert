@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from ruamel.yaml import YAML
@@ -7,7 +8,7 @@ from ruamel.yaml import YAML
 from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
-from tests.everest.utils import MockParser, relpath, skipif_no_everest_models
+from tests.everest.utils import MockParser, skipif_no_everest_models
 
 
 @pytest.mark.parametrize("random_seed", [None, 1234])
@@ -21,27 +22,39 @@ def test_random_seed(random_seed):
     assert ert_config.random_seed == random_seed
 
 
-def test_read_file():
-    config_file = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
-    everest_config = EverestConfig.load_file(config_file)
+def test_read_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("config.yml").write_text(
+        dedent("""
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    """),
+        encoding="utf-8",
+    )
+    everest_config = EverestConfig.load_file("config.yml")
     keys = [
         ConfigKeys.WELLS,
         ConfigKeys.CONTROLS,
-        ConfigKeys.INPUT_CONSTRAINTS,
         ConfigKeys.OBJECTIVE_FUNCTIONS,
-        ConfigKeys.INSTALL_JOBS,
         ConfigKeys.ENVIRONMENT,
         ConfigKeys.MODEL,
         ConfigKeys.SIMULATOR,
         ConfigKeys.OPTIMIZATION,
-        ConfigKeys.FORWARD_MODEL,
-        ConfigKeys.INSTALL_DATA,
         ConfigKeys.DEFINITIONS,
         ConfigKeys.CONFIGPATH,
     ]
-    assert sorted(keys) == sorted(everest_config.to_dict().keys())
+    assert sorted(everest_config.to_dict().keys()) == sorted(keys)
 
-    exp_dir, exp_fn = os.path.split(os.path.realpath(config_file))
+    exp_dir, exp_fn = os.path.split(os.path.realpath("config.yml"))
     assert exp_dir == everest_config.config_directory
     assert exp_fn == everest_config.config_file
 
