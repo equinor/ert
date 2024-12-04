@@ -151,6 +151,26 @@ def test_extra_key(min_config):
             {"model": {"realizations": [-1]}},
             "greater than or equal to 0",
         ),
+        (
+            {"environment": {"simulation_folder": "/usr/bin/unwriteable"}},
+            "User does not have write access to",
+        ),
+        (
+            {"environment": {"output_folder": ("super long path" * 300)}},
+            "output_folder\n.* File name too long",
+        ),
+        (
+            {"environment": {"output_folder": None}},
+            "output_folder\n.* str type expected",
+        ),
+        (
+            {"environment": {"output_folder": "/path/with/" + chr(0) + "embeddedNULL"}},
+            "output_folder\n.* embedded null",
+        ),
+        (
+            {"environment": {"output_folder": ["some", "list"]}},
+            "output_folder\n.* str type expected",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -196,23 +216,6 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
     )
     with expectation:
         EverestConfig(**min_config)
-
-
-def test_simulation_spec():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.ENVIRONMENT][ConfigKeys.SIMULATION_FOLDER] = (
-        "/usr/bin/unwriteable"
-    )
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 1
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    has_error(errors, match="User does not have write access (.*)")
-
-    config[ConfigKeys.ENVIRONMENT][ConfigKeys.SIMULATION_FOLDER] = (
-        "/tmp/this_everest_folder/is/writeable"
-    )
-    errors = EverestConfig.lint_config_dict(config)
-    assert not errors
 
 
 def test_existing_file_validation():
