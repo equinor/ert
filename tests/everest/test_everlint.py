@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from everest import ConfigKeys
 from everest.config import EverestConfig
@@ -69,13 +70,9 @@ def test_optional_keys(optional_key, min_config):
     assert not EverestConfig.lint_config_dict(min_config)
 
 
-def test_extra_key():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config["EXTRA_KEY"] = "funcy data for the win"
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 1
-    has_error(errors, match="extra fields not permitted")
+def test_extra_key(min_config):
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        EverestConfig.with_defaults(**min_config | {"extra": "extra"})
 
 
 def test_no_data():
