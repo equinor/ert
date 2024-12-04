@@ -141,6 +141,10 @@ def test_extra_key(min_config):
             {"install_data": [{"source": "not a file", "target": "not_relevant"}]},
             "No such file or directory",
         ),
+        (
+            {"forward_model": ["not_a_job"]},
+            "unknown job not_a_job",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -160,21 +164,6 @@ def test_empty_list(min_config):
     min_config[ConfigKeys.INSTALL_DATA] = []
     errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
-
-
-def test_no_installed_jobs(min_config):
-    min_config["forward_model"] = ["not_a_job"]
-    with pytest.raises(ValidationError, match="unknown job not_a_job"):
-        EverestConfig(**min_config)
-
-
-def test_not_installed_job_in_script():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-
-    config[ConfigKeys.FORWARD_MODEL] = ["my_well_drill"]
-
-    errors = EverestConfig.lint_config_dict(config)
-    has_error(errors, match="unknown job my_well_drill")
 
 
 def test_validator_lint_value_error_msg():
