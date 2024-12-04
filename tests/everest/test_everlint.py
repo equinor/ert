@@ -103,6 +103,22 @@ def test_extra_key(min_config):
             {"config_path": "does_not_exist"},
             "no such file or directory .*/does_not_exist",
         ),
+        (
+            {
+                "install_templates": [
+                    {"template": "does_not_exist", "output_file": "not_relevant"}
+                ]
+            },
+            "No such file or directory .*/does_not_exist",
+        ),
+        (
+            {"model": {"realizations": [-1]}},
+            "greater than or equal to 0",
+        ),
+        (
+            {"model": {"realizations": ["apekatt"]}},
+            "should be a valid integer",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -110,35 +126,6 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
-
-
-def test_non_existent_file():
-    non_existing_file = "fndjffdsn/is/no/file"
-    assert not os.path.isfile(non_existing_file)
-
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.INSTALL_TEMPLATES] = [
-        {
-            ConfigKeys.TEMPLATE: non_existing_file,
-            ConfigKeys.OUTPUT_FILE: "fndjffdsn/whatever/file",
-        }
-    ]
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) > 0
-    has_error(errors, match="No such file or directory (.*)")
-
-
-def test_invalid_integer():
-    invalid_values = [-1, -999, "apekatt"]
-    exp_errors = 2 * ["(.*)greater than or equal to 0"] + ["(.*) not a valid integer"]
-    for invalid_value, err in zip(invalid_values, exp_errors, strict=False):
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        config[ConfigKeys.MODEL][ConfigKeys.REALIZATIONS][1] = invalid_value
-
-        errors = EverestConfig.lint_config_dict(config)
-        assert len(errors) > 0
-        has_error(errors, match=err)
 
 
 def test_invalid_string():
