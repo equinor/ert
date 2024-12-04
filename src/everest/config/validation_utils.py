@@ -168,7 +168,7 @@ def check_writable_filepath(path: str):
 
     if os.path.isdir(path) or not os.path.basename(path):
         raise ValueError("Invalid type")
-    if os.path.isfile(path) and not os.access(path, os.W_OK | os.X_OK):
+    if os.path.isfile(path) and not os.access(path, os.W_OK):
         raise ValueError(f"User does not have write access to {path}")
 
 
