@@ -177,6 +177,10 @@ def test_extra_key(min_config):
             {"environment": {"output_folder": ["some", "list"]}},
             "output_folder\n.* str type expected",
         ),
+        (
+            {"input_constraints": [{"weights": {"not_exists": 1.0}}]},
+            "not_exists.*not match any instance of control_name.variable_name",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -281,28 +285,9 @@ def test_well_ref_validation(min_config):
     has_error(errors, match="(.*) name can not contain any dots")
 
 
-def test_control_ref_validation():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 0
-
-    weights = config[ConfigKeys.INPUT_CONSTRAINTS][0][ConfigKeys.WEIGHTS]
-    weights.pop("group.W1")
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 0
-
-    weights["no_group.W1"] = 1.0
-    weights["group.no_ctrl"] = 1.0
-    weights["g.n.c.s.w"] = 1.0
-    weights["asdasdasd"] = 1.0
-
-    errors = EverestConfig.lint_config_dict(config)
-    errors = errors[0]["ctx"]["error"].args[0]
-    assert len(errors) == 4
-    for err in errors:
-        assert "not match any instance of control_name.variable_name" in err
+def test_control_ref_validation(min_config):
+    min_config["input_constraints"] = [{"weights": {"my_control.test": 1.0}}]
+    EverestConfig(**min_config)
 
 
 def test_init_context_controls():
