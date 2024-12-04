@@ -33,15 +33,18 @@ def test_num_cpu_from_config_preferred():
     assert ert_config.preferred_num_cpu == config_num_cpu
 
 
+@pytest.mark.parametrize(
+    "parallelsuffix", [("/"), (" /"), (" DISTRIBUTED/"), (" DISTRIBUTED /")]
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set():
+def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(parallelsuffix):
     data_file = "dfile"
     data_file_num_cpu = 4
     with open(file=data_file, mode="w", encoding="utf-8") as data_file_hander:
         data_file_hander.write(
             f"""
 PARALLEL
- {data_file_num_cpu} DISTRIBUTED/
+ {data_file_num_cpu}{parallelsuffix}
 """
         )
     config_dict = {
