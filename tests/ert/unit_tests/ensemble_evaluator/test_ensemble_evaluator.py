@@ -139,7 +139,9 @@ async def test_when_task_prematurely_ends_raises_exception(
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config())
+    evaluator = EnsembleEvaluator(
+        ensemble, make_ee_config(use_token=False, generate_cert=False)
+    )
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started.wait()

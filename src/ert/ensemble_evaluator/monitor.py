@@ -44,6 +44,7 @@ class Monitor:
         self._socket = self._zmq_context.socket(zmq.DEALER)
         self._socket.setsockopt(zmq.LINGER, 0)
         self._socket.setsockopt_string(zmq.IDENTITY, f"client-{self._id}")
+        print(f"{self._id=} wiith {ee_con_info.token=}")
         if ee_con_info.token is not None:
             client_public, client_secret = zmq.curve_keypair()
             self._socket.curve_secretkey = client_secret
@@ -137,6 +138,7 @@ class Monitor:
             )
             if ack.decode() != "ACK":
                 raise asyncio.TimeoutError("No Ack for connect")
+            print(f"{self._id=} MONITOR CONNECTED")
         except asyncio.TimeoutError:
             print("NO CONNECTION")
             logger.warning(
