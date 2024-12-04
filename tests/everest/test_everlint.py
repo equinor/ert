@@ -1,6 +1,5 @@
 import os
 import tempfile
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -130,6 +129,10 @@ def test_extra_key(min_config):
             },
             "target\n.* should be a valid string",
         ),
+        (
+            {"install_data": [{"source": None, "target": "not_relevant"}]},
+            "source\n  Input should be a valid string",
+        ),
     ],
 )
 def test_invalid_subconfig(extra_config, min_config, expected):
@@ -139,19 +142,9 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         EverestConfig(**min_config)
 
 
-def test_no_list():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.INSTALL_DATA] = None
-
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 0
-
-
-def test_empty_list():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config[ConfigKeys.INSTALL_DATA] = []
-
-    errors = EverestConfig.lint_config_dict(config)
+def test_no_list(min_config):
+    min_config[ConfigKeys.INSTALL_DATA] = None
+    errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
 
 
@@ -171,6 +164,12 @@ def test_malformed_list():
 
         assert len(errors) > 0
         has_error(errors, match=exp_err)
+
+
+def test_empty_list(min_config):
+    min_config[ConfigKeys.INSTALL_DATA] = []
+    errors = EverestConfig.lint_config_dict(min_config)
+    assert len(errors) == 0
 
 
 def test_no_installed_jobs():
