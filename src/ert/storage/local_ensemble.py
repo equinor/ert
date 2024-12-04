@@ -12,6 +12,7 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
@@ -560,16 +561,15 @@ class LocalEnsemble(BaseMode):
 
         return self._load_dataset(group, realizations)
 
-    def load_cross_correlations(self) -> xr.Dataset:
-        input_path = self.mount_point / "corr_XY.nc"
-
+    def load_cross_correlations(self) -> pl.DataFrame:
+        input_path = self.mount_point / "corr_XY.parquet"
         if not input_path.exists():
             raise FileNotFoundError(
                 f"No cross-correlation data available at '{input_path}'. Make sure to run the update with "
                 "Adaptive Localization enabled."
             )
         logger.info("Loading cross correlations")
-        return xr.open_dataset(input_path, engine="scipy")
+        return pl.read_parquet(input_path)
 
     @require_write
     def save_observation_scaling_factors(self, dataset: polars.DataFrame) -> None:
@@ -592,17 +592,28 @@ class LocalEnsemble(BaseMode):
         cross_correlations: npt.NDArray[np.float64],
         param_group: str,
         parameter_names: list[str],
+        unique_obs_names: list[str],
+        observation_keys: list[str],
     ) -> None:
-        data_vars = {
-            param_group: xr.DataArray(
-                data=cross_correlations,
-                dims=["parameter", "response"],
-                coords={"parameter": parameter_names},
-            )
-        }
-        dataset = xr.Dataset(data_vars)
-        file_path = os.path.join(self.mount_point, "corr_XY.nc")
-        self._storage._to_netcdf_transaction(file_path, dataset)
+        n_responses = cross_correlations.shape[1]
+        new_df = pl.DataFrame(
+            {
+                "param_group": [param_group]
+                * (len(parameter_names) * len(unique_obs_names)),
+                "param_name": np.repeat(parameter_names, n_responses),
+                "obs_group": observation_keys * len(parameter_names),
+                "obs_name": unique_obs_names * len(parameter_names),
+                "value": cross_correlations.ravel(),
+            }
+        )
+
+        file_path = os.path.join(self.mount_point, "corr_XY.parquet")
+        if os.path.exists(file_path):
+            existing_df = pl.read_parquet(file_path)
+            df = pl.concat([existing_df, new_df])
+        else:
+            df = new_df
+        self._storage._to_parquet_transaction(file_path, df)
 
     def load_responses(
         self, key: str, realizations: tuple[int, ...]
