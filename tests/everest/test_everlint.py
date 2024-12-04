@@ -258,25 +258,27 @@ def test_ert_job_file(tmp_path, monkeypatch, min_config, content, error):
         EverestConfig(**min_config)
 
 
-def test_well_ref_validation():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 0
+def test_invalid_wells(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    with pytest.raises(ValidationError, match="can not contain any dots"):
+        EverestConfig.with_defaults(
+            **yaml.safe_load(
+                dedent("""
+    model: {"realizations": [0], data_file: my_file}
+    wells: [{ name: fakename.fake}]
+    definitions: {eclbase: my_test_case}
+    """)
+            )
+        )
 
+
+def test_well_ref_validation(min_config):
+    config = min_config
     variables = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES]
     variables.append({ConfigKeys.NAME: "a.new.well", ConfigKeys.INITIAL_GUESS: 0.2})
     errors = EverestConfig.lint_config_dict(config)
     has_error(errors, match="(.*) name can not contain any dots")
-
-    wells = config[ConfigKeys.WELLS]
-    wells.append({ConfigKeys.NAME: "a.new.well"})
-    errors = EverestConfig.lint_config_dict(config)
-    has_error(errors, match="(.*) name can not contain any dots")
-
-    variables[-1][ConfigKeys.NAME] = "aNewWell"
-    wells[-1] = {ConfigKeys.NAME: "aNewWell"}
-    errors = EverestConfig.lint_config_dict(config)
-    assert len(errors) == 0
 
 
 def test_control_ref_validation():
