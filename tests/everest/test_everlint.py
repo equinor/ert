@@ -162,13 +162,10 @@ def test_empty_list(min_config):
     assert len(errors) == 0
 
 
-def test_no_installed_jobs():
-    config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-    config.pop(ConfigKeys.INSTALL_JOBS)
-
-    errors = EverestConfig.lint_config_dict(config)
-    for err in errors:
-        has_error([err], match="unknown job (.*)")
+def test_no_installed_jobs(min_config):
+    min_config["forward_model"] = ["not_a_job"]
+    with pytest.raises(ValidationError, match="unknown job not_a_job"):
+        EverestConfig(**min_config)
 
 
 def test_not_installed_job_in_script():
