@@ -84,6 +84,14 @@ def test_extra_key(min_config):
             "(.*) weight data required for input constraints",
         ),
         (
+            {"input_constraints": [{"weights": {"name": ["one, two"]}}]},
+            "should be a valid number",
+        ),
+        (
+            {"input_constraints": [{"weights": {"name": {"ans": 42}}}]},
+            "should be a valid number",
+        ),
+        (
             {"controls": [{"variables": []}]},
             "Value should have at least 1 item after validation, not 0",
         ),
@@ -94,19 +102,6 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
-
-
-def test_invalid_shallow_value():
-    for invalid_val in [["one", "two"], {"ans": 42}]:
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        input_constr_weights = config[ConfigKeys.INPUT_CONSTRAINTS][0]
-        input_constr_weights = input_constr_weights[ConfigKeys.WEIGHTS]
-        input_constr_weights[next(iter(input_constr_weights.keys()))] = invalid_val
-
-        errors = EverestConfig.lint_config_dict(config)
-        has_error(errors, match="value is not a valid float")
-        assert len(errors) > 0
-        assert len(errors) == 1
 
 
 def test_invalid_shallow_key():
