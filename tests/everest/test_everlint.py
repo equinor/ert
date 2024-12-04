@@ -1,8 +1,10 @@
 import os
 import tempfile
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
+import yaml
 
 from everest import ConfigKeys
 from everest.config import EverestConfig
@@ -10,10 +12,6 @@ from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
-REQUIRED_TOP_KEYS = (
-    ConfigKeys.OBJECTIVE_FUNCTIONS,
-    ConfigKeys.CONTROLS,
-)
 OPTIONAL_TOP_KEYS = (
     ConfigKeys.OUTPUT_CONSTRAINTS,
     ConfigKeys.INPUT_CONSTRAINTS,
@@ -28,16 +26,41 @@ OPTIONAL_TOP_KEYS = (
 SNAKE_OIL_CONFIG = relpath("test_data/snake_oil/", "everest/model/snake_oil_all.yml")
 
 
-def test_missing_key():
-    for key in REQUIRED_TOP_KEYS:
-        config = yaml_file_to_substituted_config_dict(SNAKE_OIL_CONFIG)
-        del config[key]
+@pytest.fixture
+def min_config():
+    yield yaml.safe_load(
+        dedent("""
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    config_path: .
+    """)
+    )
 
-        if key == ConfigKeys.CONTROLS:
-            del config[ConfigKeys.INPUT_CONSTRAINTS]  # avoid ctrl ref err
-        errors = EverestConfig.lint_config_dict(config)
-        assert len(errors) == 1
-        assert errors[0]["type"] == "missing"
+
+@pytest.mark.parametrize(
+    "required_key",
+    (
+        ConfigKeys.OBJECTIVE_FUNCTIONS,
+        ConfigKeys.CONTROLS,
+        # ConfigKeys.MODEL, # This is not actually optional
+        ConfigKeys.CONFIGPATH,
+    ),
+)
+def test_missing_key(required_key, min_config):
+    del min_config[required_key]
+    errors = EverestConfig.lint_config_dict(min_config)
+    assert len(errors) == 1
+    assert errors[0]["type"] == "missing"
+    assert errors[0]["loc"][0] == required_key
 
 
 def test_removing_optional_key():
