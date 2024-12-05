@@ -90,9 +90,9 @@ def _get_num_cpu(
 ) -> Optional[int]:
     """Handles reading the lines in the data file and returns the num_cpu
 
-    TITLE keyword requires skipping two non-empty lines
+    TITLE keyword requires skipping one line
 
-    >>> _get_num_cpu(iter(["TITLE", "", "", "PARALLEL", "3 / -- skipped", "PARALLEL", "4 /"]))
+    >>> _get_num_cpu(iter(["TITLE", "PARALLEL EXAMPLE CASE", "PARALLEL", "4 /"]))
     4
 
     PARALLEL takes presedence even when SLAVES comes first:
@@ -109,15 +109,9 @@ def _get_num_cpu(
                 continue
             keyword = next(words, None)
             keyword = keyword[0 : min(len(keyword), 8)] if keyword is not None else None
-            if keyword == "TITLE":
-                # Skip two non-blank lines following a TITLE
-                for _ in range(2):
-                    line: list[str] = []
-                    while line == []:
-                        nline = parser.next_line(None)
-                        if nline is None:
-                            break
-                        line = list(nline)
+            # Skip one line following a TITLE
+            if keyword == "TITLE" and parser.next_line(None) is None:
+                break
             if keyword == "PARALLEL":
                 while (word := next(words, None)) is None:
                     words = parser.next_line(None)
