@@ -410,6 +410,7 @@ class EverestRunModel(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+        self.restart = restart
         simulator = Simulator(
             self.everest_config,
             self.ert_config,
