@@ -294,7 +294,10 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         if i % 2 == 0:
             os.remove(real_dir / "BPR.nc")
 
-        os.remove(real_dir / "GEN.nc")
+        gen_data_file = next(
+            file for file in os.listdir(real_dir) if "gen" in file.lower()
+        )
+        os.remove(real_dir / gen_data_file)
 
     monkeypatch.chdir(tmp_path / "all_data_types")
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
