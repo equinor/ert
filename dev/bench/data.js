@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733388774579,
+  "lastUpdate": 1733391302886,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "oyveid@equinor.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "f6b7bd63554a9d9fe34cd479dca9869705262910",
-          "message": "Make sure site config is loaded for Everest",
-          "timestamp": "2024-11-28T15:05:14+01:00",
-          "tree_id": "83b0de76f9a2c4ad440ce377b6146fedbe2bdf78",
-          "url": "https://github.com/equinor/ert/commit/f6b7bd63554a9d9fe34cd479dca9869705262910"
-        },
-        "date": 1732802823848,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19147649349749385,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03555141279673454",
-            "extra": "mean: 5.222573182400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01770439466924137",
             "extra": "mean: 4.644277697200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "6c86e6aeb4e0610945156e6a845f145e0227f296",
+          "message": "Move shell jobs test",
+          "timestamp": "2024-12-05T10:33:11+01:00",
+          "tree_id": "0914236da2ed50bd3df1a6a90410f1513e99fb30",
+          "url": "https://github.com/equinor/ert/commit/6c86e6aeb4e0610945156e6a845f145e0227f296"
+        },
+        "date": 1733391302229,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21364418028765084,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031307127655364836",
+            "extra": "mean: 4.6806798044 sec\nrounds: 5"
           }
         ]
       }
