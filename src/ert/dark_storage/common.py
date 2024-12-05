@@ -155,6 +155,7 @@ def data_for_key(
                 )
                 mask = ensemble.get_realization_mask_with_responses()
                 realizations = np.where(mask)[0]
+                assert isinstance(response_key, str)
                 data = ensemble.load_responses(response_key, tuple(realizations))
             except ValueError as err:
                 logger.info(f"Dark storage could not load response {key}: {err}")
