@@ -63,6 +63,7 @@ class EnsembleExperiment(BaseRunModel):
         restart: bool = False,
     ) -> None:
         self.log_at_startup()
+        self.restart = restart
         if not restart:
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,

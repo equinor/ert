@@ -85,6 +85,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+        self.restart = restart
         if self.restart_run:
             id = self.prior_ensemble_id
             try:
