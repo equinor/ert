@@ -8,6 +8,7 @@ from _ert.threading import ErtThread
 from .ensemble_evaluator_utils import _mock_ws
 
 
+@pytest.mark.integration_test
 def test_invalid_server():
     port = 7777
     host = "localhost"
@@ -41,6 +42,7 @@ def test_successful_sending(unused_tcp_port):
         assert msg in messages
 
 
+@pytest.mark.integration_test
 def test_retry(unused_tcp_port):
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"

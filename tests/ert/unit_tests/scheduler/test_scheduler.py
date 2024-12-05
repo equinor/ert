@@ -289,6 +289,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         assert max_running_observed == ensemble_size
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(6)
 async def test_max_runtime_while_killing(realization, mock_driver):
     wait_started = asyncio.Event()
