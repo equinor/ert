@@ -203,6 +203,49 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
 
 
 @pytest.mark.parametrize(
+    "real_status_dict, expected_result",
+    [
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Finished"},
+            {"Finished": 3},
+            id="ran_all_realizations_and_all_succeeded",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Failed"},
+            {"Finished": 2, "Failed": 1},
+            id="ran_all_realizations_and_some_failed",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Failed"},
+            {"Finished": 1, "Failed": 1, "Running": 1},
+            id="ran_all_realizations_and_result_was_mixed",
+        ),
+    ],
+)
+def test_get_current_status(
+    real_status_dict,
+    expected_result,
+):
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
+    initial_active_realizations = [True] * 3
+    new_active_realizations = [True] * 3
+    brm = BaseRunModel(
+        config=config,
+        storage=MagicMock(spec=Storage),
+        queue_config=config.queue_config,
+        status_queue=MagicMock(spec=SimpleQueue),
+        active_realizations=initial_active_realizations,
+    )
+    snapshot_dict_reals = {}
+    for index, realization_status in real_status_dict.items():
+        snapshot_dict_reals[index] = {"status": realization_status}
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+    assert dict(brm.get_current_status()) == expected_result
+
+
+@pytest.mark.parametrize(
     "initial_active_realizations, new_active_realizations, real_status_dict, expected_result",
     [
         pytest.param(
@@ -242,27 +285,6 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
         ),
         pytest.param(
             [True, True, True],
-            [True, True, True],
-            {"0": "Finished", "1": "Finished", "2": "Finished"},
-            {"Finished": 3},
-            id="ran_all_realizations_and_all_succeeded",
-        ),
-        pytest.param(
-            [True, True, True],
-            [True, True, True],
-            {"0": "Finished", "1": "Finished", "2": "Failed"},
-            {"Finished": 2, "Failed": 1},
-            id="ran_all_realizations_and_some_failed",
-        ),
-        pytest.param(
-            [True, True, True],
-            [True, True, True],
-            {"0": "Finished", "1": "Running", "2": "Failed"},
-            {"Finished": 1, "Failed": 1, "Running": 1},
-            id="ran_all_realizations_and_result_was_mixed",
-        ),
-        pytest.param(
-            [True, True, True],
             [True, True, False],
             {"0": "Finished", "1": "Finished"},
             {"Finished": 3},
@@ -277,7 +299,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
         ),
     ],
 )
-def test_get_current_status(
+def test_get_current_status_when_rerun(
     initial_active_realizations,
     new_active_realizations,
     real_status_dict,
@@ -292,6 +314,7 @@ def test_get_current_status(
         status_queue=MagicMock(spec=SimpleQueue),
         active_realizations=initial_active_realizations,
     )
+    brm.restart = True
     snapshot_dict_reals = {}
     for index, realization_status in real_status_dict.items():
         snapshot_dict_reals[index] = {"status": realization_status}
@@ -299,3 +322,65 @@ def test_get_current_status(
     brm._iter_snapshot[0] = iter_snapshot
     brm.active_realizations = new_active_realizations
     assert dict(brm.get_current_status()) == expected_result
+
+
+def test_get_current_status_for_new_iteration_when_realization_failed_in_previous_run():
+    """Active realizations gets changed when we run next iteration, and the failed realizations from
+    the previous run should not be present in the current_status."""
+    initial_active_realizations = [True] * 5
+    # Realization 0,1, and 3 failed in the previous iteration
+    new_active_realizations = [False, False, True, False, True]
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+    brm = BaseRunModel(
+        config=config,
+        storage=MagicMock(spec=Storage),
+        queue_config=config.queue_config,
+        status_queue=MagicMock(spec=SimpleQueue),
+        active_realizations=initial_active_realizations,
+    )
+    snapshot_dict_reals = {
+        "2": {"status": "Running"},
+        "4": {"status": "Finished"},
+    }
+    iter_snapshot = EnsembleSnapshot.from_nested_dict({"reals": snapshot_dict_reals})
+    brm._iter_snapshot[0] = iter_snapshot
+    brm.active_realizations = new_active_realizations
+
+    assert brm.restart is False
+    assert dict(brm.get_current_status()) == {"Running": 1, "Finished": 1}
+
+
+@pytest.mark.parametrize(
+    "new_active_realizations, was_rerun, expected_result",
+    [
+        pytest.param(
+            [False, False, False, True, False],
+            True,
+            5,
+            id="rerun_so_total_realization_count_is_not_affected_by_previous_failed_realizations",
+        ),
+        pytest.param(
+            [True, True, False, False, False],
+            False,
+            2,
+            id="new_iteration_so_total_realization_count_is_only_previously_successful_realizations",
+        ),
+    ],
+)
+def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
+    new_active_realizations, was_rerun, expected_result
+):
+    """When rerunning, we include all realizations in the total amount of active realization.
+    When running a new iteration based on the result of the previous iteration, we only include the successful realizations."""
+    initial_active_realizations = [True] * 5
+    config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+    brm = BaseRunModel(
+        config=config,
+        storage=MagicMock(spec=Storage),
+        queue_config=config.queue_config,
+        status_queue=MagicMock(spec=SimpleQueue),
+        active_realizations=initial_active_realizations,
+    )
+    brm.active_realizations = new_active_realizations
+    brm.restart = was_rerun
+    assert brm.get_number_of_active_realizations() == expected_result

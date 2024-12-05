@@ -188,6 +188,7 @@ class BaseRunModel(ABC):
         self.minimum_required_realizations = minimum_required_realizations
         self.active_realizations = copy.copy(active_realizations)
         self.start_iteration = start_iteration
+        self.restart = False
         self.validate_active_realizations_count()
 
     def log_at_startup(self) -> None:
@@ -404,7 +405,10 @@ class BaseRunModel(ABC):
                 for real in all_realizations.values():
                     status[str(real["status"])] += 1
 
-        status["Finished"] += self._get_number_of_finished_realizations_from_reruns()
+        if self.restart:
+            status["Finished"] += (
+                self._get_number_of_finished_realizations_from_reruns()
+            )
         return status
 
     def _get_number_of_finished_realizations_from_reruns(self) -> int:
@@ -644,7 +648,11 @@ class BaseRunModel(ABC):
         return [real_path.exists() for real_path in realization_set].count(True)
 
     def get_number_of_active_realizations(self) -> int:
-        return self._initial_realizations_mask.count(True)
+        return (
+            self._initial_realizations_mask.count(True)
+            if self.restart
+            else self.active_realizations.count(True)
+        )
 
     def get_number_of_successful_realizations(self) -> int:
         return self.active_realizations.count(True)
