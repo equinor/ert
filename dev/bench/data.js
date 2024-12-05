@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733392860657,
+  "lastUpdate": 1733407176178,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "1df489a295c252968d777f973eb8be911f9ed0e1",
-          "message": "Remove lambda function",
-          "timestamp": "2024-11-29T09:45:49+01:00",
-          "tree_id": "f140d3e959289822806f63ddcf95ac707cb819fd",
-          "url": "https://github.com/equinor/ert/commit/1df489a295c252968d777f973eb8be911f9ed0e1"
-        },
-        "date": 1732870064072,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19077687544305852,
-            "unit": "iter/sec",
-            "range": "stddev: 0.07491276480983348",
-            "extra": "mean: 5.2417254328000125 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033963081775852486",
             "extra": "mean: 4.644669220999992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "4e31e0bec0610e3f4a32014e9e3fdf749a8a915f",
+          "message": "Fix progress bar not updating realization count for new iterations\n\nThis commit fixes the bug introduced in 31e607b066ab79415671f83f2d57c7400c4d4e98, where the status reporting in GUI was done the same way when rerunning failed realizations, and running new iterations. This is an issue because when rerunning failed realizations, we want to show all realizations and add the finished/failed count from the previous run, while new iterations should drop the failed realizations altogether.",
+          "timestamp": "2024-12-05T14:57:40+01:00",
+          "tree_id": "6b089c914f3f221b7f1bc023a0d56d356a2c38ed",
+          "url": "https://github.com/equinor/ert/commit/4e31e0bec0610e3f4a32014e9e3fdf749a8a915f"
+        },
+        "date": 1733407175503,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21154862888533055,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03076221655735647",
+            "extra": "mean: 4.72704552739998 sec\nrounds: 5"
           }
         ]
       }
