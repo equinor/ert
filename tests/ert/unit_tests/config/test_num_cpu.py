@@ -51,11 +51,31 @@ def test_reading_num_cpu_from_data_file_does_not_crash(data_file_contents):
     )
 
 
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@given(st.binary())
+@pytest.mark.usefixtures("use_tmpdir")
+def test_reading_num_cpu_from_binary_data_file_does_not_crash(data_file_contents):
+    data_file = "case.data"
+    Path(data_file).write_bytes(data_file_contents)
+    _ = ErtConfig.from_dict(
+        {
+            ConfigKeys.NUM_REALIZATIONS: 1,
+            ConfigKeys.DATA_FILE: data_file,
+        }
+    )
+
+
 @pytest.mark.parametrize(
     "parallelsuffix", [("/"), (" /"), (" DISTRIBUTED/"), (" DISTRIBUTED /")]
 )
 @pytest.mark.parametrize(
-    "casetitle", ["CASE", "-- A CASE --", "PARALLEL Tutorial Case"]
+    "casetitle",
+    [
+        "CASE",
+        "-- A CASE --",
+        "PARALLEL Tutorial Case",
+        "",  # Not valid input in some reservoir simulators
+    ],
 )
 def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
     parallelsuffix, casetitle
