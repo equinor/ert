@@ -206,7 +206,6 @@ class EnsembleEvaluator:
         for frame in frames:
             raw_msg = frame.decode("utf-8")
             if raw_msg == "CONNECT":
-                await self._router_socket.send_multipart([dealer, b"", b"ACK"])
                 self._clients_connected.add(dealer)
                 self._clients_empty.clear()
                 current_snapshot_dict = self._ensemble.snapshot.to_dict()
@@ -234,7 +233,6 @@ class EnsembleEvaluator:
         for frame in frames:
             raw_msg = frame.decode("utf-8")
             if raw_msg == "CONNECT":
-                print(f"GOT MESSAGE {raw_msg=} from {dealer=}")
                 self._dispatchers_connected.add(dealer)
                 self._dispatchers_connected.clear()
             elif raw_msg == "DISCONNECT":
@@ -260,11 +258,13 @@ class EnsembleEvaluator:
         while True:
             try:
                 dealer, _, *frames = await self._router_socket.recv_multipart()
+                # print(f"GOT MESSAGE {frames=} from {dealer=}")
+                await self._router_socket.send_multipart([dealer, b"", b"ACK"])
                 sender = dealer.decode("utf-8")
                 if sender.startswith("client"):
                     await self.handle_client(dealer, frames)
                 elif sender.startswith("dispatch"):
-                    await self._router_socket.send_multipart([dealer, b"", b"ACK"])
+                    # await self._router_socket.send_multipart([dealer, b"", b"ACK"])
                     await self.handle_dispatch(dealer, frames)
                 else:
                     logger.info(f"Connection attempt to unknown sender: {sender}.")

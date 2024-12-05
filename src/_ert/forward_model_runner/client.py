@@ -28,21 +28,19 @@ class Client:
     CONNECTION_TIMEOUT = 60
 
     def __enter__(self) -> Self:
-        self.loop.run_until_complete(self.reconnect())
+        self.loop.run_until_complete(self.__aenter__())
         return self
 
     def term(self) -> None:
         self.socket.close()
         self.context.term()
-        self.loop.close()
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
-        self.send("DISCONNECT")
-        self.socket.disconnect(self.url)
-        self.term()
+        self.loop.run_until_complete(self.__aexit__(exc_type, exc_value, exc_traceback))
+        self.loop.close()
 
     async def __aenter__(self) -> Self:
-        await self.reconnect()
+        await self.connect()
         return self
 
     async def __aexit__(
@@ -50,7 +48,14 @@ class Client:
     ) -> None:
         await self._send("DISCONNECT")
         self.socket.disconnect(self.url)
+        await self._term_receiver_task()
         self.term()
+
+    async def _term_receiver_task(self):
+        if self._receiver_task and not self._receiver_task.done():
+            self._receiver_task.cancel()
+            await asyncio.gather(self._receiver_task, return_exceptions=True)
+        self._receiver_task = None
 
     def __init__(
         self,
@@ -67,17 +72,17 @@ class Client:
         self.url = url
         self.token = token
 
-        # Set up ZeroMQ context and socket
+        # Set up ZeroMQ context and socke
+        self._ack_event: asyncio.Event = asyncio.Event()
         self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.LINGER, 0)
         if dealer_name is None:
-            dispatch_id = f"dispatch-{uuid.uuid4().hex[:8]}"
+            self.dealer_id = f"dispatch-{uuid.uuid4().hex[:8]}"
         else:
-            dispatch_id = dealer_name
-        self.dispatch_id = dispatch_id
-        self.socket.setsockopt_string(zmq.IDENTITY, dispatch_id)
-        print(f"{self.dispatch_id} {token}")
+            self.dealer_id = dealer_name
+        self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
+        print(f"Created: {self.dealer_id=} {token=} {self._connection_timeout=}")
         if token is not None:
             client_public, client_secret = zmq.curve_keypair()
             self.socket.curve_secretkey = client_secret
@@ -86,33 +91,46 @@ class Client:
 
         self._max_retries = max_retries
         self.loop = new_event_loop()
+        self._receiver_task: Optional[asyncio.Task[None]] = None
 
-    async def reconnect(self) -> None:
+    async def connect(self) -> None:
         self.socket.connect(self.url)
-        print(f"{self.dispatch_id=} CONNECTING to {self.url=}")
+        await self._term_receiver_task()
+        self._receiver_task = asyncio.create_task(self._receiver())
         try:
             await self._send("CONNECT", max_retries=1)
-            _, ack = await asyncio.wait_for(
-                self.socket.recv_multipart(), timeout=self._connection_timeout
-            )
-            if ack.decode() != "ACK":
-                raise ClientConnectionError("No Ack for connect")
-            print(f"{self.dispatch_id=} CONNECTED to {self.url=}")
-        except asyncio.TimeoutError as exc:
-            logger.warning("Failed to get acknowledgment on dealer connect!")
+        except ClientConnectionError:
+            await self._term_receiver_task()
             self.term()
-            raise ClientConnectionError(
-                "Connection to evaluator not established!"
-            ) from exc
+            raise
 
     def send(
         self, messages: str | list[str], max_retries: Optional[int] = None
     ) -> None:
         self.loop.run_until_complete(self._send(messages, max_retries))
 
+    async def process_message(self, msg: str) -> None:
+        pass
+
+    async def _receiver(self) -> None:
+        while True:
+            try:
+                _, raw_msg = await self.socket.recv_multipart()
+                if raw_msg == b"ACK":
+                    self._ack_event.set()
+                else:
+                    await self.process_message(raw_msg.decode("utf-8"))
+            except zmq.ZMQError as exc:
+                logger.debug(
+                    f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"
+                )
+                await asyncio.sleep(1)
+                self.socket.connect(self.url)
+
     async def _send(
         self, messages: str | list[str], max_retries: Optional[int] = None
     ) -> None:
+        self._ack_event.clear()
         if isinstance(messages, str):
             messages = [messages]
 
@@ -124,27 +142,21 @@ class Client:
                 await self.socket.send_multipart(
                     [b""] + [message.encode("utf-8") for message in messages]
                 )
-
-                # Wait for acknowledgment
                 try:
-                    _, ack = await asyncio.wait_for(
-                        self.socket.recv_multipart(), timeout=self._connection_timeout
+                    await asyncio.wait_for(
+                        self._ack_event.wait(), timeout=self._connection_timeout
                     )
-                    if ack.decode() == "ACK":
-                        logger.info("Message acknowledged.")
-                        print(f"message sent {messages=} from {self.dispatch_id=}")
-                        return
-                    logger.warning(
-                        "Got acknowledgment but not the expected message. Resending."
-                    )
+                    return
                 except asyncio.TimeoutError:
                     logger.warning(
                         "Failed to get acknowledgment on the message. Resending."
                     )
-
-            except zmq.ZMQError as e:
-                logger.warning(f"ZMQ error occurred: {e}. Reconnecting...")
-                await self.reconnect()
+            except zmq.ZMQError as exc:
+                logger.debug(
+                    f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"
+                )
+                await asyncio.sleep(1)
+                self.socket.connect(self.url)
             except asyncio.CancelledError:
                 self.term()
                 raise
@@ -155,4 +167,6 @@ class Client:
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
 
-        raise ClientConnectionError("Failed to send message after retries.")
+        raise ClientConnectionError(
+            f"{self.dealer_id} Failed to send {messages=} after retries."
+        )
