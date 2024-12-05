@@ -227,8 +227,8 @@ class Eclipse100(ForwardModelStepPlugin):
 
         if available_versions and version not in available_versions:
             raise ForwardModelStepValidationError(
-                f"Unavailable ECLIPSE100 version {version} current supported "
-                f"versions {available_versions}"
+                f"Unavailable ECLIPSE100 version {version}. "
+                f"Available versions: {available_versions}"
             )
 
     @staticmethod
@@ -284,8 +284,8 @@ class Eclipse300(ForwardModelStepPlugin):
         available_versions = _available_eclrun_versions(simulator="e300")
         if available_versions and version not in available_versions:
             raise ForwardModelStepValidationError(
-                f"Unavailable ECLIPSE300 version {version} current supported "
-                f"versions {available_versions}"
+                f"Unavailable ECLIPSE300 version {version}. "
+                f"Available versions: {available_versions}"
             )
 
     @staticmethod
@@ -640,8 +640,6 @@ def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[st
     try:
         return (
             subprocess.check_output(
-                # It is not sufficient to just give the correct path to eclrun, its PATH must include its location
-                # for versions to be displayed. Ensure this is covered in tests.
                 ["eclrun", simulator, "--report-versions"],
                 env=eclrun_env,
             )
