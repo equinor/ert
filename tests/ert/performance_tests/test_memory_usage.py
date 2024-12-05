@@ -69,7 +69,7 @@ def test_memory_smoothing(poly_template):
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
-    assert stats.peak_memory_allocated < 1024**2 * 450
+    assert stats.peak_memory_allocated < 1024**2 * 300
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
