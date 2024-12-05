@@ -119,7 +119,6 @@ def test_everserver_status_running_complete(
     )
 
     assert status["status"] == ServerStatus.completed
-    # assert status["message"] == "Optimization completed."
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])

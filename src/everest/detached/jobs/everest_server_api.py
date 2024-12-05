@@ -16,7 +16,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from dns import resolver, reversename
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import (
@@ -33,6 +32,7 @@ from pydantic import BaseModel
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
+from ert.shared import get_machine_name as ert_shared_get_machine_name
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import get_opt_status
 from everest.strings import (
@@ -44,33 +44,6 @@ from everest.strings import (
     STOP_ENDPOINT,
 )
 from everest.util import makedirs_if_needed
-
-
-def _get_machine_name() -> str:
-    """Returns a name that can be used to identify this machine in a network
-
-    A fully qualified domain name is returned if available. Otherwise returns
-    the string `localhost`
-    """
-    hostname = socket.gethostname()
-    try:
-        # We need the ip-address to perform a reverse lookup to deal with
-        # differences in how the clusters are getting their fqdn's
-        ip_addr = socket.gethostbyname(hostname)
-        reverse_name = reversename.from_address(ip_addr)
-        resolved_hosts = [
-            str(ptr_record).rstrip(".")
-            for ptr_record in resolver.resolve(reverse_name, "PTR")  # type: ignore
-        ]
-        resolved_hosts.sort()
-        return resolved_hosts[0]
-    except (resolver.NXDOMAIN, resolver.NoResolverConfiguration):
-        # If local address and reverse lookup not working - fallback
-        # to socket fqdn which are using /etc/hosts to retrieve this name
-        return socket.getfqdn()
-    except socket.gaierror:
-        logging.debug(traceback.format_exc())
-        return "localhost"
 
 
 def _find_open_port(host: str, lower: int, upper: int) -> int:
@@ -125,7 +98,7 @@ def _generate_certificate(cert_folder: str):
     )
 
     # Generate the certificate and sign it with the private key
-    cert_name = _get_machine_name()
+    cert_name = ert_shared_get_machine_name()
     subject = issuer = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "NO"),
@@ -275,7 +248,7 @@ class EverestServerAPI(threading.Thread):
         self.cert_path, self.key_path, self.key_pw = _generate_certificate(
             ServerConfig.get_certificate_dir(self.output_dir)
         )
-        self.host = _get_machine_name()
+        self.host = ert_shared_get_machine_name()
         self.port = _find_open_port(self.host, lower=5000, upper=5800)
 
         host_file = ServerConfig.get_hostfile_path(self.output_dir)
@@ -292,6 +265,7 @@ class EverestServerAPI(threading.Thread):
             ssl_certfile=self.cert_path,
             ssl_version=ssl.PROTOCOL_SSLv23,
             ssl_keyfile_password=self.key_pw,
+            log_level=logging.CRITICAL,
         )
 
     def _check_user(self, credentials: HTTPBasicCredentials) -> None:
