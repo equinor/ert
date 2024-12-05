@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733313901029,
+  "lastUpdate": 1733388774579,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "55793cd3b175be581cc87b4c741fca77914854db",
-          "message": "Enforce correct dtypes in migration",
-          "timestamp": "2024-11-28T13:56:16+01:00",
-          "tree_id": "c67fff1ed97ea571d423e5be48fa763919ed0f83",
-          "url": "https://github.com/equinor/ert/commit/55793cd3b175be581cc87b4c741fca77914854db"
-        },
-        "date": 1732798696062,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18929199575224825,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06980627750871395",
-            "extra": "mean: 5.282843556199987 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.042338890828999935",
             "extra": "mean: 4.670858392800011 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "471df83cff13d972c9e91db27118d222f062da91",
+          "message": "Update run_dialog fm_label test to verify item clicked",
+          "timestamp": "2024-12-05T09:51:05+01:00",
+          "tree_id": "94d30d79b7c694c047f13c41822ea6f1c72e62c5",
+          "url": "https://github.com/equinor/ert/commit/471df83cff13d972c9e91db27118d222f062da91"
+        },
+        "date": 1733388774066,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2153187352691876,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01770439466924137",
+            "extra": "mean: 4.644277697200005 sec\nrounds: 5"
           }
         ]
       }
