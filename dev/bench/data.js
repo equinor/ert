@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733407942603,
+  "lastUpdate": 1733429708003,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "a99ed165e9903d8ee05caef418f90796ef9eb458",
-          "message": "Remove unused function",
-          "timestamp": "2024-11-29T12:05:34+01:00",
-          "tree_id": "c7e27794fbc4dbc87a3bbf18e5df30eaf2f28750",
-          "url": "https://github.com/equinor/ert/commit/a99ed165e9903d8ee05caef418f90796ef9eb458"
-        },
-        "date": 1732878444313,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19727052440242182,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04723139479139347",
-            "extra": "mean: 5.0691810295999975 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.025162739190932745",
             "extra": "mean: 4.6139776568 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "b903bb03be7e401622f604442691b36e5addbde4",
+          "message": "Remove overriding of tempfile.tempdir\n\nWhen the jobs are executed on the cluster, /user/run/<userid> is not set up,\nthough XDG_RUNTIME_DIR points to it. This is not a problem for ert as it\nruns the main application locally, but is a problem for Everest where the\nmain application runs on the cluster. So the way lsf logs in to the node is the reason.",
+          "timestamp": "2024-12-05T21:13:16+01:00",
+          "tree_id": "656ff4f7053e3f065b481da16cf0864a80775c79",
+          "url": "https://github.com/equinor/ert/commit/b903bb03be7e401622f604442691b36e5addbde4"
+        },
+        "date": 1733429707584,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21689946115874717,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04384166878033591",
+            "extra": "mean: 4.610431001799986 sec\nrounds: 5"
           }
         ]
       }
