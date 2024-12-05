@@ -169,8 +169,6 @@ def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_stora
             os.remove(ds_path)
             smry_df.clear().write_parquet(ds_path)
 
-        ensemble.load_responses.cache_clear()
-
         with pytest.raises(
             ResponseError, match="No response loaded for observation type: summary"
         ):
