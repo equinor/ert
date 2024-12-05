@@ -1,6 +1,9 @@
-import os
+from pathlib import Path
+from textwrap import dedent
 
+import hypothesis.strategies as st
 import pytest
+from hypothesis import given
 
 from ert.config import ConfigValidationError, ErtConfig
 from ert.config.parsing import ConfigKeys
@@ -11,50 +14,77 @@ def test_default_num_cpu():
     assert ert_config.preferred_num_cpu == 1
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_num_cpu_from_config_preferred():
     data_file = "dfile"
     config_num_cpu = 17
     data_file_num_cpu = 4
-    with open(file=data_file, mode="w", encoding="utf-8") as data_file_hander:
-        data_file_hander.write(
-            f"""PARALLEL
- {data_file_num_cpu} DISTRIBUTED/
-"""
-        )
-    config_dict = {
-        ConfigKeys.NUM_REALIZATIONS: 1,
-        ConfigKeys.NUM_CPU: config_num_cpu,
-        ConfigKeys.DATA_FILE: os.path.join(os.getcwd(), data_file),
-        ConfigKeys.ENSPATH: ".",
-        ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
-    }
-    ert_config = ErtConfig.from_dict(config_dict)
-    assert ert_config.preferred_num_cpu == config_num_cpu
+    Path(data_file).write_text(
+        dedent(f"""\
+            PARALLEL
+            {data_file_num_cpu} DISTRIBUTED/
+        """),
+        encoding="utf-8",
+    )
+    assert (
+        ErtConfig.from_dict(
+            {
+                ConfigKeys.NUM_CPU: config_num_cpu,
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DATA_FILE: data_file,
+            }
+        ).preferred_num_cpu
+        == config_num_cpu
+    )
+
+
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@given(st.text())
+@pytest.mark.usefixtures("use_tmpdir")
+def test_reading_num_cpu_from_data_file_does_not_crash(data_file_contents):
+    data_file = "case.data"
+    Path(data_file).write_text(data_file_contents, encoding="utf-8")
+    _ = ErtConfig.from_dict(
+        {
+            ConfigKeys.NUM_REALIZATIONS: 1,
+            ConfigKeys.DATA_FILE: data_file,
+        }
+    )
 
 
 @pytest.mark.parametrize(
     "parallelsuffix", [("/"), (" /"), (" DISTRIBUTED/"), (" DISTRIBUTED /")]
 )
-@pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(parallelsuffix):
-    data_file = "dfile"
+@pytest.mark.parametrize(
+    "casetitle", ["CASE", "-- A CASE --", "PARALLEL Tutorial Case"]
+)
+def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
+    parallelsuffix, casetitle
+):
     data_file_num_cpu = 4
-    with open(file=data_file, mode="w", encoding="utf-8") as data_file_hander:
-        data_file_hander.write(
-            f"""
-PARALLEL
- {data_file_num_cpu}{parallelsuffix}
-"""
-        )
-    config_dict = {
-        ConfigKeys.NUM_REALIZATIONS: 1,
-        ConfigKeys.DATA_FILE: data_file,
-        ConfigKeys.ENSPATH: ".",
-        ConfigKeys.RUNPATH_FILE: os.path.join(os.getcwd(), "runpath.file"),
-    }
-    ert_config = ErtConfig.from_dict(config_dict)
-    assert ert_config.preferred_num_cpu == data_file_num_cpu
+    data_file = "case.data"
+    Path(data_file).write_text(
+        dedent(
+            f"""\
+        RUNSPEC
+        --comment
+        TITLE
+        {casetitle}
+        PARALLEL
+         {data_file_num_cpu}{parallelsuffix}
+    """,
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        ErtConfig.from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DATA_FILE: data_file,
+            }
+        ).preferred_num_cpu
+        == data_file_num_cpu
+    )
 
 
 @pytest.mark.parametrize(
