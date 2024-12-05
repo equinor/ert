@@ -28,6 +28,7 @@ from tests.ert.utils import _mock_ws_thread, wait_until
 from .test_event_reporter import _wait_until
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_terminate_steps():
     # Executes itself recursively and sleeps for 100 seconds

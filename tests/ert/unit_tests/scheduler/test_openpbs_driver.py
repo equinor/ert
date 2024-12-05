@@ -221,6 +221,7 @@ async def test_cluster_label():
     assert "-l foobar" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "qstat_script, started_expected",
     [
@@ -457,6 +458,7 @@ async def test_that_qsub_will_retry_and_succeed(
     await driver.submit(0, "sleep 10")
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [

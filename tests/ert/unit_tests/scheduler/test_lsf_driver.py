@@ -495,6 +495,7 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
     assert "Unknown state FOO" in caplog.text
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bjobs_script, expectation",
     [
@@ -1011,6 +1012,7 @@ def not_found_bjobs(monkeypatch, tmp_path):
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
+@pytest.mark.integration_test
 async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
     caplog.set_level(logging.INFO)
     os.chdir(tmp_path)
@@ -1258,6 +1260,7 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     assert driver._bhist_cache and job_id in driver._bhist_cache
 
 
+@pytest.mark.integration_test
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command
     to a realization right after it has been submitted (as in driver.submit()).

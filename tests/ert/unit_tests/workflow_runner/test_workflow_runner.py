@@ -48,6 +48,7 @@ def test_workflow_thread_cancel_ert_script():
     assert not os.path.exists("wait_finished_2")
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()

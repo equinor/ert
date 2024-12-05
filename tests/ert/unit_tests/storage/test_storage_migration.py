@@ -332,6 +332,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
             ensembles[0].load_responses("GEN", (0,))
 
 
+@pytest.mark.integration_test
 def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     with open(tmp_path / "config.ert", mode="w", encoding="utf-8") as f:
         f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(tmp_path / "storage")])
