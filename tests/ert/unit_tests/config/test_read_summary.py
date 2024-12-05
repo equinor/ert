@@ -151,8 +151,12 @@ def test_group_and_well_have_named_format(keyword, number, name, nx, ny):
     assert make_summary_key(keyword, number, name, nx, ny) == f"{keyword}:{name}"
 
 
-@given(st.text(), st.integers(), st.integers())
-@pytest.mark.parametrize("keyword", inter_region_summary_variables)
+@given(
+    st.sampled_from(inter_region_summary_variables),
+    st.text(),
+    st.integers(),
+    st.integers(),
+)
 def test_inter_region_summary_format_contains_in_and_out_regions(keyword, name, nx, ny):
     number = 3014660
     assert make_summary_key(keyword, number, name, nx, ny) == f"{keyword}:4-82"
