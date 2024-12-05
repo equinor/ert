@@ -84,6 +84,7 @@ async def test_no_config_raises_valueerror_when_running():
         await evaluator.run_and_get_successful_realizations()
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     ("task, task_name"),
     [
@@ -365,6 +366,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 break
 
 
+@pytest.mark.integration_test
 async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
     evaluator_to_use,
 ):
