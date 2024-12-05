@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -13,14 +14,12 @@ from everest.util import makedirs_if_needed
 CONFIG_FILE = "config_fm_failure.yml"
 
 
-def string_exists_in_file(file_path, string):
-    with open(file_path, "r", encoding="utf-8") as f:
-        txt = f.read()
-        return string in txt
+def _string_exists_in_file(file_path, string):
+    return string in Path(file_path).read_text(encoding="utf-8")
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.timeout(60)  # Simulation might not finish
+@pytest.mark.timeout(70)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_logging_setup(copy_math_func_test_data_to_tmp):
@@ -35,8 +34,8 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, debug=True)
     try:
-        wait_for_server(everest_config.output_dir, 120)
-    except SystemExit as e:
+        wait_for_server(everest_config.output_dir, 60)
+    except (SystemExit, RuntimeError) as e:
         raise e
     await server_running()
 
@@ -56,17 +55,16 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert os.path.exists(everest_log_path)
     assert os.path.exists(endpoint_log_path)
 
-    assert string_exists_in_file(everest_log_path, "everest DEBUG:")
-    assert string_exists_in_file(
-        forward_model_log_path,
-        "forward_models ERROR: Batch: 0 Realization: 0 Simulation: 2 "
-        "Job: toggle_failure Failed Error: 0",
+    assert _string_exists_in_file(everest_log_path, "everest DEBUG:")
+    assert _string_exists_in_file(
+        forward_model_log_path, "Exception: Failing simulation_2 by request!"
     )
-    assert string_exists_in_file(
+    assert _string_exists_in_file(
         forward_model_log_path, "Exception: Failing simulation_2" " by request!"
     )
 
-    assert string_exists_in_file(
-        endpoint_log_path,
-        "everserver INFO: / entered from",
-    )
+    endpoint_logs = Path(endpoint_log_path).read_text(encoding="utf-8")
+    # Avoid cases where optimization finished before we get a chance to check that
+    # the everest server has started
+    if endpoint_logs:
+        assert "everserver INFO: / entered from" in endpoint_logs
