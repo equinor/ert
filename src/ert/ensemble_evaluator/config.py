@@ -161,21 +161,16 @@ class EvaluatorServerConfig:
     ) -> typing.Optional[ssl.SSLContext]:
         if self.cert is None:
             return None
-        backup_default_tmp = tempfile.tempdir
-        try:
-            tempfile.tempdir = os.environ.get("XDG_RUNTIME_DIR", tempfile.gettempdir())
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                tmp_path = pathlib.Path(tmp_dir)
-                cert_path = tmp_path / "ee.crt"
-                with open(cert_path, "w", encoding="utf-8") as filehandle_1:
-                    filehandle_1.write(self.cert)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = pathlib.Path(tmp_dir)
+            cert_path = tmp_path / "ee.crt"
+            with open(cert_path, "w", encoding="utf-8") as filehandle_1:
+                filehandle_1.write(self.cert)
 
-                key_path = tmp_path / "ee.key"
-                if self._key is not None:
-                    with open(key_path, "wb") as filehandle_2:
-                        filehandle_2.write(self._key)
-                context = ssl.SSLContext(protocol=protocol)
-                context.load_cert_chain(cert_path, key_path, self._key_pw)
-                return context
-        finally:
-            tempfile.tempdir = backup_default_tmp
+            key_path = tmp_path / "ee.key"
+            if self._key is not None:
+                with open(key_path, "wb") as filehandle_2:
+                    filehandle_2.write(self._key)
+            context = ssl.SSLContext(protocol=protocol)
+            context.load_cert_chain(cert_path, key_path, self._key_pw)
+            return context
