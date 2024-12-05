@@ -16,6 +16,8 @@ import os
 import sys
 from importlib import metadata
 
+from everest.docs import generate_docs_pydantic_to_rst
+
 sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
@@ -201,3 +203,8 @@ numfig = True
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+
+docs_content = generate_docs_pydantic_to_rst()
+with open("config_generated.rst", "w", encoding="utf-8") as fp:
+    fp.write(docs_content)
