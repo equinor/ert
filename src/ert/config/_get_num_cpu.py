@@ -78,7 +78,7 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
     try:
         with open(data_file, "r", encoding="utf-8") as file:
             return _get_num_cpu(iter(file), data_file)
-    except OSError as err:
+    except (OSError, UnicodeDecodeError) as err:
         ConfigWarning.warn(
             f"Failed to read from DATA_FILE {data_file}: {err}", data_file
         )
