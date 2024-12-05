@@ -20,7 +20,7 @@ from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
+from .parsing import ConfigKeys, ConfigValidationError
 from .refcase import Refcase
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig

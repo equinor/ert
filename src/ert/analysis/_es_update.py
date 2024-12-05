@@ -349,7 +349,7 @@ def _load_observations_and_responses(
                 )
             )
 
-        if len(scaling_factors_dfs):
+        if scaling_factors_dfs:
             scaling_factors_df = polars.concat(scaling_factors_dfs)
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 

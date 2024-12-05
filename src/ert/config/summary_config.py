@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional, Set, Union, no_type_check
+from typing import TYPE_CHECKING, Any, Set, Union, no_type_check
 
 from ert.substitutions import substitute_runpath_name
 
 from ._read_summary import read_summary
 from .ensemble_config import Refcase
-from .parsing import ConfigDict, ConfigKeys
+from .parsing import ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
 from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index

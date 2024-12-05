@@ -8,7 +8,7 @@ from typing import List, Optional, no_type_check
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, HistorySource
+from .parsing import ConfigKeys, ConfigValidationError, HistorySource
 
 logger = logging.getLogger(__name__)
 

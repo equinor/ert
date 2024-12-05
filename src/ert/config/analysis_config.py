@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Dict, Final, List, Optional, Union, no_type_check
+from typing import List, Optional, Union, no_type_check
 
 from pydantic import ValidationError
 
@@ -13,7 +13,6 @@ from .analysis_module import ESSettings, IESSettings
 from .design_matrix import DesignMatrix
 from .parsing import (
     AnalysisMode,
-    ConfigDict,
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,

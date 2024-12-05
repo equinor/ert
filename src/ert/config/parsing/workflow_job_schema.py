@@ -1,6 +1,5 @@
 from typing import no_type_check
 
-from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError
 from .config_schema_item import SchemaItem
 from .schema_dict import SchemaItemDict
