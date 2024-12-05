@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733407176178,
+  "lastUpdate": 1733407942603,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "oyveid@equinor.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "f39a174f5e8559503f57129f7e08c9f95196bf44",
-          "message": "Replace everest site config manager with ert",
-          "timestamp": "2024-11-29T09:46:27+01:00",
-          "tree_id": "b53ebf3b45565e26d3de33eab288783e9ac017af",
-          "url": "https://github.com/equinor/ert/commit/f39a174f5e8559503f57129f7e08c9f95196bf44"
-        },
-        "date": 1732870098320,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19133164376739084,
-            "unit": "iter/sec",
-            "range": "stddev: 0.014603867025298803",
-            "extra": "mean: 5.22652698899999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03076221655735647",
             "extra": "mean: 4.72704552739998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "434b77391a68481e0cc6c5584b43a9e125866729",
+          "message": "Fix crash when reading num_cpu from non-ascii files",
+          "timestamp": "2024-12-05T15:10:31+01:00",
+          "tree_id": "2768c7cd0e2548e17b2772378334c9aed4ac23a4",
+          "url": "https://github.com/equinor/ert/commit/434b77391a68481e0cc6c5584b43a9e125866729"
+        },
+        "date": 1733407941702,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2167327356963286,
+            "unit": "iter/sec",
+            "range": "stddev: 0.025162739190932745",
+            "extra": "mean: 4.6139776568 sec\nrounds: 5"
           }
         ]
       }
