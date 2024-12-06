@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Tuple, Union
 from uuid import UUID
 
 import numpy as np
@@ -603,8 +603,32 @@ class LocalEnsemble(BaseMode):
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
         self._storage._to_netcdf_transaction(file_path, dataset)
 
-    @lru_cache  # noqa: B019
-    def load_responses(self, key: str, realizations: Tuple[int]) -> polars.DataFrame:
+    def load_responses(
+        self, key: str, realizations: Tuple[int, ...]
+    ) -> polars.DataFrame:
+        """Load responses for key and realizations into xarray Dataset.
+
+        For each given realization, response data is loaded from the NetCDF
+        file whose filename matches the given key parameter.
+
+        Parameters
+        ----------
+        key : str
+            Response key to load.
+        realizations : tuple of int
+            Realization indices to load.
+
+        Returns
+        -------
+        responses : DataFrame
+            Loaded polars DataFrame with responses.
+        """
+
+        return self._load_responses_lazy(key, realizations).collect()
+
+    def _load_responses_lazy(
+        self, key: str, realizations: Tuple[int, ...]
+    ) -> polars.LazyFrame:
         """Load responses for key and realizations into xarray Dataset.
 
         For each given realization, response data is loaded from the NetCDF
@@ -637,14 +661,14 @@ class LocalEnsemble(BaseMode):
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
                 raise KeyError(f"No response for key {key}, realization: {realization}")
-            df = polars.read_parquet(input_path)
+            df = polars.scan_parquet(input_path)
 
             if select_key:
                 df = df.filter(polars.col("response_key") == key)
 
             loaded.append(df)
 
-        return polars.concat(loaded) if loaded else polars.DataFrame()
+        return polars.concat(loaded) if loaded else polars.DataFrame().lazy()
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
@@ -876,3 +900,127 @@ class LocalEnsemble(BaseMode):
             else RealizationStorageState.UNDEFINED
             for e in response_configs
         }
+
+    def get_observations_and_responses(
+        self,
+        selected_observations: Iterable[str],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> polars.DataFrame:
+        """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
+        observations_by_type = self.experiment.observations
+
+        with polars.StringCache():
+            dfs_per_response_type = []
+            for (
+                response_type,
+                response_cls,
+            ) in self.experiment.response_configuration.items():
+                if response_type not in observations_by_type:
+                    continue
+
+                observations_for_type = (
+                    observations_by_type[response_type]
+                    .filter(
+                        polars.col("observation_key").is_in(list(selected_observations))
+                    )
+                    .with_columns(
+                        [
+                            polars.col("response_key")
+                            .cast(polars.Categorical)
+                            .alias("response_key")
+                        ]
+                    )
+                )
+
+                observed_cols = {
+                    k: observations_for_type[k].unique()
+                    for k in ["response_key", *response_cls.primary_key]
+                }
+
+                reals = iens_active_index.tolist()
+                reals.sort()
+                # too much memory to do it all at once, go per realization
+                first_columns: polars.DataFrame | None = None
+                realization_columns: List[polars.DataFrame] = []
+                for real in reals:
+                    responses = self._load_responses_lazy(
+                        response_type, (real,)
+                    ).with_columns(
+                        [
+                            polars.col("response_key")
+                            .cast(polars.Categorical)
+                            .alias("response_key")
+                        ]
+                    )
+
+                    # Filter out responses without observations
+                    for col, observed_values in observed_cols.items():
+                        responses = responses.filter(
+                            polars.col(col).is_in(observed_values)
+                        )
+
+                    pivoted = responses.collect().pivot(
+                        on="realization",
+                        index=["response_key", *response_cls.primary_key],
+                        values="values",
+                        aggregate_function="mean",
+                    )
+
+                    if pivoted.is_empty():
+                        joined = observations_for_type.with_columns(
+                            polars.Series(
+                                str(real),
+                                [np.nan] * len(observations_for_type),
+                                dtype=polars.Float32,
+                            )
+                        )
+                    elif "time" in pivoted:
+                        joined = observations_for_type.join_asof(
+                            pivoted,
+                            by=["response_key", *response_cls.primary_key],
+                            on="time",
+                            tolerance="1s",
+                        )
+                    else:
+                        joined = observations_for_type.join(
+                            pivoted,
+                            how="left",
+                            on=["response_key", *response_cls.primary_key],
+                        )
+
+                    joined = (
+                        joined.with_columns(
+                            polars.concat_str(
+                                response_cls.primary_key, separator=", "
+                            ).alias(
+                                "__tmp_index_key__"
+                                # Avoid potential collisions w/ primary key
+                            )
+                        )
+                        .drop(response_cls.primary_key)
+                        .rename({"__tmp_index_key__": "index"})
+                    )
+
+                    # if not joined.is_empty():
+                    if first_columns is None:
+                        first_columns = joined.select(
+                            [
+                                "response_key",
+                                "index",
+                                "observation_key",
+                                "observations",
+                                "std",
+                                str(real),
+                            ]
+                        )
+                    else:
+                        realization_columns.append(joined.select(str(real)))
+
+                if first_columns is not None:
+                    dfs_per_response_type.append(
+                        polars.concat(
+                            [first_columns, *realization_columns], how="horizontal"
+                        )
+                    )
+
+        return polars.concat(dfs_per_response_type, how="vertical")
