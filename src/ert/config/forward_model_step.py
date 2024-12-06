@@ -181,7 +181,9 @@ class ForwardModelStep:
             return v
         return Substitutions(v)
 
-    def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+    def validate_pre_experiment(
+        self, fm_step_json: ForwardModelStepJSON, env_vars: Dict[str, str]
+    ) -> None:
         """
         Raise errors pertaining to the environment not being
         as the forward model step requires it to be. For example

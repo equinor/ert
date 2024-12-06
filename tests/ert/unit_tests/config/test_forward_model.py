@@ -5,6 +5,7 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict
 from unittest.mock import patch
 
 import pytest
@@ -595,9 +596,12 @@ def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
 
     ecl100_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
     ecl300_config_content = f"eclrun_env:\n  PATH: {os.getcwd()}\n"
-    ert_config_contents = (
-        f"NUM_REALIZATIONS  1\nFORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)\n"
-    )
+    ert_config_contents = f"""NUM_REALIZATIONS  1
+
+        SETENV ECL100_SITE_CONFIG {ecl100_config_file_name}
+        SETENV ECL300_SITE_CONFIG {ecl300_config_file_name}
+
+        FORWARD_MODEL ECLIPSE{eclipse_v} (<VERSION>=1)"""
 
     # Write config file
     config_file_name = "test.ert"
@@ -606,17 +610,11 @@ def test_that_eclipse_jobs_check_version(eclipse_v, mock_eclrun):
     Path(ecl100_config_file_name).write_text(ecl100_config_content, encoding="utf-8")
     # Write ecl300_config file
     Path(ecl300_config_file_name).write_text(ecl300_config_content, encoding="utf-8")
-    with patch(
-        "ert.plugins.hook_implementations.forward_model_steps.ErtPluginManager"
-    ) as mock:
-        instance = mock.return_value
-        instance.get_ecl100_config_path.return_value = ecl100_config_file_name
-        instance.get_ecl300_config_path.return_value = ecl300_config_file_name
-        with pytest.raises(
-            ConfigValidationError,
-            match=rf".*Unavailable ECLIPSE{eclipse_v} version 1 current supported versions \['4', '2', '8'\].*",
-        ):
-            _ = ErtConfig.with_plugins().from_file(config_file_name)
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf".*Unavailable ECLIPSE{eclipse_v} version 1 current supported versions \['4', '2', '8'\].*",
+    ):
+        ErtConfig.with_plugins().from_file(config_file_name)
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is available")
@@ -669,7 +667,9 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
             )
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, env_vars: Dict[str, str]
+        ) -> None:
             if set(self.private_args.keys()) != {"<arg1>", "<arg2>", "<arg3>"}:
                 raise ForwardModelStepValidationError("Bad")
 
@@ -893,6 +893,33 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         )
 
 
+def test_that_plugin_forward_model_validation_sees_setenv(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS  1
+        SETENV FOO bar
+        FORWARD_MODEL FM1()
+        """
+    )
+
+    class ExceptionThatWeWant(ForwardModelStepValidationError):
+        pass
+
+    class FM1(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(name="FM1", command=["dummy.sh"])
+
+        def validate_pre_experiment(
+            self, _: ForwardModelStepJSON, env_vars: Dict[str, str]
+        ) -> None:
+            raise ExceptionThatWeWant(f'Found FOO={env_vars["FOO"]}')
+
+    with pytest.raises(ConfigValidationError, match=".*Found FOO=bar.*"):
+        ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
+            tmp_path / "test.ert"
+        )
+
+
 def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
     tmp_path,
 ):
@@ -911,7 +938,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
         def __init__(self):
             super().__init__(name="FM1", command=["the_executable.sh"])
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
+        ) -> None:
             if self.name != "FM1":
                 raise ForwardModelStepValidationError("Expected name to be FM1")
 
@@ -924,7 +953,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
                 command=["the_executable.sh"],
             )
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
+        ) -> None:
             if self.name != "FM2":
                 raise ForwardModelStepValidationError("Expected name to be FM2")
 
@@ -1011,7 +1042,9 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
         def __init__(self):
             super().__init__(name="FMWithAssertionError", command=["the_executable.sh"])
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: dict
+        ) -> None:
             raise AssertionError("I should be a warning")
 
     class FMWithFMStepValidationError(ForwardModelStepPlugin):
@@ -1021,7 +1054,9 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
                 command=["the_executable.sh"],
             )
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: dict
+        ) -> None:
             raise ForwardModelStepValidationError("I should not be a warning")
 
     with (
