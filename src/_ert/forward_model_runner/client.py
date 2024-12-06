@@ -62,12 +62,9 @@ class Client:
         url: str,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        max_retries: int = 10,
         connection_timeout: float = 5.0,
         dealer_name: Optional[str] = None,
     ) -> None:
-        if max_retries is None:
-            max_retries = self.DEFAULT_MAX_RETRIES
         self._connection_timeout = connection_timeout
         self.url = url
         self.token = token
@@ -89,7 +86,6 @@ class Client:
             self.socket.curve_publickey = client_public
             self.socket.curve_serverkey = token.encode("utf-8")
 
-        self._max_retries = max_retries
         self.loop = new_event_loop()
         self._receiver_task: Optional[asyncio.Task[None]] = None
 
@@ -105,7 +101,7 @@ class Client:
             raise
 
     def send(
-        self, messages: str | list[str], max_retries: Optional[int] = None
+        self, messages: str | list[str], max_retries: int = DEFAULT_MAX_RETRIES
     ) -> None:
         self.loop.run_until_complete(self._send(messages, max_retries))
 
@@ -128,16 +124,15 @@ class Client:
                 self.socket.connect(self.url)
 
     async def _send(
-        self, messages: str | list[str], max_retries: Optional[int] = None
+        self, messages: str | list[str], max_retries: int = DEFAULT_MAX_RETRIES
     ) -> None:
         self._ack_event.clear()
         if isinstance(messages, str):
             messages = [messages]
 
-        retries = max_retries or self._max_retries
         backoff = 1
 
-        while retries > 0:
+        while max_retries > 0:
             try:
                 await self.socket.send_multipart(
                     [b""] + [message.encode("utf-8") for message in messages]
@@ -161,9 +156,9 @@ class Client:
                 self.term()
                 raise
 
-            retries -= 1
-            if retries > 0:
-                logger.info(f"Retrying... ({retries} attempts left)")
+            max_retries -= 1
+            if max_retries > 0:
+                logger.info(f"Retrying... ({max_retries} attempts left)")
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
 
