@@ -17,8 +17,8 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/resources/forward_models
-# package-data path which. These are kept out of the ert package to avoid the
+# import run_reservoirsimulator from ert/resources/forward_models
+# package-data. This is kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
 
@@ -371,6 +371,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_ecl100_license_error_is_caught():
     prt_error = """\
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
@@ -402,6 +403,7 @@ def test_ecl100_license_error_is_caught():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_ecl100_crash_is_not_mistaken_as_license_trouble():
     prt_error = """\
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
@@ -431,6 +433,7 @@ def test_ecl100_crash_is_not_mistaken_as_license_trouble():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_ecl300_license_error_is_caught():
     prt_error = """\
  @--Message:The message service has been activated
@@ -468,6 +471,7 @@ def test_ecl300_license_error_is_caught():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_ecl300_crash_is_not_mistaken_as_license_trouble():
     prt_error = """\
  @--Message:The message service has been activated
@@ -502,6 +506,7 @@ def test_ecl300_crash_is_not_mistaken_as_license_trouble():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_license_error_in_slave_is_caught():
     """If a coupled Eclipse model fails in one of the slave runs
     due to license issues, there is no trace of licence in the master PRT file.
@@ -564,6 +569,7 @@ def test_license_error_in_slave_is_caught():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_crash_in_slave_is_not_mistaken_as_license():
     Path("slave1").mkdir()
     Path("slave2").mkdir()
@@ -615,6 +621,7 @@ def test_crash_in_slave_is_not_mistaken_as_license():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_too_few_parsed_error_messages_gives_warning():
     prt_error = """\
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
@@ -641,6 +648,7 @@ def test_too_few_parsed_error_messages_gives_warning():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_tail_of_prt_file_is_included_when_error_count_inconsistency():
     prt_error = (
         "this_should_not_be_included "
@@ -674,6 +682,7 @@ def test_tail_of_prt_file_is_included_when_error_count_inconsistency():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_correct_number_of_parsed_error_messages_gives_no_warning():
     prt_error = """\
  @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
@@ -702,6 +711,7 @@ def test_correct_number_of_parsed_error_messages_gives_no_warning():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 def test_slave_started_message_are_not_counted_as_errors():
     prt_error = f"""\
  @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-2000):
@@ -756,6 +766,7 @@ _DUMMY_SLAVE_STARTED_MESSAGE = """\
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.requires_eclipse
 @pytest.mark.parametrize(
     "prt_error, expected_error_list",
     [
