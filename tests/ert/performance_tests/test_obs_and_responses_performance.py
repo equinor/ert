@@ -488,7 +488,7 @@ def test_performance_of_doing_es_update(
 
         for real in range(config.num_realizations):
             # Note: We add noise to avoid ensemble collapse in which
-            # case the update won't appen
+            # case the update won't happen
             prior.save_response(
                 "summary",
                 _add_noise_to_df_values(info.summary_responses),
