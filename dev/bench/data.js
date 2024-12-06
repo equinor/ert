@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733477387012,
+  "lastUpdate": 1733478014527,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "6197ed4ebca19c46cd44b1080c6ce60fb9f59222",
-          "message": "Reduce examples ran in storage test",
-          "timestamp": "2024-12-02T09:32:16+01:00",
-          "tree_id": "7492c002fb1833ea645140662fdadabb22a49d8c",
-          "url": "https://github.com/equinor/ert/commit/6197ed4ebca19c46cd44b1080c6ce60fb9f59222"
-        },
-        "date": 1733128453040,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19529733591711776,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02977841711705624",
-            "extra": "mean: 5.120397548199992 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028287705830547526",
             "extra": "mean: 4.6176134761999945 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "oyveid@equinor.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "aa45608cf666c28b38c32d6b339fe9ee04cf6cb9",
+          "message": "Move addition of activate script",
+          "timestamp": "2024-12-06T10:38:26+01:00",
+          "tree_id": "0e5558d1ba63b8c98d1191b1779ffa407a4459f3",
+          "url": "https://github.com/equinor/ert/commit/aa45608cf666c28b38c32d6b339fe9ee04cf6cb9"
+        },
+        "date": 1733478014035,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21382553020849498,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05113461513636054",
+            "extra": "mean: 4.67671002159999 sec\nrounds: 5"
           }
         ]
       }
