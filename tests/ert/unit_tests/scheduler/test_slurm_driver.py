@@ -41,12 +41,15 @@ def capturing_sbatch(monkeypatch, tmp_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "sbatch_script, scontrol_script, exit_code",
+    "sbatch_script, scontrol_script, sacct_script, exit_code",
     [
-        pytest.param("echo 0", 'echo "JobState=COMPLETED ExitCode=0:0"', 0),
+        pytest.param("echo 0", 'echo "JobState=COMPLETED ExitCode=0:0"', "false", 0),
+        pytest.param("echo 0", "false", 'echo "COMPLETED|0:0"', 0),
     ],
 )
-async def test_exit_codes(tmp_path_factory, sbatch_script, scontrol_script, exit_code):
+async def test_exit_codes(
+    tmp_path_factory, sbatch_script, scontrol_script, sacct_script, exit_code
+):
     tmp_path = tmp_path_factory.mktemp("exit_codes")
 
     mocked_scontrol = tmp_path / "scontrol"
@@ -57,7 +60,13 @@ async def test_exit_codes(tmp_path_factory, sbatch_script, scontrol_script, exit
     mocked_sbatch.write_text(f"#!/bin/sh\n{sbatch_script}")
     mocked_sbatch.chmod(mocked_sbatch.stat().st_mode | stat.S_IEXEC)
 
-    driver = SlurmDriver(sbatch_cmd=mocked_sbatch, scontrol_cmd=mocked_scontrol)
+    mocked_sacct = tmp_path / "sacct"
+    mocked_sacct.write_text(f"#!/bin/sh\n{sacct_script}")
+    mocked_sacct.chmod(mocked_sacct.stat().st_mode | stat.S_IEXEC)
+
+    driver = SlurmDriver(
+        sbatch_cmd=mocked_sbatch, scontrol_cmd=mocked_scontrol, sacct_cmd=mocked_sacct
+    )
     await driver.submit(0, 'echo "hello"')
 
     assert await driver._get_exit_code("0") == exit_code
@@ -450,3 +459,26 @@ async def test_kill_before_submit_is_finished(
     assert not Path(
         "survived"
     ).exists(), "The process children of the job should also have been killed"
+
+
+async def test_slurm_uses_sacct(monkeypatch, tmp_path, caplog):
+    os.chdir(tmp_path)
+
+    bin_path = tmp_path / "bin"
+    bin_path.mkdir()
+    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
+
+    # Break scontrol:
+    scontrol_path = bin_path / "scontrol"
+    scontrol_path.write_text(
+        "#!/bin/sh\nfalse",
+        encoding="utf-8",
+    )
+    scontrol_path.chmod(scontrol_path.stat().st_mode | stat.S_IEXEC)
+
+    driver = SlurmDriver()
+    await driver.submit(0, "false")
+    assert await driver._get_exit_code(driver._iens2jobid[0]) == 1
+
+    # Make sure sacct was tried:
+    assert "scontrol failed, trying sacct" in caplog.text
