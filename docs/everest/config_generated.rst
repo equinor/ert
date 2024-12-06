@@ -986,6 +986,12 @@ Simulation settings
     scontrol executable to be used by the slurm queue interface.
 
 
+**sacct (optional)**
+    Type: *Optional[str]*
+
+    sacct executable to be used by the slurm queue interface.
+
+
 **squeue (optional)**
     Type: *Optional[str]*
 

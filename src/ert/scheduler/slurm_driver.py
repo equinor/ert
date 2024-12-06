@@ -67,6 +67,7 @@ class SlurmDriver(Driver):
         include_hosts: str = "",
         squeue_cmd: str = "squeue",
         scontrol_cmd: str = "scontrol",
+        sacct_cmd: str = "sacct",
         scancel_cmd: str = "scancel",
         sbatch_cmd: str = "sbatch",
         user: Optional[str] = None,
@@ -119,6 +120,7 @@ class SlurmDriver(Driver):
         self._squeue = squeue_cmd
 
         self._scontrol = scontrol_cmd
+        self._sacct = sacct_cmd
         self._scontrol_cache_timestamp = 0.0
         self._scontrol_required_cache_age = 30
         self._scontrol_cache: dict[str, ScontrolInfo] = {}
@@ -367,6 +369,18 @@ class SlurmDriver(Driver):
         ) and missing_job_id in self._scontrol_cache:
             return self._scontrol_cache[missing_job_id]
 
+        info = await self._run_scontrol(missing_job_id)
+        if info is None:
+            logger.warning("scontrol failed, trying sacct")
+            info = await self._run_sacct(missing_job_id)
+        if info is None:
+            return None
+
+        self._scontrol_cache[missing_job_id] = info
+        self._scontrol_cache_timestamp = time.time()
+        return info
+
+    async def _run_scontrol(self, missing_job_id: str) -> Optional[ScontrolInfo]:
         process = await asyncio.create_subprocess_exec(
             self._scontrol,
             "show",
@@ -377,24 +391,54 @@ class SlurmDriver(Driver):
         )
         stdout, stderr = await process.communicate()
         if process.returncode:
-            logger.error(
+            logger.warning(
                 f"scontrol gave returncode {process.returncode} with "
                 f"output{stdout.decode(errors='ignore').strip()} "
                 f"and error {stderr.decode(errors='ignore').strip()}"
             )
             return None
 
-        info = None
         try:
-            info = _parse_scontrol_output(stdout.decode(errors="ignore"))
+            return _parse_scontrol_output(stdout.decode(errors="ignore"))
         except Exception as err:
-            logger.error(
-                f"Could no parse scontrol stdout {stdout.decode(errors='ignore')}: {err}"
+            logger.warning(
+                f"Could not parse scontrol stdout {stdout.decode(errors='ignore')}: {err}"
             )
-            return info
-        self._scontrol_cache[missing_job_id] = info
-        self._scontrol_cache_timestamp = time.time()
-        return info
+        return None
+
+    async def _run_sacct(self, missing_job_id: str) -> Optional[ScontrolInfo]:
+        try:
+            process = await asyncio.create_subprocess_exec(
+                self._sacct,
+                "-X",
+                "-n",
+                "-o",
+                "State,ExitCode",
+                "-P",
+                "-j",
+                str(missing_job_id),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError:
+            logger.warning("sacct binary not found")
+            return None
+        stdout, stderr = await process.communicate()
+        if process.returncode:
+            logger.warning(
+                f"sacct gave returncode {process.returncode} with "
+                f"output{stdout.decode(errors='ignore').strip()} "
+                f"and error {stderr.decode(errors='ignore').strip()}"
+            )
+            return None
+
+        try:
+            return _parse_sacct_output(stdout.decode(errors="ignore"))
+        except Exception as err:
+            logger.warning(
+                f"Could not parse sacct stdout {stdout.decode(errors='ignore')}: {err}"
+            )
+        return None
 
     async def finish(self) -> None:
         pass
@@ -447,3 +491,11 @@ def _parse_scontrol_output(output: str) -> ScontrolInfo:
     if exit_code_str:
         exit_code = int(exit_code_str.split(":")[0])
     return ScontrolInfo(JobStatus[values["JobState"]], exit_code)
+
+
+def _parse_sacct_output(output: str) -> ScontrolInfo:
+    items = output.split("|")
+    exit_code = None
+    if len(items) > 0 and items[1]:
+        exit_code = int(items[1].split(":")[0])
+    return ScontrolInfo(JobStatus[items[0]], exit_code)

@@ -416,6 +416,11 @@ only the most necessary options have been added.
 
   Command to modify configuration and state, default ``scontrol``.
 
+.. _slurm_sacct:
+.. topic:: SACCT
+
+  Command used when ``scontrol`` fails, default ``sacct``.
+
 .. _slurm_squeue:
 .. topic:: SQUEUE
 

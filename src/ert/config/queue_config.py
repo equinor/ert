@@ -162,6 +162,7 @@ class SlurmQueueOptions(QueueOptions):
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
+    sacct: NonEmptyString = "sacct"
     squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
@@ -178,6 +179,7 @@ class SlurmQueueOptions(QueueOptions):
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
         driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
+        driver_dict["sacct_cmd"] = driver_dict.pop("sacct")
         driver_dict["squeue_cmd"] = driver_dict.pop("squeue")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["include_hosts"] = driver_dict.pop("include_host")
