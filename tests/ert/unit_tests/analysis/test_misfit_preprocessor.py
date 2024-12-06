@@ -9,11 +9,10 @@ from ert.analysis.misfit_preprocessor import (
 )
 
 
-@pytest.mark.parametrize(
-    "nr_obs, nr_components, expected", [[8, 2, 2], [4, 0, 2], [4, 1, 2]]
-)
-def test_get_scaling_factor(nr_obs, nr_components, expected):
-    assert get_scaling_factor(nr_obs, nr_components) == expected
+def test_get_scaling_factor():
+    assert get_scaling_factor(8, 2) == 2
+    assert get_scaling_factor(4, 0) == 2
+    assert get_scaling_factor(4, 1) == 2
 
 
 @pytest.mark.parametrize(
