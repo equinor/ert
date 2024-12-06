@@ -461,7 +461,8 @@ async def test_kill_before_submit_is_finished(
     ).exists(), "The process children of the job should also have been killed"
 
 
-async def test_slurm_uses_sacct(monkeypatch, tmp_path, caplog):
+@pytest.mark.parametrize("cmd, exit_code", [("true", 0), ("false", 1)])
+async def test_slurm_uses_sacct(monkeypatch, tmp_path, caplog, cmd, exit_code):
     os.chdir(tmp_path)
 
     bin_path = tmp_path / "bin"
@@ -477,8 +478,8 @@ async def test_slurm_uses_sacct(monkeypatch, tmp_path, caplog):
     scontrol_path.chmod(scontrol_path.stat().st_mode | stat.S_IEXEC)
 
     driver = SlurmDriver()
-    await driver.submit(0, "false")
-    assert await driver._get_exit_code(driver._iens2jobid[0]) == 1
+    await driver.submit(0, cmd)
+    assert await driver._get_exit_code(driver._iens2jobid[0]) == exit_code
 
     # Make sure sacct was tried:
     assert "scontrol failed, trying sacct" in caplog.text
