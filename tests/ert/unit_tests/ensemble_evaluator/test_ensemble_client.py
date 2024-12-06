@@ -16,7 +16,7 @@ def test_invalid_server():
         pytest.raises(
             ClientConnectionError, match="Connection to evaluator not established!"
         ),
-        Client(url, max_retries=2, connection_timeout=1.0),
+        Client(url, connection_timeout=1.0),
     ):
         pass
 
