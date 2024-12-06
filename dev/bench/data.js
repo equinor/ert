@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733484987939,
+  "lastUpdate": 1733484996219,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "b5a1805e6517c52fc9007b0e4cd7ed862c452fe0",
-          "message": "Use ensemble evaluator in everest in place of BatchSimulator\n\n* Use ensemble evaluator in everest in place of BatchSimulator\r\n\r\n* Fix test_simulator_cache Co-authored-by: Peter Verveer <pieter.verveer@tno.nl>",
-          "timestamp": "2024-12-02T12:17:55+02:00",
-          "tree_id": "4b0da21e8f1407f01ded1dbb2640cc45547c5c36",
-          "url": "https://github.com/equinor/ert/commit/b5a1805e6517c52fc9007b0e4cd7ed862c452fe0"
-        },
-        "date": 1733134789517,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1973472987219686,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04097912290169314",
-            "extra": "mean: 5.067208958399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029463112519569366",
             "extra": "mean: 4.638041514199995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "4b34fc94ceab52c8ad34e5059837b7ec26e5dcb9",
+          "message": "Delete unused `evaluate` method in ensemble_evaluator_utils",
+          "timestamp": "2024-12-06T12:34:46+01:00",
+          "tree_id": "3f250a19d7c5ac087dd71f3e56a1c1141feeaa7a",
+          "url": "https://github.com/equinor/ert/commit/4b34fc94ceab52c8ad34e5059837b7ec26e5dcb9"
+        },
+        "date": 1733484995231,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.208689645651837,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05284187912160273",
+            "extra": "mean: 4.791804580799993 sec\nrounds: 5"
           }
         ]
       }
