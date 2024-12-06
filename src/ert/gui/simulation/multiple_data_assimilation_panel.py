@@ -103,9 +103,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._active_realizations_model,  # type: ignore
             "config/simulation/active_realizations",
         )
+        self._active_realizations_field.setObjectName("active_realizations_box")
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         self._ensemble_selector = EnsembleSelector(notifier)
-        self._realizations_from_fs()
         layout.addRow("Active realizations:", self._active_realizations_field)
 
         self._restart_box = QCheckBox("")
@@ -114,6 +114,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._restart_box.toggled.connect(self.update_experiment_edit)
 
         self._restart_box.setEnabled(bool(self._ensemble_selector._ensemble_list()))
+        self._ensemble_selector.setEnabled(False)
         layout.addRow("Restart run:", self._restart_box)
 
         self._ensemble_selector.ensemble_populated.connect(self.restart_run_toggled)
@@ -189,6 +190,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             if self._restart_box.isChecked()
             else MultipleDataAssimilation.default_weights
         )
+        if self._restart_box.isChecked():
+            self._realizations_from_fs()
+        else:
+            # If box is unchecked we reset to the default mask
+            self._active_realizations_field.model.setValue(value="")
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
