@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733484971478,
+  "lastUpdate": 1733484987939,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "0d1430ed21320779649478c0617ec0401260d722",
-          "message": "Add also the simulation jobs to the list of possible simulator instances.\n\nEverest is adding SIMULATION_JOB key and not FORWARD_MODEL key for the steps in the forward model",
-          "timestamp": "2024-12-02T19:16:01+09:00",
-          "tree_id": "be0fcbea412d0eaf4ee25c7aaf752e3bad712685",
-          "url": "https://github.com/equinor/ert/commit/0d1430ed21320779649478c0617ec0401260d722"
-        },
-        "date": 1733134672326,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19036200242006743,
-            "unit": "iter/sec",
-            "range": "stddev: 0.036633390621088266",
-            "extra": "mean: 5.253149196200002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.059976100777467865",
             "extra": "mean: 4.685302591200008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "710e6d5d13a16ec1df4340910b52ca6328f3b6bb",
+          "message": "Migrate finalized keys for response configs",
+          "timestamp": "2024-12-06T12:34:42+01:00",
+          "tree_id": "d5c0168545e3cc674dbc6545b05a0c8189767d37",
+          "url": "https://github.com/equinor/ert/commit/710e6d5d13a16ec1df4340910b52ca6328f3b6bb"
+        },
+        "date": 1733484987413,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21560824691593727,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029463112519569366",
+            "extra": "mean: 4.638041514199995 sec\nrounds: 5"
           }
         ]
       }
