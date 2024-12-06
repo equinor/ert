@@ -144,7 +144,7 @@ class Client:
                     return
                 except asyncio.TimeoutError:
                     logger.warning(
-                        "Failed to get acknowledgment on the message. Resending."
+                        f"{self.dealer_id} failed to get acknowledgment on the {messages}. Resending."
                     )
             except zmq.ZMQError as exc:
                 logger.debug(

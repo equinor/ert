@@ -75,6 +75,11 @@ class Event(Reporter):
         self._event_publisher_thread = ErtThread(target=self._event_publisher)
         self._done = False
 
+    def stop(self):
+        self._event_queue.put(Event._sentinel)
+        if self._event_publisher_thread.is_alive():
+            self._event_publisher_thread.join()
+
     def _event_publisher(self):
         logger.debug("Publishing event.")
         with Client(
