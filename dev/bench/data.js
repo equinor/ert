@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733429708003,
+  "lastUpdate": 1733477387012,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "105e41a754091570d234a7e251f88acf40b9c9f4",
-          "message": "Make sure that migrations use correct dtypes",
-          "timestamp": "2024-11-29T12:20:40+01:00",
-          "tree_id": "eb258b2fc42c35cb54c73f5be5d8b40cd39f543c",
-          "url": "https://github.com/equinor/ert/commit/105e41a754091570d234a7e251f88acf40b9c9f4"
-        },
-        "date": 1732879350277,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1923995306790705,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03137511752879723",
-            "extra": "mean: 5.197517875800003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04384166878033591",
             "extra": "mean: 4.610431001799986 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "03903bbc50fbd911313469a10d29c4d43636917c",
+          "message": "Improve exit code detection in the slurm driver (#9440)\n\nImprove exit code detection in the slurm driver",
+          "timestamp": "2024-12-06T10:27:57+01:00",
+          "tree_id": "e21e8c5f40dffa7bee9d0754cc27584a9846b319",
+          "url": "https://github.com/equinor/ert/commit/03903bbc50fbd911313469a10d29c4d43636917c"
+        },
+        "date": 1733477386342,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21656208453872952,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028287705830547526",
+            "extra": "mean: 4.6176134761999945 sec\nrounds: 5"
           }
         ]
       }
