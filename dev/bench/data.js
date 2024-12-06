@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733485982752,
+  "lastUpdate": 1733507090022,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "2ef40b4278dd51c4053731283dc8971dda821230",
-          "message": "Make it possible to have multiline statements in config",
-          "timestamp": "2024-12-02T13:23:38+01:00",
-          "tree_id": "3de8fba5f73c16034f691bb7f73045152a5f2937",
-          "url": "https://github.com/equinor/ert/commit/2ef40b4278dd51c4053731283dc8971dda821230"
-        },
-        "date": 1733142333408,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19146370145251476,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029801264624543234",
-            "extra": "mean: 5.222922112200007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05363075399486037",
             "extra": "mean: 4.678887846599997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "baeb4f52bbbf45a292b0ca943d700c4d485c6c5b",
+          "message": "Update everest snapshot egg-py311.csv",
+          "timestamp": "2024-12-06T18:42:55+01:00",
+          "tree_id": "586c7b283858f837abcdc0c627535b72d1accfed",
+          "url": "https://github.com/equinor/ert/commit/baeb4f52bbbf45a292b0ca943d700c4d485c6c5b"
+        },
+        "date": 1733507089070,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21517625560161308,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07914358763160681",
+            "extra": "mean: 4.647352921000004 sec\nrounds: 5"
           }
         ]
       }
