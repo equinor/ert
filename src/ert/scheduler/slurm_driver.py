@@ -371,7 +371,7 @@ class SlurmDriver(Driver):
 
         info = await self._run_scontrol(missing_job_id)
         if info is None:
-            logger.error("scontrol failed, trying sacct")
+            logger.warning("scontrol failed, trying sacct")
             info = await self._run_sacct(missing_job_id)
         if info is None:
             return None
@@ -391,7 +391,7 @@ class SlurmDriver(Driver):
         )
         stdout, stderr = await process.communicate()
         if process.returncode:
-            logger.error(
+            logger.warning(
                 f"scontrol gave returncode {process.returncode} with "
                 f"output{stdout.decode(errors='ignore').strip()} "
                 f"and error {stderr.decode(errors='ignore').strip()}"
@@ -401,7 +401,7 @@ class SlurmDriver(Driver):
         try:
             return _parse_scontrol_output(stdout.decode(errors="ignore"))
         except Exception as err:
-            logger.error(
+            logger.warning(
                 f"Could not parse scontrol stdout {stdout.decode(errors='ignore')}: {err}"
             )
         return None
@@ -421,11 +421,11 @@ class SlurmDriver(Driver):
                 stderr=asyncio.subprocess.PIPE,
             )
         except FileNotFoundError:
-            logger.error("sacct binary not found")
+            logger.warning("sacct binary not found")
             return None
         stdout, stderr = await process.communicate()
         if process.returncode:
-            logger.error(
+            logger.warning(
                 f"sacct gave returncode {process.returncode} with "
                 f"output{stdout.decode(errors='ignore').strip()} "
                 f"and error {stderr.decode(errors='ignore').strip()}"
@@ -435,7 +435,7 @@ class SlurmDriver(Driver):
         try:
             return _parse_sacct_output(stdout.decode(errors="ignore"))
         except Exception as err:
-            logger.error(
+            logger.warning(
                 f"Could not parse sacct stdout {stdout.decode(errors='ignore')}: {err}"
             )
         return None
