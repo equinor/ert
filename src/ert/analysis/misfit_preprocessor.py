@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
-    """
-    Calculates an observation scaling factor which is:
-        sqrt(nr_obs / pc)
-    where:
-        nr_obs is the number of observations
-        pc is the number of primary components from PCA analysis
+    """Calculates an observation scaling factor which is
+    sqrt(nr_observations / nr_components)
+
+    Args:
+        nr_observations is the number of observations
+        nr_components is the number of primary components from PCA analysis
             below a user threshold
     """
     logger.info(
