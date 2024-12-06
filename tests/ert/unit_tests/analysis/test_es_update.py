@@ -1,7 +1,5 @@
 import functools
-import re
 from contextlib import ExitStack as does_not_raise
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -57,16 +55,6 @@ def obs() -> polars.DataFrame:
             "std": polars.Series([0.1, 1.0, 10.0], dtype=polars.Float32),
         }
     )
-
-
-def remove_timestamp_from_logfile(log_file: Path):
-    with open(log_file, "r", encoding="utf-8") as fin:
-        buf = fin.read()
-    buf = re.sub(
-        r"Time: [0-9]{4}\.[0-9]{2}\.[0-9]{2} [0-9]{2}\:[0-9]{2}\:[0-9]{2}", "Time:", buf
-    )
-    with open(log_file, "w", encoding="utf-8") as fout:
-        fout.write(buf)
 
 
 @pytest.mark.integration_test
