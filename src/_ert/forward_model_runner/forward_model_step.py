@@ -175,7 +175,7 @@ class ForwardModelStep:
 
         target_file = self.job_data.get("target_file")
         target_file_mtime: Optional[int] = _get_target_file_ntime(target_file)
-
+        run_start_time = dt.now()
         try:
             proc = Popen(
                 arg_list,
@@ -217,7 +217,9 @@ class ForwardModelStep:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
             except TimeoutExpired:
                 potential_exited_msg = (
-                    self.handle_process_timeout_and_create_exited_msg(exit_code, proc)
+                    self.handle_process_timeout_and_create_exited_msg(
+                        exit_code, proc, run_start_time
+                    )
                 )
                 if isinstance(potential_exited_msg, Exited):
                     yield potential_exited_msg
@@ -281,13 +283,12 @@ class ForwardModelStep:
         )
 
     def handle_process_timeout_and_create_exited_msg(
-        self, exit_code: Optional[int], proc: Popen[Process]
+        self, exit_code: Optional[int], proc: Popen[Process], run_start_time: dt
     ) -> Exited | None:
         max_running_minutes = self.job_data.get("max_running_minutes")
-        run_start_time = dt.now()
 
         run_time = dt.now() - run_start_time
-        if max_running_minutes is None or run_time.seconds > max_running_minutes * 60:
+        if max_running_minutes is None or run_time.seconds < max_running_minutes * 60:
             return None
 
         # If the spawned process is not in the same process group as
