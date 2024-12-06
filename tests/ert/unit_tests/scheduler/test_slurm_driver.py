@@ -462,7 +462,13 @@ async def test_kill_before_submit_is_finished(
 
 
 @pytest.mark.parametrize("cmd, exit_code", [("true", 0), ("false", 1)])
-async def test_slurm_uses_sacct(monkeypatch, tmp_path, caplog, cmd, exit_code):
+async def test_slurm_uses_sacct(
+    monkeypatch, tmp_path, caplog, cmd, exit_code, pytestconfig
+):
+    # On a real SLURM system, sacct may not be configured, so we skip:
+    if pytestconfig.getoption("slurm"):
+        pytest.skip()
+
     os.chdir(tmp_path)
 
     bin_path = tmp_path / "bin"
