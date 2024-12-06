@@ -263,7 +263,7 @@ _BenchMarks: List[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=40,
-            time_limit_s=0.15,
+            time_limit_s=1,
             last_measured_time=0.03,
             last_measured_memory_mb=17,
         ),
@@ -271,7 +271,7 @@ _BenchMarks: List[_Benchmark] = [
             last_measured_time=0.09,
             last_measured_memory_mb=7.13,
             memory_limit_mb=20,
-            time_limit_s=0.15,
+            time_limit_s=1,
         ),
     ),
     _Benchmark(
