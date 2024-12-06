@@ -90,13 +90,16 @@ def mock_zmq_thread(host, port, messages):
         loop = asyncio.new_event_loop()
 
         async def _handler(router_socket):
+            nonlocal messages
             while True:
                 try:
                     dealer, __, *frames = await router_socket.recv_multipart()
                     await router_socket.send_multipart([dealer, b"", b"ACK"])
                     for frame in frames:
                         raw_msg = frame.decode("utf-8")
-                        messages.append(raw_msg)
+                        print(f"{raw_msg} from {dealer}")
+                        if raw_msg not in ["CONNECT", "DISCONNECT"]:
+                            messages.append(raw_msg)
                 except asyncio.CancelledError:
                     break
 
@@ -124,10 +127,10 @@ def mock_zmq_thread(host, port, messages):
         # with Client(url) as client:
         #     client.send("stop")
         #     # Cancel the handler task explicitly
+        print(f"these are the final {messages=}")
         if handler_task and not handler_task.done():
             loop.call_soon_threadsafe(handler_task.cancel)
         mock_zmq_thread.join()
-        messages.pop()
 
 
 async def poll(driver: Driver, expected: set[int], *, started=None, finished=None):
