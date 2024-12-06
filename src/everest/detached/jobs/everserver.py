@@ -26,7 +26,6 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
     SHARED_DATA_ENDPOINT,
     SIM_PROGRESS_ENDPOINT,
-    START_ENDPOINT,
     STOP_ENDPOINT,
 )
 from everest.util import get_azure_logging_handler, makedirs_if_needed, version_info
@@ -180,16 +179,16 @@ def main():
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        #response = requests.post(
+        # response = requests.post(
         #    url + "/" + START_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
-        #)
+        # )
 
         is_done = False
         while not is_done:
             response = requests.get(
                 url + "/" + EXIT_CODE_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
             )
-            exit_code = ExitCode.model_validate_json(response.text)
+            exit_code = ExitCode.model_validate_json(response.body)
             if exit_code.exit_code or exit_code.message:
                 is_done = True
             else:
@@ -206,7 +205,7 @@ def main():
         response = requests.get(
             url + "/" + SHARED_DATA_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
         )
-        if json_body := json.loads(response.text):
+        if json_body := json.loads(response.body):
             shared_data = json_body
 
         status, message = _get_optimization_status(exit_code.exit_code, shared_data)

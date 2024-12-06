@@ -237,6 +237,8 @@ class EverestServerAPI(threading.Thread):
             STOP_ENDPOINT: False,
         }
 
+        self.runner: Optional[ExperimentRunner] = None
+
         self.everest_config = everest_config
         self.output_dir = everest_config.output_dir
         self.optimization_output_dir = everest_config.optimization_output_dir
@@ -309,6 +311,9 @@ class EverestServerAPI(threading.Thread):
     ) -> JSONResponse:
         self._log(request)
         self._check_user(credentials)
+
+        if not self.runner:
+            return JSONResponse(jsonable_encoder({}))
         return JSONResponse(
             jsonable_encoder(
                 self.runner.get_exit_code() if self.runner.get_exit_code() else {}

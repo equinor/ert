@@ -52,7 +52,11 @@ PROXY = {"http": None, "https": None}
 # everest.log file instead
 
 
-async def start_experiment(server_context: Tuple[str, str, Tuple[str, str]], config: EverestConfig, debug: bool = False) -> None:
+def start_experiment(
+    server_context: Tuple[str, str, Tuple[str, str]],
+    config: EverestConfig,
+    debug: bool = False,
+) -> None:
     try:
         url, cert, auth = server_context
         start_endpoint = "/".join([url, START_ENDPOINT])
@@ -65,7 +69,7 @@ async def start_experiment(server_context: Tuple[str, str, Tuple[str, str]], con
         response.raise_for_status()
     except:
         raise ValueError("Failed to start experiment") from None
-    
+
 
 async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     """
