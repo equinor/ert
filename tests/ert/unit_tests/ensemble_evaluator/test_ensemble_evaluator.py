@@ -170,7 +170,6 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
             url,
             cert=cert,
             token=token,
-            max_retries=1,
             dealer_name="dispatch_from_test_1",
         ) as dispatch:
             event = ForwardModelStepRunning(
@@ -210,7 +209,6 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         url,
         cert=cert,
         token=token,
-        max_retries=1,
     ) as dispatch:
         event = ForwardModelStepSuccess(
             ensemble=evaluator.ensemble.id_,
@@ -258,13 +256,11 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 url,
                 cert=cert,
                 token=token,
-                max_retries=1,
             ) as dispatch1,
             Client(
                 url,
                 cert=cert,
                 token=token,
-                max_retries=1,
             ) as dispatch2,
         ):
             # first dispatch endpoint client informs that forward model 0 is running
@@ -324,7 +320,6 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
         url,
         cert=cert,
         token=token,
-        max_retries=1,
     ) as dispatch2:
         # second dispatch endpoint client informs that job 0 is done
         event = ForwardModelStepSuccess(
@@ -394,13 +389,11 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 url,
                 cert=cert,
                 token=token,
-                max_retries=1,
             ) as dispatch1,
             Client(
                 url,
                 cert=cert,
                 token=token,
-                max_retries=1,
             ) as dispatch2,
         ):
             # first dispatch endpoint client informs that real 0 fm 0 is running
