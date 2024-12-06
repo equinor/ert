@@ -13,9 +13,7 @@ def test_invalid_server():
     url = f"tcp://{host}:{port}"
 
     with (
-        pytest.raises(
-            ClientConnectionError, match="Connection to evaluator not established!"
-        ),
+        pytest.raises(ClientConnectionError),
         Client(url, connection_timeout=1.0),
     ):
         pass

@@ -11,9 +11,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     event_from_json,
 )
-from _ert.forward_model_runner.client import (
-    ClientConnectionError,
-)
+from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
@@ -181,9 +179,7 @@ def test_report_inconsistent_events(unused_tcp_port):
     url = f"tcp://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
 
-    lines = []
     with (
-        mock_zmq_thread(host, unused_tcp_port, lines),
         pytest.raises(
             TransitionError,
             match=r"Illegal transition None -> \(MessageType<Finish>,\)",
