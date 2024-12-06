@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733485948583,
+  "lastUpdate": 1733485982752,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "ef9b3b8e3b8c6dd0981853032762742dfaa915bc",
-          "message": "Fix _storage_main `terminate_on_parent_death` not working on mac\n\nPrior to this commit, the `terminate_on_parent_death` function was only usable on linux, due to it using the prctl command.\nThis commit creates a new thread which polls the parent process, and signals terminate when it can no longer find the parent.",
-          "timestamp": "2024-12-02T13:04:34+01:00",
-          "tree_id": "ec5397136b5122e8f34c11d9e0df672a3d93affe",
-          "url": "https://github.com/equinor/ert/commit/ef9b3b8e3b8c6dd0981853032762742dfaa915bc"
-        },
-        "date": 1733141191570,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.18882702036145596,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03441055395684877",
-            "extra": "mean: 5.295852246599997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06572133260757662",
             "extra": "mean: 4.7216213295999925 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "90c14a927fb0e4c1de9e08a88f7599f329342a0a",
+          "message": "Improve UX for permission errors in storage\n\nThis commit:\n* Improves the error message displayed when the dark storage server does not have access to the storage path.\n* Makes the dark storage server return a response with status code 401 - unauthorized when the `get_ensemble_record` endpoint fails due to `PermissionError`.\n* Makes the failed message in `LegacyEnsemble._evaluate_inner` omit stacktrace when it failed due to PermissionError, making it shorter and more consise.",
+          "timestamp": "2024-12-06T12:51:10+01:00",
+          "tree_id": "5c8c3d177362548299096fd3e12b750c461d7570",
+          "url": "https://github.com/equinor/ert/commit/90c14a927fb0e4c1de9e08a88f7599f329342a0a"
+        },
+        "date": 1733485981654,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2137260034404691,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05363075399486037",
+            "extra": "mean: 4.678887846599997 sec\nrounds: 5"
           }
         ]
       }
