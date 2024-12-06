@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733484996219,
+  "lastUpdate": 1733485948583,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "c9fc8d30ef52b8b98c8c3ff9d37f805cbbdbcc6d",
-          "message": "Fix handling '/' in _get_num_cpu",
-          "timestamp": "2024-12-02T12:00:56+01:00",
-          "tree_id": "aaec44910500225a36278417e2e8f5ecd7c36ad5",
-          "url": "https://github.com/equinor/ert/commit/c9fc8d30ef52b8b98c8c3ff9d37f805cbbdbcc6d"
-        },
-        "date": 1733137369426,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19181437147688954,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02435365875604968",
-            "extra": "mean: 5.213373702399997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05284187912160273",
             "extra": "mean: 4.791804580799993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "726a273e44984d59214426751203284b10d27efe",
+          "message": "Have ModelConfig output more noticable warning when malformatted runpath\n\nThis commit makes ModelConfig emit a ConfigWarning if the input runpath does not contain `<ITER>` or `<IENS>`. This was previously only a warning in the logs, but it should be more noticable.",
+          "timestamp": "2024-12-06T12:50:39+01:00",
+          "tree_id": "9a6f2404d6a597848fafec7c30f82ba0d17c5fe1",
+          "url": "https://github.com/equinor/ert/commit/726a273e44984d59214426751203284b10d27efe"
+        },
+        "date": 1733485947918,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21179165591509186,
+            "unit": "iter/sec",
+            "range": "stddev: 0.06572133260757662",
+            "extra": "mean: 4.7216213295999925 sec\nrounds: 5"
           }
         ]
       }
