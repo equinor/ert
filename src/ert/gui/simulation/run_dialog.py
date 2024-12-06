@@ -311,6 +311,7 @@ class RunDialog(QFrame):
 
             widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
+            widget.itemClicked.connect(self._select_real)
             self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
                 widget, f"Realizations for iteration {index.internalPointer().id_}"
