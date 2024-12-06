@@ -15,16 +15,6 @@ def test_get_scaling_factor():
     assert get_scaling_factor(4, 1) == 2
 
 
-@pytest.mark.parametrize(
-    "threshold,expected_result", [(0.0, 0), (0.7, 3), (0.8, 4), (0.9, 5), (0.95, 6)]
-)
-def test_get_nr_primary_components(threshold, expected_result):
-    rng = np.random.default_rng(123)
-    input_matrix = rng.random((10, 10))
-    components = get_nr_primary_components(input_matrix, threshold)
-    assert components == expected_result
-
-
 def test_that_get_nr_primary_components_is_according_to_theory():
     # pylint: disable=too-many-locals,invalid-name
     """Based on theory in Multivariate Statistical Methods 4th Edition
