@@ -51,7 +51,7 @@ class Client:
         await self._term_receiver_task()
         self.term()
 
-    async def _term_receiver_task(self):
+    async def _term_receiver_task(self) -> None:
         if self._receiver_task and not self._receiver_task.done():
             self._receiver_task.cancel()
             await asyncio.gather(self._receiver_task, return_exceptions=True)
