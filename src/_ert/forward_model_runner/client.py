@@ -26,6 +26,7 @@ class Client:
     DEFAULT_MAX_RETRIES = 10
     DEFAULT_TIMEOUT_MULTIPLIER = 5
     CONNECTION_TIMEOUT = 60
+    _receiver_task: Optional[asyncio.Task[None]]
 
     def __enter__(self) -> Self:
         self.loop.run_until_complete(self.__aenter__())
@@ -55,7 +56,7 @@ class Client:
         if self._receiver_task and not self._receiver_task.done():
             self._receiver_task.cancel()
             await asyncio.gather(self._receiver_task, return_exceptions=True)
-        self._receiver_task = None
+            self._receiver_task = None
 
     def __init__(
         self,
@@ -87,7 +88,7 @@ class Client:
             self.socket.curve_serverkey = token.encode("utf-8")
 
         self.loop = new_event_loop()
-        self._receiver_task: Optional[asyncio.Task[None]] = None
+        self._receiver_task = None
 
     async def connect(self) -> None:
         self.socket.connect(self.url)
