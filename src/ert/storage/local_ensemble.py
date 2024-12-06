@@ -943,7 +943,7 @@ class LocalEnsemble(BaseMode):
                 first_columns: polars.DataFrame | None = None
                 realization_columns: List[polars.DataFrame] = []
                 for real in reals:
-                    my_responses = self._load_responses_lazy(
+                    responses = self._load_responses_lazy(
                         response_type, (real,)
                     ).with_columns(
                         [
@@ -953,13 +953,13 @@ class LocalEnsemble(BaseMode):
                         ]
                     )
 
-                    # Filter out irrelevant data before reading into memory
+                    # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
-                        my_responses = my_responses.filter(
+                        responses = responses.filter(
                             polars.col(col).is_in(observed_values)
                         )
 
-                    pivoted = my_responses.collect().pivot(
+                    pivoted = responses.collect().pivot(
                         on="realization",
                         index=["response_key", *response_cls.primary_key],
                         values="values",
