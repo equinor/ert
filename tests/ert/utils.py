@@ -3,14 +3,12 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import zmq
 import zmq.asyncio
 
-from _ert.forward_model_runner.client import Client
 from _ert.threading import ErtThread
 from ert.scheduler.event import FinishedEvent, StartedEvent
 
@@ -62,37 +60,11 @@ def wait_until(func, interval=0.5, timeout=30):
     )
 
 
-def mock_zmq_server(messages, port):
-    loop = asyncio.new_event_loop()
-
-    async def _handler(router_socket):
-        while True:
-            dealer, __, *frames = await router_socket.recv_multipart()
-            if dealer.decode("utf-8").startswith("dispatch"):
-                await router_socket.send_multipart([dealer, b"", b"ACK"])
-            for frame in frames:
-                raw_msg = frame.decode("utf-8")
-                messages.append(raw_msg)
-                if raw_msg == "stop":
-                    return
-
-    async def _run_server():
-        zmq_context = zmq.asyncio.Context()  # type: ignore
-        router_socket = zmq_context.socket(zmq.ROUTER)
-        router_socket.bind(f"tcp://*:{port}")
-        await _handler(router_socket)
-        router_socket.close()
-
-    loop.run_until_complete(_run_server())
-    loop.close()
-
-
 async def async_mock_zmq_server(messages, port, server_started):
     async def _handler(router_socket):
         while True:
             dealer, __, *frames = await router_socket.recv_multipart()
-            if dealer.decode("utf-8").startswith("dispatch"):
-                await router_socket.send_multipart([dealer, b"", b"ACK"])
+            await router_socket.send_multipart([dealer, b"", b"ACK"])
             for frame in frames:
                 raw_msg = frame.decode("utf-8")
                 messages.append(raw_msg)
@@ -110,19 +82,51 @@ async def async_mock_zmq_server(messages, port, server_started):
 
 @contextlib.contextmanager
 def mock_zmq_thread(host, port, messages):
-    mock_ws_thread = ErtThread(
-        target=partial(mock_zmq_server, messages=messages),
-        args=(port,),
+    loop = None
+    handler_task = None
+
+    def mock_zmq_server(messages, port):
+        nonlocal loop, handler_task
+        loop = asyncio.new_event_loop()
+
+        async def _handler(router_socket):
+            while True:
+                try:
+                    dealer, __, *frames = await router_socket.recv_multipart()
+                    await router_socket.send_multipart([dealer, b"", b"ACK"])
+                    for frame in frames:
+                        raw_msg = frame.decode("utf-8")
+                        messages.append(raw_msg)
+                except asyncio.CancelledError:
+                    break
+
+        async def _run_server():
+            zmq_context = zmq.asyncio.Context()  # type: ignore
+            router_socket = zmq_context.socket(zmq.ROUTER)
+            router_socket.bind(f"tcp://*:{port}")
+            nonlocal handler_task
+            handler_task = asyncio.create_task(_handler(router_socket))
+            await handler_task
+            router_socket.close()
+
+        loop.run_until_complete(_run_server())
+        loop.close()
+
+    mock_zmq_thread = ErtThread(
+        target=lambda: mock_zmq_server(messages, port),
     )
-    mock_ws_thread.start()
+    mock_zmq_thread.start()
     try:
         yield
     # Make sure to join the thread even if an exception occurs
     finally:
-        url = f"tcp://{host}:{port}"
-        with Client(url) as client:
-            client.send("stop")
-        mock_ws_thread.join()
+        # url = f"tcp://{host}:{port}"
+        # with Client(url) as client:
+        #     client.send("stop")
+        #     # Cancel the handler task explicitly
+        if handler_task and not handler_task.done():
+            loop.call_soon_threadsafe(handler_task.cancel)
+        mock_zmq_thread.join()
         messages.pop()
 
 

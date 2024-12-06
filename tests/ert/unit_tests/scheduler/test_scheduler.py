@@ -125,7 +125,7 @@ async def test_cancel(realization, mock_driver):
 async def test_add_dispatch_information_to_jobs_file(
     storage, tmp_path: Path, mock_driver
 ):
-    test_ee_uri = "ws://test_ee_uri.com/121/"
+    test_ee_uri = "tcp://test_ee_uri.com/121/"
     test_ens_id = "test_ens_id121"
     test_ee_token = "test_ee_token_t0k€n121"
     test_ee_cert = "test_ee_cert121.pem"
