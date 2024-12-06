@@ -9,8 +9,8 @@ from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
 
-# import ecl_config.py and ecl_run from ert/resources/forward_models
-# package-data path which. These are kept out of the ert package to avoid the
+# import run_reservoirsimulator from ert/resources/forward_models
+# package-data. This is kept out of the ert package to avoid the
 # overhead of importing ert. This is necessary as these may be invoked as a
 # subprocess on each realization.
 
