@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733478014527,
+  "lastUpdate": 1733484971478,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "08e98c5794620522227654da5a821fba9ba475e8",
-          "message": "Move performance tests out of unit_tests",
-          "timestamp": "2024-12-02T11:04:02+01:00",
-          "tree_id": "87e51ac6fcf674d05465b0116fad86c4d9ce4b3b",
-          "url": "https://github.com/equinor/ert/commit/08e98c5794620522227654da5a821fba9ba475e8"
-        },
-        "date": 1733133957145,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19138848497139124,
-            "unit": "iter/sec",
-            "range": "stddev: 0.046897176649856",
-            "extra": "mean: 5.224974742600006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05113461513636054",
             "extra": "mean: 4.67671002159999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "5061a9426cc6f5ae2db17d2f958a6c9ecfe0cb58",
+          "message": "Inline redefinition of components in test",
+          "timestamp": "2024-12-06T12:34:23+01:00",
+          "tree_id": "e44e579d3509cb6d869a7ded31288311d70c227f",
+          "url": "https://github.com/equinor/ert/commit/5061a9426cc6f5ae2db17d2f958a6c9ecfe0cb58"
+        },
+        "date": 1733484970869,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21343338675248258,
+            "unit": "iter/sec",
+            "range": "stddev: 0.059976100777467865",
+            "extra": "mean: 4.685302591200008 sec\nrounds: 5"
           }
         ]
       }
