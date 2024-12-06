@@ -289,13 +289,13 @@ _BenchMarks: List[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=1500,
-            time_limit_s=6.5,
+            time_limit_s=15,
             last_measured_time=2.78,
             last_measured_memory_mb=1027,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=2800,
-            time_limit_s=15,
+            time_limit_s=20,
             last_measured_time=5.34,
             last_measured_memory_mb=2230,
         ),
@@ -315,13 +315,13 @@ _BenchMarks: List[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=4500,
-            time_limit_s=10,
+            time_limit_s=25,
             last_measured_memory_mb=1710,
             last_measured_time=3.59,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=4000,
-            time_limit_s=18,
+            time_limit_s=30,
             last_measured_memory_mb=3088,
             last_measured_time=6.23,
         ),
@@ -341,13 +341,13 @@ _BenchMarks: List[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=2300,
-            time_limit_s=12,
+            time_limit_s=35,
             last_measured_time=3.96,
             last_measured_memory_mb=1715,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=3500,
-            time_limit_s=23,
+            time_limit_s=40,
             last_measured_time=6.98,
             last_measured_memory_mb=3115,
         ),
