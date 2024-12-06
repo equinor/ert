@@ -62,6 +62,7 @@ from tests.everest.utils import (
                 "include_hosts": "host5,host6,host7,host8",
                 "memory": "1000M",
                 "queue_name": "default-queue",
+                "sacct_cmd": "sacct",
                 "sbatch_cmd": "sbatch",
                 "scancel_cmd": "scancel",
                 "scontrol_cmd": "scontrol",
