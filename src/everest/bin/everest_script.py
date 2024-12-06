@@ -15,6 +15,7 @@ from everest.detached import (
     ServerStatus,
     everserver_status,
     server_is_running,
+    start_experiment,
     start_server,
     wait_for_server,
 )
@@ -130,6 +131,11 @@ async def run_everest(options):
         print("Waiting for server ...")
         wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")
+        
+        await start_experiment(server_context=ServerConfig.get_server_context(options.config.output_dir),
+                               config=options.config,
+                               debug=options.debug)
+        
         run_detached_monitor(
             server_context=ServerConfig.get_server_context(options.config.output_dir),
             optimization_output_dir=options.config.optimization_output_dir,

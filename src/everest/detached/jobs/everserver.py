@@ -180,9 +180,9 @@ def main():
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        response = requests.post(
-            url + "/" + START_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
-        )
+        #response = requests.post(
+        #    url + "/" + START_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
+        #)
 
         is_done = False
         while not is_done:
