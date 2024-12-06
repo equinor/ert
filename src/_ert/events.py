@@ -1,11 +1,5 @@
-import sys
 from datetime import datetime
-from typing import Any, Dict, Final, Literal, Union
-
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated
-else:
-    from typing import Annotated
+from typing import Annotated, Any, Dict, Final, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
