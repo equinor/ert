@@ -48,12 +48,9 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     threshold_3 = (s1**2 + 2 * s_remaining**2) / total
 
     # Adding a bit to the thresholds because of numerical accuracy.
-    components = get_nr_primary_components(Y, threshold_1 + 0.01)
-    assert components == 1
-    components = get_nr_primary_components(Y, threshold_2 + 0.01)
-    assert components == 2
-    components = get_nr_primary_components(Y, threshold_3 + 0.01)
-    assert components == 3
+    assert get_nr_primary_components(Y, threshold_1 + 0.01) == 1
+    assert get_nr_primary_components(Y, threshold_2 + 0.01) == 2
+    assert get_nr_primary_components(Y, threshold_3 + 0.01) == 3
 
 
 @pytest.mark.parametrize("nr_observations", [4, 10, 100])
