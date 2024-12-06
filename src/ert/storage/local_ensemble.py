@@ -1001,20 +1001,20 @@ class LocalEnsemble(BaseMode):
                         .rename({"__tmp_index_key__": "index"})
                     )
 
-                    if not joined.is_empty():
-                        if first_columns is None:
-                            first_columns = joined.select(
-                                [
-                                    "response_key",
-                                    "index",
-                                    "observation_key",
-                                    "observations",
-                                    "std",
-                                    str(real),
-                                ]
-                            )
-                        else:
-                            realization_columns.append(joined.select(str(real)))
+                    # if not joined.is_empty():
+                    if first_columns is None:
+                        first_columns = joined.select(
+                            [
+                                "response_key",
+                                "index",
+                                "observation_key",
+                                "observations",
+                                "std",
+                                str(real),
+                            ]
+                        )
+                    else:
+                        realization_columns.append(joined.select(str(real)))
 
                 if first_columns is not None:
                     dfs_per_response_type.append(
