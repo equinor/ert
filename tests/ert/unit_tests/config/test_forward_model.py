@@ -5,6 +5,7 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict
 from unittest.mock import patch
 
 import pytest
@@ -669,7 +670,9 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
             )
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, env_vars: Dict[str, str]
+        ) -> None:
             if set(self.private_args.keys()) != {"<arg1>", "<arg2>", "<arg3>"}:
                 raise ForwardModelStepValidationError("Bad")
 
@@ -893,6 +896,33 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         )
 
 
+def test_that_plugin_forward_model_validation_sees_setenv(tmp_path):
+    (tmp_path / "test.ert").write_text(
+        """
+        NUM_REALIZATIONS  1
+        SETENV FOO bar
+        FORWARD_MODEL FM1()
+        """
+    )
+
+    class ExceptionThatWeWant(ForwardModelStepValidationError):
+        pass
+
+    class FM1(ForwardModelStepPlugin):
+        def __init__(self):
+            super().__init__(name="FM1", command=["dummy.sh"])
+
+        def validate_pre_experiment(
+            self, _: ForwardModelStepJSON, env_vars: Dict[str, str]
+        ) -> None:
+            raise ExceptionThatWeWant(f'Found FOO={env_vars["FOO"]}')
+
+    with pytest.raises(ConfigValidationError, match=".*Found FOO=bar.*"):
+        ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
+            tmp_path / "test.ert"
+        )
+
+
 def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
     tmp_path,
 ):
@@ -911,7 +941,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
         def __init__(self):
             super().__init__(name="FM1", command=["the_executable.sh"])
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
+        ) -> None:
             if self.name != "FM1":
                 raise ForwardModelStepValidationError("Expected name to be FM1")
 
@@ -924,7 +956,9 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
                 command=["the_executable.sh"],
             )
 
-        def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
+        def validate_pre_experiment(
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
+        ) -> None:
             if self.name != "FM2":
                 raise ForwardModelStepValidationError("Expected name to be FM2")
 
