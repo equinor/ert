@@ -669,4 +669,4 @@ def _available_eclrun_versions(
             .split(" ")
         )
     except subprocess.CalledProcessError:
-        return
+        return []
