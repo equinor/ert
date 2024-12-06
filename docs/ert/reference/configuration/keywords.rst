@@ -1828,9 +1828,9 @@ in :ref:`queue-system-chapter`. In brief, the queue systems have the following o
   ``QSTAT_OPTIONS``, ``QUEUE``, ``CLUSTER_LABEL``, ``MAX_RUNNING``, ``NUM_NODES``,
   ``NUM_CPUS_PER_NODE``, ``MEMORY_PER_JOB``, ``KEEP_QSUB_OUTPUT``, ``SUBMIT_SLEEP``,
   ``QUEUE_QUERY_TIMEOUT``
-* :ref:`SLURM <slurm-systems>` — ``SBATCH``, ``SCANCEL``, ``SCONTROL``, ``SQUEUE``,
-  ``PARTITION``, ``SQUEUE_TIMEOUT``, ``MAX_RUNTIME``, ``MEMORY``, ``MEMORY_PER_CPU``,
-  ``INCLUDE_HOST``, ``EXCLUDE_HOST``, ``MAX_RUNNING``
+* :ref:`SLURM <slurm-systems>` — ``SBATCH``, ``SCANCEL``, ``SCONTROL``, ``SACCT``,
+  ``SQUEUE``, ``PARTITION``, ``SQUEUE_TIMEOUT``, ``MAX_RUNTIME``, ``MEMORY``,
+  ``MEMORY_PER_CPU``, ``INCLUDE_HOST``, ``EXCLUDE_HOST``, ``MAX_RUNNING``
 
 In addition, some options apply to all queue systems:
 

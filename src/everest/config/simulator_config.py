@@ -93,6 +93,10 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         default=None,
         description="scontrol executable to be used by the slurm queue interface.",
     )
+    sacct: Optional[str] = Field(
+        default=None,
+        description="sacct executable to be used by the slurm queue interface.",
+    )
     squeue: Optional[str] = Field(
         default=None,
         description="squeue executable to be used by the slurm queue interface.",

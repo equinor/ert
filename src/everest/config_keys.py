@@ -62,6 +62,7 @@ class ConfigKeys:
     SLURM_SBATCH = "sbatch"
     SLURM_SCANCEL = "scancel"
     SLURM_SCONTROL = "scontrol"
+    SLURM_SACCT = "sacct"
     SLURM_SQUEUE = "squeue"
     SLURM_SQUEUE_TIMEOUT = "squeue_timeout"
     SLURM_MAX_RUNTIME = "slurm_timeout"

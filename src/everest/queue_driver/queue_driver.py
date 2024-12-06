@@ -17,6 +17,7 @@ _SLURM_OPTIONS = [
     (ConfigKeys.SLURM_SBATCH, "SBATCH"),
     (ConfigKeys.SLURM_SCANCEL, "SCANCEL"),
     (ConfigKeys.SLURM_SCONTROL, "SCONTROL"),
+    (ConfigKeys.SLURM_SACCT, "SACCT"),
     (ConfigKeys.SLURM_SQUEUE, "SQUEUE"),
     (ConfigKeys.SLURM_MAX_RUNTIME, "MAX_RUNTIME"),
     (ConfigKeys.SLURM_MEMORY, "MEMORY"),
