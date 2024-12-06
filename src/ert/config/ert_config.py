@@ -478,6 +478,16 @@ class ErtConfig:
             errors.append(e)
 
         try:
+            if cls.ACTIVATE_SCRIPT:
+                if "QUEUE_OPTION" not in config_dict:
+                    config_dict["QUEUE_OPTION"] = []
+                config_dict["QUEUE_OPTION"].append(
+                    [
+                        QueueSystemWithGeneric.GENERIC,
+                        "ACTIVATE_SCRIPT",
+                        cls.ACTIVATE_SCRIPT,
+                    ]
+                )
             queue_config = QueueConfig.from_dict(config_dict)
         except ConfigValidationError as err:
             errors.append(err)
@@ -678,12 +688,6 @@ class ErtConfig:
                 user_config_dict[keyword] = value + original_entries
             elif keyword not in user_config_dict:
                 user_config_dict[keyword] = value
-        if cls.ACTIVATE_SCRIPT:
-            if "QUEUE_OPTION" not in user_config_dict:
-                user_config_dict["QUEUE_OPTION"] = []
-            user_config_dict["QUEUE_OPTION"].append(
-                [QueueSystemWithGeneric.GENERIC, "ACTIVATE_SCRIPT", cls.ACTIVATE_SCRIPT]
-            )
         return user_config_dict
 
     @classmethod

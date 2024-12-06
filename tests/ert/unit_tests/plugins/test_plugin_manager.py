@@ -321,3 +321,16 @@ def test_activate_script_plugin_integration():
     with patch("ert.config.ert_config.ErtPluginManager", patched):
         config = ErtConfig.with_plugins().from_file_contents("NUM_REALIZATIONS 1\n")
         assert config.queue_config.queue_options.activate_script == "source something"
+
+
+def test_activate_script_plugin_integration_from_dict():
+    patched = partial(
+        ert.config.ert_config.ErtPluginManager, plugins=[ActivatePlugin()]
+    )
+    with patch("ert.config.ert_config.ErtPluginManager", patched):
+        config = ErtConfig.with_plugins().from_dict(
+            {
+                "NUM_REALIZATIONS": 1,
+            }
+        )
+        assert config.queue_config.queue_options.activate_script == "source something"
