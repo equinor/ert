@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import queue
-import time
 from pathlib import Path
 from typing import Final, Union
 
@@ -81,36 +81,56 @@ class Event(Reporter):
             self._event_publisher_thread.join()
 
     def _event_publisher(self):
-        logger.debug("Publishing event.")
-        with Client(
-            url=self._evaluator_url,
-            token=self._token,
-            cert=self._cert,
-        ) as client:
-            events = []
-            last_sent_time = time.time()
-            while not self._done:
-                try:
-                    event = self._event_queue.get()
-                    if event is self._sentinel:
-                        self._done = True
-                        if events:
-                            client.send(events)
-                            events.clear()
-                        break
-                    events.append(event_to_json(event))
+        async def publisher():
+            async with Client(
+                url=self._evaluator_url,
+                token=self._token,
+                cert=self._cert,
+            ) as client:
+                while True:
+                    try:
+                        event = self._event_queue.get()
+                        if event is self._sentinel:
+                            break
+                        await client._send(event_to_json(event))
+                    except asyncio.CancelledError:
+                        return
+                    except ClientConnectionError as exc:
+                        logger.error(f"Failed to send event: {exc}")
 
-                    current_time = time.time()
-                    if current_time - last_sent_time >= 2:
-                        if events:
-                            client.send(events)
-                            events.clear()
-                        last_sent_time = current_time
-                except ClientConnectionError as e:
-                    logger.error(f"Failed to send event: {e}")
-                except Exception as e:
-                    logger.error(f"Error while sending event: {e}")
-                    raise
+        asyncio.run(publisher())
+
+    # def _event_publisher(self):
+    #     logger.debug("Publishing event.")
+    #     with Client(
+    #         url=self._evaluator_url,
+    #         token=self._token,
+    #         cert=self._cert,
+    #     ) as client:
+    #         events = []
+    #         last_sent_time = time.time()
+    #         while not self._done:
+    #             try:
+    #                 event = self._event_queue.get()
+    #                 if event is self._sentinel:
+    #                     self._done = True
+    #                     if events:
+    #                         client.send(events)
+    #                         events.clear()
+    #                     break
+    #                 events.append(event_to_json(event))
+
+    #                 current_time = time.time()
+    #                 if current_time - last_sent_time >= 1:
+    #                     if events:
+    #                         client.send(events)
+    #                         events.clear()
+    #                     last_sent_time = current_time
+    #             except ClientConnectionError as e:
+    #                 logger.error(f"Failed to send event: {e}")
+    #             except Exception as e:
+    #                 logger.error(f"Error while sending event: {e}")
+    #                 raise
 
     def report(self, msg):
         self._statemachine.transition(msg)
