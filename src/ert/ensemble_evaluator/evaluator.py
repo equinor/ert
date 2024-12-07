@@ -202,70 +202,68 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    async def handle_client(self, dealer: bytes, frames: list[bytes]) -> None:
-        for frame in frames:
-            raw_msg = frame.decode("utf-8")
-            if raw_msg == "CONNECT":
-                self._clients_connected.add(dealer)
-                self._clients_empty.clear()
-                current_snapshot_dict = self._ensemble.snapshot.to_dict()
-                event: Event = EESnapshot(
-                    snapshot=current_snapshot_dict,
-                    ensemble=self.ensemble.id_,
-                )
-                await self._router_socket.send_multipart(
-                    [dealer, b"", event_to_json(event).encode()]
-                )
-            elif raw_msg == "DISCONNECT":
-                self._clients_connected.discard(dealer)
-                if not self._clients_connected:
-                    self._clients_empty.set()
-            else:
-                event = event_from_json(raw_msg)
-                if type(event) is EEUserCancel:
-                    logger.debug("Client asked to cancel.")
-                    self._signal_cancel()
-                elif type(event) is EEUserDone:
-                    logger.debug("Client signalled done.")
-                    self.stop()
+    async def handle_client(self, dealer: bytes, frame: bytes) -> None:
+        raw_msg = frame.decode("utf-8")
+        if raw_msg == "CONNECT":
+            self._clients_connected.add(dealer)
+            self._clients_empty.clear()
+            current_snapshot_dict = self._ensemble.snapshot.to_dict()
+            event: Event = EESnapshot(
+                snapshot=current_snapshot_dict,
+                ensemble=self.ensemble.id_,
+            )
+            await self._router_socket.send_multipart(
+                [dealer, b"", event_to_json(event).encode()]
+            )
+        elif raw_msg == "DISCONNECT":
+            self._clients_connected.discard(dealer)
+            if not self._clients_connected:
+                self._clients_empty.set()
+        else:
+            event = event_from_json(raw_msg)
+            if type(event) is EEUserCancel:
+                logger.debug("Client asked to cancel.")
+                self._signal_cancel()
+            elif type(event) is EEUserDone:
+                logger.debug("Client signalled done.")
+                self.stop()
 
-    async def handle_dispatch(self, dealer: bytes, frames: list[bytes]) -> None:
-        for frame in frames:
-            raw_msg = frame.decode("utf-8")
-            if raw_msg == "CONNECT":
-                self._dispatchers_connected.add(dealer)
-                self._dispatchers_connected.clear()
-            elif raw_msg == "DISCONNECT":
-                self._dispatchers_connected.discard(dealer)
-                if not self._dispatchers_connected:
-                    self._dispatchers_empty.set()
+    async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
+        raw_msg = frame.decode("utf-8")
+        if raw_msg == "CONNECT":
+            self._dispatchers_connected.add(dealer)
+            self._dispatchers_connected.clear()
+        elif raw_msg == "DISCONNECT":
+            self._dispatchers_connected.discard(dealer)
+            if not self._dispatchers_connected:
+                self._dispatchers_empty.set()
+        else:
+            event = dispatch_event_from_json(raw_msg)
+            if event.ensemble != self.ensemble.id_:
+                logger.info(
+                    "Got event from evaluator "
+                    f"{event.ensemble}. "
+                    f"Ignoring since I am {self.ensemble.id_}"
+                )
+                return
+            if type(event) is ForwardModelStepChecksum:
+                await self.forward_checksum(event)
             else:
-                event = dispatch_event_from_json(raw_msg)
-                if event.ensemble != self.ensemble.id_:
-                    logger.info(
-                        "Got event from evaluator "
-                        f"{event.ensemble}. "
-                        f"Ignoring since I am {self.ensemble.id_}"
-                    )
-                    continue
-                if type(event) is ForwardModelStepChecksum:
-                    await self.forward_checksum(event)
-                else:
-                    await self._events.put(event)
+                await self._events.put(event)
 
     async def listen_for_messages(self) -> None:
         await self._server_started.wait()
         while True:
             try:
-                dealer, _, *frames = await self._router_socket.recv_multipart()
+                dealer, _, frame = await self._router_socket.recv_multipart()
                 # print(f"GOT MESSAGE {frames=} from {dealer=}")
                 await self._router_socket.send_multipart([dealer, b"", b"ACK"])
                 sender = dealer.decode("utf-8")
                 if sender.startswith("client"):
-                    await self.handle_client(dealer, frames)
+                    await self.handle_client(dealer, frame)
                 elif sender.startswith("dispatch"):
                     # await self._router_socket.send_multipart([dealer, b"", b"ACK"])
-                    await self.handle_dispatch(dealer, frames)
+                    await self.handle_dispatch(dealer, frame)
                 else:
                     logger.info(f"Connection attempt to unknown sender: {sender}.")
             except zmq.error.ZMQError as e:

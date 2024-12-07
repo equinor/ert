@@ -101,10 +101,8 @@ class Client:
             self.term()
             raise
 
-    def send(
-        self, messages: str | list[str], max_retries: int = DEFAULT_MAX_RETRIES
-    ) -> None:
-        self.loop.run_until_complete(self._send(messages, max_retries))
+    def send(self, message: str, max_retries: int = DEFAULT_MAX_RETRIES) -> None:
+        self.loop.run_until_complete(self._send(message, max_retries))
 
     async def process_message(self, msg: str) -> None:
         pass
@@ -124,20 +122,14 @@ class Client:
                 await asyncio.sleep(1)
                 self.socket.connect(self.url)
 
-    async def _send(
-        self, messages: str | list[str], max_retries: int = DEFAULT_MAX_RETRIES
-    ) -> None:
+    async def _send(self, message: str, max_retries: int = DEFAULT_MAX_RETRIES) -> None:
         self._ack_event.clear()
-        if isinstance(messages, str):
-            messages = [messages]
 
         backoff = 1
 
         while max_retries > 0:
             try:
-                await self.socket.send_multipart(
-                    [b""] + [message.encode("utf-8") for message in messages]
-                )
+                await self.socket.send_multipart([b"", message.encode("utf-8")])
                 try:
                     await asyncio.wait_for(
                         self._ack_event.wait(), timeout=self._connection_timeout
@@ -145,7 +137,7 @@ class Client:
                     return
                 except asyncio.TimeoutError:
                     logger.warning(
-                        f"{self.dealer_id} failed to get acknowledgment on the {messages}. Resending."
+                        f"{self.dealer_id} failed to get acknowledgment on the {message}. Resending."
                     )
             except zmq.ZMQError as exc:
                 logger.debug(
@@ -164,5 +156,5 @@ class Client:
                 backoff = min(backoff * 2, 10)  # Exponential backoff
 
         raise ClientConnectionError(
-            f"{self.dealer_id} Failed to send {messages=} after retries."
+            f"{self.dealer_id} Failed to send {message=} after retries."
         )
