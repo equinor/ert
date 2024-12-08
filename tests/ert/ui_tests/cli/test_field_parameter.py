@@ -11,9 +11,7 @@ import pytest
 import resfo
 import xtgeo
 
-from ert.analysis import (
-    smoother_update,
-)
+from ert.analysis import smoother_update
 from ert.config import ErtConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings
@@ -247,6 +245,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
     - Numerical warnings from division by zero
     - Cross-correlation matrix instabilities
     """
+
+    os.environ["POLARS_MAX_THREADS"] = "1"
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("es-mda")
@@ -328,6 +328,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         )
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)
+        del os.environ["POLARS_MAX_THREADS"]
 
 
 @pytest.mark.usefixtures("copy_heat_equation")

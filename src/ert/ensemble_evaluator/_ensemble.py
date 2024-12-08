@@ -31,13 +31,8 @@ from ert.config import ForwardModelStep, QueueConfig
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
 
-from ._wait_for_evaluator import wait_for_evaluator
 from .config import EvaluatorServerConfig
-from .snapshot import (
-    EnsembleSnapshot,
-    FMStepSnapshot,
-    RealizationSnapshot,
-)
+from .snapshot import EnsembleSnapshot, FMStepSnapshot, RealizationSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
@@ -122,6 +117,7 @@ class LegacyEnsemble:
         self._config: Optional[EvaluatorServerConfig] = None
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
+        self._client: Client | None = None
         if self.snapshot.status:
             self._status_tracker = _EnsembleStateTracker(self.snapshot.status)
         else:
@@ -207,8 +203,8 @@ class LegacyEnsemble:
         cert: Optional[Union[str, bytes]] = None,
         retries: int = 10,
     ) -> None:
-        async with Client(url, token, cert, max_retries=retries) as client:
-            await client._send(event_to_json(event))
+        async with Client(url, token, cert) as client:
+            await client._send(event_to_json(event), retries)
 
     def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
         def event_builder(status: str) -> Event:
@@ -233,21 +229,19 @@ class LegacyEnsemble:
             ce_unary_send_method_name,
             partialmethod(
                 self.__class__.send_event,
-                self._config.dispatch_uri,
+                self._config.get_connection_info().router_uri,
                 token=self._config.token,
                 cert=self._config.cert,
             ),
         )
-        await wait_for_evaluator(
-            base_url=self._config.url,
-            token=self._config.token,
-            cert=self._config.cert,
-        )
-        await self._evaluate_inner(
-            event_unary_send=getattr(self, ce_unary_send_method_name),
-            scheduler_queue=scheduler_queue,
-            manifest_queue=manifest_queue,
-        )
+        try:
+            await self._evaluate_inner(
+                event_unary_send=getattr(self, ce_unary_send_method_name),
+                scheduler_queue=scheduler_queue,
+                manifest_queue=manifest_queue,
+            )
+        except asyncio.CancelledError:
+            print("Cancelling evaluator task!")
 
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
@@ -285,7 +279,7 @@ class LegacyEnsemble:
                 max_running=self._queue_config.max_running,
                 submit_sleep=self._queue_config.submit_sleep,
                 ens_id=self.id_,
-                ee_uri=self._config.dispatch_uri,
+                ee_uri=self._config.get_connection_info().router_uri,
                 ee_cert=self._config.cert,
                 ee_token=self._config.token,
             )
