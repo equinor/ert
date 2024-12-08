@@ -98,11 +98,13 @@ def mock_zmq_thread(port, messages, signal_queue=None):
                     if signal_queue:
                         with contextlib.suppress(queue.Empty):
                             signal_value = signal_queue.get(timeout=0.1)
+
                     print(f"{dealer=} {frame=} {signal_value=}")
-                    if frame in [b"CONNECT", b"DISCONNECT"] or signal_value != 1:
+                    if frame in [b"CONNECT", b"DISCONNECT"] or signal_value == 0:
                         await router_socket.send_multipart([dealer, b"", b"ACK"])
-                        if frame not in [b"CONNECT", b"DISCONNECT"]:
-                            messages.append(frame.decode("utf-8"))
+                    if frame not in [b"CONNECT", b"DISCONNECT"] and signal_value != 1:
+                        messages.append(frame.decode("utf-8"))
+
                 except asyncio.CancelledError:
                     break
 

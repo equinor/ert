@@ -1,9 +1,9 @@
-import asyncio
+import queue
 
 import pytest
 
 from _ert.forward_model_runner.client import Client, ClientConnectionError
-from tests.ert.utils import async_mock_zmq_server
+from tests.ert.utils import mock_zmq_thread
 
 
 @pytest.mark.integration_test
@@ -19,38 +19,37 @@ def test_invalid_server():
         pass
 
 
-async def test_successful_sending(unused_tcp_port):
+def test_successful_sending(unused_tcp_port):
     host = "localhost"
     url = f"tcp://{host}:{unused_tcp_port}"
     messages = []
-    server_started = asyncio.Event()
-
-    server_task = asyncio.create_task(
-        async_mock_zmq_server(messages, unused_tcp_port, server_started)
-    )
-    await server_started.wait()
-    messages_c1 = ["test_1", "test_2", "test_3"]
-    async with Client(url) as c1:
-        for message in messages_c1:
-            await c1._send(message)
-
-    await server_task
+    with mock_zmq_thread(unused_tcp_port, messages):
+        messages_c1 = ["test_1", "test_2", "test_3"]
+        with Client(url) as c1:
+            for message in messages_c1:
+                c1.send(message)
 
     for msg in messages_c1:
         assert msg in messages
 
 
-async def test_retry(unused_tcp_port):
-    pass
-    # host = "localhost"
-    # url = f"tcp://{host}:{unused_tcp_port}"
-    # messages = []
-    # server_started = asyncio.Event()
-
-    # server_task = asyncio.create_task(
-    #     async_mock_zmq_server(messages, unused_tcp_port, server_started)
-    # )
-
-    # messages_c1 = ["test_1", "test_2", "test_3"]
-
-    # TODO write test for retry!
+def test_retry(unused_tcp_port):
+    host = "localhost"
+    url = f"tcp://{host}:{unused_tcp_port}"
+    messages = []
+    signal_queue = queue.Queue()
+    signal_queue.put(2)
+    client_connection_error_set = False
+    with mock_zmq_thread(unused_tcp_port, messages, signal_queue):
+        messages_c1 = ["test_1", "test_2", "test_3"]
+        with Client(url, ack_timeout=1) as c1:
+            for message in messages_c1:
+                try:
+                    c1.send(message, retries=2)
+                except ClientConnectionError:
+                    client_connection_error_set = True
+                    signal_queue.put(0)
+    assert client_connection_error_set
+    assert messages.count("test_1") == 3
+    assert messages.count("test_2") == 1
+    assert messages.count("test_3") == 1
