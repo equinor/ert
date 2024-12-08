@@ -24,7 +24,7 @@ async def async_zmq_server(port, handler):
 async def test_no_connection_established(make_ee_config):
     ee_config = make_ee_config()
     monitor = Monitor(ee_config.get_connection_info())
-    monitor._connection_timeout = 0.1
+    monitor._ack_timeout = 0.1
     with pytest.raises(ClientConnectionError):
         async with monitor:
             pass

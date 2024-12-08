@@ -14,7 +14,7 @@ def test_invalid_server():
 
     with (
         pytest.raises(ClientConnectionError),
-        Client(url, connection_timeout=1.0),
+        Client(url, ack_timeout=1.0),
     ):
         pass
 
@@ -31,7 +31,8 @@ async def test_successful_sending(unused_tcp_port):
     await server_started.wait()
     messages_c1 = ["test_1", "test_2", "test_3"]
     async with Client(url) as c1:
-        await c1._send(messages_c1)
+        for message in messages_c1:
+            await c1._send(message)
 
     await server_task
 

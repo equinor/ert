@@ -316,7 +316,7 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
         (tmp_path / JOBS_FILE).write_text(jobs_json)
         lock.release()
 
-    with mock_zmq_thread("localhost", unused_tcp_port, []):
+    with mock_zmq_thread(unused_tcp_port, []):
         thread = ErtThread(target=create_jobs_file_after_lock)
         thread.start()
         main(args=["script.py", str(tmp_path)])
@@ -345,7 +345,6 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
-    host = "localhost"
     port = unused_tcp_port
     jobs_json = json.dumps(
         {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
@@ -363,7 +362,7 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
         ]
         mock_getpgid.return_value = 17
 
-        with mock_zmq_thread(host, port, []):
+        with mock_zmq_thread(port, []):
             main(["script.py"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import queue
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -63,13 +64,12 @@ def wait_until(func, interval=0.5, timeout=30):
 async def async_mock_zmq_server(messages, port, server_started):
     async def _handler(router_socket):
         while True:
-            dealer, __, *frames = await router_socket.recv_multipart()
+            dealer, __, frame = await router_socket.recv_multipart()
             await router_socket.send_multipart([dealer, b"", b"ACK"])
-            for frame in frames:
-                raw_msg = frame.decode("utf-8")
-                messages.append(raw_msg)
-                if raw_msg == "DISCONNECT":
-                    return
+            raw_msg = frame.decode("utf-8")
+            messages.append(raw_msg)
+            if raw_msg == "DISCONNECT":
+                return
 
     zmq_context = zmq.asyncio.Context()  # type: ignore
     router_socket = zmq_context.socket(zmq.ROUTER)
@@ -81,33 +81,36 @@ async def async_mock_zmq_server(messages, port, server_started):
 
 
 @contextlib.contextmanager
-def mock_zmq_thread(host, port, messages):
+def mock_zmq_thread(port, messages, signal_queue=None):
     loop = None
     handler_task = None
 
-    def mock_zmq_server(messages, port):
+    def mock_zmq_server(messages, port, signal_queue=None):
         nonlocal loop, handler_task
         loop = asyncio.new_event_loop()
 
         async def _handler(router_socket):
-            nonlocal messages
+            nonlocal messages, signal_queue
+            signal_value = 0
             while True:
                 try:
-                    dealer, __, *frames = await router_socket.recv_multipart()
-                    await router_socket.send_multipart([dealer, b"", b"ACK"])
-                    for frame in frames:
-                        raw_msg = frame.decode("utf-8")
-                        print(f"{raw_msg} from {dealer}")
-                        if raw_msg not in ["CONNECT", "DISCONNECT"]:
-                            messages.append(raw_msg)
+                    dealer, __, frame = await router_socket.recv_multipart()
+                    if signal_queue:
+                        with contextlib.suppress(queue.Empty):
+                            signal_value = signal_queue.get(timeout=0.1)
+                    print(f"{dealer=} {frame=} {signal_value=}")
+                    if frame in [b"CONNECT", b"DISCONNECT"] or signal_value != 1:
+                        await router_socket.send_multipart([dealer, b"", b"ACK"])
+                        if frame not in [b"CONNECT", b"DISCONNECT"]:
+                            messages.append(frame.decode("utf-8"))
                 except asyncio.CancelledError:
                     break
 
         async def _run_server():
+            nonlocal handler_task
             zmq_context = zmq.asyncio.Context()  # type: ignore
             router_socket = zmq_context.socket(zmq.ROUTER)
             router_socket.bind(f"tcp://*:{port}")
-            nonlocal handler_task
             handler_task = asyncio.create_task(_handler(router_socket))
             await handler_task
             router_socket.close()
@@ -116,17 +119,12 @@ def mock_zmq_thread(host, port, messages):
         loop.close()
 
     mock_zmq_thread = ErtThread(
-        target=lambda: mock_zmq_server(messages, port),
+        target=lambda: mock_zmq_server(messages, port, signal_queue),
     )
     mock_zmq_thread.start()
     try:
         yield
-    # Make sure to join the thread even if an exception occurs
     finally:
-        # url = f"tcp://{host}:{port}"
-        # with Client(url) as client:
-        #     client.send("stop")
-        #     # Cancel the handler task explicitly
         print(f"these are the final {messages=}")
         if handler_task and not handler_task.done():
             loop.call_soon_threadsafe(handler_task.cancel)
