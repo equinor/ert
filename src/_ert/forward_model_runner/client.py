@@ -23,9 +23,8 @@ class ClientConnectionClosedOK(Exception):
 
 
 class Client:
-    DEFAULT_MAX_RETRIES = 10
-    DEFAULT_TIMEOUT_MULTIPLIER = 5
-    CONNECTION_TIMEOUT = 60
+    DEFAULT_MAX_RETRIES = 5
+    DEFAULT_ACK_TIMEOUT = 5
     _receiver_task: Optional[asyncio.Task[None]]
 
     def __enter__(self) -> Self:
@@ -63,10 +62,10 @@ class Client:
         url: str,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        connection_timeout: float = 5.0,
         dealer_name: Optional[str] = None,
+        ack_timeout: Optional[float] = None,
     ) -> None:
-        self._connection_timeout = connection_timeout
+        self._ack_timeout = ack_timeout or self.DEFAULT_ACK_TIMEOUT
         self.url = url
         self.token = token
 
@@ -80,7 +79,7 @@ class Client:
         else:
             self.dealer_id = dealer_name
         self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
-        print(f"Created: {self.dealer_id=} {token=} {self._connection_timeout=}")
+        print(f"Created: {self.dealer_id=} {token=} {self._ack_timeout=}")
         if token is not None:
             client_public, client_secret = zmq.curve_keypair()
             self.socket.curve_secretkey = client_secret
@@ -95,14 +94,14 @@ class Client:
         await self._term_receiver_task()
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await self._send("CONNECT", max_retries=1)
+            await self._send("CONNECT", retries=1)
         except ClientConnectionError:
             await self._term_receiver_task()
             self.term()
             raise
 
-    def send(self, message: str, max_retries: int = DEFAULT_MAX_RETRIES) -> None:
-        self.loop.run_until_complete(self._send(message, max_retries))
+    def send(self, message: str, retries: Optional[int] = None) -> None:
+        self.loop.run_until_complete(self._send(message, retries))
 
     async def process_message(self, msg: str) -> None:
         pass
@@ -122,17 +121,17 @@ class Client:
                 await asyncio.sleep(1)
                 self.socket.connect(self.url)
 
-    async def _send(self, message: str, max_retries: int = DEFAULT_MAX_RETRIES) -> None:
+    async def _send(self, message: str, retries: Optional[int] = None) -> None:
         self._ack_event.clear()
 
         backoff = 1
-
-        while max_retries > 0:
+        retries = retries or self.DEFAULT_MAX_RETRIES
+        while retries > 0:
             try:
                 await self.socket.send_multipart([b"", message.encode("utf-8")])
                 try:
                     await asyncio.wait_for(
-                        self._ack_event.wait(), timeout=self._connection_timeout
+                        self._ack_event.wait(), timeout=self._ack_timeout
                     )
                     return
                 except asyncio.TimeoutError:
@@ -149,12 +148,11 @@ class Client:
                 self.term()
                 raise
 
-            max_retries -= 1
-            if max_retries > 0:
-                logger.info(f"Retrying... ({max_retries} attempts left)")
+            retries -= 1
+            if retries > 0:
+                logger.info(f"Retrying... ({retries} attempts left)")
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
-
         raise ClientConnectionError(
-            f"{self.dealer_id} Failed to send {message=} after retries."
+            f"{self.dealer_id} Failed to send {message=} after {retries=}"
         )

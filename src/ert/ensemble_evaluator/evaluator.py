@@ -262,7 +262,6 @@ class EnsembleEvaluator:
                 if sender.startswith("client"):
                     await self.handle_client(dealer, frame)
                 elif sender.startswith("dispatch"):
-                    # await self._router_socket.send_multipart([dealer, b"", b"ACK"])
                     await self.handle_dispatch(dealer, frame)
                 else:
                     logger.info(f"Connection attempt to unknown sender: {sender}.")

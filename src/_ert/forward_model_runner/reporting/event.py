@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import queue
+import time
 from pathlib import Path
 from typing import Final, Union
 
@@ -27,7 +28,7 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import StateMachine
-from _ert.threading import ErtThread
+from _ert.threading import ErtThread, threading
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,14 @@ class Event(Reporter):
 
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, evaluator_url, token=None, cert_path=None):
+    def __init__(
+        self,
+        evaluator_url,
+        token=None,
+        cert_path=None,
+        ack_timeout=None,
+        max_retries=None,
+    ):
         self._evaluator_url = evaluator_url
         self._token = token
         if cert_path is not None:
@@ -73,10 +81,13 @@ class Event(Reporter):
         self._real_id = None
         self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
         self._event_publisher_thread = ErtThread(target=self._event_publisher)
-        self._done = False
+        self._done = threading.Event()
+        self._ack_timeout = ack_timeout
+        self._max_retries = max_retries
 
     def stop(self):
         self._event_queue.put(Event._sentinel)
+        self._done.set()
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
 
@@ -86,19 +97,31 @@ class Event(Reporter):
                 url=self._evaluator_url,
                 token=self._token,
                 cert=self._cert,
+                ack_timeout=self._ack_timeout,
             ) as client:
+                event = None
+                start_time = None
                 while True:
                     try:
-                        event = self._event_queue.get()
-                        if event is self._sentinel:
+                        if self._done.is_set() and start_time is None:
+                            start_time = time.time()
+                        if event is None:
+                            event = self._event_queue.get()
+                            if event is self._sentinel:
+                                break
+                        if start_time and (time.time() - start_time) > 2:
                             break
-                        await client._send(event_to_json(event))
+                        await client._send(event_to_json(event), self._max_retries)
+                        event = None
                     except asyncio.CancelledError:
                         return
                     except ClientConnectionError as exc:
                         logger.error(f"Failed to send event: {exc}")
 
-        asyncio.run(publisher())
+        try:
+            asyncio.run(publisher())
+        except ClientConnectionError as exc:
+            raise ClientConnectionError("Couldn't connect to evaluator") from exc
 
     def report(self, msg):
         self._statemachine.transition(msg)
@@ -162,6 +185,7 @@ class Event(Reporter):
 
     def _finished_handler(self, _):
         self._event_queue.put(Event._sentinel)
+        self._done.set()
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
 

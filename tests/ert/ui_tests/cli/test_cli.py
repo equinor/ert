@@ -952,9 +952,8 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
 def test_that_connection_errors_do_not_effect_final_result(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 0)
-    monkeypatch.setattr(Client, "DEFAULT_TIMEOUT_MULTIPLIER", 0)
-    monkeypatch.setattr(Client, "CONNECTION_TIMEOUT", 1)
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
+    monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
     monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0.01)
     monkeypatch.setattr(Job, "DEFAULT_CHECKSUM_TIMEOUT", 0)
 
