@@ -458,6 +458,7 @@ class EnsembleEvaluator:
 def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:
     """Produces a message warning about misconfiguration of NUM_CPU if
     so is detected. Returns an empty string if everything is ok."""
+    allowed_overspending = 1.05
     now = datetime.datetime.now()
     duration = (
         (fm_step.get(ids.END_TIME) or now) - (fm_step.get(ids.START_TIME) or now)
@@ -466,7 +467,7 @@ def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) ->
         return ""
     cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
     parallelization_obtained = cpu_seconds / duration
-    if parallelization_obtained > num_cpu:
+    if parallelization_obtained > num_cpu * allowed_overspending:
         return (
             f"Misconfigured NUM_CPU, forward model step '{fm_step.get(ids.NAME)}' for "
             f"realization {real_id} spent {cpu_seconds} cpu seconds "
