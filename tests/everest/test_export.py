@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -9,10 +10,7 @@ from everest.bin.utils import export_with_progress
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import check_for_errors, export_data
-from tests.everest.utils import create_cached_mocked_test_case, relpath
 
-CONFIG_FILE_MOCKED_TEST_CASE = "mocked_multi_batch.yml"
-CASHED_RESULTS_FOLDER = relpath("test_data", "cached_results_config_multiobj")
 CONFIG_FILE = "config_multiobj.yml"
 DATA = pd.DataFrame(
     {
@@ -25,11 +23,6 @@ DATA = pd.DataFrame(
 )
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
-
-
-@pytest.fixture()
-def cache_dir(request, monkeypatch):
-    return create_cached_mocked_test_case(request, monkeypatch)
 
 
 def assertEqualDataFrames(x, y):
@@ -65,16 +58,9 @@ def test_filter_double_wildcard():
     )
 
 
-def test_export_only_non_gradient_with_increased_merit(
-    copy_math_func_test_data_to_tmp, snapshot
-):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
-    )
-
+def test_export_only_non_gradient_with_increased_merit(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
     # Default export functionality when no export section is defined
     df = export_data(
         export_config=config.export,
@@ -84,16 +70,14 @@ def test_export_only_non_gradient_with_increased_merit(
 
     # Test that the default export functionality generated data frame
     # contains only non gradient simulations
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
-
-
-def test_export_only_non_gradient(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
     )
+
+
+def test_export_only_non_gradient(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add export section to config
     config.export = ExportConfig(discard_rejected=False)
@@ -104,16 +88,14 @@ def test_export_only_non_gradient(copy_math_func_test_data_to_tmp, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
-
-
-def test_export_only_increased_merit(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
     )
+
+
+def test_export_only_increased_merit(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False)
@@ -124,16 +106,15 @@ def test_export_only_increased_merit(copy_math_func_test_data_to_tmp, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
-
-
-def test_export_all_batches(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(),
+        "export.csv",
     )
+
+
+def test_export_all_batches(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add export section to config
     config.export = ExportConfig(discard_gradient=False, discard_rejected=False)
@@ -144,16 +125,14 @@ def test_export_all_batches(copy_math_func_test_data_to_tmp, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
-
-
-def test_export_only_give_batches(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
     )
+
+
+def test_export_only_give_batches(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add export section to config
     config.export = ExportConfig(discard_gradient=True, batches=[2])
@@ -164,17 +143,14 @@ def test_export_only_give_batches(copy_math_func_test_data_to_tmp, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
-
-
-def test_export_batches_progress(cache_dir, copy_mocked_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
-
-    shutil.copytree(
-        cache_dir / "mocked_multi_batch_output",
-        "mocked_multi_batch_output",
-        dirs_exist_ok=True,
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
     )
+
+
+def test_export_batches_progress(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add export section to config
     config.export = ExportConfig(discard_gradient=True, batches=[2])
@@ -183,18 +159,14 @@ def test_export_batches_progress(cache_dir, copy_mocked_test_data_to_tmp, snapsh
     # Check only simulations from given batches are present in export
     # drop non-deterministic columns
     df = df.drop(["start_time", "end_time", "simulation"], axis=1)
-    df = df.sort_values(by=["sim_date", "realization", "batch", "sim_avg_obj"])
+    df = df.sort_values(by=["realization", "batch", "sim_avg_obj"])
 
     snapshot.assert_match(df.round(4).to_csv(index=False), "export.csv")
 
 
-def test_export_nothing_for_empty_batch_list(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
-    )
+def test_export_nothing_for_empty_batch_list(cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add discard gradient flag to config file
     config.export = ExportConfig(
@@ -210,13 +182,9 @@ def test_export_nothing_for_empty_batch_list(copy_math_func_test_data_to_tmp, sn
     assert df.empty
 
 
-def test_export_nothing(copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
-    )
+def test_export_nothing(cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Add discard gradient flag to config file
     config.export = ExportConfig(
@@ -232,8 +200,9 @@ def test_export_nothing(copy_math_func_test_data_to_tmp):
     assert df.empty
 
 
-def test_get_export_path(copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
+def test_get_export_path(cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     # Test default export path when no csv_output_filepath is defined
     expected_export_path = os.path.join(
@@ -268,14 +237,11 @@ def test_get_export_path(copy_math_func_test_data_to_tmp):
     assert expected_export_path == new_config.export_path
 
 
-def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE_MOCKED_TEST_CASE)
-
-    shutil.copytree(
-        cache_dir / "mocked_multi_batch_output",
-        "mocked_multi_batch_output",
-        dirs_exist_ok=True,
+def test_validate_export(cached_example):
+    config_path, config_file, _ = cached_example(
+        "../../tests/everest/test_data/mocked_test_case/mocked_multi_batch.yml"
     )
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     def check_error(expected_error, reported_errors):
         expected_error_msg, expected_export_ecl = expected_error
@@ -374,13 +340,9 @@ def test_validate_export(cache_dir, copy_mocked_test_data_to_tmp):
     assert config.export.batches == [0]
 
 
-def test_export_gradients(copy_math_func_test_data_to_tmp, snapshot):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    os.makedirs(config.optimization_output_dir)
-    shutil.copy(
-        os.path.join(CASHED_RESULTS_FOLDER, "seba.db"),
-        os.path.join(config.optimization_output_dir, "seba.db"),
-    )
+def test_export_gradients(cached_example, snapshot):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
     df = export_data(
         export_config=config.export,
@@ -388,4 +350,6 @@ def test_export_gradients(copy_math_func_test_data_to_tmp, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
+    snapshot.assert_match(
+        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
+    )
