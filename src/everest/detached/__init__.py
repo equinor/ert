@@ -191,6 +191,7 @@ def wait_for_server_to_stop(server_context: Tuple[str, str, Tuple[str, str]], ti
     Raise an exception when the timeout is reached.
     """
     if server_is_running(*server_context):
+        print("Waiting for server to stop ...")
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             sleep_time = sleep_time_increment * (2**retry_count)

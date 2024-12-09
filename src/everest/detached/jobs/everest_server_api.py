@@ -295,6 +295,7 @@ class EverestServerAPI(threading.Thread):
     ) -> Response:
         self._log(request)
         self._check_user(credentials)
+        print("STOP flag raised")
         self.state[STOP_ENDPOINT] = True
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
@@ -312,8 +313,19 @@ class EverestServerAPI(threading.Thread):
         self._log(request)
         self._check_user(credentials)
 
+        if self.state[STOP_ENDPOINT] == True:
+            print("Everest server stopped")
+            return JSONResponse(
+                jsonable_encoder(
+                    ExitCode(
+                        message="Everest server stopped",
+                    )
+                )
+            )
+
         if not self.runner:
             return JSONResponse(jsonable_encoder({}))
+
         return JSONResponse(
             jsonable_encoder(
                 self.runner.get_exit_code() if self.runner.get_exit_code() else {}

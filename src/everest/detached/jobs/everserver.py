@@ -185,16 +185,19 @@ def main():
 
         is_done = False
         while not is_done:
-            response = requests.get(
+            resp: requests.Response = requests.get(
                 url + "/" + EXIT_CODE_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
             )
-            exit_code = ExitCode.model_validate_json(response.body)
+            exit_code = ExitCode.model_validate_json(
+                resp.text if hasattr(resp, "text") else resp.body
+            )
+            print(f"EXit code {exit_code}")
             if exit_code.exit_code or exit_code.message:
                 is_done = True
             else:
                 time.sleep(1)
 
-        if exit_code.message:
+        if exit_code.message and exit_code.message != "Everest server stopped":
             update_everserver_status(
                 status_path,
                 ServerStatus.failed,
@@ -202,10 +205,10 @@ def main():
             )
             return
 
-        response = requests.get(
+        resp: requests.Response = requests.get(
             url + "/" + SHARED_DATA_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
         )
-        if json_body := json.loads(response.body):
+        if json_body := json.loads(resp.text if hasattr(resp, "text") else resp.body):
             shared_data = json_body
 
         status, message = _get_optimization_status(exit_code.exit_code, shared_data)

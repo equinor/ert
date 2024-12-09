@@ -142,14 +142,15 @@ def test_everserver_status_running_complete(
                     }
                 )
             )
+
         return PlainTextResponse("Everest is running")
 
     mocked_get.side_effect = mocked_server
 
     everserver.main()
 
-    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
-    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
+    # url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+    # requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
