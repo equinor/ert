@@ -35,7 +35,7 @@ jobs:
       matrix:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.11', '3.12' ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-24.04 ]
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
@@ -49,7 +49,7 @@ jobs:
       matrix:
         test-type: [ 'test', 'integration-test', 'everest-models-test', 'doc', 'everest-docs-entry-test' ]
         python-version: [ '3.11', '3.12' ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-24.04 ]
     uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-24.04 ]
         python-version: [ '3.11', '3.12' ]
     uses: ./.github/workflows/test_ert_with_slurm.yml
     with:
@@ -143,7 +143,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.12']
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -184,7 +184,7 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-for-tags-ert, test-mac-for-tags-everest, docs-ert]
     permissions:
       id-token: write
