@@ -587,7 +587,7 @@ def _mock_load_observations_and_responses(
      _get_observations_and_responses
     """
     with patch(
-        "ert.analysis._es_update._get_observations_and_responses"
+        "ert.storage.LocalEnsemble.get_observations_and_responses"
     ) as mock_obs_n_responses:
         mock_obs_n_responses.return_value = observations_and_responses
 
