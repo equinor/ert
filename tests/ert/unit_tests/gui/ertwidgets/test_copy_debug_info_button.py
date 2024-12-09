@@ -11,7 +11,7 @@ def test_copy_debug_info_button_alterates_text_when_pressed(qtbot: QtBot):
         nonlocal button_clicked
         button_clicked = True
 
-    button = CopyDebugInfoButton(on_click=on_click)
+    button = CopyDebugInfoButton(on_click=on_click, time_to_alternate=10)
     qtbot.addWidget(button)
 
     assert button.text() == CopyDebugInfoButton._initial_text

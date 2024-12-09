@@ -535,16 +535,17 @@ class CopyDebugInfoButton(QPushButton):
     _initial_text = "Copy Debug Info"
     _clicked_text = "Copied..."
 
-    def __init__(self, on_click: Callable[[], None]):
+    def __init__(self, on_click: Callable[[], None], time_to_alternate: int = 1000):
         QPushButton.__init__(self, CopyDebugInfoButton._initial_text)
         self.setToolTip("Copies useful information to clipboard")
         self.setObjectName("copy_debug_info_button")
         self.setFixedWidth(140)
+        self.time_to_alternate = time_to_alternate
 
         def alternate_button_text_on_click_and_call_callback() -> None:
             self._alternate_button_text()
             on_click()
-            QTimer.singleShot(1000, self._alternate_button_text)
+            QTimer.singleShot(self.time_to_alternate, self._alternate_button_text)
 
         self.clicked.connect(alternate_button_text_on_click_and_call_callback)
 
