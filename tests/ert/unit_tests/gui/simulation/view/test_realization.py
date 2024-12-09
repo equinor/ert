@@ -51,6 +51,7 @@ class MockDelegate(QStyledItemDelegate):
         return self._size
 
 
+@pytest.mark.integration_test
 def test_delegate_drawing_count(small_snapshot, qtbot):
     it = 0
     widget = RealizationWidget(it)

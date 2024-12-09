@@ -69,6 +69,7 @@ async def test_kill_before_running(sleep_before_killing):
 
 
 @pytest.mark.timeout(10)
+@pytest.mark.integration_test
 async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     # Reduce timeout to something more appropriate for a test
     monkeypatch.setattr(local_driver, "_TERMINATE_TIMEOUT", 0.1)

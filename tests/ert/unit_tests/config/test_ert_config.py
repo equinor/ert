@@ -480,6 +480,7 @@ def test_that_ert_config_has_valid_schema():
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.usefixtures("set_site_config")
+@pytest.mark.integration_test
 @settings(max_examples=10)
 @given(config_generators())
 def test_that_parsing_ert_config_result_in_expected_values(
