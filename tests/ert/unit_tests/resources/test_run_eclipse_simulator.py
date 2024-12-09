@@ -53,7 +53,7 @@ def test_ecl100_binary_can_produce_output(source_root):
     erun = run_reservoirsimulator.RunReservoirSimulator(
         "eclipse", "2019.3", "SPE1.DATA"
     )
-    erun.runEclipseX00()
+    erun.run_eclipseX00()
 
     ok_path = Path("SPE1.OK")
     prt_path = Path("SPE1.PRT")
@@ -205,7 +205,7 @@ def test_eclrun_will_raise_on_deck_errors(source_root):
         "eclipse", "2019.3", "SPE1_ERROR"
     )
     with pytest.raises(Exception, match="ERROR"):
-        erun.runEclipseX00()
+        erun.run_eclipseX00()
 
 
 @pytest.mark.integration_test
@@ -225,7 +225,7 @@ def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
         subprocess.CalledProcessError,
         match=r"Command .*eclrun.* non-zero exit status (1|255)\.$",
     ):
-        erun.runEclipseX00()
+        erun.run_eclipseX00()
 
 
 @pytest.mark.integration_test

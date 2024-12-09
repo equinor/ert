@@ -17,7 +17,7 @@ from typing import List, Literal, Optional, Union
 import resfo
 
 
-def ecl_output_has_license_error(ecl_output: str):
+def ecl_output_has_license_error(ecl_output: str) -> bool:
     return (
         "LICENSE ERROR" in ecl_output
         or "LICENSE FAILURE" in ecl_output
@@ -132,14 +132,14 @@ class RunReservoirSimulator:
     def __init__(
         self,
         simulator: Literal["flow", "eclipse", "e300"],
-        version: str,
-        ecl_case: str,  # consider Path
+        version: Optional[str],
+        ecl_case: Union[Path, str],
         num_cpu: int = 1,
         check_status: bool = True,
         summary_conversion: bool = False,
     ):
         self.simulator = simulator
-        self.version: str = version
+        self.version: Optional[str] = version
 
         self.num_cpu: int = int(num_cpu)
         self.check_status: bool = check_status
@@ -168,9 +168,9 @@ class RunReservoirSimulator:
                     self.bypass_flowrun = True
         self.runner_abspath: str = str(_runner_abspath)
 
-        data_file = ecl_case_to_data_file(ecl_case)
+        data_file = ecl_case_to_data_file(Path(ecl_case))
 
-        if not Path(data_file).exists:
+        if not Path(data_file).exists():
             raise IOError(f"No such file: {data_file}")
 
         self.run_path: Path = Path(data_file).parent.absolute()
@@ -187,7 +187,7 @@ class RunReservoirSimulator:
             self.runner_abspath,
             self.simulator,
             "--version",
-            self.version,
+            str(self.version),
             self.data_file,
             "--summary-conversion",
             "yes" if self.summary_conversion else "no",
@@ -204,13 +204,13 @@ class RunReservoirSimulator:
         return [
             self.runner_abspath,
             "--version",
-            self.version,
+            str(self.version),
             self.data_file,
             "--np",
             str(self.num_cpu),
         ]
 
-    def runFlow(self) -> None:
+    def run_flow(self) -> None:
         return_code = subprocess.run(self.flowrun_command, check=False).returncode
         OK_file = self.run_path / f"{self.base_name}.OK"
         if not self.check_status:
@@ -223,7 +223,9 @@ class RunReservoirSimulator:
                 raise subprocess.CalledProcessError(return_code, self.flowrun_command)
             self.assertECLEND()
             if self.num_cpu > 1:
-                await_completed_unsmry_file(find_unsmry(self.run_path / self.base_name))
+                smry_file = find_unsmry(self.run_path / self.base_name)
+                if smry_file is not None:
+                    await_completed_unsmry_file(smry_file)
 
             OK_file.write_text("FLOW simulation OK", encoding="utf-8")
 
@@ -231,7 +233,9 @@ class RunReservoirSimulator:
     LICENSE_RETRY_STAGGER_FACTOR = 60
     LICENSE_RETRY_BACKOFF_EXPONENT = 3
 
-    def runEclipseX00(self, retries_left=3, backoff_sleep=None) -> None:
+    def run_eclipseX00(
+        self, retries_left: int = 3, backoff_sleep: Optional[float] = None
+    ) -> None:
         # This function calls itself recursively in case of license failures
         backoff_sleep = (
             self.LICENSE_FAILURE_RETRY_INITIAL_SLEEP
@@ -261,7 +265,7 @@ class RunReservoirSimulator:
                         f"retrying in {time_to_wait} seconds\n"
                     )
                     time.sleep(time_to_wait)
-                    self.runEclipseX00(
+                    self.run_eclipseX00(
                         retries_left=retries_left - 1,
                         backoff_sleep=int(
                             backoff_sleep * self.LICENSE_RETRY_BACKOFF_EXPONENT
@@ -271,11 +275,13 @@ class RunReservoirSimulator:
                 else:
                     raise err from None
             if self.num_cpu > 1:
-                await_completed_unsmry_file(find_unsmry(self.run_path / self.base_name))
+                smry_file = find_unsmry(self.run_path / self.base_name)
+                if smry_file is not None:
+                    await_completed_unsmry_file(smry_file)
 
             OK_file.write_text("ECLIPSE simulation OK", encoding="utf-8")
 
-    def assertECLEND(self):
+    def assertECLEND(self) -> None:
         tail_length = 5000
         result = self.readECLEND()
         if result.errors > 0:
@@ -301,12 +307,12 @@ class RunReservoirSimulator:
         if result.bugs > 0:
             raise EclError(f"Eclipse simulation failed with:{result.bugs:d} bugs")
 
-    def readECLEND(self):
+    def readECLEND(self) -> EclipseResult:
         error_regexp = re.compile(r"^\s*Errors\s+(\d+)\s*$")
         bug_regexp = re.compile(r"^\s*Bugs\s+(\d+)\s*$")
 
-        report_file = os.path.join(self.run_path, f"{self.base_name}.ECLEND")
-        if not os.path.isfile(report_file):
+        report_file = self.run_path / f"{self.base_name}.ECLEND"
+        if not report_file.is_file():
             report_file = self.prt_path
 
         errors = None
@@ -362,7 +368,7 @@ def tail_textfile(file_path: Path, num_chars: int) -> str:
         return file.read()[-num_chars:]
 
 
-def run_reservoirsimulator(args: List[str]):
+def run_reservoirsimulator(args: List[str]) -> None:
     parser = ArgumentParser()
     parser.add_argument("simulator", type=str, choices=["flow", "eclipse", "e300"])
     parser.add_argument("version", type=str)
@@ -405,14 +411,13 @@ def run_reservoirsimulator(args: List[str]):
         sys.exit(-1)
 
 
-def ecl_case_to_data_file(ecl_case: str) -> str:
-    ext: str = Path(ecl_case).suffix
-    if ext in [".data", ".DATA"]:
+def ecl_case_to_data_file(ecl_case: Path) -> Path:
+    if ecl_case.suffix in [".data", ".DATA"]:
         return ecl_case
-    elif ecl_case.islower():
-        return ecl_case + ".data"
+    elif str(ecl_case).islower():
+        return Path(str(ecl_case) + ".data")
     else:
-        return ecl_case + ".DATA"
+        return Path(str(ecl_case) + ".DATA")
 
 
 if __name__ == "__main__":

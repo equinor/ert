@@ -1,8 +1,8 @@
 import os
 import shutil
+import stat
 from pathlib import Path
 from subprocess import CalledProcessError
-from unittest import mock
 
 import pytest
 
@@ -29,15 +29,48 @@ def test_flow_can_produce_output(source_root):
     shutil.copy(source_root / "test-data/ert/eclipse/SPE1.DATA", "SPE1.DATA")
     run_reservoirsimulator.RunReservoirSimulator(
         "flow", FLOW_VERSION, "SPE1.DATA"
-    ).runFlow()
+    ).run_flow()
     assert Path("SPE1.UNSMRY").exists()
 
 
-@mock.patch.dict(os.environ, {"FLOWRUN_PATH": ""}, clear=True)
-def test_flowrun_can_be_bypassed(tmp_path, monkeypatch):
+def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path, monkeypatch):
+    # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
     monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
-    print(shutil.which("flowrun"))
-    pass
+    # Add a mocked flow to PATH
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    mocked_flow = Path(tmp_path / "flow")
+    mocked_flow.write_text("", encoding="utf-8")
+    mocked_flow.chmod(mocked_flow.stat().st_mode | stat.S_IEXEC)
+    Path("DUMMY.DATA").write_text("", encoding="utf-8")
+    runner = run_reservoirsimulator.RunReservoirSimulator("flow", None, "DUMMY.DATA")
+    assert runner.bypass_flowrun is True
+
+
+def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path, monkeypatch):
+    # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
+    monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
+    # Add a mocked flow to PATH
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    mocked_flow = Path(tmp_path / "flow")
+    mocked_flow.write_text("", encoding="utf-8")
+    mocked_flow.chmod(mocked_flow.stat().st_mode | stat.S_IEXEC)
+
+    with pytest.raises(
+        RuntimeError, match="MPI runs not supported without a flowrun wrapper"
+    ):
+        run_reservoirsimulator.RunReservoirSimulator(
+            "flow", None, "DUMMY.DATA", num_cpu=2
+        )
+
+
+@pytest.mark.integration_test
+@pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
+def test_run_flow_with_no_flowrun(tmp_path, monkeypatch, source_root):
+    # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
+    monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
+    shutil.copy(source_root / "test-data/ert/eclipse/SPE1.DATA", "SPE1.DATA")
+    run_reservoirsimulator.RunReservoirSimulator("flow", None, "SPE1.DATA").run_flow()
+    assert Path("SPE1.UNSMRY").exists()
 
 
 @pytest.mark.integration_test
@@ -49,7 +82,7 @@ def test_flowrunner_will_raise_when_flow_fails(source_root):
     with pytest.raises(CalledProcessError, match="returned non-zero exit status 1"):
         run_reservoirsimulator.RunReservoirSimulator(
             "flow", FLOW_VERSION, "SPE1_ERROR.DATA"
-        ).runFlow()
+        ).run_flow()
 
 
 @pytest.mark.integration_test
@@ -60,7 +93,7 @@ def test_flowrunner_will_can_ignore_flow_errors(source_root):
     )
     run_reservoirsimulator.RunReservoirSimulator(
         "flow", FLOW_VERSION, "SPE1_ERROR.DATA", check_status=False
-    ).runFlow()
+    ).run_flow()
 
 
 @pytest.mark.integration_test
@@ -69,7 +102,7 @@ def test_flowrunner_will_raise_on_unknown_version():
     with pytest.raises(CalledProcessError):
         run_reservoirsimulator.RunReservoirSimulator(
             "flow", "garbled_version", ""
-        ).runFlow()
+        ).run_flow()
 
 
 @pytest.mark.integration_test
@@ -83,4 +116,4 @@ def test_flow_with_parallel_keyword(source_root):
     )
     run_reservoirsimulator.RunReservoirSimulator(
         "flow", FLOW_VERSION, "SPE1_PARALLEL.DATA"
-    ).runFlow()
+    ).run_flow()
