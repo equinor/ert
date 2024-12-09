@@ -122,6 +122,20 @@ class SchemaItem:
                 raise ConfigValidationError.with_context(
                     f"{self.kw!r} must have a number as argument {index + 1!r}", token
                 ) from e
+        if val_type == SchemaItemType.POSITIVE_FLOAT:
+            try:
+                fval = float(token)
+            except ValueError as e:
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a number as argument {index + 1!r}", token
+                ) from e
+            if fval > 0:
+                return ContextFloat(fval, token, keyword)
+            else:
+                raise ConfigValidationError.with_context(
+                    f"{self.kw!r} must have a positive float value as argument {index + 1!r}",
+                    token,
+                )
 
         path: Optional[str] = str(token)
         if val_type in [
@@ -253,6 +267,10 @@ class SchemaItem:
 
 def float_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.FLOAT])
+
+
+def positive_float_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.POSITIVE_FLOAT])
 
 
 def int_keyword(keyword: str) -> SchemaItem:

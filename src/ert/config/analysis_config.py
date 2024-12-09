@@ -7,7 +7,7 @@ from os.path import realpath
 from pathlib import Path
 from typing import Any, Dict, Final, List, Optional, Union, no_type_check
 
-from pydantic import ValidationError
+from pydantic import PositiveFloat, ValidationError
 
 from .analysis_module import ESSettings, IESSettings
 from .design_matrix import DesignMatrix
@@ -27,7 +27,7 @@ ObservationGroups = List[str]
 
 @dataclass
 class UpdateSettings:
-    std_cutoff: float = 1e-6
+    std_cutoff: PositiveFloat = 1e-6
     alpha: float = 3.0
     auto_scale_observations: List[ObservationGroups] = field(default_factory=list)
 

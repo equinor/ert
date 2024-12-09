@@ -551,6 +551,20 @@ def test_queue_config_max_running_invalid_values(max_running_value, expected_err
         ErtConfig.from_file_contents(contents)
 
 
+def test_negative_std_cutoff_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError, match="'STD_CUTOFF' must have a positive float"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                STD_CUTOFF -1
+                """
+            )
+        )
+
+
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
 def test_num_cpu_vs_torque_queue_cpu_configuration(
