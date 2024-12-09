@@ -294,12 +294,13 @@ class EnsembleEvaluator:
                 self._router_socket.curve_server = True
 
             # Attempt to bind the ROUTER socket
-            self._router_socket.bind(f"tcp://*:{self._config.router_port}")
+            # self._router_socket.bind(f"tcp://*:{self._config.router_port}")
+            if self._config.router_port:
+                self._router_socket.bind(f"tcp://*:{self._config.router_port}")
+            else:
+                self._router_socket.bind(self._config.url)
             self._server_started.set()
-            print(
-                "ROUTER listens on",
-                f"tcp://*:{self._config.router_port} {self._config.server_public_key=} {self._config.server_secret_key=}",
-            )
+            print(f"ROUTER listens on {self._config.url}")
         except zmq.error.ZMQError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
             print(f"ZMQ error encountered {e} during evaluator initialization")

@@ -6,6 +6,7 @@ import socket
 import ssl
 import tempfile
 import typing
+import uuid
 import warnings
 from base64 import b64encode
 from datetime import datetime, timedelta, timezone
@@ -108,30 +109,30 @@ class EvaluatorServerConfig:
         use_token: bool = True,
         generate_cert: bool = True,
         custom_host: typing.Optional[str] = None,
+        localhost: bool = True,
     ) -> None:
-        self._socket_handle = find_available_socket(
-            custom_range=custom_port_range,
-            custom_host=custom_host,
-            will_close_then_reopen_socket=True,
-        )
-        host, port = self._socket_handle.getsockname()
-        self.host = host
-        self.router_port = port
-        self.url = f"tcp://{self.host}:{self.router_port}"
+        self.host: typing.Optional[str] = None
+        self.router_port: typing.Optional[int] = None
+        self.url = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
         self.token: typing.Optional[str] = None
 
         self.server_public_key: typing.Optional[bytes] = None
         self.server_secret_key: typing.Optional[bytes] = None
+        if not localhost:
+            self._socket_handle = find_available_socket(
+                custom_range=custom_port_range,
+                custom_host=custom_host,
+                will_close_then_reopen_socket=True,
+            )
+            self.host, self.router_port = self._socket_handle.getsockname()
+            self.url = f"tcp://{self.host}:{self.router_port}"
 
-        if generate_cert:
-            cert, key, pw = _generate_certificate(host)
+        if use_token:
             self.server_public_key, self.server_secret_key = zmq.curve_keypair()
             self.token = self.server_public_key.decode("utf-8")
-        else:
-            cert, key, pw = None, None, None
-        self.cert = cert
-        self._key: Optional[bytes] = key
-        self._key_pw = pw
+        self.cert: typing.Optional[str] = None
+        self._key: Optional[bytes] = None
+        self._key_pw: Optional[bytes] = None
 
     def get_socket(self) -> socket.socket:
         return self._socket_handle.dup()
