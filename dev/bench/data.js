@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733752320346,
+  "lastUpdate": 1733755018960,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "ec8b5cc05487895058c45c0d9b9db863901655f0",
-          "message": "Add coverage gathering of everest",
-          "timestamp": "2024-12-03T09:58:52+01:00",
-          "tree_id": "1cbec251b07c0a9d82460a48da04c2fbfa95ae5e",
-          "url": "https://github.com/equinor/ert/commit/ec8b5cc05487895058c45c0d9b9db863901655f0"
-        },
-        "date": 1733216446585,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19484407227573639,
-            "unit": "iter/sec",
-            "range": "stddev: 0.025283097746221977",
-            "extra": "mean: 5.132309073200008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02019763556109462",
             "extra": "mean: 4.672343905399998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "ad786d8aafd2a68307598f251b74f4f415615bc2",
+          "message": "Use pattern matching for make_summary_key",
+          "timestamp": "2024-12-09T15:35:09+01:00",
+          "tree_id": "792a5098ecdd3cd0f48f7780d324b0eaa547cae3",
+          "url": "https://github.com/equinor/ert/commit/ad786d8aafd2a68307598f251b74f4f415615bc2"
+        },
+        "date": 1733755018491,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21490196426339978,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018610687178640374",
+            "extra": "mean: 4.653284596199995 sec\nrounds: 5"
           }
         ]
       }
