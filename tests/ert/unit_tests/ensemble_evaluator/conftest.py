@@ -17,6 +17,52 @@ from ert.run_arg import RunArg
 from ert.storage import Ensemble
 from tests.ert import SnapshotBuilder
 
+# @pytest.fixture(name="zmq_server")
+# def _mock_zmq_server(host, port, messages, delay_startup=0):
+#     loop = new_event_loop()
+#     done = loop.create_future()
+
+#     async def _handler(router_socket):
+#         while True:
+#             _, __, *frames = await router_socket.recv_multipart()
+#             for frame in frames:
+#                 raw_msg = frame.decode("utf-8")
+#                 messages.append(raw_msg)
+#                 if raw_msg == "stop":
+#                     done.set_result(None)
+#                     break
+
+#     async def _run_server():
+#         await asyncio.sleep(delay_startup)
+#         zmq_context = zmq.asyncio.Context()  # type: ignore
+#         router_socket = zmq_context.socket(zmq.ROUTER)
+#         router_socket.bind(f"tcp://*:{port}")
+#         handler_task = asyncio.create_task(_handler(router_socket))
+#         await handler_task
+#         router_socket.close()
+
+#     loop.run_until_complete(_run_server())
+#     loop.close()
+
+
+# @pytest.fixture(name="async_zmq_server")
+# def _async_mock_zmq_server(port, handler, set_when_done):
+#     loop = new_event_loop()
+
+#     async def _run_server():
+#         zmq_context = zmq.asyncio.Context()  # type: ignore
+#         router_socket = zmq_context.socket(zmq.ROUTER)
+#         router_socket.bind(f"tcp://*:{port}")
+#         while True:
+#             dealer, __, *frames = await router_socket.recv_multipart()
+#             for frame in frames:
+#                 handler(dealer.decode("utf-8"), frame)
+#                 if set_when_done:
+#                     return
+
+#     loop.run_until_complete(_run_server())
+#     loop.close()
+
 
 @pytest.fixture
 def snapshot():

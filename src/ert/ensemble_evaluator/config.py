@@ -6,11 +6,13 @@ import socket
 import ssl
 import tempfile
 import typing
+import uuid
 import warnings
 from base64 import b64encode
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import zmq
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -98,27 +100,7 @@ def _generate_certificate(
 
 class EvaluatorServerConfig:
     """
-    This class is responsible for identifying a host:port-combo and then provide
-    low-level sockets bound to said combo. The problem is that these sockets may
-    be closed by underlying code, while the EvaluatorServerConfig-instance is
-    still alive and expected to provide a bound low-level socket. Thus we risk
-    that the host:port is hijacked by another process in the meantime.
-
-    To prevent this, we keep a handle to the bound socket and every time
-    a socket is requested we return a duplicate of this. The duplicate will be
-    bound similarly to the handle, but when closed the handle stays open and
-    holds the port.
-
-    In particular, the websocket-server closes the websocket when exiting a
-    context:
-
-       https://github.com/aaugustin/websockets/blob/c439f1d52aafc05064cc11702d1c3014046799b0/src/websockets/legacy/server.py#L890
-
-    and digging into the cpython-implementation of asyncio, we see that causes
-    the asyncio code to also close the underlying socket:
-
-       https://github.com/python/cpython/blob/b34dd58fee707b8044beaf878962a6fa12b304dc/Lib/asyncio/selector_events.py#L607-L611
-
+    TODO zmq setup
     """
 
     def __init__(
@@ -127,24 +109,30 @@ class EvaluatorServerConfig:
         use_token: bool = True,
         generate_cert: bool = True,
         custom_host: typing.Optional[str] = None,
+        localhost: bool = True,
     ) -> None:
-        self._socket_handle = find_available_socket(
-            custom_range=custom_port_range, custom_host=custom_host
-        )
-        host, port = self._socket_handle.getsockname()
-        self.protocol = "wss" if generate_cert else "ws"
-        self.url = f"{self.protocol}://{host}:{port}"
-        self.client_uri = f"{self.url}/client"
-        self.dispatch_uri = f"{self.url}/dispatch"
-        if generate_cert:
-            cert, key, pw = _generate_certificate(host)
-        else:
-            cert, key, pw = None, None, None
-        self.cert = cert
-        self._key: Optional[bytes] = key
-        self._key_pw = pw
+        self.host: typing.Optional[str] = None
+        self.router_port: typing.Optional[int] = None
+        self.url = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
+        self.token: typing.Optional[str] = None
 
-        self.token = _generate_authentication() if use_token else None
+        self.server_public_key: typing.Optional[bytes] = None
+        self.server_secret_key: typing.Optional[bytes] = None
+        if not localhost:
+            self._socket_handle = find_available_socket(
+                custom_range=custom_port_range,
+                custom_host=custom_host,
+                will_close_then_reopen_socket=True,
+            )
+            self.host, self.router_port = self._socket_handle.getsockname()
+            self.url = f"tcp://{self.host}:{self.router_port}"
+
+        if use_token:
+            self.server_public_key, self.server_secret_key = zmq.curve_keypair()
+            self.token = self.server_public_key.decode("utf-8")
+        self.cert: typing.Optional[str] = None
+        self._key: Optional[bytes] = None
+        self._key_pw: Optional[bytes] = None
 
     def get_socket(self) -> socket.socket:
         return self._socket_handle.dup()

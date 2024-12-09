@@ -1,34 +1,6 @@
-import asyncio
-
-import websockets
-
-from _ert.async_utils import new_event_loop
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import Ensemble
 from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization
-
-
-def _mock_ws(host, port, messages, delay_startup=0):
-    loop = new_event_loop()
-    done = loop.create_future()
-
-    async def _handler(websocket):
-        while True:
-            msg = await websocket.recv()
-            messages.append(msg)
-            if msg == "stop":
-                done.set_result(None)
-                break
-
-    async def _run_server():
-        await asyncio.sleep(delay_startup)
-        async with websockets.server.serve(
-            _handler, host, port, ping_timeout=1, ping_interval=1
-        ):
-            await done
-
-    loop.run_until_complete(_run_server())
-    loop.close()
 
 
 class TestEnsemble(Ensemble):

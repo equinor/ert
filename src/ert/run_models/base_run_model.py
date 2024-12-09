@@ -26,12 +26,7 @@ from typing import (
 
 import numpy as np
 
-from _ert.events import (
-    EESnapshot,
-    EESnapshotUpdate,
-    EETerminated,
-    Event,
-)
+from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import (
     AnalysisEvent,
     AnalysisStatusEvent,
@@ -524,7 +519,6 @@ class BaseRunModel(ABC):
                             event,
                             iteration,
                         )
-
                         if event.snapshot.get(STATUS) in [
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
@@ -577,6 +571,7 @@ class BaseRunModel(ABC):
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
+        await evaluator._server_started.wait()
         if not (await self.run_monitor(ee_config, ensemble.iteration)):
             return []
 
