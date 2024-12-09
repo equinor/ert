@@ -58,6 +58,7 @@ dependencies = [
     "python-dateutil",
     "python-multipart",  # extra dependency for fastapi
     "pyyaml",
+    "pyzmq",
     "qtpy",
     "requests",
     "resfo",
@@ -70,7 +71,6 @@ dependencies = [
     "uvicorn >= 0.17.0",
     "xarray",
     "xtgeo >= 3.3.0",
-    "zmq",
 ]
 
 [project.scripts]

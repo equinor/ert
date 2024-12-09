@@ -90,7 +90,7 @@ class EnsembleEvaluator:
             event = await self._events_to_send.get()
             for identity in self._clients_connected:
                 await self._router_socket.send_multipart(
-                    [identity, b"", event_to_json(event).encode()]
+                    [identity, b"", event_to_json(event).encode("utf-8")]
                 )
             self._events_to_send.task_done()
 
@@ -213,7 +213,7 @@ class EnsembleEvaluator:
                 ensemble=self.ensemble.id_,
             )
             await self._router_socket.send_multipart(
-                [dealer, b"", event_to_json(event).encode()]
+                [dealer, b"", event_to_json(event).encode("utf-8")]
             )
         elif raw_msg == "DISCONNECT":
             self._clients_connected.discard(dealer)
@@ -296,7 +296,10 @@ class EnsembleEvaluator:
             # Attempt to bind the ROUTER socket
             self._router_socket.bind(f"tcp://*:{self._config.router_port}")
             self._server_started.set()
-            print("ROUTER listens on", f"tcp://*:{self._config.router_port}")
+            print(
+                "ROUTER listens on",
+                f"tcp://*:{self._config.router_port} {self._config.server_public_key=} {self._config.server_secret_key=}",
+            )
         except zmq.error.ZMQError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
             print(f"ZMQ error encountered {e} during evaluator initialization")

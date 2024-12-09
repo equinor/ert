@@ -570,6 +570,7 @@ class BaseRunModel(ABC):
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
+        await evaluator._server_started.wait()
         if not (await self.run_monitor(ee_config, ensemble.iteration)):
             return []
 
