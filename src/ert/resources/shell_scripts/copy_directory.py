@@ -3,10 +3,10 @@ import os
 import shutil
 import sys
 
-from make_directory import mkdir
+from make_directory import mkdir  # type: ignore
 
 
-def copy_directory(src_path, target_path):
+def copy_directory(src_path: str, target_path: str) -> None:
     if os.path.isdir(src_path):
         src_basename = os.path.basename(src_path)
         target_root, _ = os.path.split(target_path)

@@ -4,7 +4,7 @@ import shutil
 import sys
 
 
-def move_directory(src_dir, target):
+def move_directory(src_dir: str, target: str) -> None:
     """
     Will raise IOError if src_dir is not a folder.
 
