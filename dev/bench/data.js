@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733755018960,
+  "lastUpdate": 1733755047973,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "eea080c93eec1b812a917f5c2016fc81f8d3f352",
-          "message": "Ignore erroneous auto-scale configuration, but warn",
-          "timestamp": "2024-12-03T11:43:07+01:00",
-          "tree_id": "ac4f4a4ffdb746233a6165e9ae1af4b2baa72ad6",
-          "url": "https://github.com/equinor/ert/commit/eea080c93eec1b812a917f5c2016fc81f8d3f352"
-        },
-        "date": 1733222698752,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.20023494236975783,
-            "unit": "iter/sec",
-            "range": "stddev: 0.052400916188259684",
-            "extra": "mean: 4.994133332399997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.018610687178640374",
             "extra": "mean: 4.653284596199995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "35e410144fdcee7c64e5675be461cdeacccef98f",
+          "message": "Use pattern-matching for ensemble_parameters",
+          "timestamp": "2024-12-09T15:34:44+01:00",
+          "tree_id": "fd510197e7304a33062b38a6d9f7b9311e7ec812",
+          "url": "https://github.com/equinor/ert/commit/35e410144fdcee7c64e5675be461cdeacccef98f"
+        },
+        "date": 1733755046896,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21639733693184626,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03895051510979895",
+            "extra": "mean: 4.621128957400003 sec\nrounds: 5"
           }
         ]
       }
