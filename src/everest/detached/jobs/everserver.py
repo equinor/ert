@@ -152,7 +152,10 @@ def main():
             STOP_ENDPOINT: False,
         }
 
-        everest_server_api = EverestServerAPI(config)
+        everest_server_api = EverestServerAPI(
+            output_dir=config.output_dir,
+            optimization_output_dir=config.optimization_output_dir,
+        )
         everest_server_api.daemon = True
         everest_server_api.start()
 
@@ -172,29 +175,30 @@ def main():
         is_running = False
         while not is_running:
             try:
-                requests.get(url + "/", verify=cert, auth=auth, proxies=PROXY)
+                requests.get(url + "/", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
                 is_running = True
             except:
                 time.sleep(1)
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        # response = requests.post(
-        #    url + "/" + START_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
-        # )
-
         is_done = False
         while not is_done:
-            response = requests.get(
-                url + "/" + EXIT_CODE_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
+            resp: requests.Response = requests.get(
+                url + "/" + EXIT_CODE_ENDPOINT,
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,  # type: ignore
             )
-            exit_code = ExitCode.model_validate_json(response.body)
+            exit_code = ExitCode.model_validate_json(
+                resp.text if hasattr(resp, "text") else resp.body
+            )
             if exit_code.exit_code or exit_code.message:
                 is_done = True
             else:
                 time.sleep(1)
 
-        if exit_code.message:
+        if exit_code.message and exit_code.message != "Everest server stopped":
             update_everserver_status(
                 status_path,
                 ServerStatus.failed,
@@ -202,10 +206,15 @@ def main():
             )
             return
 
-        response = requests.get(
-            url + "/" + SHARED_DATA_ENDPOINT, verify=cert, auth=auth, proxies=PROXY
+        response: requests.Response = requests.get(
+            url + "/" + SHARED_DATA_ENDPOINT,
+            verify=cert,
+            auth=auth,
+            proxies=PROXY,  # type: ignore
         )
-        if json_body := json.loads(response.body):
+        if json_body := json.loads(
+            response.text if hasattr(response, "text") else response.body
+        ):
             shared_data = json_body
 
         status, message = _get_optimization_status(exit_code.exit_code, shared_data)

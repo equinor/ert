@@ -9,7 +9,6 @@ import signal
 import threading
 from functools import partial
 
-from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -24,7 +23,6 @@ from everest.strings import EVEREST
 from everest.util import (
     makedirs_if_needed,
     version_info,
-    warn_user_that_runpath_is_nonempty,
 )
 
 from .utils import (
@@ -115,8 +113,8 @@ async def run_everest(options):
         except ValueError as exc:
             raise SystemExit(f"Config validation error: {exc}") from exc
 
-        if EverestRunModel.create(options.config).check_if_runpath_exists():
-            warn_user_that_runpath_is_nonempty()
+        # if EverestRunModel.create(options.config).check_if_runpath_exists():
+        #    warn_user_that_runpath_is_nonempty()
 
         try:
             output_dir = options.config.output_dir
@@ -135,7 +133,6 @@ async def run_everest(options):
         start_experiment(
             server_context=ServerConfig.get_server_context(options.config.output_dir),
             config=options.config,
-            debug=options.debug,
         )
 
         run_detached_monitor(

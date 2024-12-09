@@ -55,7 +55,6 @@ PROXY = {"http": None, "https": None}
 def start_experiment(
     server_context: Tuple[str, str, Tuple[str, str]],
     config: EverestConfig,
-    debug: bool = False,
 ) -> None:
     try:
         url, cert, auth = server_context
@@ -65,6 +64,7 @@ def start_experiment(
             verify=cert,
             auth=auth,
             proxies=PROXY,  # type: ignore
+            json=config.to_dict(),
         )
         response.raise_for_status()
     except:

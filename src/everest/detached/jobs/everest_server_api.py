@@ -206,8 +206,11 @@ security = HTTPBasic()
 
 
 class EverestServerAPI(threading.Thread):
-    def __init__(self, everest_config: EverestConfig):
+    def __init__(self, output_dir: str, optimization_output_dir: str):
         super().__init__()
+
+        self.output_dir = output_dir
+        self.optimization_output_dir = optimization_output_dir
 
         self.app = FastAPI()
 
@@ -238,10 +241,6 @@ class EverestServerAPI(threading.Thread):
         }
 
         self.runner: Optional[ExperimentRunner] = None
-
-        self.everest_config = everest_config
-        self.output_dir = everest_config.output_dir
-        self.optimization_output_dir = everest_config.optimization_output_dir
 
         # same code is in ensemble evaluator
         self.authentication = _generate_authentication()
@@ -312,8 +311,18 @@ class EverestServerAPI(threading.Thread):
         self._log(request)
         self._check_user(credentials)
 
+        if self.state[STOP_ENDPOINT] == True:
+            return JSONResponse(
+                jsonable_encoder(
+                    ExitCode(
+                        message="Everest server stopped",
+                    )
+                )
+            )
+
         if not self.runner:
             return JSONResponse(jsonable_encoder({}))
+
         return JSONResponse(
             jsonable_encoder(
                 self.runner.get_exit_code() if self.runner.get_exit_code() else {}
@@ -330,13 +339,14 @@ class EverestServerAPI(threading.Thread):
 
     def start_experiment(
         self,
+        config: EverestConfig,
         request: Request,
         credentials: HTTPBasicCredentials = Depends(security),
     ) -> Response:
         self._log(request)
         self._check_user(credentials)
 
-        self.runner = ExperimentRunner(self.everest_config, self.state)
+        self.runner = ExperimentRunner(config, self.state)
         self.runner.start()
 
         return Response("Everest experiment started", 200)

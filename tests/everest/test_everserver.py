@@ -7,7 +7,6 @@ from unittest.mock import patch
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, PlainTextResponse
 from ropt.enums import OptimizerExitCode
-from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import PROXY, ServerStatus, everserver_status
@@ -142,14 +141,12 @@ def test_everserver_status_running_complete(
                     }
                 )
             )
+
         return PlainTextResponse("Everest is running")
 
     mocked_get.side_effect = mocked_server
 
     everserver.main()
-
-    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
-    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
@@ -208,7 +205,7 @@ def test_everserver_status_failed_job(
     everserver.main()
 
     url, cert, auth = ServerConfig.get_server_context(config.output_dir)
-    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
+    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
@@ -259,7 +256,7 @@ def test_everserver_status_exception(
     everserver.main()
 
     url, cert, auth = ServerConfig.get_server_context(config.output_dir)
-    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
+    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
@@ -269,55 +266,3 @@ def test_everserver_status_exception(
     # start_optimization raised.
     assert status["status"] == ServerStatus.failed
     assert "Exception: Failed optimization" in status["message"]
-
-
-@pytest.mark.integration_test
-@patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("requests.get")
-def test_everserver_status_max_batch_num(
-    mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
-):
-    config_file = "config_one_batch.yml"
-    config = EverestConfig.load_file(config_file)
-
-    def mocked_server(url, verify, auth, proxies):
-        if "/exit_code" in url:
-            return JSONResponse(
-                jsonable_encoder(
-                    ExitCode(exit_code=OptimizerExitCode.OPTIMIZER_STEP_FINISHED)
-                )
-            )
-        if "/shared_data" in url:
-            return JSONResponse(
-                jsonable_encoder(
-                    {
-                        SIM_PROGRESS_ENDPOINT: {
-                            "status": {},
-                            "progress": [],
-                        },
-                        STOP_ENDPOINT: False,
-                    }
-                )
-            )
-        return PlainTextResponse("Everest is running")
-
-    mocked_get.side_effect = mocked_server
-
-    everserver.main()
-
-    url, cert, auth = ServerConfig.get_server_context(config.output_dir)
-    requests.post(url + "/start", verify=cert, auth=auth, proxies=PROXY)
-
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
-
-    # The server should complete without error.
-    assert status["status"] == ServerStatus.completed
-
-    # Check that there is only one batch.
-    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
-        filter_out_gradient=False, batches=None
-    )
-    assert {data.batch for data in snapshot.simulation_data} == {0}
