@@ -330,6 +330,7 @@ ARG_TYPE 0 STRING
     ]
 
 
+@pytest.mark.integration_test
 @settings(max_examples=10)
 @given(config_generators())
 def test_ert_config_throws_on_missing_forward_model_step(
