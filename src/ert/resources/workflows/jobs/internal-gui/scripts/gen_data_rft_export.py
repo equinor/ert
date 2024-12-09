@@ -1,16 +1,18 @@
 import contextlib
 import json
 import os
+from typing import Any, Sequence
 
 import numpy
 import pandas as pd
 import polars
-from qtpy.QtWidgets import QCheckBox
+from qtpy.QtWidgets import QCheckBox, QWidget
 
 from ert.config import CancelPluginException, ErtPlugin
+from ert.storage import Storage
 
 
-def load_args(filename, column_names=None):
+def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFrame:
     rows = 0
     columns = 0
     with open(filename, encoding="utf-8") as fileH:
@@ -67,18 +69,18 @@ class GenDataRFTCSVExportJob(ErtPlugin):
     """
 
     @staticmethod
-    def getName():
+    def getName() -> str:
         return "GEN_DATA RFT CSV Export"
 
     @staticmethod
-    def getDescription():
+    def getDescription() -> str:
         return "Export gen_data RFT results into a single CSV file."
 
     def run(
         self,
-        storage,
-        workflow_args,
-    ):
+        storage: Storage,
+        workflow_args: Sequence[str],
+    ) -> str:
         """The run method will export the RFT's for all wells and all ensembles."""
 
         output_file = workflow_args[0]
@@ -202,7 +204,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         )
         return export_info
 
-    def getArguments(self, parent, storage):
+    def getArguments(self, parent: QWidget, storage: Storage) -> list[Any]:  # type: ignore
         # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
         from ert.gui.ertwidgets import (  # noqa: PLC0415
             CustomDialog,

@@ -4,7 +4,7 @@ import shutil
 import sys
 
 
-def copy_file(src, target=None):
+def copy_file(src: str, target: str | None = None) -> None:
     if os.path.isfile(src):
         if target is None:
             target = os.path.basename(src)

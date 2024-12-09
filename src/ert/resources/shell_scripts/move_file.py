@@ -4,7 +4,7 @@ import shutil
 import sys
 
 
-def move_file(src_file, target):
+def move_file(src_file: str, target: str) -> None:
     """
     Will raise IOError if src_file is not a file.
 

@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def delete_file(filename):
+def delete_file(filename: str) -> None:
     stat_info = os.lstat(filename)
     uid = stat_info.st_uid
     if uid == os.getuid():
@@ -13,7 +13,7 @@ def delete_file(filename):
         sys.stderr.write(f"Sorry you are not owner of file:{filename} - not deleted\n")
 
 
-def delete_empty_directory(dirname):
+def delete_empty_directory(dirname: str) -> None:
     stat_info = os.stat(dirname)
     uid = stat_info.st_uid
     if uid == os.getuid():
@@ -37,7 +37,7 @@ def delete_empty_directory(dirname):
         )
 
 
-def delete_directory(path):
+def delete_directory(path: str) -> None:
     """
     Will ignore if you are not owner.
     """
