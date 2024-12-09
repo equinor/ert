@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733507090022,
+  "lastUpdate": 1733745409576,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "3a84a98e4447dbf7101d8661fbfcc6ee525181f6",
-          "message": "Update ropt to 0.10.0 (#9405)\n\n* Update ropt to 0.10.0\r\n\r\n* Run ruff format",
-          "timestamp": "2024-12-02T13:25:53+01:00",
-          "tree_id": "a0364d4dc7359bc7379ab7a1db23f87199cfa99f",
-          "url": "https://github.com/equinor/ert/commit/3a84a98e4447dbf7101d8661fbfcc6ee525181f6"
-        },
-        "date": 1733142465450,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19563369033055503,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03777665863641594",
-            "extra": "mean: 5.111594011799997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07914358763160681",
             "extra": "mean: 4.647352921000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "a5bfbdb3e14fd6eaf0155dc545fdcb8c1ba9b2d3",
+          "message": "Mute marginal cpu overspending\n\nThere exists logs that a user has overspent with a factor of 1.0. This is not very\ninteresting, so skip logging anything that we don't find significant.",
+          "timestamp": "2024-12-09T12:54:57+01:00",
+          "tree_id": "531f7b1e539f789dc17711ef32c2ede1cad32ff9",
+          "url": "https://github.com/equinor/ert/commit/a5bfbdb3e14fd6eaf0155dc545fdcb8c1ba9b2d3"
+        },
+        "date": 1733745408650,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22054059747100946,
+            "unit": "iter/sec",
+            "range": "stddev: 0.021143488419735627",
+            "extra": "mean: 4.534312555000002 sec\nrounds: 5"
           }
         ]
       }
