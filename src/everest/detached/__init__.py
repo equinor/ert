@@ -35,6 +35,7 @@ from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
+    START_ENDPOINT,
     STOP_ENDPOINT,
 )
 
@@ -49,6 +50,25 @@ PROXY = {"http": None, "https": None}
 # Information from the client side is relatively uninteresting, so we show it in
 # the default logger (stdout). Info from the server will be logged to the
 # everest.log file instead
+
+
+def start_experiment(
+    server_context: Tuple[str, str, Tuple[str, str]],
+    config: EverestConfig,
+    debug: bool = False,
+) -> None:
+    try:
+        url, cert, auth = server_context
+        start_endpoint = "/".join([url, START_ENDPOINT])
+        response = requests.post(
+            start_endpoint,
+            verify=cert,
+            auth=auth,
+            proxies=PROXY,  # type: ignore
+        )
+        response.raise_for_status()
+    except:
+        raise ValueError("Failed to start experiment") from None
 
 
 async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
@@ -171,6 +191,7 @@ def wait_for_server_to_stop(server_context: Tuple[str, str, Tuple[str, str]], ti
     Raise an exception when the timeout is reached.
     """
     if server_is_running(*server_context):
+        print("Waiting for server to stop ...")
         sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
         for retry_count in range(_HTTP_REQUEST_RETRY):
             sleep_time = sleep_time_increment * (2**retry_count)
