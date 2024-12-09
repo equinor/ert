@@ -149,7 +149,14 @@ class EnsembleEvaluator:
                 except asyncio.TimeoutError:
                     continue
             self._complete_batch.set()
+            batch_start_time = asyncio.get_running_loop().time()
             await self._batch_processing_queue.put(batch)
+            if batch and self._events.qsize() > 0:
+                logger.info(
+                    f"Processed {len(batch)} events in "
+                    f"{(asyncio.get_running_loop().time() - batch_start_time):.6f}s "
+                    f"{self._events.qsize()} left in queue"
+                )
 
     async def _fm_handler(
         self, events: Sequence[Union[FMEvent, RealizationEvent]]
