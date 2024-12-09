@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733745409576,
+  "lastUpdate": 1733749734529,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "22687ea7c012ab36176ad48cff53884726f55273",
-          "message": "Remove test_api.py\n\nBehavior of plot API is still locked in by snapshots in `test_api_snapshots.py`",
-          "timestamp": "2024-12-02T15:46:46+01:00",
-          "tree_id": "d4179bc83fb0e947b7c3a72289fd2a8071229cdb",
-          "url": "https://github.com/equinor/ert/commit/22687ea7c012ab36176ad48cff53884726f55273"
-        },
-        "date": 1733150917551,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19379841736524772,
-            "unit": "iter/sec",
-            "range": "stddev: 0.007068278583113922",
-            "extra": "mean: 5.160000858600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.021143488419735627",
             "extra": "mean: 4.534312555000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "ea78bd8890343d1c99337be738c3ccae8c32fd45",
+          "message": "Only set active realizations from selected ensemble when restart is checked es_mda",
+          "timestamp": "2024-12-09T14:06:59+01:00",
+          "tree_id": "07962ecd11797d4dc9a46e969fda438d1acbeead",
+          "url": "https://github.com/equinor/ert/commit/ea78bd8890343d1c99337be738c3ccae8c32fd45"
+        },
+        "date": 1733749733640,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21473519569661298,
+            "unit": "iter/sec",
+            "range": "stddev: 0.09679680966034868",
+            "extra": "mean: 4.656898449999983 sec\nrounds: 5"
           }
         ]
       }
