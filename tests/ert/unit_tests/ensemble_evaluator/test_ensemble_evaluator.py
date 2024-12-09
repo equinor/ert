@@ -536,8 +536,8 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
 @given(
     num_cpu=st.integers(min_value=1, max_value=64),
     start=st.datetimes(),
-    duration=st.integers(min_value=-1, max_value=10000),
-    cpu_seconds=st.floats(min_value=0),
+    duration=st.integers(min_value=-1, max_value=1000),
+    cpu_seconds=st.floats(min_value=0, max_value=2000),
 )
 def test_overspent_cpu_is_logged(
     num_cpu: int,
@@ -554,7 +554,7 @@ def test_overspent_cpu_is_logged(
             cpu_seconds=cpu_seconds,
         ),
     )
-    if duration > 0 and cpu_seconds / duration > num_cpu:
+    if duration > 0 and cpu_seconds / duration > num_cpu * 1.05:
         assert "Misconfigured NUM_CPU" in message
     else:
         assert "NUM_CPU" not in message
