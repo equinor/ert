@@ -6,6 +6,7 @@ class SchemaItemType(StrEnum):
     INT = "INT"
     POSITIVE_INT = "POSITIVE_INT"
     FLOAT = "FLOAT"
+    POSITIVE_FLOAT = "POSITIVE_FLOAT"
     PATH = "PATH"
     EXISTING_PATH = "EXISTING_PATH"
     BOOL = "BOOL"

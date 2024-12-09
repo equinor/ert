@@ -218,7 +218,7 @@ def test_default_std_cutoff_is_set():
     )
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False))
+@given(st.floats(allow_nan=False, allow_infinity=False, min_value=1e-12))
 def test_std_cutoff_is_set_from_corresponding_key(value):
     assert (
         AnalysisConfig.from_dict(
