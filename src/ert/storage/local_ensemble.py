@@ -1022,4 +1022,6 @@ class LocalEnsemble(BaseMode):
                         )
                     )
 
-        return polars.concat(dfs_per_response_type, how="vertical")
+            return polars.concat(dfs_per_response_type, how="vertical").with_columns(
+                polars.col("response_key").cast(polars.String).alias("response_key")
+            )
