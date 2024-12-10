@@ -174,26 +174,23 @@ def test_eclrun_on_nosim_with_existing_unsmry_file(source_root):
     assert Path("SPE1.OK").exists()
 
 
-@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
-def test_await_completed_summary_file_times_out_on_nosim_with_mpi(source_root):
-    minimum_duration = 15  # This is max_wait in the await function tested
+def test_await_completed_summary_file_does_not_time_out_on_nosim_with_mpi(source_root):
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
     deck = deck.replace("TITLE", "NOSIM\n\nPARALLEL\n 2 /\n\nTITLE")
     Path("SPE1.DATA").write_text(deck, encoding="utf-8")
-    start_time = time.time()
     run_reservoirsimulator.run_reservoirsimulator(
         ["eclipse", "2019.3", "SPE1.DATA", "--num-cpu=2"]
     )
-    end_time = time.time()
     assert Path("SPE1.OK").exists()
     assert not Path(
         "SPE1.UNSMRY"
     ).exists(), "A nosim run should not produce an unsmry file"
-    assert (
-        end_time - start_time > minimum_duration
-    ), "timeout in await_completed not triggered"
+    # The timeout will not happen since find_unsmry() returns None.
+
+    # There is no assert on runtime because we cannot predict how long the Eclipse license
+    # checkout takes.
 
 
 @pytest.mark.integration_test
@@ -236,8 +233,10 @@ def test_eclrun_will_raise_on_deck_errors(source_root):
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
+    deck = Path("MOCKED_DECK.DATA")
+    deck.touch()
     erun = run_reservoirsimulator.RunReservoirSimulator(
-        "eclipse", "dummy_version", "mocked_anyway.DATA"
+        "eclipse", "dummy_version", deck.name
     )
     return_value_with_code = mock.MagicMock()
     return_value_with_code.returncode = 1
@@ -261,7 +260,7 @@ def test_deck_errors_can_be_ignored(source_root):
         "SPE1_ERROR.DATA",
     )
     run_reservoirsimulator.run_reservoirsimulator(
-        ["eclipse", "2019.3", "SPE1.DATA", "--ignore-errors"]
+        ["eclipse", "2019.3", "SPE1_ERROR.DATA", "--ignore-errors"]
     )
 
 
