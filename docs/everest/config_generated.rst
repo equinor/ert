@@ -1049,12 +1049,6 @@ Simulation settings
     The kill command
 
 
-**qstat_options (optional)**
-    Type: *Optional[str]*
-
-    Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.
-
-
 **cluster_label (optional)**
     Type: *Optional[str]*
 

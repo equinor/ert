@@ -251,12 +251,6 @@ The following is a list of all queue-specific configuration options:
     QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat
     QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel
 
-.. _torque_qstat_options:
-.. topic:: QSTAT_OPTIONS
-
-  Options to be supplied to the ``qstat`` command. This defaults to :code:`-x`,
-  which tells the ``qstat`` command to include exited processes.
-
 .. _torque_queue:
 .. topic:: QUEUE
 

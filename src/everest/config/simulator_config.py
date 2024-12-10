@@ -129,10 +129,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
     qsub_cmd: Optional[str] = Field(default="qsub", description="The submit command")
     qstat_cmd: Optional[str] = Field(default="qstat", description="The query command")
     qdel_cmd: Optional[str] = Field(default="qdel", description="The kill command")
-    qstat_options: Optional[str] = Field(
-        default="-x",
-        description="Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.",
-    )
     cluster_label: Optional[str] = Field(
         default=None,
         description="The name of the cluster you are running simulations in.",
