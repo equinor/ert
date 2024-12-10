@@ -7,13 +7,17 @@ import shutil
 from abc import abstractmethod
 from dataclasses import field
 from copy import copy
-from dataclasses import asdict, field, fields
-from typing import Any, Literal, Mapping, Optional, no_type_check, Annotated
+
+from typing import Any, Literal, Mapping, Optional, no_type_check
 
 import pydantic
+from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core.core_schema import ValidationInfo
+from typing_extensions import Annotated
 
 from .parsing import (
+    BaseModelWithContextSupport,
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
@@ -34,14 +38,24 @@ def activate_script() -> str:
     return f"source {venv}/bin/activate"
 
 
-@pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
-class QueueOptions:
+class QueueOptions(BaseModelWithContextSupport, validate_assignment=True):
     name: str
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: str | None = None
-    activate_script: str = field(default_factory=activate_script)
+    activate_script: str | None = Field(default=None, validate_default=True)
     queue_name: Optional[NonEmptyString] = None
+
+    @field_validator("activate_script")
+    @classmethod
+    def inject_site_config_script(cls, v: str, info: ValidationInfo):
+        # User value gets highest priority
+        if isinstance(v, str):
+            return v
+        # Use from plugin system if user has not specified
+        if info.context:
+            return info.context.get("activate_script")
+        return activate_script()  # Return default value
 
     @staticmethod
     def create_queue_options(
@@ -69,12 +83,12 @@ class QueueOptions:
             return None
 
     def add_global_queue_options(self, config_dict: ConfigDict) -> None:
-        for generic_option in fields(QueueOptions):
+        for name, generic_option in QueueOptions.model_fields.items():
             if (
-                generic_value := config_dict.get(generic_option.name.upper(), None)  # type: ignore
-            ) and self.__dict__[generic_option.name] == generic_option.default:
+                generic_value := config_dict.get(name.upper(), None)  # type: ignore
+            ) and self.__dict__[name] == generic_option.default:
                 try:
-                    setattr(self, generic_option.name, generic_value)
+                    setattr(self, name, generic_value)
                 except pydantic.ValidationError as exception:
                     for error in exception.errors():
                         _throw_error_or_warning(
@@ -89,7 +103,6 @@ class QueueOptions:
         """Translate the queue options to the key-value API provided by each driver"""
 
 
-@pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
     name: Literal[QueueSystem.LOCAL, "local", "LOCAL"] = "local"
 
@@ -98,7 +111,6 @@ class LocalQueueOptions(QueueOptions):
         return {}
 
 
-@pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
     name: Literal[QueueSystem.LSF, "lsf", "LSF"] = "lsf"
     bhist_cmd: NonEmptyString | None = None
@@ -112,16 +124,12 @@ class LsfQueueOptions(QueueOptions):
 
     @property
     def driver_options(self) -> dict[str, Any]:
-        driver_dict = asdict(self)
-        driver_dict.pop("name")
+        driver_dict = self.model_dump(exclude={"name", "submit_sleep", "max_running"})
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
-        driver_dict.pop("submit_sleep")
-        driver_dict.pop("max_running")
         return driver_dict
 
 
-@pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
     name: Literal[QueueSystem.TORQUE, "torque", "TORQUE"] = "torque"
     qsub_cmd: NonEmptyString | None = None
@@ -139,12 +147,15 @@ class TorqueQueueOptions(QueueOptions):
 
     @property
     def driver_options(self) -> dict[str, Any]:
-        driver_dict = asdict(self)
-        driver_dict.pop("name")
-        driver_dict.pop("max_running")
-        driver_dict.pop("submit_sleep")
-        driver_dict.pop("qstat_options")
-        driver_dict.pop("queue_query_timeout")
+        driver_dict = self.model_dump(
+            exclude={
+                "name",
+                "max_running",
+                "submit_sleep",
+                "qstat_options",
+                "queue_query_timeout",
+            }
+        )
         return driver_dict
 
     @pydantic.field_validator("memory_per_job")
@@ -155,7 +166,6 @@ class TorqueQueueOptions(QueueOptions):
         return value
 
 
-@pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
     name: Literal[QueueSystem.SLURM, "SLURM", "slurm"] = "slurm"
     sbatch: NonEmptyString = "sbatch"
@@ -171,8 +181,7 @@ class SlurmQueueOptions(QueueOptions):
 
     @property
     def driver_options(self) -> dict[str, Any]:
-        driver_dict = asdict(self)
-        driver_dict.pop("name")
+        driver_dict = self.model_dump(exclude={"name", "max_running", "submit_sleep"})
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
         driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
@@ -180,8 +189,6 @@ class SlurmQueueOptions(QueueOptions):
         driver_dict["squeue_cmd"] = driver_dict.pop("squeue")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["include_hosts"] = driver_dict.pop("include_host")
-        driver_dict.pop("max_running")
-        driver_dict.pop("submit_sleep")
         return driver_dict
 
     @pydantic.field_validator("memory", "memory_per_cpu")
@@ -215,14 +222,14 @@ queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
     ),
 }
 valid_options: dict[str, list[str]] = {
-    QueueSystem.LOCAL.name: [field.name.upper() for field in fields(LocalQueueOptions)],
-    QueueSystem.LSF.name: [field.name.upper() for field in fields(LsfQueueOptions)],
-    QueueSystem.SLURM.name: [field.name.upper() for field in fields(SlurmQueueOptions)],
+    QueueSystem.LOCAL.name: [field.upper() for field in LocalQueueOptions.model_fields],
+    QueueSystem.LSF.name: [field.upper() for field in LsfQueueOptions.model_fields],
+    QueueSystem.SLURM.name: [field.upper() for field in SlurmQueueOptions.model_fields],
     QueueSystem.TORQUE.name: [
-        field.name.upper() for field in fields(TorqueQueueOptions)
+        field.upper() for field in TorqueQueueOptions.model_fields
     ],
     QueueSystemWithGeneric.GENERIC.name: [
-        field.name.upper() for field in fields(QueueOptions)
+        field.upper() for field in QueueOptions.model_fields
     ],
 }
 
