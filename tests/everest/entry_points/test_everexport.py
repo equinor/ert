@@ -1,6 +1,6 @@
 import logging
 import os
-import shutil
+from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
@@ -10,9 +10,8 @@ from everest import ConfigKeys as CK
 from everest import MetaDataColumnNames as MDCN
 from everest.bin.everexport_script import everexport_entry
 from everest.bin.utils import ProgressBar
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ExportConfig
 from tests.everest.utils import (
-    create_cached_mocked_test_case,
     satisfy,
     satisfy_callable,
     satisfy_type,
@@ -63,21 +62,17 @@ def validate_export_mock(**_):
     return ([], True)
 
 
-@pytest.fixture()
-def cache_dir(request, monkeypatch):
-    return create_cached_mocked_test_case(request, monkeypatch)
-
-
 @patch("everest.bin.everexport_script.export_with_progress", side_effect=export_mock)
-def test_everexport_entry_run(mocked_func, copy_math_func_test_data_to_tmp):
+def test_everexport_entry_run(_, cached_example):
     """Test running everexport with not flags"""
     # NOTE: there is probably a bug concerning output folders. Everexport
     # seems to assume that the folder where the file will be saved exists.
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
     export_file_path = config.export_path
     assert not os.path.isfile(export_file_path)
 
-    everexport_entry([CONFIG_FILE_MINIMAL])
+    everexport_entry([config_file])
 
     assert os.path.isfile(export_file_path)
     df = pd.read_csv(export_file_path, sep=";")
@@ -85,13 +80,14 @@ def test_everexport_entry_run(mocked_func, copy_math_func_test_data_to_tmp):
 
 
 @patch("everest.bin.everexport_script.export_with_progress", side_effect=empty_mock)
-def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
+def test_everexport_entry_empty(mocked_func, cached_example):
     """Test running everexport with no data"""
     # NOTE: When there is no data (ie, the optimization has not yet run)
     # the current behavior is to create an empty .csv file. It is arguable
     # whether that is really the desired behavior, but for now we assume
     # it is and we test against that expected behavior.
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
     export_file_path = config.export_path
     assert not os.path.isfile(export_file_path)
 
@@ -109,11 +105,10 @@ def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
 )
 @patch("everest.bin.utils.export_data")
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_batches(
-    mocked_func, validate_export_mock, copy_math_func_test_data_to_tmp
-):
+def test_everexport_entry_batches(mocked_func, validate_export_mock, cached_example):
     """Test running everexport with the --batches flag"""
-    everexport_entry([CONFIG_FILE_MINIMAL, "--batches", "0", "2"])
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
+    everexport_entry([config_file, "--batches", "0", "2"])
 
     def check_export_batches(config):
         batches = (config.batches if config is not None else None) or False
@@ -132,17 +127,14 @@ def test_everexport_entry_batches(
 
 
 @patch("everest.bin.everexport_script.export_to_csv")
-def test_everexport_entry_no_export(mocked_func, copy_math_func_test_data_to_tmp):
+def test_everexport_entry_no_export(mocked_func, cached_example):
     """Test running everexport on config file with skip_export flag
     set to true"""
 
+    config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config.export = ExportConfig(skip_export=True)
     # Add export section to config file and set run_export flag to false
-    with open(CONFIG_FILE_MINIMAL, "a", encoding="utf-8") as f:
-        f.write(
-            "{export}:\n  {skip}: True".format(export=CK.EXPORT, skip=CK.SKIP_EXPORT)
-        )
-
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
     export_file_path = config.export_path
     assert not os.path.isfile(export_file_path)
 
@@ -153,28 +145,31 @@ def test_everexport_entry_no_export(mocked_func, copy_math_func_test_data_to_tmp
 
 
 @patch("everest.bin.everexport_script.export_to_csv")
-def test_everexport_entry_empty_export(mocked_func, copy_math_func_test_data_to_tmp):
+def test_everexport_entry_empty_export(mocked_func, cached_example):
     """Test running everexport on config file with empty export section"""
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
 
     # Add empty export section to config file
-    with open(CONFIG_FILE_MINIMAL, "a", encoding="utf-8") as f:
+    with open(config_file, "a", encoding="utf-8") as f:
         f.write(f"{CK.EXPORT}:\n")
 
-    everexport_entry([CONFIG_FILE_MINIMAL])
+    everexport_entry([config_file])
     # Check export to csv is called even if export section is empty
     mocked_func.assert_called_once()
 
 
 @patch("everest.bin.utils.export_data")
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_no_usr_def_ecl_keys(
-    mocked_func, copy_mocked_test_data_to_tmp
-):
+def test_everexport_entry_no_usr_def_ecl_keys(mocked_func, cached_example):
     """Test running everexport with config file containing only the
     keywords label without any list of keys"""
 
+    _, config_file, _ = cached_example(
+        "../../tests/everest/test_data/mocked_test_case/mocked_multi_batch.yml"
+    )
+
     # Add export section to config file and set run_export flag to false
-    with open(CONFIG_FILE_MOCKED_TEST_CASE, "a", encoding="utf-8") as f:
+    with open(config_file, "a", encoding="utf-8") as f:
         f.write(
             "{export}:\n  {keywords}:".format(
                 export=CK.EXPORT,
@@ -182,7 +177,7 @@ def test_everexport_entry_no_usr_def_ecl_keys(
             )
         )
 
-    everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
+    everexport_entry([config_file])
 
     def condition(config):
         batches = config.batches if config is not None else None
@@ -204,30 +199,25 @@ def test_everexport_entry_no_usr_def_ecl_keys(
 
 @patch("everest.bin.utils.export_data")
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_internalized_usr_def_ecl_keys(
-    mocked_func, cache_dir, copy_mocked_test_data_to_tmp
-):
+def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cached_example):
     """Test running everexport with config file containing a key in the
     list of user defined ecl keywords, that has been internalized on
     a previous run"""
 
-    shutil.copytree(
-        cache_dir / "mocked_multi_batch_output",
-        "mocked_multi_batch_output",
-        dirs_exist_ok=True,
+    _, config_file, _ = cached_example(
+        "../../tests/everest/test_data/mocked_test_case/mocked_multi_batch.yml"
     )
-
     user_def_keys = ["FOPT"]
 
     # Add export section to config file and set run_export flag to false
-    with open(CONFIG_FILE_MOCKED_TEST_CASE, "a", encoding="utf-8") as f:
+    with open(config_file, "a", encoding="utf-8") as f:
         f.write(
             "{export}:\n  {keywords}: {keys}".format(
                 export=CK.EXPORT, keywords=CK.KEYWORDS, keys=user_def_keys
             )
         )
 
-    everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
+    everexport_entry([config_file])
 
     def condition(config):
         batches = config.batches if config is not None else None
@@ -249,23 +239,19 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(
 
 @patch("everest.bin.utils.export_data")
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_non_int_usr_def_ecl_keys(
-    mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
-):
+def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, caplog, cached_example):
     """Test running everexport  when config file contains non internalized
     ecl keys in the user defined keywords list"""
 
-    shutil.copytree(
-        cache_dir / "mocked_multi_batch_output",
-        "mocked_multi_batch_output",
-        dirs_exist_ok=True,
+    _, config_file, _ = cached_example(
+        "../../tests/everest/test_data/mocked_test_case/mocked_multi_batch.yml"
     )
 
     non_internalized_key = "KEY"
     user_def_keys = ["FOPT", non_internalized_key]
 
     # Add export section to config file and set run_export flag to false
-    with open(CONFIG_FILE_MOCKED_TEST_CASE, "a", encoding="utf-8") as f:
+    with open(config_file, "a", encoding="utf-8") as f:
         f.write(
             "{export}:\n  {keywords}: {keys}".format(
                 export=CK.EXPORT, keywords=CK.KEYWORDS, keys=user_def_keys
@@ -273,7 +259,7 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(
         )
 
     with caplog.at_level(logging.DEBUG):
-        everexport_entry([CONFIG_FILE_MOCKED_TEST_CASE])
+        everexport_entry([config_file])
 
     assert (
         f"Non-internalized ecl keys selected for export '{non_internalized_key}'"
@@ -300,24 +286,19 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(
 
 @patch("everest.bin.utils.export_data")
 @pytest.mark.fails_on_macos_github_workflow
-def test_everexport_entry_not_available_batches(
-    mocked_func, cache_dir, caplog, copy_mocked_test_data_to_tmp
-):
+def test_everexport_entry_not_available_batches(mocked_func, caplog, cached_example):
     """Test running everexport  when config file contains non existing
     batch numbers in the list of user defined batches"""
 
-    shutil.copytree(
-        cache_dir / "mocked_multi_batch_output",
-        "mocked_multi_batch_output",
-        dirs_exist_ok=True,
+    _, config_file, _ = cached_example(
+        "../../tests/everest/test_data/mocked_test_case/mocked_multi_batch.yml"
     )
 
     na_batch = 42
     user_def_batches = [0, na_batch]
-    mocked_test_config_file = "mocked_multi_batch.yml"
 
     # Add export section to config file and set run_export flag to false
-    with open(mocked_test_config_file, "a", encoding="utf-8") as f:
+    with open(config_file, "a", encoding="utf-8") as f:
         f.write(
             "{export}:\n  {batch_key}: {batches}".format(
                 export=CK.EXPORT, batch_key=CK.BATCHES, batches=user_def_batches
@@ -325,7 +306,7 @@ def test_everexport_entry_not_available_batches(
         )
 
     with caplog.at_level(logging.DEBUG):
-        everexport_entry([mocked_test_config_file])
+        everexport_entry([config_file])
 
     assert (
         f"Batch {na_batch} not found in optimization results."
