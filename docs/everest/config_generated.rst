@@ -148,7 +148,7 @@ a group of control variables
 
 
         **options (optional)**
-            Type: *Optional[dict[str, Any]]*
+            Type: *Optional[Mapping[str, Any]]*
 
 
             Specifies a dict of optional parameters for the sampler backend.
@@ -312,7 +312,7 @@ a group of control variables
 
 
     **options (optional)**
-        Type: *Optional[dict[str, Any]]*
+        Type: *Optional[Mapping[str, Any]]*
 
 
         Specifies a dict of optional parameters for the sampler backend.
@@ -381,7 +381,7 @@ Optimizer options
 
 
 **backend_options (optional)**
-    Type: *Optional[dict[str, Any]]*
+    Type: *Optional[Mapping[str, Any]]*
 
     Dict of optional parameters for the optimizer backend.
     This dict of values is passed unchanged to the selected algorithm in the backend.
@@ -731,7 +731,7 @@ Type: *Optional[list[InputConstraintConfig]]*
 List of input constraints
 
 **weights (required)**
-    Type: *dict[str, float]*
+    Type: *Mapping[str, float]*
 
     **Example**
     If we are trying to constrain only one control (i.e the z control) value:
