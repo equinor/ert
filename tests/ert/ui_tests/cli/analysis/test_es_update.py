@@ -183,6 +183,22 @@ def test_update_multiple_param():
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
     assert np.trace(np.cov(posterior_array)) < np.trace(np.cov(prior_array))
 
+    corr_XY = prior_ensemble.load_cross_correlations()
+    expected_obs_groups = [obs[0] for obs in ert_config.observation_config]
+    obs_groups = corr_XY["obs_group"].unique().to_list()
+    assert sorted(obs_groups) == sorted(expected_obs_groups)
+    # Check that obs names are created using obs groups
+    obs_name_starts_with_group = (
+        corr_XY.with_columns(
+            polars.col("obs_name")
+            .str.starts_with(polars.col("obs_group"))
+            .alias("starts_with_check")
+        )
+        .get_column("starts_with_check")
+        .all()
+    )
+    assert obs_name_starts_with_group
+
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_update_works_with_failed_realizations():
