@@ -11,7 +11,6 @@ from ert import (
     ForwardModelStepValidationError,
     plugin,
 )
-from ert.plugins import ErtPluginManager
 
 
 class CarefulCopyFile(ForwardModelStepPlugin):
@@ -217,13 +216,17 @@ class Eclipse100(ForwardModelStepPlugin):
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": ""},
         )
 
-    def validate_pre_experiment(self, _: ForwardModelStepJSON) -> None:
+    def validate_pre_experiment(
+        self, _: ForwardModelStepJSON, env_vars: dict[str, str]
+    ) -> None:
         if "<VERSION>" not in self.private_args:
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE100 must be given a VERSION argument"
             )
         version = self.private_args["<VERSION>"]
-        available_versions = _available_eclrun_versions(simulator="eclipse")
+        available_versions = _available_eclrun_versions(
+            simulator="eclipse", env_vars=env_vars
+        )
 
         if available_versions and version not in available_versions:
             raise ForwardModelStepValidationError(
@@ -275,13 +278,17 @@ class Eclipse300(ForwardModelStepPlugin):
             default_mapping={"<NUM_CPU>": 1, "<OPTS>": "", "<VERSION>": "version"},
         )
 
-    def validate_pre_experiment(self, _: ForwardModelStepJSON) -> None:
+    def validate_pre_experiment(
+        self, _: ForwardModelStepJSON, env_vars: dict[str, str]
+    ) -> None:
         if "<VERSION>" not in self.private_args:
             raise ForwardModelStepValidationError(
                 "Forward model step ECLIPSE300 must be given a VERSION argument"
             )
         version = self.private_args["<VERSION>"]
-        available_versions = _available_eclrun_versions(simulator="e300")
+        available_versions = _available_eclrun_versions(
+            simulator="e300", env_vars=env_vars
+        )
         if available_versions and version not in available_versions:
             raise ForwardModelStepValidationError(
                 f"Unavailable ECLIPSE300 version {version}. "
@@ -625,19 +632,27 @@ def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
-    pm = ErtPluginManager()
+def _available_eclrun_versions(
+    simulator: Literal["eclipse", "e300"], env_vars: dict[str, str]
+) -> List[str]:
+    # pm = ErtPluginManager()
     eclrun_env = os.environ.copy()
     _simulator_to_fm_stepname = {"eclipse": "ECLIPSE100", "e300": "ECLIPSE300"}
-    eclrun_path = (
-        pm.get_forward_model_configuration()
-        .get(_simulator_to_fm_stepname[simulator], {})
-        .get("ECLRUN_PATH", "")
-    )
+    eclrun_path = env_vars.get("ECLRUN_PATH", "")
+    # pm.get_forward_model_configuration()
+    # .get(_simulator_to_fm_stepname[simulator], {})
+    # .get("ECLRUN_PATH", "")
+    # )
     eclrun_env["PATH"] = os.pathsep.join(
         [eclrun_path, *os.getenv("PATH", "").split(os.pathsep)]
     )
     try:
+        import shutil
+
+        print(eclrun_path)
+        print(eclrun_env["PATH"])
+
+        print(shutil.which("eclrun"))
         return (
             subprocess.check_output(
                 ["eclrun", simulator, "--report-versions"],

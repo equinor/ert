@@ -766,10 +766,15 @@ class ErtConfig:
         cls,
         installed_steps: Dict[str, ForwardModelStep],
         substitutions: Substitutions,
-        config_dict,
+        config_dict: dict,
     ) -> List[ForwardModelStep]:
         errors = []
         fm_steps = []
+
+        env_vars = {}
+        for key, val in config_dict.get("SETENV", []):
+            env_vars[key] = val
+
         for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(fm_step_description) > 1:
                 unsubstituted_step_name, args = fm_step_description
@@ -836,7 +841,7 @@ class ErtConfig:
                         skip_pre_experiment_validation=True,
                     )
                     job_json = substituted_json["jobList"][0]
-                    fm_step.validate_pre_experiment(job_json)
+                    fm_step.validate_pre_experiment(job_json, env_vars)
                 except ForwardModelStepValidationError as err:
                     errors.append(
                         ConfigValidationError.with_context(

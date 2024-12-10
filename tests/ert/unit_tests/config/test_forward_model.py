@@ -585,6 +585,32 @@ def test_that_eclipse_fm_step_check_version_availability(eclipse_v):
         _ = ErtConfig.with_plugins().from_file(config_file_name)
 
 
+@pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(
+    eclipse_v, tmp_path
+):
+    eclrun_bin = Path("bin/eclrun")
+    eclrun_bin.parent.mkdir()
+    eclrun_bin.write_text("#!/bin/sh\necho 2036.1 2036.2 2037.1", encoding="utf-8")
+    eclrun_bin.chmod(eclrun_bin.stat().st_mode | stat.S_IEXEC)
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        dedent(
+            f"""
+            NUM_REALIZATIONS 1
+            SETENV ECLRUN_PATH {eclrun_bin.absolute().parent}
+            FORWARD_MODEL {eclipse_v}(<VERSION>=2034.1)"""
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf".*Unavailable {eclipse_v} version 2034.1. Available versions: \[\'2036.1.*",
+    ):
+        _ = ErtConfig.with_plugins().from_file(config_file_name)
+
+
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is present")
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 @pytest.mark.usefixtures("use_tmpdir")
