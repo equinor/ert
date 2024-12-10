@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733824172488,
+  "lastUpdate": 1733824327631,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "309a5353a9bc25b7adc98a83e6fd9c5f6747eb40",
-          "message": "Revert \"Use uvloop for asyncio\"\n\nThis reverts commit d11ba38bd8f93808ae60d320e03ab10725294dec.\nThis was done due to issues with uvloop when attempting to use uvloop\nfor our tests",
-          "timestamp": "2024-12-03T14:22:23+01:00",
-          "tree_id": "1559784effd3f73924a6b411e2abf7b36a4c6ec9",
-          "url": "https://github.com/equinor/ert/commit/309a5353a9bc25b7adc98a83e6fd9c5f6747eb40"
-        },
-        "date": 1733232259426,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2115476281274497,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02510521401801525",
-            "extra": "mean: 4.7270678894000016 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03677181838482849",
             "extra": "mean: 4.403021891599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jholba@equinor.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "committer": {
+            "email": "jon.holba@gmail.com",
+            "name": "Jon Holba",
+            "username": "JHolba"
+          },
+          "distinct": true,
+          "id": "4efb1902a3f15cbdd877c89d5f2865f857f066e6",
+          "message": "Remove code paths for python <3.11",
+          "timestamp": "2024-12-10T10:50:20+01:00",
+          "tree_id": "cdb466a57f6a494ae86e0787ce809dc98f75045c",
+          "url": "https://github.com/equinor/ert/commit/4efb1902a3f15cbdd877c89d5f2865f857f066e6"
+        },
+        "date": 1733824327122,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21451582590554963,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08362406842782452",
+            "extra": "mean: 4.661660722599999 sec\nrounds: 5"
           }
         ]
       }
