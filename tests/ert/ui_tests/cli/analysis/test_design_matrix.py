@@ -22,6 +22,7 @@ def test_run_poly_example_with_design_matrix():
         {
             "REAL": list(range(num_realizations)),
             "a": a_values,
+            "category": 5 * ["cat1"] + 5 * ["cat2"],
         }
     )
     default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
@@ -59,6 +60,7 @@ def test_run_poly_example_with_design_matrix():
                         return json.load(f)["DESIGN_MATRIX"]
 
                 def _evaluate(coeffs, x):
+                    assert coeffs["category"] in ["cat1", "cat2"]
                     return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
                 if __name__ == "__main__":
@@ -88,8 +90,9 @@ def test_run_poly_example_with_design_matrix():
             "DESIGN_MATRIX"
         )["values"]
         np.testing.assert_array_equal(params[:, 0], a_values)
-        np.testing.assert_array_equal(params[:, 1], 10 * [1])
-        np.testing.assert_array_equal(params[:, 2], 10 * [2])
+        np.testing.assert_array_equal(params[:, 0], 5 * ["cat1"] + 5 * ["cat2"])
+        np.testing.assert_array_equal(params[:, 2], 10 * [1])
+        np.testing.assert_array_equal(params[:, 3], 10 * [2])
 
 
 @pytest.mark.usefixtures("copy_poly_case")
