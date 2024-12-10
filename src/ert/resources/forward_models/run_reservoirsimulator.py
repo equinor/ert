@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from pathlib import Path
 from random import random
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union, get_args
 
 import resfo
 
@@ -43,6 +43,7 @@ class EclError(RuntimeError):
         return False
 
 
+Simulators = Literal["flow", "eclipse", "e300"]
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
@@ -131,13 +132,17 @@ class RunReservoirSimulator:
 
     def __init__(
         self,
-        simulator: Literal["flow", "eclipse", "e300"],
+        simulator: Simulators,
         version: Optional[str],
         ecl_case: Union[Path, str],
         num_cpu: int = 1,
         check_status: bool = True,
         summary_conversion: bool = False,
     ):
+        if simulator not in get_args(Simulators):
+            raise ValueError(
+                f"Unknown simulator '{simulator}', pick from {get_args(Simulators)}"
+            )
         self.simulator = simulator
         self.version: Optional[str] = version
 
@@ -169,7 +174,6 @@ class RunReservoirSimulator:
         self.runner_abspath: str = str(_runner_abspath)
 
         data_file = ecl_case_to_data_file(Path(ecl_case))
-
         if not Path(data_file).exists():
             raise IOError(f"No such file: {data_file}")
 
@@ -396,7 +400,7 @@ def run_reservoirsimulator(args: List[str]) -> None:
                 num_cpu=options.num_cpu,
                 check_status=not options.ignore_errors,
                 summary_conversion=options.summary_conversion,
-            ).runEclipseX00()
+            ).run_eclipseX00()
         else:
             RunReservoirSimulator(
                 "flow",
@@ -404,7 +408,7 @@ def run_reservoirsimulator(args: List[str]) -> None:
                 options.ecl_case,
                 num_cpu=options.num_cpu,
                 check_status=not options.ignore_errors,
-            ).runFlow()
+            ).run_flow()
 
     except EclError as msg:
         print(msg, file=sys.stderr)

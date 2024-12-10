@@ -1,5 +1,9 @@
+import os
+import stat
+import sys
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -25,25 +29,77 @@ ecl_case_to_data_file = import_from_location(
 )
 
 
-def test_runners_are_found_from_path():
-    # assert different runners are looked for given wanted
-    # simulator
-    # assert runtimeoerror if no runner found
-    pass
+@pytest.fixture(name="mocked_eclrun")
+def fixture_mocked_eclrun(use_tmpdir, monkeypatch):
+    """This puts a eclrun binary in path that cannot do anything."""
+    eclrun_bin = Path("bin/eclrun")
+    eclrun_bin.parent.mkdir()
+    eclrun_bin.write_text("", encoding="utf-8")
+    eclrun_bin.chmod(eclrun_bin.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"bin:{os.environ['PATH']}")
 
 
-def test_flowrun_can_be_bypassed():
-    # if flow is in path, then we can bypass
-    # assert an error if num_cpu is more than 1., not suppported yet.
-    pass
+def test_unknown_simulator():
+    with pytest.raises(ValueError, match="Unknown simulator"):
+        run_reservoirsimulator.RunReservoirSimulator(
+            "bogus_flow", "mocked_version", "bogus_deck.DATA"
+        )
 
 
+@pytest.mark.usefixtures("mocked_eclrun")
 def test_runner_fails_on_missing_data_file():
-    pass
+    with pytest.raises(OSError, match="No such file: NOTEXISTING.DATA"):
+        run_reservoirsimulator.RunReservoirSimulator(
+            "eclipse", "mocked_version", "NOTEXISTING.DATA"
+        )
 
 
-def test_ecl_case_from_data_file():
-    pass
+@pytest.mark.usefixtures("mocked_eclrun")
+def test_runner_can_find_deck_without_extension():
+    Path("DECK.DATA").write_text("FOO", encoding="utf-8")
+    runner = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "mocked_version", "DECK"
+    )
+    assert runner.data_file == "DECK.DATA"
+
+
+@pytest.mark.usefixtures("mocked_eclrun")
+def test_runner_can_find_lowercase_deck_without_extension():
+    Path("deck.data").write_text("FOO", encoding="utf-8")
+    runner = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "mocked_version", "deck"
+    )
+    assert runner.data_file == "deck.data"
+
+
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Case insensitive filesystem on MacOS"
+)
+@pytest.mark.usefixtures("mocked_eclrun")
+def test_runner_cannot_find_mixed_case_decks():
+    Path("deck.DATA").write_text("FOO", encoding="utf-8")
+    with pytest.raises(OSError, match="No such file: deck.data"):
+        run_reservoirsimulator.RunReservoirSimulator(
+            "eclipse", "mocked_version", "deck"
+        )
+
+
+@pytest.mark.usefixtures("mocked_eclrun")
+@pytest.mark.parametrize(
+    "data_path, expected",
+    [
+        ("DECK.DATA", "DECK"),
+        ("foo/DECK.DATA", "DECK"),
+        ("foo/deck.data", "deck"),
+    ],
+)
+def test_runner_can_extract_base_name(data_path: str, expected: str):
+    Path(data_path).parent.mkdir(exist_ok=True)
+    Path(data_path).write_text("FOO", encoding="utf-8")
+    runner = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "mocked_version", data_path
+    )
+    assert runner.base_name == expected
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -67,6 +67,30 @@ def test_ecl100_binary_can_produce_output(source_root):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
+@pytest.mark.requires_eclipse
+def test_ecl100_binary_can_handle_extra_dots_in_casename(source_root):
+    """There is code dealing with file extensions in the Eclipse runner
+    so it better be tested to work as expected."""
+    shutil.copy(
+        source_root / "test-data/ert/eclipse/SPE1.DATA",
+        "SPE1.DOT.DATA",
+    )
+
+    erun = run_reservoirsimulator.RunReservoirSimulator(
+        "eclipse", "2019.3", "SPE1.DOT.DATA"
+    )
+    erun.run_eclipseX00()
+
+    ok_path = Path("SPE1.DOT.OK")
+    prt_path = Path("SPE1.DOT.PRT")
+
+    assert ok_path.exists()
+    assert prt_path.stat().st_size > 0
+    assert len(erun.parseErrors()) == 0
+
+
+@pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_runeclrun_argparse_api(source_root):
