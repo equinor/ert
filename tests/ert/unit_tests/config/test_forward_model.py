@@ -1037,7 +1037,7 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
             super().__init__(name="FMWithAssertionError", command=["the_executable.sh"])
 
         def validate_pre_experiment(
-            self, fm_step_json: ForwardModelStepJSON, _: dict
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
         ) -> None:
             raise AssertionError("I should be a warning")
 
@@ -1049,7 +1049,7 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
             )
 
         def validate_pre_experiment(
-            self, fm_step_json: ForwardModelStepJSON, _: dict
+            self, fm_step_json: ForwardModelStepJSON, _: Dict[str, str]
         ) -> None:
             raise ForwardModelStepValidationError("I should not be a warning")
 
