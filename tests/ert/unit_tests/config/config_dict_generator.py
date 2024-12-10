@@ -93,16 +93,10 @@ transforms = st.sampled_from(list(TRANSFORM_FUNCTIONS))
 small_floats = st.floats(min_value=1.0, max_value=10.0, allow_nan=False)
 positives = st.integers(min_value=1, max_value=10000)
 queue_systems = st.sampled_from(QueueSystem)
-memory_unit_slurm = st.sampled_from(["", "K", "G", "M", "T"])
 memory_unit_torque = st.sampled_from(["kb", "mb", "gb"])
 memory_unit_lsf = st.sampled_from(
     ["", "KB", "K", "MB", "M", "GB", "G", "TB", "T", "PB", "P", "EB", "E", "ZB", "Z"]
 )
-
-
-@st.composite
-def memory_with_unit_slurm(draw):
-    return f"{draw(positives)}{draw(memory_unit_slurm)}"
 
 
 @st.composite
@@ -116,7 +110,6 @@ def memory_with_unit_lsf(draw):
 
 
 memory_with_unit = {
-    QueueSystemWithGeneric.SLURM: memory_with_unit_slurm,
     QueueSystemWithGeneric.TORQUE: memory_with_unit_torque,
     QueueSystemWithGeneric.LSF: memory_with_unit_lsf,
     QueueSystemWithGeneric.LOCAL: memory_with_unit_lsf,  # Just a dummy value

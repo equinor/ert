@@ -920,18 +920,6 @@ Simulation settings
     should be included in the slurm run
 
 
-**max_memory (optional)**
-    Type: *Optional[str]*
-
-    Maximum memory usage for a slurm job.
-
-
-**max_memory_cpu (optional)**
-    Type: *Optional[str]*
-
-    Maximum memory usage per cpu for a slurm job.
-
-
 **max_runtime (optional)**
     Type: *Optional[NonNegativeInt]*
 

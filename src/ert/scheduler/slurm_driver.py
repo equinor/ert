@@ -67,22 +67,17 @@ class SlurmDriver(Driver):
         scancel_cmd: str = "scancel",
         sbatch_cmd: str = "sbatch",
         user: str | None = None,
-        memory: str | None = "",
         realization_memory: int | None = 0,
         queue_name: str | None = None,
-        memory_per_cpu: str | None = None,
         max_runtime: float | None = None,
         squeue_timeout: float = 2,
         project_code: str | None = None,
         activate_script: str = "",
     ) -> None:
         """
-        The arguments "memory" and "realization_memory" are currently both
-        present, where the latter has been added later. "realization_memory" is
-        a global keyword in Ert and not queue specific. It is always supplied
-        in bytes to the driver. "memory" is a string with a Slurm unit and is a
-        Slurm queue specific queue option. They are both supplied to sbatch
-        using "--mem" so they cannot both be defined at the same time.
+        The argument "realization_memory" is a global keyword in Ert
+        and not queue specific. It is always supplied in bytes to
+        the driver, and forwarded to sbatch using "--mem".
 
         In slurm, --mem==0 requests all memory on a node. In Ert,
         zero "realization memory" is the default and means no intended
@@ -93,15 +88,7 @@ class SlurmDriver(Driver):
         self._iens2jobid: dict[int, str] = {}
         self._jobs: dict[str, JobData] = {}
         self._job_error_message_by_iens: dict[int, str] = {}
-        self._memory_per_cpu = memory_per_cpu
-        self._memory = memory
         self._realization_memory = realization_memory
-
-        if self._realization_memory and self._memory:
-            raise ValueError(
-                "Overspecified memory, use either memory "
-                "or realization_memory, not both"
-            )
 
         self._max_runtime = max_runtime
         self._queue_name = queue_name
@@ -148,8 +135,6 @@ class SlurmDriver(Driver):
             # In slurm, --mem==0 requests all memory on a node. In Ert,
             # zero realization memory means no intended memory allocation.
             sbatch_with_args.append(f"--mem={self._realization_memory // 1024**2}M")
-        if self._memory:
-            sbatch_with_args.append(f"--mem={self._memory}")
         if self._include_hosts:
             sbatch_with_args.append(f"--nodelist={self._include_hosts}")
         if self._exclude_hosts:
@@ -158,8 +143,6 @@ class SlurmDriver(Driver):
             sbatch_with_args.append(
                 f"--time={_seconds_to_slurm_time_format(self._max_runtime)}"
             )
-        if self._memory_per_cpu:
-            sbatch_with_args.append(f"--mem-per-cpu={self._memory_per_cpu}")
         if self._queue_name:
             sbatch_with_args.append(f"--partition={self._queue_name}")
         if self._project_code:
