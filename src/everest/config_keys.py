@@ -66,8 +66,6 @@ class ConfigKeys:
     SLURM_SQUEUE = "squeue"
     SLURM_SQUEUE_TIMEOUT = "squeue_timeout"
     SLURM_MAX_RUNTIME = "slurm_timeout"
-    SLURM_MEMORY = "max_memory"
-    SLURM_MEMORY_PER_CPU = "max_memory_cpu"
     SLURM_EXCLUDE_HOST_OPTION = "exclude_host"
     SLURM_INCLUDE_HOST_OPTION = "include_host"
     MAX = "max"

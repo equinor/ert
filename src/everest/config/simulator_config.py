@@ -43,14 +43,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         description="""Comma separated list of nodes that
                 should be included in the slurm run""",
     )
-    max_memory: str | None = Field(
-        default=None,
-        description="Maximum memory usage for a slurm job.",
-    )
-    max_memory_cpu: str | None = Field(
-        default=None,
-        description="Maximum memory usage per cpu for a slurm job.",
-    )
     max_runtime: NonNegativeInt | None = Field(
         default=None,
         description="""Maximum allowed running time of a forward model. When

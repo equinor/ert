@@ -213,18 +213,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="MEMORY as QUEUE_OPTION to SLURM is deprecated and will be removed in "
-        "the future. Replace by REALIZATION_MEMORY.",
-        check=lambda line: "MEMORY" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="MEMORY_PER_CPU as QUEUE_OPTION to SLURM is deprecated and will be removed in "
-        "the future. Use REALIZATION_MEMORY instead.",
-        check=lambda line: "MEMORY_PER_CPU" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="Memory requirements in LSF should now be set using REALIZATION_MEMORY and not"
         " through the LSF_RESOURCE option.",
         check=lambda line: "LSF_RESOURCE" in line

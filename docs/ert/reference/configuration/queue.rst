@@ -449,20 +449,6 @@ only the most necessary options have been added.
 
     QUEUE_OPTION SLURM MAX_RUNTIME 100
 
-.. _slurm_memory:
-.. topic:: MEMORY
-
-  Memory (in MiB) required per node, for example::
-
-    QUEUE_OPTION SLURM MEMORY 16000
-
-.. _slurm_memory_per_cpu:
-.. topic:: MEMORY_PER_CPU
-
-  Memory (in MiB) required per allocated CPU, for example::
-
-    QUEUE_OPTION SLURM MEMORY_PER_CPU 4000
-
 .. _slurm_include_host:
 .. topic:: INCLUDE_HOST
 
