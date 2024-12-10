@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733826772884,
+  "lastUpdate": 1733828122113,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "13fdda268cf349fe5b3c328a8004cd6de67efa40",
-          "message": "Fix the azure logging handler in Everest\n\n* Fix the azure logging handler in Everest\r\n\r\nCo-authored-by: DanSava <dan.sava42@gmail.com>",
-          "timestamp": "2024-12-03T17:21:47+02:00",
-          "tree_id": "42d983a6caf0663e408a354e283e628097c4dc9d",
-          "url": "https://github.com/equinor/ert/commit/13fdda268cf349fe5b3c328a8004cd6de67efa40"
-        },
-        "date": 1733239420814,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21449748614004083,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03604122720208032",
-            "extra": "mean: 4.662059299600003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026439295745565545",
             "extra": "mean: 4.412750619400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "68d01c72cb386db9c9236591c52b3862d12ad375",
+          "message": "Lower test_memory_smoothing threshold",
+          "timestamp": "2024-12-10T11:53:29+01:00",
+          "tree_id": "c9197c37daaa4da06cb25d941da7998420010f10",
+          "url": "https://github.com/equinor/ert/commit/68d01c72cb386db9c9236591c52b3862d12ad375"
+        },
+        "date": 1733828121140,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21975888542340732,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029186475432132337",
+            "extra": "mean: 4.550441717400003 sec\nrounds: 5"
           }
         ]
       }
