@@ -137,25 +137,18 @@ def parse_resource_string(qsub_args: str) -> dict[str, str]:
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_memory_per_job():
-    driver = OpenPBSDriver(memory_per_job="10gb")
-    await driver.submit(0, "sleep")
-    assert " -l mem=10gb" in Path("captured_qsub_args").read_text(encoding="utf-8")
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_no_default_memory_per_job():
+async def test_no_default_realization_memory():
     driver = OpenPBSDriver()
     await driver.submit(0, "sleep")
     assert " -l " not in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_no_validation_of_memory_per_job():
+async def test_realization_memory_not_negative():
     # Validation will happen during config parsing
-    driver = OpenPBSDriver(memory_per_job="a_lot")
-    await driver.submit(0, "sleep")
-    assert " -l mem=a_lot" in Path("captured_qsub_args").read_text(encoding="utf-8")
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep", realization_memory=-1)
+    assert " -l " not in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -177,47 +170,6 @@ async def test_job_name_with_prefix():
     driver = OpenPBSDriver(job_prefix="pre_")
     await driver.submit(0, "sleep", name="sleepy")
     assert " -Npre_sleepy " in Path("captured_qsub_args").read_text(encoding="utf-8")
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_num_nodes():
-    driver = OpenPBSDriver(num_nodes=2)
-    await driver.submit(0, "sleep")
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert resources["select"] == "2"
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_num_nodes_default():
-    # This is the driver default, Ert can fancy a different default
-    driver = OpenPBSDriver()
-    await driver.submit(0, "sleep")
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert "nodes" not in resources
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_num_cpus_per_node():
-    driver = OpenPBSDriver(num_cpus_per_node=2)
-    await driver.submit(0, "sleep", num_cpu=2)
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert resources["ncpus"] == "2"
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_num_cpus_per_node_default():
-    driver = OpenPBSDriver()
-    await driver.submit(0, "sleep")
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert "ncpus" not in resources
 
 
 @pytest.mark.usefixtures("capturing_qsub")
@@ -309,18 +261,21 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
     assert was_started == started_expected
 
 
-@given(words, st.integers(min_value=1), words)
+@given(st.integers(), st.integers(min_value=1), words)
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
+async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
     driver = OpenPBSDriver(
-        memory_per_job=memory_per_job if memory_per_job else None,
         cluster_label=cluster_label if cluster_label else None,
     )
-    await driver.submit(0, "sleep", num_cpu=num_cpu)
+    await driver.submit(
+        0, "sleep", num_cpu=num_cpu, realization_memory=realization_memory
+    )
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
-    assert resources.get("mem", "") == memory_per_job
+    assert resources.get("mem", "") == (
+        f"{realization_memory // 1024**2 }mb" if realization_memory > 0 else ""
+    )
     assert resources.get("select", "1") == "1"
     assert resources.get("ncpus", "1") == str(num_cpu)
 
@@ -331,64 +286,8 @@ async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
 
     assert len(resources) == sum(
         [
-            bool(memory_per_job),
+            realization_memory > 0,
             num_cpu > 1,
-            bool(cluster_label),
-        ]
-    ), "Unknown or missing resources in resource string"
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_submit_with_realization_memory():
-    driver = OpenPBSDriver()
-    await driver.submit(0, "sleep", realization_memory=1024**2)
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert resources.get("mem", "") == "1mb"
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_submit_with_realization_memory_and_memory_per_job():
-    driver = OpenPBSDriver(memory_per_job="1")
-    with pytest.raises(ValueError, match="Overspecified memory"):
-        await driver.submit(0, "sleep", realization_memory=1)
-
-
-@given(words, st.integers(min_value=0), st.integers(min_value=0), words)
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_full_resource_string_deprecated_options(
-    memory_per_job, num_nodes, num_cpus_per_node, cluster_label
-):
-    """Test deprecated queue options to the driver.
-
-    Remove this test function altogether when NUM_CPUS_PER_NODE and NUM_NODES
-    support is removed"""
-    driver = OpenPBSDriver(
-        memory_per_job=memory_per_job if memory_per_job else None,
-        num_nodes=num_nodes if num_nodes > 0 else None,
-        num_cpus_per_node=num_cpus_per_node if num_cpus_per_node > 0 else None,
-        cluster_label=cluster_label if cluster_label else None,
-    )
-    num_cpu = (num_nodes or 1) * (num_cpus_per_node or 1)
-    await driver.submit(0, "sleep", num_cpu=num_cpu)
-    resources = parse_resource_string(
-        Path("captured_qsub_args").read_text(encoding="utf-8")
-    )
-    assert resources.get("mem", "") == memory_per_job
-    assert resources.get("select", "0") == str(num_nodes)
-    assert resources.get("ncpus", "1") == str(num_cpu)
-    # "0" here is a test implementation detail, not related to driver
-    if cluster_label:
-        # cluster_label is not a key-value thing in the resource list,
-        # the parser in this test handles that specially
-        assert resources.get(cluster_label) == "_present_"
-
-    assert len(resources) == sum(
-        [
-            bool(memory_per_job),
-            num_cpu > 1,
-            bool(num_nodes),
             bool(cluster_label),
         ]
     ), "Unknown or missing resources in resource string"

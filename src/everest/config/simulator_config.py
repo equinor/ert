@@ -119,20 +119,9 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
     qsub_cmd: str | None = Field(default="qsub", description="The submit command")
     qstat_cmd: str | None = Field(default="qstat", description="The query command")
     qdel_cmd: str | None = Field(default="qdel", description="The kill command")
-    qstat_options: str | None = Field(
-        default="-x",
-        description="Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.",
-    )
     cluster_label: str | None = Field(
         default=None,
         description="The name of the cluster you are running simulations in.",
-    )
-    memory_per_job: str | None = Field(
-        default=None,
-        description="""You can specify the amount of memory you will need for running your job. This will ensure that not too many jobs will run on a single shared memory node at once, possibly crashing the compute node if it runs out of memory.
-    You can get an indication of the memory requirement by watching the course of a local run using the htop utility. Whether you should set the peak memory usage as your requirement or a lower figure depends on how simultaneously each job will run.
-    The option to be supplied will be used as a string in the qsub argument. You must specify the unit, either gb or mb.
-    """,
     )
     keep_qsub_output: int | None = Field(
         default=0,
@@ -141,13 +130,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
     submit_sleep: float | None = Field(
         default=0.5,
         description="To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5",
-    )
-    queue_query_timeout: int | None = Field(
-        default=126,
-        description="""
-    The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may intermittently not respond and give error messages when submitting jobs or asking for job statuses. The timeout (in seconds) determines how long ERT will wait before it will give up. Applies to job submission (qsub) and job status queries (qstat). Default is 126 seconds.
-    ERT will do exponential sleeps, starting at 2 seconds, and the provided timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64 in order to be explicit about the number of retries. Set to zero to disallow flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two re-attempts. Example allowing six retries:
-    """,
     )
     project_code: str | None = Field(
         default=None,
