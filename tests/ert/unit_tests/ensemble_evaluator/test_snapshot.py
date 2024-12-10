@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime
 
 from _ert.events import (
     ForwardModelStepFailure,
     ForwardModelStepRunning,
+    ForwardModelStepStart,
     ForwardModelStepSuccess,
     RealizationSuccess,
 )
@@ -103,3 +105,54 @@ def test_that_realization_success_message_updates_state():
     assert (
         snapshot.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
     )
+
+
+def test_fm_updates_previous_fm_if_it_is_stuck_in_nonfinalized_state(caplog):
+    """In case a snapshot event is lost (if connection is dropped), a forwardmodel can be stuck in a non-finalized state.
+    This should be handled, and it is safe to assume it has already finished if the next forwardmodel has started.
+    We also don't know the end_time of the prior forwardmodel if we have lost a finished/exited event,
+    so we set it to the start_time of the next forwardmodel."""
+    caplog.set_level(logging.ERROR)
+
+    main_snapshot = EnsembleSnapshot()
+    main_snapshot._fm_step_snapshots["0", "0"] = FMStepSnapshot(
+        status="Pending",
+        index="0",
+        start_time=datetime.fromtimestamp(757575),
+        name="forward_model0",
+    )
+    main_snapshot._fm_step_snapshots["0", "1"] = FMStepSnapshot(
+        status="Running",
+        index="1",
+        start_time=datetime.fromtimestamp(939393),
+        name="forward_model1",
+    )
+
+    update_snapshot = EnsembleSnapshot()
+    update_snapshot.update_from_event(
+        ForwardModelStepStart(
+            real="0", fm_step="2", time=datetime.fromtimestamp(10101010)
+        ),
+        main_snapshot,
+    )
+    update_snapshot.update_from_event(
+        ForwardModelStepRunning(real="0", fm_step="2"), main_snapshot
+    )
+    main_snapshot.merge_snapshot(update_snapshot)
+
+    affected_snapshots = [main_snapshot, update_snapshot]
+    for snapshot in affected_snapshots:
+        assert snapshot.get_fm_step(real_id="0", fm_step_id="0")["status"] == "Finished"
+        assert snapshot.get_fm_step(real_id="0", fm_step_id="0")[
+            "end_time"
+        ] == datetime.fromtimestamp(939393)
+
+        assert snapshot.get_fm_step(real_id="0", fm_step_id="1")["status"] == "Finished"
+        assert snapshot.get_fm_step(real_id="0", fm_step_id="1")[
+            "end_time"
+        ] == datetime.fromtimestamp(10101010)
+
+        assert snapshot.get_fm_step(real_id="0", fm_step_id="2")["status"] == "Running"
+        assert "end_time" not in snapshot.get_fm_step(real_id="0", fm_step_id="2")
+
+    assert "Did not get finished event for" in caplog.text
