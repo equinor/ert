@@ -15,7 +15,6 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.plugins import ErtPluginManager
 
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
 
@@ -29,7 +28,7 @@ def check_removed_config(queue_system):
     }
     if isinstance(queue_system, str) and queue_system in queue_systems:
         raise ValueError(
-            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].__dataclass_fields__.keys())}"
+            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].model_fields.keys())}"
         )
 
 
@@ -97,10 +96,6 @@ class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
     def default_local_queue(cls, v):
         if v is None:
             return LocalQueueOptions(max_running=8)
-        if "activate_script" not in v and (
-            active_script := ErtPluginManager().activate_script()
-        ):
-            v["activate_script"] = active_script
         return v
 
     @model_validator(mode="before")
