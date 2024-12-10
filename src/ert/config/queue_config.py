@@ -134,7 +134,6 @@ class TorqueQueueOptions(QueueOptions):
     keep_qsub_output: bool = False
 
     qstat_options: Optional[str] = pydantic.Field(default=None, deprecated=True)
-    queue_query_timeout: Optional[str] = pydantic.Field(default=None, deprecated=True)
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -144,7 +143,6 @@ class TorqueQueueOptions(QueueOptions):
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         driver_dict.pop("qstat_options")
-        driver_dict.pop("queue_query_timeout")
         return driver_dict
 
     @pydantic.field_validator("memory_per_job")

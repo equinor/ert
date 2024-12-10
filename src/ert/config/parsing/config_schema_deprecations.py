@@ -183,12 +183,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION is ignored. "
-        "Please remove the line.",
-        check=lambda line: "QUEUE_QUERY_TIMEOUT" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="QSTAT_OPTIONS as QUEUE_OPTION to the TORQUE is ignored. "
         "Please remove the line.",
         check=lambda line: "QSTAT_OPTIONS" in line,

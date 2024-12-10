@@ -332,23 +332,6 @@ The following is a list of all queue-specific configuration options:
 
     QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
 
-.. _torque_queue_query_timeout:
-.. topic:: QUEUE_QUERY_TIMEOUT
-
-  The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may
-  intermittently not respond and give error messages when submitting jobs
-  or asking for job statuses. The timeout (in seconds) determines how long
-  ERT will wait before it will give up. Applies to job submission (``qsub``)
-  and job status queries (``qstat``). Default is 126 seconds.
-
-  ERT will do exponential sleeps, starting at 2 seconds, and the provided
-  timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
-  in order to be explicit about the number of retries. Set to zero to disallow
-  flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two
-  re-attempts. Example allowing six retries::
-
-    QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
-
 .. _torque_project_code:
 .. topic:: PROJECT_CODE
 

@@ -152,13 +152,6 @@ class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: i
         default=0.5,
         description="To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5",
     )
-    queue_query_timeout: Optional[int] = Field(
-        default=126,
-        description="""
-    The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may intermittently not respond and give error messages when submitting jobs or asking for job statuses. The timeout (in seconds) determines how long ERT will wait before it will give up. Applies to job submission (qsub) and job status queries (qstat). Default is 126 seconds.
-    ERT will do exponential sleeps, starting at 2 seconds, and the provided timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64 in order to be explicit about the number of retries. Set to zero to disallow flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two re-attempts. Example allowing six retries:
-    """,
-    )
     project_code: Optional[str] = Field(
         default=None,
         description="String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.",
