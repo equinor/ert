@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import QObject
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction
@@ -17,7 +15,7 @@ class Tool:
         super().__init__()
         self.__icon = icon
         self.__name = name
-        self.__parent: Optional[QObject] = None
+        self.__parent: QObject | None = None
         self.__enabled = enabled
         self.__checkable = checkable
         self.__is_popup_menu = popup_menu
@@ -37,11 +35,11 @@ class Tool:
     def trigger(self) -> None:
         raise NotImplementedError()
 
-    def setParent(self, parent: Optional[QObject]) -> None:
+    def setParent(self, parent: QObject | None) -> None:
         self.__parent = parent
         self.__action.setParent(parent)
 
-    def parent(self) -> Optional[QObject]:
+    def parent(self) -> QObject | None:
         return self.__parent
 
     def isEnabled(self) -> bool:

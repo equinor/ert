@@ -1,5 +1,4 @@
 from io import TextIOWrapper
-from typing import Optional
 
 from qtpy.QtCore import QObject, QTimer, Signal, Slot
 
@@ -11,10 +10,10 @@ class FileUpdateWorker(QObject):
 
     read = Signal(str)
 
-    def __init__(self, file: TextIOWrapper, parent: Optional[QObject] = None) -> None:
+    def __init__(self, file: TextIOWrapper, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._file = file
-        self._timer: Optional[QTimer] = None
+        self._timer: QTimer | None = None
 
     @Slot()
     def stop(self) -> None:

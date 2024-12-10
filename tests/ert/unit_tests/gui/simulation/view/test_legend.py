@@ -1,5 +1,3 @@
-from typing import Dict
-
 import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, settings
@@ -18,7 +16,7 @@ from tests.ert.ui_tests.gui.conftest import get_child
     )
 )
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-def test_marker_label_text_correct(qtbot, status: Dict[str, int]):
+def test_marker_label_text_correct(qtbot, status: dict[str, int]):
     realization_count = sum(status.values())
     progress_widget = ProgressWidget()
     qtbot.addWidget(progress_widget)
@@ -44,7 +42,7 @@ def test_marker_label_text_correct(qtbot, status: Dict[str, int]):
     )
 )
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-def test_progress_state_width_correct(qtbot, status: Dict[str, int]):
+def test_progress_state_width_correct(qtbot, status: dict[str, int]):
     realization_count = sum(status.values())
     progress_widget = ProgressWidget()
     qtbot.addWidget(progress_widget)

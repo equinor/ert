@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,9 +22,9 @@ class StdDevPlot:
         self,
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_data: Dict[str, npt.NDArray[np.float32]],
+        std_dev_data: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer

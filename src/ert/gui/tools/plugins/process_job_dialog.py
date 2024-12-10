@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie
@@ -25,7 +25,7 @@ class ProcessJobDialog(QDialog):
     closeButtonPressed = Signal()
     cancelConfirmed = Signal()
 
-    def __init__(self, title: str, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, title: str, parent: QWidget | None = None) -> None:
         QDialog.__init__(self, parent)
 
         self.__parent = parent
@@ -80,7 +80,7 @@ class ProcessJobDialog(QDialog):
         self.presentError.connect(self.__presentError)
         self.closeButtonPressed.connect(self.__confirmCancel)
 
-        self._msg_box: Optional[QMessageBox] = None
+        self._msg_box: QMessageBox | None = None
 
     def disableCloseButton(self) -> None:
         self.close_button.setEnabled(False)
@@ -88,7 +88,7 @@ class ProcessJobDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # disallow pressing escape to close
         # when close button is not enabled
         if (
@@ -98,15 +98,15 @@ class ProcessJobDialog(QDialog):
         ):
             QDialog.keyPressEvent(self, a0)
 
-    def closeEvent(self, a0: Optional[QCloseEvent]) -> None:
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
         if a0 is not None:
             a0.ignore()
         self.closeButtonPressed.emit()
 
     def __createMsgBox(
-        self, title: Optional[str], message: Optional[str], details: str
+        self, title: str | None, message: str | None, details: str
     ) -> QMessageBox:
-        msg_box = QMessageBox(cast(Optional[QWidget], self.parent()))
+        msg_box = QMessageBox(cast(QWidget | None, self.parent()))
         msg_box.setText(title)
         msg_box.setInformativeText(message)
 
@@ -122,7 +122,7 @@ class ProcessJobDialog(QDialog):
         return msg_box
 
     def __presentInformation(
-        self, title: Optional[str], message: Optional[str], details: str
+        self, title: str | None, message: str | None, details: str
     ) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Information)
@@ -130,7 +130,7 @@ class ProcessJobDialog(QDialog):
         self._msg_box.exec_()
 
     def __presentError(
-        self, title: Optional[str], message: Optional[str], details: str
+        self, title: str | None, message: str | None, details: str
     ) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Critical)

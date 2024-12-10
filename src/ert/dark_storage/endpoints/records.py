@@ -1,5 +1,6 @@
 import io
-from typing import Annotated, Any, Mapping, Union
+from collections.abc import Mapping
+from typing import Annotated, Any
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
@@ -78,7 +79,7 @@ async def get_ensemble_record(
     storage: Storage = DEFAULT_STORAGE,
     name: str,
     ensemble_id: UUID,
-    accept: Annotated[Union[str, None], Header()] = None,
+    accept: Annotated[str | None, Header()] = None,
 ) -> Any:
     name = unquote(name)
     try:

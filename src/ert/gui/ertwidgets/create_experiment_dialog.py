@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import (
     Qt,
     Signal,
@@ -14,11 +12,7 @@ from qtpy.QtWidgets import (
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import StringBox, TextModel, ValueModel
-from ert.validation import (
-    ExperimentValidation,
-    IntegerArgument,
-    ProperNameArgument,
-)
+from ert.validation import ExperimentValidation, IntegerArgument, ProperNameArgument
 
 
 class CreateExperimentDialog(QDialog):
@@ -28,7 +22,7 @@ class CreateExperimentDialog(QDialog):
         self,
         notifier: ErtNotifier,
         title: str = "Create new experiment",
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         QDialog.__init__(self, parent=parent)
         self.setModal(True)

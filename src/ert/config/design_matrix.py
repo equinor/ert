@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -11,10 +11,7 @@ from pandas.api.types import is_integer_dtype
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 from ._option_dict import option_dict
-from .parsing import (
-    ConfigValidationError,
-    ErrorInfo,
-)
+from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
     from ert.config import (
@@ -31,13 +28,13 @@ class DesignMatrix:
     default_sheet: str
 
     def __post_init__(self) -> None:
-        self.num_realizations: Optional[int] = None
-        self.active_realizations: Optional[List[bool]] = None
-        self.design_matrix_df: Optional[pd.DataFrame] = None
-        self.parameter_configuration: Optional[Dict[str, ParameterConfig]] = None
+        self.num_realizations: int | None = None
+        self.active_realizations: list[bool] | None = None
+        self.design_matrix_df: pd.DataFrame | None = None
+        self.parameter_configuration: dict[str, ParameterConfig] | None = None
 
     @classmethod
-    def from_config_list(cls, config_list: List[str]) -> "DesignMatrix":
+    def from_config_list(cls, config_list: list[str]) -> DesignMatrix:
         filename = Path(config_list[0])
         options = option_dict(config_list, 1)
         design_sheet = options.get("DESIGN_SHEET")
@@ -119,8 +116,8 @@ class DesignMatrix:
         )
         design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
-        parameter_configuration: Dict[str, ParameterConfig] = {}
-        transform_function_definitions: List[TransformFunctionDefinition] = []
+        parameter_configuration: dict[str, ParameterConfig] = {}
+        transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
             transform_function_definitions.append(
                 TransformFunctionDefinition(
@@ -150,12 +147,12 @@ class DesignMatrix:
 
     @staticmethod
     def _read_excel(
-        file_name: Union[Path, str],
+        file_name: Path | str,
         sheet_name: str,
-        usecols: Optional[List[int]] = None,
-        header: Optional[int] = 0,
-        skiprows: Optional[int] = None,
-        dtype: Optional[str] = None,
+        usecols: list[int] | None = None,
+        header: int | None = 0,
+        skiprows: int | None = None,
+        dtype: str | None = None,
     ) -> pd.DataFrame:
         """
         Reads an Excel file into a DataFrame, with options to filter columns and rows,
@@ -172,7 +169,7 @@ class DesignMatrix:
         return df.dropna(axis=1, how="all")
 
     @staticmethod
-    def _validate_design_matrix(design_matrix: pd.DataFrame) -> List[str]:
+    def _validate_design_matrix(design_matrix: pd.DataFrame) -> list[str]:
         """
         Validate user inputted design matrix
         :raises: ValueError if design matrix contains empty headers or empty cells
@@ -200,10 +197,10 @@ class DesignMatrix:
 
     @staticmethod
     def _read_defaultssheet(
-        xls_filename: Union[Path, str],
+        xls_filename: Path | str,
         defaults_sheetname: str,
-        existing_parameters: List[str],
-    ) -> Dict[str, Union[str, float]]:
+        existing_parameters: list[str],
+    ) -> dict[str, str | float]:
         """
         Construct a dict of keys and values to be used as defaults from the
         first two columns in a spreadsheet. Only returns the keys that are
@@ -240,7 +237,7 @@ class DesignMatrix:
         }
 
 
-def convert_to_numeric(x: str) -> Union[str, float]:
+def convert_to_numeric(x: str) -> str | float:
     try:
         return pd.to_numeric(x)
     except ValueError:

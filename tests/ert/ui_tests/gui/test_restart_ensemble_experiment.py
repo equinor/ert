@@ -2,7 +2,6 @@ import os
 import random
 import stat
 from textwrap import dedent
-from typing import Set
 
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
@@ -20,7 +19,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     """
     gui = opened_main_window_poly
 
-    def write_poly_eval(failing_reals: Set[int]):
+    def write_poly_eval(failing_reals: set[int]):
         with open("poly_eval.py", "w", encoding="utf-8") as f:
             f.write(
                 dedent(

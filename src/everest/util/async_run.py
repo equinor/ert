@@ -18,7 +18,7 @@ def async_run(function, on_finished=None, on_error=None):
 
 class _AsyncRunner(Thread):
     def __init__(self, function=None, on_finished=None, on_error=None):
-        super(_AsyncRunner, self).__init__()
+        super().__init__()
         self._function = function
         self._on_finished = on_finished
         self._on_error = on_error

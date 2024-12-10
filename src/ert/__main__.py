@@ -11,7 +11,8 @@ import resource
 import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
-from typing import Any, Dict, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
 import yaml
@@ -50,14 +51,14 @@ from ert.validation import (
 logger = logging.getLogger(__name__)
 
 
-def run_ert_storage(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
+def run_ert_storage(args: Namespace, _: ErtPluginManager | None = None) -> None:
     with StorageService.start_server(
         verbose=True, project=ErtConfig.from_file(args.config).ens_path
     ) as server:
         server.wait()
 
 
-def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> None:
+def run_webviz_ert(args: Namespace, _: ErtPluginManager | None = None) -> None:
     try:
         import webviz_ert  # type: ignore  # noqa
     except ImportError as err:
@@ -65,7 +66,7 @@ def run_webviz_ert(args: Namespace, _: Optional[ErtPluginManager] = None) -> Non
             "Running `ert vis` requires that webviz_ert is installed"
         ) from err
 
-    kwargs: Dict[str, Any] = {"verbose": args.verbose}
+    kwargs: dict[str, Any] = {"verbose": args.verbose}
     ert_config = ErtConfig.with_plugins().from_file(args.config)
     os.chdir(ert_config.config_path)
     ens_path = ert_config.ens_path
@@ -141,7 +142,7 @@ def valid_name(user_input: str) -> str:
     return user_input
 
 
-def valid_ensemble(user_input: str) -> Union[str, UUID]:
+def valid_ensemble(user_input: str) -> str | UUID:
     if user_input.startswith("UUID="):
         return UUID(user_input[5:])
     return valid_name(user_input)
@@ -194,8 +195,8 @@ def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
 
 
 class DeprecatedAction(argparse.Action):
-    def __init__(self, alternative_option: Optional[str] = None, **kwargs: Any) -> None:
-        self.alternative_option: Optional[str] = alternative_option
+    def __init__(self, alternative_option: str | None = None, **kwargs: Any) -> None:
+        self.alternative_option: str | None = alternative_option
         super().__init__(**kwargs)
 
     def __call__(
@@ -203,7 +204,7 @@ class DeprecatedAction(argparse.Action):
         parser: ArgumentParser,
         namespace: argparse.Namespace,
         values: Any,
-        option_string: Optional[str] = None,
+        option_string: str | None = None,
     ) -> None:
         alternative_msg: str = (
             f"Use {self.alternative_option} instead." if self.alternative_option else ""
@@ -215,7 +216,7 @@ class DeprecatedAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
+def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     if parser is None:
         parser = ArgumentParser(description="ERT - Ensemble Reservoir Tool")
 
@@ -605,7 +606,7 @@ def get_ert_parser(parser: Optional[ArgumentParser] = None) -> ArgumentParser:
     return parser
 
 
-def ert_parser(parser: Optional[ArgumentParser], args: Sequence[str]) -> Namespace:
+def ert_parser(parser: ArgumentParser | None, args: Sequence[str]) -> Namespace:
     return get_ert_parser(parser).parse_args(
         args,
         namespace=Namespace(),
@@ -617,7 +618,7 @@ def log_process_usage() -> None:
         usage = resource.getrusage(resource.RUSAGE_SELF)
         max_rss = ert.shared.status.utils.get_ert_memory_usage()
 
-        usage_dict: Dict[str, Union[int, float]] = {
+        usage_dict: dict[str, int | float] = {
             "User time": usage.ru_utime,
             "System time": usage.ru_stime,
             "File system inputs": usage.ru_inblock,

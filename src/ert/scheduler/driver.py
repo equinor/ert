@@ -4,8 +4,8 @@ import asyncio
 import logging
 import shlex
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from .event import Event
 
@@ -103,7 +103,7 @@ class Driver(ABC):
         error_on_msgs: Iterable[str] = (),
         log_to_debug: bool | None = True,
     ) -> tuple[bool, str]:
-        _logger = driverlogger or logging.getLogger(__name__)
+        logger = driverlogger or logging.getLogger(__name__)
         error_message: str | None = None
 
         for i in range(total_attempts):
@@ -127,14 +127,14 @@ class Driver(ABC):
             )
             if process.returncode == 0:
                 if retry_on_empty_stdout and not stdout:
-                    _logger.warning(
+                    logger.warning(
                         f'Command "{shlex.join(cmd_with_args)}" gave exit code 0 but empty stdout, '
                         "will retry. "
                         f'stderr: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
                     )
                 else:
                     if log_to_debug:
-                        _logger.debug(
+                        logger.debug(
                             f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
                         )
                     return True, stdout.decode(errors="ignore").strip()
@@ -152,7 +152,7 @@ class Driver(ABC):
                 error_message = outputs
             elif process.returncode in accept_codes:
                 if log_to_debug:
-                    _logger.debug(
+                    logger.debug(
                         f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
                     )
                 return True, stderr.decode(errors="ignore").strip()
@@ -160,7 +160,7 @@ class Driver(ABC):
                 error_message = (
                     f'Command "{shlex.join(cmd_with_args)}" failed with {outputs}'
                 )
-                _logger.error(error_message)
+                logger.error(error_message)
                 return False, error_message
             if i < (total_attempts - 1):
                 await asyncio.sleep(retry_interval)
@@ -168,5 +168,5 @@ class Driver(ABC):
             f'Command "{shlex.join(cmd_with_args)}" failed after {total_attempts} attempts '
             f"with {outputs}"
         )
-        _logger.error(error_message)
+        logger.error(error_message)
         return False, error_message

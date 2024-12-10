@@ -1,5 +1,3 @@
-from typing import List
-
 from .plot_config import PlotConfig
 
 
@@ -11,8 +9,8 @@ class PlotConfigHistory:
         super().__init__()
         self._name = name
         self._initial = PlotConfig.createCopy(initial)
-        self._undo_history: List[PlotConfig] = []
-        self._redo_history: List[PlotConfig] = []
+        self._undo_history: list[PlotConfig] = []
+        self._redo_history: list[PlotConfig] = []
         self._current = PlotConfig.createCopy(self._initial)
 
     def isUndoPossible(self) -> bool:

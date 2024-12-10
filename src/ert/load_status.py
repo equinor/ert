@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 
 class LoadStatus(Enum):
@@ -8,5 +8,5 @@ class LoadStatus(Enum):
 
 
 class LoadResult(NamedTuple):
-    status: Optional[LoadStatus]
+    status: LoadStatus | None
     message: str

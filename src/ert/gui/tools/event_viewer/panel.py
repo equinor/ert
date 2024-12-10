@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
 
 from qtpy import QtCore
 from qtpy.QtCore import QObject

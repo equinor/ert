@@ -1,16 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QCheckBox, QWidget
 
-from ert.gui.ertwidgets import (
-    CustomDialog,
-    ListEditBox,
-    PathChooser,
-    PathModel,
-)
+from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser, PathModel
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -22,7 +17,7 @@ class ExportDialog(CustomDialog):
         self,
         ert_config: ErtConfig,
         storage: LocalStorage,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         self.storage = storage
         description = "The CSV export requires some information before it starts:"
@@ -60,7 +55,7 @@ class ExportDialog(CustomDialog):
         self.addButtons()
 
     @property
-    def output_path(self) -> Optional[str]:
+    def output_path(self) -> str | None:
         return self.output_path_model.getPath()
 
     @property
@@ -77,7 +72,7 @@ class ExportDialog(CustomDialog):
         return json.dumps(ensembles)
 
     @property
-    def design_matrix_path(self) -> Optional[str]:
+    def design_matrix_path(self) -> str | None:
         path = self.design_matrix_path_model.getPath()
         if not path or not path.strip():
             path = None

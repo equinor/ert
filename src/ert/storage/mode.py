@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
+from collections.abc import Callable
+from enum import StrEnum
 from functools import wraps
-from typing import Callable, Concatenate, Literal, ParamSpec, TypeVar
+from typing import Concatenate, Literal, ParamSpec, TypeVar
 
 ModeLiteral = Literal["r", "w"]
 
@@ -14,7 +15,7 @@ class ModeError(ValueError):
     """
 
 
-class Mode(str, Enum):
+class Mode(StrEnum):
     """Enumeration representing the access modes for storage interaction."""
 
     READ = "r"

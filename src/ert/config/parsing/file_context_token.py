@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 from lark import Token
 
@@ -11,7 +11,7 @@ class FileContextToken(Token):
     filename: str
 
     def __new__(cls, token: Token, filename: str) -> "FileContextToken":
-        inst = super(FileContextToken, cls).__new__(
+        inst = super().__new__(
             cls,
             token.type,
             token.value,
@@ -46,7 +46,7 @@ class FileContextToken(Token):
 
     @classmethod
     def join_tokens(
-        cls, tokens: List["FileContextToken"], separator: str = " "
+        cls, tokens: list["FileContextToken"], separator: str = " "
     ) -> "FileContextToken":
         first = tokens[0]
         min_start_pos = min(x.start_pos for x in tokens if x.start_pos is not None)

@@ -36,7 +36,7 @@ def migrate(path: Path) -> None:
             )
 
         responses_file = experiment / "responses.json"
-        with open(responses_file, encoding="utf-8", mode="r") as f:
+        with open(responses_file, encoding="utf-8") as f:
             info = json.load(f)
         for key, values in list(info.items()):
             if values.get("_ert_kind") == "SummaryConfig" and not values.get("keys"):

@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
@@ -15,11 +14,11 @@ DEFAULT_BODY = Body(...)
 
 
 @router.get(
-    "/experiments/{experiment_id}/observations", response_model=List[js.ObservationOut]
+    "/experiments/{experiment_id}/observations", response_model=list[js.ObservationOut]
 )
 def get_observations(
     *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
-) -> List[js.ObservationOut]:
+) -> list[js.ObservationOut]:
     experiment = storage.get_experiment(experiment_id)
     return [
         js.ObservationOut(

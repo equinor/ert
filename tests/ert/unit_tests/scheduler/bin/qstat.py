@@ -5,7 +5,7 @@ import os
 import random
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 QSTAT_HEADER = (
     "Job id                         Name            User             Time Use S Queue\n"
@@ -13,7 +13,7 @@ QSTAT_HEADER = (
 )
 
 
-def read(path: Path, default: Optional[str] = None) -> Optional[str]:
+def read(path: Path, default: str | None = None) -> str | None:
     return path.read_text().strip() if path.exists() else default
 
 
@@ -54,7 +54,7 @@ def main() -> None:
         elif pid is not None:
             state = "R"
 
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "Job_Name": name,
             "job_state": state,
         }

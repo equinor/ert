@@ -2,7 +2,7 @@ import argparse
 from copy import deepcopy as copy
 from functools import partial
 from os.path import exists, join
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from ruamel.yaml import YAML
 from seba_sqlite.database import Database as seba_db
@@ -13,7 +13,7 @@ from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
 
 
-def _yaml_config(file_path: str, parser) -> Tuple[str, Optional[Dict[str, Any]]]:
+def _yaml_config(file_path: str, parser) -> tuple[str, dict[str, Any] | None]:
     loaded_config = EverestConfig.load_file_with_argparser(file_path, parser)
 
     assert loaded_config is not None

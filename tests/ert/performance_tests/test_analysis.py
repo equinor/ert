@@ -7,9 +7,7 @@ import xarray as xr
 import xtgeo
 from scipy.ndimage import gaussian_filter
 
-from ert.analysis import (
-    smoother_update,
-)
+from ert.analysis import smoother_update
 from ert.config import Field, GenDataConfig
 from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings

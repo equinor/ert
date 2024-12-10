@@ -5,7 +5,7 @@ Type: *Optional[ModelConfig]*
 Configuration of the Everest model
 
 **realizations (optional)**
-    Type: *List[NonNegativeInt]*
+    Type: *list[NonNegativeInt]*
 
     List of realizations to use in optimization ensemble.
 
@@ -22,7 +22,7 @@ Configuration of the Everest model
 
 
 **realizations_weights (optional)**
-    Type: *Optional[List[float]]*
+    Type: *Optional[list[float]]*
 
     List of weights, one per realization.
 
@@ -32,7 +32,7 @@ Configuration of the Everest model
 
 controls (required)
 -------------------
-Type: *List[ControlConfig]*
+Type: *list[ControlConfig]*
 
 Defines a list of controls.
 Controls should have unique names each control defines
@@ -57,7 +57,7 @@ a group of control variables
 
 
 **variables (required)**
-    Type: *Union[List[ControlVariableConfig], List[ControlVariableGuessListConfig]]*
+    Type: *Union[list[ControlVariableConfig], list[ControlVariableGuessListConfig]]*
 
     List of control variables
 
@@ -92,7 +92,7 @@ a group of control variables
 
 
     **scaled_range (optional)**
-        Type: *Optional[Tuple[float, float]]*
+        Type: *Optional[tuple[float, float]]*
 
 
         Can be used to set the range of the variable values
@@ -171,7 +171,7 @@ a group of control variables
 
 
     **initial_guess (optional)**
-        Type: *List[float]*
+        Type: *list[float]*
 
         List of Starting values for the control variable
 
@@ -271,7 +271,7 @@ a group of control variables
 
 
 **scaled_range (optional)**
-    Type: *Optional[Tuple[float, float]]*
+    Type: *Optional[tuple[float, float]]*
 
 
     Can be used to set the range of the control values
@@ -521,7 +521,7 @@ Optimizer options
 
 
 **options (optional)**
-    Type: *Optional[List[str]]*
+    Type: *Optional[list[str]]*
 
     specifies non-validated, optional
     passthrough parameters for the optimizer
@@ -574,7 +574,7 @@ Optimizer options
 
 objective_functions (required)
 ------------------------------
-Type: *List[ObjectiveFunctionConfig]*
+Type: *list[ObjectiveFunctionConfig]*
 
 List of objective function specifications
 
@@ -697,7 +697,7 @@ The environment of Everest, specifies which folders are used for simulation and 
 
 wells (optional)
 ----------------
-Type: *List[WellConfig]*
+Type: *list[WellConfig]*
 
 A list of well configurations, all with unique names.
 
@@ -726,7 +726,7 @@ A list of well configurations, all with unique names.
 
 input_constraints (optional)
 ----------------------------
-Type: *Optional[List[InputConstraintConfig]]*
+Type: *Optional[list[InputConstraintConfig]]*
 
 List of input constraints
 
@@ -795,7 +795,7 @@ List of input constraints
 
 output_constraints (optional)
 -----------------------------
-Type: *Optional[List[OutputConstraintConfig]]*
+Type: *Optional[list[OutputConstraintConfig]]*
 
 A list of output constraints with unique names.
 
@@ -1100,7 +1100,7 @@ Simulation settings
 
 install_jobs (optional)
 -----------------------
-Type: *Optional[List[InstallJobConfig]]*
+Type: *Optional[list[InstallJobConfig]]*
 
 A list of jobs to install
 
@@ -1119,7 +1119,7 @@ A list of jobs to install
 
 install_workflow_jobs (optional)
 --------------------------------
-Type: *Optional[List[InstallJobConfig]]*
+Type: *Optional[list[InstallJobConfig]]*
 
 A list of workflow jobs to install
 
@@ -1138,7 +1138,7 @@ A list of workflow jobs to install
 
 install_data (optional)
 -----------------------
-Type: *Optional[List[InstallDataConfig]]*
+Type: *Optional[list[InstallDataConfig]]*
 
 A list of install data elements from the install_data config
 section. Each item marks what folders or paths need to be copied or linked
@@ -1173,7 +1173,7 @@ in order for the evaluation jobs to run.
 
 install_templates (optional)
 ----------------------------
-Type: *Optional[List[InstallTemplateConfig]]*
+Type: *Optional[list[InstallTemplateConfig]]*
 
 Allow the user to define the workflow establishing the model
 chain for the purpose of sensitivity analysis, enabling the relationship
@@ -1201,7 +1201,7 @@ evaluated.
 
 forward_model (optional)
 ------------------------
-Type: *Optional[List[str]]*
+Type: *Optional[list[str]]*
 
 List of jobs to run
 
@@ -1213,13 +1213,13 @@ Type: *Optional[WorkflowConfig]*
 Workflows to run during optimization
 
 **pre_simulation (optional)**
-    Type: *Optional[List[str]]*
+    Type: *Optional[list[str]]*
 
     List of workflow jobs triggered pre-simulation
 
 
 **post_simulation (optional)**
-    Type: *Optional[List[str]]*
+    Type: *Optional[list[str]]*
 
     List of workflow jobs triggered post-simulation
 
@@ -1314,13 +1314,13 @@ Settings to control the exports of a optimization run by everest.
 
 
 **keywords (optional)**
-    Type: *Optional[List[str]]*
+    Type: *Optional[list[str]]*
 
     List of eclipse keywords to be exported into csv.
 
 
 **batches (optional)**
-    Type: *Optional[List[int]]*
+    Type: *Optional[list[int]]*
 
     list of batches to be exported, default is all batches.
 

@@ -11,9 +11,7 @@ import ert.plugins.hook_implementations
 from ert.config import ErtConfig
 from ert.plugins import ErtPluginManager, plugin
 from tests.ert.unit_tests.plugins import dummy_plugins
-from tests.ert.unit_tests.plugins.dummy_plugins import (
-    DummyFMStep,
-)
+from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
 
 
 def test_no_plugins():

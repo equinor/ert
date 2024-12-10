@@ -1,4 +1,4 @@
-from typing import Collection
+from collections.abc import Collection
 
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.validation import ActiveRange, mask_to_rangestring

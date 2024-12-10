@@ -4,15 +4,10 @@ import logging
 from contextlib import suppress
 from queue import Empty, SimpleQueue
 from time import sleep
-from typing import Optional
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from ert.ensemble_evaluator import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
+from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from ert.gui.model.snapshot import SnapshotModel
 from ert.run_models import StatusEvents
 
@@ -28,7 +23,7 @@ class QueueEmitter(QObject):
     def __init__(
         self,
         event_queue: SimpleQueue[StatusEvents],
-        parent: Optional[QObject] = None,
+        parent: QObject | None = None,
     ):
         super().__init__(parent)
         logger.debug("init QueueEmitter")
@@ -51,7 +46,7 @@ class QueueEmitter(QObject):
 
             # pre-rendering in this thread to avoid work in main rendering thread
             if (
-                isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent))
+                isinstance(event, FullSnapshotEvent | SnapshotUpdateEvent)
                 and event.snapshot
             ):
                 SnapshotModel.prerender(event.snapshot)

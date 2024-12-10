@@ -2,9 +2,10 @@ import errno
 import os
 import tempfile
 from collections import Counter
+from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -26,7 +27,7 @@ _VARIABLE_ERROR_MESSAGE = (
 
 
 class InstallDataContext:
-    def __init__(self, install_data: List[InstallDataConfig], config_path: Path):
+    def __init__(self, install_data: list[InstallDataConfig], config_path: Path):
         self._install_data = install_data or []
         self._config_dir = str(config_path.parent)
         self._cwd = os.getcwd()
@@ -40,7 +41,7 @@ class InstallDataContext:
         os.chdir(self._temp_dir.name)
         return self
 
-    def _set_symlink(self, source: str, target: str, realization: Optional[int]):
+    def _set_symlink(self, source: str, target: str, realization: int | None):
         if realization is not None:
             source = source.replace("<GEO_ID>", str(realization))
             target = target.replace("<GEO_ID>", str(realization))
@@ -64,14 +65,14 @@ class InstallDataContext:
 
 def control_variables_validation(
     name: str,
-    _min: Optional[float],
-    _max: Optional[float],
-    initial_guess: Union[float, List[float], None],
-) -> List[str]:
+    min_: float | None,
+    max_: float | None,
+    initial_guess: float | list[float] | None,
+) -> list[str]:
     error = []
-    if _min is None:
+    if min_ is None:
         error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="min"))
-    if _max is None:
+    if max_ is None:
         error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="max"))
     if initial_guess is None:
         error.append(
@@ -80,16 +81,16 @@ def control_variables_validation(
     if isinstance(initial_guess, float):
         initial_guess = [initial_guess]
     if (
-        _min is not None
-        and _max is not None
+        min_ is not None
+        and max_ is not None
         and (
             msg := ", ".join(
-                str(guess) for guess in initial_guess or [] if not _min <= guess <= _max
+                str(guess) for guess in initial_guess or [] if not min_ <= guess <= max_
             )
         )
     ):
         error.append(
-            f"Variable {name} must respect {_min} <= initial_guess <= {_max}: {msg}"
+            f"Variable {name} must respect {min_} <= initial_guess <= {max_}: {msg}"
         )
     return error
 
@@ -141,7 +142,7 @@ def unique_items(items: Sequence[T]) -> Sequence[T]:
     return items
 
 
-def valid_range(range_value: Tuple[float, float]):
+def valid_range(range_value: tuple[float, float]):
     if range_value[0] >= range_value[1]:
         raise ValueError("scaled_range must be a valid range [a, b], where a < b.")
     return range_value
@@ -172,7 +173,7 @@ def check_writable_filepath(path: str):
         raise ValueError(f"User does not have write access to {path}")
 
 
-def check_for_duplicate_names(names: List[str], item_name: str, key: str = "item"):
+def check_for_duplicate_names(names: list[str], item_name: str, key: str = "item"):
     if len(set(names)) != len(names):
         histogram = {k: names.count(k) for k in set(names) if names.count(k) > 1}
         occurrences_str = ", ".join(
@@ -191,14 +192,14 @@ def as_abs_path(path: str, config_dir: str) -> str:
     return os.path.realpath(os.path.join(config_dir, path))
 
 
-def expand_geo_id_paths(path_source: str, realizations: List[int]):
+def expand_geo_id_paths(path_source: str, realizations: list[int]):
     if "<GEO_ID>" in path_source:
         return [path_source.replace("<GEO_ID>", str(r)) for r in realizations]
     return [path_source]
 
 
 def check_path_exists(
-    path_source: str, config_path: Optional[Path], realizations: List[int]
+    path_source: str, config_path: Path | None, realizations: list[int]
 ):
     """Check if the given path exists. If the given path contains <CONFIG_PATH>
     or GEO_ID they will be expanded and all instances of expanded paths need to exist.
@@ -265,7 +266,7 @@ def format_errors(error: ValidationError) -> str:
 
 
 def validate_forward_model_configs(
-    forward_model: Optional[List[str]], install_jobs: Optional[List[InstallJobConfig]]
+    forward_model: list[str] | None, install_jobs: list[InstallJobConfig] | None
 ):
     if not forward_model:
         return

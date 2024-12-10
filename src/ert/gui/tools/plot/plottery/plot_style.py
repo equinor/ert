@@ -1,11 +1,8 @@
-from typing import Optional
-
-
 class PlotStyle:
     def __init__(
         self,
         name: str,
-        color: Optional[str] = "#000000",
+        color: str | None = "#000000",
         alpha: float = 1.0,
         line_style: str = "-",
         marker: str = "",

@@ -1,4 +1,5 @@
-from typing import List, Sequence, Type, TypeVar
+from collections.abc import Sequence
+from typing import TypeVar
 
 from everest.plugins import hookspec
 
@@ -76,7 +77,7 @@ def get_forward_models_schemas():
 
 
 @hookspec
-def parse_forward_model_schema(path: str, schema: Type[T]):
+def parse_forward_model_schema(path: str, schema: type[T]):
     """
     Given a path and schema type, this hook will parse the file.
     """
@@ -106,7 +107,7 @@ def get_forward_model_documentations():
 
 
 @hookspec(firstresult=True)
-def custom_forward_model_outputs(forward_model_steps: List[str]):
+def custom_forward_model_outputs(forward_model_steps: list[str]):
     """
     Check if the given forward model steps will output to a file maching the
     defined everest objective

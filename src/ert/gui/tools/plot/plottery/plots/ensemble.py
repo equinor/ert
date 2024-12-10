@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -28,9 +28,9 @@ class EnsemblePlot:
         self,
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
@@ -74,7 +74,7 @@ class EnsemblePlot:
         plot_config: PlotConfig,
         data: pd.DataFrame,
         ensemble_label: str,
-        draw_style: Optional[str] = None,
+        draw_style: str | None = None,
     ) -> None:
         style = plot_config.defaultStyle()
 

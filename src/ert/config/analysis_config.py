@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Dict, Final, List, Optional, Union, no_type_check
+from typing import Any, Final, no_type_check
 
 from pydantic import PositiveFloat, ValidationError
 
@@ -22,30 +22,30 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_ANALYSIS_MODE = AnalysisMode.ENSEMBLE_SMOOTHER
-ObservationGroups = List[str]
+ObservationGroups = list[str]
 
 
 @dataclass
 class UpdateSettings:
     std_cutoff: PositiveFloat = 1e-6
     alpha: float = 3.0
-    auto_scale_observations: List[ObservationGroups] = field(default_factory=list)
+    auto_scale_observations: list[ObservationGroups] = field(default_factory=list)
 
 
 @dataclass
 class AnalysisConfig:
-    max_runtime: Optional[int] = None
+    max_runtime: int | None = None
     minimum_required_realizations: int = 0
-    update_log_path: Union[str, Path] = "update_log"
+    update_log_path: str | Path = "update_log"
     es_module: ESSettings = field(default_factory=ESSettings)
     ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
-    design_matrix: Optional[DesignMatrix] = None
+    design_matrix: DesignMatrix | None = None
 
     @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "AnalysisConfig":
+    def from_dict(cls, config_dict: ConfigDict) -> AnalysisConfig:
         num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
         min_realization_str: str = config_dict.get(ConfigKeys.MIN_REALIZATIONS, "0")
         if "%" in min_realization_str:
@@ -83,8 +83,8 @@ class AnalysisConfig:
 
         design_matrix_config_list = config_dict.get(ConfigKeys.DESIGN_MATRIX, None)
 
-        options: Dict[str, Dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
-        observation_settings: Dict[str, Any] = {
+        options: dict[str, dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
+        observation_settings: dict[str, Any] = {
             "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             "auto_scale_observations": [],

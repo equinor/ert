@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import ceil, floor, log10, sqrt
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -27,9 +28,9 @@ class HistogramPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map, observation_data)
 
@@ -37,7 +38,7 @@ class HistogramPlot:
 def plotHistogram(
     figure: Figure,
     plot_context: PlotContext,
-    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     observation_data: pd.DataFrame,
 ) -> None:
     config = plot_context.plotConfig()
@@ -106,7 +107,7 @@ def plotHistogram(
             maximum = current_max if maximum is None else max(maximum, current_max)  # type: ignore
             max_element_count = max(max_element_count, len(data[ensemble.name].index))
 
-    bin_count = int(ceil(sqrt(max_element_count)))
+    bin_count = ceil(sqrt(max_element_count))
 
     axes = {}
     for index, ensemble in enumerate(ensemble_list):
@@ -169,10 +170,10 @@ def plotHistogram(
 
 
 def _plotCategoricalHistogram(
-    axes: "Axes",
+    axes: Axes,
     style: PlotStyle,
     data: pd.DataFrame,
-    categories: List[str],
+    categories: list[str],
 ) -> Rectangle:
     counts = data.value_counts()
     freq = [counts.get(category, 0) for category in categories]
@@ -189,15 +190,15 @@ def _plotCategoricalHistogram(
 
 
 def _plotHistogram(
-    axes: "Axes",
+    axes: Axes,
     style: PlotStyle,
     data: pd.DataFrame,
     bin_count: int,
     use_log_scale: float = False,
-    minimum: Optional[float] = None,
-    maximum: Optional[float] = None,
+    minimum: float | None = None,
+    maximum: float | None = None,
 ) -> Rectangle:
-    bins: Union[Sequence[float], int]
+    bins: Sequence[float] | int
     if minimum is not None and maximum is not None:
         if use_log_scale:
             bins = _histogramLogBins(bin_count, minimum, maximum)  # type: ignore
@@ -225,8 +226,8 @@ def _histogramLogBins(
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
 
-    min_value = int(floor(minimum))
-    max_value = int(ceil(maximum))
+    min_value = floor(minimum)
+    max_value = ceil(maximum)
 
     log_bin_count = max_value - min_value
 

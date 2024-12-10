@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
+from collections.abc import Coroutine, Generator
 from contextlib import suppress
-from typing import Any, Coroutine, Generator, TypeVar, Union
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def get_running_loop() -> asyncio.AbstractEventLoop:
 
 def _create_task(
     loop: asyncio.AbstractEventLoop,
-    coro: Union[Coroutine[Any, Any, _T], Generator[Any, None, _T]],
+    coro: Coroutine[Any, Any, _T] | Generator[Any, None, _T],
 ) -> asyncio.Task[_T]:
     assert asyncio.iscoroutine(coro)
     task = asyncio.Task(coro, loop=loop)
@@ -47,9 +48,7 @@ def _done_callback(task: asyncio.Task[_T_co]) -> None:
             traceback.format_exception(None, exc, exc.__traceback__)
         )
         logger.error(
-            (
-                f"Exception in scheduler task {task.get_name()}: {exc}\n"
-                f"Traceback: {exc_traceback}"
-            )
+            f"Exception in scheduler task {task.get_name()}: {exc}\n"
+            f"Traceback: {exc_traceback}"
         )
         raise exc

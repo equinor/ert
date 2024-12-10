@@ -1,6 +1,5 @@
 import os
 import sys
-from typing import List, Optional
 
 import pytest
 
@@ -52,8 +51,8 @@ def run_args(run_paths):
     def func(
         ert_config: ErtConfig,
         ensemble: Ensemble,
-        active_realizations: Optional[int] = None,
-    ) -> List[RunArg]:
+        active_realizations: int | None = None,
+    ) -> list[RunArg]:
         active_realizations = (
             ert_config.model_config.num_realizations
             if active_realizations is None

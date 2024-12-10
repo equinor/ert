@@ -85,8 +85,8 @@ def test_config_branch_preserves_config_section_order(
 
     diff_lines = []
     with (
-        open(CONFIG_FILE, "r", encoding="utf-8") as initial_config,
-        open(new_config_file_name, "r", encoding="utf-8") as branch_config,
+        open(CONFIG_FILE, encoding="utf-8") as initial_config,
+        open(new_config_file_name, encoding="utf-8") as branch_config,
     ):
         diff = difflib.unified_diff(
             initial_config.readlines(),

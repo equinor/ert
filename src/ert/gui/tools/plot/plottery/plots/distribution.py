@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -25,9 +25,9 @@ class DistributionPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)
 
@@ -35,7 +35,7 @@ class DistributionPlot:
 def plotDistribution(
     figure: Figure,
     plot_context: PlotContext,
-    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     _observation_data: pd.DataFrame,
 ) -> None:
     config = plot_context.plotConfig()
@@ -49,7 +49,7 @@ def plotDistribution(
         axes.set_yscale("log")
 
     ensemble_list = plot_context.ensembles()
-    ensemble_indexes: List[int] = []
+    ensemble_indexes: list[int] = []
     previous_data = None
     for ensemble_index, (ensemble, data) in enumerate(ensemble_to_data_map.items()):
         ensemble_indexes.append(ensemble_index)
@@ -85,12 +85,12 @@ def plotDistribution(
 
 
 def _plotDistribution(
-    axes: "Axes",
-    plot_config: "PlotConfig",
+    axes: Axes,
+    plot_config: PlotConfig,
     data: pd.DataFrame,
     label: str,
     index: int,
-    previous_data: Optional[pd.DataFrame],
+    previous_data: pd.DataFrame | None,
 ) -> None:
     data = pd.Series(dtype="float64") if data.empty else data[0]
 

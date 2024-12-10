@@ -1,5 +1,5 @@
 from json import JSONEncoder
-from typing import Any, List, TypeVar, Union, no_type_check
+from typing import Any, TypeVar, no_type_check
 
 from .file_context_token import FileContextToken
 
@@ -87,7 +87,7 @@ class ContextString(str):
 T = TypeVar("T")
 
 
-class ContextList(List[T]):
+class ContextList(list[T]):
     keyword_token: FileContextToken
 
     def __init__(self, token: FileContextToken) -> None:
@@ -96,11 +96,11 @@ class ContextList(List[T]):
 
     @classmethod
     def with_values(
-        cls, token: FileContextToken, values: List["ContextValue"]
+        cls, token: FileContextToken, values: list["ContextValue"]
     ) -> "ContextList[ContextValue]":
-        the_list: "ContextList[ContextValue]" = ContextList(token)
+        the_list: ContextList[ContextValue] = ContextList(token)
         the_list += values
         return the_list
 
 
-ContextValue = Union[ContextString, ContextFloat, ContextInt, ContextBool]
+ContextValue = ContextString | ContextFloat | ContextInt | ContextBool

@@ -1,5 +1,4 @@
 from math import floor
-from typing import Optional
 
 from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
@@ -46,7 +45,7 @@ class FileDialog(QDialog):
         job_number: int,
         realization: int,
         iteration: int,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
 
@@ -58,7 +57,7 @@ class FileDialog(QDialog):
 
         try:
             # We take care to close this file in _quit_thread()
-            self._file = open(file_name, "r", encoding="utf-8")  # noqa: SIM115
+            self._file = open(file_name, encoding="utf-8")  # noqa: SIM115
         except OSError as error:
             self._mb = QMessageBox(
                 QMessageBox.Critical,

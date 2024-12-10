@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional, Union
 
 from qtpy.QtCore import QDate
 from qtpy.QtGui import QIcon
@@ -44,7 +43,7 @@ class CustomDateEdit(QWidget):
 
         self._calendar_widget.activated.connect(self.setDate)
 
-    def setDate(self, date: Union[datetime.date, QDate]) -> None:
+    def setDate(self, date: datetime.date | QDate) -> None:
         if isinstance(date, datetime.date):
             date = QDate(date.year, date.month, date.day)  # type: ignore
 
@@ -53,7 +52,7 @@ class CustomDateEdit(QWidget):
         else:
             self._line_edit.setText("")
 
-    def date(self) -> Optional[datetime.date]:
+    def date(self) -> datetime.date | None:
         date_string = self._line_edit.text()
         if len(str(date_string).strip()) > 0:
             date = QDate.fromString(date_string, "yyyy-MM-dd")

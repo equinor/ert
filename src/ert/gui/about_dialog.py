@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import (
@@ -15,7 +13,7 @@ import ert.gui as ert_gui
 
 
 class AboutDialog(QDialog):
-    def __init__(self, parent: Optional[QWidget]) -> None:
+    def __init__(self, parent: QWidget | None) -> None:
         QDialog.__init__(self, parent)
 
         self.setWindowTitle("About")

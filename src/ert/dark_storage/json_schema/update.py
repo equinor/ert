@@ -3,9 +3,7 @@ from uuid import UUID
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
-from .observation import (
-    ObservationTransformationIn,
-)
+from .observation import ObservationTransformationIn
 
 
 @dataclass

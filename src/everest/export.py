@@ -1,7 +1,7 @@
 import os
 import re
 from enum import StrEnum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import pandas as pd
 from pandas import DataFrame
@@ -45,7 +45,7 @@ class MetaDataColumnNames(StrEnum):
         ]
 
 
-def filter_data(data: DataFrame, keyword_filters: Set[str]):
+def filter_data(data: DataFrame, keyword_filters: set[str]):
     filtered_columns = []
 
     for col in data.columns:
@@ -57,14 +57,14 @@ def filter_data(data: DataFrame, keyword_filters: Set[str]):
     return data[filtered_columns]
 
 
-def available_batches(optimization_output_dir: str) -> Set[int]:
+def available_batches(optimization_output_dir: str) -> set[int]:
     snapshot = SebaSnapshot(optimization_output_dir).get_snapshot(
         filter_out_gradient=False, batches=None
     )
     return {data.batch for data in snapshot.simulation_data}
 
 
-def export_metadata(config: Optional[ExportConfig], optimization_output_dir: str):
+def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
     discard_gradient = True
     discard_rejected = True
     batches = None
@@ -100,7 +100,7 @@ def export_metadata(config: Optional[ExportConfig], optimization_output_dir: str
         ):
             continue
 
-        md_row: Dict[str, Any] = {
+        md_row: dict[str, Any] = {
             MetaDataColumnNames.BATCH: data.batch,
             MetaDataColumnNames.SIM_AVERAGED_OBJECTIVE: data.sim_avg_obj,
             MetaDataColumnNames.IS_GRADIENT: data.is_gradient,
@@ -147,12 +147,12 @@ def get_internalized_keys(
     config: ExportConfig,
     storage_path: str,
     optimization_output_path: str,
-    batch_ids: Optional[Set[int]] = None,
+    batch_ids: set[int] | None = None,
 ):
     if batch_ids is None:
         metadata = export_metadata(config, optimization_output_path)
         batch_ids = {data[MetaDataColumnNames.BATCH] for data in metadata}
-    internal_keys: Set = set()
+    internal_keys: set = set()
     with open_storage(storage_path, "r") as storage:
         for batch_id in batch_ids:
             case_name = f"batch_{batch_id}"
@@ -177,24 +177,24 @@ def check_for_errors(
     config: ExportConfig,
     optimization_output_path: str,
     storage_path: str,
-    data_file_path: Optional[str],
+    data_file_path: str | None,
 ):
     """
     Checks for possible errors when attempting to export current optimization
     case.
     """
     export_ecl = True
-    export_errors: List[str] = []
+    export_errors: list[str] = []
 
     if config.batches:
-        _available_batches = available_batches(optimization_output_path)
-        for batch in set(config.batches).difference(_available_batches):
+        available_batches_ = available_batches(optimization_output_path)
+        for batch in set(config.batches).difference(available_batches_):
             export_errors.append(
                 "Batch {} not found in optimization "
                 "results. Skipping for current export."
                 "".format(batch)
             )
-        config.batches = list(set(config.batches).intersection(_available_batches))
+        config.batches = list(set(config.batches).intersection(available_batches_))
 
     if config.batches == []:
         export_errors.append(
@@ -242,9 +242,9 @@ def check_for_errors(
 
 
 def export_data(
-    export_config: Optional[ExportConfig],
+    export_config: ExportConfig | None,
     output_dir: str,
-    data_file: Optional[str],
+    data_file: str | None,
     export_ecl=True,
     progress_callback=lambda _: None,
 ):
@@ -291,7 +291,7 @@ def export_data(
 
 
 def load_simulation_data(
-    output_path: str, metadata: List[dict], progress_callback=lambda _: None
+    output_path: str, metadata: list[dict], progress_callback=lambda _: None
 ):
     """Export simulations to a pandas DataFrame
     @output_path optimization output folder path.

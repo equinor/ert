@@ -1,6 +1,6 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Self
+from typing import Any, Self
 
 import polars
 
@@ -58,7 +58,7 @@ class ResponseConfig(ABC):
 
     @classmethod
     @abstractmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Optional[Self]:
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
         """Creates a config, given an ert config dict.
         A response config may depend on several config kws, such as REFCASE
         for summary."""

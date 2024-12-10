@@ -1,4 +1,4 @@
-from typing import Any, List, Literal, Optional, Tuple
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     AfterValidator,
@@ -9,7 +9,6 @@ from pydantic import (
     PositiveFloat,
 )
 from ropt.enums import VariableType
-from typing_extensions import Annotated
 
 from everest.config.validation_utils import no_dots_in_string, valid_range
 
@@ -22,39 +21,39 @@ class _ControlVariable(BaseModel):
     name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
         description="Control variable name"
     )
-    control_type: Optional[Literal["real", "integer"]] = Field(
+    control_type: Literal["real", "integer"] | None = Field(
         default=None,
         description="""
 The type of control. Set to "integer" for discrete optimization. This may be
 ignored if the algorithm that is used does not support different control types.
 """,
     )
-    enabled: Optional[bool] = Field(
+    enabled: bool | None = Field(
         default=None,
         description="""
 If `True`, the variable will be optimized, otherwise it will be fixed to the
 initial value.
 """,
     )
-    auto_scale: Optional[bool] = Field(
+    auto_scale: bool | None = Field(
         default=None,
         description="""
 Can be set to true to re-scale variable from the range
 defined by [min, max] to the range defined by scaled_range (default [0, 1])
 """,
     )
-    scaled_range: Annotated[
-        Optional[Tuple[float, float]], AfterValidator(valid_range)
-    ] = Field(
-        default=None,
-        description="""
+    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
+        Field(
+            default=None,
+            description="""
 Can be used to set the range of the variable values
 after scaling (default = [0, 1]).
 
 This option has no effect if auto_scale is not set.
 """,
+        )
     )
-    min: Optional[float] = Field(
+    min: float | None = Field(
         default=None,
         description="""
 Minimal value allowed for the variable
@@ -62,7 +61,7 @@ Minimal value allowed for the variable
 initial_guess is required to be greater than this value.
 """,
     )
-    max: Optional[float] = Field(
+    max: float | None = Field(
         default=None,
         description="""
     Max value allowed for the variable
@@ -70,7 +69,7 @@ initial_guess is required to be greater than this value.
     initial_guess is required to be less than this value.
     """,
     )
-    perturbation_magnitude: Optional[PositiveFloat] = Field(
+    perturbation_magnitude: PositiveFloat | None = Field(
         default=None,
         description="""
 Specifies the perturbation magnitude for this particular variable.
@@ -81,24 +80,24 @@ how long rate applies for) & value (the actual rate).
 NOTE: In most cases this should not be configured, and the default value should be used.
 """,
     )
-    sampler: Optional[SamplerConfig] = Field(
+    sampler: SamplerConfig | None = Field(
         default=None, description="The backend used by Everest for sampling points"
     )
 
     @property
-    def ropt_control_type(self) -> Optional[VariableType]:
+    def ropt_control_type(self) -> VariableType | None:
         return VariableType[self.control_type.upper()] if self.control_type else None
 
 
 class ControlVariableConfig(_ControlVariable):
     model_config = ConfigDict(title="variable control")
-    initial_guess: Optional[float] = Field(
+    initial_guess: float | None = Field(
         default=None,
         description="""
 Starting value for the control variable, if given needs to be in the interval [min, max]
 """,
     )
-    index: Optional[NonNegativeInt] = Field(
+    index: NonNegativeInt | None = Field(
         default=None,
         description="""
 Index should be given either for all of the variables or for none of them
@@ -122,7 +121,7 @@ Index should be given either for all of the variables or for none of them
 
 class ControlVariableGuessListConfig(_ControlVariable):
     initial_guess: Annotated[
-        List[float],
+        list[float],
         Field(
             default=None,
             description="List of Starting values for the control variable",

@@ -2,12 +2,7 @@ from abc import abstractmethod
 
 from qtpy.QtCore import QTimer
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
-    QApplication,
-    QMessageBox,
-    QPushButton,
-    QSizePolicy,
-)
+from qtpy.QtWidgets import QApplication, QMessageBox, QPushButton, QSizePolicy
 
 
 class CopyButton(QPushButton):

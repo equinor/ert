@@ -1299,9 +1299,7 @@ def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
             ErtConfig.from_file("config.ert")
 
 
-def test_validation_of_duplicate_names(
-    tmpdir,
-):
+def test_validation_of_duplicate_names(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """

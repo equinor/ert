@@ -23,7 +23,7 @@ def load_data(filename):
             json_err = err
 
     err_msg = "%s is neither yaml (err_msg=%s) nor json (err_msg=%s)"
-    raise IOError(err_msg % (filename, str(yaml_err), str(json_err)))
+    raise OSError(err_msg % (filename, str(yaml_err), str(json_err)))
 
 
 def _create_folders(filename):

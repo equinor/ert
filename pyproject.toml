@@ -194,6 +194,7 @@ select = [
     "C4",    # flake8-comprehensions
     "ASYNC", # flake8-async
     "RUF",   # ruff specific rules
+    "UP",    # pyupgrade
 ]
 preview = true
 ignore = [
@@ -210,6 +211,8 @@ ignore = [
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
     "PLW3201", # bad-dunder-method-name
+    "UP032",   # f-string
+    "UP031",   # printf-string-formatting
 ]
 
 # Allow EN DASH (U+2013)
@@ -221,6 +224,7 @@ allowed-confusables = ["–"]
     "RUF029",  # unused-async
     "RUF018",  # assignment-in-assert
     "RUF006",  # asyncio-dangling-task
+    "PLW1508", # Invalid type of environment variable default
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async

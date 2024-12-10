@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from qtpy.QtGui import QIcon
 
@@ -16,8 +16,8 @@ class LoadResultsTool(Tool):
             "Load results manually",
             QIcon("img:upload.svg"),
         )
-        self._import_widget: Optional[LoadResultsPanel] = None
-        self._dialog: Optional[ClosableDialog] = None
+        self._import_widget: LoadResultsPanel | None = None
+        self._dialog: ClosableDialog | None = None
         self._notifier = notifier
 
     def trigger(self) -> None:

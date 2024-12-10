@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMenu
@@ -52,7 +52,7 @@ class PluginsTool(Tool):
     def trigger(self) -> None:
         self.notifier.emitErtChange()  # plugin may have added new cases.
 
-    def get_plugin_runner(self, plugin_name: str) -> Optional[PluginRunner]:
+    def get_plugin_runner(self, plugin_name: str) -> PluginRunner | None:
         for pulgin, runner in self.__plugins.items():
             if pulgin.getName() == plugin_name:
                 return runner

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QWidget
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 class ExperimentConfigPanel(QWidget):
     simulationConfigurationChanged = Signal()
 
-    def __init__(self, simulation_model: Type[BaseRunModel]):
+    def __init__(self, simulation_model: type[BaseRunModel]):
         QWidget.__init__(self)
         self.setContentsMargins(10, 10, 10, 10)
         self.__simulation_model = simulation_model
 
-    def get_experiment_type(self) -> Type[BaseRunModel]:
+    def get_experiment_type(self) -> type[BaseRunModel]:
         return self.__simulation_model
 
     def isConfigurationValid(self) -> bool:

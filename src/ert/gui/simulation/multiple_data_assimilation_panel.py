@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Slot
 from qtpy.QtGui import QFont
@@ -39,7 +39,7 @@ class Arguments:
     mode: str
     target_ensemble: str
     realizations: str
-    weights: List[float]
+    weights: list[float]
     restart_run: bool
     prior_ensemble_id: str  # UUID not serializable in json
     experiment_name: str

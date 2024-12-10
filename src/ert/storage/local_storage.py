@@ -5,13 +5,14 @@ import json
 import logging
 import os
 import shutil
+from collections.abc import Generator, MutableSequence
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any, Generator, MutableSequence, Type
+from typing import Any
 from uuid import UUID, uuid4
 
 import polars
@@ -23,11 +24,7 @@ from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
-from ert.storage.mode import (
-    BaseMode,
-    Mode,
-    require_write,
-)
+from ert.storage.mode import BaseMode, Mode, require_write
 from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
@@ -251,7 +248,7 @@ class LocalStorage(BaseMode):
     def __exit__(
         self,
         exception: Exception,
-        exception_type: Type[Exception],
+        exception_type: type[Exception],
         traceback: TracebackType,
     ) -> None:
         self.close()

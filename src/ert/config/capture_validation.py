@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Iterator, cast
+from typing import cast
 from warnings import catch_warnings
 
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo, WarningInfo

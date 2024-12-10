@@ -172,7 +172,7 @@ def _find_open_port(host, lower, upper) -> int:
             sock.bind((host, port))
             sock.close()
             return port
-        except socket.error:
+        except OSError:
             logging.getLogger("everserver").info(
                 "Port {} for host {} is taken".format(port, host)
             )
@@ -403,12 +403,10 @@ def _failed_realizations_messages(shared_data):
         # Find the set of jobs that failed. To keep the order in which they
         # are found in the queue, use a dict as sets are not ordered.
         failed_jobs = dict.fromkeys(
-            (
-                job["name"]
-                for queue in shared_data[SIM_PROGRESS_ENDPOINT]["progress"]
-                for job in queue
-                if job["status"] == JOB_FAILURE
-            )
+            job["name"]
+            for queue in shared_data[SIM_PROGRESS_ENDPOINT]["progress"]
+            for job in queue
+            if job["status"] == JOB_FAILURE
         ).keys()
         messages.append(
             "{} job failures caused by: {}".format(failed, ", ".join(failed_jobs))

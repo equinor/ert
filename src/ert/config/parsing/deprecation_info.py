@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Union
 
 from .context_values import ContextValue
 
@@ -7,10 +7,10 @@ from .context_values import ContextValue
 @dataclass
 class DeprecationInfo:
     keyword: str
-    message: Union[str, Callable[[List[str]], str]]
-    check: Optional[Callable[[List[ContextValue]], bool]] = None
+    message: str | Callable[[list[str]], str]
+    check: Callable[[list[ContextValue]], bool] | None = None
 
-    def resolve_message(self, line: List[str]) -> str:
+    def resolve_message(self, line: list[str]) -> str:
         if callable(self.message):
             return self.message(line)
 

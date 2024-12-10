@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from .active_range import ActiveRange
 from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
@@ -15,7 +13,7 @@ class RangeStringArgument(ArgumentDefinition):
     )
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
-    def __init__(self, max_value: Optional[int] = None, **kwargs: bool) -> None:
+    def __init__(self, max_value: int | None = None, **kwargs: bool) -> None:
         super().__init__(**kwargs)
         self.__max_value = max_value
 

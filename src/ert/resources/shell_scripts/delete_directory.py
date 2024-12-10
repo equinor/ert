@@ -52,7 +52,7 @@ def delete_directory(path):
                         delete_empty_directory(os.path.join(root, _dir))
 
         else:
-            raise IOError(f"Entry:'{path}' is not a directory")
+            raise OSError(f"Entry:'{path}' is not a directory")
 
         delete_empty_directory(path)
     else:
@@ -63,5 +63,5 @@ if __name__ == "__main__":
     try:
         for d in sys.argv[1:]:
             delete_directory(d)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"DELETE_DIRECTORY failed with the following error: {e}")

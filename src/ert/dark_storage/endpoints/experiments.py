@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
@@ -14,11 +13,11 @@ DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
 
 
-@router.get("/experiments", response_model=List[js.ExperimentOut])
+@router.get("/experiments", response_model=list[js.ExperimentOut])
 def get_experiments(
     *,
     storage: Storage = DEFAULT_STORAGE,
-) -> List[js.ExperimentOut]:
+) -> list[js.ExperimentOut]:
     return [
         js.ExperimentOut(
             id=experiment.id,
@@ -48,13 +47,13 @@ def get_experiment_by_id(
 
 
 @router.get(
-    "/experiments/{experiment_id}/ensembles", response_model=List[js.EnsembleOut]
+    "/experiments/{experiment_id}/ensembles", response_model=list[js.EnsembleOut]
 )
 def get_experiment_ensembles(
     *,
     storage: Storage = DEFAULT_STORAGE,
     experiment_id: UUID,
-) -> List[js.EnsembleOut]:
+) -> list[js.EnsembleOut]:
     return [
         js.EnsembleOut(
             id=ensemble.id,

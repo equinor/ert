@@ -13,7 +13,7 @@ from ert.config import CancelPluginException, ErtPlugin
 def load_args(filename, column_names=None):
     rows = 0
     columns = 0
-    with open(filename, "r", encoding="utf-8") as fileH:
+    with open(filename, encoding="utf-8") as fileH:
         for line in fileH.readlines():
             rows += 1
             columns = max(columns, len(line.split()))

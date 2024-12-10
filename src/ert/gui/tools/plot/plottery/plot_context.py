@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, List, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -29,26 +29,26 @@ class PlotContext:
     def __init__(
         self,
         plot_config: PlotConfig,
-        ensembles: List[EnsembleObject],
+        ensembles: list[EnsembleObject],
         key: str,
-        layer: Optional[int] = None,
+        layer: int | None = None,
     ) -> None:
         super().__init__()
         self._key = key
         self._ensembles = ensembles
         self._plot_config = plot_config
-        self.history_data: Optional[DataFrame] = None
+        self.history_data: DataFrame | None = None
         self._log_scale = False
-        self._layer: Optional[int] = layer
+        self._layer: int | None = layer
 
         self._date_support_active = True
-        self._x_axis: Optional[str] = None
-        self._y_axis: Optional[str] = None
+        self._x_axis: str | None = None
+        self._y_axis: str | None = None
 
-    def plotConfig(self) -> "PlotConfig":
+    def plotConfig(self) -> PlotConfig:
         return self._plot_config
 
-    def ensembles(self) -> List[EnsembleObject]:
+    def ensembles(self) -> list[EnsembleObject]:
         return self._ensembles
 
     def key(self) -> str:
@@ -61,11 +61,11 @@ class PlotContext:
         return self._date_support_active
 
     @property
-    def layer(self) -> Optional[int]:
+    def layer(self) -> int | None:
         return self._layer
 
     @property
-    def x_axis(self) -> Optional[str]:
+    def x_axis(self) -> str | None:
         return self._x_axis
 
     @x_axis.setter
@@ -77,7 +77,7 @@ class PlotContext:
         self._x_axis = value
 
     @property
-    def y_axis(self) -> Optional[str]:
+    def y_axis(self) -> str | None:
         return self._y_axis
 
     @y_axis.setter

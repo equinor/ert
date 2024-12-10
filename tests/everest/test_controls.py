@@ -2,7 +2,6 @@ import itertools
 import numbers
 import os
 from copy import deepcopy
-from typing import List
 
 import pytest
 from pydantic import ValidationError
@@ -63,7 +62,7 @@ def test_controls_initialization():
 
 def _perturb_control_zero(
     config: EverestConfig, gmin, gmax, ginit, fill
-) -> List[ControlVariableConfig]:
+) -> list[ControlVariableConfig]:
     """Perturbs the variable range of the first control to create
     interesting configurations.
     """

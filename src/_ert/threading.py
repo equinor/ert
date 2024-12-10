@@ -5,14 +5,15 @@ import os
 import signal
 import threading
 import traceback
+from collections.abc import Callable, Iterable
 from threading import Thread as _Thread
 from types import FrameType
-from typing import Any, Callable, Iterable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-_current_exception: Optional[ErtThreadError] = None
+_current_exception: ErtThreadError | None = None
 _can_raise = False
 
 

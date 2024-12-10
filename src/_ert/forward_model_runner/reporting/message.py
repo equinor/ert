@@ -1,6 +1,6 @@
 import dataclasses
 from datetime import datetime as dt
-from typing import TYPE_CHECKING, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import psutil
 from typing_extensions import TypedDict
@@ -39,17 +39,17 @@ class ProcessTreeStatus:
     """Holds processtree information that can be represented as a line of CSV data"""
 
     timestamp: str = ""
-    fm_step_id: Optional[int] = None
-    fm_step_name: Optional[str] = None
+    fm_step_id: int | None = None
+    fm_step_name: str | None = None
 
     # Memory unit is bytes
-    rss: Optional[int] = None
-    max_rss: Optional[int] = None
-    free: Optional[int] = None
+    rss: int | None = None
+    max_rss: int | None = None
+    free: int | None = None
 
     cpu_seconds: float = 0.0
 
-    oom_score: Optional[int] = None
+    oom_score: int | None = None
 
     def __post_init__(self):
         self.timestamp = dt.now().isoformat()
@@ -72,8 +72,8 @@ class _MetaMessage(type):
 class Message(metaclass=_MetaMessage):
     def __init__(self, job=None):
         self.timestamp = dt.now()
-        self.job: Optional[ForwardModelStep] = job
-        self.error_message: Optional[str] = None
+        self.job: ForwardModelStep | None = job
+        self.error_message: str | None = None
 
     def __repr__(self):
         return type(self).__name__
@@ -134,7 +134,7 @@ class Exited(Message):
 
 
 class Checksum(Message):
-    def __init__(self, checksum_dict: Dict[str, "ChecksumDict"], run_path: str):
+    def __init__(self, checksum_dict: dict[str, "ChecksumDict"], run_path: str):
         super().__init__()
         self.data = checksum_dict
         self.run_path = run_path

@@ -3,7 +3,7 @@ import pathlib
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -15,7 +15,7 @@ from everest.config.sampler_config import SamplerConfig
 from tests.everest.utils import skipif_no_everest_models
 
 
-def has_error(error: Union[ValidationError, List[dict]], match: str):
+def has_error(error: ValidationError | list[dict], match: str):
     messages = (
         [error_dict["msg"] for error_dict in error.errors()]
         if isinstance(error, ValidationError)
@@ -282,7 +282,7 @@ def test_that_scaled_range_is_valid_range():
     ),
 )
 def test_that_invalid_control_initial_guess_outside_bounds(
-    variables: List[Dict[str, Any]], count: int
+    variables: list[dict[str, Any]], count: int
 ):
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(

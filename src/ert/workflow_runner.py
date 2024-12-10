@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from concurrent import futures
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, Optional, Self
+from typing import TYPE_CHECKING, Any, Self
 
 from ert.config import ErtConfig, ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
@@ -15,13 +15,13 @@ class WorkflowJobRunner:
     def __init__(self, workflow_job: WorkflowJob):
         self.job = workflow_job
         self.__running = False
-        self.__script: Optional[ErtScript] = None
+        self.__script: ErtScript | None = None
         self.stop_on_fail = False
 
     def run(
         self,
-        arguments: Optional[list[Any]] = None,
-        fixtures: Optional[dict[str, Any]] = None,
+        arguments: list[Any] | None = None,
+        fixtures: dict[str, Any] | None = None,
     ) -> Any:
         if arguments is None:
             arguments = []
@@ -107,22 +107,22 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow: Workflow,
-        storage: Optional[Storage] = None,
-        ensemble: Optional[Ensemble] = None,
-        ert_config: Optional[ErtConfig] = None,
+        storage: Storage | None = None,
+        ensemble: Ensemble | None = None,
+        ert_config: ErtConfig | None = None,
     ) -> None:
         self.__workflow = workflow
         self.storage = storage
         self.ensemble = ensemble
         self.ert_config = ert_config
 
-        self.__workflow_result: Optional[bool] = None
+        self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
-        self._workflow_job: Optional[Future[None]] = None
+        self._workflow_job: Future[None] | None = None
 
         self.__running = False
         self.__cancelled = False
-        self.__current_job: Optional[WorkflowJobRunner] = None
+        self.__current_job: WorkflowJobRunner | None = None
         self.__status: dict[str, dict[str, Any]] = {}
 
     def __enter__(self) -> Self:
@@ -131,8 +131,8 @@ class WorkflowRunner:
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
         traceback: Any,
     ) -> None:
         self.wait()
@@ -216,7 +216,7 @@ class WorkflowRunner:
             self.__cancelled = True
         self.wait()
 
-    def exception(self) -> Optional[BaseException]:
+    def exception(self) -> BaseException | None:
         if self._workflow_job is not None:
             return self._workflow_job.exception()
         return None
@@ -229,7 +229,7 @@ class WorkflowRunner:
                 [self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION
             )
 
-    def workflowResult(self) -> Optional[bool]:
+    def workflowResult(self) -> bool | None:
         return self.__workflow_result
 
     def workflowReport(self) -> dict[str, dict[str, Any]]:

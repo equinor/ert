@@ -6,7 +6,7 @@ that realization 0, 2, 3, and 4 are active.
 The ranges can overlap. The end of each range is inclusive.
 """
 
-from typing import Collection
+from collections.abc import Collection
 
 
 def mask_to_rangestring(mask: Collection[bool | int]) -> str:

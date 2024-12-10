@@ -34,19 +34,19 @@ def _inject_scripts() -> None:
             / rel_script_path
         )
 
-    _scripts = {}
+    scripts = {}
     for script_name in script_names:
-        _scripts[script_name] = fetch_script_path(script_name)
-        globals()[script_name] = _scripts[script_name]
+        scripts[script_name] = fetch_script_path(script_name)
+        globals()[script_name] = scripts[script_name]
 
-    globals()["_scripts"] = _scripts
+    globals()["_scripts"] = scripts
 
 
 def fetch_script(script_name):
     if script_name in _scripts:  # noqa F821
         return _scripts[script_name]  # noqa F821
     else:
-        raise KeyError("Unknown script: %s" % script_name)
+        raise KeyError("Unknown script: {}".format(script_name))
 
 
 _inject_scripts()

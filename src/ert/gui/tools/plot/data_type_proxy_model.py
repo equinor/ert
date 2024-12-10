@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class DataTypeProxyModel(QSortFilterProxyModel):
-    def __init__(self, parent: Optional[QObject], model: DataTypeKeysListModel) -> None:
+    def __init__(self, parent: QObject | None, model: DataTypeKeysListModel) -> None:
         QSortFilterProxyModel.__init__(self, parent)
 
         self.__show_summary_keys = True

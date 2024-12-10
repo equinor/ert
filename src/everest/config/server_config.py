@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,7 +15,7 @@ from .has_ert_queue_options import HasErtQueueOptions
 
 
 class ServerConfig(BaseModel, HasErtQueueOptions):  # type: ignore
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         description="""Specifies which queue to use.
 
@@ -27,23 +27,23 @@ The everest server generally has lower resource requirements than forward models
 as RMS and Eclipse.
     """,
     )  # Corresponds to queue name
-    exclude_host: Optional[str] = Field(
+    exclude_host: str | None = Field(
         "",
         description="""Comma separated list of nodes that should be
          excluded from the slurm run""",
     )
-    include_host: Optional[str] = Field(
+    include_host: str | None = Field(
         "",
         description="""Comma separated list of nodes that
         should be included in the slurm run""",
     )
-    options: Optional[str] = Field(
+    options: str | None = Field(
         None,
         description="""Used to specify options to LSF.
         Examples to set memory requirement is:
         * rusage[mem=1000]""",
     )
-    queue_system: Optional[Literal["lsf", "local", "slurm"]] = Field(
+    queue_system: Literal["lsf", "local", "slurm"] | None = Field(
         None,
         description="Defines which queue system the everest server runs on.",
     )
@@ -62,7 +62,7 @@ as RMS and Eclipse.
         return f"https://{server_info['host']}:{server_info['port']}"
 
     @staticmethod
-    def get_server_context(output_dir: str) -> Tuple[str, str, Tuple[str, str]]:
+    def get_server_context(output_dir: str) -> tuple[str, str, tuple[str, str]]:
         """Returns a tuple with
         - url of the server
         - path to the .cert file
@@ -80,7 +80,7 @@ as RMS and Eclipse.
         """Load server information from the hostfile"""
         host_file_path = ServerConfig.get_hostfile_path(output_dir)
         try:
-            with open(host_file_path, "r", encoding="utf-8") as f:
+            with open(host_file_path, encoding="utf-8") as f:
                 json_string = f.read()
 
             data = json.loads(json_string)

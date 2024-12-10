@@ -1,12 +1,9 @@
-from typing import Optional
-
-
 class ValidationStatus:
     def __init__(self) -> None:
         super().__init__()
         self.__fail = False
         self.__message = ""
-        self.__value: Optional[str] = None
+        self.__value: str | None = None
 
     def setFailed(self) -> None:
         self.__fail = True
@@ -23,7 +20,7 @@ class ValidationStatus:
     def setValue(self, value: str) -> None:
         self.__value = value
 
-    def value(self) -> Optional[str]:
+    def value(self) -> str | None:
         return self.__value
 
     def __bool__(self) -> bool:

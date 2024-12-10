@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, List
+from typing import Any
 
 from .ert_script import ErtScript
 
@@ -11,7 +11,7 @@ class CancelPluginException(Exception):
 
 
 class ErtPlugin(ErtScript, ABC):
-    def getArguments(self, args: List[Any]) -> List[Any]:
+    def getArguments(self, args: list[Any]) -> list[Any]:
         return []
 
     def getName(self) -> str:

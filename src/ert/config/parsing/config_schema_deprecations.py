@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, cast
+from typing import cast
 
 from .deprecation_info import DeprecationInfo
 
@@ -228,6 +228,6 @@ deprecated_keywords_list = [
         message="Memory requirements in LSF should now be set using REALIZATION_MEMORY and not"
         " through the LSF_RESOURCE option.",
         check=lambda line: "LSF_RESOURCE" in line
-        and "mem=" in cast(List[str], line)[-1],
+        and "mem=" in cast(list[str], line)[-1],
     ),
 ]

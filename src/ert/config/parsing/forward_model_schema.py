@@ -1,5 +1,3 @@
-from typing import List
-
 from .config_dict import ConfigDict
 from .config_schema_item import SchemaItem
 from .deprecation_info import DeprecationInfo
@@ -139,7 +137,7 @@ def default_keyword() -> SchemaItem:
     )
 
 
-forward_model_schema_items: List[SchemaItem] = [
+forward_model_schema_items: list[SchemaItem] = [
     executable_keyword(),
     stdin_keyword(),
     stdout_keyword(),
@@ -158,7 +156,7 @@ forward_model_schema_items: List[SchemaItem] = [
     exec_env_keyword(),
 ]
 
-forward_model_deprecations: List[DeprecationInfo] = [
+forward_model_deprecations: list[DeprecationInfo] = [
     DeprecationInfo(
         keyword="PORTABLE_EXE",
         message='"PORTABLE_EXE" key is deprecated, please replace with "EXECUTABLE"',

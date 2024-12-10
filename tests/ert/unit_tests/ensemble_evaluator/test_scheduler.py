@@ -5,11 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from _ert.events import (
-    EESnapshot,
-    EESnapshotUpdate,
-    ForwardModelStepChecksum,
-)
+from _ert.events import EESnapshot, EESnapshotUpdate, ForwardModelStepChecksum
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 

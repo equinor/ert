@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class ClosableDialog(QDialog):
     def __init__(
-        self, title: Optional[str], widget: QWidget, parent: Optional[QWidget] = None
+        self, title: str | None, widget: QWidget, parent: QWidget | None = None
     ) -> None:
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
@@ -47,7 +47,7 @@ class ClosableDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)
 

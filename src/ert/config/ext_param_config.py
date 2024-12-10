@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping, MutableMapping
+from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
@@ -116,7 +117,7 @@ class ExtParamConfig(ParameterConfig):
         names: list[str] = []
         values: list[float] = []
         for outer_key, outer_val in data.items():
-            if isinstance(outer_val, (int, float)):
+            if isinstance(outer_val, int | float):
                 names.append(outer_key)
                 values.append(float(outer_val))
                 continue

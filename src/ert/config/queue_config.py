@@ -5,8 +5,9 @@ import os
 import re
 import shutil
 from abc import abstractmethod
+from collections.abc import Mapping
 from dataclasses import asdict, field, fields
-from typing import Annotated, Any, Literal, Mapping, Optional, no_type_check
+from typing import Annotated, Any, Literal, no_type_check
 
 import pydantic
 from pydantic.dataclasses import dataclass
@@ -38,7 +39,7 @@ class QueueOptions:
     name: str
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
-    project_code: Optional[str] = None
+    project_code: str | None = None
     activate_script: str = field(default_factory=activate_script)
 
     @staticmethod
@@ -46,7 +47,7 @@ class QueueOptions:
         queue_system: QueueSystem,
         options: dict[str, Any],
         is_selected_queue_system: bool,
-    ) -> Optional[QueueOptions]:
+    ) -> QueueOptions | None:
         lower_case_options = {key.lower(): value for key, value in options.items()}
         try:
             if queue_system == QueueSystem.LSF:
@@ -99,13 +100,13 @@ class LocalQueueOptions(QueueOptions):
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
     name: Literal[QueueSystem.LSF] = QueueSystem.LSF
-    bhist_cmd: Optional[NonEmptyString] = None
-    bjobs_cmd: Optional[NonEmptyString] = None
-    bkill_cmd: Optional[NonEmptyString] = None
-    bsub_cmd: Optional[NonEmptyString] = None
-    exclude_host: Optional[str] = None
-    lsf_queue: Optional[NonEmptyString] = None
-    lsf_resource: Optional[str] = None
+    bhist_cmd: NonEmptyString | None = None
+    bjobs_cmd: NonEmptyString | None = None
+    bkill_cmd: NonEmptyString | None = None
+    bsub_cmd: NonEmptyString | None = None
+    exclude_host: str | None = None
+    lsf_queue: NonEmptyString | None = None
+    lsf_resource: str | None = None
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -122,19 +123,19 @@ class LsfQueueOptions(QueueOptions):
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
     name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
-    qsub_cmd: Optional[NonEmptyString] = None
-    qstat_cmd: Optional[NonEmptyString] = None
-    qdel_cmd: Optional[NonEmptyString] = None
-    queue: Optional[NonEmptyString] = None
-    memory_per_job: Optional[NonEmptyString] = None
+    qsub_cmd: NonEmptyString | None = None
+    qstat_cmd: NonEmptyString | None = None
+    qdel_cmd: NonEmptyString | None = None
+    queue: NonEmptyString | None = None
+    memory_per_job: NonEmptyString | None = None
     num_cpus_per_node: pydantic.PositiveInt = 1
     num_nodes: pydantic.PositiveInt = 1
-    cluster_label: Optional[NonEmptyString] = None
-    job_prefix: Optional[NonEmptyString] = None
+    cluster_label: NonEmptyString | None = None
+    job_prefix: NonEmptyString | None = None
     keep_qsub_output: bool = False
 
-    qstat_options: Optional[str] = pydantic.Field(default=None, deprecated=True)
-    queue_query_timeout: Optional[str] = pydantic.Field(default=None, deprecated=True)
+    qstat_options: str | None = pydantic.Field(default=None, deprecated=True)
+    queue_query_timeout: str | None = pydantic.Field(default=None, deprecated=True)
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -149,7 +150,7 @@ class TorqueQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory_per_job")
     @classmethod
-    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
+    def check_memory_per_job(cls, value: str | None) -> str | None:
         if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -165,11 +166,11 @@ class SlurmQueueOptions(QueueOptions):
     squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
-    memory: Optional[NonEmptyString] = None
-    memory_per_cpu: Optional[NonEmptyString] = None
-    partition: Optional[NonEmptyString] = None  # aka queue_name
+    memory: NonEmptyString | None = None
+    memory_per_cpu: NonEmptyString | None = None
+    partition: NonEmptyString | None = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
-    max_runtime: Optional[pydantic.NonNegativeFloat] = None
+    max_runtime: pydantic.NonNegativeFloat | None = None
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -189,7 +190,7 @@ class SlurmQueueOptions(QueueOptions):
 
     @pydantic.field_validator("memory", "memory_per_cpu")
     @classmethod
-    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
+    def check_memory_per_job(cls, value: str | None) -> str | None:
         if not queue_memory_usage_formats[QueueSystem.SLURM].validate(value):
             raise ValueError("wrong memory format")
         return value
@@ -199,7 +200,7 @@ class SlurmQueueOptions(QueueOptions):
 class QueueMemoryStringFormat:
     suffixes: list[str]
 
-    def validate(self, mem_str_format: Optional[str]) -> bool:
+    def validate(self, mem_str_format: str | None) -> bool:
         if mem_str_format is None:
             return True
         return (
@@ -298,32 +299,30 @@ class QueueConfig:
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
-        _raw_queue_options = config_dict.get("QUEUE_OPTION", [])
-        _grouped_queue_options = _group_queue_options_by_queue_system(
-            _raw_queue_options
-        )
-        _log_duplicated_queue_options(_raw_queue_options)
-        _raise_for_defaulted_invalid_options(_raw_queue_options)
+        raw_queue_options = config_dict.get("QUEUE_OPTION", [])
+        grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
+        _log_duplicated_queue_options(raw_queue_options)
+        _raise_for_defaulted_invalid_options(raw_queue_options)
 
-        _all_validated_queue_options = {
+        all_validated_queue_options = {
             selected_queue_system: QueueOptions.create_queue_options(
                 selected_queue_system,
-                _grouped_queue_options[selected_queue_system],
+                grouped_queue_options[selected_queue_system],
                 True,
             )
         }
-        _all_validated_queue_options.update(
+        all_validated_queue_options.update(
             {
                 _queue_system: QueueOptions.create_queue_options(
-                    _queue_system, _grouped_queue_options[_queue_system], False
+                    _queue_system, grouped_queue_options[_queue_system], False
                 )
                 for _queue_system in QueueSystem
                 if _queue_system != selected_queue_system
             }
         )
 
-        queue_options = _all_validated_queue_options[selected_queue_system]
-        queue_options_test_run = _all_validated_queue_options[QueueSystem.LOCAL]
+        queue_options = all_validated_queue_options[selected_queue_system]
+        queue_options_test_run = all_validated_queue_options[QueueSystem.LOCAL]
         queue_options.add_global_queue_options(config_dict)
 
         if queue_options.project_code is None:
@@ -337,10 +336,10 @@ class QueueConfig:
 
         if selected_queue_system == QueueSystem.TORQUE:
             _check_num_cpu_requirement(
-                config_dict.get("NUM_CPU", 1), queue_options, _raw_queue_options
+                config_dict.get("NUM_CPU", 1), queue_options, raw_queue_options
             )
 
-        for _queue_vals in _all_validated_queue_options.values():
+        for _queue_vals in all_validated_queue_options.values():
             if (
                 isinstance(_queue_vals, TorqueQueueOptions)
                 and _queue_vals.memory_per_job

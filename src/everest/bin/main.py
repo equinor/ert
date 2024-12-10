@@ -26,7 +26,7 @@ def _create_dump_action(dumps, extended=False):
             default=argparse.SUPPRESS,
             help=None,
         ):
-            super(_DumpAction, self).__init__(
+            super().__init__(
                 option_strings=option_strings,
                 dest=dest,
                 default=default,
@@ -77,7 +77,7 @@ def _build_args_parser():
     return arg_parser
 
 
-class EverestMain(object):
+class EverestMain:
     def __init__(self, args):
         parser = _build_args_parser()
         # Parse_args defaults to [1:] for args, but you need to

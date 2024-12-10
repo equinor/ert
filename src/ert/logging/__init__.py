@@ -4,7 +4,7 @@ import pathlib
 import sys
 from datetime import datetime
 from types import TracebackType
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any
 
 LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
 STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
@@ -70,9 +70,7 @@ class TerminalFormatter(logging.Formatter):
 
     @staticmethod
     def formatException(
-        _: Union[
-            Tuple[Type[BaseException], BaseException, Optional[TracebackType]],
-            Tuple[None, None, None],
-        ],
+        _: tuple[type[BaseException], BaseException, TracebackType | None]
+        | tuple[None, None, None],
     ) -> str:
         return ""

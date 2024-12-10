@@ -11,7 +11,7 @@ def globalIndex(i, j, k, nx=10, ny=10, nz=10):
 
 def readParameters(filename):
     params = {}
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = value.strip()
@@ -151,7 +151,7 @@ def runSimulator(simulator, history_simulator, time_step_count) -> Summary:
 
 
 def roundedInt(value):
-    return int(round(float(value)))
+    return round(float(value))
 
 
 if __name__ == "__main__":

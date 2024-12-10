@@ -267,9 +267,9 @@ async def test_faulty_sbatch_produces_error_log(monkeypatch, tmp_path):
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
 
-    _out = "THIS_IS_OUTPUT"
-    _err = "THIS_IS_ERROR"
-    sbatch_script = f"echo {_out} && echo {_err} >&2; exit 1"
+    out = "THIS_IS_OUTPUT"
+    err = "THIS_IS_ERROR"
+    sbatch_script = f"echo {out} && echo {err} >&2; exit 1"
     sbatch_path = bin_path / "sbatch"
     sbatch_path.write_text(f"#!/bin/sh\n{sbatch_script}")
     sbatch_path.chmod(sbatch_path.stat().st_mode | stat.S_IEXEC)
@@ -278,7 +278,7 @@ async def test_faulty_sbatch_produces_error_log(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError):
         await driver.submit(0, "sleep")
     assert (
-        f'failed with exit code 1, output: "{_out}", and error: "{_err}"'
+        f'failed with exit code 1, output: "{out}", and error: "{err}"'
         in driver._job_error_message_by_iens[0]
     )
 
@@ -335,9 +335,9 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
     os.chdir(tmp_path)
     driver = SlurmDriver()
     num_written_characters = 600
-    _out = generate_random_text(num_written_characters)
-    _err = generate_random_text(num_written_characters)
-    await driver.submit(0, "sh", "-c", f"echo {_out} && echo {_err} >&2", name=job_name)
+    out = generate_random_text(num_written_characters)
+    err = generate_random_text(num_written_characters)
+    await driver.submit(0, "sh", "-c", f"echo {out} && echo {err} >&2", name=job_name)
     await poll(driver, {0})
     message = driver.read_stdout_and_stderr_files(
         runpath=".",

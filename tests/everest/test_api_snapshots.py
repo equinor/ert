@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import orjson
 import polars
@@ -26,7 +26,7 @@ def _round_floats(obj, dec):
     return obj
 
 
-def make_api_snapshot(api) -> Dict[str, Any]:
+def make_api_snapshot(api) -> dict[str, Any]:
     api_json = {
         "batches": api.batches,
         "control_names": api.control_names,

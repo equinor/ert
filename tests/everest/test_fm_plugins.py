@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Callable, Iterator, Sequence
 from itertools import chain
-from typing import Callable, Iterator, Sequence, Type
 
 import pluggy
 import pytest
@@ -47,22 +47,22 @@ def test_everest_models_jobs():
 
 
 def test_multiple_plugins(plugin_manager):
-    _SCHEMAS = [{"job1": 1}, {"job2": 2}]
+    SCHEMAS = [{"job1": 1}, {"job2": 2}]
 
     class Plugin1:
         @hookimpl
         def get_forward_models_schemas(self):
-            return [_SCHEMAS[0]]
+            return [SCHEMAS[0]]
 
     class Plugin2:
         @hookimpl
         def get_forward_models_schemas(self):
-            return [_SCHEMAS[1]]
+            return [SCHEMAS[1]]
 
     pm = plugin_manager(Plugin1(), Plugin2())
 
     jobs = list(chain.from_iterable(pm.hook.get_forward_models_schemas()))
-    for value in _SCHEMAS:
+    for value in SCHEMAS:
         assert value in jobs
 
 
@@ -72,7 +72,7 @@ def test_parse_forward_model_schema(plugin_manager):
 
     class Plugin:
         @hookimpl
-        def parse_forward_model_schema(self, path: str, schema: Type[BaseModel]):
+        def parse_forward_model_schema(self, path: str, schema: type[BaseModel]):
             return schema.model_validate({"content": path})
 
     pm = plugin_manager(Plugin())

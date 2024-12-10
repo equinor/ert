@@ -83,7 +83,7 @@ def satisfy(predicate):
     https://stackoverflow.com/questions/21611559/assert-that-a-method-was-called-with-one-argument-out-of-several
     """
 
-    class _PredicateChecker(object):
+    class _PredicateChecker:
         def __eq__(self, obj):
             return predicate(obj)
 
@@ -100,7 +100,7 @@ def satisfy_callable():
     return satisfy(callable)
 
 
-class MockParser(object):
+class MockParser:
     """
     Small class that contains the necessary functions in order to test custom
     validation functions used with the argparse module

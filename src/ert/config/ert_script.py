@@ -7,8 +7,9 @@ import sys
 import traceback
 import warnings
 from abc import abstractmethod
+from collections.abc import Callable
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from typing_extensions import deprecated
 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.storage import Ensemble, Storage
 
-    Fixtures = Union[ErtConfig, Ensemble, Storage]
+    Fixtures: TypeAlias = ErtConfig | Ensemble | Storage
 logger = logging.getLogger(__name__)
 
 
@@ -71,12 +72,12 @@ class ErtScript:
         return self._stderrdata
 
     @deprecated("Use fixtures to the run function instead")
-    def ert(self) -> Optional[ErtConfig]:
+    def ert(self) -> ErtConfig | None:
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self._ert
 
     @property
-    def ensemble(self) -> Optional[Ensemble]:
+    def ensemble(self) -> Ensemble | None:
         warnings.warn(
             "The ensemble property is deprecated, use the fixture to the run function instead",
             DeprecationWarning,
@@ -86,7 +87,7 @@ class ErtScript:
         return self._ensemble
 
     @property
-    def storage(self) -> Optional[Storage]:
+    def storage(self) -> Storage | None:
         warnings.warn(
             "The storage property is deprecated, use the fixture to the run function instead",
             DeprecationWarning,
@@ -111,9 +112,9 @@ class ErtScript:
 
     def initializeAndRun(
         self,
-        argument_types: list[Type[Any]],
+        argument_types: list[type[Any]],
         argument_values: list[str],
-        fixtures: Optional[Dict[str, Any]] = None,
+        fixtures: dict[str, Any] | None = None,
     ) -> Any:
         fixtures = {} if fixtures is None else fixtures
         arguments = []
@@ -169,7 +170,7 @@ class ErtScript:
     def insert_fixtures(
         self,
         func_args: MappingProxyType[str, inspect.Parameter],
-        fixtures: Dict[str, Fixtures],
+        fixtures: dict[str, Fixtures],
     ) -> list[Any]:
         arguments = []
         errors = []
@@ -198,7 +199,7 @@ class ErtScript:
     @staticmethod
     def loadScriptFromFile(
         path: str,
-    ) -> Callable[[], "ErtScript"]:
+    ) -> Callable[[], ErtScript]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -219,7 +220,7 @@ class ErtScript:
     @staticmethod
     def __findErtScriptImplementations(
         module: ModuleType,
-    ) -> Callable[[], "ErtScript"]:
+    ) -> Callable[[], ErtScript]:
         result = []
         for _, member in inspect.getmembers(
             module,

@@ -119,16 +119,16 @@ def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
 @given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
     """Check correspondance to normal cdf with -mu=_skew and sd=_width"""
-    _steps, _min, _max, _skew, _width = arg
-    q_values = np.linspace(start=0, stop=1, num=_steps)
-    q_checks = np.linspace(start=0, stop=1, num=_steps + 1)[1:]
-    p = norm.cdf(x, loc=-_skew, scale=_width)
+    steps, min_, max_, skew, width = arg
+    q_values = np.linspace(start=0, stop=1, num=steps)
+    q_checks = np.linspace(start=0, stop=1, num=steps + 1)[1:]
+    p = norm.cdf(x, loc=-skew, scale=width)
     bin_index = np.digitize(p, q_checks, right=True)
     expected = q_values[bin_index]
     # scale and ensure ok numerics
-    expected = _min + expected * (_max - _min)
-    if expected > _max or expected < _min:
-        np.clip(expected, _min, _max)
+    expected = min_ + expected * (max_ - min_)
+    if expected > max_ or expected < min_:
+        np.clip(expected, min_, max_)
     assert np.isclose(TransformFunction.trans_derrf(x, arg), expected)
 
 
@@ -165,8 +165,8 @@ def valid_triangular_params():
 
 @given(nice_floats(), valid_triangular_params())
 def test_that_triangular_is_within_bounds(x, args):
-    _mode, _min, _max = args
-    assert _min <= TransformFunction.trans_triangular(x, [_min, _mode, _max]) <= _max
+    mode, min_, max_ = args
+    assert min_ <= TransformFunction.trans_triangular(x, [min_, mode, max_]) <= max_
 
 
 @given(valid_triangular_params())
@@ -175,12 +175,12 @@ def test_mode_behavior(args):
     When the CDF value of x (from the normal distribution) corresponds to the relative position of the mode in the triangular distribution,
     the output of trans_triangular should be the mode (_mode) of the triangular distribution.
     """
-    _mode, _min, _max = args
-    ymode = (_mode - _min) / (_max - _min)
+    mode, min_, max_ = args
+    ymode = (mode - min_) / (max_ - min_)
 
     x = norm.ppf(ymode)
 
-    assert np.isclose(TransformFunction.trans_triangular(x, [_min, _mode, _max]), _mode)
+    assert np.isclose(TransformFunction.trans_triangular(x, [min_, mode, max_]), mode)
 
 
 @given(valid_triangular_params())
@@ -189,12 +189,12 @@ def test_that_triangular_is_symmetric_around_mode(args):
     For values of x equidistant from the CDF value at the mode, the outputs should be symmetrically placed around the mode.
     This property holds if the triangular distribution is symmetric.
     """
-    _mode, _min, _max = args
+    mode, min_, max_ = args
 
     # Ensure the triangular distribution is symmetric
-    _mode = (_min + _max) / 2
+    mode = (min_ + max_) / 2
 
-    ymode = (_mode - _min) / (_max - _min)
+    ymode = (mode - min_) / (max_ - min_)
     delta = ymode / 2
 
     # Find x1 and x2 such that their CDF values are equidistant from ymode
@@ -202,20 +202,20 @@ def test_that_triangular_is_symmetric_around_mode(args):
     x2 = norm.ppf(ymode + delta)
 
     # Calculate the corresponding triangular values
-    y1 = TransformFunction.trans_triangular(x1, [_min, _mode, _max])
-    y2 = TransformFunction.trans_triangular(x2, [_min, _mode, _max])
+    y1 = TransformFunction.trans_triangular(x1, [min_, mode, max_])
+    y2 = TransformFunction.trans_triangular(x2, [min_, mode, max_])
 
     # Check if y1 and y2 are symmetric around the mode
-    assert abs((_mode - y1) - (y2 - _mode)) < 1e-15 * max(
-        *map(abs, [x1, x2, _min, _mode, _max])
+    assert abs((mode - y1) - (y2 - mode)) < 1e-15 * max(
+        *map(abs, [x1, x2, min_, mode, max_])
     )
 
 
 @given(valid_triangular_params())
 def test_that_triangular_is_monotonic(args):
-    _mode, _min, _max = args
+    mode, min_, max_ = args
 
-    ymode = (_mode - _min) / (_max - _min)
+    ymode = (mode - min_) / (max_ - min_)
     delta = 0.05
 
     # Test both sides of the mode
@@ -224,8 +224,8 @@ def test_that_triangular_is_monotonic(args):
         x1 = norm.ppf(ymode + direction * delta)
         x2 = norm.ppf(ymode + direction * 2 * delta)
 
-        y1 = TransformFunction.trans_triangular(x1, [_min, _mode, _max])
-        y2 = TransformFunction.trans_triangular(x2, [_min, _mode, _max])
+        y1 = TransformFunction.trans_triangular(x1, [min_, mode, max_])
+        y2 = TransformFunction.trans_triangular(x2, [min_, mode, max_])
 
         # Assert monotonicity
         if direction == -1:

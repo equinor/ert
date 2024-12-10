@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QComboBox, QHBoxLayout
 
@@ -123,8 +123,8 @@ class StatisticsCustomizationView(CustomizationView):
     def updateStyle(
         self,
         attribute_name: str,
-        line_style: Optional[str],
-        marker_style: Optional[str],
+        line_style: str | None,
+        marker_style: str | None,
     ) -> None:
         style = getattr(self, attribute_name)
         style.line_style = line_style

@@ -1,7 +1,8 @@
 import os
 import shutil
+from collections.abc import Mapping
 from enum import EnumType
-from typing import List, Mapping, Optional, TypeVar, Union
+from typing import TypeVar
 
 from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
 from pydantic.dataclasses import dataclass
@@ -31,15 +32,15 @@ class SchemaItem:
     # The minimum number of arguments
     argc_min: NonNegativeInt = 1
     # The maximum number of arguments: None means no upper limit
-    argc_max: Optional[NonNegativeInt] = 1
+    argc_max: NonNegativeInt | None = 1
     # A list of types for the items. Set along with argc_minmax()
-    type_map: List[Union[SchemaItemType, EnumType, None]] = Field(default_factory=list)
+    type_map: list[SchemaItemType | EnumType | None] = Field(default_factory=list)
     # A list of item's which must also be set (if this item is set). (can be NULL)
-    required_children: List[str] = Field(default_factory=list)
+    required_children: list[str] = Field(default_factory=list)
     # Information about the deprecation if deprecated
-    deprecation_info: List[DeprecationInfo] = Field(default_factory=list)
+    deprecation_info: list[DeprecationInfo] = Field(default_factory=list)
     # if positive, arguments after this count will be concatenated with a " " between
-    join_after: Optional[PositiveInt] = None
+    join_after: PositiveInt | None = None
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
@@ -47,7 +48,7 @@ class SchemaItem:
     # Index of tokens to do substitution from until end
     substitute_from: NonNegativeInt = 1
     required_set: bool = False
-    required_children_value: Mapping[str, List[str]] = Field(default_factory=dict)
+    required_children_value: Mapping[str, list[str]] = Field(default_factory=dict)
 
     @classmethod
     def deprecated_dummy_keyword(cls, info: DeprecationInfo) -> "SchemaItem":
@@ -62,7 +63,7 @@ class SchemaItem:
 
     def token_to_value_with_context(
         self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
-    ) -> Optional[MaybeWithContext]:
+    ) -> MaybeWithContext | None:
         """
         Converts a FileContextToken to a value with context that
         behaves like a value, but also contains its location in the file,
@@ -140,7 +141,7 @@ class SchemaItem:
                     )
 
             case SchemaItemType.PATH | SchemaItemType.EXISTING_PATH:
-                path: Optional[str] = str(token)
+                path: str | None = str(token)
                 if not os.path.isabs(token):
                     path = os.path.normpath(
                         os.path.join(os.path.dirname(token.filename), token)
@@ -156,7 +157,7 @@ class SchemaItem:
                 assert isinstance(path, str)
                 return ContextString(path, token, keyword)
             case SchemaItemType.EXECUTABLE:
-                absolute_path: Optional[str]
+                absolute_path: str | None
                 is_command = False
                 if not os.path.isabs(token):
                     # Try relative
@@ -207,15 +208,13 @@ class SchemaItem:
 
     def apply_constraints(
         self,
-        args: List[T],
+        args: list[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> Union[
-        T, MaybeWithContext, ContextList[Union[T, MaybeWithContext, None]], None
-    ]:
-        errors: List[Union[ErrorInfo, ConfigValidationError]] = []
+    ) -> T | MaybeWithContext | ContextList[T | MaybeWithContext | None] | None:
+        errors: list[ErrorInfo | ConfigValidationError] = []
 
-        args_with_context: ContextList[Union[T, MaybeWithContext, None]] = ContextList(
+        args_with_context: ContextList[T | MaybeWithContext | None] = ContextList(
             token=keyword
         )
         for i, x in enumerate(args):
@@ -253,7 +252,7 @@ class SchemaItem:
 
         return args_with_context
 
-    def join_args(self, line: List[FileContextToken]) -> List[FileContextToken]:
+    def join_args(self, line: list[FileContextToken]) -> list[FileContextToken]:
         n = self.join_after
         if n is not None and n < len(line):
             joined = FileContextToken.join_tokens(line[n:], " ")

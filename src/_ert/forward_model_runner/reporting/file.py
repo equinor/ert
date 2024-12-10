@@ -179,9 +179,7 @@ class File(Reporter):
             stderr_file = None
             if fm_step.std_err:
                 if os.path.exists(fm_step.std_err):
-                    with open(
-                        fm_step.std_err, "r", encoding="utf-8"
-                    ) as error_file_handler:
+                    with open(fm_step.std_err, encoding="utf-8") as error_file_handler:
                         stderr = error_file_handler.read()
                         if stderr:
                             stderr_file = os.path.join(os.getcwd(), fm_step.std_err)

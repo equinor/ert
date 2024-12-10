@@ -141,7 +141,7 @@ def test_memory_usage_counts_grandchildren():
     # comparing the memory used with different amounts of forks done.
     # subtract a little bit (* 0.9) due to natural variance in memory used
     # when running the program.
-    memory_per_numbers_list = sys.getsizeof(int(0)) * blobsize * 0.90
+    memory_per_numbers_list = sys.getsizeof(0) * blobsize * 0.90
 
     max_seens = [max_memory_per_subprocess_layer(layers) for layers in range(3)]
     assert max_seens[0] + memory_per_numbers_list < max_seens[1]

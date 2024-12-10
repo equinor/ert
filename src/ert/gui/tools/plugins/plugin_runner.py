@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from _ert.threading import ErtThread
 from ert.config import CancelPluginException
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 class PluginRunner:
     def __init__(
-        self, plugin: "Plugin", ert_config: ErtConfig, storage: LocalStorage
+        self, plugin: Plugin, ert_config: ErtConfig, storage: LocalStorage
     ) -> None:
         super().__init__()
         self.ert_config = ert_config
@@ -29,7 +30,7 @@ class PluginRunner:
 
         self.__result = None
         self._runner = WorkflowJobRunner(plugin.getWorkflowJob())
-        self.poll_thread: Optional[ErtThread] = None
+        self.poll_thread: ErtThread | None = None
 
     def run(self) -> None:
         try:
@@ -70,7 +71,7 @@ class PluginRunner:
             print("Plugin cancelled before execution!")
 
     def __runWorkflowJob(
-        self, arguments: Optional[List[Any]], fixtures: Dict[str, Any]
+        self, arguments: list[Any] | None, fixtures: dict[str, Any]
     ) -> None:
         self.__result = self._runner.run(arguments, fixtures=fixtures)
 

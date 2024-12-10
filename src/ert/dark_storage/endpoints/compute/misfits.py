@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import UUID
 
 import pandas as pd
@@ -34,7 +34,7 @@ async def get_response_misfits(
     storage: Storage = DEFAULT_STORAGEREADER,
     ensemble_id: UUID,
     response_name: str,
-    realization_index: Optional[int] = None,
+    realization_index: int | None = None,
     summary_misfits: bool = False,
 ) -> Response:
     ensemble = storage.get_ensemble(ensemble_id)
@@ -56,7 +56,7 @@ async def get_response_misfits(
         raise ValueError(f"Cant fetch observations for key {response_name}")
     o = obs[0]
 
-    def parse_index(x: Any) -> Union[int, datetime]:
+    def parse_index(x: Any) -> int | datetime:
         try:
             return int(x)
         except ValueError:

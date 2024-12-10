@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import Literal, Type
+from typing import Literal
 
 import yaml
 
@@ -577,7 +577,7 @@ By invoking the :code:`FORWARD_MODEL` as such:
         )
 
 
-_UpperCaseFMSteps: list[Type[ForwardModelStepPlugin]] = [
+_UpperCaseFMSteps: list[type[ForwardModelStepPlugin]] = [
     CarefulCopyFile,
     CopyDirectory,
     CopyFile,
@@ -600,7 +600,7 @@ _UpperCaseFMSteps: list[Type[ForwardModelStepPlugin]] = [
 # executables with no validation.
 def _create_lowercase_fm_step_cls_with_only_executable(
     fm_step_name: str, executable: str
-) -> Type[ForwardModelStepPlugin]:
+) -> type[ForwardModelStepPlugin]:
     class _LowerCaseFMStep(ForwardModelStepPlugin):
         def __init__(self) -> None:
             super().__init__(name=fm_step_name, command=[executable])
@@ -612,7 +612,7 @@ def _create_lowercase_fm_step_cls_with_only_executable(
     return _LowerCaseFMStep
 
 
-_LowerCaseFMSteps: list[Type[ForwardModelStepPlugin]] = []
+_LowerCaseFMSteps: list[type[ForwardModelStepPlugin]] = []
 for fm_step_subclass in _UpperCaseFMSteps:
     assert issubclass(fm_step_subclass, ForwardModelStepPlugin)
     inst = fm_step_subclass()  # type: ignore
@@ -624,7 +624,7 @@ for fm_step_subclass in _UpperCaseFMSteps:
 
 
 @plugin(name="ert")
-def installable_forward_model_steps() -> list[Type[ForwardModelStepPlugin]]:
+def installable_forward_model_steps() -> list[type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 

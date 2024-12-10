@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional, Union
 
 
 @dataclass
@@ -7,8 +6,8 @@ class EvaluatorConnectionInfo:
     """Read only server-info"""
 
     url: str
-    cert: Optional[Union[str, bytes]] = None
-    token: Optional[str] = None
+    cert: str | bytes | None = None
+    token: str | None = None
 
     @property
     def dispatch_uri(self) -> str:

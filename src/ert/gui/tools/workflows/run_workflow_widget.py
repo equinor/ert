@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Iterable, Optional
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QMovie
@@ -57,13 +58,13 @@ class RunWorkflowWidget(QWidget):
 
         self.setLayout(layout)
 
-        self._running_workflow_dialog: Optional[WorkflowDialog] = None
+        self._running_workflow_dialog: WorkflowDialog | None = None
 
         self.workflowSucceeded.connect(self.workflowFinished)
         self.workflowFailed.connect(self.workflowFinishedWithFail)
         self.workflowKilled.connect(self.workflowStoppedByUser)
 
-        self._workflow_runner: Optional[WorkflowRunner] = None
+        self._workflow_runner: WorkflowRunner | None = None
 
     def createSpinWidget(self) -> QWidget:
         widget = QWidget()

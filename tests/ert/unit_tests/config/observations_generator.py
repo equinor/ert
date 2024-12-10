@@ -2,7 +2,6 @@ import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-from typing import List, Optional
 
 import hypothesis.strategies as st
 from hypothesis import assume
@@ -38,7 +37,7 @@ class Observation(ABC):
                 continue
             if isinstance(val, Enum):
                 result += f"{f.name.upper()} = {val.name}; "
-            elif isinstance(val, (float, str, int)):
+            elif isinstance(val, float | str | int):
                 result += f"{f.name.upper()} = {val}; "
             elif isinstance(val, Observation):
                 result += str(val)
@@ -64,7 +63,7 @@ class Segment(Observation):
 @dataclass
 class HistoryObservation(Observation):
     error_mode: ErrorMode
-    segment: List[Segment] = field(default_factory=list)
+    segment: list[Segment] = field(default_factory=list)
 
     @property
     def class_name(self):
@@ -80,10 +79,10 @@ class SummaryObservation(Observation):
     key: str
     error_min: PositiveFloat
     error_mode: ErrorMode
-    days: Optional[float] = None
-    hours: Optional[float] = None
-    restart: Optional[int] = None
-    date: Optional[str] = None
+    days: float | None = None
+    hours: float | None = None
+    restart: int | None = None
+    date: str | None = None
 
     @property
     def class_name(self):
@@ -103,13 +102,13 @@ class SummaryObservation(Observation):
 @dataclass
 class GeneralObservation(Observation):
     data: str
-    date: Optional[str] = None
-    days: Optional[float] = None
-    hours: Optional[float] = None
-    restart: Optional[int] = None
-    obs_file: Optional[str] = None
-    value: Optional[float] = None
-    index_list: Optional[List[int]] = None
+    date: str | None = None
+    days: float | None = None
+    hours: float | None = None
+    restart: int | None = None
+    obs_file: str | None = None
+    value: float | None = None
+    index_list: list[int] | None = None
 
     def get_date(self, start):
         if self.date is not None:

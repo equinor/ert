@@ -1609,7 +1609,7 @@ def test_that_context_types_are_json_serializable():
     with open("test.json", "w", encoding="utf-8") as f:
         json.dump(payload, f, cls=ContextBoolEncoder)
 
-    with open("test.json", "r", encoding="utf-8") as f:
+    with open("test.json", encoding="utf-8") as f:
         r = json.load(f)
 
     assert isinstance(r["context_bool_false"], bool)

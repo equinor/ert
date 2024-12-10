@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import pytest
 
@@ -33,7 +33,7 @@ def test_workflow_run(copy_mocked_test_data_to_tmp, evaluator_server_config_gene
 @pytest.mark.parametrize("config", ("array", "index"))
 def test_state_modifier_workflow_run(
     config: str,
-    copy_testdata_tmpdir: Callable[[Optional[str]], Path],
+    copy_testdata_tmpdir: Callable[[str | None], Path],
     evaluator_server_config_generator,
 ) -> None:
     cwd = copy_testdata_tmpdir("open_shut_state_modifier")

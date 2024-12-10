@@ -5,7 +5,7 @@ import hashlib
 import logging
 import time
 from contextlib import suppress
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class JobState(str, Enum):
+class JobState(StrEnum):
     WAITING = "WAITING"
     SUBMITTING = "SUBMITTING"
     PENDING = "PENDING"

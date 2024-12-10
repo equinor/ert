@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -26,9 +26,9 @@ class GaussianKDEPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotGaussianKDE(figure, plot_context, ensemble_to_data_map, observation_data)
 
@@ -36,7 +36,7 @@ class GaussianKDEPlot:
 def plotGaussianKDE(
     figure: Figure,
     plot_context: PlotContext,
-    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     _observation_data: Any,
 ) -> None:
     config = plot_context.plotConfig()

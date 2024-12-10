@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, Optional
+from collections.abc import Iterable
 from uuid import UUID
 
 from qtpy.QtCore import QSize, Qt
@@ -18,9 +18,7 @@ from .validationsupport import ValidationSupport
 
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
-    def __init__(
-        self, items: Iterable[Optional[str]], parent: Optional[QWidget] = None
-    ):
+    def __init__(self, items: Iterable[str | None], parent: QWidget | None = None):
         super().__init__(parent)
 
         self._separators = [",", " "]
@@ -52,7 +50,7 @@ class AutoCompleteLineEdit(QLineEdit):
             i -= 1
         return text_under_cursor
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         popup = self._completer.popup()
         if (
             popup is not None
@@ -73,7 +71,7 @@ class AutoCompleteLineEdit(QLineEdit):
         if popup is not None and len(completion_prefix) == 0:
             popup.hide()
 
-    def __updateCompleterPopupItems(self, completionPrefix: Optional[str]) -> None:
+    def __updateCompleterPopupItems(self, completionPrefix: str | None) -> None:
         self._completer.setCompletionPrefix(completionPrefix)
         popup = self._completer.popup()
         assert popup is not None
@@ -87,7 +85,7 @@ class ListEditBox(QWidget):
     NO_ITEMS_SPECIFIED_MSG = "The list must contain at least one item or * (for all)."
     DEFAULT_MSG = "A list of comma separated ensemble names or * for all."
 
-    def __init__(self, possible_items: Dict[UUID, str]) -> None:
+    def __init__(self, possible_items: dict[UUID, str]) -> None:
         QWidget.__init__(self)
 
         self._editing = True
@@ -129,7 +127,7 @@ class ListEditBox(QWidget):
         text = "".join(text.split())
         return text
 
-    def getItems(self) -> Dict[UUID, str]:
+    def getItems(self) -> dict[UUID, str]:
         text = self.getListText()
         items = text.split(",")
 

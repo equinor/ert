@@ -7,7 +7,7 @@ from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QStandardItemModel
@@ -138,7 +138,7 @@ class ExperimentPanel(QWidget):
 
         layout.addWidget(self._experiment_stack)
 
-        self._experiment_widgets: dict[Type[BaseRunModel], QWidget] = OrderedDict()
+        self._experiment_widgets: dict[type[BaseRunModel], QWidget] = OrderedDict()
         self.addExperimentConfigPanel(
             SingleTestRunPanel(run_path, notifier),
             True,
@@ -263,17 +263,15 @@ class ExperimentPanel(QWidget):
 
             msg_box.setText("Run experiments")
             msg_box.setInformativeText(
-                (
-                    "ERT is running in an existing runpath.\n\n"
-                    "Please be aware of the following:\n"
-                    "- Previously generated results "
-                    "might be overwritten.\n"
-                    "- Previously generated files might "
-                    "be used if not configured correctly.\n"
-                    f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
-                    "are running in existing runpaths.\n"
-                    "Are you sure you want to continue?"
-                )
+                "ERT is running in an existing runpath.\n\n"
+                "Please be aware of the following:\n"
+                "- Previously generated results "
+                "might be overwritten.\n"
+                "- Previously generated files might "
+                "be used if not configured correctly.\n"
+                f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
+                "are running in existing runpaths.\n"
+                "Are you sure you want to continue?"
             )
 
             delete_runpath_checkbox = QCheckBox()
@@ -300,7 +298,7 @@ class ExperimentPanel(QWidget):
                     msg_box.setIcon(QMessageBox.Warning)
                     msg_box.setText("ERT could not delete the existing runpath")
                     msg_box.setInformativeText(
-                        (f"{e}\n\n" "Continue without deleting the runpath?")
+                        f"{e}\n\n" "Continue without deleting the runpath?"
                     )
                     msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                     msg_box.setDefaultButton(QMessageBox.No)

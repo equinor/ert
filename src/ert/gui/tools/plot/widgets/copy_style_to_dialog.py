@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
@@ -24,9 +24,9 @@ if TYPE_CHECKING:
 class CopyStyleToDialog(QDialog):
     def __init__(
         self,
-        parent: Optional[QWidget],
+        parent: QWidget | None,
         current_key: Any,
-        key_defs: List[PlotApiKeyDefinition],
+        key_defs: list[PlotApiKeyDefinition],
     ):
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
@@ -66,10 +66,10 @@ class CopyStyleToDialog(QDialog):
 
         layout.addRow(button_layout)
 
-    def getSelectedKeys(self) -> List[str]:
+    def getSelectedKeys(self) -> list[str]:
         return self._list_model.getSelectedItems()
 
-    def filterSettingsChanged(self, item: Dict[str, bool]) -> None:
+    def filterSettingsChanged(self, item: dict[str, bool]) -> None:
         for value, visible in item.items():
             self._list_model.setFilterOnMetadata("data_origin", value, visible)
         self._cl.modelChanged()

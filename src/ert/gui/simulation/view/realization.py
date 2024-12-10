@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import (
     QAbstractItemModel,
     QEvent,
@@ -34,10 +32,10 @@ from ert.shared.status.utils import byte_with_unit
 
 
 class RealizationWidget(QWidget):
-    def __init__(self, _it: int, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, it: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._iter = _it
+        self._iter = it
         self._delegate_size = QSize(90, 90)
 
         self._real_view = QListView(self)
@@ -97,7 +95,7 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def paint(
         self,
-        painter: Optional[QPainter],
+        painter: QPainter | None,
         option: QStyleOptionViewItem,
         index: QModelIndex,
     ) -> None:
@@ -149,7 +147,7 @@ class RealizationDelegate(QStyledItemDelegate):
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, object: Optional[QObject], event: Optional[QEvent]) -> bool:
+    def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
         if event.type() == QEvent.Type.ToolTip:  # type: ignore
             mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
             parent: RealizationWidget = self.parent()  # type: ignore

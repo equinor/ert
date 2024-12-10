@@ -3,10 +3,11 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
+from collections.abc import Iterable
 from datetime import datetime
-from functools import lru_cache
+from functools import cache, lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
@@ -86,7 +87,7 @@ class LocalEnsemble(BaseMode):
         )
         self._error_log_name = "error.json"
 
-        @lru_cache(maxsize=None)
+        @cache
         def create_realization_dir(realization: int) -> Path:
             return self._path / f"realization-{realization}"
 
@@ -455,12 +456,12 @@ class LocalEnsemble(BaseMode):
                 return True
             path = self._realization_dir(realization)
 
-            def _has_response(_key: str) -> bool:
-                if _key in self.experiment.response_key_to_response_type:
-                    _response_type = self.experiment.response_key_to_response_type[_key]
-                    return (path / f"{_response_type}.parquet").exists()
+            def _has_response(key_: str) -> bool:
+                if key_ in self.experiment.response_key_to_response_type:
+                    response_type = self.experiment.response_key_to_response_type[key_]
+                    return (path / f"{response_type}.parquet").exists()
 
-                return (path / f"{_key}.parquet").exists()
+                return (path / f"{key_}.parquet").exists()
 
             if key:
                 return _has_response(key)
@@ -483,20 +484,20 @@ class LocalEnsemble(BaseMode):
             )
 
         def _find_state(realization: int) -> set[RealizationStorageState]:
-            _state = set()
+            state = set()
             if self.has_failure(realization):
                 failure = self.get_failure(realization)
                 assert failure
-                _state.add(failure.type)
+                state.add(failure.type)
             if _responses_exist_for_realization(realization):
-                _state.add(RealizationStorageState.RESPONSES_LOADED)
+                state.add(RealizationStorageState.RESPONSES_LOADED)
             if _parameters_exist_for_realization(realization):
-                _state.add(RealizationStorageState.PARAMETERS_LOADED)
+                state.add(RealizationStorageState.PARAMETERS_LOADED)
 
-            if len(_state) == 0:
-                _state.add(RealizationStorageState.UNDEFINED)
+            if len(state) == 0:
+                state.add(RealizationStorageState.UNDEFINED)
 
-            return _state
+            return state
 
         return [_find_state(i) for i in range(self.ensemble_size)]
 
@@ -522,7 +523,7 @@ class LocalEnsemble(BaseMode):
         group: str,
         realizations: int | np.int64 | npt.NDArray[np.int_] | None,
     ) -> xr.Dataset:
-        if isinstance(realizations, (int, np.int64)):
+        if isinstance(realizations, int | np.int64):
             return self._load_single_dataset(group, int(realizations)).isel(
                 realizations=0, drop=True
             )

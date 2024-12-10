@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from qtpy.QtCore import QRect, QSize, Signal, Slot
 from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import QColorDialog, QFrame
@@ -43,13 +41,13 @@ class ColorBox(QFrame):
         return self._color
 
     @color.setter
-    def color(self, color: Tuple[str, float]) -> None:
+    def color(self, color: tuple[str, float]) -> None:
         new_color = QColor(color[0])
         new_color.setAlphaF(color[1])
         self._color = new_color
         self.update()
 
-    def paintEvent(self, event: Optional[QPaintEvent]) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Paints the box"""
         painter = QPainter(self)
         rect = self.contentsRect()
@@ -69,7 +67,7 @@ class ColorBox(QFrame):
 
         QFrame.paintEvent(self, event)
 
-    def mouseReleaseEvent(self, event: Optional[QMouseEvent]) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
         if event:
             self.mouseRelease.emit()
         return super().mouseReleaseEvent(event)

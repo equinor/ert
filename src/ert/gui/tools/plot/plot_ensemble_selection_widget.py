@@ -1,4 +1,5 @@
-from typing import Any, Iterator, List, Optional
+from collections.abc import Iterator
+from typing import Any
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, Signal
 from qtpy.QtGui import (
@@ -27,7 +28,7 @@ from .plot_api import EnsembleObject
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
-    def __init__(self, ensembles: List[EnsembleObject]):
+    def __init__(self, ensembles: list[EnsembleObject]):
         QWidget.__init__(self)
         self.__dndlist = EnsembleSelectListWidget(ensembles[::-1])
 
@@ -40,7 +41,7 @@ class EnsembleSelectionWidget(QWidget):
             self.ensembleSelectionChanged.emit
         )
 
-    def get_selected_ensembles(self) -> List[EnsembleObject]:
+    def get_selected_ensembles(self) -> list[EnsembleObject]:
         return self.__dndlist.get_checked_ensembles()
 
 
@@ -49,7 +50,7 @@ class EnsembleSelectListWidget(QListWidget):
     MAXIMUM_SELECTED = 5
     MINIMUM_SELECTED = 1
 
-    def __init__(self, ensembles: List[EnsembleObject]):
+    def __init__(self, ensembles: list[EnsembleObject]):
         super().__init__()
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
@@ -70,7 +71,7 @@ class EnsembleSelectListWidget(QListWidget):
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
 
-    def get_checked_ensembles(self) -> List[EnsembleObject]:
+    def get_checked_ensembles(self) -> list[EnsembleObject]:
         def _iter() -> Iterator[EnsembleObject]:
             for index in range(self._ensemble_count):
                 item = self.item(index)
@@ -80,14 +81,14 @@ class EnsembleSelectListWidget(QListWidget):
 
         return list(_iter())
 
-    def mouseMoveEvent(self, e: Optional[QMouseEvent]) -> None:
+    def mouseMoveEvent(self, e: QMouseEvent | None) -> None:
         super().mouseMoveEvent(e)
         if e is not None and self.itemAt(e.pos()):
             self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         else:
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
 
-    def dropEvent(self, event: Optional[QDropEvent]) -> None:
+    def dropEvent(self, event: QDropEvent | None) -> None:
         super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
 
@@ -113,7 +114,7 @@ class CustomItemDelegate(QStyledItemDelegate):
 
     def paint(
         self,
-        painter: Optional[QPainter],
+        painter: QPainter | None,
         option: QStyleOptionViewItem,
         index: QModelIndex,
     ) -> None:

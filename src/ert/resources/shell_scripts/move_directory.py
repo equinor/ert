@@ -14,7 +14,7 @@ def move_directory(src_dir, target):
             shutil.rmtree(target)
         shutil.move(src_dir, target)
     else:
-        raise IOError(f"Input argument {src_dir} is not an existing directory")
+        raise OSError(f"Input argument {src_dir} is not an existing directory")
 
 
 if __name__ == "__main__":
@@ -22,5 +22,5 @@ if __name__ == "__main__":
     target = sys.argv[2]
     try:
         move_directory(src, target)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"MOVE_DIRECTORY failed with the following error: {e}")

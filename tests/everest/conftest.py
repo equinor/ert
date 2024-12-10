@@ -1,9 +1,9 @@
 import os
 import shutil
 import tempfile
+from collections.abc import Callable, Iterator
 from copy import deepcopy
 from pathlib import Path
-from typing import Callable, Dict, Iterator, Optional, Union
 
 import pytest
 
@@ -23,8 +23,8 @@ def testdata() -> Path:
 @pytest.fixture
 def copy_testdata_tmpdir(
     testdata: Path, tmp_path: Path
-) -> Iterator[Callable[[Optional[str]], Path]]:
-    def _copy_tree(path: Optional[str] = None):
+) -> Iterator[Callable[[str | None], Path]]:
+    def _copy_tree(path: str | None = None):
         path_ = testdata if path is None else testdata / path
         shutil.copytree(path_, tmp_path, dirs_exist_ok=True)
         return path_
@@ -36,7 +36,7 @@ def copy_testdata_tmpdir(
 
 
 @pytest.fixture(scope="module")
-def control_data_no_variables() -> Dict[str, Union[str, float]]:
+def control_data_no_variables() -> dict[str, str | float]:
     return {
         "name": "group_0",
         "type": "well_control",
@@ -83,7 +83,7 @@ def control_data_no_variables() -> Dict[str, Union[str, float]]:
 )
 def control_config(
     request,
-    control_data_no_variables: Dict[str, Union[str, float]],
+    control_data_no_variables: dict[str, str | float],
 ) -> ControlConfig:
     config = deepcopy(control_data_no_variables)
     config["variables"] = request.param

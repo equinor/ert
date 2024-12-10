@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar
 
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
@@ -27,8 +27,8 @@ class _EverestDocumentation(SphinxDirective):
 
     def _generate_job_documentation(
         self,
-        docs: Dict[str, Any],
-    ) -> List[nodes.section]:
+        docs: dict[str, Any],
+    ) -> list[nodes.section]:
         if not docs:
             node = nodes.section(ids=[_escape_id("no-forward-models-category")])
             node.append(nodes.literal_block(text="No forward model jobs installed"))
@@ -62,7 +62,7 @@ class EverestForwardModelDocumentation(_EverestDocumentation):
     pm = EverestPluginManager()
     _JOBS: ClassVar[dict[str, Any]] = {**pm.get_documentation()}
 
-    def run(self) -> List[nodes.section]:
+    def run(self) -> list[nodes.section]:
         return self._generate_job_documentation(
             EverestForwardModelDocumentation._JOBS,
         )

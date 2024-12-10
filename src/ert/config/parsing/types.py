@@ -1,16 +1,16 @@
 from enum import Enum
-from typing import Any, List, Tuple, Union
+from typing import Any
 
 from .context_values import ContextValue
 from .file_context_token import FileContextToken
 
 # The type of the leaf nodes in the Tree after transformation is done
-Instruction = List[
-    List[Union[FileContextToken, List[Tuple[FileContextToken, FileContextToken]]]]
+Instruction = list[
+    list[FileContextToken | list[tuple[FileContextToken, FileContextToken]]]
 ]
 
-Defines = List[List[str]]
+Defines = list[list[str]]
 
-Primitives = Union[float, bool, str, int, Enum]
+Primitives = float | bool | str | int | Enum
 
-MaybeWithContext = Union[ContextValue, Primitives, FileContextToken, List[Any]]
+MaybeWithContext = ContextValue | Primitives | FileContextToken | list[Any]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, no_type_check
+from typing import TYPE_CHECKING, no_type_check
 
 from ert.plugins.plugin_manager import hook_specification
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 @no_type_check
 @hook_specification
-def installable_jobs() -> PluginResponse[Dict[str, str]]:
+def installable_jobs() -> PluginResponse[dict[str, str]]:
     """
     :return: dict with job names as keys and path to config as value
     :rtype: PluginResponse with data as dict[str,str]
@@ -20,7 +20,7 @@ def installable_jobs() -> PluginResponse[Dict[str, str]]:
 
 @no_type_check
 @hook_specification(firstresult=True)
-def job_documentation(job_name: str) -> PluginResponse[Optional[Dict[str, str]]]:
+def job_documentation(job_name: str) -> PluginResponse[dict[str, str] | None]:
     """
     :return: If job_name is from your plugin return
              dict with documentation fields as keys and corresponding
@@ -38,7 +38,7 @@ def job_documentation(job_name: str) -> PluginResponse[Optional[Dict[str, str]]]
 
 @no_type_check
 @hook_specification
-def installable_workflow_jobs() -> PluginResponse[Dict[str, str]]:
+def installable_workflow_jobs() -> PluginResponse[dict[str, str]]:
     """
     :return: dict with workflow job names as keys and path to config as value
     """

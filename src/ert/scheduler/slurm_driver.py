@@ -7,15 +7,11 @@ import logging
 import shlex
 import stat
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import (
-    Iterator,
-    Optional,
-    Tuple,
-)
 
 from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
@@ -38,8 +34,8 @@ class JobStatus(Enum):
 @dataclass
 class JobData:
     iens: int
-    exit_code: Optional[int] = None
-    status: Optional[JobStatus] = None
+    exit_code: int | None = None
+    status: JobStatus | None = None
 
 
 END_STATES = {JobStatus.FAILED, JobStatus.COMPLETED, JobStatus.CANCELLED}
@@ -47,12 +43,12 @@ END_STATES = {JobStatus.FAILED, JobStatus.COMPLETED, JobStatus.CANCELLED}
 
 @dataclass
 class JobInfo:
-    status: Optional[JobStatus] = None
+    status: JobStatus | None = None
 
 
 @dataclass
 class ScontrolInfo(JobInfo):
-    exit_code: Optional[int] = None
+    exit_code: int | None = None
 
 
 @dataclass
@@ -70,14 +66,14 @@ class SlurmDriver(Driver):
         sacct_cmd: str = "sacct",
         scancel_cmd: str = "scancel",
         sbatch_cmd: str = "sbatch",
-        user: Optional[str] = None,
-        memory: Optional[str] = "",
-        realization_memory: Optional[int] = 0,
-        queue_name: Optional[str] = None,
-        memory_per_cpu: Optional[str] = None,
-        max_runtime: Optional[float] = None,
+        user: str | None = None,
+        memory: str | None = "",
+        realization_memory: int | None = 0,
+        queue_name: str | None = None,
+        memory_per_cpu: str | None = None,
+        max_runtime: float | None = None,
         squeue_timeout: float = 2,
-        project_code: Optional[str] = None,
+        project_code: str | None = None,
         activate_script: str = "",
     ) -> None:
         """
@@ -135,8 +131,8 @@ class SlurmDriver(Driver):
     def _submit_cmd(
         self,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
     ) -> list[str]:
         sbatch_with_args = [
             str(self._sbatch),
@@ -177,15 +173,15 @@ class SlurmDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
-        realization_memory: Optional[int] = 0,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
 
         script = create_submit_script(runpath, executable, args, self.activate_script)
-        script_path: Optional[Path] = None
+        script_path: Path | None = None
         try:
             with NamedTemporaryFile(
                 dir=runpath,
@@ -324,7 +320,7 @@ class SlurmDriver(Driver):
             return
 
         self._jobs[job_id].status = new_state
-        event: Optional[Event] = None
+        event: Event | None = None
         if new_state == JobStatus.RUNNING:
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
@@ -360,9 +356,7 @@ class SlurmDriver(Driver):
             return code
         return SLURM_FAILED_EXIT_CODE_FETCH
 
-    async def _poll_once_by_scontrol(
-        self, missing_job_id: str
-    ) -> Optional[ScontrolInfo]:
+    async def _poll_once_by_scontrol(self, missing_job_id: str) -> ScontrolInfo | None:
         if (
             time.time() - self._scontrol_cache_timestamp
             < self._scontrol_required_cache_age
@@ -380,7 +374,7 @@ class SlurmDriver(Driver):
         self._scontrol_cache_timestamp = time.time()
         return info
 
-    async def _run_scontrol(self, missing_job_id: str) -> Optional[ScontrolInfo]:
+    async def _run_scontrol(self, missing_job_id: str) -> ScontrolInfo | None:
         process = await asyncio.create_subprocess_exec(
             self._scontrol,
             "show",
@@ -406,7 +400,7 @@ class SlurmDriver(Driver):
             )
         return None
 
-    async def _run_sacct(self, missing_job_id: str) -> Optional[ScontrolInfo]:
+    async def _run_sacct(self, missing_job_id: str) -> ScontrolInfo | None:
         try:
             process = await asyncio.create_subprocess_exec(
                 self._sacct,
@@ -467,7 +461,7 @@ def _tail_textfile(file_path: Path, num_chars: int) -> str:
         return file.read()[-num_chars:]
 
 
-def _parse_squeue_output(output: str) -> Iterator[Tuple[str, SqueueInfo]]:
+def _parse_squeue_output(output: str) -> Iterator[tuple[str, SqueueInfo]]:
     for line in output.split("\n"):
         if line:
             id, status = line.split()

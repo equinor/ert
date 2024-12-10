@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
@@ -8,7 +7,7 @@ DEFAULT_TOKEN = "hunter2"
 _security_header = APIKeyHeader(name="Token", auto_error=False)
 
 
-async def security(*, token: Optional[str] = Security(_security_header)) -> None:
+async def security(*, token: str | None = Security(_security_header)) -> None:
     if os.getenv("ERT_STORAGE_NO_TOKEN"):
         return
     if not token:

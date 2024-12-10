@@ -3,7 +3,6 @@ import itertools
 import json
 import logging
 import os
-from typing import DefaultDict, Dict, List, Union
 
 import everest
 from ert.config import ErtConfig, ExtParamConfig
@@ -193,7 +192,7 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
     assert ever_config.output_dir is not None
     job_storage = os.path.join(ever_config.output_dir, ".jobs")
     logging.getLogger(EVEREST).debug(
-        "Creating job description files in %s" % job_storage
+        "Creating job description files in {}".format(job_storage)
     )
 
     if not os.path.isdir(job_storage):
@@ -206,14 +205,14 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
         script = everest.jobs.fetch_script(default_job)
         job_spec_file = os.path.join(job_storage, "_" + default_job)
         with open(job_spec_file, "w", encoding="utf-8") as f:
-            f.write("EXECUTABLE %s" % script)
+            f.write("EXECUTABLE {}".format(script))
 
         ever_jobs.append(Job(name=default_job, source=job_spec_file))
 
     return ever_jobs
 
 
-def _job_to_dict(job: Union[dict, InstallJobConfig]) -> Union[dict, InstallJobConfig]:
+def _job_to_dict(job: dict | InstallJobConfig) -> dict | InstallJobConfig:
     if type(job) is InstallJobConfig:
         return job.model_dump(exclude_none=True)
     return job
@@ -288,7 +287,7 @@ def _internal_data_files(ever_config: EverestConfig):
     assert ever_config.output_dir is not None
     data_storage = os.path.join(ever_config.output_dir, ".internal_data")
     data_storage = os.path.realpath(data_storage)
-    logging.getLogger(EVEREST).debug("Storing internal data in %s" % data_storage)
+    logging.getLogger(EVEREST).debug("Storing internal data in {}".format(data_storage))
 
     if not os.path.isdir(data_storage):
         os.makedirs(data_storage)
@@ -493,16 +492,14 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
     ens_config = ert_config.ensemble_config
 
     def _get_variables(
-        variables: Union[
-            List[ControlVariableConfig], List[ControlVariableGuessListConfig]
-        ],
-    ) -> Union[List[str], Dict[str, List[str]]]:
+        variables: list[ControlVariableConfig] | list[ControlVariableGuessListConfig],
+    ) -> list[str] | dict[str, list[str]]:
         if (
             isinstance(variables[0], ControlVariableConfig)
             and getattr(variables[0], "index", None) is None
         ):
             return [var.name for var in variables]
-        result: DefaultDict[str, list] = collections.defaultdict(list)
+        result: collections.defaultdict[str, list] = collections.defaultdict(list)
         for variable in variables:
             if isinstance(variable, ControlVariableGuessListConfig):
                 result[variable.name].extend(

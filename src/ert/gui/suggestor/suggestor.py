@@ -4,7 +4,8 @@ import functools
 import logging
 import webbrowser
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, Sequence
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor

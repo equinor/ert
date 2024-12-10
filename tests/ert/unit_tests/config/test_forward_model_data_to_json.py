@@ -4,7 +4,6 @@ import os
 import os.path
 import stat
 from textwrap import dedent
-from typing import List
 
 import pytest
 
@@ -162,8 +161,8 @@ def _generate_step(
     return _forward_model_step_from_config_file(config_file, name)
 
 
-def empty_list_if_none(_list):
-    return [] if _list is None else _list
+def empty_list_if_none(list_):
+    return [] if list_ is None else list_
 
 
 def default_name_if_none(name):
@@ -236,7 +235,7 @@ def generate_step_from_dict(forward_model_config):
     return forward_model
 
 
-def set_up_forward_model(fm_steplist) -> List[ForwardModelStep]:
+def set_up_forward_model(fm_steplist) -> list[ForwardModelStep]:
     return [generate_step_from_dict(step) for step in fm_steplist]
 
 
@@ -393,7 +392,7 @@ def test_various_null_fields(fm_step_list, context):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
-    forward_model_list: List[ForwardModelStep] = set_up_forward_model(fm_step_list)
+    forward_model_list: list[ForwardModelStep] = set_up_forward_model(fm_step_list)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
 

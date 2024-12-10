@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List
 
 from jinja2 import Template
 
@@ -7,7 +6,7 @@ import ert
 from ert.shared import ert_share_path
 
 
-def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:
+def _get_jobs_from_directories(directories: list[str]) -> dict[str, str]:
     share_path = ert_share_path()
     directories = [
         Template(directory).render(ERT_SHARE_PATH=share_path, ERT_UI_MODE="gui")
@@ -27,7 +26,7 @@ def _get_jobs_from_directories(directories: List[str]) -> Dict[str, str]:
 
 
 @ert.plugin(name="ert")
-def installable_workflow_jobs() -> Dict[str, str]:
+def installable_workflow_jobs() -> dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/workflows/jobs/shell",
         "{{ERT_SHARE_PATH}}/workflows/jobs/internal-{{ERT_UI_MODE}}/config",

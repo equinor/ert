@@ -1,20 +1,15 @@
 import os
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import (
     Any,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
+    Final,
+    TypeAlias,
 )
 
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType, PerturbationType, VariableType
-from typing_extensions import Final, TypeAlias
 
 from everest.config import (
     ControlConfig,
@@ -31,10 +26,10 @@ from everest.config.control_variable_config import (
     ControlVariableGuessListConfig,
 )
 
-VariableName: TypeAlias = Tuple[str, str, int]
-ControlName: TypeAlias = Union[Tuple[str, str], VariableName, List[VariableName]]
-StrListDict: TypeAlias = DefaultDict[str, list]
-IGNORE_KEYS: Final[Tuple[str, ...]] = (
+VariableName: TypeAlias = tuple[str, str, int]
+ControlName: TypeAlias = tuple[str, str] | VariableName | list[VariableName]
+StrListDict: TypeAlias = defaultdict[str, list]
+IGNORE_KEYS: Final[tuple[str, ...]] = (
     "enabled",
     "scaled_range",
     "auto_scale",
@@ -45,10 +40,10 @@ IGNORE_KEYS: Final[Tuple[str, ...]] = (
 
 
 def _collect_sampler(
-    sampler: Optional[SamplerConfig],
-    storage: Dict[str, Any],
-    control_name: Union[List[ControlName], ControlName, None] = None,
-) -> Optional[Dict[str, Any]]:
+    sampler: SamplerConfig | None,
+    storage: dict[str, Any],
+    control_name: list[ControlName] | ControlName | None = None,
+) -> dict[str, Any] | None:
     if sampler is None:
         return None
     map = sampler.model_dump(exclude_none=True, exclude={"backend", "method"})
@@ -64,37 +59,37 @@ def _collect_sampler(
 
 def _scale_translations(
     is_scale: bool,
-    _min: float,
-    _max: float,
+    min_: float,
+    max_: float,
     lower_bound: float,
     upper_bound: float,
     perturbation_type: PerturbationType,
-) -> Tuple[float, float, int]:
+) -> tuple[float, float, int]:
     if not is_scale:
         return 1.0, 0.0, perturbation_type.value
-    scale = (_max - _min) / (upper_bound - lower_bound)
-    return scale, _min - lower_bound * scale, PerturbationType.SCALED.value
+    scale = (max_ - min_) / (upper_bound - lower_bound)
+    return scale, min_ - lower_bound * scale, PerturbationType.SCALED.value
 
 
 @dataclass
 class Control:
-    name: Tuple[str, str]
+    name: tuple[str, str]
     enabled: bool
     lower_bounds: float
     upper_bounds: float
-    perturbation_magnitudes: Optional[float]
-    initial_values: List[float]
+    perturbation_magnitudes: float | None
+    initial_values: list[float]
     types: VariableType
-    scaled_range: Tuple[float, float]
+    scaled_range: tuple[float, float]
     auto_scale: bool
-    index: Optional[int]
+    index: int | None
     scales: float
     offsets: float
     perturbation_types: int
 
 
 def _resolve_everest_control(
-    variable: Union[ControlVariableConfig, ControlVariableGuessListConfig],
+    variable: ControlVariableConfig | ControlVariableGuessListConfig,
     group: ControlConfig,
 ) -> Control:
     scaled_range = variable.scaled_range or group.scaled_range or (0, 1.0)
@@ -137,7 +132,7 @@ def _variable_initial_guess_list_injection(
     *,
     variables: StrListDict,
     gradients: StrListDict,
-) -> List[VariableName]:
+) -> list[VariableName]:
     guesses = len(control.initial_values)
     ropt_names = [(*control.name, index + 1) for index in range(guesses)]
     variables["names"].extend(ropt_names)
@@ -241,13 +236,13 @@ def _parse_controls(controls: Sequence[ControlConfig], ropt_config):
         ropt_config["gradient"]["samplers"] = sampler_indices
 
 
-def _parse_objectives(objective_functions: List[ObjectiveFunctionConfig], ropt_config):
-    names: List[str] = []
-    scales: List[float] = []
-    auto_scale: List[bool] = []
-    weights: List[float] = []
-    transform_indices: List[int] = []
-    transforms: List = []
+def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_config):
+    names: list[str] = []
+    scales: list[float] = []
+    auto_scale: list[bool] = []
+    weights: list[float] = []
+    transform_indices: list[int] = []
+    transforms: list = []
 
     for objective in objective_functions:
         assert isinstance(objective.name, str)
@@ -291,7 +286,7 @@ def _parse_objectives(objective_functions: List[ObjectiveFunctionConfig], ropt_c
 
 
 def _parse_input_constraints(
-    input_constraints: Optional[List[InputConstraintConfig]],
+    input_constraints: list[InputConstraintConfig] | None,
     ropt_config,
     formatted_names,
 ):
@@ -331,19 +326,19 @@ def _parse_input_constraints(
 
 
 def _parse_output_constraints(
-    output_constraints: Optional[List[OutputConstraintConfig]], ropt_config
+    output_constraints: list[OutputConstraintConfig] | None, ropt_config
 ):
     if not output_constraints:
         return
 
-    names: List[str] = []
-    rhs_values: List[float] = []
-    scales: List[float] = []
-    auto_scale: List[bool] = []
-    types: List[ConstraintType] = []
+    names: list[str] = []
+    rhs_values: list[float] = []
+    scales: list[float] = []
+    auto_scale: list[bool] = []
+    types: list[ConstraintType] = []
 
     def _add_output_constraint(
-        rhs_value: Optional[float], constraint_type: ConstraintType, suffix=None
+        rhs_value: float | None, constraint_type: ConstraintType, suffix=None
     ):
         if rhs_value is not None:
             name = constr.name
@@ -386,7 +381,7 @@ def _parse_output_constraints(
 
 
 def _parse_optimization(
-    ever_opt: Optional[OptimizationConfig],
+    ever_opt: OptimizationConfig | None,
     has_output_constraints: bool,
     ropt_config,
 ):
@@ -451,7 +446,7 @@ def _parse_optimization(
     if cvar_opts := ever_opt.cvar or None:
         # set up the configuration of the realization filter that implements cvar:
         if (percentile := cvar_opts.percentile) is not None:
-            cvar_config: Dict[str, Any] = {
+            cvar_config: dict[str, Any] = {
                 "method": "cvar-objective",
                 "options": {"percentile": percentile},
             }
@@ -485,8 +480,8 @@ def _parse_optimization(
 
 
 def _parse_model(
-    ever_model: Optional[ModelConfig],
-    ever_opt: Optional[OptimizationConfig],
+    ever_model: ModelConfig | None,
+    ever_opt: OptimizationConfig | None,
     ropt_config,
 ):
     if not ever_model:
@@ -507,7 +502,7 @@ def _parse_model(
 
 
 def _parse_environment(
-    optimization_output_dir: str, random_seed: Optional[int], ropt_config
+    optimization_output_dir: str, random_seed: int | None, ropt_config
 ):
     ropt_config["optimizer"]["output_dir"] = os.path.abspath(optimization_output_dir)
     if random_seed is not None:
@@ -521,7 +516,7 @@ def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
     the values are actually extracted, all the others are set to some
     more or less reasonable default
     """
-    ropt_config: Dict[str, Any] = {}
+    ropt_config: dict[str, Any] = {}
 
     _parse_controls(ever_config.controls, ropt_config)
 

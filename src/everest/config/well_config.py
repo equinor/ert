@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -8,7 +7,7 @@ from everest.strings import DATE_FORMAT
 
 class WellConfig(BaseModel):
     name: str = Field(description="The unique name of the well")
-    drill_date: Optional[str] = Field(
+    drill_date: str | None = Field(
         None,
         description="""Ideal date to drill a well.
 
@@ -16,7 +15,7 @@ The interpretation of this is up to the forward model. The standard tooling will
 consider this as the earliest possible drill date.
 """,
     )
-    drill_time: Optional[float] = Field(
+    drill_time: float | None = Field(
         None,
         description="""specifies the time it takes
  to drill the well under consideration.""",

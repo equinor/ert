@@ -24,8 +24,8 @@ def _setup_reporters(
     ee_token=None,
     ee_cert_path=None,
     experiment_id=None,
-) -> typing.List[reporting.Reporter]:
-    reporters: typing.List[reporting.Reporter] = []
+) -> list[reporting.Reporter]:
+    reporters: list[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:
@@ -77,10 +77,10 @@ def _wait_for_retry():
 
 def _read_jobs_file(retry=True):
     try:
-        with open(JOBS_FILE, "r", encoding="utf-8") as json_file:
+        with open(JOBS_FILE, encoding="utf-8") as json_file:
             return json.load(json_file)
     except json.JSONDecodeError as e:
-        raise IOError("Job Runner cli failed to load JSON-file.") from e
+        raise OSError("Job Runner cli failed to load JSON-file.") from e
     except FileNotFoundError as e:
         if retry:
             logger.error(f"Could not find file {JOBS_FILE}, retrying")

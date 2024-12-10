@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Mapping, Optional, Sequence, Tuple, Union
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import httpx
 import requests
@@ -17,11 +18,11 @@ class StorageService(BaseService):
         self,
         exec_args: Sequence[str] = (),
         timeout: int = 120,
-        conn_info: Union[Mapping[str, Any], Exception, None] = None,
-        project: Optional[str] = None,
+        conn_info: Mapping[str, Any] | Exception | None = None,
+        project: str | None = None,
         verbose: bool = False,
     ):
-        self._url: Optional[str] = None
+        self._url: str | None = None
 
         exec_args = local_exec_args("storage")
 
@@ -31,7 +32,7 @@ class StorageService(BaseService):
 
         super().__init__(exec_args, timeout, conn_info, project)
 
-    def fetch_auth(self) -> Tuple[str, Any]:
+    def fetch_auth(self) -> tuple[str, Any]:
         """
         Returns a tuple of username and password, compatible with requests' `auth`
         kwarg.
@@ -74,7 +75,7 @@ class StorageService(BaseService):
         )
 
     @classmethod
-    def session(cls, timeout: Optional[int] = None) -> Client:
+    def session(cls, timeout: int | None = None) -> Client:
         """
         Start a HTTP transaction with the server
         """
@@ -88,7 +89,7 @@ class StorageService(BaseService):
     @classmethod
     async def async_session(
         cls,
-        timeout: Optional[int] = None,  # noqa: ASYNC109
+        timeout: int | None = None,  # noqa: ASYNC109
     ) -> httpx.AsyncClient:
         """
         Start a HTTP transaction with the server

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from datetime import date
@@ -27,11 +27,12 @@ class PlotTools:
     @staticmethod
     def _getXAxisLimits(
         plot_context: PlotContext,
-    ) -> Optional[
-        tuple[Optional[int], Optional[int]]
-        | tuple[Optional[float], Optional[float]]
-        | tuple[Optional[date], Optional[date]]
-    ]:
+    ) -> (
+        tuple[int | None, int | None]
+        | tuple[float | None, float | None]
+        | tuple[date | None, date | None]
+        | None
+    ):
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.x_axis
 
@@ -51,11 +52,12 @@ class PlotTools:
     @staticmethod
     def _getYAxisLimits(
         plot_context: PlotContext,
-    ) -> Optional[
-        tuple[Optional[int], Optional[int]]
-        | tuple[Optional[float], Optional[float]]
-        | tuple[Optional[date], Optional[date]]
-    ]:
+    ) -> (
+        tuple[int | None, int | None]
+        | tuple[float | None, float | None]
+        | tuple[date | None, date | None]
+        | None
+    ):
         limits = plot_context.plotConfig().limits
         axis_name = plot_context.y_axis
 

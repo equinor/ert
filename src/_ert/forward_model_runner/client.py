@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import ssl
-from typing import Any, AnyStr, Optional, Self, Union
+from typing import Any, AnyStr, Self
 
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.datastructures import Headers
@@ -50,10 +50,10 @@ class Client:
     def __init__(
         self,
         url: str,
-        token: Optional[str] = None,
-        cert: Optional[Union[str, bytes]] = None,
-        max_retries: Optional[int] = None,
-        timeout_multiplier: Optional[int] = None,
+        token: str | None = None,
+        cert: str | bytes | None = None,
+        max_retries: int | None = None,
+        timeout_multiplier: int | None = None,
     ) -> None:
         if max_retries is None:
             max_retries = self.DEFAULT_MAX_RETRIES
@@ -72,7 +72,7 @@ class Client:
         # if True it will enforce TLS, and if you want to use self signed
         # certificates you need to pass an ssl_context with the certificate
         # loaded.
-        self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = None
+        self._ssl_context: bool | ssl.SSLContext | None = None
         if cert is not None:
             self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             self._ssl_context.load_verify_locations(cadata=cert)
@@ -81,7 +81,7 @@ class Client:
 
         self._max_retries = max_retries
         self._timeout_multiplier = timeout_multiplier
-        self.websocket: Optional[ClientConnection] = None
+        self.websocket: ClientConnection | None = None
         self.loop = new_event_loop()
 
     async def get_websocket(self) -> ClientConnection:
@@ -103,33 +103,28 @@ class Client:
                 await self.websocket.send(msg)
                 return
             except ConnectionClosedOK as exception:
-                _error_msg = (
+                error_msg = (
                     f"Connection closed received from the server {self.url}! "
                     f" Exception from {type(exception)}: {exception!s}"
                 )
-                raise ClientConnectionClosedOK(_error_msg) from exception
-            except (
-                InvalidHandshake,
-                InvalidURI,
-                OSError,
-                asyncio.TimeoutError,
-            ) as exception:
+                raise ClientConnectionClosedOK(error_msg) from exception
+            except (TimeoutError, InvalidHandshake, InvalidURI, OSError) as exception:
                 if retry == self._max_retries:
-                    _error_msg = (
+                    error_msg = (
                         f"Not able to establish the "
                         f"websocket connection {self.url}! Max retries reached!"
                         " Check for firewall issues."
                         f" Exception from {type(exception)}: {exception!s}"
                     )
-                    raise ClientConnectionError(_error_msg) from exception
+                    raise ClientConnectionError(error_msg) from exception
             except ConnectionClosedError as exception:
                 if retry == self._max_retries:
-                    _error_msg = (
+                    error_msg = (
                         f"Not been able to send the event"
                         f" to {self.url}! Max retries reached!"
                         f" Exception from {type(exception)}: {exception!s}"
                     )
-                    raise ClientConnectionError(_error_msg) from exception
+                    raise ClientConnectionError(error_msg) from exception
             await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
             self.websocket = None
 

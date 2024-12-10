@@ -64,7 +64,7 @@ class GenDataConfig(ResponseConfig):
                     name,
                 )
             try:
-                _report_steps: list[int] | None = rangestring_to_list(
+                report_steps_: list[int] | None = rangestring_to_list(
                     report_steps_value
                 )
             except ValueError as e:
@@ -74,7 +74,7 @@ class GenDataConfig(ResponseConfig):
                     gen_data,
                 ) from e
 
-            _report_steps = sorted(_report_steps) if _report_steps else None
+            report_steps_ = sorted(report_steps_) if report_steps_ else None
             if os.path.isabs(res_file):
                 result_file_context = next(
                     x for x in gen_data if x.startswith("RESULT_FILE:")
@@ -85,7 +85,7 @@ class GenDataConfig(ResponseConfig):
                     result_file_context,
                 )
 
-            if _report_steps is None and "%d" in res_file:
+            if report_steps_ is None and "%d" in res_file:
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
@@ -94,19 +94,19 @@ class GenDataConfig(ResponseConfig):
                     ).set_context_keyword(gen_data)
                 )
 
-            if _report_steps is not None and "%d" not in res_file:
+            if report_steps_ is not None and "%d" not in res_file:
                 result_file_context = next(
                     x for x in gen_data if x.startswith("RESULT_FILE:")
                 )
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
-                        message=f"When configuring REPORT_STEPS:{_report_steps} "
+                        message=f"When configuring REPORT_STEPS:{report_steps_} "
                         "RESULT_FILES must be configured using %d"
                     ).set_context_keyword(result_file_context)
                 )
 
             keys.append(name)
-            report_steps.append(_report_steps)
+            report_steps.append(report_steps_)
             input_files.append(res_file)
 
         return cls(
@@ -141,7 +141,7 @@ class GenDataConfig(ResponseConfig):
 
         errors = []
 
-        _run_path = Path(run_path)
+        run_path_ = Path(run_path)
         datasets_per_name = []
 
         for name, input_file, report_steps in zip(
@@ -151,7 +151,7 @@ class GenDataConfig(ResponseConfig):
             if report_steps is None:
                 try:
                     filename = substitute_runpath_name(input_file, iens, iter)
-                    datasets_per_report_step.append(_read_file(_run_path / filename, 0))
+                    datasets_per_report_step.append(_read_file(run_path_ / filename, 0))
                 except (InvalidResponseFile, FileNotFoundError) as err:
                     errors.append(err)
             else:
@@ -161,7 +161,7 @@ class GenDataConfig(ResponseConfig):
                     )
                     try:
                         datasets_per_report_step.append(
-                            _read_file(_run_path / filename, report_step)
+                            _read_file(run_path_ / filename, report_step)
                         )
                     except (InvalidResponseFile, FileNotFoundError) as err:
                         errors.append(err)

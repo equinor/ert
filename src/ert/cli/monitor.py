@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from queue import SimpleQueue
-from typing import Dict, Optional, TextIO, Tuple
+from typing import TextIO
 
 from tqdm import tqdm
 
@@ -31,7 +30,7 @@ from ert.run_models.event import (
 )
 from ert.shared.status.utils import format_running_time
 
-Color = Tuple[int, int, int]
+Color = tuple[int, int, int]
 
 
 def _no_color(text: str, color: Color) -> str:
@@ -59,8 +58,8 @@ class Monitor:
 
     def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
-        self._snapshots: Dict[int, EnsembleSnapshot] = {}
-        self._start_time: Optional[datetime] = None
+        self._snapshots: dict[int, EnsembleSnapshot] = {}
+        self._start_time: datetime | None = None
         self._colorize = ansi_color
         # If out is not (like) a tty, disable colors.
         if not out.isatty() and not color_always:
@@ -73,7 +72,7 @@ class Monitor:
     def monitor(
         self,
         event_queue: SimpleQueue[StatusEvents],
-        output_path: Optional[Path] = None,
+        output_path: Path | None = None,
     ) -> EndEvent:
         self._start_time = datetime.now()
         while True:
@@ -100,7 +99,7 @@ class Monitor:
                     event.write_as_csv(output_path)
 
     def _print_job_errors(self) -> None:
-        failed_jobs: Dict[Optional[str], int] = {}
+        failed_jobs: dict[str | None, int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
                 for job in real["fm_steps"].values():
@@ -118,15 +117,15 @@ class Monitor:
         aggregate = latest_snapshot.aggregate_real_states()
         for state_ in ALL_REALIZATION_STATES:
             count = aggregate[state_]
-            _countstring = f"{count}/{total_count}"
+            countstring = f"{count}/{total_count}"
             out = (
                 f"{self._colorize(self.dot, color=REAL_STATE_TO_COLOR[state_])}"
-                f"{state_:10} {_countstring:>10}"
+                f"{state_:10} {countstring:>10}"
             )
             statuses += f"    {out}\n"
         return statuses
 
-    def _print_result(self, failed: bool, failed_message: Optional[str]) -> None:
+    def _print_result(self, failed: bool, failed_message: str | None) -> None:
         if failed:
             msg = f"Experiment failed with the following error: {failed_message}"
             print(self._colorize(msg, color=COLOR_FAILED), file=self._out)

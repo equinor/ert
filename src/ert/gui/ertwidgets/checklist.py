@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QPoint, QSize, Qt
 from qtpy.QtGui import QIcon
@@ -27,7 +27,7 @@ class CheckList(QWidget):
         self,
         model: SelectableListModel,
         label: str = "",
-        custom_filter_button: Optional[QToolButton] = None,
+        custom_filter_button: QToolButton | None = None,
     ):
         """
         :param custom_filter_button:  if needed, add a button that opens a
@@ -123,15 +123,15 @@ class CheckList(QWidget):
 
         self.filterList(self._search_box.filter())
 
-    def filterList(self, _filter: str) -> None:
-        _filter = _filter.lower()
+    def filterList(self, filter_: str) -> None:
+        filter_ = filter_.lower()
 
         for index in range(0, self._list.count()):
             item = self._list.item(index)
             assert item is not None
             text = item.text().lower()
 
-            if not _filter or _filter in text:
+            if not filter_ or filter_ in text:
                 item.setHidden(False)
             else:
                 item.setHidden(True)

@@ -1,4 +1,4 @@
-from typing import List, Set, Type, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -16,12 +16,12 @@ def collect_forward_model_schemas():
     return {}
 
 
-def lint_forward_model_job(job: str, args) -> List[str]:
+def lint_forward_model_job(job: str, args) -> list[str]:
     return pm.hook.lint_forward_model(job=job, args=args)
 
 
 def check_forward_model_objective(
-    forward_model_steps: List[str], objectives: Set[str]
+    forward_model_steps: list[str], objectives: set[str]
 ) -> None:
     if not objectives or not forward_model_steps:
         return
@@ -39,7 +39,7 @@ def check_forward_model_objective(
         )
 
 
-def parse_forward_model_file(path: str, schema: Type[T], message: str) -> T:
+def parse_forward_model_file(path: str, schema: type[T], message: str) -> T:
     try:
         res = pm.hook.parse_forward_model_schema(path=path, schema=schema)
         if res:

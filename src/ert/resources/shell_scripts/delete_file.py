@@ -16,7 +16,7 @@ def delete_file(filename):
                     f"Sorry you are not owner of file:{filename} - not deleted\n"
                 )
         else:
-            raise IOError(f"Entry:'{filename}' is not a regular file")
+            raise OSError(f"Entry:'{filename}' is not a regular file")
     elif os.path.islink(filename):
         os.remove(filename)
     else:
@@ -27,5 +27,5 @@ if __name__ == "__main__":
     try:
         for file in sys.argv[1:]:
             delete_file(file)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"DELETE_FILE failed with the following error: {e}")

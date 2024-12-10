@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
@@ -16,7 +14,7 @@ class WorkflowDialog(QDialog):
     closeButtonPressed = Signal()
 
     def __init__(
-        self, title: str, widget: QWidget, parent: Optional[QWidget] = None
+        self, title: str, widget: QWidget, parent: QWidget | None = None
     ) -> None:
         QDialog.__init__(self, parent)
 
@@ -53,7 +51,7 @@ class WorkflowDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # disallow pressing escape to close
         # when close button is not enabled
         if (

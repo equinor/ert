@@ -1,10 +1,8 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CVaRConfig(BaseModel):  # type: ignore
-    number_of_realizations: Optional[int] = Field(
+    number_of_realizations: int | None = Field(
         default=None,
         description="""The number of realizations used for CVaR estimation.
 
@@ -13,7 +11,7 @@ Sets the number of realizations that is used to calculate the total objective.
 This option is exclusive with the **percentile** option.
 """,
     )
-    percentile: Optional[float] = Field(
+    percentile: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,

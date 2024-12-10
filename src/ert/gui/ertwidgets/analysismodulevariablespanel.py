@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Type, cast, get_args
+from typing import cast, get_args
 
 from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
@@ -187,7 +187,7 @@ class AnalysisModuleVariablesPanel(QWidget):
     def valueChanged(
         self,
         variable_name: str,
-        variable_type: Type[bool] | Type[float],
+        variable_type: type[bool] | type[float],
         variable_control: QWidget,
     ) -> None:
         value: bool | float | None = None

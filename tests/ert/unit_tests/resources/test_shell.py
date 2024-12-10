@@ -217,12 +217,12 @@ def test_move_file_into_folder_file_exists():
     with open("file", "w", encoding="utf-8") as f:
         f.write("new")
 
-    with open("dst_folder/file", "r", encoding="utf-8") as f:
+    with open("dst_folder/file", encoding="utf-8") as f:
         content = f.read()
         assert content == "old"
 
     move_file("file", "dst_folder")
-    with open("dst_folder/file", "r", encoding="utf-8") as f:
+    with open("dst_folder/file", encoding="utf-8") as f:
         content = f.read()
         assert content == "new"
 
@@ -237,7 +237,7 @@ def test_move_pathfile_into_folder():
         f.write("stuff")
 
     move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", "r", encoding="utf-8") as f:
+    with open("dst_folder/file", encoding="utf-8") as f:
         content = f.read()
         assert content == "stuff"
 
@@ -255,7 +255,7 @@ def test_move_pathfile_into_folder_file_exists():
         f.write("garbage")
 
     move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", "r", encoding="utf-8") as f:
+    with open("dst_folder/file", encoding="utf-8") as f:
         content = f.read()
         assert content == "stuff"
 
@@ -496,7 +496,7 @@ def test_careful_copy_file():
         f.write("hallo")
 
     careful_copy_file("file1", "file2")
-    with open("file2", "r", encoding="utf-8") as f:
+    with open("file2", encoding="utf-8") as f:
         assert f.readline() == "hallo"
 
     print(careful_copy_file("file1", "file3"))

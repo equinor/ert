@@ -4,8 +4,9 @@ import io
 import os
 import time
 from asyncio import get_event_loop
+from collections.abc import Awaitable
 from datetime import datetime, timedelta
-from typing import Awaitable, TypeVar
+from typing import TypeVar
 from urllib.parse import quote
 
 import memray

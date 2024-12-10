@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from queue import SimpleQueue
-from typing import Callable, Optional
 
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtGui import (
@@ -176,8 +176,8 @@ class RunDialog(QFrame):
         run_model: BaseRunModel,
         event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
-        parent: Optional[QWidget] = None,
-        output_path: Optional[Path] = None,
+        parent: QWidget | None = None,
+        output_path: Path | None = None,
     ):
         QFrame.__init__(self, parent)
         self.output_path = output_path
@@ -190,7 +190,7 @@ class RunDialog(QFrame):
         self._run_model = run_model
         self._event_queue = event_queue
         self._notifier = notifier
-        self.fail_msg_box: Optional[ErtMessageBox] = None
+        self.fail_msg_box: ErtMessageBox | None = None
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)

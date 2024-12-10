@@ -7,10 +7,11 @@ import re
 import stat
 import string
 import time
+from collections.abc import Collection
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
-from typing import Collection, List, Optional, get_args, get_type_hints
+from typing import get_args, get_type_hints
 from unittest.mock import AsyncMock
 
 import pytest
@@ -99,7 +100,7 @@ async def test_exit_codes(tmp_path_factory, bjobs_script, bhist_script, exit_cod
     exit_code=st.integers(min_value=1, max_value=254),
 )
 async def test_events_produced_from_jobstate_updates(
-    tmp_path_factory, jobstate_sequence: List[str], exit_code: int
+    tmp_path_factory, jobstate_sequence: list[str], exit_code: int
 ):
     tmp_path = tmp_path_factory.mktemp("bjobs_mock")
     mocked_bjobs = tmp_path / "bjobs"
@@ -293,9 +294,9 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
 
-    _out = "THIS_IS_OUTPUT"
-    _err = "THIS_IS_ERROR"
-    bsub_script = f"echo {_out} && echo {_err} >&2; exit 1"
+    out = "THIS_IS_OUTPUT"
+    err = "THIS_IS_ERROR"
+    bsub_script = f"echo {out} && echo {err} >&2; exit 1"
     bsub_path = bin_path / "bsub"
     bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
@@ -304,7 +305,7 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
     with pytest.raises(RuntimeError):
         await driver.submit(0, "sleep")
     assert (
-        f'failed with exit code 1, output: "{_out}", and error: "{_err}"'
+        f'failed with exit code 1, output: "{out}", and error: "{err}"'
         in driver._job_error_message_by_iens[0]
     )
 
@@ -782,9 +783,9 @@ async def test_that_bsub_will_retry_and_succeed(
     ],
 )
 def test_build_resource_requirement_string(
-    resource_requirement: Optional[str],
-    exclude_hosts: List[str],
-    realization_memory: Optional[int],
+    resource_requirement: str | None,
+    exclude_hosts: list[str],
+    realization_memory: int | None,
     expected_string: str,
 ):
     assert (
@@ -1070,9 +1071,9 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
     os.chdir(tmp_path)
     driver = LsfDriver()
     num_written_characters = 600
-    _out = generate_random_text(num_written_characters)
-    _err = generate_random_text(num_written_characters)
-    await driver.submit(0, "sh", "-c", f"echo {_out} && echo {_err} >&2", name=job_name)
+    out = generate_random_text(num_written_characters)
+    err = generate_random_text(num_written_characters)
+    await driver.submit(0, "sh", "-c", f"echo {out} && echo {err} >&2", name=job_name)
     await poll(driver, {0})
     message = driver.read_stdout_and_stderr_files(
         runpath=".",
@@ -1091,9 +1092,9 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
     num_written_characters = 600
-    _out = generate_random_text(num_written_characters)
-    _err = generate_random_text(num_written_characters)
-    await driver.submit(0, "sh", "-c", f"echo {_out} && echo {_err} >&2", name=job_name)
+    out = generate_random_text(num_written_characters)
+    err = generate_random_text(num_written_characters)
+    await driver.submit(0, "sh", "-c", f"echo {out} && echo {err} >&2", name=job_name)
     await poll(driver, {0})
     # let's remove the output files
     os.remove(job_name + ".LSF-stderr")

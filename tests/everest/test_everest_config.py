@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -30,7 +29,7 @@ def test_that_control_config_is_initialized_with_control_variables():
     }
 
     parsed_config = ControlConfig(**controls_dict)
-    assert isinstance(parsed_config.variables, List)
+    assert isinstance(parsed_config.variables, list)
 
     [v1, v2] = parsed_config.variables
 

@@ -9,10 +9,11 @@ import signal
 import socket
 import sys
 import time
+from collections.abc import Generator, Sequence
 from datetime import datetime as dt
 from pathlib import Path
 from subprocess import Popen, run
-from typing import TYPE_CHECKING, Generator, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -91,8 +92,7 @@ class ForwardModelStep:
 
     def run(self) -> Generator[Start | Exited | Running | None]:
         try:
-            for msg in self._run():
-                yield msg
+            yield from self._run()
         except Exception as e:
             yield Exited(self, exit_code=1).with_error(str(e))
 
@@ -293,11 +293,9 @@ class ForwardModelStep:
             os.killpg(process_group_id, signal.SIGKILL)
 
         return Exited(self, exit_code).with_error(
-            (
-                f"Job:{self.name()} has been running "
-                f"for more than {max_running_minutes} "
-                "minutes - explicitly killed."
-            )
+            f"Job:{self.name()} has been running "
+            f"for more than {max_running_minutes} "
+            "minutes - explicitly killed."
         )
 
     def _handle_process_io_error_and_create_exited_message(
@@ -403,10 +401,8 @@ class ForwardModelStep:
                         int(arg_list[index])
                     except ValueError:
                         errors.append(
-                            (
-                                f"In job {self.name()}: argument with index {index} "
-                                "is of incorrect type, should be integer."
-                            )
+                            f"In job {self.name()}: argument with index {index} "
+                            "is of incorrect type, should be integer."
                         )
         return errors
 

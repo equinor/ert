@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -92,7 +92,7 @@ def open_error_dialog(title: str, content: str) -> None:
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, config_file: str, parent: Optional[QWidget]):
+    def __init__(self, config_file: str, parent: QWidget | None):
         QMainWindow.__init__(self, parent)
         t = time.perf_counter()
 
@@ -127,7 +127,7 @@ class PlotWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
 
-        self._plot_widgets: List[PlotWidget] = []
+        self._plot_widgets: list[PlotWidget] = []
 
         self.addPlotWidget(ENSEMBLE, EnsemblePlot())
         self.addPlotWidget(STATISTICS, StatisticsPlot())
@@ -137,7 +137,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
         self.addPlotWidget(STD_DEV, StdDevPlot())
         self._central_tab.currentChanged.connect(self.currentTabChanged)
-        self._prev_tab_widget: Optional[QWidget] = None
+        self._prev_tab_widget: QWidget | None = None
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
@@ -169,10 +169,10 @@ class PlotWindow(QMainWindow):
         self.updatePlot()
 
     @Slot(int)
-    def layerIndexChanged(self, index: Optional[int]) -> None:
+    def layerIndexChanged(self, index: int | None) -> None:
         self.updatePlot(index)
 
-    def updatePlot(self, layer: Optional[int] = None) -> None:
+    def updatePlot(self, layer: int | None = None) -> None:
         key_def = self.getSelectedKey()
         if key_def is None:
             return
@@ -185,7 +185,7 @@ class PlotWindow(QMainWindow):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
-            ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame] = {}
+            ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
             for ensemble in selected_ensembles:
                 try:
                     ensemble_to_data_map[ensemble] = self._api.data_for_key(
@@ -205,7 +205,7 @@ class PlotWindow(QMainWindow):
                     logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
 
-            std_dev_images: Dict[str, npt.NDArray[np.float32]] = {}
+            std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
             if "FIELD" in key_def.metadata["data_origin"]:
                 plot_widget.showLayerWidget.emit(True)
 
@@ -281,21 +281,19 @@ class PlotWindow(QMainWindow):
 
         self._plot_customizer.setAxisTypes(x_axis_type, y_axis_type)
 
-    def getSelectedKey(self) -> Optional[PlotApiKeyDefinition]:
+    def getSelectedKey(self) -> PlotApiKeyDefinition | None:
         return self._data_type_keys_widget.getSelectedItem()
 
     def addPlotWidget(
         self,
         name: str,
-        plotter: Union[
-            EnsemblePlot,
-            StatisticsPlot,
-            HistogramPlot,
-            GaussianKDEPlot,
-            DistributionPlot,
-            CrossEnsembleStatisticsPlot,
-            StdDevPlot,
-        ],
+        plotter: EnsemblePlot
+        | StatisticsPlot
+        | HistogramPlot
+        | GaussianKDEPlot
+        | DistributionPlot
+        | CrossEnsembleStatisticsPlot
+        | StdDevPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)

@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -19,19 +18,15 @@ def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
             below a user threshold
     """
     logger.info(
-        (
-            f"Calculation scaling factor, nr of primary components: "
-            f"{nr_components}, number of observations: {nr_observations}"
-        )
+        f"Calculation scaling factor, nr of primary components: "
+        f"{nr_components}, number of observations: {nr_observations}"
     )
     if nr_components == 0:
         nr_components = 1
         logger.warning(
-            (
-                "Number of PCA components is 0. "
-                "Setting to 1 to avoid division by zero "
-                "when calculating scaling factor"
-            )
+            "Number of PCA components is 0. "
+            "Setting to 1 to avoid division by zero "
+            "when calculating scaling factor"
         )
 
     return np.sqrt(nr_observations / float(nr_components))
@@ -72,7 +67,7 @@ def cluster_responses(
 def main(
     responses: npt.NDArray[np.float64],
     obs_errors: npt.NDArray[np.float64],
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     """
     Perform 'Auto Scaling' to mitigate issues with correlated observations in ensemble smoothers.
 

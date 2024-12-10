@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Union
 
 
 @dataclass
@@ -17,4 +16,4 @@ class FinishedEvent:
     exec_hosts: str = "-"
 
 
-Event = Union[StartedEvent, FinishedEvent]
+Event = StartedEvent | FinishedEvent

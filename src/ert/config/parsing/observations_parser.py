@@ -1,11 +1,11 @@
 import os
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import (
     Any,
     Literal,
-    Sequence,
     cast,
     no_type_check,
 )
