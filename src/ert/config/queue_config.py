@@ -127,8 +127,6 @@ class TorqueQueueOptions(QueueOptions):
     qdel_cmd: Optional[NonEmptyString] = None
     queue: Optional[NonEmptyString] = None
     memory_per_job: Optional[NonEmptyString] = None
-    num_cpus_per_node: pydantic.PositiveInt = 1
-    num_nodes: pydantic.PositiveInt = 1
     cluster_label: Optional[NonEmptyString] = None
     job_prefix: Optional[NonEmptyString] = None
     keep_qsub_output: bool = False
@@ -333,11 +331,6 @@ class QueueConfig:
             if tags:
                 queue_options.project_code = "+".join(tags)
 
-        if selected_queue_system == QueueSystem.TORQUE:
-            _check_num_cpu_requirement(
-                config_dict.get("NUM_CPU", 1), queue_options, _raw_queue_options
-            )
-
         for _queue_vals in _all_validated_queue_options.values():
             if (
                 isinstance(_queue_vals, TorqueQueueOptions)
@@ -391,22 +384,6 @@ class QueueConfig:
     @property
     def submit_sleep(self) -> float:
         return self.queue_options.submit_sleep
-
-
-def _check_num_cpu_requirement(
-    num_cpu: int, torque_options: TorqueQueueOptions, raw_queue_options: list[list[str]]
-) -> None:
-    flattened_raw_options = [item for line in raw_queue_options for item in line]
-    if (
-        "NUM_NODES" not in flattened_raw_options
-        and "NUM_CPUS_PER_NODE" not in flattened_raw_options
-    ):
-        return
-    if num_cpu != torque_options.num_nodes * torque_options.num_cpus_per_node:
-        raise ConfigValidationError(
-            f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({torque_options.num_nodes}) "
-            f"and NUM_CPUS_PER_NODE ({torque_options.num_cpus_per_node}) must be equal."
-        )
 
 
 def _parse_realization_memory_str(realization_memory_str: str) -> int:

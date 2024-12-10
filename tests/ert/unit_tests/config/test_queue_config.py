@@ -267,7 +267,7 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     "queue_system, queue_option, queue_value, err_msg",
     [
         ("SLURM", "SQUEUE_TIMEOUT", "5a", "should be a valid number"),
-        ("TORQUE", "NUM_NODES", "3.5", "should be a valid integer"),
+        ("TORQUE", "NUM_CPU", "3.5", "should be a valid integer"),
     ],
 )
 def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_msg):

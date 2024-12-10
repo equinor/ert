@@ -189,18 +189,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="NUM_CPUS_PER_NODE as QUEUE_OPTION to Torque is deprecated and will removed in "
-        "the future. Replace by NUM_CPU.",
-        check=lambda line: "NUM_CPUS_PER_NODE" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="NUM_NODES as QUEUE_OPTION to Torque is deprecated and will removed in "
-        "the future. Replace by NUM_CPU on a single compute node.",
-        check=lambda line: "NUM_NODES" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="MEMORY_PER_JOB as QUEUE_OPTION to TORQUE is deprecated and will be removed in "
         "the future. Replace by REALIZATION_MEMORY.",
         check=lambda line: "MEMORY_PER_JOB" in line,

@@ -283,16 +283,6 @@ The following is a list of all queue-specific configuration options:
 
   If ``n`` is zero (the default), then it is set to the number of realizations.
 
-.. _torque_nodes_cpus:
-.. topic:: NUM_NODES, NUM_CPUS_PER_NODE
-
-  The support for running a job over multiple nodes is deprecated in Ert,
-  but was previously accomplished by setting NUM_NODES to a number larger
-  than 1.
-
-  NUM_CPUS_PER_NODE is deprecated, instead please use NUM_CPU to specify the
-  number of CPU cores to reserve on a single compute node.
-
 .. _torque_memory_per_job:
 .. topic:: MEMORY_PER_JOB
 
