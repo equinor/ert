@@ -6,7 +6,7 @@ import re
 import shutil
 from abc import abstractmethod
 from dataclasses import asdict, field, fields
-from typing import Annotated, Any, Literal, Mapping, Optional, no_type_check
+from typing import Annotated, Any, Literal, Optional, no_type_check
 
 import pydantic
 from pydantic.dataclasses import dataclass
@@ -150,7 +150,7 @@ class TorqueQueueOptions(QueueOptions):
     @pydantic.field_validator("memory_per_job")
     @classmethod
     def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
-        if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
+        if not torque_memory_usage_format.validate(value):
             raise ValueError("wrong memory format")
         return value
 
@@ -165,8 +165,6 @@ class SlurmQueueOptions(QueueOptions):
     squeue: NonEmptyString = "squeue"
     exclude_host: str = ""
     include_host: str = ""
-    memory: Optional[NonEmptyString] = None
-    memory_per_cpu: Optional[NonEmptyString] = None
     partition: Optional[NonEmptyString] = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
     max_runtime: Optional[pydantic.NonNegativeFloat] = None
@@ -187,13 +185,6 @@ class SlurmQueueOptions(QueueOptions):
         driver_dict.pop("submit_sleep")
         return driver_dict
 
-    @pydantic.field_validator("memory", "memory_per_cpu")
-    @classmethod
-    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
-        if not queue_memory_usage_formats[QueueSystem.SLURM].validate(value):
-            raise ValueError("wrong memory format")
-        return value
-
 
 @dataclass
 class QueueMemoryStringFormat:
@@ -211,12 +202,10 @@ class QueueMemoryStringFormat:
         )
 
 
-queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
-    QueueSystem.SLURM: QueueMemoryStringFormat(suffixes=["", "K", "M", "G", "T"]),
-    QueueSystem.TORQUE: QueueMemoryStringFormat(
-        suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]
-    ),
-}
+torque_memory_usage_format: QueueMemoryStringFormat = QueueMemoryStringFormat(
+    suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]
+)
+
 valid_options: dict[str, list[str]] = {
     QueueSystem.LOCAL.name: [field.name.upper() for field in fields(LocalQueueOptions)],
     QueueSystem.LSF.name: [field.name.upper() for field in fields(LsfQueueOptions)],
@@ -351,19 +340,6 @@ class QueueConfig:
                     "MEMORY_PER_JOB",
                     selected_queue_system == QueueSystem.TORQUE,
                 )
-            if isinstance(_queue_vals, SlurmQueueOptions) and realization_memory:
-                if _queue_vals.memory:
-                    _throw_error_or_warning(
-                        "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY",
-                        "MEMORY",
-                        selected_queue_system == QueueSystem.SLURM,
-                    )
-                if _queue_vals.memory_per_cpu:
-                    _throw_error_or_warning(
-                        "Do not specify both REALIZATION_MEMORY and SLURM option MEMORY_PER_CPU",
-                        "MEMORY_PER_CPU",
-                        selected_queue_system == QueueSystem.SLURM,
-                    )
 
         return QueueConfig(
             job_script,
