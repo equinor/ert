@@ -106,8 +106,14 @@ class EnsembleEvaluator:
                     function_to_events_map[func] = []
                 function_to_events_map[func].append(event)
 
+            batch_start_time = asyncio.get_running_loop().time()
             for func, events in function_to_events_map.items():
                 await func(events)
+            processing_time = asyncio.get_running_loop().time() - batch_start_time
+            if processing_time > 0.01:
+                logger.info(
+                    f"Processed {len(batch)} events in {processing_time:.3f} seconds."
+                )
 
             self._batch_processing_queue.task_done()
 
@@ -142,6 +148,8 @@ class EnsembleEvaluator:
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
+            if self._events.qsize() > 0:
+                logger.info(f"{self._events.qsize()} events left in queue")
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
