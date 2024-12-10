@@ -1,18 +1,16 @@
 import os
 import stat
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import requests
 
-import everest.detached
 from ert.config import ErtConfig
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
     SlurmQueueOptions,
-    activate_script,
 )
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig
@@ -23,9 +21,7 @@ from everest.detached import (
     _EVERSERVER_JOB_PATH,
     PROXY,
     ServerStatus,
-    _find_res_queue_system,
     everserver_status,
-    get_server_queue_options,
     server_is_running,
     start_server,
     stop_server,
@@ -33,7 +29,6 @@ from everest.detached import (
     wait_for_server,
     wait_for_server_to_stop,
 )
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     DETACHED_NODE_DIR,
@@ -185,11 +180,7 @@ def _get_reference_config():
 
 def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
     everest_config, _ = _get_reference_config()
-    queue_config = get_server_queue_options(
-        everest_config.simulator, everest_config.server
-    )
-
-    assert queue_config == LocalQueueOptions(max_running=1)
+    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
 
 
 @pytest.mark.parametrize(
@@ -201,119 +192,86 @@ def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
         ("slurm", 5, "test_slurm"),
     ],
 )
-def test_everserver_queue_config_equal_to_run_config(
-    copy_math_func_test_data_to_tmp, queue_system, cores, name
-):
-    everest_config, _ = _get_reference_config()
-
-    simulator_config = {CK.QUEUE_SYSTEM: queue_system, CK.CORES: cores}
-
+def test_everserver_queue_config_equal_to_run_config(queue_system, cores, name):
+    simulator_config = {CK.QUEUE_SYSTEM: {"name": queue_system, "max_running": cores}}
     if name is not None:
-        simulator_config.update({"name": name})
-    everest_config.simulator = SimulatorConfig(**simulator_config)
-    server_queue_option = get_server_queue_options(
-        everest_config.simulator, everest_config.server
-    )
-    ert_config = _everest_to_ert_config_dict(everest_config)
-
-    run_queue_option = ert_config["QUEUE_OPTION"]
-
-    assert ert_config["QUEUE_SYSTEM"] == server_queue_option.name
-    assert (
-        next(filter(lambda x: "MAX_RUNNING" in x, reversed(run_queue_option)))[-1]
-        == cores
-    )
-    assert server_queue_option.max_running == 1
-    if name is not None:
-        option = next(filter(lambda x: name in x, run_queue_option))
-        assert option[-1] == name == getattr(server_queue_option, option[1].lower())
+        simulator_config[CK.QUEUE_SYSTEM].update({"queue_name": name})
+    everest_config = EverestConfig.with_defaults(**{"simulator": simulator_config})
+    everest_config.server.queue_system = SimulatorConfig(**simulator_config)
 
 
-@pytest.mark.parametrize("queue_system", ["lsf", "slurm"])
-def test_detached_mode_config_only_sim(copy_math_func_test_data_to_tmp, queue_system):
-    everest_config, reference = _get_reference_config()
-
-    reference["QUEUE_SYSTEM"] = queue_system.upper()
-    queue_options = [(queue_system.upper(), "MAX_RUNNING", 1)]
-    reference.setdefault("QUEUE_OPTION", []).extend(queue_options)
-    everest_config.simulator = SimulatorConfig(**{CK.QUEUE_SYSTEM: queue_system})
-    queue_config = get_server_queue_options(
-        everest_config.simulator, everest_config.server
-    )
-    assert str(queue_config.name.name).lower() == queue_system
-
-
-def test_detached_mode_config_error(copy_math_func_test_data_to_tmp):
+def test_detached_mode_config_error():
     """
     We are not allowing the simulator queue to be local and at the
     same time the everserver queue to be something other than local
     """
-    everest_config, _ = _get_reference_config()
-
-    everest_config.server = ServerConfig(name="server", queue_system="lsf")
     with pytest.raises(ValueError, match="so must the everest server"):
-        get_server_queue_options(everest_config.simulator, everest_config.server)
+        EverestConfig.with_defaults(
+            **{
+                "simulator": {CK.QUEUE_SYSTEM: {"name": "local"}},
+                "server": {CK.QUEUE_SYSTEM: {"name": "lsf"}},
+            }
+        )
 
 
 @pytest.mark.parametrize(
     "config, expected_result",
     [
         (
-            EverestConfig.with_defaults(**{CK.SIMULATOR: {CK.QUEUE_SYSTEM: "lsf"}}),
-            "LSF",
+            EverestConfig.with_defaults(
+                **{CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "lsf"}}}
+            ),
+            "lsf",
         ),
         (
             EverestConfig.with_defaults(
                 **{
-                    CK.SIMULATOR: {CK.QUEUE_SYSTEM: "lsf"},
-                    CK.EVERSERVER: {CK.QUEUE_SYSTEM: "lsf"},
+                    CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "lsf"}},
+                    CK.EVERSERVER: {CK.QUEUE_SYSTEM: {"name": "lsf"}},
                 }
             ),
-            "LSF",
+            "lsf",
         ),
-        (EverestConfig.with_defaults(**{}), "LOCAL"),
+        (EverestConfig.with_defaults(**{}), "local"),
         (
-            EverestConfig.with_defaults(**{CK.SIMULATOR: {CK.QUEUE_SYSTEM: "local"}}),
-            "LOCAL",
+            EverestConfig.with_defaults(
+                **{CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "local"}}}
+            ),
+            "local",
         ),
     ],
 )
 def test_find_queue_system(config: EverestConfig, expected_result):
-    result = _find_res_queue_system(config.simulator, config.server)
+    result = config.simulator
 
-    assert result == expected_result
+    assert result.queue_system.name == expected_result
 
 
 def test_generate_queue_options_no_config():
     config = EverestConfig.with_defaults(**{})
-    assert get_server_queue_options(
-        config.simulator, config.server
-    ) == LocalQueueOptions(max_running=1)
+    assert config.server.queue_system == LocalQueueOptions(max_running=1)
 
 
 @pytest.mark.parametrize(
     "queue_options, expected_result",
     [
         (
-            {"options": "ever_opt_1", "queue_system": "slurm"},
-            SlurmQueueOptions(max_running=1),
+            {"queue_name": "ever_opt_1", "name": "slurm"},
+            SlurmQueueOptions(max_running=1, queue_name="ever_opt_1"),
         ),
         (
-            {"options": "ever_opt_1", "queue_system": "lsf"},
-            LsfQueueOptions(max_running=1, lsf_resource="ever_opt_1"),
+            {"queue_name": "ever_opt_1", "name": "lsf"},
+            LsfQueueOptions(max_running=1, queue_name="ever_opt_1"),
         ),
     ],
 )
 def test_generate_queue_options_use_simulator_values(
     queue_options, expected_result, monkeypatch
 ):
-    monkeypatch.setattr(
-        everest.detached.ErtPluginManager,
-        "activate_script",
-        MagicMock(return_value=activate_script()),
+    config = EverestConfig.with_defaults(
+        **{"simulator": {"queue_system": queue_options}}
     )
-    config = EverestConfig.with_defaults(**{"simulator": queue_options})
-    assert get_server_queue_options(config.simulator, config.server) == expected_result
+    assert config.server.queue_system == expected_result
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish

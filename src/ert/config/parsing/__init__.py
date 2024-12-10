@@ -1,4 +1,5 @@
 from .analysis_mode import AnalysisMode
+from .base_model_context import BaseModelWithContextSupport
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import ConfigKeys
@@ -19,6 +20,7 @@ from .workflow_schema import init_workflow_schema
 
 __all__ = [
     "AnalysisMode",
+    "BaseModelWithContextSupport",
     "ConfigDict",
     "ConfigKeys",
     "ConfigValidationError",
