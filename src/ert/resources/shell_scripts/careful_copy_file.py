@@ -5,13 +5,12 @@ import sys
 
 
 def careful_copy_file(src, target=None):
+    if target is None:
+        target = os.path.basename(src)
     if os.path.exists(target):
         print(f"File: {target} already present - not updated")
         return
     if os.path.isfile(src):
-        if target is None:
-            target = os.path.basename(src)
-
         if os.path.isdir(target):
             target_file = os.path.join(target, os.path.basename(src))
             shutil.copyfile(src, target_file)
