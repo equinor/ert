@@ -50,6 +50,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
+        self.support_restart = False
         self._relative_weights = weights
         self.weights = self.parse_weights(weights)
 
