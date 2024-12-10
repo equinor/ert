@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733820704542,
+  "lastUpdate": 1733824172488,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "03ee39ab21d16857039cd11342728d2a16f4207b",
-          "message": "Fix import that does not work in python 3.10\n\nReplace UTC with timezone.utc",
-          "timestamp": "2024-12-03T14:21:13+01:00",
-          "tree_id": "c6a55df98a348dcc5cc7f20ae7cee3436d9c53bc",
-          "url": "https://github.com/equinor/ert/commit/03ee39ab21d16857039cd11342728d2a16f4207b"
-        },
-        "date": 1733232184193,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21143399951008976,
-            "unit": "iter/sec",
-            "range": "stddev: 0.039980224908260774",
-            "extra": "mean: 4.729608304800001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026407073519232785",
             "extra": "mean: 4.579874605000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "a156a6b176ae1d5ebdf1b6f3b7b1131671f67b7f",
+          "message": "Mark tests taking more than a second as integration test",
+          "timestamp": "2024-12-10T10:47:43+01:00",
+          "tree_id": "4f9bac00943bca26cb1c724a1233d7ea809d16ae",
+          "url": "https://github.com/equinor/ert/commit/a156a6b176ae1d5ebdf1b6f3b7b1131671f67b7f"
+        },
+        "date": 1733824172016,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22711674495822548,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03677181838482849",
+            "extra": "mean: 4.403021891599996 sec\nrounds: 5"
           }
         ]
       }
