@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733833790031,
+  "lastUpdate": 1733835370646,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "dcf56325e626f4c5c6fe101674e274fa27ef23d3",
-          "message": "Fix failing everest test due to doc not generating cov",
-          "timestamp": "2024-12-04T10:45:02+01:00",
-          "tree_id": "aa76c2fbffbc5342f9fe4793753a74c120ccf1a5",
-          "url": "https://github.com/equinor/ert/commit/dcf56325e626f4c5c6fe101674e274fa27ef23d3"
-        },
-        "date": 1733305610478,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21572534969006749,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030114381515328442",
-            "extra": "mean: 4.63552383359999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.035846505022795204",
             "extra": "mean: 4.772385224199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "82972b0db0244aa4787b1a8385fb4280d8f4fc6b",
+          "message": "Remove use of deprecated types",
+          "timestamp": "2024-12-10T13:54:24+01:00",
+          "tree_id": "1931f5ebec992e066badc2a18049bc4b912160db",
+          "url": "https://github.com/equinor/ert/commit/82972b0db0244aa4787b1a8385fb4280d8f4fc6b"
+        },
+        "date": 1733835370227,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22017516807077772,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013477091318217439",
+            "extra": "mean: 4.541838249799992 sec\nrounds: 5"
           }
         ]
       }
