@@ -41,8 +41,10 @@ def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path, monkeypatch):
     mocked_flow = Path(tmp_path / "flow")
     mocked_flow.write_text("", encoding="utf-8")
     mocked_flow.chmod(mocked_flow.stat().st_mode | stat.S_IEXEC)
-    Path("DUMMY.DATA").write_text("", encoding="utf-8")
-    runner = run_reservoirsimulator.RunReservoirSimulator("flow", None, "DUMMY.DATA")
+    (tmp_path / "DUMMY.DATA").write_text("", encoding="utf-8")
+    runner = run_reservoirsimulator.RunReservoirSimulator(
+        "flow", None, str(tmp_path / "DUMMY.DATA")
+    )
     assert runner.bypass_flowrun is True
 
 
@@ -64,6 +66,7 @@ def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
 def test_run_flow_with_no_flowrun(tmp_path, monkeypatch, source_root):
     # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
@@ -86,6 +89,7 @@ def test_flowrunner_will_raise_when_flow_fails(source_root):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_flowrunner_will_can_ignore_flow_errors(source_root):
     shutil.copy(
@@ -106,6 +110,7 @@ def test_flowrunner_will_raise_on_unknown_version():
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_flow_with_parallel_keyword(source_root):
     """This only tests that ERT will be able to start flow on a data deck with
