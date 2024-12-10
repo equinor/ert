@@ -39,7 +39,7 @@ class ParsedField:
         self.type = self.type.replace("Annotated[int, Ge]", "NonNegativeInt")
         self.type = self.type.replace("Annotated[int, Gt]", "PositiveInt")
         self.type = self.type.replace("Annotated[float, Gt]", "PositiveFloat")
-        self.type = self.type.replace("Dict[", "Mapping[")
+        self.type = self.type.replace("dict[", "Mapping[")
 
         self.type = re.sub(r"Union\[(.+),\s+NoneType\]", r"Optional[\1]", self.type)
         return self.type
