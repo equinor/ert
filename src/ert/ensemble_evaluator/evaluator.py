@@ -107,8 +107,14 @@ class EnsembleEvaluator:
                     function_to_events_map[func] = []
                 function_to_events_map[func].append(event)
 
+            batch_start_time = asyncio.get_running_loop().time()
             for func, events in function_to_events_map.items():
                 await func(events)
+            processing_time = asyncio.get_running_loop().time() - batch_start_time
+            if processing_time > 0.01:
+                logger.info(
+                    f"Processed {len(batch)} events in {processing_time:.3f} seconds."
+                )
 
             self._batch_processing_queue.task_done()
 
