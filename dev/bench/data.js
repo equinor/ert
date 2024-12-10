@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733824327631,
+  "lastUpdate": 1733826772884,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "c4b5b67b99ed627ae149da0365e4e6593eec9c13",
-          "message": "Use forkserver instead of fork for multiprocessing\n\nPolars gives warnings if using fork.\npreexec_fn in create_subprocess_exec is unsafe using fork.\npython 3.14 will set forkserver as default on linux/bsd.",
-          "timestamp": "2024-12-03T15:24:43+01:00",
-          "tree_id": "c413e03f43c4c7d84b340fb1350031734613a2ca",
-          "url": "https://github.com/equinor/ert/commit/c4b5b67b99ed627ae149da0365e4e6593eec9c13"
-        },
-        "date": 1733235996444,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2166364306550501,
-            "unit": "iter/sec",
-            "range": "stddev: 0.025677284970481586",
-            "extra": "mean: 4.616028785999982 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08362406842782452",
             "extra": "mean: 4.661660722599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "60fa1a6e1bd598aa5569820698a9801f3e79f329",
+          "message": "Fix bug in careful_copy handling None\n\nThe function careful_copy_file was not able to handle None as\na target. Added the functionality as probably originally intended\nand added tests.",
+          "timestamp": "2024-12-10T11:31:06+01:00",
+          "tree_id": "c856d2dec03203e486342d9fc3e5e1ebcb04f2e3",
+          "url": "https://github.com/equinor/ert/commit/60fa1a6e1bd598aa5569820698a9801f3e79f329"
+        },
+        "date": 1733826772370,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22661602393836813,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026439295745565545",
+            "extra": "mean: 4.412750619400003 sec\nrounds: 5"
           }
         ]
       }
