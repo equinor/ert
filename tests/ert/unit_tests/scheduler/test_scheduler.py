@@ -647,9 +647,6 @@ def test_scheduler_create_lsf_driver():
 def test_scheduler_create_openpbs_driver():
     queue_name = "foo_queue"
     keep_qsub_output = "True"
-    memory_per_job = "13gb"
-    num_nodes = 1
-    num_cpus_per_node = 1
     cluster_label = "bar_cluster_label"
     job_prefix = "foo_job_prefix"
     qsub_cmd = "bar_qsub_cmd"
@@ -661,9 +658,6 @@ def test_scheduler_create_openpbs_driver():
         "QUEUE_OPTION": [
             ("TORQUE", "QUEUE", queue_name),
             ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
-            ("TORQUE", "MEMORY_PER_JOB", memory_per_job),
-            ("TORQUE", "NUM_NODES", str(num_nodes)),
-            ("TORQUE", "NUM_CPUS_PER_NODE", str(num_cpus_per_node)),
             ("TORQUE", "CLUSTER_LABEL", cluster_label),
             ("TORQUE", "JOB_PREFIX", job_prefix),
             ("TORQUE", "QSUB_CMD", qsub_cmd),
@@ -676,9 +670,6 @@ def test_scheduler_create_openpbs_driver():
     assert isinstance(driver, OpenPBSDriver)
     assert driver._queue_name == queue_name
     assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
-    assert driver._memory_per_job == memory_per_job
-    assert driver._num_nodes == num_nodes
-    assert driver._num_cpus_per_node == num_cpus_per_node
     assert driver._cluster_label == cluster_label
     assert driver._job_prefix == job_prefix
     assert str(driver._qsub_cmd) == qsub_cmd

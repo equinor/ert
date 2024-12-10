@@ -251,12 +251,6 @@ The following is a list of all queue-specific configuration options:
     QUEUE_OPTION TORQUE QSTAT_CMD /path/to/my/qstat
     QUEUE_OPTION TORQUE QDEL_CMD /path/to/my/qdel
 
-.. _torque_qstat_options:
-.. topic:: QSTAT_OPTIONS
-
-  Options to be supplied to the ``qstat`` command. This defaults to :code:`-x`,
-  which tells the ``qstat`` command to include exited processes.
-
 .. _torque_queue:
 .. topic:: QUEUE
 
@@ -283,37 +277,6 @@ The following is a list of all queue-specific configuration options:
 
   If ``n`` is zero (the default), then it is set to the number of realizations.
 
-.. _torque_nodes_cpus:
-.. topic:: NUM_NODES, NUM_CPUS_PER_NODE
-
-  The support for running a job over multiple nodes is deprecated in Ert,
-  but was previously accomplished by setting NUM_NODES to a number larger
-  than 1.
-
-  NUM_CPUS_PER_NODE is deprecated, instead please use NUM_CPU to specify the
-  number of CPU cores to reserve on a single compute node.
-
-.. _torque_memory_per_job:
-.. topic:: MEMORY_PER_JOB
-
-  You can specify the amount of memory you will need for running your
-  job. This will ensure that not too many jobs will run on a single
-  shared memory node at once, possibly crashing the compute node if it
-  runs out of memory.
-
-  You can get an indication of the memory requirement by watching the
-  course of a local run using the ``htop`` utility. Whether you should set
-  the peak memory usage as your requirement or a lower figure depends on
-  how simultaneously each job will run.
-
-  The option to be supplied will be used as a string in the ``qsub``
-  argument. You must specify the unit, either ``gb`` or ``mb`` as in
-  the example::
-
-    QUEUE_OPTION TORQUE MEMORY_PER_JOB 16gb
-
-  By default, this value is not set.
-
 .. _torque_keep_qsub_output:
 .. topic:: KEEP_QSUB_OUTPUT
 
@@ -331,23 +294,6 @@ The following is a list of all queue-specific configuration options:
   seconds to sleep for every submit, which can be a fraction like 0.5::
 
     QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
-
-.. _torque_queue_query_timeout:
-.. topic:: QUEUE_QUERY_TIMEOUT
-
-  The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may
-  intermittently not respond and give error messages when submitting jobs
-  or asking for job statuses. The timeout (in seconds) determines how long
-  ERT will wait before it will give up. Applies to job submission (``qsub``)
-  and job status queries (``qstat``). Default is 126 seconds.
-
-  ERT will do exponential sleeps, starting at 2 seconds, and the provided
-  timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64
-  in order to be explicit about the number of retries. Set to zero to disallow
-  flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two
-  re-attempts. Example allowing six retries::
-
-    QUEUE_OPTION TORQUE QUEUE_QUERY_TIMEOUT 254
 
 .. _torque_project_code:
 .. topic:: PROJECT_CODE

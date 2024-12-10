@@ -183,36 +183,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="QUEUE_QUERY_TIMEOUT as QUEUE_OPTION is ignored. "
-        "Please remove the line.",
-        check=lambda line: "QUEUE_QUERY_TIMEOUT" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="QSTAT_OPTIONS as QUEUE_OPTION to the TORQUE is ignored. "
-        "Please remove the line.",
-        check=lambda line: "QSTAT_OPTIONS" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="NUM_CPUS_PER_NODE as QUEUE_OPTION to Torque is deprecated and will removed in "
-        "the future. Replace by NUM_CPU.",
-        check=lambda line: "NUM_CPUS_PER_NODE" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="NUM_NODES as QUEUE_OPTION to Torque is deprecated and will removed in "
-        "the future. Replace by NUM_CPU on a single compute node.",
-        check=lambda line: "NUM_NODES" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
-        message="MEMORY_PER_JOB as QUEUE_OPTION to TORQUE is deprecated and will be removed in "
-        "the future. Replace by REALIZATION_MEMORY.",
-        check=lambda line: "MEMORY_PER_JOB" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="Memory requirements in LSF should now be set using REALIZATION_MEMORY and not"
         " through the LSF_RESOURCE option.",
         check=lambda line: "LSF_RESOURCE" in line

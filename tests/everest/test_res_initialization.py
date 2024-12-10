@@ -43,8 +43,6 @@ from tests.everest.utils import (
                 "qsub_cmd": "qsub",
                 "qstat_cmd": "qstat",
                 "qdel_cmd": "qdel",
-                "num_cpus_per_node": 3,
-                "num_nodes": 1,
                 "keep_qsub_output": True,
                 "queue_name": "permanent_8",
             },

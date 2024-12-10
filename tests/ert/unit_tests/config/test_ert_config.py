@@ -11,7 +11,7 @@ from textwrap import dedent
 from unittest.mock import MagicMock
 
 import pytest
-from hypothesis import HealthCheck, assume, example, given, settings
+from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
@@ -564,50 +564,6 @@ def test_negative_std_cutoff_raises_validation_error():
                 """
             )
         )
-
-
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@settings(max_examples=10)
-@given(st.integers(min_value=0), st.integers(min_value=0), st.integers(min_value=0))
-@example(1, 1, 2)  # error
-@example(2, 1, 2)  # no error
-@example(2, 1, 0)  # no error
-@example(2, 0, 1)  # no error
-def test_num_cpu_vs_torque_queue_cpu_configuration(
-    num_cpu_int, num_nodes_int, num_cpus_per_node_int
-):
-    # Only strictly positive ints are valid configuration values,
-    # zero values are used to represent the "not configured" scenario:
-    num_cpu = f"NUM_CPU {num_cpu_int}" if num_cpu_int else ""
-    num_nodes = (
-        f"QUEUE_OPTION TORQUE NUM_NODES {num_nodes_int}" if num_nodes_int else ""
-    )
-    num_cpus_per_node = (
-        f"QUEUE_OPTION TORQUE NUM_CPUS_PER_NODE {num_cpus_per_node_int}"
-        if num_cpus_per_node_int
-        else ""
-    )
-
-    test_config_contents = dedent(
-        f"""\
-        NUM_REALIZATIONS 1
-        QUEUE_SYSTEM TORQUE
-        {num_cpu}
-        {num_nodes}
-        {num_cpus_per_node}
-        """
-    )
-
-    if (num_nodes or num_cpus_per_node) and (
-        (num_cpu_int or 1) != (num_nodes_int or 1) * (num_cpus_per_node_int or 1)
-    ):
-        with pytest.raises(
-            expected_exception=ConfigValidationError,
-            match="product .* must be equal",
-        ):
-            ErtConfig.from_file_contents(test_config_contents)
-    else:
-        ErtConfig.from_file_contents(test_config_contents)
 
 
 def test_that_non_existent_job_directory_gives_config_validation_error():

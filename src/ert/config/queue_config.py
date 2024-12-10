@@ -126,15 +126,9 @@ class TorqueQueueOptions(QueueOptions):
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
     queue: NonEmptyString | None = None
-    memory_per_job: NonEmptyString | None = None
-    num_cpus_per_node: pydantic.PositiveInt = 1
-    num_nodes: pydantic.PositiveInt = 1
     cluster_label: NonEmptyString | None = None
     job_prefix: NonEmptyString | None = None
     keep_qsub_output: bool = False
-
-    qstat_options: str | None = pydantic.Field(default=None, deprecated=True)
-    queue_query_timeout: str | None = pydantic.Field(default=None, deprecated=True)
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -143,16 +137,7 @@ class TorqueQueueOptions(QueueOptions):
         driver_dict["queue_name"] = driver_dict.pop("queue")
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
-        driver_dict.pop("qstat_options")
-        driver_dict.pop("queue_query_timeout")
         return driver_dict
-
-    @pydantic.field_validator("memory_per_job")
-    @classmethod
-    def check_memory_per_job(cls, value: str | None) -> str | None:
-        if not torque_memory_usage_format.validate(value):
-            raise ValueError("wrong memory format")
-        return value
 
 
 @pydantic.dataclasses.dataclass
@@ -323,23 +308,6 @@ class QueueConfig:
             if tags:
                 queue_options.project_code = "+".join(tags)
 
-        if selected_queue_system == QueueSystem.TORQUE:
-            _check_num_cpu_requirement(
-                config_dict.get("NUM_CPU", 1), queue_options, raw_queue_options
-            )
-
-        for _queue_vals in all_validated_queue_options.values():
-            if (
-                isinstance(_queue_vals, TorqueQueueOptions)
-                and _queue_vals.memory_per_job
-                and realization_memory
-            ):
-                _throw_error_or_warning(
-                    "Do not specify both REALIZATION_MEMORY and TORQUE option MEMORY_PER_JOB",
-                    "MEMORY_PER_JOB",
-                    selected_queue_system == QueueSystem.TORQUE,
-                )
-
         return QueueConfig(
             job_script,
             realization_memory,
@@ -370,22 +338,6 @@ class QueueConfig:
     @property
     def submit_sleep(self) -> float:
         return self.queue_options.submit_sleep
-
-
-def _check_num_cpu_requirement(
-    num_cpu: int, torque_options: TorqueQueueOptions, raw_queue_options: list[list[str]]
-) -> None:
-    flattened_raw_options = [item for line in raw_queue_options for item in line]
-    if (
-        "NUM_NODES" not in flattened_raw_options
-        and "NUM_CPUS_PER_NODE" not in flattened_raw_options
-    ):
-        return
-    if num_cpu != torque_options.num_nodes * torque_options.num_cpus_per_node:
-        raise ConfigValidationError(
-            f"When NUM_CPU is {num_cpu}, then the product of NUM_NODES ({torque_options.num_nodes}) "
-            f"and NUM_CPUS_PER_NODE ({torque_options.num_cpus_per_node}) must be equal."
-        )
 
 
 def _parse_realization_memory_str(realization_memory_str: str) -> int:
