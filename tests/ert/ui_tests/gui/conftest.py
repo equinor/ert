@@ -183,9 +183,9 @@ def _ensemble_experiment_run(
 
 
 @pytest.fixture
-def esmda_has_run(esmda_run, tmp_path, monkeypatch):
+def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(esmda_run, tmp_path, dirs_exist_ok=True)
+    shutil.copytree(_esmda_run, tmp_path, dirs_exist_ok=True)
     with (
         _open_main_window(tmp_path / "poly.ert") as (
             gui,
