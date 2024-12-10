@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733828122113,
+  "lastUpdate": 1733833768268,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "831e34bdc8f008ba477059001b77c014bbd4dcac",
-          "message": "Add more DATA parsing tests for num_cpu",
-          "timestamp": "2024-12-04T09:50:16+01:00",
-          "tree_id": "d1d3dd485e25ceb50a309471ed11c66920eca776",
-          "url": "https://github.com/equinor/ert/commit/831e34bdc8f008ba477059001b77c014bbd4dcac"
-        },
-        "date": 1733302327211,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21041206438626736,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030678677762065683",
-            "extra": "mean: 4.7525791970000055 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029186475432132337",
             "extra": "mean: 4.550441717400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "e48000189c43824c95b4daea5de139435394b056",
+          "message": "Improve UX for permission errors in storage\n\nThis commit:\n* Improves the error message displayed when the dark storage server does not have access to the storage path.\n* Makes the dark storage server return a response with status code 401 - unauthorized when the `get_ensemble_record` endpoint fails due to `PermissionError`.\n* Makes the failed message in `LegacyEnsemble._evaluate_inner` omit stacktrace when it failed due to PermissionError, making it shorter and more consise.",
+          "timestamp": "2024-12-10T13:27:35+01:00",
+          "tree_id": "05cf1f88473346617a2e927b73a5f0d8c3f0b0c9",
+          "url": "https://github.com/equinor/ert/commit/e48000189c43824c95b4daea5de139435394b056"
+        },
+        "date": 1733833767805,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21821189918885073,
+            "unit": "iter/sec",
+            "range": "stddev: 0.034685910678909984",
+            "extra": "mean: 4.582701510400005 sec\nrounds: 5"
           }
         ]
       }
