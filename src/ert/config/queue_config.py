@@ -5,9 +5,7 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from dataclasses import field
 from copy import copy
-
 from typing import Any, Literal, Mapping, Optional, no_type_check
 
 import pydantic
@@ -284,7 +282,7 @@ class QueueConfig:
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
-    queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
+    queue_options_test_run: LocalQueueOptions = Field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
     @no_type_check
