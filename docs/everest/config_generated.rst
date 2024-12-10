@@ -1055,15 +1055,6 @@ Simulation settings
     The name of the cluster you are running simulations in.
 
 
-**memory_per_job (optional)**
-    Type: *Optional[str]*
-
-    You can specify the amount of memory you will need for running your job. This will ensure that not too many jobs will run on a single shared memory node at once, possibly crashing the compute node if it runs out of memory.
-    You can get an indication of the memory requirement by watching the course of a local run using the htop utility. Whether you should set the peak memory usage as your requirement or a lower figure depends on how simultaneously each job will run.
-    The option to be supplied will be used as a string in the qsub argument. You must specify the unit, either gb or mb.
-
-
-
 **keep_qsub_output (optional)**
     Type: *Optional[int]*
 

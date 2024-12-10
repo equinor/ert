@@ -183,12 +183,6 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="MEMORY_PER_JOB as QUEUE_OPTION to TORQUE is deprecated and will be removed in "
-        "the future. Replace by REALIZATION_MEMORY.",
-        check=lambda line: "MEMORY_PER_JOB" in line,
-    ),
-    DeprecationInfo(
-        keyword="QUEUE_OPTION",
         message="MEMORY as QUEUE_OPTION to SLURM is deprecated and will be removed in "
         "the future. Replace by REALIZATION_MEMORY.",
         check=lambda line: "MEMORY" in line,

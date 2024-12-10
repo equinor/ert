@@ -123,7 +123,6 @@ class OpenPBSDriver(Driver):
         queue_name: str | None = None,
         project_code: str | None = None,
         keep_qsub_output: bool | None = None,
-        memory_per_job: str | None = None,
         cluster_label: str | None = None,
         job_prefix: str | None = None,
         qsub_cmd: str | None = None,
@@ -136,7 +135,6 @@ class OpenPBSDriver(Driver):
         self._queue_name = queue_name
         self._project_code = project_code
         self._keep_qsub_output = keep_qsub_output
-        self._memory_per_job = memory_per_job
         self._cluster_label: str | None = cluster_label
         self._job_prefix = job_prefix
         self._max_pbs_cmd_attempts = 10
@@ -161,13 +159,6 @@ class OpenPBSDriver(Driver):
         cpu_resources: list[str] = []
         if num_cpu > 1:
             cpu_resources += [f"ncpus={num_cpu}"]
-        if self._memory_per_job is not None and realization_memory > 0:
-            raise ValueError(
-                "Overspecified memory pr job. "
-                "Do not specify both memory_per_job and realization_memory"
-            )
-        if self._memory_per_job is not None:
-            cpu_resources += [f"mem={self._memory_per_job}"]
         elif realization_memory > 0:
             cpu_resources += [f"mem={realization_memory // 1024**2 }mb"]
         if cpu_resources:

@@ -1825,8 +1825,8 @@ in :ref:`queue-system-chapter`. In brief, the queue systems have the following o
   ``BHIST_CMD``, ``SUBMIT_SLEEP``, ``PROJECT_CODE``, ``EXCLUDE_HOST``,
   ``MAX_RUNNING``
 * :ref:`TORQUE <pbs-systems>` — ``QSUB_CMD``, ``QSTAT_CMD``, ``QDEL_CMD``,
-  ``QUEUE``, ``CLUSTER_LABEL``, ``MAX_RUNNING``,
-  ``MEMORY_PER_JOB``, ``KEEP_QSUB_OUTPUT``, ``SUBMIT_SLEEP``
+  ``QUEUE``, ``CLUSTER_LABEL``, ``MAX_RUNNING``, ``KEEP_QSUB_OUTPUT``,
+  ``SUBMIT_SLEEP``
 * :ref:`SLURM <slurm-systems>` — ``SBATCH``, ``SCANCEL``, ``SCONTROL``, ``SACCT``,
   ``SQUEUE``, ``PARTITION``, ``SQUEUE_TIMEOUT``, ``MAX_RUNTIME``, ``MEMORY``,
   ``MEMORY_PER_CPU``, ``INCLUDE_HOST``, ``EXCLUDE_HOST``, ``MAX_RUNNING``

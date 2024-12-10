@@ -126,7 +126,6 @@ class TorqueQueueOptions(QueueOptions):
     qstat_cmd: Optional[NonEmptyString] = None
     qdel_cmd: Optional[NonEmptyString] = None
     queue: Optional[NonEmptyString] = None
-    memory_per_job: Optional[NonEmptyString] = None
     cluster_label: Optional[NonEmptyString] = None
     job_prefix: Optional[NonEmptyString] = None
     keep_qsub_output: bool = False
@@ -139,13 +138,6 @@ class TorqueQueueOptions(QueueOptions):
         driver_dict.pop("max_running")
         driver_dict.pop("submit_sleep")
         return driver_dict
-
-    @pydantic.field_validator("memory_per_job")
-    @classmethod
-    def check_memory_per_job(cls, value: Optional[str]) -> Optional[str]:
-        if not queue_memory_usage_formats[QueueSystem.TORQUE].validate(value):
-            raise ValueError("wrong memory format")
-        return value
 
 
 @pydantic.dataclasses.dataclass
@@ -329,16 +321,6 @@ class QueueConfig:
                 queue_options.project_code = "+".join(tags)
 
         for _queue_vals in _all_validated_queue_options.values():
-            if (
-                isinstance(_queue_vals, TorqueQueueOptions)
-                and _queue_vals.memory_per_job
-                and realization_memory
-            ):
-                _throw_error_or_warning(
-                    "Do not specify both REALIZATION_MEMORY and TORQUE option MEMORY_PER_JOB",
-                    "MEMORY_PER_JOB",
-                    selected_queue_system == QueueSystem.TORQUE,
-                )
             if isinstance(_queue_vals, SlurmQueueOptions) and realization_memory:
                 if _queue_vals.memory:
                     _throw_error_or_warning(

@@ -138,24 +138,24 @@ def parse_resource_string(qsub_args: str) -> Dict[str, str]:
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_memory_per_job():
-    driver = OpenPBSDriver(memory_per_job="10gb")
-    await driver.submit(0, "sleep")
-    assert " -l mem=10gb" in Path("captured_qsub_args").read_text(encoding="utf-8")
+async def test_realization_memory():
+    driver = OpenPBSDriver()
+    await driver.submit(0, "sleep", realization_memory=1024**2)
+    assert " -l mem=1gb" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_no_default_memory_per_job():
+async def test_no_default_realization_memory():
     driver = OpenPBSDriver()
     await driver.submit(0, "sleep")
     assert " -l " not in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_no_validation_of_memory_per_job():
+async def test_no_validation_of_realization_memory():
     # Validation will happen during config parsing
-    driver = OpenPBSDriver(memory_per_job="a_lot")
-    await driver.submit(0, "sleep")
+    driver = OpenPBSDriver()
+    await driver.submit(0, realization_memory="a_lot")
     assert " -l mem=a_lot" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
@@ -264,16 +264,17 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
 
 @given(words, st.integers(min_value=1), words)
 @pytest.mark.usefixtures("capturing_qsub")
-async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
+async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
     driver = OpenPBSDriver(
-        memory_per_job=memory_per_job if memory_per_job else None,
         cluster_label=cluster_label if cluster_label else None,
     )
-    await driver.submit(0, "sleep", num_cpu=num_cpu)
+    await driver.submit(
+        0, "sleep", num_cpu=num_cpu, realization_memory=realization_memory
+    )
     resources = parse_resource_string(
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
-    assert resources.get("mem", "") == memory_per_job
+    assert resources.get("mem", "") == realization_memory
     assert resources.get("select", "1") == "1"
     assert resources.get("ncpus", "1") == str(num_cpu)
 
@@ -284,7 +285,7 @@ async def test_full_resource_string(memory_per_job, num_cpu, cluster_label):
 
     assert len(resources) == sum(
         [
-            bool(memory_per_job),
+            bool(realization_memory),
             num_cpu > 1,
             bool(cluster_label),
         ]
@@ -299,13 +300,6 @@ async def test_submit_with_realization_memory():
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
     assert resources.get("mem", "") == "1mb"
-
-
-@pytest.mark.usefixtures("capturing_qsub")
-async def test_submit_with_realization_memory_and_memory_per_job():
-    driver = OpenPBSDriver(memory_per_job="1")
-    with pytest.raises(ValueError, match="Overspecified memory"):
-        await driver.submit(0, "sleep", realization_memory=1)
 
 
 @pytest.mark.parametrize(

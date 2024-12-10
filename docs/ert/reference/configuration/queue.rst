@@ -277,27 +277,6 @@ The following is a list of all queue-specific configuration options:
 
   If ``n`` is zero (the default), then it is set to the number of realizations.
 
-.. _torque_memory_per_job:
-.. topic:: MEMORY_PER_JOB
-
-  You can specify the amount of memory you will need for running your
-  job. This will ensure that not too many jobs will run on a single
-  shared memory node at once, possibly crashing the compute node if it
-  runs out of memory.
-
-  You can get an indication of the memory requirement by watching the
-  course of a local run using the ``htop`` utility. Whether you should set
-  the peak memory usage as your requirement or a lower figure depends on
-  how simultaneously each job will run.
-
-  The option to be supplied will be used as a string in the ``qsub``
-  argument. You must specify the unit, either ``gb`` or ``mb`` as in
-  the example::
-
-    QUEUE_OPTION TORQUE MEMORY_PER_JOB 16gb
-
-  By default, this value is not set.
-
 .. _torque_keep_qsub_output:
 .. topic:: KEEP_QSUB_OUTPUT
 
