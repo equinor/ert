@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import QEvent, QObject, Qt
 from qtpy.QtWidgets import (
@@ -138,7 +138,7 @@ class ManageExperimentsPanel(QTabWidget):
 
         self.addTab(panel, "Initialize from scratch")
 
-    def eventFilter(self, a0: Optional[QObject], a1: Optional[QEvent]) -> bool:
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         if a1 is not None and a1.type() == QEvent.Type.Close:
             self.notifier.emitErtChange()
         return super().eventFilter(a0, a1)

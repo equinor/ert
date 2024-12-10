@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 import polars
@@ -39,11 +39,11 @@ def history_key(key: str) -> str:
 
 @dataclass
 class EnkfObs:
-    obs_vectors: Dict[str, ObsVector] = field(default_factory=dict)
-    obs_time: List[datetime] = field(default_factory=list)
+    obs_vectors: dict[str, ObsVector] = field(default_factory=dict)
+    obs_time: list[datetime] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        grouped: Dict[str, List[polars.DataFrame]] = {}
+        grouped: dict[str, list[polars.DataFrame]] = {}
         for vec in self.obs_vectors.values():
             if vec.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
                 if "summary" not in grouped:
@@ -57,7 +57,7 @@ class EnkfObs:
 
                 grouped["gen_data"].append(vec.to_dataset([]))
 
-        datasets: Dict[str, polars.DataFrame] = {}
+        datasets: dict[str, polars.DataFrame] = {}
 
         for name, dfs in grouped.items():
             non_empty_dfs = [df for df in dfs if not df.is_empty()]
@@ -90,7 +90,7 @@ class EnkfObs:
 
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
-    ) -> List[str]:
+    ) -> list[str]:
         return sorted(
             [
                 key
@@ -124,7 +124,7 @@ class EnkfObs:
         summary_key: str,
         history_type: HistorySource,
         time_len: int,
-    ) -> Dict[str, ObsVector]:
+    ) -> dict[str, ObsVector]:
         refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
@@ -176,7 +176,7 @@ class EnkfObs:
                 values[start:stop],
                 segment_instance,
             )
-        data: Dict[Union[int, datetime], Union[GenObservation, SummaryObservation]] = {}
+        data: dict[int | datetime, GenObservation | SummaryObservation] = {}
         for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
             data[date] = SummaryObservation(summary_key, summary_key, value, error)
 
@@ -190,7 +190,7 @@ class EnkfObs:
         }
 
     @staticmethod
-    def _get_time(date_dict: DateValues, start_time: datetime) -> Tuple[datetime, str]:
+    def _get_time(date_dict: DateValues, start_time: datetime) -> tuple[datetime, str]:
         if date_dict.date is not None:
             date_str = date_dict.date
             try:
@@ -221,7 +221,7 @@ class EnkfObs:
 
     @staticmethod
     def _find_nearest(
-        time_map: List[datetime],
+        time_map: list[datetime],
         time: datetime,
         threshold: timedelta = DEFAULT_TIME_DELTA,
     ) -> int:
@@ -240,7 +240,7 @@ class EnkfObs:
     def _get_restart(
         date_dict: DateValues,
         obs_name: str,
-        time_map: List[datetime],
+        time_map: list[datetime],
         has_refcase: bool,
     ) -> int:
         if date_dict.restart is not None:
@@ -282,7 +282,7 @@ class EnkfObs:
     @staticmethod
     def _make_value_and_std_dev(
         observation_dict: SummaryValues,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         value = observation_dict.value
         return (
             value,
@@ -299,9 +299,9 @@ class EnkfObs:
         cls,
         summary_dict: SummaryValues,
         obs_key: str,
-        time_map: List[datetime],
+        time_map: list[datetime],
         has_refcase: bool,
-    ) -> Dict[str, ObsVector]:
+    ) -> dict[str, ObsVector]:
         summary_key = summary_dict.key
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
 
@@ -343,9 +343,9 @@ class EnkfObs:
     @classmethod
     def _create_gen_obs(
         cls,
-        scalar_value: Optional[Tuple[float, float]] = None,
-        obs_file: Optional[str] = None,
-        data_index: Optional[str] = None,
+        scalar_value: tuple[float, float] | None = None,
+        obs_file: str | None = None,
+        data_index: str | None = None,
     ) -> GenObservation:
         if scalar_value is None and obs_file is None:
             raise ValueError(
@@ -404,9 +404,9 @@ class EnkfObs:
         ensemble_config: "EnsembleConfig",
         general_observation: GenObsValues,
         obs_key: str,
-        time_map: List[datetime],
+        time_map: list[datetime],
         has_refcase: bool,
-    ) -> Dict[str, ObsVector]:
+    ) -> dict[str, ObsVector]:
         response_key = general_observation.data
         if not ensemble_config.hasNodeGenData(response_key):
             ConfigWarning.warn(

@@ -1,9 +1,8 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional, Self
 
 import polars
-from typing_extensions import Self
 
 from ert.config.parameter_config import CustomDict
 from ert.config.parsing import ConfigDict
@@ -19,8 +18,8 @@ class InvalidResponseFile(Exception):
 @dataclasses.dataclass
 class ResponseConfig(ABC):
     name: str
-    input_files: List[str] = dataclasses.field(default_factory=list)
-    keys: List[str] = dataclasses.field(default_factory=list)
+    input_files: list[str] = dataclasses.field(default_factory=list)
+    keys: list[str] = dataclasses.field(default_factory=list)
     has_finalized_keys: bool = False
 
     @abstractmethod
@@ -34,14 +33,14 @@ class ResponseConfig(ABC):
                 invalid
         """
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)
         data["_ert_kind"] = self.__class__.__name__
         return data
 
     @property
     @abstractmethod
-    def expected_input_files(self) -> List[str]:
+    def expected_input_files(self) -> list[str]:
         """Returns a list of filenames expected to be produced by the forward model"""
 
     @property
@@ -53,7 +52,7 @@ class ResponseConfig(ABC):
 
     @property
     @abstractmethod
-    def primary_key(self) -> List[str]:
+    def primary_key(self) -> list[str]:
         """Primary key of this response data.
         For example 'time' for summary and ['index','report_step'] for gen data"""
 

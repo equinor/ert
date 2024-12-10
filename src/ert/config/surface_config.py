@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Self
 
 import numpy as np
 import xarray as xr
 import xtgeo
-from typing_extensions import Self
 
 from ert.substitutions import substitute_runpath_name
 
@@ -37,7 +36,7 @@ class SurfaceConfig(ParameterConfig):
     base_surface_path: str
 
     @classmethod
-    def from_config_list(cls, surface: List[str]) -> Self:
+    def from_config_list(cls, surface: list[str]) -> Self:
         options = option_dict(surface, 1)
         name = surface[0]
         init_file = options.get("INIT_FILES")

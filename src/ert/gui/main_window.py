@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
-from typing import Dict, List, Optional
 
 from qtpy.QtCore import QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
@@ -68,7 +67,7 @@ BUTTON_STYLE_SHEET_DARK: str = (
 class SidebarToolButton(QToolButton):
     right_clicked = Signal()
 
-    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event:
             if event.button() == Qt.MouseButton.RightButton:
                 self.right_clicked.emit()
@@ -83,12 +82,12 @@ class ErtMainWindow(QMainWindow):
         self,
         config_file: str,
         ert_config: ErtConfig,
-        plugin_manager: Optional[ErtPluginManager] = None,
-        log_handler: Optional[GUILogHandler] = None,
+        plugin_manager: ErtPluginManager | None = None,
+        log_handler: GUILogHandler | None = None,
     ):
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier(config_file)
-        self.plugins_tool: Optional[PluginsTool] = None
+        self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
         self.config_file = config_file
         self.log_handler = log_handler
@@ -105,7 +104,7 @@ class ErtMainWindow(QMainWindow):
         self.facade = LibresFacade(self.ert_config)
         self.side_frame = QFrame(self)
         self.button_group = QButtonGroup(self.side_frame)
-        self._external_plot_windows: List[PlotWindow] = []
+        self._external_plot_windows: list[PlotWindow] = []
 
         if self.is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
@@ -115,10 +114,10 @@ class ErtMainWindow(QMainWindow):
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
-        self.central_panels_map: Dict[str, QWidget] = {}
-        self._experiment_panel: Optional[ExperimentPanel] = None
-        self._plot_window: Optional[PlotWindow] = None
-        self._manage_experiments_panel: Optional[ManageExperimentsPanel] = None
+        self.central_panels_map: dict[str, QWidget] = {}
+        self._experiment_panel: ExperimentPanel | None = None
+        self._plot_window: PlotWindow | None = None
+        self._manage_experiments_panel: ManageExperimentsPanel | None = None
         self._add_sidebar_button("Start simulation", QIcon("img:library_add.svg"))
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
@@ -334,7 +333,7 @@ class ErtMainWindow(QMainWindow):
         self.load_results_tool.setParent(self)
         tools_menu.addAction(self.load_results_tool.getAction())
 
-    def closeEvent(self, closeEvent: Optional[QCloseEvent]) -> None:
+    def closeEvent(self, closeEvent: QCloseEvent | None) -> None:
         for plot_window in self._external_plot_windows:
             if plot_window:
                 plot_window.close()

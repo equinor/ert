@@ -12,22 +12,17 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
     Literal,
     Mapping,
-    Optional,
     Sequence,
-    Tuple,
     Type,
-    TypedDict,
     TypeVar,
-    Union,
     overload,
 )
 
 import pluggy
 from opentelemetry.sdk.trace import TracerProvider
+from typing_extensions import TypedDict
 
 from .workflow_config import WorkflowConfigs
 
@@ -53,15 +48,15 @@ V = TypeVar("V")
 
 class JobDoc(TypedDict):
     description: str
-    examples: Optional[str]
-    config_file: Optional[str]
-    parser: Optional[Callable[[], ArgumentParser]]
+    examples: str | None
+    config_file: str | None
+    parser: Callable[[], ArgumentParser] | None
     source_package: str
     category: str
 
 
 class ErtPluginManager(pluggy.PluginManager):
-    def __init__(self, plugins: Optional[Sequence[object]] = None) -> None:
+    def __init__(self, plugins: Sequence[object] | None = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
 
         import ert.plugins.hook_implementations  # noqa
@@ -85,22 +80,20 @@ class ErtPluginManager(pluggy.PluginManager):
                     self_str += "\t\t" + str(hook_caller) + "\n"
         return self_str
 
-    def get_help_links(self) -> Dict[str, Any]:
+    def get_help_links(self) -> dict[str, Any]:
         return ErtPluginManager._merge_dicts(self.hook.help_links())
 
     @property
     def forward_model_steps(
         self,
-    ) -> List[Type[ForwardModelStepPlugin]]:
+    ) -> list[Type[ForwardModelStepPlugin]]:
         fm_steps_listed = [
             resp.data for resp in self.hook.installable_forward_model_steps()
         ]
         return [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
 
     @staticmethod
-    def _evaluate_config_hook(
-        hook: pluggy.HookCaller, config_name: str
-    ) -> Optional[str]:
+    def _evaluate_config_hook(hook: pluggy.HookCaller, config_name: str) -> str | None:
         response = hook()
 
         if response is None:
@@ -117,7 +110,7 @@ class ErtPluginManager(pluggy.PluginManager):
     @staticmethod
     def _evaluate_job_doc_hook(
         hook: pluggy.HookCaller, job_name: str
-    ) -> Dict[Any, Any]:
+    ) -> dict[Any, Any]:
         response = hook(job_name=job_name)
 
         if response is None:
@@ -126,29 +119,29 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
-    def get_ecl100_config_path(self) -> Optional[str]:
+    def get_ecl100_config_path(self) -> str | None:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl100_config_path, config_name="ecl100"
         )
 
-    def get_ecl300_config_path(self) -> Optional[str]:
+    def get_ecl300_config_path(self) -> str | None:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.ecl300_config_path, config_name="ecl300"
         )
 
-    def get_flow_config_path(self) -> Optional[str]:
+    def get_flow_config_path(self) -> str | None:
         return ErtPluginManager._evaluate_config_hook(
             hook=self.hook.flow_config_path, config_name="flow"
         )
 
-    def get_forward_model_configuration(self) -> Dict[str, Dict[str, Any]]:
-        response: List[PluginResponse[Dict[str, str]]] = (
+    def get_forward_model_configuration(self) -> dict[str, dict[str, Any]]:
+        response: list[PluginResponse[dict[str, str]]] = (
             self.hook.forward_model_configuration()
         )
         if response == []:
             return {}
 
-        fm_configs: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
+        fm_configs: dict[str, dict[str, Any]] = collections.defaultdict(dict)
         for res in response:
             if not isinstance(res.data, dict):
                 raise TypeError(
@@ -182,7 +175,7 @@ class ErtPluginManager(pluggy.PluginManager):
                     fm_configs[fmstep_name][key] = value
         return fm_configs
 
-    def _site_config_lines(self) -> List[str]:
+    def _site_config_lines(self) -> list[str]:
         try:
             plugin_responses = self.hook.site_config_lines()
         except AttributeError:
@@ -209,7 +202,7 @@ class ErtPluginManager(pluggy.PluginManager):
         else:
             return plugin_responses[0].data
 
-    def get_installable_workflow_jobs(self) -> Dict[str, str]:
+    def get_installable_workflow_jobs(self) -> dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
         hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
         installable_workflow_jobs = self._merge_internal_jobs(
@@ -251,9 +244,9 @@ class ErtPluginManager(pluggy.PluginManager):
 
     @staticmethod
     def _merge_internal_jobs(
-        config_jobs: Dict[str, str],
-        hooked_jobs: Dict[str, str],
-    ) -> Dict[str, str]:
+        config_jobs: dict[str, str],
+        hooked_jobs: dict[str, str],
+    ) -> dict[str, str]:
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
             logger.info(
@@ -267,33 +260,33 @@ class ErtPluginManager(pluggy.PluginManager):
 
     @staticmethod
     def _add_plugin_info_to_dict(
-        d: Dict[K, V], plugin_response: PluginResponse[Any]
-    ) -> Dict[K, Tuple[V, PluginMetadata]]:
+        d: dict[K, V], plugin_response: PluginResponse[Any]
+    ) -> dict[K, tuple[V, PluginMetadata]]:
         return {k: (v, plugin_response.plugin_metadata) for k, v in d.items()}
 
     @overload
     @staticmethod
     def _merge_dicts(
-        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        list_of_dicts: list[PluginResponse[dict[str, V]]],
         include_plugin_data: Literal[True],
-    ) -> Dict[str, Tuple[V, PluginMetadata]]:
+    ) -> dict[str, tuple[V, PluginMetadata]]:
         pass
 
     @overload
     @staticmethod
     def _merge_dicts(
-        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        list_of_dicts: list[PluginResponse[dict[str, V]]],
         include_plugin_data: Literal[False] = False,
-    ) -> Dict[str, V]:
+    ) -> dict[str, V]:
         pass
 
     @staticmethod
     def _merge_dicts(
-        list_of_dicts: List[PluginResponse[Dict[str, V]]],
+        list_of_dicts: list[PluginResponse[dict[str, V]]],
         include_plugin_data: bool = False,
-    ) -> Union[Dict[str, V], Dict[str, Tuple[V, PluginMetadata]]]:
+    ) -> dict[str, V] | dict[str, tuple[V, PluginMetadata]]:
         list_of_dicts.reverse()
-        merged_dict: Dict[str, Tuple[V, PluginMetadata]] = {}
+        merged_dict: dict[str, tuple[V, PluginMetadata]] = {}
         for d in list_of_dicts:
             conflicting_keys = set(merged_dict.keys()) & set(d.data.keys())
             for ck in conflicting_keys:
@@ -313,10 +306,10 @@ class ErtPluginManager(pluggy.PluginManager):
     def get_installable_jobs(self) -> Mapping[str, str]:
         return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
 
-    def _get_config_workflow_jobs(self) -> Dict[str, str]:
+    def _get_config_workflow_jobs(self) -> dict[str, str]:
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
 
-    def get_documentation_for_jobs(self) -> Dict[str, Any]:
+    def get_documentation_for_jobs(self) -> dict[str, Any]:
         job_docs = {
             k: {
                 "config_file": v[0],
@@ -338,7 +331,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_documentation_for_forward_model_steps(
         self,
-    ) -> Dict[str, ForwardModelStepDocumentation]:
+    ) -> dict[str, ForwardModelStepDocumentation]:
         return {
             # Implementations of plugin fm step take no __init__ args
             # (name, command)
@@ -349,10 +342,10 @@ class ErtPluginManager(pluggy.PluginManager):
             if fm_step.documentation() is not None
         }
 
-    def get_documentation_for_workflows(self) -> Dict[str, JobDoc]:
+    def get_documentation_for_workflows(self) -> dict[str, JobDoc]:
         workflow_config = self.get_ertscript_workflows()
 
-        job_docs: Dict[str, JobDoc] = {
+        job_docs: dict[str, JobDoc] = {
             workflow.name: {
                 "description": workflow.description,
                 "examples": workflow.examples,
@@ -387,17 +380,17 @@ class ErtPluginManager(pluggy.PluginManager):
 class ErtPluginContext:
     def __init__(
         self,
-        plugins: Optional[List[object]] = None,
-        logger: Optional[logging.Logger] = None,
-        trace_provider: Optional[TracerProvider] = None,
+        plugins: list[object] | None = None,
+        logger: logging.Logger | None = None,
+        trace_provider: TracerProvider | None = None,
     ) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
-        self.tmp_dir: Optional[str] = None
-        self.tmp_site_config_filename: Optional[str] = None
+        self.tmp_dir: str | None = None
+        self.tmp_site_config_filename: str | None = None
         self._logger = logger
         self._trace_provider = trace_provider
 
-    def _create_site_config(self, tmp_dir: str) -> Optional[str]:
+    def _create_site_config(self, tmp_dir: str) -> str | None:
         site_config_content = self.plugin_manager.get_site_config_content()
         tmp_site_config_filename = None
         if site_config_content is not None:
@@ -427,7 +420,7 @@ class ErtPluginContext:
         return self
 
     def _setup_temp_environment_if_not_already_set(
-        self, env: Mapping[str, Optional[str]]
+        self, env: Mapping[str, str | None]
     ) -> None:
         self.backup_env = os.environ.copy()
         self.env = env

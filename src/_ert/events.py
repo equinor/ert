@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Dict, Final, Literal, Union
+from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -39,12 +39,12 @@ class Id:
     ENSEMBLE_SUCCEEDED: Final = "ensemble.succeeded"
     ENSEMBLE_CANCELLED: Final = "ensemble.cancelled"
     ENSEMBLE_FAILED: Final = "ensemble.failed"
-    ENSEMBLE_TYPES = Union[
-        ENSEMBLE_STARTED_TYPE,
-        ENSEMBLE_FAILED_TYPE,
-        ENSEMBLE_SUCCEEDED_TYPE,
-        ENSEMBLE_CANCELLED_TYPE,
-    ]
+    ENSEMBLE_TYPES = (
+        ENSEMBLE_STARTED_TYPE
+        | ENSEMBLE_FAILED_TYPE
+        | ENSEMBLE_SUCCEEDED_TYPE
+        | ENSEMBLE_CANCELLED_TYPE
+    )
 
     EE_SNAPSHOT_TYPE = Literal["ee.snapshot"]
     EE_SNAPSHOT_UPDATE_TYPE = Literal["ee.snapshot_update"]
@@ -64,47 +64,47 @@ class BaseEvent(BaseModel):
 
 
 class ForwardModelStepBaseEvent(BaseEvent):
-    ensemble: Union[str, None] = None
+    ensemble: str | None = None
     real: str
     fm_step: str
 
 
 class ForwardModelStepStart(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_START_TYPE = Id.FORWARD_MODEL_STEP_START
-    std_out: Union[str, None] = None
-    std_err: Union[str, None] = None
+    std_out: str | None = None
+    std_err: str | None = None
 
 
 class ForwardModelStepRunning(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_RUNNING_TYPE = Id.FORWARD_MODEL_STEP_RUNNING
-    max_memory_usage: Union[int, None] = None
-    current_memory_usage: Union[int, None] = None
+    max_memory_usage: int | None = None
+    current_memory_usage: int | None = None
     cpu_seconds: float = 0.0
 
 
 class ForwardModelStepSuccess(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_SUCCESS_TYPE = Id.FORWARD_MODEL_STEP_SUCCESS
-    current_memory_usage: Union[int, None] = None
+    current_memory_usage: int | None = None
 
 
 class ForwardModelStepFailure(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_FAILURE_TYPE = Id.FORWARD_MODEL_STEP_FAILURE
     error_msg: str
-    exit_code: Union[int, None] = None
+    exit_code: int | None = None
 
 
 class ForwardModelStepChecksum(BaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_CHECKSUM_TYPE = Id.FORWARD_MODEL_STEP_CHECKSUM
-    ensemble: Union[str, None] = None
+    ensemble: str | None = None
     real: str
-    checksums: Dict[str, Dict[str, Any]]
+    checksums: dict[str, dict[str, Any]]
 
 
 class RealizationBaseEvent(BaseEvent):
     real: str
-    ensemble: Union[str, None] = None
-    queue_event_type: Union[str, None] = None
-    exec_hosts: Union[str, None] = None
+    ensemble: str | None = None
+    queue_event_type: str | None = None
+    exec_hosts: str | None = None
 
 
 class RealizationPending(RealizationBaseEvent):
@@ -121,7 +121,7 @@ class RealizationSuccess(RealizationBaseEvent):
 
 class RealizationFailed(RealizationBaseEvent):
     event_type: Id.REALIZATION_FAILURE_TYPE = Id.REALIZATION_FAILURE
-    message: Union[str, None] = None  # Only used for JobState.FAILED
+    message: str | None = None  # Only used for JobState.FAILED
 
 
 class RealizationUnknown(RealizationBaseEvent):
@@ -137,7 +137,7 @@ class RealizationTimeout(RealizationBaseEvent):
 
 
 class EnsembleBaseEvent(BaseEvent):
-    ensemble: Union[str, None] = None
+    ensemble: str | None = None
 
 
 class EnsembleStarted(EnsembleBaseEvent):
@@ -168,7 +168,7 @@ class EESnapshotUpdate(EnsembleBaseEvent):
 
 class EETerminated(BaseEvent):
     event_type: Id.EE_TERMINATED_TYPE = Id.EE_TERMINATED
-    ensemble: Union[str, None] = None
+    ensemble: str | None = None
 
 
 class EEUserCancel(BaseEvent):
@@ -181,39 +181,30 @@ class EEUserDone(BaseEvent):
     monitor: str
 
 
-FMEvent = Union[
-    ForwardModelStepStart,
-    ForwardModelStepRunning,
-    ForwardModelStepSuccess,
-    ForwardModelStepFailure,
-]
+FMEvent = (
+    ForwardModelStepStart
+    | ForwardModelStepRunning
+    | ForwardModelStepSuccess
+    | ForwardModelStepFailure
+)
 
-RealizationEvent = Union[
-    RealizationPending,
-    RealizationRunning,
-    RealizationSuccess,
-    RealizationFailed,
-    RealizationTimeout,
-    RealizationUnknown,
-    RealizationWaiting,
-]
+RealizationEvent = (
+    RealizationPending
+    | RealizationRunning
+    | RealizationSuccess
+    | RealizationFailed
+    | RealizationTimeout
+    | RealizationUnknown
+    | RealizationWaiting
+)
 
-EnsembleEvent = Union[
-    EnsembleStarted, EnsembleSucceeded, EnsembleFailed, EnsembleCancelled
-]
+EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleCancelled
 
-EEEvent = Union[EESnapshot, EESnapshotUpdate, EETerminated, EEUserCancel, EEUserDone]
+EEEvent = EESnapshot | EESnapshotUpdate | EETerminated | EEUserCancel | EEUserDone
 
-Event = Union[
-    FMEvent, ForwardModelStepChecksum, RealizationEvent, EEEvent, EnsembleEvent
-]
+Event = FMEvent | ForwardModelStepChecksum | RealizationEvent | EEEvent | EnsembleEvent
 
-DispatchEvent = Union[
-    FMEvent,
-    ForwardModelStepChecksum,
-    RealizationEvent,
-    EnsembleEvent,
-]
+DispatchEvent = FMEvent | ForwardModelStepChecksum | RealizationEvent | EnsembleEvent
 
 _DISPATCH_EVENTS_ANNOTATION = Annotated[
     DispatchEvent, Field(discriminator="event_type")
@@ -226,15 +217,15 @@ DispatchEventAdapter: TypeAdapter[DispatchEvent] = TypeAdapter(
 EventAdapter: TypeAdapter[Event] = TypeAdapter(_ALL_EVENTS_ANNOTATION)
 
 
-def dispatch_event_from_json(raw_msg: Union[str, bytes]) -> DispatchEvent:
+def dispatch_event_from_json(raw_msg: str | bytes) -> DispatchEvent:
     return DispatchEventAdapter.validate_json(raw_msg)
 
 
-def event_from_json(raw_msg: Union[str, bytes]) -> Event:
+def event_from_json(raw_msg: str | bytes) -> Event:
     return EventAdapter.validate_json(raw_msg)
 
 
-def event_from_dict(dict_msg: Dict[str, Any]) -> Event:
+def event_from_dict(dict_msg: dict[str, Any]) -> Event:
     return EventAdapter.validate_python(dict_msg)
 
 
@@ -242,5 +233,5 @@ def event_to_json(event: Event) -> str:
     return event.model_dump_json()
 
 
-def event_to_dict(event: Event) -> Dict[str, Any]:
+def event_to_dict(event: Event) -> dict[str, Any]:
     return event.model_dump()

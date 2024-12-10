@@ -7,7 +7,7 @@ import time
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from lxml import etree
 from pydantic_core._pydantic_core import ValidationError
@@ -69,9 +69,9 @@ class Job:
         self.returncode: asyncio.Future[int] = asyncio.Future()
         self._scheduler: Scheduler = scheduler
         self._message: str = ""
-        self._requested_max_submit: Optional[int] = None
-        self._start_time: Optional[float] = None
-        self._end_time: Optional[float] = None
+        self._requested_max_submit: int | None = None
+        self._start_time: float | None = None
+        self._end_time: float | None = None
 
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
@@ -100,7 +100,7 @@ class Job:
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
         await self._send(JobState.WAITING)
         await sem.acquire()
-        timeout_task: Optional[asyncio.Task[None]] = None
+        timeout_task: asyncio.Task[None] | None = None
 
         try:
             if self._scheduler.submit_sleep_state:
@@ -192,7 +192,7 @@ class Job:
     async def _verify_checksum(
         self,
         checksum_lock: asyncio.Lock,
-        timeout: Optional[int] = None,  # noqa: ASYNC109
+        timeout: int | None = None,  # noqa: ASYNC109
     ) -> None:
         if timeout is None:
             timeout = self.DEFAULT_CHECKSUM_TIMEOUT
@@ -290,7 +290,7 @@ class Job:
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: JobState) -> None:
-        event_dict: Dict[str, Any] = {
+        event_dict: dict[str, Any] = {
             "ensemble": self._scheduler._ens_id,
             "event_type": _queue_jobstate_event_type[state],
             "queue_event_type": state,
@@ -327,7 +327,7 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
             f"job failed with invalid XML ERROR file, contents '{raw_xml_contents}'"
         )
         return
-    filecontents: List[str] = []
+    filecontents: list[str] = []
     for element in ["job", "reason", "stderr_file", "stderr"]:
         filecontents.append(str(exit_file.findtext(element)))
     logger.error(

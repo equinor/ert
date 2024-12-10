@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 from ert.config.ert_script import ErtScript
 from ert.runpaths import Runpaths
@@ -33,7 +33,7 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, ert_config: ErtConfig, workflow_args: List[Any]) -> None:
+    def run(self, ert_config: ErtConfig, workflow_args: list[Any]) -> None:
         _args = " ".join(workflow_args).split()  # Make sure args is a list of words
         run_paths = Runpaths(
             jobname_format=ert_config.model_config.jobname_format_string,
@@ -51,8 +51,8 @@ class ExportRunpathJob(ErtScript):
         )
 
     def get_ranges(
-        self, args: List[str], number_of_iterations: int, number_of_realizations: int
-    ) -> Tuple[List[int], List[int]]:
+        self, args: list[str], number_of_iterations: int, number_of_realizations: int
+    ) -> tuple[list[int], list[int]]:
         realizations_rangestring, iterations_rangestring = self._get_rangestrings(
             args, number_of_realizations
         )
@@ -64,15 +64,15 @@ class ExportRunpathJob(ErtScript):
         )
 
     @staticmethod
-    def _list_from_rangestring(rangestring: str, size: int) -> List[int]:
+    def _list_from_rangestring(rangestring: str, size: int) -> list[int]:
         if rangestring == "*":
             return list(range(size))
         else:
             return rangestring_to_list(rangestring)
 
     def _get_rangestrings(
-        self, args: List[str], number_of_realizations: int
-    ) -> Tuple[str, str]:
+        self, args: list[str], number_of_realizations: int
+    ) -> tuple[str, str]:
         if not args:
             return (
                 f"0-{number_of_realizations-1}",

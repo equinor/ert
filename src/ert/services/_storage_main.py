@@ -10,7 +10,7 @@ import string
 import threading
 import time
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import uvicorn
 import yaml
@@ -27,12 +27,12 @@ class Server(uvicorn.Server):
     def __init__(
         self,
         config: uvicorn.Config,
-        connection_info: Union[str, Dict[str, Any]],
+        connection_info: str | dict[str, Any],
     ):
         super().__init__(config)
         self.connection_info = connection_info
 
-    async def startup(self, sockets: Optional[List[socket.socket]] = None) -> None:
+    async def startup(self, sockets: list[socket.socket] | None = None) -> None:
         """Overridden startup that also sends connection information"""
         await super().startup(sockets)
         if not self.started:
@@ -45,7 +45,7 @@ def generate_authtoken() -> str:
     return "".join([random.choice(chars) for _ in range(16)])
 
 
-def write_to_pipe(connection_info: Union[str, Dict[str, Any]]) -> None:
+def write_to_pipe(connection_info: str | dict[str, Any]) -> None:
     """Write connection information directly to the calling program (ERT) via a
     communication pipe."""
     fd = os.environ.get("ERT_COMM_FD")
@@ -61,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def _create_connection_info(sock: socket.socket, authtoken: str) -> Dict[str, Any]:
+def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, Any]:
     connection_info = {
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
@@ -81,7 +81,7 @@ def _create_connection_info(sock: socket.socket, authtoken: str) -> Dict[str, An
     return connection_info
 
 
-def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -> None:
+def run_server(args: argparse.Namespace | None = None, debug: bool = False) -> None:
     if args is None:
         args = parse_args()
 
@@ -91,7 +91,7 @@ def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -
         authtoken = generate_authtoken()
         os.environ["ERT_STORAGE_TOKEN"] = authtoken
 
-    config_args: Dict[str, Any] = {}
+    config_args: dict[str, Any] = {}
     if args.debug or debug:
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"

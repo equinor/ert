@@ -15,6 +15,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Self,
     Sequence,
     Tuple,
     Type,
@@ -27,7 +28,6 @@ import polars
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
-from typing_extensions import Self
 
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions

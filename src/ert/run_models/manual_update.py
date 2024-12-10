@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from ert.config import ErtConfig
@@ -27,9 +27,9 @@ class ManualUpdate(UpdateRunModel):
         self,
         ensemble_id: str,
         target_ensemble: str,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

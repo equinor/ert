@@ -1,12 +1,11 @@
 import io
-from typing import Any, Dict, List, Mapping, Union
+from typing import Annotated, Any, Mapping, Union
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import numpy as np
 from fastapi import APIRouter, Body, Depends, File, Header, HTTPException, status
 from fastapi.responses import Response
-from typing_extensions import Annotated
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
@@ -34,7 +33,7 @@ async def get_record_observations(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_name: str,
-) -> List[js.ObservationOut]:
+) -> list[js.ObservationOut]:
     response_name = unquote(response_name)
     ensemble = storage.get_ensemble(ensemble_id)
     obs_keys = get_observation_keys_for_response(ensemble, response_name)
@@ -104,10 +103,10 @@ async def get_ensemble_record(
         )
 
 
-@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=list[dict[str, Any]])
 async def get_ensemble_parameters(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     return ensemble_parameters(storage, ensemble_id)
 
 
@@ -119,7 +118,7 @@ def get_ensemble_responses(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> Mapping[str, js.RecordOut]:
-    response_map: Dict[str, js.RecordOut] = {}
+    response_map: dict[str, js.RecordOut] = {}
     ensemble = storage.get_ensemble(ensemble_id)
 
     response_names_with_observations = set()

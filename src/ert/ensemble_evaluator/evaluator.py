@@ -9,16 +9,10 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
-    Dict,
     Generator,
     Iterable,
-    List,
-    Optional,
     Sequence,
-    Set,
-    Tuple,
     Type,
-    Union,
     get_args,
 )
 
@@ -59,7 +53,7 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
-EVENT_HANDLER = Callable[[List[Event]], Awaitable[None]]
+EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
 
 
 class EnsembleEvaluator:
@@ -67,22 +61,22 @@ class EnsembleEvaluator:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
 
-        self._clients: Set[ServerConnection] = set()
+        self._clients: set[ServerConnection] = set()
         self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
         self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
-        self._ee_tasks: List[asyncio.Task[None]] = []
+        self._ee_tasks: list[asyncio.Task[None]] = []
         self._server_started: asyncio.Event = asyncio.Event()
         self._server_done: asyncio.Event = asyncio.Event()
 
         # batching section
         self._batch_processing_queue: asyncio.Queue[
-            List[Tuple[EVENT_HANDLER, Event]]
+            list[tuple[EVENT_HANDLER, Event]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
         self._batching_interval: float = 2.0
@@ -106,7 +100,7 @@ class EnsembleEvaluator:
     async def _process_event_buffer(self) -> None:
         while True:
             batch = await self._batch_processing_queue.get()
-            function_to_events_map: Dict[EVENT_HANDLER, List[Event]] = {}
+            function_to_events_map: dict[EVENT_HANDLER, list[Event]] = {}
             for func, event in batch:
                 if func not in function_to_events_map:
                     function_to_events_map[func] = []
@@ -118,22 +112,20 @@ class EnsembleEvaluator:
             self._batch_processing_queue.task_done()
 
     async def _batch_events_into_buffer(self) -> None:
-        event_handler: Dict[Type[Event], EVENT_HANDLER] = {}
+        event_handler: dict[Type[Event], EVENT_HANDLER] = {}
 
-        def set_event_handler(event_types: Set[Type[Event]], func: Any) -> None:
+        def set_event_handler(event_types: set[Type[Event]], func: Any) -> None:
             for event_type in event_types:
                 event_handler[event_type] = func
 
-        set_event_handler(
-            set(get_args(Union[FMEvent, RealizationEvent])), self._fm_handler
-        )
+        set_event_handler(set(get_args(FMEvent | RealizationEvent)), self._fm_handler)
         set_event_handler({EnsembleStarted}, self._started_handler)
         set_event_handler({EnsembleSucceeded}, self._stopped_handler)
         set_event_handler({EnsembleCancelled}, self._cancelled_handler)
         set_event_handler({EnsembleFailed}, self._failed_handler)
 
         while True:
-            batch: List[Tuple[EVENT_HANDLER, Event]] = []
+            batch: list[tuple[EVENT_HANDLER, Event]] = []
             start_time = asyncio.get_running_loop().time()
             while (
                 len(batch) < self._max_batch_size
@@ -151,9 +143,7 @@ class EnsembleEvaluator:
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
 
-    async def _fm_handler(
-        self, events: Sequence[Union[FMEvent, RealizationEvent]]
-    ) -> None:
+    async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
 
     async def _started_handler(self, events: Sequence[EnsembleStarted]) -> None:
@@ -295,7 +285,7 @@ class EnsembleEvaluator:
 
     async def process_request(
         self, connection: ServerConnection, request: Request
-    ) -> Optional[Response]:
+    ) -> Response | None:
         if request.headers.get("token") != self._config.token:
             return connection.respond(HTTPStatus.UNAUTHORIZED, "")
         if request.path == "/healthcheck":
@@ -430,7 +420,7 @@ class EnsembleEvaluator:
             )
         )
 
-    async def run_and_get_successful_realizations(self) -> List[int]:
+    async def run_and_get_successful_realizations(self) -> list[int]:
         await self._start_running()
 
         try:

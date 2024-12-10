@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Generator
 from uuid import UUID
 
 import numpy as np
@@ -87,11 +87,11 @@ class LocalExperiment(BaseMode):
         uuid: UUID,
         path: Path,
         *,
-        parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, polars.DataFrame]] = None,
-        simulation_arguments: Optional[Dict[Any, Any]] = None,
-        name: Optional[str] = None,
+        parameters: list[ParameterConfig] | None = None,
+        responses: list[ResponseConfig] | None = None,
+        observations: dict[str, polars.DataFrame] | None = None,
+        simulation_arguments: dict[Any, Any] | None = None,
+        name: str | None = None,
     ) -> LocalExperiment:
         """
         Create a new LocalExperiment and store its configuration data.
@@ -165,7 +165,7 @@ class LocalExperiment(BaseMode):
         ensemble_size: int,
         name: str,
         iteration: int = 0,
-        prior_ensemble: Optional[LocalEnsemble] = None,
+        prior_ensemble: LocalEnsemble | None = None,
     ) -> LocalEnsemble:
         """
         Create a new ensemble associated with this experiment.
@@ -222,7 +222,7 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         path = self.mount_point / self._metadata_file
         if not path.exists():
             raise ValueError(f"{self._metadata_file!s} does not exist")
@@ -246,8 +246,8 @@ class LocalExperiment(BaseMode):
         return self._path
 
     @property
-    def parameter_info(self) -> Dict[str, Any]:
-        info: Dict[str, Any]
+    def parameter_info(self) -> dict[str, Any]:
+        info: dict[str, Any]
         path = self.mount_point / self._parameter_file
         if not path.exists():
             raise ValueError(f"{self._parameter_file!s} does not exist")
@@ -256,8 +256,8 @@ class LocalExperiment(BaseMode):
         return info
 
     @property
-    def response_info(self) -> Dict[str, Any]:
-        info: Dict[str, Any]
+    def response_info(self) -> dict[str, Any]:
+        info: dict[str, Any]
         path = self.mount_point / self._responses_file
         if not path.exists():
             raise ValueError(f"{self._responses_file!s} does not exist")
@@ -287,7 +287,7 @@ class LocalExperiment(BaseMode):
         )
 
     @cached_property
-    def parameter_configuration(self) -> Dict[str, ParameterConfig]:
+    def parameter_configuration(self) -> dict[str, ParameterConfig]:
         params = {}
         for data in self.parameter_info.values():
             param_type = data.pop("_ert_kind")
@@ -295,7 +295,7 @@ class LocalExperiment(BaseMode):
         return params
 
     @property
-    def response_configuration(self) -> Dict[str, ResponseConfig]:
+    def response_configuration(self) -> dict[str, ResponseConfig]:
         responses = {}
         for data in self.response_info.values():
             ert_kind = data.pop("_ert_kind")
@@ -307,11 +307,11 @@ class LocalExperiment(BaseMode):
         return responses
 
     @cached_property
-    def update_parameters(self) -> List[str]:
+    def update_parameters(self) -> list[str]:
         return [p.name for p in self.parameter_configuration.values() if p.update]
 
     @cached_property
-    def observations(self) -> Dict[str, polars.DataFrame]:
+    def observations(self) -> dict[str, polars.DataFrame]:
         observations = sorted(self.mount_point.glob("observations/*"))
         return {
             observation.name: polars.read_parquet(f"{observation}")
@@ -319,19 +319,19 @@ class LocalExperiment(BaseMode):
         }
 
     @cached_property
-    def observation_keys(self) -> List[str]:
+    def observation_keys(self) -> list[str]:
         """
         Gets all \"name\" values for all observations. I.e.,
         the summary keyword, the gen_data observation name etc.
         """
-        keys: List[str] = []
+        keys: list[str] = []
         for df in self.observations.values():
             keys.extend(df["observation_key"].unique())
 
         return sorted(keys)
 
     @cached_property
-    def response_key_to_response_type(self) -> Dict[str, str]:
+    def response_key_to_response_type(self) -> dict[str, str]:
         mapping = {}
         for config in self.response_configuration.values():
             for key in config.keys if config.has_finalized_keys else []:
@@ -340,8 +340,8 @@ class LocalExperiment(BaseMode):
         return mapping
 
     @cached_property
-    def response_type_to_response_keys(self) -> Dict[str, List[str]]:
-        result: Dict[str, List[str]] = {}
+    def response_type_to_response_keys(self) -> dict[str, list[str]]:
+        result: dict[str, list[str]] = {}
 
         for response_key, response_type in self.response_key_to_response_type.items():
             if response_type not in result:
@@ -364,7 +364,7 @@ class LocalExperiment(BaseMode):
         return responses_configuration[response_type].has_finalized_keys
 
     def _update_response_keys(
-        self, response_type: str, response_keys: List[str]
+        self, response_type: str, response_keys: list[str]
     ) -> None:
         """
         When a response is saved to storage, it may contain keys

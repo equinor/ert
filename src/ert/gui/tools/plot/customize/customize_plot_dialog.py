@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Union
+from typing import TYPE_CHECKING, Iterable, Iterator
 
 from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtGui import QIcon, QKeyEvent
@@ -36,14 +36,14 @@ class PlotCustomizer(QObject):
     settingsChanged = Signal()
 
     def __init__(
-        self, parent: Optional[QWidget], key_defs: List[PlotApiKeyDefinition]
+        self, parent: QWidget | None, key_defs: list[PlotApiKeyDefinition]
     ) -> None:
         super().__init__()
 
         self._plot_config_key = None
         self._previous_key = None
         self.default_plot_settings = None
-        self._plot_configs: dict[Optional[str], PlotConfigHistory] = {
+        self._plot_configs: dict[str | None, PlotConfigHistory] = {
             None: PlotConfigHistory(
                 "No_Key_Selected", PlotConfig(plot_settings=None, title=None)
             )
@@ -141,7 +141,7 @@ class PlotCustomizer(QObject):
 
         self._emitChangedSignal(emit=True)
 
-    def copyCustomization(self, key: Optional[str]) -> None:
+    def copyCustomization(self, key: str | None) -> None:
         key = str(key)
         if self.isCopyPossible():
             source_config = self._plot_configs[key].getPlotConfig()
@@ -176,9 +176,7 @@ class PlotCustomizer(QObject):
     def getPlotConfig(self) -> PlotConfig:
         return self._getPlotConfigHistory().getPlotConfig()
 
-    def setAxisTypes(
-        self, x_axis_type: Optional[str], y_axis_type: Optional[str]
-    ) -> None:
+    def setAxisTypes(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
         self._customize_limits.setAxisTypes(x_axis_type, y_axis_type)
 
 
@@ -192,10 +190,10 @@ class CustomizePlotDialog(QDialog):
 
     def __init__(
         self,
-        title: Optional[str],
-        parent: Optional[QWidget],
-        key_defs: List[PlotApiKeyDefinition],
-        key: Optional[str] = "",
+        title: str | None,
+        parent: QWidget | None,
+        key_defs: list[PlotApiKeyDefinition],
+        key: str | None = "",
     ) -> None:
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
@@ -284,16 +282,16 @@ class CustomizePlotDialog(QDialog):
         if dialog.exec_():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
-    def addCopyableKey(self, key: Optional[Union[str, QListWidgetItem]]) -> None:
+    def addCopyableKey(self, key: str | QListWidgetItem | None) -> None:
         self._popup_list.addItem(key)
 
     def keySelected(self, list_widget_item: QListWidgetItem) -> None:
         self.copySettings.emit(str(list_widget_item.text()))
 
-    def currentPlotKeyChanged(self, new_key: Optional[str]) -> None:
+    def currentPlotKeyChanged(self, new_key: str | None) -> None:
         self.current_key = new_key
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
         # which closes the dialog
         if a0 is not None and a0.key() == Qt.Key.Key_Escape:

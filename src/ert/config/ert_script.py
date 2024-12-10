@@ -8,7 +8,7 @@ import traceback
 import warnings
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type, Union
 
 from typing_extensions import deprecated
 
@@ -111,8 +111,8 @@ class ErtScript:
 
     def initializeAndRun(
         self,
-        argument_types: List[Type[Any]],
-        argument_values: List[str],
+        argument_types: list[Type[Any]],
+        argument_values: list[str],
         fixtures: Optional[Dict[str, Any]] = None,
     ) -> Any:
         fixtures = {} if fixtures is None else fixtures
@@ -170,7 +170,7 @@ class ErtScript:
         self,
         func_args: MappingProxyType[str, inspect.Parameter],
         fixtures: Dict[str, Fixtures],
-    ) -> List[Any]:
+    ) -> list[Any]:
         arguments = []
         errors = []
         for val in func_args:
@@ -238,7 +238,7 @@ class ErtScript:
         return result[0]
 
     @staticmethod
-    def validate(args: List[Any]) -> None:
+    def validate(args: list[Any]) -> None:
         """
         If the workflow has problems it can validate against
         the arguments on startup. If it raises ConfigValidationError

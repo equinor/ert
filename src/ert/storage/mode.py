@@ -2,14 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Literal,
-)
-
-if TYPE_CHECKING:
-    from typing_extensions import Concatenate, ParamSpec, TypeVar
+from typing import Callable, Concatenate, Literal, ParamSpec, TypeVar
 
 ModeLiteral = Literal["r", "w"]
 
@@ -74,11 +67,10 @@ class BaseMode:
             )
 
 
-if TYPE_CHECKING:
-    P = ParamSpec("P")
-    T = TypeVar("T")
-    C = TypeVar("C", bound=BaseMode)
-    F = Callable[Concatenate[C, P], T]
+P = ParamSpec("P")
+T = TypeVar("T")
+C = TypeVar("C", bound=BaseMode)
+F = Callable[Concatenate[C, P], T]
 
 
 def require_write(func: F[C, P, T]) -> F[C, P, T]:

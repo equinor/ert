@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Optional, Union
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
-from typing_extensions import Annotated, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ class ESSettings(BaseSettings):
     ] = "exact"
     localization: Annotated[bool, Field(title="Adaptive localization")] = False
     localization_correlation_threshold: Annotated[
-        Optional[float],
+        float | None,
         Field(
             ge=0.0,
             le=1.0,
@@ -111,4 +110,4 @@ class IESSettings(BaseSettings):
     ] = DEFAULT_IES_DEC_STEPLENGTH
 
 
-AnalysisModule = Union[ESSettings, IESSettings]
+AnalysisModule = ESSettings | IESSettings

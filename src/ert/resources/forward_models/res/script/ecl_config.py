@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import yaml
 
@@ -46,7 +46,7 @@ class Simulator:
         version: str,
         executable: str,
         env: Dict[str, str],
-        mpirun: Optional[str] = None,
+        mpirun: str | None = None,
     ):
         self.version: str = version
         if not os.access(executable, os.X_OK):
@@ -54,7 +54,7 @@ class Simulator:
 
         self.executable: str = executable
         self.env: Dict[str, str] = env
-        self.mpirun: Optional[str] = mpirun
+        self.mpirun: str | None = mpirun
         self.name: str = "simulator"
 
         if mpirun is not None and not os.access(mpirun, os.X_OK):
@@ -98,16 +98,16 @@ class EclConfig:
 
         return self.default_version is not None and version in [None, Keys.default]
 
-    def get_eclrun_env(self) -> Optional[Dict[str, str]]:
+    def get_eclrun_env(self) -> dict[str, str] | None:
         if "eclrun_env" in self._config:
             return self._config["eclrun_env"].copy()
         return None
 
     @property
-    def default_version(self) -> Optional[str]:
+    def default_version(self) -> str | None:
         return self._config.get(Keys.default_version)
 
-    def _get_version(self, version_arg: Optional[str]) -> str:
+    def _get_version(self, version_arg: str | None) -> str:
         if version_arg in [None, Keys.default]:
             version = self.default_version
         else:
@@ -132,7 +132,7 @@ class EclConfig:
 
         return _replace_env(env)
 
-    def _get_sim(self, version: Optional[str], exe_type: str) -> Simulator:
+    def _get_sim(self, version: str | None, exe_type: str) -> Simulator:
         version = self._get_version(version)
         binaries: Dict[str, str] = self._config[Keys.versions][version][exe_type]
         mpirun = binaries[Keys.mpirun] if exe_type == Keys.mpi else None
@@ -143,7 +143,7 @@ class EclConfig:
             mpirun=mpirun,
         )
 
-    def sim(self, version: Optional[str] = None) -> Simulator:
+    def sim(self, version: str | None = None) -> Simulator:
         """Will return an object describing the simulator.
 
         Available attributes are 'executable' and 'env'. Observe that the
@@ -153,11 +153,11 @@ class EclConfig:
         """
         return self._get_sim(version, Keys.scalar)
 
-    def mpi_sim(self, version: Optional[str] = None) -> Simulator:
+    def mpi_sim(self, version: str | None = None) -> Simulator:
         """MPI version of method sim()"""
         return self._get_sim(version, Keys.mpi)
 
-    def simulators(self, strict: bool = True) -> List[Simulator]:
+    def simulators(self, strict: bool = True) -> list[Simulator]:
         simulators = []
         for version in self._config[Keys.versions]:
             for exe_type in self._config[Keys.versions][version]:
@@ -235,13 +235,11 @@ class EclrunConfig:
 
     def __init__(self, config: EclConfig, version: str):
         self.simulator_name: str = config.simulator_name
-        self.run_env: Optional[Dict[str, str]] = self._get_run_env(
-            config.get_eclrun_env()
-        )
+        self.run_env: dict[str, str] | None = self._get_run_env(config.get_eclrun_env())
         self.version: str = version
 
     @staticmethod
-    def _get_run_env(eclrun_env: Optional[Dict[str, str]]) -> Optional[Dict[str, str]]:
+    def _get_run_env(eclrun_env: dict[str, str] | None) -> dict[str, str] | None:
         if eclrun_env is None:
             return None
 
@@ -259,7 +257,7 @@ class EclrunConfig:
         env.update(eclrun_env)
         return env
 
-    def _get_available_eclrun_versions(self) -> List[str]:
+    def _get_available_eclrun_versions(self) -> list[str]:
         try:
             return (
                 subprocess.check_output(

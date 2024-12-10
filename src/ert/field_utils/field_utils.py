@@ -2,15 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 import numpy as np
 import resfo
@@ -22,7 +14,7 @@ from .roff_io import export_roff, import_roff
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-_PathLike = Union[str, "os.PathLike[str]"]
+_PathLike: TypeAlias = str | os.PathLike[str]
 
 
 class Shape(NamedTuple):
@@ -37,10 +29,10 @@ def _make_shape(sequence: npt.NDArray[Any]) -> Shape:
 
 def read_mask(
     grid_path: _PathLike,
-) -> Tuple[npt.NDArray[np.bool_], Shape]:
+) -> tuple[npt.NDArray[np.bool_], Shape]:
     actnum = None
     shape = None
-    actnum_coords: List[Tuple[int, int, int]] = []
+    actnum_coords: list[tuple[int, int, int]] = []
     with open(grid_path, "rb") as f:
         for entry in resfo.lazy_read(f):
             if actnum is not None and shape is not None:
@@ -87,7 +79,7 @@ def read_mask(
 
 def get_shape(
     grid_path: _PathLike,
-) -> Optional[Shape]:
+) -> Shape | None:
     shape = None
     with open(grid_path, "rb") as f:
         for entry in resfo.lazy_read(f):
@@ -120,9 +112,7 @@ def read_field(
         ) from err
 
     try:
-        values: Union[
-            npt.NDArray[np.float32], np.ma.MaskedArray[Any, np.dtype[np.float32]]
-        ]
+        values: npt.NDArray[np.float32] | np.ma.MaskedArray[Any, np.dtype[np.float32]]
         if file_format in ROFF_FORMATS:
             values = import_roff(field_path, field_name)
         elif file_format == FieldFileFormat.GRDECL:

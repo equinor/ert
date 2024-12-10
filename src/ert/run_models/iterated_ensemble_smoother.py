@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 from iterative_ensemble_smoother import steplength_exponential
@@ -39,9 +39,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         experiment_name: str,
         num_retries_per_iter: int,
         number_of_iterations: int,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

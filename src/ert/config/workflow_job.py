@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Type, Union
+from typing import Type, TypeAlias
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
@@ -19,7 +19,7 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
-ContentTypes = Union[Type[int], Type[bool], Type[float], Type[str]]
+ContentTypes: TypeAlias = Type[int] | Type[bool] | Type[float] | Type[str]
 
 
 def workflow_job_parser(file: str) -> ConfigDict:
@@ -35,15 +35,15 @@ class ErtScriptLoadFailure(ValueError):
 class WorkflowJob:
     name: str
     internal: bool
-    min_args: Optional[int]
-    max_args: Optional[int]
-    arg_types: List[SchemaItemType]
-    executable: Optional[str]
-    script: Optional[str]
-    stop_on_fail: Optional[bool] = None  # If not None, overrides in-file specification
+    min_args: int | None
+    max_args: int | None
+    arg_types: list[SchemaItemType]
+    executable: str | None
+    script: str | None
+    stop_on_fail: bool | None = None  # If not None, overrides in-file specification
 
     def __post_init__(self) -> None:
-        self.ert_script: Optional[type] = None
+        self.ert_script: type | None = None
         if self.script is not None and self.internal:
             try:
                 self.ert_script = ErtScript.loadScriptFromFile(
@@ -58,9 +58,9 @@ class WorkflowJob:
                 ) from err
 
     @staticmethod
-    def _make_arg_types_list(content_dict: ConfigDict) -> List[SchemaItemType]:
+    def _make_arg_types_list(content_dict: ConfigDict) -> list[SchemaItemType]:
         # First find the number of args
-        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
+        specified_arg_types: list[tuple[int, str]] = content_dict.get(
             WorkflowJobKeys.ARG_TYPE, []
         )  # type: ignore
 
@@ -72,7 +72,7 @@ class WorkflowJob:
         )
 
     @classmethod
-    def from_file(cls, config_file: str, name: Optional[str] = None) -> "WorkflowJob":
+    def from_file(cls, config_file: str, name: str | None = None) -> "WorkflowJob":
         if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
         if not name:
@@ -100,8 +100,8 @@ class WorkflowJob:
             return issubclass(self.ert_script, ErtPlugin)
         return False
 
-    def argument_types(self) -> List["ContentTypes"]:
-        def content_to_type(c: Optional[SchemaItemType]) -> ContentTypes:
+    def argument_types(self) -> list["ContentTypes"]:
+        def content_to_type(c: SchemaItemType | None) -> ContentTypes:
             if c == SchemaItemType.BOOL:
                 return bool
             if c == SchemaItemType.FLOAT:

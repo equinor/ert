@@ -3,17 +3,10 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import (
-    ClassVar,
-    Dict,
-    Literal,
-    Optional,
-    TypedDict,
-    Union,
-)
+from typing import ClassVar, Literal
 
 from pydantic import field_validator
-from typing_extensions import NotRequired, Unpack
+from typing_extensions import NotRequired, TypedDict, Unpack
 
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitutions import Substitutions
@@ -87,27 +80,27 @@ class ForwardModelStepOptions(TypedDict, total=False):
     target_file: NotRequired[str]
     error_file: NotRequired[str]
     max_running_minutes: NotRequired[int]
-    environment: NotRequired[dict[str, Union[str, int]]]
-    exec_env: NotRequired[dict[str, Union[str, int]]]
-    default_mapping: NotRequired[dict[str, Union[str, int]]]
+    environment: NotRequired[dict[str, str | int]]
+    exec_env: NotRequired[dict[str, str | int]]
+    default_mapping: NotRequired[dict[str, str | int]]
 
 
 @dataclass
 class ForwardModelStepDocumentation:
-    config_file: Optional[str] = field(default=None)
+    config_file: str | None = field(default=None)
     source_package: str = field(default="ert")
     source_function_name: str = field(default="ert")
     description: str = field(default="No description")
     examples: str = field(default="No examples")
-    category: Union[
+    category: (
         Literal[
             "utility.file_system",
             "simulators.reservoir",
             "modelling.reservoir",
             "utility.templating",
-        ],
-        str,
-    ] = field(default="Uncategorized")
+        ]
+        | str
+    ) = field(default="Uncategorized")
 
 
 @dataclass
@@ -151,21 +144,21 @@ class ForwardModelStep:
 
     name: str
     executable: str
-    stdin_file: Optional[str] = None
-    stdout_file: Optional[str] = None
-    stderr_file: Optional[str] = None
-    start_file: Optional[str] = None
-    target_file: Optional[str] = None
-    error_file: Optional[str] = None
-    max_running_minutes: Optional[int] = None
-    min_arg: Optional[int] = None
-    max_arg: Optional[int] = None
+    stdin_file: str | None = None
+    stdout_file: str | None = None
+    stderr_file: str | None = None
+    start_file: str | None = None
+    target_file: str | None = None
+    error_file: str | None = None
+    max_running_minutes: int | None = None
+    min_arg: int | None = None
+    max_arg: int | None = None
     arglist: list[str] = field(default_factory=list)
     required_keywords: list[str] = field(default_factory=list)
     arg_types: list[SchemaItemType] = field(default_factory=list)
-    environment: dict[str, Union[int, str]] = field(default_factory=dict)
-    exec_env: dict[str, Union[int, str]] = field(default_factory=dict)
-    default_mapping: dict[str, Union[int, str]] = field(default_factory=dict)
+    environment: dict[str, int | str] = field(default_factory=dict)
+    exec_env: dict[str, int | str] = field(default_factory=dict)
+    default_mapping: dict[str, int | str] = field(default_factory=dict)
     private_args: Substitutions = field(default_factory=Substitutions)
 
     default_env: ClassVar[dict[str, str]] = {
@@ -176,7 +169,7 @@ class ForwardModelStep:
 
     @field_validator("private_args", mode="before")
     @classmethod
-    def convert_to_substitutions(cls, v: Dict[str, str]) -> Substitutions:
+    def convert_to_substitutions(cls, v: dict[str, str]) -> Substitutions:
         if isinstance(v, Substitutions):
             return v
         return Substitutions(v)
@@ -265,7 +258,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
 
     @staticmethod
     @abstractmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         """
         Returns the documentation for the plugin forward model
         """

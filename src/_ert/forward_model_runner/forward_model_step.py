@@ -12,17 +12,7 @@ import time
 from datetime import datetime as dt
 from pathlib import Path
 from subprocess import Popen, run
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    cast,
-)
+from typing import TYPE_CHECKING, Generator, Sequence, cast
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -40,7 +30,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def killed_by_oom(pids: Set[int]) -> bool:
+def killed_by_oom(pids: set[int]) -> bool:
     """Will try to detect if a process (or any of its descendants) was killed
     by the Linux OOM-killer.
 
@@ -117,7 +107,7 @@ class ForwardModelStep:
             start_message = start_message.with_error("\n".join(errors))
         return start_message
 
-    def _build_arg_list(self) -> List[str]:
+    def _build_arg_list(self) -> list[str]:
         executable = self.job_data.get("executable")
         # assert executable is not None
         combined_arg_list = [executable]
@@ -127,7 +117,7 @@ class ForwardModelStep:
 
     def _open_file_handles(
         self,
-    ) -> Tuple[
+    ) -> tuple[
         io.TextIOWrapper | None, io.TextIOWrapper | None, io.TextIOWrapper | None
     ]:
         if self.job_data.get("stdin"):
@@ -155,7 +145,7 @@ class ForwardModelStep:
 
         return (stdin, stdout, stderr)
 
-    def _create_environment(self) -> Optional[Dict[str, str]]:
+    def _create_environment(self) -> dict[str, str] | None:
         combined_environment = None
         if environment := self.job_data.get("environment"):
             combined_environment = {**os.environ, **environment}
@@ -174,7 +164,7 @@ class ForwardModelStep:
         # stdin/stdout/stderr are closed at the end of this function
 
         target_file = self.job_data.get("target_file")
-        target_file_mtime: Optional[int] = _get_target_file_ntime(target_file)
+        target_file_mtime: int | None = _get_target_file_ntime(target_file)
         run_start_time = dt.now()
         try:
             proc = Popen(
@@ -234,9 +224,9 @@ class ForwardModelStep:
     def _create_exited_message_based_on_exit_code(
         self,
         max_memory_usage: int,
-        target_file_mtime: Optional[int],
+        target_file_mtime: int | None,
         exit_code: int,
-        fm_step_pids: Set[int],
+        fm_step_pids: set[int],
     ) -> Exited:
         if exit_code != 0:
             exited_message = self._create_exited_msg_for_non_zero_exit_code(
@@ -263,7 +253,7 @@ class ForwardModelStep:
         self,
         max_memory_usage: int,
         exit_code: int,
-        fm_step_pids: Set[int],
+        fm_step_pids: set[int],
     ) -> Exited:
         # All child pids for the forward model step. Need to track these in order to be able
         # to detect OOM kills in case of failure.
@@ -283,7 +273,7 @@ class ForwardModelStep:
         )
 
     def handle_process_timeout_and_create_exited_msg(
-        self, exit_code: Optional[int], proc: Popen[Process], run_start_time: dt
+        self, exit_code: int | None, proc: Popen[Process], run_start_time: dt
     ) -> Exited | None:
         max_running_minutes = self.job_data.get("max_running_minutes")
 
@@ -421,7 +411,7 @@ class ForwardModelStep:
         return errors
 
 
-def _get_target_file_ntime(file: Optional[str]) -> Optional[int]:
+def _get_target_file_ntime(file: str | None) -> int | None:
     mtime = None
     if file and os.path.exists(file):
         stat = os.stat(file)
@@ -437,7 +427,7 @@ def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) 
 
 def _get_processtree_data(
     process: Process,
-) -> Tuple[int, float, Optional[int], Set[int]]:
+) -> tuple[int, float, int | None, set[int]]:
     """Obtain the oom_score (the Linux kernel uses this number to
     decide which process to kill first in out-of-memory siturations).
 

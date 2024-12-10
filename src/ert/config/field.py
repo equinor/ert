@@ -5,12 +5,11 @@ import os
 import time
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Optional, Self, Union, overload
 
 import numpy as np
 import xarray as xr
 from pydantic.dataclasses import dataclass
-from typing_extensions import Self
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 from ert.substitutions import substitute_runpath_name
@@ -48,7 +47,7 @@ class Field(ParameterConfig):
         cls,
         grid_file_path: str,
         dims: Shape,
-        config_list: List[str],
+        config_list: list[str],
     ) -> Self:
         name = config_list[0]
         out_file = Path(config_list[2])

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type, no_type_check
+from typing import TYPE_CHECKING, Type, no_type_check
 
 from ert.plugins.plugin_manager import hook_specification
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 @no_type_check
 @hook_specification
 def installable_forward_model_steps() -> (
-    PluginResponse[List[Type[ForwardModelStepPlugin]]]
+    PluginResponse[list[Type[ForwardModelStepPlugin]]]
 ):
     """
     :return: List of forward model step plugins in the form of subclasses of the
@@ -22,7 +22,7 @@ def installable_forward_model_steps() -> (
 
 @no_type_check
 @hook_specification
-def forward_model_configuration() -> PluginResponse[List[Type[ForwardModelStepPlugin]]]:
+def forward_model_configuration() -> PluginResponse[list[Type[ForwardModelStepPlugin]]]:
     """
     :return: List of configurations to be merged to be provided to forward model steps.
     """

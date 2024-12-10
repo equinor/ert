@@ -13,16 +13,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Generator,
-    List,
-    MutableSequence,
-    Optional,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Generator, MutableSequence, Union, cast
 
 import numpy as np
 
@@ -118,7 +109,7 @@ class _LogAggregration(logging.Handler):
         self.messages = messages
 
         # Contains list of record names that should be exlucded from aggregated logs
-        self.exclude_logs: List[str] = []
+        self.exclude_logs: list[str] = []
         super().__init__()
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -147,10 +138,10 @@ class BaseRunModel(ABC):
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         total_iterations: int = 1,
         start_iteration: int = 0,
-        random_seed: Optional[int] = None,
+        random_seed: int | None = None,
         minimum_required_realizations: int = 0,
     ):
         """
@@ -161,15 +152,15 @@ class BaseRunModel(ABC):
         self._total_iterations = total_iterations
         config.analysis_config.num_iterations = total_iterations
 
-        self.start_time: Optional[int] = None
-        self.stop_time: Optional[int] = None
+        self.start_time: int | None = None
+        self.stop_time: int | None = None
         self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: List[bool] = copy.copy(active_realizations)
-        self._completed_realizations_mask: List[bool] = []
+        self._initial_realizations_mask: list[bool] = copy.copy(active_realizations)
+        self._completed_realizations_mask: list[bool] = []
         self.support_restart: bool = True
         self.ert_config = config
         self._storage = storage
-        self._context_env: Dict[str, str] = {}
+        self._context_env: dict[str, str] = {}
         self.random_seed: int = _seed_sequence(random_seed)
         self.rng = np.random.default_rng(self.random_seed)
         self.substitutions = config.substitutions
@@ -181,7 +172,7 @@ class BaseRunModel(ABC):
             substitutions=self.substitutions,
             eclbase=config.model_config.eclbase_format_string,
         )
-        self._iter_snapshot: Dict[int, EnsembleSnapshot] = {}
+        self._iter_snapshot: dict[int, EnsembleSnapshot] = {}
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
         # This holds state about the run model
@@ -217,7 +208,7 @@ class BaseRunModel(ABC):
     def description(cls) -> str: ...
 
     @classmethod
-    def group(cls) -> Optional[str]:
+    def group(cls) -> str | None:
         """Default value to prevent errors in children classes
         since only EnsembleExperiment and EnsembleSmoother should
         override it
@@ -280,7 +271,7 @@ class BaseRunModel(ABC):
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
 
-    def _create_mask_from_failed_realizations(self) -> List[bool]:
+    def _create_mask_from_failed_realizations(self) -> list[bool]:
         """
         Creates a list of bools representing the failed realizations,
         i.e., a realization that has failed is assigned a True value.
@@ -329,7 +320,7 @@ class BaseRunModel(ABC):
         restart: bool = False,
     ) -> None:
         failed = False
-        exception: Optional[Exception] = None
+        exception: Exception | None = None
         error_messages: MutableSequence[str] = []
         try:
             self.start_time = int(time.time())
@@ -383,7 +374,7 @@ class BaseRunModel(ABC):
 
     @staticmethod
     def format_error(
-        exception: Optional[Exception], error_messages: MutableSequence[str]
+        exception: Exception | None, error_messages: MutableSequence[str]
     ) -> str:
         msg = "\n".join(error_messages)
         if exception is None:
@@ -561,10 +552,10 @@ class BaseRunModel(ABC):
 
     async def run_ensemble_evaluator_async(
         self,
-        run_args: List[RunArg],
+        run_args: list[RunArg],
         ensemble: Ensemble,
         ee_config: EvaluatorServerConfig,
-    ) -> List[int]:
+    ) -> list[int]:
         if not self._end_queue.empty():
             logger.debug("Run model canceled - pre evaluation")
             self._end_queue.get()
@@ -597,10 +588,10 @@ class BaseRunModel(ABC):
     @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
     def run_ensemble_evaluator(
         self,
-        run_args: List[RunArg],
+        run_args: list[RunArg],
         ensemble: Ensemble,
         ee_config: EvaluatorServerConfig,
-    ) -> List[int]:
+    ) -> list[int]:
         successful_realizations = asyncio.run(
             self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
         )
@@ -608,7 +599,7 @@ class BaseRunModel(ABC):
 
     def _build_ensemble(
         self,
-        run_args: List[RunArg],
+        run_args: list[RunArg],
         experiment_id: uuid.UUID,
     ) -> EEEnsemble:
         realizations = []
@@ -634,7 +625,7 @@ class BaseRunModel(ABC):
         )
 
     @property
-    def paths(self) -> List[str]:
+    def paths(self) -> list[str]:
         run_paths = []
         active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(
@@ -692,7 +683,7 @@ class BaseRunModel(ABC):
 
     def _evaluate_and_postprocess(
         self,
-        run_args: List[RunArg],
+        run_args: list[RunArg],
         ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
@@ -750,10 +741,10 @@ class UpdateRunModel(BaseRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         total_iterations: int,
         start_iteration: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         minimum_required_realizations: int,
     ):
         self.es_settings = es_settings

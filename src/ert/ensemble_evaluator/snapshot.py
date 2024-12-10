@@ -1,21 +1,9 @@
+from __future__ import annotations
+
 import logging
-import typing
 from collections import defaultdict
 from datetime import datetime
-from typing import (
-    Any,
-    Counter,
-    DefaultDict,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-    get_args,
-)
+from typing import Any, Counter, Mapping, TypeVar, cast, get_args
 
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
@@ -76,7 +64,7 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 
 
 def convert_iso8601_to_datetime(
-    timestamp: Union[datetime, str],
+    timestamp: datetime | str,
 ) -> datetime:
     if isinstance(timestamp, datetime):
         return timestamp
@@ -90,11 +78,11 @@ FmStepId = str
 
 class EnsembleSnapshotMetadata(TypedDict):
     # contains the QColor used in the GUI for each fm_step
-    aggr_fm_step_status_colors: DefaultDict[RealId, Dict[FmStepId, QColor]]
+    aggr_fm_step_status_colors: defaultdict[RealId, dict[FmStepId, QColor]]
     # contains the QColor used in the GUI for each real
-    real_status_colors: Dict[RealId, QColor]
-    sorted_real_ids: List[RealId]
-    sorted_fm_step_ids: DefaultDict[RealId, List[FmStepId]]
+    real_status_colors: dict[RealId, QColor]
+    sorted_real_ids: list[RealId]
+    sorted_fm_step_ids: defaultdict[RealId, list[FmStepId]]
 
 
 class EnsembleSnapshot:
@@ -105,16 +93,16 @@ class EnsembleSnapshot:
     """
 
     def __init__(self) -> None:
-        self._realization_snapshots: DefaultDict[
+        self._realization_snapshots: defaultdict[
             RealId,
             RealizationSnapshot,
         ] = defaultdict(RealizationSnapshot)  # type: ignore
 
-        self._fm_step_snapshots: DefaultDict[
-            Tuple[RealId, FmStepId], FMStepSnapshot
+        self._fm_step_snapshots: defaultdict[
+            tuple[RealId, FmStepId], FMStepSnapshot
         ] = defaultdict(FMStepSnapshot)  # type: ignore
 
-        self._ensemble_state: Optional[str] = None
+        self._ensemble_state: str | None = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
         # well
         self._metadata = EnsembleSnapshotMetadata(
@@ -159,9 +147,9 @@ class EnsembleSnapshot:
     def merge_metadata(self, metadata: EnsembleSnapshotMetadata) -> None:
         self._metadata.update(metadata)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """used to send snapshot updates"""
-        _dict: Dict[str, Any] = {}
+        _dict: dict[str, Any] = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
         if self._ensemble_state:
@@ -182,7 +170,7 @@ class EnsembleSnapshot:
         return _dict
 
     @property
-    def status(self) -> Optional[str]:
+    def status(self) -> str | None:
         return self._ensemble_state
 
     @property
@@ -191,12 +179,12 @@ class EnsembleSnapshot:
 
     def get_all_fm_steps(
         self,
-    ) -> Mapping[Tuple[RealId, FmStepId], "FMStepSnapshot"]:
+    ) -> Mapping[tuple[RealId, FmStepId], "FMStepSnapshot"]:
         return self._fm_step_snapshots.copy()
 
     def get_fm_steps_for_all_reals(
         self,
-    ) -> Mapping[Tuple[RealId, FmStepId], str]:
+    ) -> Mapping[tuple[RealId, FmStepId], str]:
         return {
             idx: fm_step_snapshot["status"]
             for idx, fm_step_snapshot in self._fm_step_snapshots.items()
@@ -209,7 +197,7 @@ class EnsembleSnapshot:
 
     def get_fm_steps_for_real(
         self, real_id: RealId
-    ) -> Dict[FmStepId, "FMStepSnapshot"]:
+    ) -> dict[FmStepId, "FMStepSnapshot"]:
         return {
             fm_step_idx[1]: fm_step_snapshot.copy()
             for fm_step_idx, fm_step_snapshot in self._fm_step_snapshots.items()
@@ -222,7 +210,7 @@ class EnsembleSnapshot:
     def get_fm_step(self, real_id: RealId, fm_step_id: FmStepId) -> "FMStepSnapshot":
         return self._fm_step_snapshots[real_id, fm_step_id].copy()
 
-    def get_successful_realizations(self) -> typing.List[int]:
+    def get_successful_realizations(self) -> list[int]:
         return [
             int(real_idx)
             for real_idx, real_data in self._realization_snapshots.items()
@@ -247,10 +235,10 @@ class EnsembleSnapshot:
         self,
         real_id: str,
         status: str,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        exec_hosts: Optional[str] = None,
-        message: Optional[str] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        exec_hosts: str | None = None,
+        message: str | None = None,
     ) -> "EnsembleSnapshot":
         self._realization_snapshots[real_id].update(
             _filter_nones(
@@ -266,7 +254,7 @@ class EnsembleSnapshot:
         return self
 
     def update_from_event(
-        self, event: Event, source_snapshot: Optional["EnsembleSnapshot"] = None
+        self, event: Event, source_snapshot: EnsembleSnapshot | None = None
     ) -> "EnsembleSnapshot":
         e_type = type(event)
         timestamp = event.time
@@ -381,31 +369,31 @@ class EnsembleSnapshot:
 
 
 class FMStepSnapshot(TypedDict, total=False):
-    status: Optional[str]
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
-    index: Optional[str]
-    current_memory_usage: Optional[int]
-    max_memory_usage: Optional[int]
-    cpu_seconds: Optional[float]
-    name: Optional[str]
-    error: Optional[str]
-    stdout: Optional[str]
-    stderr: Optional[str]
+    status: str | None
+    start_time: datetime | None
+    end_time: datetime | None
+    index: str | None
+    current_memory_usage: int | None
+    max_memory_usage: int | None
+    cpu_seconds: float | None
+    name: str | None
+    error: str | None
+    stdout: str | None
+    stderr: str | None
 
 
 class RealizationSnapshot(TypedDict, total=False):
-    status: Optional[str]
-    active: Optional[bool]
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
-    exec_hosts: Optional[str]
-    fm_steps: Dict[str, FMStepSnapshot]
-    message: Optional[str]
+    status: str | None
+    active: bool | None
+    start_time: datetime | None
+    end_time: datetime | None
+    exec_hosts: str | None
+    fm_steps: dict[str, FMStepSnapshot]
+    message: str | None
 
 
 def _realization_dict_to_realization_snapshot(
-    source: Dict[str, Any],
+    source: dict[str, Any],
 ) -> RealizationSnapshot:
     realization = RealizationSnapshot(
         status=source.get("status"),

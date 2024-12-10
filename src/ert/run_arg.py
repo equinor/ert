@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Union
 
 from ert.runpaths import Runpaths
 
@@ -22,7 +22,7 @@ class RunArg:
     job_name: str
     active: bool = True
     # Below here is legacy related to Everest
-    queue_index: Optional[int] = None
+    queue_index: int | None = None
 
 
 def create_run_arguments(

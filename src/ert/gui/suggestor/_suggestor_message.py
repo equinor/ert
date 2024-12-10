@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Self
+
 from qtpy import QtSvg
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor
@@ -11,7 +13,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from typing_extensions import Any, Self
 
 from ._colors import (
     BLUE_BACKGROUND,

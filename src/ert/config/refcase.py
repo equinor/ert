@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import (
-    List,
-    Optional,
-    Sequence,
-)
+from typing import Self, Sequence
 
 import numpy as np
 
@@ -17,9 +13,9 @@ from .parsing.config_keywords import ConfigKeys
 @dataclass(eq=False)
 class Refcase:
     start_date: datetime
-    keys: List[str]
+    keys: list[str]
     dates: Sequence[datetime]
-    values: List[List[float]]
+    values: list[list[float]]
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Refcase):
@@ -32,11 +28,11 @@ class Refcase:
         )
 
     @property
-    def all_dates(self) -> List[datetime]:
+    def all_dates(self) -> list[datetime]:
         return [self.start_date, *self.dates]
 
     @classmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Optional["Refcase"]:
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
         data = None
         refcase_file_path = config_dict.get(ConfigKeys.REFCASE)  # type: ignore
         if refcase_file_path is not None:

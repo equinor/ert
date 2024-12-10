@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
@@ -34,10 +34,10 @@ class EvaluateEnsemble(BaseRunModel):
 
     def __init__(
         self,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
         ensemble_id: str,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

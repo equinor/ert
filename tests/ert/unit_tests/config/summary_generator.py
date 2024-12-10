@@ -7,7 +7,7 @@ See https://opm-project.org/?page_id=955
 from dataclasses import astuple, dataclass
 from datetime import datetime, timedelta
 from enum import Enum, unique
-from typing import Any, List, Optional, Tuple
+from typing import Any, Self
 
 import hypothesis.strategies as st
 import numpy as np
@@ -15,7 +15,6 @@ import resfo
 from hypothesis import assume
 from hypothesis.extra.numpy import from_dtype
 from pydantic import PositiveInt, conint
-from typing_extensions import Self
 
 from ert.summary_key_type import SPECIAL_KEYWORDS
 
@@ -243,18 +242,18 @@ class Smspec:
     ny: PositiveInt
     nz: PositiveInt
     restarted_from_step: PositiveInt
-    keywords: List[str]
-    well_names: List[str]
-    region_numbers: List[int]
-    units: List[str]
+    keywords: list[str]
+    well_names: list[str]
+    region_numbers: list[int]
+    units: list[str]
     start_date: Date
-    lgrs: Optional[List[str]] = None
-    numlx: Optional[List[PositiveInt]] = None
-    numly: Optional[List[PositiveInt]] = None
-    numlz: Optional[List[PositiveInt]] = None
+    lgrs: list[str] | None = None
+    numlx: list[PositiveInt] | None = None
+    numly: list[PositiveInt] | None = None
+    numlz: list[PositiveInt] | None = None
     use_names: bool = False  # whether to use the alias NAMES for WGNAMES
 
-    def to_ecl(self) -> List[Tuple[str, Any]]:
+    def to_ecl(self) -> list[tuple[str, Any]]:
         # The restart field contains 9 strings of length 8 which
         # should contain the name of the file restarted from.
         # If shorter than 72 characters (most likely), the rest
@@ -379,7 +378,7 @@ def smspecs(draw, sum_keys, start_date, use_days=None):
 @dataclass
 class SummaryMiniStep:
     mini_step: int
-    params: List[float]
+    params: list[float]
 
     def to_ecl(self):
         return [
@@ -391,7 +390,7 @@ class SummaryMiniStep:
 @dataclass
 class SummaryStep:
     seqnum: int
-    ministeps: List[SummaryMiniStep]
+    ministeps: list[SummaryMiniStep]
 
     def to_ecl(self):
         return [("SEQHDR  ", np.array([self.seqnum], dtype=np.int32))] + [
@@ -401,7 +400,7 @@ class SummaryStep:
 
 @dataclass
 class Unsmry:
-    steps: List[SummaryStep]
+    steps: list[SummaryStep]
 
     def to_ecl(self):
         a = [i for step in self.steps for i in step.to_ecl()]

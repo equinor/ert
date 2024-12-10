@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, overload
+from typing import Any, overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -26,7 +26,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
     """This proxy model presents two-dimensional views (row-column) of
     forward model data for a specific realization in a specific iteration."""
 
-    def __init__(self, parent: Optional[QObject], iter_: int, real_: int) -> None:
+    def __init__(self, parent: QObject | None, iter_: int, real_: int) -> None:
         super().__init__(parent=parent)
         self._iter = iter_
         self._real = real_
@@ -67,7 +67,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
         return source_parent
 
     @override
-    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
+    def setSourceModel(self, sourceModel: QAbstractItemModel | None) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()
@@ -96,10 +96,10 @@ class FMStepListProxyModel(QAbstractProxyModel):
         return QVariant()
 
     @override
-    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return FM_STEP_COLUMN_SIZE
 
-    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
@@ -112,14 +112,14 @@ class FMStepListProxyModel(QAbstractProxyModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> Optional[QObject]: ...
+    def parent(self) -> QObject | None: ...
     @override
-    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+    def parent(self, child: QModelIndex | None = None) -> QObject | None:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: Optional[QModelIndex] = None
+        self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
@@ -146,7 +146,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
         )
 
     def _source_data_changed(
-        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
+        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int]
     ) -> None:
         if self._accept_index(top_left):
             proxy_top_left = self.mapFromSource(top_left)

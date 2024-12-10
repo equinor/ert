@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, TypedDict
+from typing import TYPE_CHECKING, Dict, List
 
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
+from typing_extensions import TypedDict
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 

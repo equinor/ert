@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
-from typing import Any, Iterator, List, TextIO, Tuple, Union
+from typing import Any, Iterator, TextIO
 
 import numpy as np
 import numpy.typing as npt
@@ -84,9 +84,9 @@ def _interpret_token(val: str) -> list[str]:
 
 @contextmanager
 def open_grdecl(
-    grdecl_file: Union[str, os.PathLike[str]],
+    grdecl_file: str | os.PathLike[str],
     keywords: list[str],
-) -> Iterator[Iterator[Tuple[str, List[str]]]]:
+) -> Iterator[Iterator[tuple[str, list[str]]]]:
     """Generates tuples of keyword and values in records of a grdecl file.
 
     The format of the file must be that of the GRID section of a eclipse input
@@ -113,14 +113,14 @@ def open_grdecl(
 
     Args:
         grdecl_file (str): file path
-        keywords (List[str]): Which keywords to look for, these are expected to
+        keywords (list[str]): Which keywords to look for, these are expected to
         be at the start of a line in the file  and the respective values
         following on subsequent lines separated by whitespace. Reading of a
         keyword is completed by a final '\'. See example above.
     """
 
-    def read_grdecl(grdecl_stream: TextIO) -> Iterator[Tuple[str, List[str]]]:
-        words: List[str] = []
+    def read_grdecl(grdecl_stream: TextIO) -> Iterator[tuple[str, list[str]]]:
+        words: list[str] = []
         keyword = None
         nonlocal keywords
         keywords = [_until_space(keyword) for keyword in keywords]
@@ -151,9 +151,9 @@ def open_grdecl(
 
 
 def import_grdecl(
-    filename: Union[str, os.PathLike[str]],
+    filename: str | os.PathLike[str],
     name: str,
-    dimensions: Tuple[int, int, int],
+    dimensions: tuple[int, int, int],
     dtype: npt.DTypeLike = np.float32,
 ) -> npt.NDArray[np.float32]:
     """
@@ -190,9 +190,9 @@ def import_grdecl(
 
 
 def import_bgrdecl(
-    file_path: Union[str, os.PathLike[str]],
+    file_path: str | os.PathLike[str],
     field_name: str,
-    dimensions: Tuple[int, int, int],
+    dimensions: tuple[int, int, int],
 ) -> npt.NDArray[np.float32]:
     field_name = field_name.strip()
     with open(file_path, "rb") as f:
@@ -218,10 +218,8 @@ def import_bgrdecl(
 
 
 def export_grdecl(
-    values: Union[
-        np.ma.MaskedArray[Any, np.dtype[np.float32]], npt.NDArray[np.float32]
-    ],
-    file_path: Union[str, os.PathLike[str]],
+    values: np.ma.MaskedArray[Any, np.dtype[np.float32]] | npt.NDArray[np.float32],
+    file_path: str | os.PathLike[str],
     param_name: str,
     binary: bool,
 ) -> None:

@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, List, Tuple, Type, TypeVar
+from typing import Iterator, Type, TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -86,7 +86,7 @@ def _new_poly_example(source_root, destination, num_realizations: int = 20):
 @contextmanager
 def _open_main_window(
     path,
-) -> Iterator[Tuple[ErtMainWindow, Storage, ErtConfig]]:
+) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
     with ErtPluginContext():
@@ -401,6 +401,6 @@ def get_child(gui: QWidget, typ: Type[V], *args, **kwargs) -> V:
     return child
 
 
-def get_children(gui: QWidget, typ: Type[V], *args, **kwargs) -> List[V]:
-    children: List[typ] = gui.findChildren(typ, *args, **kwargs)
+def get_children(gui: QWidget, typ: Type[V], *args, **kwargs) -> list[V]:
+    children: list[typ] = gui.findChildren(typ, *args, **kwargs)
     return children

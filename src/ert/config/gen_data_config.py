@@ -2,11 +2,10 @@ import dataclasses
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Self
 
 import numpy as np
 import polars
-from typing_extensions import Self
 
 from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
@@ -20,9 +19,7 @@ from .responses_index import responses_index
 @dataclass
 class GenDataConfig(ResponseConfig):
     name: str = "gen_data"
-    report_steps_list: List[Optional[List[int]]] = dataclasses.field(
-        default_factory=list
-    )
+    report_steps_list: list[list[int] | None] = dataclasses.field(default_factory=list)
     has_finalized_keys: bool = True
 
     def __post_init__(self) -> None:
@@ -34,7 +31,7 @@ class GenDataConfig(ResponseConfig):
                     report_steps.sort()
 
     @property
-    def expected_input_files(self) -> List[str]:
+    def expected_input_files(self) -> list[str]:
         expected_files = []
         for input_file, report_steps in zip(
             self.input_files, self.report_steps_list, strict=False
@@ -48,7 +45,7 @@ class GenDataConfig(ResponseConfig):
         return expected_files
 
     @classmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Optional[Self]:
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
         gen_data_list = config_dict.get("GEN_DATA", [])  # type: ignore
 
         keys = []
@@ -67,7 +64,7 @@ class GenDataConfig(ResponseConfig):
                     name,
                 )
             try:
-                _report_steps: Optional[List[int]] = rangestring_to_list(
+                _report_steps: list[int] | None = rangestring_to_list(
                     report_steps_value
                 )
             except ValueError as e:
@@ -191,7 +188,7 @@ class GenDataConfig(ResponseConfig):
         combined = polars.concat(datasets_per_name)
         return combined
 
-    def get_args_for_key(self, key: str) -> Tuple[Optional[str], Optional[List[int]]]:
+    def get_args_for_key(self, key: str) -> tuple[str | None, list[int] | None]:
         for i, _key in enumerate(self.keys):
             if key == _key:
                 return self.input_files[i], self.report_steps_list[i]
@@ -203,7 +200,7 @@ class GenDataConfig(ResponseConfig):
         return "gen_data"
 
     @property
-    def primary_key(self) -> List[str]:
+    def primary_key(self) -> list[str]:
         return ["report_step", "index"]
 
 

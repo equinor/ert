@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, WorkflowJob
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Exporter:
     def __init__(
         self,
-        export_job: Optional[WorkflowJob],
+        export_job: WorkflowJob | None,
         notifier: ErtNotifier,
         config: ErtConfig,
     ):
@@ -23,7 +23,7 @@ class Exporter:
         self.export_job = export_job
         self._notifier = notifier
 
-    def run_export(self, parameters: List[Any]) -> None:
+    def run_export(self, parameters: list[Any]) -> None:
         if self.export_job is None:
             raise UserWarning("Could not find export_job job")
 

@@ -1,7 +1,6 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
 
 import xarray as xr
 
@@ -64,7 +63,7 @@ def _migrate_response_configs(path: Path) -> None:
 
 
 def _ensure_coord_order(
-    ds: xr.Dataset, dim_order_explicit: Optional[List[str]] = None
+    ds: xr.Dataset, dim_order_explicit: list[str] | None = None
 ) -> xr.Dataset:
     # Copypaste'd from LocalEnsemble
     data_vars = list(ds.data_vars.keys())

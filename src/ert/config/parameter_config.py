@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import xarray as xr
@@ -21,7 +21,7 @@ class CustomDict(dict):  # type: ignore
     directly to json
     """
 
-    def __init__(self, data: List[Tuple[Any, Any]]) -> None:
+    def __init__(self, data: list[tuple[Any, Any]]) -> None:
         for i, (key, value) in enumerate(data):
             if isinstance(value, Path):
                 data[i] = (key, str(value))
@@ -31,8 +31,8 @@ class CustomDict(dict):  # type: ignore
 
 
 def parse_config(
-    config: List[str], max_positionals: int
-) -> Tuple[List[str], Dict[str, str]]:
+    config: list[str], max_positionals: int
+) -> tuple[list[str], dict[str, str]]:
     """
     This function is responsible for taking a config line and splitting it
     into positional arguments and named arguments in cases were the number
@@ -79,7 +79,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> Optional[Dict[str, Dict[str, float]]]:
+    ) -> dict[str, dict[str, float]] | None:
         """
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model
@@ -107,7 +107,7 @@ class ParameterConfig(ABC):
         Must return array of shape (number of parameters, number of realizations).
         """
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = dataclasses.asdict(self, dict_factory=CustomDict)
         data["_ert_kind"] = self.__class__.__name__
         return data

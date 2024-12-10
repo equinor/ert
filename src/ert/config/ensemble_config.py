@@ -4,14 +4,7 @@ import logging
 import os
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Union,
-    no_type_check,
-    overload,
-)
+from typing import no_type_check, overload
 
 from ert.field_utils import get_shape
 
@@ -41,7 +34,7 @@ def _get_abs_path(file: str) -> str:
     pass
 
 
-def _get_abs_path(file: Optional[str]) -> Optional[str]:
+def _get_abs_path(file: str | None) -> str | None:
     if file is not None:
         file = os.path.realpath(file)
     return file
@@ -49,14 +42,14 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 
 @dataclass
 class EnsembleConfig:
-    grid_file: Optional[str] = None
-    response_configs: Dict[str, Union[SummaryConfig, GenDataConfig]] = field(
+    grid_file: str | None = None
+    response_configs: dict[str, SummaryConfig | GenDataConfig] = field(
         default_factory=dict
     )
-    parameter_configs: Dict[
+    parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = field(default_factory=dict)
-    refcase: Optional[Refcase] = None
+    refcase: Refcase | None = None
 
     def __post_init__(self) -> None:
         self._check_for_duplicate_names(
@@ -68,7 +61,7 @@ class EnsembleConfig:
 
     @staticmethod
     def _check_for_duplicate_names(
-        parameter_list: List[str], gen_data_list: List[str]
+        parameter_list: list[str], gen_data_list: list[str]
     ) -> None:
         names_counter = Counter(g for g in parameter_list + gen_data_list)
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
@@ -97,7 +90,7 @@ class EnsembleConfig:
                     grid_file_path,
                 ) from err
 
-        def make_field(field_list: List[str]) -> FieldConfig:
+        def make_field(field_list: list[str]) -> FieldConfig:
             if grid_file_path is None:
                 raise ConfigValidationError.with_context(
                     "In order to use the FIELD keyword, a GRID must be supplied.",
@@ -116,7 +109,7 @@ class EnsembleConfig:
             + [make_field(f) for f in field_list]
         )
 
-        response_configs: List[ResponseConfig] = []
+        response_configs: list[ResponseConfig] = []
 
         for config_cls in _KNOWN_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)
@@ -135,7 +128,7 @@ class EnsembleConfig:
             refcase=refcase,
         )
 
-    def __getitem__(self, key: str) -> Union[ParameterConfig, ResponseConfig]:
+    def __getitem__(self, key: str) -> ParameterConfig | ResponseConfig:
         if key in self.parameter_configs:
             return self.parameter_configs[key]
         elif key in self.response_configs:
@@ -157,7 +150,7 @@ class EnsembleConfig:
         config = self.response_configs["gen_data"]
         return key in config.keys
 
-    def get_keylist_gen_kw(self) -> List[str]:
+    def get_keylist_gen_kw(self) -> list[str]:
         return [
             val.name
             for val in self.parameter_configuration
@@ -165,24 +158,24 @@ class EnsembleConfig:
         ]
 
     @property
-    def parameters(self) -> List[str]:
+    def parameters(self) -> list[str]:
         return list(self.parameter_configs)
 
     @property
-    def responses(self) -> List[str]:
+    def responses(self) -> list[str]:
         return list(self.response_configs)
 
     @property
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         return self.parameters + self.responses
 
     def __contains__(self, key: str) -> bool:
         return key in self.keys
 
     @property
-    def parameter_configuration(self) -> List[ParameterConfig]:
+    def parameter_configuration(self) -> list[ParameterConfig]:
         return list(self.parameter_configs.values())
 
     @property
-    def response_configuration(self) -> List[ResponseConfig]:
+    def response_configuration(self) -> list[ResponseConfig]:
         return list(self.response_configs.values())

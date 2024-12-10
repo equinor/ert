@@ -6,17 +6,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping
 
 import orjson
 from numpy.random import SeedSequence
@@ -75,7 +65,7 @@ def _value_export_json(
         return
 
     # Hierarchical
-    json_out: Dict[str, Union[float, Dict[str, float]]] = {
+    json_out: Dict[str, float | Dict[str, float]] = {
         key: dict(param_map.items()) for key, param_map in values.items()
     }
 
@@ -150,7 +140,7 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> Dict[str, Any
     return manifest
 
 
-def _seed_sequence(seed: Optional[int]) -> int:
+def _seed_sequence(seed: int | None) -> int:
     # Set up RNG
     if seed is None:
         int_seed = SeedSequence().entropy
@@ -168,8 +158,8 @@ def _seed_sequence(seed: Optional[int]) -> int:
 def sample_prior(
     ensemble: Ensemble,
     active_realizations: Iterable[int],
-    parameters: Optional[List[str]] = None,
-    random_seed: Optional[int] = None,
+    parameters: list[str] | None = None,
+    random_seed: int | None = None,
 ) -> None:
     """This function is responsible for getting the prior into storage,
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -202,17 +192,17 @@ def sample_prior(
 
 
 def create_run_path(
-    run_args: List[RunArg],
+    run_args: list[RunArg],
     ensemble: Ensemble,
     user_config_file: str,
     env_vars: Dict[str, str],
     env_pr_fm_step: Dict[str, Dict[str, Any]],
-    forward_model_steps: List[ForwardModelStep],
+    forward_model_steps: list[ForwardModelStep],
     substitutions: Substitutions,
-    templates: List[Tuple[str, str]],
+    templates: list[tuple[str, str]],
     model_config: ModelConfig,
     runpaths: Runpaths,
-    context_env: Optional[Dict[str, str]] = None,
+    context_env: Dict[str, str] | None = None,
 ) -> None:
     if context_env is None:
         context_env = {}

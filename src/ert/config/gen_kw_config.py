@@ -11,10 +11,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
-    Optional,
-    TypedDict,
+    Self,
     overload,
 )
 
@@ -22,7 +19,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.stats import norm
-from typing_extensions import Self
+from typing_extensions import TypedDict
 
 from ert.substitutions import substitute_runpath_name
 
@@ -39,7 +36,7 @@ if TYPE_CHECKING:
 class PriorDict(TypedDict):
     key: str
     function: str
-    parameters: Dict[str, float]
+    parameters: dict[str, float]
 
 
 @overload
@@ -52,7 +49,7 @@ def _get_abs_path(file: str) -> str:
     pass
 
 
-def _get_abs_path(file: Optional[str]) -> Optional[str]:
+def _get_abs_path(file: str | None) -> str | None:
     if file is not None:
         file = os.path.realpath(file)
     return file
@@ -62,18 +59,18 @@ def _get_abs_path(file: Optional[str]) -> Optional[str]:
 class TransformFunctionDefinition:
     name: str
     param_name: str
-    values: List[Any]
+    values: list[Any]
 
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    template_file: Optional[str]
-    output_file: Optional[str]
-    transform_function_definitions: List[TransformFunctionDefinition]
-    forward_init_file: Optional[str] = None
+    template_file: str | None
+    output_file: str | None
+    transform_function_definitions: list[TransformFunctionDefinition]
+    forward_init_file: str | None = None
 
     def __post_init__(self) -> None:
-        self.transform_functions: List[TransformFunction] = []
+        self.transform_functions: list[TransformFunction] = []
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
                 self.transform_functions.append(
@@ -94,7 +91,7 @@ class GenKwConfig(ParameterConfig):
         return len(self.transform_functions)
 
     @classmethod
-    def from_config_list(cls, gen_kw: List[str]) -> Self:
+    def from_config_list(cls, gen_kw: list[str]) -> Self:
         gen_kw_key = gen_kw[0]
 
         positional_args, options = parse_config(gen_kw, 4)
@@ -167,7 +164,7 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        transform_function_definitions: List[TransformFunctionDefinition] = []
+        transform_function_definitions: list[TransformFunctionDefinition] = []
         with open(parameter_file, "r", encoding="utf-8") as file:
             for item in file:
                 item = item.split("--")[0]  # remove comments
@@ -282,7 +279,7 @@ class GenKwConfig(ParameterConfig):
         run_path: Path,
         real_nr: int,
         ensemble: Ensemble,
-    ) -> Dict[str, Dict[str, float]]:
+    ) -> dict[str, dict[str, float]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
         if not array.size == len(self.transform_functions):
@@ -354,8 +351,8 @@ class GenKwConfig(ParameterConfig):
                 return tf.use_log
         return False
 
-    def get_priors(self) -> List["PriorDict"]:
-        priors: List["PriorDict"] = []
+    def get_priors(self) -> list["PriorDict"]:
+        priors: list["PriorDict"] = []
         for tf in self.transform_functions:
             priors.append(
                 {
@@ -382,7 +379,7 @@ class GenKwConfig(ParameterConfig):
         return array
 
     @staticmethod
-    def _values_from_file(file_name: str, keys: List[str]) -> npt.NDArray[np.double]:
+    def _values_from_file(file_name: str, keys: list[str]) -> npt.NDArray[np.double]:
         df = pd.read_csv(file_name, sep=r"\s+", header=None)
         # This means we have a key: value mapping in the
         # file otherwise it is just a list of values
@@ -400,7 +397,7 @@ class GenKwConfig(ParameterConfig):
     @staticmethod
     def _sample_value(
         parameter_group_name: str,
-        keys: List[str],
+        keys: list[str],
         global_seed: str,
         realization: int,
     ) -> npt.NDArray[np.double]:
@@ -414,7 +411,7 @@ class GenKwConfig(ParameterConfig):
         Parameters:
         - parameter_group_name (str): The name of the parameter group, used to ensure unique RNG
         seeds for different groups.
-        - keys (List[str]): A list of parameter keys for which the sample values are generated.
+        - keys (list[str]): A list of parameter keys for which the sample values are generated.
         - global_seed (str): A global seed string used for RNG seed generation to ensure
         reproducibility across runs.
         - realization (int): An integer used to advance the RNG to a specific point in its
@@ -498,8 +495,8 @@ class GenKwConfig(ParameterConfig):
 class TransformFunction:
     name: str
     transform_function_name: str
-    parameter_list: Dict[str, float]
-    calc_func: Callable[[float, List[float]], float]
+    parameter_list: dict[str, float]
+    calc_func: Callable[[float, list[float]], float]
     use_log: bool = False
 
     def __post_init__(self) -> None:
@@ -507,7 +504,7 @@ class TransformFunction:
             self.use_log = True
 
     @staticmethod
-    def trans_errf(x: float, arg: List[float]) -> float:
+    def trans_errf(x: float, arg: list[float]) -> float:
         """
         Width  = 1 => uniform
         Width  > 1 => unimodal peaked
@@ -529,15 +526,15 @@ class TransformFunction:
         return _min + y * (_max - _min)
 
     @staticmethod
-    def trans_const(_: float, arg: List[float]) -> float:
+    def trans_const(_: float, arg: list[float]) -> float:
         return arg[0]
 
     @staticmethod
-    def trans_raw(x: float, _: List[float]) -> float:
+    def trans_raw(x: float, _: list[float]) -> float:
         return x
 
     @staticmethod
-    def trans_derrf(x: float, arg: List[float]) -> float:
+    def trans_derrf(x: float, arg: list[float]) -> float:
         """
         Bin the result of `trans_errf` with `min=0` and `max=1` to closest of `nbins`
         linearly spaced values on [0,1]. Finally map [0,1] to [min, max].
@@ -568,43 +565,43 @@ class TransformFunction:
         return result
 
     @staticmethod
-    def trans_unif(x: float, arg: List[float]) -> float:
+    def trans_unif(x: float, arg: list[float]) -> float:
         _min, _max = arg[0], arg[1]
         y = norm.cdf(x)
         return y * (_max - _min) + _min
 
     @staticmethod
-    def trans_dunif(x: float, arg: List[float]) -> float:
+    def trans_dunif(x: float, arg: list[float]) -> float:
         _steps, _min, _max = int(arg[0]), arg[1], arg[2]
         y = norm.cdf(x)
         return (math.floor(y * _steps) / (_steps - 1)) * (_max - _min) + _min
 
     @staticmethod
-    def trans_normal(x: float, arg: List[float]) -> float:
+    def trans_normal(x: float, arg: list[float]) -> float:
         _mean, _std = arg[0], arg[1]
         return x * _std + _mean
 
     @staticmethod
-    def trans_truncated_normal(x: float, arg: List[float]) -> float:
+    def trans_truncated_normal(x: float, arg: list[float]) -> float:
         _mean, _std, _min, _max = arg[0], arg[1], arg[2], arg[3]
         y = x * _std + _mean
         return max(min(y, _max), _min)  # clamp
 
     @staticmethod
-    def trans_lognormal(x: float, arg: List[float]) -> float:
+    def trans_lognormal(x: float, arg: list[float]) -> float:
         # mean is the expectation of log( y )
         _mean, _std = arg[0], arg[1]
         return math.exp(x * _std + _mean)
 
     @staticmethod
-    def trans_logunif(x: float, arg: List[float]) -> float:
+    def trans_logunif(x: float, arg: list[float]) -> float:
         _log_min, _log_max = math.log(arg[0]), math.log(arg[1])
         tmp = norm.cdf(x)
         log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
         return math.exp(log_y)
 
     @staticmethod
-    def trans_triangular(x: float, arg: List[float]) -> float:
+    def trans_triangular(x: float, arg: list[float]) -> float:
         _min, _mode, _max = arg[0], arg[1], arg[2]
         inv_norm_left = (_max - _min) * (_mode - _min)
         inv_norm_right = (_max - _min) * (_max - _mode)
@@ -616,11 +613,11 @@ class TransformFunction:
         else:
             return _max - math.sqrt((1 - y) * inv_norm_right)
 
-    def calculate(self, x: float, arg: List[float]) -> float:
+    def calculate(self, x: float, arg: list[float]) -> float:
         return self.calc_func(x, arg)
 
 
-PRIOR_FUNCTIONS: dict[str, Callable[[float, List[float]], float]] = {
+PRIOR_FUNCTIONS: dict[str, Callable[[float, list[float]], float]] = {
     "NORMAL": TransformFunction.trans_normal,
     "LOGNORMAL": TransformFunction.trans_lognormal,
     "TRUNCATED_NORMAL": TransformFunction.trans_truncated_normal,
@@ -635,7 +632,7 @@ PRIOR_FUNCTIONS: dict[str, Callable[[float, List[float]], float]] = {
 }
 
 
-DISTRIBUTION_PARAMETERS: dict[str, List[str]] = {
+DISTRIBUTION_PARAMETERS: dict[str, list[str]] = {
     "NORMAL": ["MEAN", "STD"],
     "LOGNORMAL": ["MEAN", "STD"],
     "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],

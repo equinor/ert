@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, ClassVar, Dict, List, Union
+from typing import Any, ClassVar
 
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
@@ -30,11 +30,9 @@ class _ErtDocumentation(SphinxDirective):
 
     @staticmethod
     def _divide_into_categories(
-        jobs: Union[
-            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
-        ],
-    ) -> Dict[str, Dict[str, List[_ForwardModelDocumentation]]]:
-        categories: Dict[str, Dict[str, List[_ForwardModelDocumentation]]] = (
+        jobs: dict[str, JobDoc] | dict[str, ForwardModelStepDocumentation | JobDoc],
+    ) -> dict[str, dict[str, list[_ForwardModelDocumentation]]]:
+        categories: dict[str, dict[str, list[_ForwardModelDocumentation]]] = (
             defaultdict(lambda: defaultdict(list))
         )
         for job_name, docs in jobs.items():
@@ -104,12 +102,10 @@ class _ErtDocumentation(SphinxDirective):
 
     def _generate_job_documentation(
         self,
-        jobs: Union[
-            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
-        ],
+        jobs: dict[str, JobDoc] | dict[str, ForwardModelStepDocumentation | JobDoc],
         section_id: str,
         title: str,
-    ) -> List[nodes.section]:
+    ) -> list[nodes.section]:
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
 
         main_node = self._create_forward_model_section_node(section_id, title)
@@ -146,10 +142,8 @@ class _ErtDocumentation(SphinxDirective):
 
     def _generate_job_documentation_without_title(
         self,
-        jobs: Union[
-            Dict[str, JobDoc], Dict[str, Union[ForwardModelStepDocumentation, JobDoc]]
-        ],
-    ) -> List[nodes.section]:
+        jobs: dict[str, JobDoc] | dict[str, ForwardModelStepDocumentation | JobDoc],
+    ) -> list[nodes.section]:
         job_categories = _ErtDocumentation._divide_into_categories(jobs)
         node_list = []
 
@@ -191,7 +185,7 @@ class ErtForwardModelDocumentation(_ErtDocumentation):
         **pm.get_documentation_for_forward_model_steps(),
     }
 
-    def run(self) -> List[nodes.section]:
+    def run(self) -> list[nodes.section]:
         return self._generate_job_documentation_without_title(
             ErtForwardModelDocumentation._JOBS,
         )
@@ -203,7 +197,7 @@ class ErtWorkflowDocumentation(_ErtDocumentation):
     _TITLE = "Workflow jobs"
     _SECTION_ID = "ert-workflow-jobs"
 
-    def run(self) -> List[nodes.section]:
+    def run(self) -> list[nodes.section]:
         section_id = ErtWorkflowDocumentation._SECTION_ID
         title = ErtWorkflowDocumentation._TITLE
         return self._generate_job_documentation(

@@ -12,7 +12,6 @@ from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
 from random import random
-from typing import List, Optional
 
 import resfo
 from ecl_config import EclConfig, EclrunConfig, Simulator
@@ -157,7 +156,7 @@ def pushd(run_path):
     os.chdir(starting_directory)
 
 
-def find_unsmry(basepath: Path) -> Optional[Path]:
+def find_unsmry(basepath: Path) -> Path | None:
     def _is_unsmry(base: str, path: str) -> bool:
         if "." not in path:
             return False
@@ -168,7 +167,7 @@ def find_unsmry(basepath: Path) -> Optional[Path]:
         ]
 
     base = basepath.name
-    candidates: List[str] = list(
+    candidates: list[str] = list(
         filter(lambda x: _is_unsmry(base, x), glob.glob(str(basepath) + "*"))
     )
     if not candidates:
@@ -510,7 +509,7 @@ class EclRun:
 
         return EclipseResult(errors=errors, bugs=bugs)
 
-    def parseErrors(self) -> List[str]:
+    def parseErrors(self) -> list[str]:
         """Extract multiline ERROR messages from the PRT file"""
         error_list = []
         error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)

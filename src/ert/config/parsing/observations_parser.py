@@ -4,13 +4,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import (
     Any,
-    Dict,
-    List,
     Literal,
-    Optional,
     Sequence,
-    Tuple,
-    Union,
     cast,
     no_type_check,
 )
@@ -54,24 +49,24 @@ class ObservationType(Enum):
         raise ValueError(f"Unexpected observation type {rule}")
 
 
-SimpleHistoryDeclaration = Tuple[Literal[ObservationType.HISTORY], FileContextToken]
+SimpleHistoryDeclaration = tuple[Literal[ObservationType.HISTORY], FileContextToken]
 
 
 @dataclass
 class HistoryValues(ErrorValues):
     key: str
-    segment: List[Tuple[str, Segment]]
+    segment: list[tuple[str, Segment]]
 
 
-HistoryDeclaration = Tuple[FileContextToken, HistoryValues]
+HistoryDeclaration = tuple[FileContextToken, HistoryValues]
 
 
 @dataclass
 class DateValues:
-    days: Optional[float] = None
-    hours: Optional[float] = None
-    date: Optional[str] = None
-    restart: Optional[int] = None
+    days: float | None = None
+    hours: float | None = None
+    date: str | None = None
+    restart: int | None = None
 
 
 @dataclass
@@ -85,17 +80,17 @@ class SummaryValues(DateValues, ErrorValues, _SummaryValues):
     pass
 
 
-SummaryDeclaration = Tuple[FileContextToken, SummaryValues]
+SummaryDeclaration = tuple[FileContextToken, SummaryValues]
 
 
 @dataclass
 class _GenObsValues:
     data: str
-    value: Optional[float] = None
-    error: Optional[float] = None
-    index_list: Optional[str] = None
-    index_file: Optional[str] = None
-    obs_file: Optional[str] = None
+    value: float | None = None
+    error: float | None = None
+    index_list: str | None = None
+    index_file: str | None = None
+    obs_file: str | None = None
 
 
 @dataclass
@@ -103,8 +98,8 @@ class GenObsValues(DateValues, _GenObsValues):
     pass
 
 
-GenObsDeclaration = Tuple[FileContextToken, GenObsValues]
-Declaration = Union[HistoryDeclaration, SummaryDeclaration, GenObsDeclaration]
+GenObsDeclaration = tuple[FileContextToken, GenObsValues]
+Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
 ConfContent = Sequence[Declaration]
 
 
@@ -118,11 +113,9 @@ def parse(filename: str) -> ConfContent:
 
 def _parse_content(
     content: str, filename: str
-) -> List[
-    Union[
-        SimpleHistoryDeclaration,
-        Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
-    ]
+) -> list[
+    SimpleHistoryDeclaration
+    | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
 ]:
     try:
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
@@ -202,11 +195,9 @@ observations_parser = Lark(
 class TreeToObservations(
     Transformer[
         FileContextToken,
-        List[
-            Union[
-                SimpleHistoryDeclaration,
-                Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
-            ]
+        list[
+            SimpleHistoryDeclaration
+            | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
         ],
     ]
 ):
@@ -229,14 +220,12 @@ class TreeToObservations(
 def _validate_conf_content(
     directory: str,
     inp: Sequence[
-        Union[
-            SimpleHistoryDeclaration,
-            Tuple[ObservationType, FileContextToken, Dict[FileContextToken, Any]],
-        ]
+        SimpleHistoryDeclaration
+        | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
     ],
 ) -> ConfContent:
-    result: List[Declaration] = []
-    error_list: List[ErrorInfo] = []
+    result: list[Declaration] = []
+    error_list: list[ErrorInfo] = []
     for decl in inp:
         try:
             if decl[0] == ObservationType.HISTORY:
@@ -283,7 +272,7 @@ def _validate_conf_content(
 
 
 def _validate_unique_names(
-    conf_content: Sequence[Tuple[FileContextToken, Any]],
+    conf_content: Sequence[tuple[FileContextToken, Any]],
 ) -> None:
     names_counter = Counter(n for n, _ in conf_content)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]
@@ -298,7 +287,7 @@ def _validate_unique_names(
 
 
 def _validate_history_values(
-    name_token: FileContextToken, inp: Dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: dict[FileContextToken, Any]
 ) -> HistoryValues:
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
@@ -326,13 +315,13 @@ def _validate_history_values(
 
 
 def _validate_summary_values(
-    name_token: FileContextToken, inp: Dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: dict[FileContextToken, Any]
 ) -> SummaryValues:
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
     date_dict: DateValues = DateValues()
-    float_values: Dict[str, float] = {"ERROR_MIN": 0.1}
+    float_values: dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in inp.items():
         if key == "RESTART":
             date_dict.restart = validate_positive_int(value, key)
@@ -368,7 +357,7 @@ def _validate_summary_values(
 
 
 def _validate_segment_dict(
-    name_token: FileContextToken, inp: Dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: dict[FileContextToken, Any]
 ) -> Segment:
     start = None
     stop = None
@@ -403,7 +392,7 @@ def _validate_segment_dict(
 
 
 def _validate_gen_obs_values(
-    directory: str, name_token: FileContextToken, inp: Dict[FileContextToken, Any]
+    directory: str, name_token: FileContextToken, inp: dict[FileContextToken, Any]
 ) -> GenObsValues:
     try:
         data = inp[cast(FileContextToken, "DATA")]
@@ -521,9 +510,7 @@ def _unknown_key_error(key: FileContextToken, name: str) -> ObservationConfigErr
 
 
 def _unknown_declaration_error(
-    decl: Union[
-        SimpleHistoryDeclaration, Tuple[ObservationType, FileContextToken, Any]
-    ],
+    decl: SimpleHistoryDeclaration | tuple[ObservationType, FileContextToken, Any],
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f"Unexpected declaration in observations {decl}", decl[1]

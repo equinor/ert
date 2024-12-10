@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Mapping
+from typing import Any, Mapping
 from uuid import UUID
 
 from pydantic import ConfigDict, Field
@@ -20,6 +20,6 @@ class ExperimentIn(_Experiment):
 @dataclass(config=ConfigDict(from_attributes=True))
 class ExperimentOut(_Experiment):
     id: UUID
-    ensemble_ids: List[UUID]
-    priors: Mapping[str, Dict[str, Any]]
+    ensemble_ids: list[UUID]
+    priors: Mapping[str, dict[str, Any]]
     userdata: Mapping[str, Any]

@@ -18,26 +18,22 @@ from typing import (
     Any,
     Callable,
     Generic,
-    List,
     Mapping,
     Optional,
+    Self,
     Sequence,
-    Set,
     Type,
     TypeVar,
-    Union,
 )
-
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from inspect import Traceback
 
 T = TypeVar("T", bound="BaseService")
-ConnInfo = Union[Mapping[str, Any], Exception, None]
+ConnInfo = Mapping[str, Any] | Exception | None
 
 
-SERVICE_CONF_PATHS: Set[str] = set()
+SERVICE_CONF_PATHS: set[str] = set()
 
 
 def cleanup_service_files(signum: int, frame: Optional[FrameType]) -> None:
@@ -53,7 +49,7 @@ if threading.current_thread() is threading.main_thread():
     signal.signal(signal.SIGINT, cleanup_service_files)
 
 
-def local_exec_args(script_args: Union[str, List[str]]) -> List[str]:
+def local_exec_args(script_args: str | list[str]) -> list[str]:
     """
     Convenience function that returns the exec_args for executing a Python
     script in the directory of '_base_service.py'.
@@ -66,7 +62,7 @@ def local_exec_args(script_args: Union[str, List[str]]) -> List[str]:
     """
     if isinstance(script_args, str):
         script = script_args
-        rest: List[str] = []
+        rest: list[str] = []
     else:
         script = script_args[0]
         rest = script_args[1:]
@@ -85,7 +81,7 @@ class _Context(Generic[T]):
         self,
         exc_type: Type[BaseException],
         exc_value: BaseException,
-        traceback: "Traceback",
+        traceback: Traceback,
     ) -> bool:
         self._service.shutdown()
         return exc_type is None

@@ -9,10 +9,9 @@ from typing import (
     Callable,
     Generic,
     Iterable,
-    List,
     Optional,
+    Self,
     Sequence,
-    Tuple,
     TypeVar,
 )
 
@@ -20,14 +19,9 @@ import iterative_ensemble_smoother as ies
 import numpy as np
 import polars
 import psutil
-from iterative_ensemble_smoother.experimental import (
-    AdaptiveESMDA,
-)
-from typing_extensions import Self
+from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.config import (
-    GenKwConfig,
-)
+from ert.config import GenKwConfig
 
 from ..config.analysis_config import ObservationGroups, UpdateSettings
 from ..config.analysis_module import ESSettings, IESSettings
@@ -143,8 +137,8 @@ def _load_param_ensemble_array(
 
 
 def _expand_wildcards(
-    input_list: npt.NDArray[np.str_], patterns: List[str]
-) -> List[str]:
+    input_list: npt.NDArray[np.str_], patterns: list[str]
+) -> list[str]:
     """
     Returns a sorted list of unique strings from `input_list` that match any of the specified wildcard patterns.
 
@@ -171,14 +165,14 @@ def _load_observations_and_responses(
     global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
-    auto_scale_observations: Optional[List[ObservationGroups]],
+    auto_scale_observations: Optional[list[ObservationGroups]],
     progress_callback: Callable[[AnalysisEvent], None],
-) -> Tuple[
+) -> tuple[
     npt.NDArray[np.float64],
-    Tuple[
+    tuple[
         npt.NDArray[np.float64],
         npt.NDArray[np.float64],
-        List[ObservationAndResponseSnapshot],
+        list[ObservationAndResponseSnapshot],
     ],
 ]:
     observations_and_responses = ensemble.get_observations_and_responses(
@@ -331,7 +325,7 @@ def _load_observations_and_responses(
 
 def _split_by_batchsize(
     arr: npt.NDArray[np.int_], batch_size: int
-) -> List[npt.NDArray[np.int_]]:
+) -> list[npt.NDArray[np.int_]]:
     """
     Splits an array into sub-arrays of a specified batch size.
 
@@ -415,8 +409,8 @@ def _copy_unupdated_parameters(
     This is necessary because users can choose not to update parameters but may still want to analyse them.
 
     Parameters:
-    all_parameter_groups (List[str]): A list of all parameter groups.
-    updated_parameter_groups (List[str]): A list of parameter groups that have already been updated.
+    all_parameter_groups (list[str]): A list of all parameter groups.
+    updated_parameter_groups (list[str]): A list of parameter groups that have already been updated.
     iens_active_index (npt.NDArray[np.int_]): An array of indices for the active realizations in the
                                               target ensemble.
     source_ensemble (Ensemble): The file system of the source ensemble, from which parameters are copied.
@@ -451,7 +445,7 @@ def analysis_ES(
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: Optional[List[ObservationGroups]],
+    auto_scale_observations: Optional[list[ObservationGroups]],
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -530,7 +524,7 @@ def analysis_ES(
 
     def correlation_callback(
         cross_correlations_of_batch: npt.NDArray[np.float64],
-        cross_correlations_accumulator: List[npt.NDArray[np.float64]],
+        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
     ) -> None:
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
@@ -551,7 +545,7 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
-            cross_correlations: List[npt.NDArray[np.float64]] = []
+            cross_correlations: list[npt.NDArray[np.float64]] = []
             for param_batch_idx in batches:
                 X_local = param_ensemble_array[param_batch_idx, :]
                 if isinstance(config_node, GenKwConfig):
@@ -631,7 +625,7 @@ def analysis_IES(
     target_ensemble: Ensemble,
     sies_smoother: Optional[ies.SIES],
     progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: List[ObservationGroups],
+    auto_scale_observations: list[ObservationGroups],
     sies_step_length: Callable[[int], float],
     initial_mask: npt.NDArray[np.bool_],
 ) -> ies.SIES:
@@ -830,7 +824,7 @@ def iterative_smoother_update(
     rng: Optional[np.random.Generator] = None,
     progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
     global_scaling: float = 1.0,
-) -> Tuple[SmootherSnapshot, ies.SIES]:
+) -> tuple[SmootherSnapshot, ies.SIES]:
     if not progress_callback:
         progress_callback = noop_progress_callback
     if rng is None:

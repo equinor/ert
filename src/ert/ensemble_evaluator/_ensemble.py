@@ -9,12 +9,8 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    Dict,
-    List,
-    Optional,
     Protocol,
     Sequence,
-    Union,
 )
 
 from _ert.events import (
@@ -56,7 +52,7 @@ _handle = Callable[..., Any]
 class _EnsembleStateTracker:
     def __init__(self, state_: str = ENSEMBLE_STATE_UNKNOWN) -> None:
         self._state = state_
-        self._handles: Dict[str, _handle] = {}
+        self._handles: dict[str, _handle] = {}
         self._msg = "Illegal state transition from %s to %s"
 
         self.set_default_handles()
@@ -111,15 +107,15 @@ class _EnsembleStateTracker:
 
 @dataclass
 class LegacyEnsemble:
-    reals: List[Realization]
-    metadata: Dict[str, Any]
+    reals: list[Realization]
+    metadata: dict[str, Any]
     _queue_config: QueueConfig
     min_required_realizations: int
     id_: str
 
     def __post_init__(self) -> None:
-        self._scheduler: Optional[_KillAllJobs] = None
-        self._config: Optional[EvaluatorServerConfig] = None
+        self._scheduler: _KillAllJobs | None = None
+        self._config: EvaluatorServerConfig | None = None
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
         if self.snapshot.status:
@@ -147,11 +143,11 @@ class LegacyEnsemble:
             snapshot.add_realization(str(real.iens), realization)
         return snapshot
 
-    def get_successful_realizations(self) -> List[int]:
+    def get_successful_realizations(self) -> list[int]:
         return self.snapshot.get_successful_realizations()
 
     def _log_completed_fm_step(
-        self, event: FMEvent, step_snapshot: Optional[FMStepSnapshot]
+        self, event: FMEvent, step_snapshot: FMStepSnapshot | None
     ) -> None:
         if step_snapshot is None:
             logger.warning(f"Should log {event}, but there was no step_snapshot")
@@ -203,8 +199,8 @@ class LegacyEnsemble:
         self,
         url: str,
         event: Event,
-        token: Optional[str] = None,
-        cert: Optional[Union[str, bytes]] = None,
+        token: str | None = None,
+        cert: str | bytes | None = None,
         retries: int = 10,
     ) -> None:
         async with Client(url, token, cert, max_retries=retries) as client:
@@ -223,8 +219,8 @@ class LegacyEnsemble:
     async def evaluate(
         self,
         config: EvaluatorServerConfig,
-        scheduler_queue: Optional[asyncio.Queue[Event]] = None,
-        manifest_queue: Optional[asyncio.Queue[Event]] = None,
+        scheduler_queue: asyncio.Queue[Event] | None = None,
+        manifest_queue: asyncio.Queue[Event] | None = None,
     ) -> None:
         self._config = config
         ce_unary_send_method_name = "_ce_unary_send"
@@ -252,8 +248,8 @@ class LegacyEnsemble:
     async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
         event_unary_send: Callable[[Event], Awaitable[None]],
-        scheduler_queue: Optional[asyncio.Queue[Event]] = None,
-        manifest_queue: Optional[asyncio.Queue[Event]] = None,
+        scheduler_queue: asyncio.Queue[Event] | None = None,
+        manifest_queue: asyncio.Queue[Event] | None = None,
     ) -> None:
         """
         This (inner) coroutine does the actual work of evaluating the ensemble. It
@@ -343,7 +339,7 @@ class Realization:
     iens: int
     fm_steps: Sequence[ForwardModelStep]
     active: bool
-    max_runtime: Optional[int]
+    max_runtime: int | None
     run_arg: "RunArg"
     num_cpu: int
     job_script: str

@@ -1,4 +1,4 @@
-from typing import List, Optional, overload
+from typing import overload
 
 from qtpy.QtCore import (
     QAbstractItemModel,
@@ -13,7 +13,7 @@ from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
 
 class RealListModel(QAbstractProxyModel):
-    def __init__(self, parent: Optional[QObject], iter_: int) -> None:
+    def __init__(self, parent: QObject | None, iter_: int) -> None:
         super().__init__(parent=parent)
         self._iter: int = iter_
 
@@ -51,7 +51,7 @@ class RealListModel(QAbstractProxyModel):
             source_model.modelReset.connect(self.modelReset)
 
     @override
-    def setSourceModel(self, sourceModel: Optional[QAbstractItemModel]) -> None:
+    def setSourceModel(self, sourceModel: QAbstractItemModel | None) -> None:
         if not sourceModel:
             raise ValueError("need source model")
         self.beginResetModel()
@@ -61,10 +61,10 @@ class RealListModel(QAbstractProxyModel):
         self.endResetModel()
 
     @override
-    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return 1
 
-    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
@@ -77,14 +77,14 @@ class RealListModel(QAbstractProxyModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> Optional[QObject]: ...
+    def parent(self) -> QObject | None: ...
     @override
-    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+    def parent(self, child: QModelIndex | None = None) -> QObject | None:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: Optional[QModelIndex] = None
+        self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
@@ -93,7 +93,7 @@ class RealListModel(QAbstractProxyModel):
         return QModelIndex()
 
     @override
-    def hasChildren(self, parent: Optional[QModelIndex] = None) -> bool:
+    def hasChildren(self, parent: QModelIndex | None = None) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
@@ -123,7 +123,7 @@ class RealListModel(QAbstractProxyModel):
         )
 
     def _source_data_changed(
-        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: List[int]
+        self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int]
     ) -> None:
         if top_left.internalPointer() and top_left.data(IsRealizationRole):
             proxy_top_left = self.mapFromSource(top_left)

@@ -1,5 +1,3 @@
-from typing import Dict, List, Optional
-
 from qtpy.QtCore import QSize, Signal
 from qtpy.QtGui import QColor, QIcon, QPainter, QPaintEvent
 from qtpy.QtWidgets import (
@@ -30,7 +28,7 @@ class _LegendMarker(QWidget):
 
         self.color = color
 
-    def paintEvent(self, a0: Optional[QPaintEvent]) -> None:
+    def paintEvent(self, a0: QPaintEvent | None) -> None:
         painter = QPainter(self)
 
         rect = self.contentsRect()
@@ -46,7 +44,7 @@ class _LegendMarker(QWidget):
 class _Legend(QWidget):
     """Combines a _LegendMarker with a label"""
 
-    def __init__(self, legend: Optional[str], color: QColor):
+    def __init__(self, legend: str | None, color: QColor):
         QWidget.__init__(self)
 
         self.setMinimumWidth(140)
@@ -71,7 +69,7 @@ class _Legend(QWidget):
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs: List[PlotApiKeyDefinition]):
+    def __init__(self, key_defs: list[PlotApiKeyDefinition]):
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)
@@ -110,7 +108,7 @@ class DataTypeKeysWidget(QWidget):
 
         self.setLayout(layout)
 
-    def onItemChanged(self, item: Dict[str, bool]) -> None:
+    def onItemChanged(self, item: dict[str, bool]) -> None:
         for value, visible in item.items():
             self.filter_model.setFilterOnMetadata("data_origin", value, visible)
 
@@ -119,7 +117,7 @@ class DataTypeKeysWidget(QWidget):
         if selected_item is not None:
             self.dataTypeKeySelected.emit()
 
-    def getSelectedItem(self) -> Optional[PlotApiKeyDefinition]:
+    def getSelectedItem(self) -> PlotApiKeyDefinition | None:
         index = self.data_type_keys_widget.currentIndex()
         source_index = self.filter_model.mapToSource(index)
         item = self.model.itemAt(source_index)
@@ -128,7 +126,7 @@ class DataTypeKeysWidget(QWidget):
     def selectDefault(self) -> None:
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
-    def setSearchString(self, _filter: Optional[str]) -> None:
+    def setSearchString(self, _filter: str | None) -> None:
         self.filter_model.setFilterFixedString(_filter)
 
     def showFilterPopup(self) -> None:

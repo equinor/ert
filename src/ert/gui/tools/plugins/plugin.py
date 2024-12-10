@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from ert import ErtScript
 
@@ -17,7 +17,7 @@ class Plugin:
     def __init__(self, notifier: ErtNotifier, workflow_job: WorkflowJob):
         self.__notifier = notifier
         self.__workflow_job = workflow_job
-        self.__parent_window: Optional[QWidget] = None
+        self.__parent_window: QWidget | None = None
 
         script = self.__loadPlugin()
         self.__name = script.getName()
@@ -34,7 +34,7 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self, fixtures: Dict[str, Any]) -> List[Any]:
+    def getArguments(self, fixtures: dict[str, Any]) -> list[Any]:
         """
         Returns a list of arguments. Either from GUI or from arbitrary code.
         If the user for example cancels in the GUI a CancelPluginException is raised.
@@ -50,10 +50,10 @@ class Plugin:
         script._storage = fixtures.get("storage")
         return script.getArguments(*arguments)
 
-    def setParentWindow(self, parent_window: Optional[QWidget]) -> None:
+    def setParentWindow(self, parent_window: QWidget | None) -> None:
         self.__parent_window = parent_window
 
-    def getParentWindow(self) -> Optional[QWidget]:
+    def getParentWindow(self) -> QWidget | None:
         return self.__parent_window
 
     def ert(self) -> None:
@@ -64,7 +64,7 @@ class Plugin:
         return self.__notifier.storage
 
     @property
-    def ensemble(self) -> Optional[Ensemble]:
+    def ensemble(self) -> Ensemble | None:
         return self.__notifier.current_ensemble
 
     def getWorkflowJob(self) -> WorkflowJob:
