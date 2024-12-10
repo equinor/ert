@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733818825535,
+  "lastUpdate": 1733820704542,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "5dbaae50d8f43eb9a7af2ad139d99913439c64df",
-          "message": "Update python version in benchmark workflow",
-          "timestamp": "2024-12-03T13:31:46+01:00",
-          "tree_id": "03285172575be2ef1295110daad16b098a3ba46c",
-          "url": "https://github.com/equinor/ert/commit/5dbaae50d8f43eb9a7af2ad139d99913439c64df"
-        },
-        "date": 1733229220532,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21755028259359038,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026973425817297007",
-            "extra": "mean: 4.596638478599994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.045115848454224346",
             "extra": "mean: 4.515095602399993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "602a9b2444fe6262514f7a76665d4d4237e1b498",
+          "message": "Use pattern matching for config schema",
+          "timestamp": "2024-12-10T09:49:48+01:00",
+          "tree_id": "ab22c6111029f34e88c76e7578a83f1e6169d31c",
+          "url": "https://github.com/equinor/ert/commit/602a9b2444fe6262514f7a76665d4d4237e1b498"
+        },
+        "date": 1733820704060,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2183465894258909,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026407073519232785",
+            "extra": "mean: 4.579874605000003 sec\nrounds: 5"
           }
         ]
       }
