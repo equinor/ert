@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733816662955,
+  "lastUpdate": 1733818825535,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "0ee3d4906ebf32a15be67979dea908cd3a95d4f5",
-          "message": "Make local_driver use start_new_session when spawning children\n\nThis makes it more in line with lsf driver.\npreexec_fn can also deadlock when using fork method for multiprocessing\nmodule.",
-          "timestamp": "2024-12-03T13:01:27+01:00",
-          "tree_id": "258fc63207c210f5c9dcff0c590298ce01dc5a12",
-          "url": "https://github.com/equinor/ert/commit/0ee3d4906ebf32a15be67979dea908cd3a95d4f5"
-        },
-        "date": 1733227396920,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.19343094337051872,
-            "unit": "iter/sec",
-            "range": "stddev: 0.014114403390293724",
-            "extra": "mean: 5.169803665199993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.044098889337104534",
             "extra": "mean: 4.542311749999999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "bf2d515c9e9948fcad5caa4b4fba7c60e6339cfa",
+          "message": "Fix ForwardModelStep `handle_process_timeout...` timeout\n\nThis fixes the bug where some code was unreachable after the refactoring in commit #4dc894ca63687476e091f582df5a42045190f7bd",
+          "timestamp": "2024-12-10T09:18:33+01:00",
+          "tree_id": "fac3444a941125e008dfefb9b8a03fbedecc6620",
+          "url": "https://github.com/equinor/ert/commit/bf2d515c9e9948fcad5caa4b4fba7c60e6339cfa"
+        },
+        "date": 1733818824915,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2214792527246713,
+            "unit": "iter/sec",
+            "range": "stddev: 0.045115848454224346",
+            "extra": "mean: 4.515095602399993 sec\nrounds: 5"
           }
         ]
       }
