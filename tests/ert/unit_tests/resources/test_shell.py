@@ -1,6 +1,7 @@
 import contextlib
 import os
 import os.path
+import shutil
 import sys
 from contextlib import suppress
 from pathlib import Path
@@ -472,6 +473,22 @@ def test_copy_file3():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_copy_when_target_is_none():
+    Path("somedir").mkdir()
+    Path("somedir/file.txt").write_text("Hei", encoding="utf-8")
+
+    copy_file("somedir/file.txt", None)
+    assert Path("file.txt").read_text(encoding="utf-8") == "Hei"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_when_target_is_none_in_same_directory():
+    Path("file.txt").write_text("Hei", encoding="utf-8")
+    with pytest.raises(shutil.SameFileError):
+        copy_file("file.txt", None)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_careful_copy_file():
     with open("file1", "w", encoding="utf-8") as f:
         f.write("hei")
@@ -484,6 +501,31 @@ def test_careful_copy_file():
 
     print(careful_copy_file("file1", "file3"))
     assert os.path.isfile("file3")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_careful_copy_file_when_target_is_none():
+    Path("somedir").mkdir()
+    Path("somedir/file.txt").write_text("Hei", encoding="utf-8")
+
+    careful_copy_file("somedir/file.txt", None)
+    assert Path("file.txt").read_text(encoding="utf-8") == "Hei"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_careful_copy_when_target_is_none_in_same_directory_is_noop():
+    Path("file.txt").write_text("Hei", encoding="utf-8")
+    careful_copy_file("file.txt", None)  # File will not be touched
+    assert Path("file.txt").read_text(encoding="utf-8") == "Hei"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_careful_copy_when_target_is_none_does_not_touch_existing():
+    Path("somedir").mkdir()
+    Path("somedir/file.txt").write_text("Hei", encoding="utf-8")
+    Path("file.txt").write_text("I will survive", encoding="utf-8")
+    careful_copy_file("somedir/file.txt", None)
+    assert Path("file.txt").read_text(encoding="utf-8") == "I will survive"
 
 
 @pytest.fixture
