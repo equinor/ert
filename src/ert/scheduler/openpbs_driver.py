@@ -124,9 +124,6 @@ class OpenPBSDriver(Driver):
         queue_name: str | None = None,
         project_code: str | None = None,
         keep_qsub_output: bool | None = None,
-        memory_per_job: str | None = None,
-        num_nodes: int | None = None,
-        num_cpus_per_node: int | None = None,
         cluster_label: str | None = None,
         job_prefix: str | None = None,
         qsub_cmd: str | None = None,
@@ -139,9 +136,6 @@ class OpenPBSDriver(Driver):
         self._queue_name = queue_name
         self._project_code = project_code
         self._keep_qsub_output = keep_qsub_output
-        self._memory_per_job = memory_per_job
-        self._num_nodes: int | None = num_nodes
-        self._num_cpus_per_node: int | None = num_cpus_per_node
         self._cluster_label: str | None = cluster_label
         self._job_prefix = job_prefix
         self._max_pbs_cmd_attempts = 10
@@ -158,45 +152,15 @@ class OpenPBSDriver(Driver):
         self._finished_job_ids: set[str] = set()
         self._finished_iens: set[int] = set()
 
-        if self._num_nodes is not None and self._num_nodes > 1:
-            logger.warning(
-                "OpenPBSDriver initialized with num_nodes > 1, "
-                "this behaviour is deprecated and will be removed"
-            )
-
-        if self._num_cpus_per_node is not None and self._num_cpus_per_node > 1:
-            logger.warning(
-                "OpenPBSDriver initialized with num_cpus_per_node, "
-                "this behaviour is deprecated and will be removed. "
-                "Use NUM_CPU in the config instead."
-            )
-
     def _build_resource_string(
         self, num_cpu: int = 1, realization_memory: int = 0
     ) -> list[str]:
         resource_specifiers: list[str] = []
 
         cpu_resources: list[str] = []
-        if self._num_nodes is not None:
-            cpu_resources += [f"select={self._num_nodes}"]
-        if self._num_cpus_per_node is not None:
-            num_nodes = self._num_nodes or 1
-            if num_cpu != self._num_cpus_per_node * num_nodes:
-                raise ValueError(
-                    f"NUM_CPUS_PER_NODE ({self._num_cpus_per_node}) must be equal "
-                    f"to NUM_CPU ({num_cpu}). "
-                    "Please remove NUM_CPUS_PER_NODE from the configuration"
-                )
         if num_cpu > 1:
             cpu_resources += [f"ncpus={num_cpu}"]
-        if self._memory_per_job is not None and realization_memory > 0:
-            raise ValueError(
-                "Overspecified memory pr job. "
-                "Do not specify both memory_per_job and realization_memory"
-            )
-        if self._memory_per_job is not None:
-            cpu_resources += [f"mem={self._memory_per_job}"]
-        elif realization_memory > 0:
+        if realization_memory > 0:
             cpu_resources += [f"mem={realization_memory // 1024**2 }mb"]
         if cpu_resources:
             resource_specifiers.append(":".join(cpu_resources))

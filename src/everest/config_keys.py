@@ -123,7 +123,6 @@ class ConfigKeys:
     TORQUE_QDEL_CMD = "qdel_cmd"
     TORQUE_QUEUE_NAME = "name"
     TORQUE_CLUSTER_LABEL = "cluster_label"
-    TORQUE_MEMORY_PER_JOB = "memory_per_job"
     TORQUE_KEEP_QSUB_OUTPUT = "keep_qsub_output"
     TORQUE_SUBMIT_SLEEP = "submit_sleep"
     TORQUE_PROJECT_CODE = "project_code"
