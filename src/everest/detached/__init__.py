@@ -35,6 +35,7 @@ from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
+    START_ENDPOINT,
     STOP_ENDPOINT,
 )
 
@@ -49,6 +50,25 @@ PROXY = {"http": None, "https": None}
 # Information from the client side is relatively uninteresting, so we show it in
 # the default logger (stdout). Info from the server will be logged to the
 # everest.log file instead
+
+
+def start_experiment(
+    server_context: Tuple[str, str, Tuple[str, str]],
+    config: EverestConfig,
+) -> None:
+    try:
+        url, cert, auth = server_context
+        start_endpoint = "/".join([url, START_ENDPOINT])
+        response = requests.post(
+            start_endpoint,
+            verify=cert,
+            auth=auth,
+            proxies=PROXY,  # type: ignore
+            json=config.to_dict(),
+        )
+        response.raise_for_status()
+    except:
+        raise ValueError("Failed to start experiment") from None
 
 
 async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
