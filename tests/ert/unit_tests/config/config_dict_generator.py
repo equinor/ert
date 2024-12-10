@@ -4,7 +4,7 @@ import os
 import os.path
 import stat
 from collections import defaultdict
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 from warnings import filterwarnings
@@ -134,37 +134,43 @@ queue_systems_and_options = {
 
 def valid_queue_options(queue_system: str):
     return [
-        field.name.upper()
-        for field in fields(
-            queue_systems_and_options[QueueSystemWithGeneric(queue_system)]
-        )
-        if field.name != "name"
+        name.upper()
+        for name in queue_systems_and_options[
+            QueueSystemWithGeneric(queue_system)
+        ].model_fields
+        if name != "name"
     ]
 
 
 queue_options_by_type: dict[str, dict[str, list[str]]] = defaultdict(dict)
 for system, options in queue_systems_and_options.items():
     queue_options_by_type["string"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if ("String" in field.type or "str" in field.type)
-        and "memory" not in field.name
+        name.upper()
+        for name, field in options.model_fields.items()
+        if ("String" in str(field.annotation) or "str" in str(field.annotation))
+        and "memory" not in name
     ]
     queue_options_by_type["bool"][system.name] = [
-        field.name.upper() for field in fields(options) if field.type == "bool"
+        name.upper()
+        for name, field in options.model_fields.items()
+        if "bool" in str(field.annotation)
     ]
     queue_options_by_type["posint"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if "PositiveInt" in field.type or "NonNegativeInt" in field.type
+        name.upper()
+        for name, field in options.model_fields.items()
+        if "PositiveInt" in str(field.annotation)
+        or "NonNegativeInt" in str(field.annotation)
     ]
     queue_options_by_type["posfloat"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if "NonNegativeFloat" in field.type or "PositiveFloat" in field.type
+        name.upper()
+        for name, field in options.model_fields.items()
+        if "NonNegativeFloat" in str(field.annotation)
+        or "PositiveFloat" in str(field.annotation)
     ]
     queue_options_by_type["memory"][system.name] = [
-        field.name.upper() for field in fields(options) if "memory" in field.name
+        name.upper()
+        for name, field in options.model_fields.items()
+        if "memory" in str(field.annotation)
     ]
 
 
