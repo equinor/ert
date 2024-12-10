@@ -1,9 +1,14 @@
 from itertools import chain
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import (
+    Annotated,
+    Any,
+    Literal,
+    Self,
+    TypeAlias,
+)
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
-from typing_extensions import Annotated, Self, TypeAlias
 
 from .control_variable_config import (
     ControlVariableConfig,
@@ -17,9 +22,9 @@ from .validation_utils import (
     valid_range,
 )
 
-ControlVariable: TypeAlias = Union[
-    List[ControlVariableConfig], List[ControlVariableGuessListConfig]
-]
+ControlVariable: TypeAlias = (
+    list[ControlVariableConfig] | list[ControlVariableGuessListConfig]
+)
 
 
 def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
@@ -54,7 +59,7 @@ Only two allowed control types are accepted
         AfterValidator(_all_or_no_index),
         AfterValidator(unique_items),
     ] = Field(description="List of control variables", min_length=1)
-    initial_guess: Optional[float] = Field(
+    initial_guess: float | None = Field(
         default=None,
         description="""
 Initial guess for the control group all control variables with initial_guess not
@@ -71,7 +76,7 @@ optimization. This may be ignored if the algorithm that is used does not support
 different control types.
 """,
     )
-    enabled: Optional[bool] = Field(
+    enabled: bool | None = Field(
         default=True,
         description="""
 If `True`, all variables in this control group will be optimized. If set to `False`
@@ -86,7 +91,7 @@ defined by [min, max] to the range defined by
 scaled_range (default [0, 1]).
         """,
     )
-    min: Optional[float] = Field(
+    min: float | None = Field(
         default=None,
         description="""
 Defines left-side value in the control group range [min, max].
@@ -96,7 +101,7 @@ The initial guess for both the group and the individual variables needs to be co
 in the resulting [min, max] range
 """,
     )
-    max: Optional[float] = Field(
+    max: float | None = Field(
         default=None,
         description="""
 Defines right-side value in the control group range [min, max].
@@ -120,7 +125,7 @@ NOTE: currently the dynamic range is computed with respect to all controls, so
  ranges might have unintended effects.
         """,
     )
-    perturbation_magnitude: Optional[float] = Field(
+    perturbation_magnitude: float | None = Field(
         default=None,
         description="""
 Specifies the perturbation magnitude for a set of controls of a certain type.
@@ -136,18 +141,18 @@ of values also cause issues.
 NOTE: In most cases this should not be configured, and the default value should be used.
         """,
     )
-    scaled_range: Annotated[
-        Optional[Tuple[float, float]], AfterValidator(valid_range)
-    ] = Field(
-        default=None,
-        description="""
+    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
+        Field(
+            default=None,
+            description="""
 Can be used to set the range of the control values
 after scaling (default = [0, 1]).
 
 This option has no effect if auto_scale is not set.
         """,
+        )
     )
-    sampler: Optional[SamplerConfig] = Field(
+    sampler: SamplerConfig | None = Field(
         default=None,
         description="""
 A sampler specification section applies to a group of controls, or to an

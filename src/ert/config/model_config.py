@@ -31,7 +31,7 @@ def _read_time_map(file_name: str) -> list[datetime]:
             return datetime.strptime(date_str, "%d/%m/%Y")
 
     dates = []
-    with open(file_name, "r", encoding="utf-8") as fin:
+    with open(file_name, encoding="utf-8") as fin:
         for line in fin:
             dates.append(str_to_datetime(line.strip()))
     return dates
@@ -102,7 +102,7 @@ class ModelConfig:
 
     @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> "ModelConfig":
+    def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
         time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
         time_map_file = (
             os.path.abspath(time_map_file) if time_map_file is not None else None
@@ -111,7 +111,7 @@ class ModelConfig:
         if time_map_file is not None:
             try:
                 time_map = _read_time_map(time_map_file)
-            except (ValueError, IOError) as err:
+            except (OSError, ValueError) as err:
                 raise ConfigValidationError.with_context(
                     f"Could not read timemap file {time_map_file}: {err}", time_map_file
                 ) from err

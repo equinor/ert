@@ -3,7 +3,6 @@ import logging
 import shutil
 from functools import partial
 from pathlib import Path
-from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -56,7 +55,7 @@ def realization():
 
 
 async def assert_scheduler_events(
-    scheduler: Scheduler, expected_job_events: List[JobState]
+    scheduler: Scheduler, expected_job_events: list[JobState]
 ) -> None:
     for expected_job_event in expected_job_events:
         assert (

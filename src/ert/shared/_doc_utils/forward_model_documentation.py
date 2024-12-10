@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from docutils import nodes
 
@@ -15,9 +16,9 @@ class _ForwardModelDocumentation:
         category: str,
         job_source: str,
         description: str,
-        job_config_file: Optional[str],
-        parser: Optional[Callable[[], ArgumentParser]],
-        examples: Optional[str] = "",
+        job_config_file: str | None,
+        parser: Callable[[], ArgumentParser] | None,
+        examples: str | None = "",
     ) -> None:
         self.name = name
         self.job_source = job_source

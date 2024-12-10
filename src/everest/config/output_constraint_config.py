@@ -1,11 +1,9 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field, model_validator
 
 
 class OutputConstraintConfig(BaseModel, extra="forbid"):  # type: ignore
     name: str = Field(description="The unique name of the output constraint.")
-    target: Optional[float] = Field(
+    target: float | None = Field(
         default=None,
         description="""Defines the equality constraint
 
@@ -16,14 +14,14 @@ scale (scale).
 
 """,
     )
-    auto_scale: Optional[bool] = Field(
+    auto_scale: bool | None = Field(
         default=None,
         description="""If set to true, Everest will automatically
 determine the scaling factor from the constraint value in batch 0.
 
 If scale is also set, the automatic value is multiplied by its value.""",
     )
-    lower_bound: Optional[float] = Field(
+    lower_bound: float | None = Field(
         default=None,
         description="""Defines the lower bound
 (greater than or equal) constraint
@@ -34,7 +32,7 @@ where b is the lower bound, f is a function of the control vector x, and c is
 the scale (scale).
 """,
     )
-    upper_bound: Optional[float] = Field(
+    upper_bound: float | None = Field(
         default=None,
         description="""Defines the upper bound (less than or equal) constraint:
 
@@ -43,7 +41,7 @@ the scale (scale).
 where b is the upper bound, f is a function of the control vector x, and c is
 the scale (scale).""",
     )
-    scale: Optional[float] = Field(
+    scale: float | None = Field(
         default=None,
         description="""Scaling of constraints (scale).
 

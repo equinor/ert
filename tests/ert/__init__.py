@@ -1,8 +1,9 @@
 import importlib.util
 import sys
+from collections.abc import Sequence
 from copy import deepcopy
 from datetime import datetime
-from typing import Any, Dict, Optional, Sequence
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -27,16 +28,16 @@ def import_from_location(name, location):
 
 
 class SnapshotBuilder(BaseModel):
-    fm_steps: Dict[str, FMStepSnapshot] = {}
-    metadata: Dict[str, Any] = {}
+    fm_steps: dict[str, FMStepSnapshot] = {}
+    metadata: dict[str, Any] = {}
 
     def build(
         self,
         real_ids: Sequence[str],
-        status: Optional[str],
-        exec_hosts: Optional[str] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        status: str | None,
+        exec_hosts: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> EnsembleSnapshot:
         snapshot = EnsembleSnapshot()
         snapshot._ensemble_state = status
@@ -60,14 +61,14 @@ class SnapshotBuilder(BaseModel):
         self,
         fm_step_id: str,
         index: str,
-        name: Optional[str],
-        status: Optional[str],
-        current_memory_usage: Optional[str] = None,
-        max_memory_usage: Optional[str] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        stdout: Optional[str] = None,
-        stderr: Optional[str] = None,
+        name: str | None,
+        status: str | None,
+        current_memory_usage: str | None = None,
+        max_memory_usage: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        stdout: str | None = None,
+        stderr: str | None = None,
     ) -> "SnapshotBuilder":
         self.fm_steps[fm_step_id] = _filter_nones(
             FMStepSnapshot(

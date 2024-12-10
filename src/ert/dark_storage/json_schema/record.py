@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 from uuid import UUID
 
 from pydantic import ConfigDict
@@ -15,4 +16,4 @@ class RecordOut(_Record):
     id: UUID
     name: str
     userdata: Mapping[str, Any]
-    has_observations: Optional[bool]
+    has_observations: bool | None

@@ -1,6 +1,5 @@
 from collections import defaultdict
 from itertools import count
-from typing import DefaultDict, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy._typing import NDArray
@@ -16,12 +15,12 @@ from numpy._typing import NDArray
 class SimulatorCache:
     def __init__(self) -> None:
         # Stores the realization/controls key, together with an ID.
-        self._keys: DefaultDict[int, List[Tuple[NDArray[np.float64], int]]] = (
+        self._keys: defaultdict[int, list[tuple[NDArray[np.float64], int]]] = (
             defaultdict(list)
         )
         # Store objectives and constraints by ID:
-        self._objectives: Dict[int, NDArray[np.float64]] = {}
-        self._constraints: Dict[int, NDArray[np.float64]] = {}
+        self._objectives: dict[int, NDArray[np.float64]] = {}
+        self._constraints: dict[int, NDArray[np.float64]] = {}
 
         # Generate unique ID's:
         self._counter = count()
@@ -32,7 +31,7 @@ class SimulatorCache:
         real_id: int,
         control_values: NDArray[np.float64],
         objectives: NDArray[np.float64],
-        constraints: Optional[NDArray[np.float64]],
+        constraints: NDArray[np.float64] | None,
     ):
         cache_id = next(self._counter)
         self._keys[real_id].append((control_values[sim_idx, :].copy(), cache_id))
@@ -40,9 +39,7 @@ class SimulatorCache:
         if constraints is not None:
             self._constraints[cache_id] = constraints[sim_idx, ...].copy()
 
-    def find_key(
-        self, real_id: int, control_vector: NDArray[np.float64]
-    ) -> Optional[int]:
+    def find_key(self, real_id: int, control_vector: NDArray[np.float64]) -> int | None:
         # Brute-force search, premature optimization is the root of all evil:
         for cached_vector, cache_id in self._keys.get(real_id, []):
             if np.allclose(

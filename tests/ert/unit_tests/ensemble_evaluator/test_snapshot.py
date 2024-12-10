@@ -7,10 +7,7 @@ from _ert.events import (
     RealizationSuccess,
 )
 from ert.ensemble_evaluator import state
-from ert.ensemble_evaluator.snapshot import (
-    EnsembleSnapshot,
-    FMStepSnapshot,
-)
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot, FMStepSnapshot
 from tests.ert import SnapshotBuilder
 
 

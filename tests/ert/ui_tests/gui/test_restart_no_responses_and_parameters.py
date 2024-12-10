@@ -1,8 +1,8 @@
 import os
 import stat
+from collections.abc import Generator
 from contextlib import contextmanager
 from textwrap import dedent
-from typing import Generator, Tuple
 from unittest.mock import Mock
 
 import pytest
@@ -29,7 +29,7 @@ from .conftest import get_child
 @contextmanager
 def _open_main_window(
     path,
-) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
+) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
     with open("forward_model.py", "w", encoding="utf-8") as f:
         f.write(
             dedent(

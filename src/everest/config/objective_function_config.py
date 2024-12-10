@@ -1,11 +1,9 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field, PositiveFloat, field_validator
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):  # type: ignore
     name: str = Field()
-    alias: Optional[str] = Field(
+    alias: str | None = Field(
         default=None,
         description="""
 alias can be set to the name of another objective function, directing everest
@@ -17,7 +15,7 @@ realizations of the same objective. In such a case, add a second objective with
 sure that the standard deviation is calculated over the values of that objective.
 """,
     )
-    weight: Optional[PositiveFloat] = Field(
+    weight: PositiveFloat | None = Field(
         default=None,
         description="""
 weight determines the importance of an objective function relative to the other
@@ -28,7 +26,7 @@ Note that, in case the weights do not sum up to 1, they are normalized before be
 used in the optimization process.
 """,
     )
-    normalization: Optional[float] = Field(
+    normalization: float | None = Field(
         default=None,
         description="""
 normalization is a multiplication factor defined per objective function.
@@ -40,7 +38,7 @@ of magnitude. Ultimately, the normalized objectives are used in computing
 the weighted sum that Everest tries to optimize.
 """,
     )
-    auto_normalize: Optional[bool] = Field(
+    auto_normalize: bool | None = Field(
         default=None,
         description="""
 auto_normalize can be set to true to automatically
@@ -49,7 +47,7 @@ determine the normalization factor from the objective value in batch 0.
 If normalization is also set, the automatic value is multiplied by its value.
 """,
     )
-    type: Optional[str] = Field(
+    type: str | None = Field(
         default=None,
         description="""
 type can be set to the name of a method that should be applied to calculate a

@@ -1,6 +1,6 @@
 import sys
 import traceback
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -12,13 +12,7 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
 from matplotlib.figure import Figure
 from qtpy.QtCore import QStringListModel, Qt, Signal, Slot
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
-    QAction,
-    QComboBox,
-    QVBoxLayout,
-    QWidget,
-    QWidgetAction,
-)
+from qtpy.QtWidgets import QAction, QComboBox, QVBoxLayout, QWidget, QWidgetAction
 
 from .plot_api import EnsembleObject
 
@@ -40,7 +34,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def __init__(
         self,
         canvas: FigureCanvas,
-        parent: Optional[QWidget],
+        parent: QWidget | None,
         coordinates: bool = True,
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
@@ -104,7 +98,7 @@ class PlotWidget(QWidget):
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
         ],
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         QWidget.__init__(self, parent)
 
@@ -143,9 +137,9 @@ class PlotWidget(QWidget):
     def updatePlot(
         self,
         plot_context: "PlotContext",
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         self.resetPlot()
         try:

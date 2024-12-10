@@ -22,5 +22,5 @@ if __name__ == "__main__":
     path = sys.argv[1]
     try:
         mkdir(path)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"MAKE_DIRECTORY failed with the following error: {e}")

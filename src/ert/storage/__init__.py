@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Union
 
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
@@ -33,7 +32,7 @@ class ErtStorageException(Exception):
 
 
 def open_storage(
-    path: Union[str, os.PathLike[str]], mode: Union[ModeLiteral, Mode] = "r"
+    path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
 ) -> Storage:
     try:
         return LocalStorage(Path(path), Mode(mode))

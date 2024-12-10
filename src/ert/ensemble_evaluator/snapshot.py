@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, Counter, Mapping, TypeVar, cast, get_args
+from typing import Any, TypeVar, cast, get_args
 
 from qtpy.QtGui import QColor
 from typing_extensions import TypedDict
@@ -113,7 +114,7 @@ class EnsembleSnapshot:
         )
 
     @classmethod
-    def from_nested_dict(cls, source: Mapping[Any, Any]) -> "EnsembleSnapshot":
+    def from_nested_dict(cls, source: Mapping[Any, Any]) -> EnsembleSnapshot:
         ensemble = EnsembleSnapshot()
         if "metadata" in source:
             ensemble._metadata = source["metadata"]
@@ -126,7 +127,7 @@ class EnsembleSnapshot:
         return ensemble
 
     def add_realization(
-        self, real_id: RealId, realization: "RealizationSnapshot"
+        self, real_id: RealId, realization: RealizationSnapshot
     ) -> None:
         self._realization_snapshots[real_id] = realization
 
@@ -134,7 +135,7 @@ class EnsembleSnapshot:
             fm_step_idx = (real_id, fm_step_id)
             self._fm_step_snapshots[fm_step_idx] = fm_step_snapshot
 
-    def merge_snapshot(self, ensemble: "EnsembleSnapshot") -> "EnsembleSnapshot":
+    def merge_snapshot(self, ensemble: EnsembleSnapshot) -> EnsembleSnapshot:
         self._metadata.update(ensemble._metadata)
         if ensemble._ensemble_state is not None:
             self._ensemble_state = ensemble._ensemble_state
@@ -149,25 +150,25 @@ class EnsembleSnapshot:
 
     def to_dict(self) -> dict[str, Any]:
         """used to send snapshot updates"""
-        _dict: dict[str, Any] = {}
+        dict_: dict[str, Any] = {}
         if self._metadata:
-            _dict["metadata"] = self._metadata
+            dict_["metadata"] = self._metadata
         if self._ensemble_state:
-            _dict["status"] = self._ensemble_state
+            dict_["status"] = self._ensemble_state
         if self._realization_snapshots:
-            _dict["reals"] = self._realization_snapshots
+            dict_["reals"] = self._realization_snapshots
 
         for (real_id, fm_id), fm_values_dict in self._fm_step_snapshots.items():
-            if "reals" not in _dict:
-                _dict["reals"] = {}
-            if real_id not in _dict["reals"]:
-                _dict["reals"][real_id] = RealizationSnapshot(fm_steps={})
-            if "fm_steps" not in _dict["reals"][real_id]:
-                _dict["reals"][real_id]["fm_steps"] = {}
+            if "reals" not in dict_:
+                dict_["reals"] = {}
+            if real_id not in dict_["reals"]:
+                dict_["reals"][real_id] = RealizationSnapshot(fm_steps={})
+            if "fm_steps" not in dict_["reals"][real_id]:
+                dict_["reals"][real_id]["fm_steps"] = {}
 
-            _dict["reals"][real_id]["fm_steps"][fm_id] = fm_values_dict
+            dict_["reals"][real_id]["fm_steps"][fm_id] = fm_values_dict
 
-        return _dict
+        return dict_
 
     @property
     def status(self) -> str | None:
@@ -179,7 +180,7 @@ class EnsembleSnapshot:
 
     def get_all_fm_steps(
         self,
-    ) -> Mapping[tuple[RealId, FmStepId], "FMStepSnapshot"]:
+    ) -> Mapping[tuple[RealId, FmStepId], FMStepSnapshot]:
         return self._fm_step_snapshots.copy()
 
     def get_fm_steps_for_all_reals(
@@ -192,22 +193,20 @@ class EnsembleSnapshot:
         }
 
     @property
-    def reals(self) -> Mapping[RealId, "RealizationSnapshot"]:
+    def reals(self) -> Mapping[RealId, RealizationSnapshot]:
         return self._realization_snapshots
 
-    def get_fm_steps_for_real(
-        self, real_id: RealId
-    ) -> dict[FmStepId, "FMStepSnapshot"]:
+    def get_fm_steps_for_real(self, real_id: RealId) -> dict[FmStepId, FMStepSnapshot]:
         return {
             fm_step_idx[1]: fm_step_snapshot.copy()
             for fm_step_idx, fm_step_snapshot in self._fm_step_snapshots.items()
             if fm_step_idx[0] == real_id
         }
 
-    def get_real(self, real_id: RealId) -> "RealizationSnapshot":
+    def get_real(self, real_id: RealId) -> RealizationSnapshot:
         return self._realization_snapshots[real_id]
 
-    def get_fm_step(self, real_id: RealId, fm_step_id: FmStepId) -> "FMStepSnapshot":
+    def get_fm_step(self, real_id: RealId, fm_step_id: FmStepId) -> FMStepSnapshot:
         return self._fm_step_snapshots[real_id, fm_step_id].copy()
 
     def get_successful_realizations(self) -> list[int]:
@@ -219,11 +218,9 @@ class EnsembleSnapshot:
 
     def aggregate_real_states(self) -> Counter[str]:
         counter = Counter(
-            (
-                real["status"]
-                for real in self._realization_snapshots.values()
-                if real.get("status") is not None
-            )
+            real["status"]
+            for real in self._realization_snapshots.values()
+            if real.get("status") is not None
         )
         return counter  # type: ignore
 
@@ -239,7 +236,7 @@ class EnsembleSnapshot:
         end_time: datetime | None = None,
         exec_hosts: str | None = None,
         message: str | None = None,
-    ) -> "EnsembleSnapshot":
+    ) -> EnsembleSnapshot:
         self._realization_snapshots[real_id].update(
             _filter_nones(
                 RealizationSnapshot(
@@ -255,7 +252,7 @@ class EnsembleSnapshot:
 
     def update_from_event(
         self, event: Event, source_snapshot: EnsembleSnapshot | None = None
-    ) -> "EnsembleSnapshot":
+    ) -> EnsembleSnapshot:
         e_type = type(event)
         timestamp = event.time
 
@@ -362,8 +359,8 @@ class EnsembleSnapshot:
         self,
         real_id: str,
         fm_step_id: str,
-        fm_step: "FMStepSnapshot",
-    ) -> "EnsembleSnapshot":
+        fm_step: FMStepSnapshot,
+    ) -> EnsembleSnapshot:
         self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
 

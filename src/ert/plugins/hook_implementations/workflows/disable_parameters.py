@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from ert.config.ert_script import ErtScript
 from ert.config.parsing.config_errors import ConfigValidationError
@@ -13,7 +13,7 @@ class DisableParametersUpdate(ErtScript):
         raise NotImplementedError(DisableParametersUpdate.__doc__)
 
     @staticmethod
-    def validate(args: List[Any]) -> None:
+    def validate(args: list[Any]) -> None:
         raise ConfigValidationError(
             f"DISABLE_PARAMETERS is removed, use the UPDATE:FALSE "
             f"option to the parameter instead:"

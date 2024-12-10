@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtGui import QCursor
@@ -22,7 +22,7 @@ class FilterPopup(QDialog):
     filterSettingsChanged = Signal(dict)
 
     def __init__(
-        self, parent: Optional[QWidget], key_defs: List[PlotApiKeyDefinition]
+        self, parent: QWidget | None, key_defs: list[PlotApiKeyDefinition]
     ) -> None:
         QDialog.__init__(
             self,
@@ -54,22 +54,22 @@ class FilterPopup(QDialog):
         self.setLayout(layout)
         self.adjustSize()
 
-    def addFilterItem(self, name: str, _id: str, value: bool = True) -> None:
-        self.filter_items[_id] = value
+    def addFilterItem(self, name: str, id_: str, value: bool = True) -> None:
+        self.filter_items[id_] = value
 
         check_box = QCheckBox(name)
         check_box.setChecked(value)
         check_box.setObjectName("FilterCheckBox")
 
         def toggleItem(checked: bool) -> None:
-            self.filter_items[_id] = checked
+            self.filter_items[id_] = checked
             self.filterSettingsChanged.emit(self.filter_items)
 
         check_box.toggled.connect(toggleItem)
 
         self.__layout.addWidget(check_box)
 
-    def leaveEvent(self, event: Optional[QEvent]) -> None:
+    def leaveEvent(self, event: QEvent | None) -> None:
         self.hide()
         QWidget.leaveEvent(self, event)
 

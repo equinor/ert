@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
@@ -123,7 +124,7 @@ def _substitute(
     return substituted_string
 
 
-def _replace_strings(substitutions: Mapping[str, str], string: str) -> Optional[str]:
+def _replace_strings(substitutions: Mapping[str, str], string: str) -> str | None:
     start = 0
     parts = []
     for match in _PATTERN.finditer(string):

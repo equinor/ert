@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Mapping, Union
+from collections.abc import Mapping
 
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage import Experiment
@@ -22,13 +22,13 @@ _PRIOR_NAME_MAP = {
 
 def create_priors(
     experiment: Experiment,
-) -> Mapping[str, Dict[str, Union[str, float]]]:
+) -> Mapping[str, dict[str, str | float]]:
     priors_dict = {}
 
     for group, priors in experiment.parameter_configuration.items():
         if isinstance(priors, GenKwConfig):
             for func in priors.transform_functions:
-                prior: Dict[str, Union[str, float]] = {
+                prior: dict[str, str | float] = {
                     "function": _PRIOR_NAME_MAP[func.transform_function_name],
                 }
                 for name, value in func.parameter_list.items():

@@ -1,25 +1,23 @@
-from typing import List, Optional
-
 from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from ert.config import ConfigWarning
 
 
 class ModelConfig(BaseModel, extra="forbid"):  # type: ignore
-    realizations: List[NonNegativeInt] = Field(
+    realizations: list[NonNegativeInt] = Field(
         default_factory=lambda: [],
         description="""List of realizations to use in optimization ensemble.
 
 Typically, this is a list [0, 1, ..., n-1] of all realizations in the ensemble.""",
     )
-    data_file: Optional[str] = Field(
+    data_file: str | None = Field(
         default=None,
         description="""Path to the eclipse data file used for optimization.
         The path can contain r{{geo_id}}.
 
 NOTE: Without a data file no well or group specific summary data will be exported.""",
     )
-    realizations_weights: Optional[List[float]] = Field(
+    realizations_weights: list[float] | None = Field(
         default=None,
         description="""List of weights, one per realization.
 

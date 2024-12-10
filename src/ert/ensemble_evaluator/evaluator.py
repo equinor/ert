@@ -2,17 +2,18 @@ import asyncio
 import datetime
 import logging
 import traceback
-from contextlib import asynccontextmanager, contextmanager
-from http import HTTPStatus
-from typing import (
-    Any,
+from collections.abc import (
     AsyncIterator,
     Awaitable,
     Callable,
     Generator,
     Iterable,
     Sequence,
-    Type,
+)
+from contextlib import asynccontextmanager, contextmanager
+from http import HTTPStatus
+from typing import (
+    Any,
     get_args,
 )
 
@@ -112,9 +113,9 @@ class EnsembleEvaluator:
             self._batch_processing_queue.task_done()
 
     async def _batch_events_into_buffer(self) -> None:
-        event_handler: dict[Type[Event], EVENT_HANDLER] = {}
+        event_handler: dict[type[Event], EVENT_HANDLER] = {}
 
-        def set_event_handler(event_types: set[Type[Event]], func: Any) -> None:
+        def set_event_handler(event_types: set[type[Event]], func: Any) -> None:
             for event_type in event_types:
                 event_handler[event_type] = func
 
@@ -138,7 +139,7 @@ class EnsembleEvaluator:
                     function = event_handler[type(event)]
                     batch.append((function, event))
                     self._events.task_done()
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
@@ -315,7 +316,7 @@ class EnsembleEvaluator:
                     await asyncio.wait_for(
                         self._dispatchers_connected.join(), timeout=20
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.debug("Timed out waiting for dispatchers to disconnect")
             else:
                 logger.debug("Got done signal. No dispatchers connected")
@@ -414,10 +415,8 @@ class EnsembleEvaluator:
             )
         )
         logger.error(
-            (
-                f"Exception in evaluator task {task_name}: {task_exception}\n"
-                f"Traceback: {exc_traceback}"
-            )
+            f"Exception in evaluator task {task_name}: {task_exception}\n"
+            f"Traceback: {exc_traceback}"
         )
 
     async def run_and_get_successful_realizations(self) -> list[int]:

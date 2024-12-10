@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Iterator, Optional, TypeVar, overload
+from collections.abc import Iterator
+from typing import TypeVar, overload
 
 from .parsing import ConfigWarning
 
 
-def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
+def get_num_cpu_from_data_file(data_file: str) -> int | None:
     """Reads the number of cpus required from the reservoir simulator .data file.
 
     Works similarly to resdata.util.get_num_cpu
@@ -76,7 +77,7 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
 
     """
     try:
-        with open(data_file, "r", encoding="utf-8") as file:
+        with open(data_file, encoding="utf-8") as file:
             return _get_num_cpu(iter(file), data_file)
     except (OSError, UnicodeDecodeError) as err:
         ConfigWarning.warn(
@@ -86,8 +87,8 @@ def get_num_cpu_from_data_file(data_file: str) -> Optional[int]:
 
 
 def _get_num_cpu(
-    lines_iter: Iterator[str], data_file_name: Optional[str] = None
-) -> Optional[int]:
+    lines_iter: Iterator[str], data_file_name: str | None = None
+) -> int | None:
     """Handles reading the lines in the data file and returns the num_cpu
 
     TITLE keyword requires skipping one line

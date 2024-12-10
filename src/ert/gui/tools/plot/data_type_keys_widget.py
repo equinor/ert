@@ -126,8 +126,8 @@ class DataTypeKeysWidget(QWidget):
     def selectDefault(self) -> None:
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
-    def setSearchString(self, _filter: str | None) -> None:
-        self.filter_model.setFilterFixedString(_filter)
+    def setSearchString(self, filter_: str | None) -> None:
+        self.filter_model.setFilterFixedString(filter_)
 
     def showFilterPopup(self) -> None:
         self.__filter_popup.show()

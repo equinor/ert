@@ -5,7 +5,6 @@ import os
 from collections import Counter
 from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
-from typing import Optional, Tuple
 
 from qtpy.QtCore import QDir
 from qtpy.QtGui import QIcon
@@ -30,7 +29,7 @@ from ert.storage.local_storage import local_storage_set_ert_config
 from .suggestor import Suggestor
 
 
-def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> int:
+def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> int:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -68,8 +67,8 @@ def run_gui(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
 def _start_initial_gui_window(
     args: Namespace,
     log_handler: GUILogHandler,
-    plugin_manager: Optional[ErtPluginManager] = None,
-) -> Tuple[QWidget, Optional[str]]:
+    plugin_manager: ErtPluginManager | None = None,
+) -> tuple[QWidget, str | None]:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
     logger = logging.getLogger(__name__)
@@ -119,17 +118,17 @@ def _start_initial_gui_window(
     for msg in validation_messages.warnings:
         logger.info(f"Warning shown in gui '{msg}'")
 
-    _main_window = _setup_main_window(
+    main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
     )
 
     if validation_messages.warnings or validation_messages.deprecations:
 
         def continue_action() -> None:
-            _main_window.show()
-            _main_window.activateWindow()
-            _main_window.raise_()
-            _main_window.adjustSize()
+            main_window.show()
+            main_window.activateWindow()
+            main_window.raise_()
+            main_window.adjustSize()
 
         suggestor = Suggestor(
             validation_messages.errors,
@@ -138,14 +137,14 @@ def _start_initial_gui_window(
             continue_action,
             plugin_manager.get_help_links() if plugin_manager is not None else {},
         )
-        suggestor.notifier = _main_window.notifier
+        suggestor.notifier = main_window.notifier
         return (
             suggestor,
             ert_config.ens_path,
         )
     else:
         return (
-            _main_window,
+            main_window,
             ert_config.ens_path,
         )
 
@@ -155,7 +154,7 @@ def _setup_main_window(
     args: Namespace,
     log_handler: GUILogHandler,
     storage: Storage,
-    plugin_manager: Optional[ErtPluginManager] = None,
+    plugin_manager: ErtPluginManager | None = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
     window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)

@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+from collections.abc import Coroutine
 from pathlib import Path
-from typing import Any, Coroutine, Literal
+from typing import Any, Literal
 
 import pytest
 

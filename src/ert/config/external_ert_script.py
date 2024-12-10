@@ -3,7 +3,7 @@ from __future__ import annotations
 import codecs
 import sys
 from subprocess import PIPE, Popen
-from typing import Any, Optional
+from typing import Any
 
 from .ert_script import ErtScript
 
@@ -13,7 +13,7 @@ class ExternalErtScript(ErtScript):
         super().__init__()
 
         self.__executable = executable
-        self.__job: Optional[Popen[bytes]] = None
+        self.__job: Popen[bytes] | None = None
 
     def run(self, *args: Any) -> None:
         command = [self.__executable]

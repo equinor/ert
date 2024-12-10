@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtGui import QPalette
 from qtpy.QtWidgets import QTextEdit
@@ -27,7 +27,7 @@ class TextBox(QTextEdit):
         QTextEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)
-        self._validator: Optional[StringDefinition] = None
+        self._validator: StringDefinition | None = None
         self._model = model
         self._enable_validation = True
 
@@ -68,7 +68,7 @@ class TextBox(QTextEdit):
 
     def textBoxChanged(self) -> None:
         """Called whenever the contents of the textbox changes."""
-        text: Optional[str] = self.toPlainText()
+        text: str | None = self.toPlainText()
         if not text:
             text = None
 

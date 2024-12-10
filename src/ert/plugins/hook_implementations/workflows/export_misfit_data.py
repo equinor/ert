@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ class ExportMisfitDataJob(ErtScript):
     """
 
     def run(
-        self, ert_config: ErtConfig, ensemble: Ensemble, workflow_args: List[Any]
+        self, ert_config: ErtConfig, ensemble: Ensemble, workflow_args: list[Any]
     ) -> None:
         target_file = "misfit.hdf" if not workflow_args else workflow_args[0]
 

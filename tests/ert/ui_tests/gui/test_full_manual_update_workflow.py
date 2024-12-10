@@ -3,12 +3,7 @@ import shutil
 
 import numpy as np
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
-    QComboBox,
-    QToolButton,
-    QTreeView,
-    QWidget,
-)
+from qtpy.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
 from ert.data import MeasuredData
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel

@@ -78,7 +78,7 @@ def test_gen_kw_config_get_priors():
         f.write("KEY10  CONST 10\n")
 
     transform_function_definitions = []
-    with open(parameter_file, "r", encoding="utf-8") as file:
+    with open(parameter_file, encoding="utf-8") as file:
         for item in file:
             items = item.split()
             transform_function_definitions.append(

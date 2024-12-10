@@ -1,6 +1,6 @@
 from dataclasses import astuple, dataclass
 from enum import Enum, auto, unique
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import hypothesis.strategies as st
 import numpy as np
@@ -59,7 +59,7 @@ class GrdeclKeyword:
     ...     return [self.field1.to_ecl(), self.field2.to_ecl]
     """
 
-    def to_ecl(self) -> List[Any]:
+    def to_ecl(self) -> list[Any]:
         return [value.to_ecl() for value in astuple(self)]
 
 
@@ -197,8 +197,8 @@ class GridHead:
     numres: int
     nseg: int
     coordinate_type: CoordinateType
-    lgr_start: Tuple[int, int, int]
-    lgr_end: Tuple[int, int, int]
+    lgr_start: tuple[int, int, int]
+    lgr_end: tuple[int, int, int]
 
     def to_ecl(self) -> np.ndarray:
         # The data is expected to consist of
@@ -228,7 +228,7 @@ class GlobalGrid:
     grid_head: GridHead
     coord: np.ndarray
     zcorn: np.ndarray
-    actnum: Optional[np.ndarray] = None
+    actnum: np.ndarray | None = None
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, GlobalGrid):
@@ -240,7 +240,7 @@ class GlobalGrid:
             and np.array_equal(self.zcorn, other.zcorn)
         )
 
-    def to_ecl(self) -> List[Tuple[str, Any]]:
+    def to_ecl(self) -> list[tuple[str, Any]]:
         result = [
             ("GRIDHEAD", self.grid_head.to_ecl()),
             ("COORD   ", self.coord.astype(np.float32)),
@@ -268,7 +268,7 @@ class EGrid:
     global_grid: GlobalGrid
 
     @property
-    def shape(self) -> Tuple[int, int, int]:
+    def shape(self) -> tuple[int, int, int]:
         grid_head = self.global_grid.grid_head
         return (grid_head.num_x, grid_head.num_y, grid_head.num_z)
 
@@ -366,7 +366,7 @@ def global_grids(draw):
 egrids = st.builds(EGrid, file_heads, global_grids())
 
 
-def simple_grid(dims: Tuple[int, int, int] = (2, 2, 2)):
+def simple_grid(dims: tuple[int, int, int] = (2, 2, 2)):
     corner_size = (dims[0] + 1) * (dims[1] + 1) * 6
     coord = np.zeros(
         shape=corner_size,

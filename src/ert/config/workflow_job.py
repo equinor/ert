@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Type, TypeAlias
+from typing import TypeAlias
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
@@ -19,7 +19,7 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
-ContentTypes: TypeAlias = Type[int] | Type[bool] | Type[float] | Type[str]
+ContentTypes: TypeAlias = type[int] | type[bool] | type[float] | type[str]
 
 
 def workflow_job_parser(file: str) -> ConfigDict:
@@ -72,7 +72,7 @@ class WorkflowJob:
         )
 
     @classmethod
-    def from_file(cls, config_file: str, name: str | None = None) -> "WorkflowJob":
+    def from_file(cls, config_file: str, name: str | None = None) -> WorkflowJob:
         if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
             raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
         if not name:
@@ -100,7 +100,7 @@ class WorkflowJob:
             return issubclass(self.ert_script, ErtPlugin)
         return False
 
-    def argument_types(self) -> list["ContentTypes"]:
+    def argument_types(self) -> list[ContentTypes]:
         def content_to_type(c: SchemaItemType | None) -> ContentTypes:
             if c == SchemaItemType.BOOL:
                 return bool

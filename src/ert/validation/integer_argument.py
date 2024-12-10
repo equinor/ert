@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
@@ -13,8 +12,8 @@ class IntegerArgument(ArgumentDefinition):
 
     def __init__(
         self,
-        from_value: Optional[int] = None,
-        to_value: Optional[int] = None,
+        from_value: int | None = None,
+        to_value: int | None = None,
         **kwargs: bool,
     ) -> None:
         super().__init__(**kwargs)

@@ -21,7 +21,7 @@ def symlink(target, link_name):
         target_check = os.path.join(link_path, target)
 
     if not os.path.exists(target_check):
-        raise IOError(
+        raise OSError(
             f"{target} (target) and {link_name} (link_name) requested, "
             f"which implies that {target_check} must exist, but it does not."
         )
@@ -37,5 +37,5 @@ if __name__ == "__main__":
     link_name = sys.argv[2]
     try:
         symlink(target, link_name)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"SYMLINK failed with the following error: {e}")

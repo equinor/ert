@@ -5,9 +5,9 @@ import contextlib
 import logging
 import signal
 from asyncio.subprocess import Process
+from collections.abc import MutableMapping
 from contextlib import suppress
 from pathlib import Path
-from typing import MutableMapping, Optional, Set
 
 from .driver import SIGNAL_OFFSET, Driver
 from .event import FinishedEvent, StartedEvent
@@ -21,7 +21,7 @@ class LocalDriver(Driver):
     def __init__(self) -> None:
         super().__init__()
         self._tasks: MutableMapping[int, asyncio.Task[None]] = {}
-        self._sent_finished_events: Set[int] = set()
+        self._sent_finished_events: set[int] = set()
 
     async def submit(
         self,
@@ -30,9 +30,9 @@ class LocalDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
-        realization_memory: Optional[int] = 0,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
         activate_script: str = "",
     ) -> None:
         self._tasks[iens] = asyncio.create_task(self._run(iens, executable, *args))
@@ -117,7 +117,7 @@ class LocalDriver(Driver):
         try:
             proc.terminate()
             await asyncio.wait_for(proc.wait(), _TERMINATE_TIMEOUT)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
         except ProcessLookupError:
             # This will happen if the subprocess has not yet started

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -45,7 +45,7 @@ class Simulator:
         self,
         version: str,
         executable: str,
-        env: Dict[str, str],
+        env: dict[str, str],
         mpirun: str | None = None,
     ):
         self.version: str = version
@@ -53,7 +53,7 @@ class Simulator:
             raise OSError(f"The executable: '{executable}' can not be executed by user")
 
         self.executable: str = executable
-        self.env: Dict[str, str] = env
+        self.env: dict[str, str] = env
         self.mpirun: str | None = mpirun
         self.name: str = "simulator"
 
@@ -121,11 +121,11 @@ class EclConfig:
 
         return version
 
-    def _get_env(self, version: str, exe_type: str) -> Dict[str, str]:
-        env: Dict[str, str] = {}
+    def _get_env(self, version: str, exe_type: str) -> dict[str, str]:
+        env: dict[str, str] = {}
         env.update(self._config.get(Keys.env, {}))
 
-        mpi_sim: Dict[str, Any] = self._config[Keys.versions][
+        mpi_sim: dict[str, Any] = self._config[Keys.versions][
             self._get_version(version)
         ][exe_type]
         env.update(mpi_sim.get(Keys.env, {}))
@@ -134,7 +134,7 @@ class EclConfig:
 
     def _get_sim(self, version: str | None, exe_type: str) -> Simulator:
         version = self._get_version(version)
-        binaries: Dict[str, str] = self._config[Keys.versions][version][exe_type]
+        binaries: dict[str, str] = self._config[Keys.versions][version][exe_type]
         mpirun = binaries[Keys.mpirun] if exe_type == Keys.mpi else None
         return Simulator(
             version,

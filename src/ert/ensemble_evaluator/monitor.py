@@ -2,7 +2,8 @@ import asyncio
 import logging
 import ssl
 import uuid
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Final, Optional, Union
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING, Any, Final
 
 from aiohttp import ClientError
 from websockets import ConnectionClosed, Headers
@@ -35,9 +36,9 @@ class Monitor:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
-        self._event_queue: asyncio.Queue[Union[Event, EventSentinel]] = asyncio.Queue()
-        self._connection: Optional[ClientConnection] = None
-        self._receiver_task: Optional[asyncio.Task[None]] = None
+        self._event_queue: asyncio.Queue[Event | EventSentinel] = asyncio.Queue()
+        self._connection: ClientConnection | None = None
+        self._receiver_task: asyncio.Task[None] | None = None
         self._connected: asyncio.Future[None] = asyncio.Future()
         self._connection_timeout: float = 120.0
         self._receiver_timeout: float = 60.0
@@ -46,7 +47,7 @@ class Monitor:
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
             await asyncio.wait_for(self._connected, timeout=self._connection_timeout)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             msg = "Couldn't establish connection with the ensemble evaluator!"
             logger.error(msg)
             self._receiver_task.cancel()
@@ -86,28 +87,28 @@ class Monitor:
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
-        self, heartbeat_interval: Optional[float] = None
-    ) -> AsyncGenerator[Optional[Event], None]:
+        self, heartbeat_interval: float | None = None
+    ) -> AsyncGenerator[Event | None, None]:
         """Yield events from the internal event queue with optional heartbeats.
 
         Heartbeats are represented by None being yielded.
 
         Heartbeats stops being emitted after a CloseTrackerEvent is found."""
-        _heartbeat_interval: Optional[float] = heartbeat_interval
+        heartbeat_interval_: float | None = heartbeat_interval
         closetracker_received: bool = False
         while True:
             try:
                 event = await asyncio.wait_for(
-                    self._event_queue.get(), timeout=_heartbeat_interval
+                    self._event_queue.get(), timeout=heartbeat_interval_
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 if closetracker_received:
                     logger.error("Evaluator did not send the TERMINATED event!")
                     break
                 event = None
             if isinstance(event, EventSentinel):
                 closetracker_received = True
-                _heartbeat_interval = self._receiver_timeout
+                heartbeat_interval_ = self._receiver_timeout
             else:
                 yield event
                 if type(event) is EETerminated:
@@ -117,7 +118,7 @@ class Monitor:
                 self._event_queue.task_done()
 
     async def _receiver(self) -> None:
-        tls: Optional[ssl.SSLContext] = None
+        tls: ssl.SSLContext | None = None
         if self._ee_con_info.cert:
             tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             tls.load_verify_locations(cadata=self._ee_con_info.cert)

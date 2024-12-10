@@ -5,7 +5,7 @@ import os
 import time
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Self, Union, overload
+from typing import TYPE_CHECKING, Any, Self, overload
 
 import numpy as np
 import xarray as xr
@@ -33,14 +33,14 @@ class Field(ParameterConfig):
     ny: int
     nz: int
     file_format: FieldFileFormat
-    output_transformation: Optional[str]
-    input_transformation: Optional[str]
-    truncation_min: Optional[float]
-    truncation_max: Optional[float]
+    output_transformation: str | None
+    input_transformation: str | None
+    truncation_min: float | None
+    truncation_max: float | None
     forward_init_file: str
     output_file: Path
     grid_file: str
-    mask_file: Optional[Path] = None
+    mask_file: Path | None = None
 
     @classmethod
     def from_config_list(
@@ -263,29 +263,27 @@ TRANSFORM_FUNCTIONS = {
 
 @overload
 def field_transform(
-    data: xr.DataArray, transform_name: Optional[str]
-) -> Union[npt.NDArray[np.float32], xr.DataArray]:
+    data: xr.DataArray, transform_name: str | None
+) -> npt.NDArray[np.float32] | xr.DataArray:
     pass
 
 
 @overload
 def field_transform(
-    data: npt.NDArray[np.float32], transform_name: Optional[str]
+    data: npt.NDArray[np.float32], transform_name: str | None
 ) -> npt.NDArray[np.float32]:
     pass
 
 
 def field_transform(
-    data: Union[xr.DataArray, npt.NDArray[np.float32]], transform_name: Optional[str]
-) -> Union[npt.NDArray[np.float32], xr.DataArray]:
+    data: xr.DataArray | npt.NDArray[np.float32], transform_name: str | None
+) -> npt.NDArray[np.float32] | xr.DataArray:
     if transform_name is None:
         return data
     return TRANSFORM_FUNCTIONS[transform_name](data)  # type: ignore
 
 
-def _field_truncate(
-    data: npt.ArrayLike, min_: Optional[float], max_: Optional[float]
-) -> Any:
+def _field_truncate(data: npt.ArrayLike, min_: float | None, max_: float | None) -> Any:
     if min_ is not None and max_ is not None:
         vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
         return vfunc(data)

@@ -5,7 +5,8 @@ import logging
 import os
 import tempfile
 from argparse import ArgumentParser
-from typing import Any, Callable, Type
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class WorkflowConfigs:
         self._workflows: list[WorkflowConfig] = []
 
     def add_workflow(
-        self, ert_script: Type[Any], name: str | None = None
+        self, ert_script: type[Any], name: str | None = None
     ) -> WorkflowConfig:
         """
 
@@ -52,7 +53,7 @@ class WorkflowConfig:
     """
 
     def __init__(
-        self, ertscript_class: Type[Any], tmpdir: str, name: str | None = None
+        self, ertscript_class: type[Any], tmpdir: str, name: str | None = None
     ) -> None:
         """
         :param ertscript_class: Class inheriting from ErtScript
@@ -111,7 +112,7 @@ class WorkflowConfig:
         self._category = category
 
     @staticmethod
-    def _get_func_name(func: Type[Any], name: str | None) -> str:
+    def _get_func_name(func: type[Any], name: str | None) -> str:
         return name if name else func.__name__
 
     def _write_workflow_config(self, output_dir: str) -> str:
@@ -122,6 +123,6 @@ class WorkflowConfig:
         return file_path
 
     @staticmethod
-    def _get_source_package(module: Type[Any]) -> str:
+    def _get_source_package(module: type[Any]) -> str:
         base, _, _ = module.__module__.partition(".")
         return base

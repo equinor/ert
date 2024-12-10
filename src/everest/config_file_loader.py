@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import jinja2
 from ruamel.yaml import YAML, YAMLError
@@ -28,9 +28,9 @@ ERT_CONFIG_TEMPLATES = {
 }
 
 
-def load_yaml(file_name: str) -> Optional[Dict[str, Any]]:
-    with open(file_name, "r", encoding="utf-8") as input_file:
-        input_data: List[str] = input_file.readlines()
+def load_yaml(file_name: str) -> dict[str, Any] | None:
+    with open(file_name, encoding="utf-8") as input_file:
+        input_data: list[str] = input_file.readlines()
         try:
             yaml = YAML()
             yaml.preserve_quotes = True
@@ -85,7 +85,7 @@ def _os():
 
     """
 
-    class Os(object):
+    class Os:
         pass
 
     x = Os()
@@ -114,7 +114,7 @@ def _render_definitions(definitions, jinja_env):
             )
 
 
-def yaml_file_to_substituted_config_dict(config_path: str) -> Dict[str, Any]:
+def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
     configuration = load_yaml(config_path)
 
     definitions = _get_definitions(
@@ -122,7 +122,7 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> Dict[str, Any]:
         configpath=os.path.dirname(os.path.abspath(config_path)),
     )
     definitions["os"] = _os()  # update definitions with os namespace
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         txt = "".join(f.readlines())
     jenv = jinja2.Environment(
         block_start_string=BLOCK_START_STRING,
@@ -137,7 +137,7 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> Dict[str, Any]:
     # Load the config with definitions again as yaml
     yaml = YAML(typ="safe", pure=True).load(config)
 
-    if not isinstance(yaml, Dict):
+    if not isinstance(yaml, dict):
         yaml = {}
 
     # Inject config path

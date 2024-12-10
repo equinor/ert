@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -21,21 +21,17 @@ if TYPE_CHECKING:
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
-CcsData = TypedDict(
-    "CcsData",
-    {
-        "index": List[int],
-        "mean": Dict[int, float],
-        "min": Dict[int, float],
-        "max": Dict[int, float],
-        "p10": Dict[int, float],
-        "p33": Dict[int, float],
-        "p50": Dict[int, float],
-        "p67": Dict[int, float],
-        "p90": Dict[int, float],
-        "std": Dict[int, float],
-    },
-)
+class CcsData(TypedDict):
+    index: list[int]
+    mean: dict[int, float]
+    min: dict[int, float]
+    max: dict[int, float]
+    p10: dict[int, float]
+    p33: dict[int, float]
+    p50: dict[int, float]
+    p67: dict[int, float]
+    p90: dict[int, float]
+    std: dict[int, float]
 
 
 class CrossEnsembleStatisticsPlot:
@@ -46,9 +42,9 @@ class CrossEnsembleStatisticsPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+        ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         plotCrossEnsembleStatistics(
             figure, plot_context, ensemble_to_data_map, observation_data
@@ -57,8 +53,8 @@ class CrossEnsembleStatisticsPlot:
 
 def plotCrossEnsembleStatistics(
     figure: Figure,
-    plot_context: "PlotContext",
-    ensemble_to_data_map: Dict[EnsembleObject, pd.DataFrame],
+    plot_context: PlotContext,
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     _observation_data: DataFrame,
 ) -> None:
     config = plot_context.plotConfig()
@@ -132,7 +128,7 @@ def plotCrossEnsembleStatistics(
     )
 
 
-def _addStatisticsLegends(plot_config: "PlotConfig") -> None:
+def _addStatisticsLegends(plot_config: PlotConfig) -> None:
     _addStatisticsLegend(plot_config, "mean")
     _addStatisticsLegend(plot_config, "p50")
     _addStatisticsLegend(plot_config, "min-max", 0.2)
@@ -142,7 +138,7 @@ def _addStatisticsLegends(plot_config: "PlotConfig") -> None:
 
 
 def _addStatisticsLegend(
-    plot_config: "PlotConfig", style_name: str, alpha_multiplier: float = 1.0
+    plot_config: PlotConfig, style_name: str, alpha_multiplier: float = 1.0
 ) -> None:
     style = plot_config.getStatisticsStyle(style_name)
     if style.isVisible():
@@ -178,7 +174,7 @@ def _assertNumeric(data: pd.DataFrame) -> pd.Series:
 
 
 def _plotCrossEnsembleStatistics(
-    axes: "Axes", plot_config: "PlotConfig", data: CcsData, index: int
+    axes: Axes, plot_config: PlotConfig, data: CcsData, index: int
 ) -> None:
     axes.set_xlabel(plot_config.xLabel())  # type: ignore
     axes.set_ylabel(plot_config.yLabel())  # type: ignore
@@ -293,8 +289,8 @@ def _plotCrossEnsembleStatistics(
 
 
 def _plotConnectionLines(
-    axes: "Axes",
-    plot_config: "PlotConfig",
+    axes: Axes,
+    plot_config: PlotConfig,
     ccs: CcsData,
 ) -> None:
     line_style = plot_config.distributionLineStyle()

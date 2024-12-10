@@ -5,10 +5,7 @@ import pytest
 
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import (
-    start_server,
-    wait_for_server,
-)
+from everest.detached import start_server, wait_for_server
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE = "config_fm_failure.yml"

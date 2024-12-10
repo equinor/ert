@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
 from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
@@ -42,7 +40,7 @@ class ClearableLineEdit(QLineEdit):
         size = QLineEdit.minimumSizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
-    def resizeEvent(self, a0: Optional[QResizeEvent]) -> None:
+    def resizeEvent(self, a0: QResizeEvent | None) -> None:
         right = self.rect().right()
         style = self.style()
         assert style is not None
@@ -72,16 +70,16 @@ class ClearableLineEdit(QLineEdit):
             palette.setColor(self.foregroundRole(), self._active_color)
             self.setPalette(palette)
 
-    def focusInEvent(self, a0: Optional[QFocusEvent]) -> None:
+    def focusInEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusInEvent(self, a0)
         self.hidePlaceHolder()
 
-    def focusOutEvent(self, a0: Optional[QFocusEvent]) -> None:
+    def focusOutEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusOutEvent(self, a0)
         if not QLineEdit.text(self):
             self.showPlaceholder()
 
-    def keyPressEvent(self, a0: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.clear()
             self.clearFocus()
@@ -89,7 +87,7 @@ class ClearableLineEdit(QLineEdit):
 
         QLineEdit.keyPressEvent(self, a0)
 
-    def setText(self, a0: Optional[str]) -> None:
+    def setText(self, a0: str | None) -> None:
         self.hidePlaceHolder()
 
         QLineEdit.setText(self, a0)

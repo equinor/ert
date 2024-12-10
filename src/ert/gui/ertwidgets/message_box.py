@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -21,9 +19,9 @@ from ert.gui.tools.file.file_dialog import (
 class ErtMessageBox(QDialog):
     def __init__(
         self,
-        text: Optional[str],
-        detailed_text: Optional[str],
-        parent: Optional[QWidget] = None,
+        text: str | None,
+        detailed_text: str | None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.box = QDialogButtonBox(

@@ -4,7 +4,7 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import ClassVar, Dict, List, Tuple
+from typing import ClassVar
 
 import colorama
 from colorama import Fore
@@ -100,7 +100,7 @@ def _format_list(values):
 @dataclass
 class JobProgress:
     name: str
-    status: Dict[str, List[int]] = field(
+    status: dict[str, list[int]] = field(
         default_factory=lambda: {
             JOB_RUNNING: [],  # contains running simulation numbers i.e [7,8,9]
             JOB_SUCCESS: [],  # contains successful simulation numbers i.e [0,1,3,4]
@@ -113,7 +113,7 @@ class JobProgress:
         JOB_FAILURE: Fore.RED,
     }
 
-    def _status_string(self, max_widths: Dict[str, int]) -> str:
+    def _status_string(self, max_widths: dict[str, int]) -> str:
         string = []
         for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
             number_of_simulations = len(self.status[state])
@@ -122,7 +122,7 @@ class JobProgress:
             string.append(f"{color}{number_of_simulations:>{width}}{Fore.RESET}")
         return "/".join(string)
 
-    def progress_str(self, max_widths: Dict[str, int]) -> str:
+    def progress_str(self, max_widths: dict[str, int]) -> str:
         msg = ""
         for state in [JOB_SUCCESS, JOB_FAILURE]:
             simulations_list = _format_list(self.status[state])
@@ -299,7 +299,7 @@ class _DetachedMonitor:
 
 
 def run_detached_monitor(
-    server_context: Tuple[str, str, Tuple[str, str]],
+    server_context: tuple[str, str, tuple[str, str]],
     optimization_output_dir: str,
     show_all_jobs: bool = False,
 ):

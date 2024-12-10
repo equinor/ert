@@ -3,15 +3,12 @@ from __future__ import annotations
 import functools
 import logging
 import time
+from collections.abc import Callable, Iterable, Sequence
 from fnmatch import fnmatch
 from typing import (
     TYPE_CHECKING,
-    Callable,
     Generic,
-    Iterable,
-    Optional,
     Self,
-    Sequence,
     TypeVar,
 )
 
@@ -165,7 +162,7 @@ def _load_observations_and_responses(
     global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
-    auto_scale_observations: Optional[list[ObservationGroups]],
+    auto_scale_observations: list[ObservationGroups] | None,
     progress_callback: Callable[[AnalysisEvent], None],
 ) -> tuple[
     npt.NDArray[np.float64],
@@ -262,7 +259,7 @@ def _load_observations_and_responses(
                 )
             )
 
-        if len(scaling_factors_dfs):
+        if scaling_factors_dfs:
             scaling_factors_df = polars.concat(scaling_factors_dfs)
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 
@@ -445,7 +442,7 @@ def analysis_ES(
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: Optional[list[ObservationGroups]],
+    auto_scale_observations: list[ObservationGroups] | None,
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -574,12 +571,12 @@ def analysis_ES(
                     t["name"]  # type: ignore
                     for t in config_node.transform_function_definitions
                 ]
-                _cross_correlations = np.vstack(cross_correlations)
-                if _cross_correlations.size != 0:
+                cross_correlations_ = np.vstack(cross_correlations)
+                if cross_correlations_.size != 0:
                     source_ensemble.save_cross_correlations(
-                        _cross_correlations,
+                        cross_correlations_,
                         param_group,
-                        parameter_names[: _cross_correlations.shape[0]],
+                        parameter_names[: cross_correlations_.shape[0]],
                     )
             logger.info(
                 f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
@@ -623,7 +620,7 @@ def analysis_IES(
     ens_mask: npt.NDArray[np.bool_],
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
-    sies_smoother: Optional[ies.SIES],
+    sies_smoother: ies.SIES | None,
     progress_callback: Callable[[AnalysisEvent], None],
     auto_scale_observations: list[ObservationGroups],
     sies_step_length: Callable[[int], float],
@@ -750,10 +747,10 @@ def smoother_update(
     posterior_storage: Ensemble,
     observations: Iterable[str],
     parameters: Iterable[str],
-    analysis_config: Optional[UpdateSettings] = None,
-    es_settings: Optional[ESSettings] = None,
-    rng: Optional[np.random.Generator] = None,
-    progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
+    analysis_config: UpdateSettings | None = None,
+    es_settings: ESSettings | None = None,
+    rng: np.random.Generator | None = None,
+    progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
 ) -> SmootherSnapshot:
     if not progress_callback:
@@ -814,15 +811,15 @@ def smoother_update(
 def iterative_smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
-    sies_smoother: Optional[ies.SIES],
+    sies_smoother: ies.SIES | None,
     parameters: Iterable[str],
     observations: Iterable[str],
     update_settings: UpdateSettings,
     analysis_config: IESSettings,
     sies_step_length: Callable[[int], float],
     initial_mask: npt.NDArray[np.bool_],
-    rng: Optional[np.random.Generator] = None,
-    progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
+    rng: np.random.Generator | None = None,
+    progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
 ) -> tuple[SmootherSnapshot, ies.SIES]:
     if not progress_callback:

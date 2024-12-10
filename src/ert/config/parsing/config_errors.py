@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import warnings
-from typing import Callable, Self, Sequence, Type
+from collections.abc import Callable, Sequence
+from typing import Self
 
 from .error_info import ErrorInfo, WarningInfo
 from .types import MaybeWithContext
@@ -28,7 +29,7 @@ class ConfigWarning(UserWarning):
 
         def ert_formatted_warning(
             message: Warning | str,
-            category: Type[Warning],
+            category: type[Warning],
             filename: str,
             lineno: int,
             line: str | None = None,

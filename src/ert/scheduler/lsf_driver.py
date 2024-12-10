@@ -9,16 +9,12 @@ import shlex
 import shutil
 import stat
 import time
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
-    Iterable,
     Literal,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    Type,
     cast,
     get_args,
 )
@@ -79,7 +75,7 @@ AnyJob = (
     FinishedJobSuccess | FinishedJobFailure | QueuedJob | RunningJob | IgnoredJobstates
 )
 
-_STATE_ORDER: dict[Type[AnyJob], int] = {
+_STATE_ORDER: dict[type[AnyJob], int] = {
     IgnoredJobstates: -1,
     QueuedJob: 0,
     RunningJob: 1,

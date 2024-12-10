@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional, Set, Union, no_type_check
+from typing import TYPE_CHECKING, Any, no_type_check
 
 from ert.substitutions import substitute_runpath_name
 
@@ -15,7 +15,7 @@ from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 if TYPE_CHECKING:
-    from typing import List
+    pass
 
 logger = logging.getLogger(__name__)
 import polars
@@ -24,7 +24,7 @@ import polars
 @dataclass
 class SummaryConfig(ResponseConfig):
     name: str = "summary"
-    refcase: Union[Set[datetime], List[str], None] = None
+    refcase: set[datetime] | list[str] | None = None
     has_finalized_keys = False
 
     def __post_init__(self) -> None:
@@ -35,7 +35,7 @@ class SummaryConfig(ResponseConfig):
             raise ValueError("SummaryConfig must be given at least one key")
 
     @property
-    def expected_input_files(self) -> List[str]:
+    def expected_input_files(self) -> list[str]:
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
@@ -68,15 +68,15 @@ class SummaryConfig(ResponseConfig):
         return "summary"
 
     @property
-    def primary_key(self) -> List[str]:
+    def primary_key(self) -> list[str]:
         return ["time"]
 
     @no_type_check
     @classmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Optional[SummaryConfig]:
+    def from_config_dict(cls, config_dict: ConfigDict) -> SummaryConfig | None:
         refcase = Refcase.from_config_dict(config_dict)
         if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):
-            eclbase: Optional[str] = config_dict.get("ECLBASE")
+            eclbase: str | None = config_dict.get("ECLBASE")
             if eclbase is None:
                 raise ConfigValidationError(
                     "In order to use summary responses, ECLBASE has to be set."

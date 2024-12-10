@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from qtpy.QtCore import QModelIndex, QPoint, QSize
 from qtpy.QtGui import QColor, QRegion
@@ -26,8 +26,8 @@ class _ComboBoxItemWidget(QWidget):
         label: str,
         description: str,
         enabled: bool = True,
-        parent: Optional[QWidget] = None,
-        group: Optional[str] = None,
+        parent: QWidget | None = None,
+        group: str | None = None,
     ) -> None:
         super().__init__(parent)
         layout = QVBoxLayout()
@@ -115,12 +115,12 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
 
 
 class QComboBoxWithDescription(QComboBox):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
     def addDescriptionItem(
-        self, label: Optional[str], description: Any, group: Optional[str] = None
+        self, label: str | None, description: Any, group: str | None = None
     ) -> None:
         super().addItem(label)
         model = self.model()

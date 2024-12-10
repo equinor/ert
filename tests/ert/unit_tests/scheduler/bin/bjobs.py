@@ -1,7 +1,7 @@
 import argparse
 import os
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -26,11 +26,11 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def bjobs_formatter(jobstats: List[Job]) -> str:
+def bjobs_formatter(jobstats: list[Job]) -> str:
     return "".join([f"{job.job_id}^{job.job_state}^-\n" for job in jobstats])
 
 
-def read(path: Path, default: Optional[str] = None) -> Optional[str]:
+def read(path: Path, default: str | None = None) -> str | None:
     return path.read_text().strip() if path.exists() else default
 
 
@@ -45,7 +45,7 @@ def main() -> None:
         print(returncode)
         return
 
-    jobs_output: List[Job] = []
+    jobs_output: list[Job] = []
     for job in args.jobs:
         pid = read(jobs_path / f"{job}.pid")
         returncode = read(jobs_path / f"{job}.returncode")

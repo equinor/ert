@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import numpy as np
 from matplotlib.lines import Line2D
@@ -29,9 +29,9 @@ class StatisticsPlot:
     def plot(
         figure: Figure,
         plot_context: PlotContext,
-        ensemble_to_data_map: Dict[EnsembleObject, DataFrame],
-        _observation_data: DataFrame,
-        std_dev_images: Dict[str, npt.NDArray[np.float32]],
+        ensemble_to_data_map: dict[EnsembleObject, DataFrame],
+        observation_data: DataFrame,
+        std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
@@ -73,7 +73,7 @@ class StatisticsPlot:
 
         _addStatisticsLegends(plot_config=config)
 
-        plotObservations(_observation_data, plot_context, axes)
+        plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
@@ -120,7 +120,7 @@ def _addStatisticsLegend(
 
 
 def _plotPercentiles(
-    axes: "Axes", plot_config: PlotConfig, data: DataFrame, ensemble_label: str
+    axes: Axes, plot_config: PlotConfig, data: DataFrame, ensemble_label: str
 ) -> None:
     style = plot_config.getStatisticsStyle("mean")
     if style.isVisible():

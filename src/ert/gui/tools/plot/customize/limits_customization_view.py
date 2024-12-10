@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import date
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from qtpy.QtGui import QDoubleValidator, QIntValidator
 from qtpy.QtWidgets import QLabel, QStackedWidget, QWidget
@@ -19,17 +19,17 @@ if TYPE_CHECKING:
 class StackedInput(QStackedWidget):
     def __init__(self) -> None:
         QStackedWidget.__init__(self)
-        self._inputs: dict[Optional[str], QWidget] = {}
-        self._index_map: dict[Optional[str], int] = {}
+        self._inputs: dict[str | None, QWidget] = {}
+        self._index_map: dict[str | None, int] = {}
         self.addInput(PlotContext.UNKNOWN_AXIS, QLabel("Fixed"))
-        self._current_name: Optional[str] = PlotContext.UNKNOWN_AXIS
+        self._current_name: str | None = PlotContext.UNKNOWN_AXIS
 
-    def addInput(self, name: Optional[str], widget: QWidget) -> None:
+    def addInput(self, name: str | None, widget: QWidget) -> None:
         index = self.addWidget(widget)
         self._inputs[name] = widget
         self._index_map[name] = index
 
-    def switchToInput(self, name: Optional[str]) -> None:
+    def switchToInput(self, name: str | None) -> None:
         index_for_name = self._index_map[name]
         self.setCurrentIndex(index_for_name)
         self._current_name = name
@@ -65,8 +65,8 @@ class LimitsStack(StackedInput):
 
     @staticmethod
     def createDoubleLineEdit(
-        minimum: Optional[float] = None,
-        maximum: Optional[float] = None,
+        minimum: float | None = None,
+        maximum: float | None = None,
         placeholder: str = "",
     ) -> ClearableLineEdit:
         line_edit = ClearableLineEdit(placeholder=placeholder)
@@ -83,8 +83,8 @@ class LimitsStack(StackedInput):
 
     @staticmethod
     def createIntegerLineEdit(
-        minimum: Optional[int] = None,
-        maximum: Optional[int] = None,
+        minimum: int | None = None,
+        maximum: int | None = None,
         placeholder: str = "",
     ) -> ClearableLineEdit:
         line_edit = ClearableLineEdit(placeholder=placeholder)
@@ -99,32 +99,32 @@ class LimitsStack(StackedInput):
         line_edit.setValidator(validator)
         return line_edit
 
-    def setValue(self, axis_name: Optional[str], value: Any) -> None:
-        _input = self._inputs[axis_name]
+    def setValue(self, axis_name: str | None, value: Any) -> None:
+        input_ = self._inputs[axis_name]
 
         if axis_name in LimitsStack.NUMBER_AXIS:
             if value is None:
-                _input.setText("")
+                input_.setText("")
             else:
-                _input.setText(str(value))
+                input_.setText(str(value))
         elif axis_name == PlotContext.DATE_AXIS:
-            _input.setDate(value)
+            input_.setDate(value)
 
-    def getValue(self, axis_name: Optional[str]) -> Optional[float | int | date]:
-        _input = self._inputs[axis_name]
+    def getValue(self, axis_name: str | None) -> float | int | date | None:
+        input_ = self._inputs[axis_name]
         result = None
         if axis_name in LimitsStack.FLOAT_AXIS:
             try:
-                result = float(_input.text())
+                result = float(input_.text())
             except ValueError:
                 result = None
         elif axis_name in LimitsStack.INT_AXIS:
             try:
-                result = int(_input.text())
+                result = int(input_.text())
             except ValueError:
                 result = None
         elif axis_name == PlotContext.DATE_AXIS:
-            result = _input.date()
+            result = input_.date()
 
         return result
 
@@ -134,11 +134,11 @@ class LimitsWidget:
         self._limits = PlotLimits()
         self._x_minimum_stack = LimitsStack()
         self._x_maximum_stack = LimitsStack()
-        self._x_current_input_name: Optional[str] = PlotContext.UNKNOWN_AXIS
+        self._x_current_input_name: str | None = PlotContext.UNKNOWN_AXIS
 
         self._y_minimum_stack = LimitsStack()
         self._y_maximum_stack = LimitsStack()
-        self._y_current_input_name: Optional[str] = PlotContext.UNKNOWN_AXIS
+        self._y_current_input_name: str | None = PlotContext.UNKNOWN_AXIS
 
     @property
     def x_minimum_stack(self) -> LimitsStack:
@@ -204,9 +204,7 @@ class LimitsWidget:
             maximum = self._y_maximum_stack.getValue(self._y_current_input_name)
             self._updateLimit(self._y_current_input_name, minimum, maximum)
 
-    def _updateLimit(
-        self, axis_name: Optional[str], minimum: Any, maximum: Any
-    ) -> None:
+    def _updateLimit(self, axis_name: str | None, minimum: Any, maximum: Any) -> None:
         if axis_name == PlotContext.COUNT_AXIS:
             self._limits.count_limits = minimum, maximum
         elif axis_name == PlotContext.DENSITY_AXIS:
@@ -218,13 +216,13 @@ class LimitsWidget:
         elif axis_name == PlotContext.VALUE_AXIS:
             self._limits.value_limits = minimum, maximum
 
-    def switchInputOnX(self, axis_type: Optional[str]) -> None:
+    def switchInputOnX(self, axis_type: str | None) -> None:
         self._x_current_input_name = axis_type
         self._updateWidgets()
         self._x_minimum_stack.switchToInput(axis_type)
         self._x_maximum_stack.switchToInput(axis_type)
 
-    def switchInputOnY(self, axis_type: Optional[str]) -> None:
+    def switchInputOnY(self, axis_type: str | None) -> None:
         self._y_current_input_name = axis_type
         self._updateWidgets()
         self._y_minimum_stack.switchToInput(axis_type)
@@ -246,9 +244,7 @@ class LimitsCustomizationView(CustomizationView):
         self.addRow("Minimum", limits_widget.y_minimum_stack)
         self.addRow("Maximum", limits_widget.y_maximum_stack)
 
-    def setAxisTypes(
-        self, x_axis_type: Optional[str], y_axis_type: Optional[str]
-    ) -> None:
+    def setAxisTypes(self, x_axis_type: str | None, y_axis_type: str | None) -> None:
         self._limits_widget.switchInputOnX(x_axis_type)
         self._limits_widget.switchInputOnY(y_axis_type)
 

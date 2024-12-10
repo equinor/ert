@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 from ert.services import StorageService
 
 
 def get_info(
-    project_id: Optional[os.PathLike[str]] = None,
-) -> Dict[str, Union[str, Tuple[str, Any]]]:
+    project_id: os.PathLike[str] | None = None,
+) -> dict[str, str | tuple[str, Any]]:
     client = StorageService.connect(project=project_id)
     return {
         "baseurl": client.fetch_url(),

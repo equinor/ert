@@ -1,8 +1,9 @@
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Final, Sequence, overload
+from typing import Any, Final, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -419,9 +420,9 @@ class SnapshotModel(QAbstractItemModel):
             data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: str | None = data.get(data_name)  # type: ignore
-                if _bytes:
-                    return byte_with_unit(float(_bytes))
+                bytes_: str | None = data.get(data_name)  # type: ignore
+                if bytes_:
+                    return byte_with_unit(float(bytes_))
 
             if data_name in [ids.STDOUT, ids.STDERR]:
                 if not file_has_content(index.data(FileRole)):

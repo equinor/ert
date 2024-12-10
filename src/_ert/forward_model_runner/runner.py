@@ -2,14 +2,14 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
 
 
 class ForwardModelRunner:
-    def __init__(self, steps_data: Dict[str, Any]):
+    def __init__(self, steps_data: dict[str, Any]):
         self.steps_data = (
             steps_data  # On disk, this is called jobs.json for legacy reasons
         )
@@ -22,7 +22,7 @@ class ForwardModelRunner:
         if self.simulation_id is not None:
             os.environ["ERT_RUN_ID"] = self.simulation_id
 
-        self.steps: List[ForwardModelStep] = []
+        self.steps: list[ForwardModelStep] = []
         for index, step_data in enumerate(steps_data["jobList"]):
             self.steps.append(ForwardModelStep(step_data, index))
 
@@ -31,7 +31,7 @@ class ForwardModelRunner:
     def _read_manifest(self):
         if not Path("manifest.json").exists():
             return None
-        with open("manifest.json", mode="r", encoding="utf-8") as f:
+        with open("manifest.json", encoding="utf-8") as f:
             data = json.load(f)
         return {
             name: {"type": "file", "path": str(Path(file).absolute())}
@@ -49,7 +49,7 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    def run(self, names_of_steps_to_run: List[str]):
+    def run(self, names_of_steps_to_run: list[str]):
         if not names_of_steps_to_run:
             step_queue = self.steps
         else:

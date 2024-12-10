@@ -59,10 +59,10 @@ def test_workflow_run():
 
     WorkflowRunner(workflow).run_blocking()
 
-    with open("dump1", "r", encoding="utf-8") as f:
+    with open("dump1", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
 
-    with open("dump2", "r", encoding="utf-8") as f:
+    with open("dump2", encoding="utf-8") as f:
         assert f.read() == "dump_text_2"
 
 

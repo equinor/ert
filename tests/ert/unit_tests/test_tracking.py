@@ -4,7 +4,6 @@ import os
 import re
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Dict
 
 import pytest
 from jsonpath_ng import parse
@@ -199,7 +198,7 @@ def test_tracking(
     )
     thread.start()
 
-    snapshots: Dict[str, EnsembleSnapshot] = {}
+    snapshots: dict[str, EnsembleSnapshot] = {}
 
     thread.join()
 
@@ -300,7 +299,7 @@ def test_setting_env_context_during_run(
 
     expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
     for event, environment in zip(queue.events, queue.environment, strict=False):
-        if isinstance(event, (FullSnapshotEvent, SnapshotUpdateEvent)):
+        if isinstance(event, FullSnapshotEvent | SnapshotUpdateEvent):
             for key in expected:
                 assert key in environment
             assert environment.get("_ERT_SIMULATION_MODE") == mode
@@ -379,7 +378,7 @@ def test_run_information_present_as_env_var_in_fm_context(
 
     # Check run information in job environment
     for path in model.paths:
-        with open(Path(path) / "jobs.json", "r", encoding="utf-8") as f:
+        with open(Path(path) / "jobs.json", encoding="utf-8") as f:
             jobs_data = json.load(f)
         for key in expected:
             assert key in jobs_data["global_environment"]

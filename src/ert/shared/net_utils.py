@@ -1,7 +1,6 @@
 import logging
 import random
 import socket
-from typing import Optional
 
 from dns import exception, resolver, reversename
 
@@ -47,8 +46,8 @@ def get_machine_name() -> str:
 
 
 def find_available_socket(
-    custom_host: Optional[str] = None,
-    custom_range: Optional[range] = None,
+    custom_host: str | None = None,
+    custom_range: range | None = None,
     will_close_then_reopen_socket: bool = False,
 ) -> socket.socket:
     """
@@ -135,7 +134,7 @@ def get_family(host: str) -> socket.AddressFamily:
     try:
         socket.inet_pton(socket.AF_INET6, host)
         return socket.AF_INET6
-    except socket.error:
+    except OSError:
         return socket.AF_INET
 
 

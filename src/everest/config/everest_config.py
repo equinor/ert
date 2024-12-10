@@ -6,11 +6,11 @@ from io import StringIO
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Dict,
-    List,
+    Annotated,
     Literal,
     Optional,
     Protocol,
+    Self,
     no_type_check,
 )
 
@@ -24,7 +24,6 @@ from pydantic import (
     model_validator,
 )
 from ruamel.yaml import YAML, YAMLError
-from typing_extensions import Annotated, Self
 
 from ert.config import ErtConfig
 from everest.config.control_variable_config import ControlVariableGuessListConfig
@@ -102,20 +101,20 @@ class HasName(Protocol):
 
 
 class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
-    controls: Annotated[List[ControlConfig], AfterValidator(unique_items)] = Field(
+    controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
             a group of control variables
         """,
     )
-    objective_functions: List[ObjectiveFunctionConfig] = Field(
+    objective_functions: list[ObjectiveFunctionConfig] = Field(
         description="List of objective function specifications",
     )
-    optimization: Optional[OptimizationConfig] = Field(
+    optimization: OptimizationConfig | None = Field(
         default=OptimizationConfig(),
         description="Optimizer options",
     )
-    model: Optional[ModelConfig] = Field(
+    model: ModelConfig | None = Field(
         default=ModelConfig(),
         description="Configuration of the Everest model",
     )
@@ -123,16 +122,16 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
     # It IS required but is currently used in a non-required manner by tests
     # Thus, it is to be made explicitly required as the other logic
     # is being rewritten
-    environment: Optional[EnvironmentConfig] = Field(
+    environment: EnvironmentConfig | None = Field(
         default=EnvironmentConfig(),
         description="The environment of Everest, specifies which folders are used "
         "for simulation and output, as well as the level of detail in Everest-logs",
     )
-    wells: List[WellConfig] = Field(
+    wells: list[WellConfig] = Field(
         default_factory=list,
         description="A list of well configurations, all with unique names.",
     )
-    definitions: Optional[dict] = Field(
+    definitions: dict | None = Field(
         default_factory=dict,
         description="""Section for specifying variables.
 
@@ -157,25 +156,25 @@ and environment variables are exposed in the form 'os.NAME', for example:
 | ...
     """,
     )
-    input_constraints: Optional[List[InputConstraintConfig]] = Field(
+    input_constraints: list[InputConstraintConfig] | None = Field(
         default=None, description="List of input constraints"
     )
-    output_constraints: Optional[List[OutputConstraintConfig]] = Field(
+    output_constraints: list[OutputConstraintConfig] | None = Field(
         default=None, description="A list of output constraints with unique names."
     )
-    install_jobs: Optional[List[InstallJobConfig]] = Field(
+    install_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of jobs to install"
     )
-    install_workflow_jobs: Optional[List[InstallJobConfig]] = Field(
+    install_workflow_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of workflow jobs to install"
     )
-    install_data: Optional[List[InstallDataConfig]] = Field(
+    install_data: list[InstallDataConfig] | None = Field(
         default=None,
         description="""A list of install data elements from the install_data config
         section. Each item marks what folders or paths need to be copied or linked
         in order for the evaluation jobs to run.""",
     )
-    install_templates: Optional[List[InstallTemplateConfig]] = Field(
+    install_templates: list[InstallTemplateConfig] | None = Field(
         default=None,
         description="""Allow the user to define the workflow establishing the model
         chain for the purpose of sensitivity analysis, enabling the relationship
@@ -183,7 +182,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         evaluated.
 """,
     )
-    server: Optional[ServerConfig] = Field(
+    server: ServerConfig | None = Field(
         default=None,
         description="""Defines Everest server settings, i.e., which queue system,
             queue name and queue options are used for the everest server.
@@ -201,16 +200,16 @@ and environment variables are exposed in the form 'os.NAME', for example:
             requirements of the forward models.
 """,
     )
-    simulator: Optional[SimulatorConfig] = Field(
+    simulator: SimulatorConfig | None = Field(
         default_factory=SimulatorConfig, description="Simulation settings"
     )
-    forward_model: Optional[List[str]] = Field(
+    forward_model: list[str] | None = Field(
         default=None, description="List of jobs to run"
     )
-    workflows: Optional[WorkflowConfig] = Field(
+    workflows: WorkflowConfig | None = Field(
         default=None, description="Workflows to run during optimization"
     )
-    export: Optional[ExportConfig] = Field(
+    export: ExportConfig | None = Field(
         default=None,
         description="Settings to control the exports of a optimization run by everest.",
     )
@@ -248,7 +247,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
                     continue
                 exec_path = None
                 valid_jobfile = True
-                with open(abs_config_path, "r", encoding="utf-8") as jobfile:
+                with open(abs_config_path, encoding="utf-8") as jobfile:
                     for line in jobfile:
                         if not line.startswith("EXECUTABLE"):
                             continue
@@ -515,7 +514,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @field_validator("wells")
     @no_type_check
     @classmethod
-    def validate_unique_well_names(cls, wells: List[WellConfig]):
+    def validate_unique_well_names(cls, wells: list[WellConfig]):
         check_for_duplicate_names([w.name for w in wells], "well", "name")
         return wells
 
@@ -524,7 +523,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @no_type_check
     @classmethod
     def validate_unique_output_constraint_names(
-        cls, output_constraints: List[OutputConstraintConfig]
+        cls, output_constraints: list[OutputConstraintConfig]
     ):
         check_for_duplicate_names(
             [c.name for c in output_constraints], "output constraint", "name"
@@ -597,14 +596,14 @@ and environment variables are exposed in the form 'os.NAME', for example:
         env.log_level = level  # pylint:disable = E0237
 
     @property
-    def config_directory(self) -> Optional[str]:
+    def config_directory(self) -> str | None:
         if self.config_path is not None:
             return str(self.config_path.parent)
 
         return None
 
     @property
-    def config_file(self) -> Optional[str]:
+    def config_file(self) -> str | None:
         if self.config_path is not None:
             return self.config_path.name
         return None
@@ -628,7 +627,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return os.path.join(cfgdir, path)
 
     @property
-    def simulation_dir(self) -> Optional[str]:
+    def simulation_dir(self) -> str | None:
         assert self.environment is not None
         path = self.environment.simulation_folder
 
@@ -678,7 +677,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return objectives_names + constraint_names
 
     @property
-    def function_aliases(self) -> Dict[str, str]:
+    def function_aliases(self) -> dict[str, str]:
         aliases = {
             objective.name: objective.alias
             for objective in self.objective_functions
@@ -739,7 +738,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return EverestConfig.model_validate({**defaults, **kwargs})
 
     @staticmethod
-    def lint_config_dict(config: dict) -> List["ErrorDetails"]:
+    def lint_config_dict(config: dict) -> list["ErrorDetails"]:
         try:
             EverestConfig.model_validate(config)
             return []
@@ -782,7 +781,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
                 f"{format_errors(e)}"
             )
 
-    def dump(self, fname: Optional[str] = None) -> Optional[str]:
+    def dump(self, fname: str | None = None) -> str | None:
         """Write a config dict to file or return it if fname is None."""
         stripped_conf = self.to_dict()
 

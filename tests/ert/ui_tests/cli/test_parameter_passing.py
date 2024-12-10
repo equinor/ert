@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 import cwrap
 import hypothesis.strategies as st
@@ -141,7 +141,7 @@ class IoProvider:
         else:
             raise ValueError()
 
-    def _random_values(self, shape: Tuple[int, ...], name: str):
+    def _random_values(self, shape: tuple[int, ...], name: str):
         return self.data.draw(
             arrays(
                 elements=st.floats(min_value=2.0, max_value=4.0, width=32),
@@ -231,10 +231,10 @@ class FieldParameter(Parameter):
     name: str
     infformat: FieldFileFormat
     outfformat: FieldFileFormat
-    min: Optional[float]
-    max: Optional[float]
-    input_transform: Optional[Transform]
-    output_transform: Optional[Transform]
+    min: float | None
+    max: float | None
+    input_transform: Transform | None
+    output_transform: Transform | None
     forward_init: bool
 
     @property

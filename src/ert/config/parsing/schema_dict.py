@@ -1,6 +1,6 @@
 import abc
 from collections import UserDict
-from typing import List, Set, no_type_check
+from typing import no_type_check
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -23,7 +23,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
         # both with the same value
         # which causes .values() to return the NUM_REALIZATIONS keyword twice
         # which again leads to duplicate collection of errors related to this
-        visited: Set[str] = set()
+        visited: set[str] = set()
 
         for constraints in self.values():
             if constraints.kw in visited:
@@ -42,7 +42,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    def add_deprecations(self, deprecated_keywords_list: List[DeprecationInfo]) -> None:
+    def add_deprecations(self, deprecated_keywords_list: list[DeprecationInfo]) -> None:
         for info in deprecated_keywords_list:
             # Add it to the schema only so that it is
             # catched by the parser
@@ -59,7 +59,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
     ) -> None:
         detected_deprecations = []
 
-        def push_deprecation(infos: List[DeprecationInfo], line: List[ContextString]):
+        def push_deprecation(infos: list[DeprecationInfo], line: list[ContextString]):
             for info in infos:
                 if info.check is None or (callable(info.check) and info.check(line)):
                     detected_deprecations.append((info, line))

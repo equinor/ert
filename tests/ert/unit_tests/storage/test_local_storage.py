@@ -5,7 +5,7 @@ import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import UUID
 
@@ -56,7 +56,7 @@ def test_create_experiment(tmp_path):
         assert (experiment_path / experiment._parameter_file).exists()
         assert (experiment_path / experiment._responses_file).exists()
 
-        with open(experiment_path / "index.json", encoding="utf-8", mode="r") as f:
+        with open(experiment_path / "index.json", encoding="utf-8") as f:
             index = json.load(f)
             assert index["id"] == str(experiment.id)
             assert index["name"] == "test-experiment"
@@ -560,7 +560,7 @@ small_ints = st.integers(min_value=1, max_value=10)
 
 
 @st.composite
-def fields(draw, egrid, num_fields=small_ints) -> List[Field]:
+def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
     grid_file, grid = egrid
     nx, ny, nz = grid.shape
     return [
@@ -640,18 +640,18 @@ def test_write_transaction_overwrites(tmp_path):
 @dataclass
 class Ensemble:
     uuid: UUID
-    parameter_values: Dict[str, Any] = field(default_factory=dict)
-    response_values: Dict[str, Any] = field(default_factory=dict)
-    failure_messages: Dict[int, str] = field(default_factory=dict)
+    parameter_values: dict[str, Any] = field(default_factory=dict)
+    response_values: dict[str, Any] = field(default_factory=dict)
+    failure_messages: dict[int, str] = field(default_factory=dict)
 
 
 @dataclass
 class Experiment:
     uuid: UUID
-    ensembles: Dict[UUID, Ensemble] = field(default_factory=dict)
-    parameters: List[ParameterConfig] = field(default_factory=list)
-    responses: List[ResponseConfig] = field(default_factory=list)
-    observations: Dict[str, polars.DataFrame] = field(default_factory=dict)
+    ensembles: dict[UUID, Ensemble] = field(default_factory=dict)
+    parameters: list[ParameterConfig] = field(default_factory=list)
+    responses: list[ResponseConfig] = field(default_factory=list)
+    observations: dict[str, polars.DataFrame] = field(default_factory=dict)
 
 
 @settings(max_examples=250)
@@ -687,7 +687,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         self.tmpdir = tempfile.mkdtemp(prefix="StatefulStorageTest")
         self.storage = open_storage(self.tmpdir + "/storage/", "w")
         note(f"storage path is: {self.storage.path}")
-        self.model: Dict[UUID, Experiment] = {}
+        self.model: dict[UUID, Experiment] = {}
         assert list(self.storage.ensembles) == []
 
         # Realization to save/delete params/responses
@@ -741,8 +741,8 @@ class StatefulStorageTest(RuleBasedStateMachine):
     )
     def create_experiment(
         self,
-        parameters: List[ParameterConfig],
-        responses: List[ResponseConfig],
+        parameters: list[ParameterConfig],
+        responses: list[ResponseConfig],
         obs: EnkfObs,
     ):
         experiment_id = self.storage.create_experiment(

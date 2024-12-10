@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -131,16 +131,16 @@ class PriorErtDErf(BaseModel):
     width: float
 
 
-Prior = Union[
-    PriorConst,
-    PriorTrig,
-    PriorNormal,
-    PriorLogNormal,
-    PriorErtTruncNormal,
-    PriorStdNormal,
-    PriorUniform,
-    PriorErtDUniform,
-    PriorLogUniform,
-    PriorErtErf,
-    PriorErtDErf,
-]
+Prior = (
+    PriorConst
+    | PriorTrig
+    | PriorNormal
+    | PriorLogNormal
+    | PriorErtTruncNormal
+    | PriorStdNormal
+    | PriorUniform
+    | PriorErtDUniform
+    | PriorLogUniform
+    | PriorErtErf
+    | PriorErtDErf
+)

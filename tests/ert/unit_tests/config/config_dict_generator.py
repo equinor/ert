@@ -6,7 +6,7 @@ import stat
 from collections import defaultdict
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 from warnings import filterwarnings
 
 import hypothesis.strategies as st
@@ -142,7 +142,7 @@ def valid_queue_options(queue_system: str):
     ]
 
 
-queue_options_by_type: Dict[str, Dict[str, List[str]]] = defaultdict(dict)
+queue_options_by_type: dict[str, dict[str, list[str]]] = defaultdict(dict)
 for system, options in queue_systems_and_options.items():
     queue_options_by_type["string"][system.name] = [
         field.name.upper()
@@ -254,23 +254,23 @@ def random_forward_model_names(draw, some_words, some_file_names):
 @dataclass
 class ErtConfigValues:
     num_realizations: PositiveInt
-    eclbase: Optional[str]
+    eclbase: str | None
     runpath_file: str
-    run_template: List[str]
+    run_template: list[str]
     enkf_alpha: float
     update_log_path: str
     std_cutoff: float
     max_runtime: PositiveInt
     min_realizations: str
-    define: List[Tuple[str, str]]
-    forward_model: Tuple[str, List[Tuple[str, str]]]
-    simulation_job: List[List[str]]
+    define: list[tuple[str, str]]
+    forward_model: tuple[str, list[tuple[str, str]]]
+    simulation_job: list[list[str]]
     stop_long_running: bool
-    data_kw_key: List[Tuple[str, str]]
+    data_kw_key: list[tuple[str, str]]
     data_file: str
     grid_file: str
     job_script: str
-    jobname: Optional[str]
+    jobname: str | None
     runpath: str
     enspath: str
     time_map: str
@@ -278,23 +278,23 @@ class ErtConfigValues:
     history_source: HistorySource
     refcase: str
     gen_kw_export_name: str
-    field: List[Tuple[str, ...]]
-    gen_data: List[Tuple[str, ...]]
+    field: list[tuple[str, ...]]
+    gen_data: list[tuple[str, ...]]
     max_submit: PositiveInt
     num_cpu: PositiveInt
     queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
-    queue_option: List[Union[Tuple[str, str], Tuple[str, str, str]]]
-    analysis_set_var: List[Tuple[str, str, Any]]
-    install_job: List[Tuple[str, str]]
-    install_job_directory: List[str]
+    queue_option: list[tuple[str, str] | tuple[str, str, str]]
+    analysis_set_var: list[tuple[str, str, Any]]
+    install_job: list[tuple[str, str]]
+    install_job_directory: list[str]
     license_path: str
     random_seed: int
-    setenv: List[Tuple[str, str]]
-    observations: List[Observation]
+    setenv: list[tuple[str, str]]
+    observations: list[Observation]
     refcase_smspec: Smspec
     refcase_unsmry: Unsmry
     egrid: EGrid
-    datetimes: List[datetime.datetime]
+    datetimes: list[datetime.datetime]
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
         result = {
@@ -425,7 +425,7 @@ def ert_config_values(draw, use_eclbase=booleans):
         )
     )
     need_eclbase = any(
-        (isinstance(val, (HistoryObservation, SummaryObservation)) for val in obs)
+        isinstance(val, HistoryObservation | SummaryObservation) for val in obs
     )
     use_eclbase = draw(use_eclbase) if not need_eclbase else True
     dates = _observation_dates(obs, first_date)
@@ -538,7 +538,7 @@ def sim_job(installed_jobs):
 
 def _observation_dates(
     observations, start_date: datetime.datetime
-) -> List[datetime.datetime]:
+) -> list[datetime.datetime]:
     """
     :returns: the dates that need to exist in the refcase for ert to accept the
         observations

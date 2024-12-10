@@ -1,13 +1,13 @@
-from typing import Dict, Iterable, Tuple, Type
+from collections.abc import Iterable
 
 from .response_config import ResponseConfig
 
 
 class _ResponsesIndex:
     def __init__(self) -> None:
-        self._items: Dict[str, Type[ResponseConfig]] = {}
+        self._items: dict[str, type[ResponseConfig]] = {}
 
-    def add_response_type(self, response_cls: Type[ResponseConfig]) -> None:
+    def add_response_type(self, response_cls: type[ResponseConfig]) -> None:
         if not issubclass(response_cls, ResponseConfig):
             raise ValueError("Response type must be subclass of ResponseConfig")
 
@@ -21,16 +21,16 @@ class _ResponsesIndex:
 
         self._items[clsname] = response_cls
 
-    def values(self) -> Iterable[Type[ResponseConfig]]:
+    def values(self) -> Iterable[type[ResponseConfig]]:
         return self._items.values()
 
-    def items(self) -> Iterable[Tuple[str, Type[ResponseConfig]]]:
+    def items(self) -> Iterable[tuple[str, type[ResponseConfig]]]:
         return self._items.items()
 
     def keys(self) -> Iterable[str]:
         return self._items.keys()
 
-    def __getitem__(self, item: str) -> Type[ResponseConfig]:
+    def __getitem__(self, item: str) -> type[ResponseConfig]:
         return self._items[item]
 
     def __contains__(self, item: str) -> bool:

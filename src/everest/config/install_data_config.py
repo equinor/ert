@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -16,7 +15,7 @@ class InstallDataConfig(BaseModel, extra="forbid"):  # type: ignore
         Relative path to place the copy or link for the given source.
         """
     )  # path
-    link: Optional[bool] = Field(
+    link: bool | None = Field(
         default=None,
         description="""
         If set to true will create a link to the given source at the given target,

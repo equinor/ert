@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 import time
 from datetime import timedelta
-from typing import Optional
 
 import humanize
 from qtpy.QtCore import Qt, Slot
@@ -39,7 +38,7 @@ from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 
 
 class UpdateLogTable(QTableWidget):
-    def __init__(self, data: DataSection, parent: Optional[QWidget] = None):
+    def __init__(self, data: DataSection, parent: QWidget | None = None):
         super().__init__(parent)
 
         self.setColumnCount(len(data.header))
@@ -55,9 +54,9 @@ class UpdateLogTable(QTableWidget):
             for j, val in enumerate(row):
                 self.setItem(i, j, QTableWidgetItem(str(val)))
 
-    def keyPressEvent(self, e: Optional[QKeyEvent]) -> None:
+    def keyPressEvent(self, e: QKeyEvent | None) -> None:
         if e is not None and e.matches(QKeySequence.Copy):
-            stream = str()
+            stream = ""
             for i in self.selectedIndexes():
                 item = self.itemFromIndex(i)
                 assert item is not None
@@ -78,7 +77,7 @@ class UpdateLogTable(QTableWidget):
 
 
 class UpdateWidget(QWidget):
-    def __init__(self, iteration: int, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._iteration = iteration

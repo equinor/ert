@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 from ert.gui.ertwidgets import SelectableListModel
 
@@ -14,12 +14,12 @@ class FilterableKwListModel(SelectableListModel):
     SelectableListModel
     """
 
-    def __init__(self, key_defs: List[PlotApiKeyDefinition]):
+    def __init__(self, key_defs: list[PlotApiKeyDefinition]):
         SelectableListModel.__init__(self, [k.key for k in key_defs])
         self._key_defs = key_defs
-        self._metadata_filters: Dict[str, Dict[str, bool]] = {}
+        self._metadata_filters: dict[str, dict[str, bool]] = {}
 
-    def getList(self) -> List[str]:
+    def getList(self) -> list[str]:
         items = []
         for item in self._key_defs:
             add = True

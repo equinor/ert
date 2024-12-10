@@ -9,17 +9,15 @@ import queue
 import random
 import shutil
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Literal,
-    Mapping,
     Protocol,
-    Type,
 )
 
 import numpy as np
@@ -33,11 +31,7 @@ from ropt.plan import Event as OptimizerEvent
 from seba_sqlite import SqliteStorage
 from typing_extensions import TypedDict
 
-from _ert.events import (
-    EESnapshot,
-    EESnapshotUpdate,
-    Event,
-)
+from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.config import ErtConfig, ExtParamConfig
 from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
@@ -144,7 +138,7 @@ class OptimalResult:
     @staticmethod
     def from_seba_optimal_result(
         o: seba_sqlite.sqlite_storage.OptimalResult | None = None,
-    ) -> "OptimalResult" | None:
+    ) -> OptimalResult | None:
         if o is None:
             return None
 
@@ -313,7 +307,7 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         fm_id = "b_{}_r_{}_s_{}_{}".format(batch, realization, simulation, fm_name)
         fm_logger = logging.getLogger("forward_models")
-        with open(error_path, "r", encoding="utf-8") as errors:
+        with open(error_path, encoding="utf-8") as errors:
             error_str = errors.read()
 
         error_hash = hash(error_str)
@@ -341,7 +335,7 @@ class EverestRunModel(BaseRunModel):
                         _: Callable[..., Any],
                         path: str,
                         sys_info: tuple[
-                            Type[BaseException], BaseException, TracebackType
+                            type[BaseException], BaseException, TracebackType
                         ],
                     ) -> None:
                         logging.getLogger(EVEREST).debug(
@@ -528,7 +522,7 @@ class EverestRunModel(BaseRunModel):
         ensemble: Ensemble,
     ) -> None:
         def _check_suffix(
-            ext_config: "ExtParamConfig",
+            ext_config: ExtParamConfig,
             key: str,
             assignment: dict[str, Any] | tuple[str, str] | str | int,
         ) -> None:
@@ -564,11 +558,9 @@ class EverestRunModel(BaseRunModel):
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
-                        (
-                            f"Expected {len(ext_config)} variables for "
-                            f"control {control_name}, "
-                            f"received {len(control.keys())}."
-                        )
+                        f"Expected {len(ext_config)} variables for "
+                        f"control {control_name}, "
+                        f"received {len(control.keys())}."
                     )
                 for var_name, var_setting in control.items():
                     _check_suffix(ext_config, var_name, var_setting)
@@ -637,7 +629,7 @@ class EverestRunModel(BaseRunModel):
 
         self._delete_runpath(run_args)
         # gather results
-        results: list[dict[str, "npt.NDArray[np.float64]"]] = []
+        results: list[dict[str, npt.NDArray[np.float64]]] = []
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
                 logger.error(f"Simulation {sim_id} failed.")

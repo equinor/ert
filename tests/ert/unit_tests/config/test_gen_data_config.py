@@ -1,7 +1,6 @@
 import os
 from contextlib import suppress
 from pathlib import Path
-from typing import List
 
 import hypothesis.strategies as st
 import pytest
@@ -18,7 +17,7 @@ from ert.config import ConfigValidationError, GenDataConfig, InvalidResponseFile
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gen_data_config(name: str, report_steps: List[int]):
+def test_gen_data_config(name: str, report_steps: list[int]):
     gdc = GenDataConfig(keys=[name], report_steps_list=[report_steps])
     assert gdc.keys == [name]
     assert gdc.report_steps_list[0] == sorted(report_steps)

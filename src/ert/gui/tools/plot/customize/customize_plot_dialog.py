@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtGui import QIcon, QKeyEvent
@@ -304,7 +305,7 @@ class CustomizePlotDialog(QDialog):
         self._tab_map[attribute_name] = widget
         self._tab_order.append(attribute_name)
 
-    def __getitem__(self, item: str) -> "CustomizationView":
+    def __getitem__(self, item: str) -> CustomizationView:
         return self._tab_map[item]
 
     def __iter__(self) -> Iterator[QWidget]:

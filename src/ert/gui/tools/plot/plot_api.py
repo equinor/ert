@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, NamedTuple
 from urllib.parse import quote
 
 import httpx
@@ -25,35 +25,31 @@ class EnsembleObject:
     experiment_name: str
 
 
-PlotApiKeyDefinition = NamedTuple(
-    "PlotApiKeyDefinition",
-    [
-        ("key", str),
-        ("index_type", Optional[str]),
-        ("observations", bool),
-        ("dimensionality", int),
-        ("metadata", Dict[Any, Any]),
-        ("log_scale", bool),
-    ],
-)
+class PlotApiKeyDefinition(NamedTuple):
+    key: str
+    index_type: str | None
+    observations: bool
+    dimensionality: int
+    metadata: dict[Any, Any]
+    log_scale: bool
 
 
 class PlotApi:
     def __init__(self) -> None:
-        self._all_ensembles: Optional[List[EnsembleObject]] = None
+        self._all_ensembles: list[EnsembleObject] | None = None
         self._timeout = 120
 
     @staticmethod
     def escape(s: str) -> str:
         return quote(quote(s, safe=""))
 
-    def _get_ensemble_by_id(self, id: str) -> Optional[EnsembleObject]:
+    def _get_ensemble_by_id(self, id: str) -> EnsembleObject | None:
         for ensemble in self.get_all_ensembles():
             if ensemble.id == id:
                 return ensemble
         return None
 
-    def get_all_ensembles(self) -> List[EnsembleObject]:
+    def get_all_ensembles(self) -> list[EnsembleObject]:
         if self._all_ensembles is not None:
             return self._all_ensembles
 
@@ -97,7 +93,7 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def all_data_type_keys(self) -> List[PlotApiKeyDefinition]:
+    def all_data_type_keys(self) -> list[PlotApiKeyDefinition]:
         """Returns a list of all the keys except observation keys.
 
         The keys are a unique set of all keys in the ensembles
@@ -105,7 +101,7 @@ class PlotApi:
         For each key a dict is returned with info about
         the key"""
 
-        all_keys: Dict[str, PlotApiKeyDefinition] = {}
+        all_keys: dict[str, PlotApiKeyDefinition] = {}
 
         with StorageService.session() as client:
             response = client.get("/experiments", timeout=self._timeout)
@@ -189,7 +185,7 @@ class PlotApi:
             except ValueError:
                 return df
 
-    def observations_for_key(self, ensemble_ids: List[str], key: str) -> pd.DataFrame:
+    def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given ensembles. The row index is the realization number, and the column index
         is a multi-index with (obs_key, index/date, obs_index), where index/date is
@@ -242,7 +238,7 @@ class PlotApi:
 
         return all_observations.T
 
-    def history_data(self, key: str, ensemble_ids: Optional[List[str]]) -> pd.DataFrame:
+    def history_data(self, key: str, ensemble_ids: list[str] | None) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""

@@ -32,7 +32,7 @@ def test_all_repo_configs():
     config_folders = map(lambda fn: os.path.join(repo_dir, fn), config_folders)  # noqa E731
 
     is_yaml = lambda fn: fn.endswith(".yml")
-    is_data = lambda fn: any((df in fn for df in data_folders))
+    is_data = lambda fn: any(df in fn for df in data_folders)
 
     def is_config(fn):
         return is_yaml(fn) and not is_data(fn) and "invalid" not in fn

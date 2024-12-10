@@ -1,12 +1,6 @@
 from qtpy import QtCore
 from qtpy.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
-from qtpy.QtWidgets import (
-    QBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPlainTextEdit,
-)
+from qtpy.QtWidgets import QBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit
 
 
 class SearchBar(QLineEdit):
@@ -47,10 +41,10 @@ class SearchBar(QLineEdit):
                 )
 
     def get_layout(self) -> QBoxLayout:
-        _layout = QHBoxLayout()
-        _layout.addWidget(self._label)
-        _layout.addWidget(self)
-        return _layout
+        layout = QHBoxLayout()
+        layout.addWidget(self._label)
+        layout.addWidget(self)
+        return layout
 
     def select_text(self, start: int, length: int) -> None:
         self._cursor.setPosition(start)

@@ -1,6 +1,5 @@
 import json
 from enum import IntEnum
-from typing import Optional
 
 import polars
 import seaborn as sns
@@ -48,7 +47,7 @@ class _EnsembleWidgetTabs(IntEnum):
 class _ExperimentWidget(QWidget):
     def __init__(self) -> None:
         QWidget.__init__(self)
-        self._experiment: Optional[Experiment] = None
+        self._experiment: Experiment | None = None
 
         self._responses_text_edit = QTextEdit()
         self._responses_text_edit.setReadOnly(True)
@@ -114,7 +113,7 @@ class _ExperimentWidget(QWidget):
 class _EnsembleWidget(QWidget):
     def __init__(self) -> None:
         QWidget.__init__(self)
-        self._ensemble: Optional[Ensemble] = None
+        self._ensemble: Ensemble | None = None
 
         info_frame = QFrame()
         self._name_label = QLabel()
@@ -248,7 +247,7 @@ class _EnsembleWidget(QWidget):
                 [polars.col("scaling_factor").product()]
             )
             joined_small = joined_small.with_columns(
-                (joined_small["std"] * joined_small["scaling_factor"])
+                joined_small["std"] * joined_small["scaling_factor"]
             )
 
             ax.errorbar(

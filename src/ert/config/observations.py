@@ -1,8 +1,9 @@
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 import numpy as np
 import polars

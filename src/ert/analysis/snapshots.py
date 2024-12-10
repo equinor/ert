@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel
@@ -53,10 +53,10 @@ class SmootherSnapshot(BaseModel):
     alpha: float
     std_cutoff: float
     global_scaling: float
-    update_step_snapshots: List[ObservationAndResponseSnapshot]
+    update_step_snapshots: list[ObservationAndResponseSnapshot]
 
     @property
-    def header(self) -> List[str]:
+    def header(self) -> list[str]:
         return [
             "Observation name",
             "Index",
@@ -70,7 +70,7 @@ class SmootherSnapshot(BaseModel):
         ]
 
     @property
-    def csv(self) -> List[List[Any]]:
+    def csv(self) -> list[list[Any]]:
         data = []
         for step in self.update_step_snapshots:
             data.append(
@@ -89,7 +89,7 @@ class SmootherSnapshot(BaseModel):
         return data
 
     @property
-    def extra(self) -> Dict[str, str]:
+    def extra(self) -> dict[str, str]:
         return {
             "Parent ensemble": self.source_ensemble_name,
             "Target ensemble": self.target_ensemble_name,

@@ -4,18 +4,12 @@ import fnmatch
 import os
 import os.path
 import re
+from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 import numpy as np
@@ -30,7 +24,7 @@ from .response_config import InvalidResponseFile
 
 def _cell_index(
     array_index: int, nx: PositiveInt, ny: PositiveInt
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     k = array_index // (nx * ny)
     array_index -= k * (nx * ny)
     j = array_index // nx
@@ -43,8 +37,8 @@ T = TypeVar("T")
 
 
 def _check_if_missing(
-    keyword_name: str, missing_key: str, *test_vars: Optional[T]
-) -> List[T]:
+    keyword_name: str, missing_key: str, *test_vars: T | None
+) -> list[T]:
     if any(v is None for v in test_vars):
         raise InvalidResponseFile(
             f"Found {keyword_name} keyword in summary "
@@ -55,14 +49,14 @@ def _check_if_missing(
 
 def make_summary_key(
     keyword: str,
-    number: Optional[int] = None,
-    name: Optional[str] = None,
-    nx: Optional[int] = None,
-    ny: Optional[int] = None,
-    lgr_name: Optional[str] = None,
-    li: Optional[int] = None,
-    lj: Optional[int] = None,
-    lk: Optional[int] = None,
+    number: int | None = None,
+    name: str | None = None,
+    nx: int | None = None,
+    ny: int | None = None,
+    lgr_name: str | None = None,
+    li: int | None = None,
+    lj: int | None = None,
+    lk: int | None = None,
 ) -> str:
     try:
         sum_type = SummaryKeyType.from_keyword(keyword)
@@ -125,7 +119,7 @@ class DateUnit(Enum):
         raise InvalidResponseFile(f"Unknown date unit {val}")
 
 
-def _is_base_with_extension(base: str, path: str, exts: List[str]) -> bool:
+def _is_base_with_extension(base: str, path: str, exts: list[str]) -> bool:
     """
     >>> _is_base_with_extension("ECLBASE", "ECLBASE.SMSPEC", ["smspec"])
     True
@@ -166,7 +160,7 @@ def _find_file_matching(
     return os.path.join(dir, candidates[0])
 
 
-def _get_summary_filenames(filepath: str) -> Tuple[str, str]:
+def _get_summary_filenames(filepath: str) -> tuple[str, str]:
     if filepath.lower().endswith(".data"):
         # For backwards compatability, it is
         # allowed to give REFCASE and ECLBASE both
@@ -179,7 +173,7 @@ def _get_summary_filenames(filepath: str) -> Tuple[str, str]:
 
 def read_summary(
     filepath: str, fetch_keys: Sequence[str]
-) -> Tuple[datetime, List[str], Sequence[datetime], Any]:
+) -> tuple[datetime, list[str], Sequence[datetime], Any]:
     summary, spec = _get_summary_filenames(filepath)
     try:
         date_index, start_date, date_units, keys, indices = _read_spec(spec, fetch_keys)
@@ -193,14 +187,14 @@ def read_summary(
     return (start_date, keys, time_map, fetched)
 
 
-def _key2str(key: Union[bytes, str]) -> str:
+def _key2str(key: bytes | str) -> str:
     ret = key.decode() if isinstance(key, bytes) else key
     assert isinstance(ret, str)
     return ret.strip()
 
 
 def _check_vals(
-    kw: str, spec: str, vals: Union[npt.NDArray[Any], resfo.MESS]
+    kw: str, spec: str, vals: npt.NDArray[Any] | resfo.MESS
 ) -> npt.NDArray[Any]:
     if vals is resfo.MESS or isinstance(vals, resfo.MESS):
         raise InvalidResponseFile(f"{kw.strip()} in {spec} has incorrect type MESS")
@@ -241,14 +235,14 @@ def _fetch_keys_to_matcher(fetch_keys: Sequence[str]) -> Callable[[str], bool]:
 
 def _read_spec(
     spec: str, fetch_keys: Sequence[str]
-) -> Tuple[int, datetime, DateUnit, List[str], npt.NDArray[np.int64]]:
+) -> tuple[int, datetime, DateUnit, list[str], npt.NDArray[np.int64]]:
     date = None
     n = None
     nx = None
     ny = None
     wgnames = None
 
-    arrays: Dict[str, Optional[npt.NDArray[Any]]] = dict.fromkeys(
+    arrays: dict[str, npt.NDArray[Any] | None] = dict.fromkeys(
         [
             "NUMS    ",
             "KEYWORDS",
@@ -322,14 +316,14 @@ def _read_spec(
     if n is None:
         n = len(keywords)
 
-    indices: List[int] = []
-    keys: List[str] = []
-    index_mapping: Dict[str, int] = {}
+    indices: list[int] = []
+    keys: list[str] = []
+    index_mapping: dict[str, int] = {}
     date_index = None
 
     should_load_key = _fetch_keys_to_matcher(fetch_keys)
 
-    def optional_get(arr: Optional[npt.NDArray[Any]], idx: int) -> Any:
+    def optional_get(arr: npt.NDArray[Any] | None, idx: int) -> Any:
         if arr is None:
             return None
         if len(arr) <= idx:
@@ -412,7 +406,7 @@ def _read_summary(
     unit: DateUnit,
     indices: npt.NDArray[np.int64],
     date_index: int,
-) -> Tuple[npt.NDArray[np.float32], List[datetime]]:
+) -> tuple[npt.NDArray[np.float32], list[datetime]]:
     if summary.lower().endswith("funsmry"):
         mode = "rt"
         format = resfo.Format.FORMATTED
@@ -421,8 +415,8 @@ def _read_summary(
         format = resfo.Format.UNFORMATTED
 
     last_params = None
-    values: List[npt.NDArray[np.float32]] = []
-    dates: List[datetime] = []
+    values: list[npt.NDArray[np.float32]] = []
+    dates: list[datetime] = []
 
     def read_params() -> None:
         nonlocal last_params, values

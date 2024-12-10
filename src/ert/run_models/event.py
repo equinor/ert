@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 from uuid import UUID
 
 from ert.analysis.event import DataSection
@@ -35,7 +34,7 @@ class RunModelDataEvent(RunModelEvent):
     name: str
     data: DataSection
 
-    def write_as_csv(self, output_path: Optional[Path]) -> None:
+    def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv(self.name, output_path / str(self.run_id))
 
@@ -44,7 +43,7 @@ class RunModelDataEvent(RunModelEvent):
 class RunModelUpdateEndEvent(RunModelEvent):
     data: DataSection
 
-    def write_as_csv(self, output_path: Optional[Path]) -> None:
+    def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))
 
@@ -52,8 +51,8 @@ class RunModelUpdateEndEvent(RunModelEvent):
 @dataclass
 class RunModelErrorEvent(RunModelEvent):
     error_msg: str
-    data: Optional[DataSection] = None
+    data: DataSection | None = None
 
-    def write_as_csv(self, output_path: Optional[Path]) -> None:
+    def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))

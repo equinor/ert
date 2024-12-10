@@ -2,8 +2,8 @@
 Contains code that was used to generate files expected by ert.
 """
 
+from collections.abc import Callable
 from textwrap import dedent
-from typing import Callable, List
 
 import numpy as np
 import numpy.typing as npt
@@ -27,7 +27,7 @@ def create_egrid_file():
 
 
 def make_observations(
-    coordinates: List[Coordinate],
+    coordinates: list[Coordinate],
     times: npt.NDArray[np.int_],
     field: npt.NDArray[np.float64],
     error: Callable,
@@ -57,7 +57,7 @@ def make_observations(
             # See documentation for details.
             value = field[k, coordinate.x, coordinate.y]
             sd = error(value)
-            _df = pd.DataFrame(
+            df_ = pd.DataFrame(
                 {
                     "k": [k],
                     "x": [coordinate.x],
@@ -66,7 +66,7 @@ def make_observations(
                     "sd": [sd],
                 }
             )
-            d = pd.concat([d, _df])
+            d = pd.concat([d, df_])
     d = d.set_index(["k", "x", "y"], verify_integrity=True)
 
     return d

@@ -671,7 +671,7 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     # test callback
-    class CBTracker(object):
+    class CBTracker:
         def __init__(self):
             self.called = False
 
@@ -802,7 +802,7 @@ def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
 def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
-    class CBTracker(object):
+    class CBTracker:
         def __init__(self):
             self.called = False
 

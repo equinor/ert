@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
@@ -104,5 +105,5 @@ class EnsembleSelector(QComboBox):
     def _on_current_index_changed(self, index: int) -> None:
         self.notifier.set_current_ensemble(self.itemData(index))
 
-    def _on_global_current_ensemble_changed(self, data: Optional[Ensemble]) -> None:
+    def _on_global_current_ensemble_changed(self, data: Ensemble | None) -> None:
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))

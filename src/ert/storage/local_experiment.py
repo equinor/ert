@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import numpy as np
@@ -12,12 +13,7 @@ import polars
 import xtgeo
 from pydantic import BaseModel
 
-from ert.config import (
-    ExtParamConfig,
-    Field,
-    GenKwConfig,
-    SurfaceConfig,
-)
+from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.config.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -226,7 +222,7 @@ class LocalExperiment(BaseMode):
         path = self.mount_point / self._metadata_file
         if not path.exists():
             raise ValueError(f"{self._metadata_file!s} does not exist")
-        with open(path, encoding="utf-8", mode="r") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     @property
@@ -251,7 +247,7 @@ class LocalExperiment(BaseMode):
         path = self.mount_point / self._parameter_file
         if not path.exists():
             raise ValueError(f"{self._parameter_file!s} does not exist")
-        with open(path, encoding="utf-8", mode="r") as f:
+        with open(path, encoding="utf-8") as f:
             info = json.load(f)
         return info
 
@@ -261,7 +257,7 @@ class LocalExperiment(BaseMode):
         path = self.mount_point / self._responses_file
         if not path.exists():
             raise ValueError(f"{self._responses_file!s} does not exist")
-        with open(path, encoding="utf-8", mode="r") as f:
+        with open(path, encoding="utf-8") as f:
             info = json.load(f)
         return info
 

@@ -245,7 +245,7 @@ assert exec_env["TEST_ENV"] == "123"
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     for msg in list(ForwardModelRunner(jobs_json).run([])):
@@ -286,7 +286,7 @@ assert os.environ["TEST_ENV"] == "123"
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     # Check ENV variable not available outside of step context
@@ -336,7 +336,7 @@ def test_default_env_variables_available_inside_fm_step_context():
             fptr,
         )
 
-    with open("jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     # Check default ENV variable not available outside of step context

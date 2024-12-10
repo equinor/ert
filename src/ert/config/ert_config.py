@@ -4,6 +4,7 @@ import importlib
 import logging
 import os
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import field
 from datetime import datetime
 from os import path
@@ -11,15 +12,7 @@ from pathlib import Path
 from typing import (
     Any,
     ClassVar,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
     Self,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
     no_type_check,
     overload,
 )
@@ -90,15 +83,15 @@ def site_config_location() -> str:
 
 def create_forward_model_json(
     context: Substitutions,
-    forward_model_steps: List[ForwardModelStep],
-    run_id: Optional[str],
+    forward_model_steps: list[ForwardModelStep],
+    run_id: str | None,
     iens: int = 0,
     itr: int = 0,
-    user_config_file: Optional[str] = "",
-    env_vars: Optional[Dict[str, str]] = None,
-    env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
+    user_config_file: str | None = "",
+    env_vars: dict[str, str] | None = None,
+    env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
     skip_pre_experiment_validation: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if env_vars is None:
         env_vars = {}
     if env_pr_fm_step is None:
@@ -171,7 +164,7 @@ def create_forward_model_json(
     config_file = str(config_file_path.name) if config_file_path else ""
 
     job_list_errors = []
-    job_list: List[ForwardModelStepJSON] = []
+    job_list: list[ForwardModelStepJSON] = []
     for idx, fm_step in enumerate(forward_model_steps):
         substituter = Substituter(fm_step)
         fm_step_json = {
@@ -230,14 +223,14 @@ def create_forward_model_json(
 
 def forward_model_data_to_json(
     substitutions: Substitutions,
-    forward_model_steps: List[ForwardModelStep],
-    env_vars: Dict[str, str],
-    env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
-    user_config_file: Optional[str] = "",
-    run_id: Optional[str] = None,
+    forward_model_steps: list[ForwardModelStep],
+    env_vars: dict[str, str],
+    env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
+    user_config_file: str | None = "",
+    run_id: str | None = None,
     iens: int = 0,
     itr: int = 0,
-    context_env: Optional[Dict[str, str]] = None,
+    context_env: dict[str, str] | None = None,
 ):
     if context_env is None:
         context_env = {}
@@ -259,39 +252,39 @@ def forward_model_data_to_json(
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
-    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Dict[str, ForwardModelStep]] = {}
-    ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = {}
-    ACTIVATE_SCRIPT: Optional[str] = None
+    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
+    ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
+    ACTIVATE_SCRIPT: str | None = None
 
     substitutions: Substitutions = field(default_factory=Substitutions)
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
-    env_vars: Dict[str, str] = field(default_factory=dict)
-    random_seed: Optional[int] = None
+    env_vars: dict[str, str] = field(default_factory=dict)
+    random_seed: int | None = None
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
-    workflow_jobs: Dict[str, WorkflowJob] = field(default_factory=dict)
-    workflows: Dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: DefaultDict[HookRuntime, List[Workflow]] = field(
+    workflow_jobs: dict[str, WorkflowJob] = field(default_factory=dict)
+    workflows: dict[str, Workflow] = field(default_factory=dict)
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = field(
         default_factory=lambda: defaultdict(list)
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
-    ert_templates: List[Tuple[str, str]] = field(default_factory=list)
-    installed_forward_model_steps: Dict[str, ForwardModelStep] = field(
+    ert_templates: list[tuple[str, str]] = field(default_factory=list)
+    installed_forward_model_steps: dict[str, ForwardModelStep] = field(
         default_factory=dict
     )
-    forward_model_steps: List[ForwardModelStep] = field(default_factory=list)
+    forward_model_steps: list[ForwardModelStep] = field(default_factory=list)
     model_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
-    observation_config: List[
-        Tuple[str, Union[HistoryValues, SummaryValues, GenObsValues]]
+    observation_config: list[
+        tuple[str, HistoryValues | SummaryValues | GenObsValues]
     ] = field(default_factory=list)
     enkf_obs: EnkfObs = field(default_factory=EnkfObs)
 
     @field_validator("substitutions", mode="before")
     @classmethod
-    def convert_to_substitutions(cls, v: Dict[str, str]) -> Substitutions:
+    def convert_to_substitutions(cls, v: dict[str, str]) -> Substitutions:
         if isinstance(v, Substitutions):
             return v
         return Substitutions(v)
@@ -324,17 +317,17 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.observations: Dict[str, polars.DataFrame] = self.enkf_obs.datasets
+        self.observations: dict[str, polars.DataFrame] = self.enkf_obs.datasets
 
     @staticmethod
     def with_plugins(
-        forward_model_step_classes: Optional[List[Type[ForwardModelStepPlugin]]] = None,
-        env_pr_fm_step: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> Type["ErtConfig"]:
+        forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
+        env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
+    ) -> type["ErtConfig"]:
         if forward_model_step_classes is None:
             forward_model_step_classes = ErtPluginManager().forward_model_steps
 
-        preinstalled_fm_steps: Dict[str, ForwardModelStepPlugin] = {}
+        preinstalled_fm_steps: dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
             fm_step = fm_step_subclass()
             preinstalled_fm_steps[fm_step.name] = fm_step
@@ -346,9 +339,9 @@ class ErtConfig:
 
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
-                Dict[str, ForwardModelStepPlugin]
+                dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
-            ENV_PR_FM_STEP: ClassVar[Dict[str, Dict[str, Any]]] = env_pr_fm_step
+            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = ErtPluginManager().activate_script()
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
@@ -521,7 +514,7 @@ class ErtConfig:
                 summary_obs = {
                     obs[1].key
                     for obs in obs_config_content
-                    if isinstance(obs[1], (HistoryValues, SummaryValues))
+                    if isinstance(obs[1], HistoryValues | SummaryValues)
                 }
                 if summary_obs:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
@@ -578,7 +571,7 @@ class ErtConfig:
         )
 
     @classmethod
-    def _read_summary_keys(cls, config_dict) -> List[str]:
+    def _read_summary_keys(cls, config_dict) -> list[str]:
         return [
             item
             for sublist in config_dict.get(ConfigKeys.SUMMARY, [])
@@ -618,7 +611,7 @@ class ErtConfig:
         )
 
     @classmethod
-    def _log_config_dict(cls, content_dict: Dict[str, Any]) -> None:
+    def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
         tmp_dict = content_dict.copy()
         tmp_dict.pop("FORWARD_MODEL", None)
         tmp_dict.pop("LOAD_WORKFLOW", None)
@@ -707,7 +700,7 @@ class ErtConfig:
     @staticmethod
     def check_non_utf_chars(file_path: str) -> None:
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 f.read()
         except UnicodeDecodeError as e:
             error_words = str(e).split(" ")
@@ -728,7 +721,7 @@ class ErtConfig:
             ) from e
 
     @classmethod
-    def _read_templates(cls, config_dict) -> List[Tuple[str, str]]:
+    def _read_templates(cls, config_dict) -> list[tuple[str, str]]:
         templates = []
         if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
             # This replicates the behavior of the DATA_FILE implementation
@@ -748,7 +741,7 @@ class ErtConfig:
     @classmethod
     def _validate_dict(
         cls, config_dict, config_file: str
-    ) -> List[Union[ErrorInfo, ConfigValidationError]]:
+    ) -> list[ErrorInfo | ConfigValidationError]:
         errors = []
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
@@ -764,10 +757,10 @@ class ErtConfig:
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
         cls,
-        installed_steps: Dict[str, ForwardModelStep],
+        installed_steps: dict[str, ForwardModelStep],
         substitutions: Substitutions,
         config_dict,
-    ) -> List[ForwardModelStep]:
+    ) -> list[ForwardModelStep]:
         errors = []
         fm_steps = []
         for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
@@ -855,7 +848,7 @@ class ErtConfig:
 
         return fm_steps
 
-    def forward_model_step_name_list(self) -> List[str]:
+    def forward_model_step_name_list(self) -> list[str]:
         return [j.name for j in self.forward_model_steps]
 
     @classmethod
@@ -976,7 +969,7 @@ class ErtConfig:
     @classmethod
     def _installed_forward_model_steps_from_dict(
         cls, config_dict
-    ) -> Dict[str, ForwardModelStep]:
+    ) -> dict[str, ForwardModelStep]:
         errors = []
         fm_steps = {}
         for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
@@ -1027,21 +1020,20 @@ class ErtConfig:
         return int(self.substitutions.get(f"<{ConfigKeys.NUM_CPU}>", 1))
 
     @property
-    def env_pr_fm_step(self) -> Dict[str, Dict[str, Any]]:
+    def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
         return self.ENV_PR_FM_STEP
 
     @staticmethod
     def _create_observations(
-        obs_config_content: Optional[
-            Dict[str, Union[HistoryValues, SummaryValues, GenObsValues]]
-        ],
+        obs_config_content: dict[str, HistoryValues | SummaryValues | GenObsValues]
+        | None,
         ensemble_config: EnsembleConfig,
-        time_map: Optional[List[datetime]],
+        time_map: list[datetime] | None,
         history: HistorySource,
     ) -> EnkfObs:
         if not obs_config_content:
             return EnkfObs({}, [])
-        obs_vectors: Dict[str, ObsVector] = {}
+        obs_vectors: dict[str, ObsVector] = {}
         obs_time_list: Sequence[datetime] = []
         if ensemble_config.refcase is not None:
             obs_time_list = ensemble_config.refcase.all_dates
@@ -1049,7 +1041,7 @@ class ErtConfig:
             obs_time_list = time_map
 
         time_len = len(obs_time_list)
-        config_errors: List[ErrorInfo] = []
+        config_errors: list[ErrorInfo] = []
         for obs_name, values in obs_config_content:
             try:
                 if type(values) == HistoryValues:
@@ -1143,8 +1135,8 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
 
 
 def _uppercase_subkeys_and_stringify_subvalues(
-    nested_dict: Dict[str, Dict[str, Any]],
-) -> Dict[str, Dict[str, str]]:
+    nested_dict: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, str]]:
     fixed_dict: dict[str, dict[str, str]] = {}
     for key, value in nested_dict.items():
         fixed_dict[key] = {
@@ -1155,7 +1147,7 @@ def _uppercase_subkeys_and_stringify_subvalues(
 
 @no_type_check
 def _forward_model_step_from_config_file(
-    config_file: str, name: Optional[str] = None
+    config_file: str, name: str | None = None
 ) -> "ForwardModelStep":
     if name is None:
         name = os.path.basename(config_file)
@@ -1165,7 +1157,7 @@ def _forward_model_step_from_config_file(
     try:
         content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
 
-        specified_arg_types: List[Tuple[int, str]] = content_dict.get(
+        specified_arg_types: list[tuple[int, str]] = content_dict.get(
             ForwardModelStepKeys.ARG_TYPE, []
         )
 
@@ -1199,5 +1191,5 @@ def _forward_model_step_from_config_file(
             exec_env=exec_env,
             default_mapping=default_mapping,
         )
-    except IOError as err:
+    except OSError as err:
         raise ConfigValidationError.with_context(str(err), config_file) from err

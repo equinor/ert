@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, BinaryIO, Optional, TextIO, Tuple, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, TextIO
 
 import numpy as np
 import roffio  # type: ignore
@@ -10,7 +10,7 @@ import roffio  # type: ignore
 if TYPE_CHECKING:
     from os import PathLike
 
-    _PathLike = Union[str, PathLike[str]]
+    _PathLike = str | PathLike[str]
 
 
 RMS_UNDEFINED_FLOAT = np.float32(-999.0)
@@ -18,7 +18,7 @@ RMS_UNDEFINED_FLOAT = np.float32(-999.0)
 
 def export_roff(
     data: np.ma.MaskedArray[Any, np.dtype[np.float32]],
-    filelike: Union[TextIO, BinaryIO, _PathLike],
+    filelike: TextIO | BinaryIO | _PathLike,
     parameter_name: str,
     binary: bool,
 ) -> None:
@@ -49,7 +49,7 @@ def export_roff(
 
 
 def import_roff(
-    filelike: Union[TextIO, BinaryIO, _PathLike], name: Optional[str] = None
+    filelike: TextIO | BinaryIO | _PathLike, name: str | None = None
 ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     looking_for = {
         "dimensions": {
@@ -69,7 +69,7 @@ def import_roff(
     def all_set() -> bool:
         return all(val is not None for v in looking_for.values() for val in v.values())
 
-    def should_skip_parameter(key: Tuple[str, str]) -> bool:
+    def should_skip_parameter(key: tuple[str, str]) -> bool:
         return key[0] == "name" and name is not None and key[1] != name
 
     with roffio.lazy_read(filelike) as tag_generator:

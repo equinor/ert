@@ -34,7 +34,7 @@ class ExportRunpathJob(ErtScript):
     """
 
     def run(self, ert_config: ErtConfig, workflow_args: list[Any]) -> None:
-        _args = " ".join(workflow_args).split()  # Make sure args is a list of words
+        args = " ".join(workflow_args).split()  # Make sure args is a list of words
         run_paths = Runpaths(
             jobname_format=ert_config.model_config.jobname_format_string,
             runpath_format=ert_config.model_config.runpath_format_string,
@@ -44,7 +44,7 @@ class ExportRunpathJob(ErtScript):
         )
         run_paths.write_runpath_list(
             *self.get_ranges(
-                _args,
+                args,
                 ert_config.analysis_config.num_iterations,
                 ert_config.model_config.num_realizations,
             )

@@ -1,9 +1,7 @@
 from hypothesis import given
 
 from ert.config._read_summary import read_summary
-from tests.ert.unit_tests.config.summary_generator import (
-    summaries,
-)
+from tests.ert.unit_tests.config.summary_generator import summaries
 
 
 @given(summaries())

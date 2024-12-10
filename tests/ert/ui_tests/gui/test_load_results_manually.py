@@ -5,10 +5,7 @@ from ert.gui.ertwidgets import ClosableDialog, StringBox, TextBox
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.tools.load_results import LoadResultsPanel
 
-from .conftest import (
-    get_child,
-    wait_for_child,
-)
+from .conftest import get_child, wait_for_child
 
 
 def test_validation(ensemble_experiment_has_run_no_failure, qtbot):

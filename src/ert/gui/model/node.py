@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, cast
+from typing import cast
 
 from qtpy.QtGui import QColor
 
@@ -12,11 +12,11 @@ from ert.ensemble_evaluator.snapshot import FMStepSnapshot
 @dataclass
 class _Node(ABC):
     id_: str
-    parent: Optional[RootNode | IterNode | RealNode] = None
+    parent: RootNode | IterNode | RealNode | None = None
     children: (
         dict[str, IterNode] | dict[str, RealNode] | dict[str, ForwardModelStepNode]
     ) = field(default_factory=dict)
-    _index: Optional[int] = None
+    _index: int | None = None
 
     def __repr__(self) -> str:
         parent = "no " if self.parent is None else ""
@@ -40,7 +40,7 @@ class _Node(ABC):
 class RootNode(_Node):
     parent: None = field(default=None, init=False)
     children: dict[str, IterNode] = field(default_factory=dict)
-    max_memory_usage: Optional[int] = None
+    max_memory_usage: int | None = None
 
     def add_child(self, node: _Node) -> None:
         node = cast(IterNode, node)
@@ -50,13 +50,13 @@ class RootNode(_Node):
 
 @dataclass
 class IterNodeData:
-    index: Optional[str] = None
-    status: Optional[str] = None
+    index: str | None = None
+    status: str | None = None
 
 
 @dataclass
 class IterNode(_Node):
-    parent: Optional[RootNode] = None
+    parent: RootNode | None = None
     data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
@@ -68,20 +68,20 @@ class IterNode(_Node):
 
 @dataclass
 class RealNodeData:
-    status: Optional[str] = None
-    active: Optional[bool] = False
+    status: str | None = None
+    active: bool | None = False
     fm_step_status_color_by_id: dict[str, QColor] = field(default_factory=dict)
-    real_status_color: Optional[QColor] = None
-    current_memory_usage: Optional[int] = None
-    max_memory_usage: Optional[int] = None
-    exec_hosts: Optional[str] = None
-    stderr: Optional[str] = None
-    message: Optional[str] = None
+    real_status_color: QColor | None = None
+    current_memory_usage: int | None = None
+    max_memory_usage: int | None = None
+    exec_hosts: str | None = None
+    stderr: str | None = None
+    message: str | None = None
 
 
 @dataclass
 class RealNode(_Node):
-    parent: Optional[IterNode] = None
+    parent: IterNode | None = None
     data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
@@ -93,7 +93,7 @@ class RealNode(_Node):
 
 @dataclass
 class ForwardModelStepNode(_Node):
-    parent: Optional[RealNode]
+    parent: RealNode | None
     data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
 
     def add_child(self, node: _Node) -> None:

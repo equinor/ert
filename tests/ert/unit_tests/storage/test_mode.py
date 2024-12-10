@@ -1,11 +1,6 @@
 import pytest
 
-from ert.storage.mode import (
-    BaseMode,
-    Mode,
-    ModeError,
-    require_write,
-)
+from ert.storage.mode import BaseMode, Mode, ModeError, require_write
 
 
 class SomeClass(BaseMode):

@@ -3,13 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import warnings
+from collections.abc import Callable, Iterable
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Iterable,
 )
 
 import numpy as np
@@ -148,7 +147,7 @@ class LibresFacade:
         ensemble.refresh_ensemble_state()
         return loaded
 
-    def get_observations(self) -> "EnkfObs":
+    def get_observations(self) -> EnkfObs:
         return self.config.enkf_obs
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
@@ -230,7 +229,7 @@ class LibresFacade:
     @classmethod
     def from_config_file(
         cls, config_file: str, read_only: bool = False
-    ) -> "LibresFacade":
+    ) -> LibresFacade:
         with ErtPluginContext():
             return cls(
                 ErtConfig.with_plugins().from_file(config_file),

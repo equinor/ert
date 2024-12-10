@@ -7,24 +7,14 @@ import os
 import signal
 import sys
 import threading
+from collections.abc import Callable, Mapping, Sequence
 from logging import Logger, getLogger
 from pathlib import Path
 from select import PIPE_BUF, select
 from subprocess import Popen, TimeoutExpired
 from time import sleep
 from types import FrameType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Mapping,
-    Optional,
-    Self,
-    Sequence,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar
 
 if TYPE_CHECKING:
     from inspect import Traceback
@@ -36,7 +26,7 @@ ConnInfo = Mapping[str, Any] | Exception | None
 SERVICE_CONF_PATHS: set[str] = set()
 
 
-def cleanup_service_files(signum: int, frame: Optional[FrameType]) -> None:
+def cleanup_service_files(signum: int, frame: FrameType | None) -> None:
     for file_path in SERVICE_CONF_PATHS:
         file = Path(file_path)
         if file.exists():
@@ -79,7 +69,7 @@ class _Context(Generic[T]):
 
     def __exit__(
         self,
-        exc_type: Type[BaseException],
+        exc_type: type[BaseException],
         exc_value: BaseException,
         traceback: Traceback,
     ) -> bool:
@@ -161,7 +151,7 @@ class _Proc(threading.Thread):
         self.join()
         return self._childproc.returncode
 
-    def _read_conn_info(self, proc: Popen[bytes]) -> Optional[str]:
+    def _read_conn_info(self, proc: Popen[bytes]) -> str | None:
         comm_buf = io.StringIO()
         first_iter = True
         while first_iter or proc.poll() is None:
@@ -239,19 +229,19 @@ class BaseService:
         # initialisation is finished and it will try to read the JSON data.
     """
 
-    _instance: Optional["BaseService"] = None
+    _instance: BaseService | None = None
 
     def __init__(
         self,
         exec_args: Sequence[str] = (),
         timeout: int = 120,
         conn_info: ConnInfo = None,
-        project: Optional[str] = None,
+        project: str | None = None,
     ):
         self._exec_args = exec_args
         self._timeout = timeout
 
-        self._proc: Optional[_Proc] = None
+        self._proc: _Proc | None = None
         self._conn_info: ConnInfo = conn_info
         self._conn_info_event = threading.Event()
         self._project = Path(project) if project is not None else Path.cwd()
@@ -265,7 +255,7 @@ class BaseService:
             )
 
     @classmethod
-    def start_server(cls: Type[T], *args: Any, **kwargs: Any) -> _Context[T]:
+    def start_server(cls: type[T], *args: Any, **kwargs: Any) -> _Context[T]:
         if cls._instance is not None:
             raise RuntimeError("Server already running")
         cls._instance = obj = cls(*args, **kwargs)
@@ -277,8 +267,8 @@ class BaseService:
     def connect(
         cls,
         *,
-        project: Optional[os.PathLike[str]] = None,
-        timeout: Optional[int] = None,
+        project: os.PathLike[str] | None = None,
+        timeout: int | None = None,
     ) -> Self:
         if cls._instance is not None:
             cls._instance.wait_until_ready()
@@ -303,7 +293,7 @@ class BaseService:
         raise TimeoutError("Server not started")
 
     @classmethod
-    def connect_or_start_server(cls: Type[T], *args: Any, **kwargs: Any) -> _Context[T]:
+    def connect_or_start_server(cls: type[T], *args: Any, **kwargs: Any) -> _Context[T]:
         with contextlib.suppress(TimeoutError):
             # Note that timeout==0 will bypass the loop in connect() and force
             # TimeoutError if there is no known existing instance
@@ -311,7 +301,7 @@ class BaseService:
         # Server is not running. Start a new one
         return cls.start_server(*args, **kwargs)
 
-    def wait_until_ready(self, timeout: Optional[int] = None) -> bool:
+    def wait_until_ready(self, timeout: int | None = None) -> bool:
         if timeout is None:
             timeout = self._timeout
 

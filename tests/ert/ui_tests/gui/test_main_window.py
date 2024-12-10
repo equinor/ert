@@ -4,7 +4,6 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -145,7 +144,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     qapp, tmp_path
 ):
     with (
-        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly.ert", encoding="utf-8") as fin,
         open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
     ):
         for line in fin:
@@ -360,10 +359,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     plot_window.close()
 
 
-def test_that_the_manage_experiments_tool_can_be_used(
-    esmda_has_run,
-    qtbot,
-):
+def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
     gui = esmda_has_run
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
@@ -617,7 +613,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
         assert button_plot_tool
 
-        def top_level_plotter_windows() -> List[QWindow]:
+        def top_level_plotter_windows() -> list[QWindow]:
             top_level_plot_windows = []
             top_level_windows = QApplication.topLevelWindows()
             for win in top_level_windows:

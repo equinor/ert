@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Self, Sequence
+from typing import Self
 
 from .file_context_token import FileContextToken
 from .types import MaybeWithContext

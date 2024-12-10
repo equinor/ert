@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from qtpy.QtCore import QObject, Signal
 
 
@@ -7,12 +5,12 @@ class SelectableListModel(QObject):
     modelChanged = Signal()
     selectionChanged = Signal()
 
-    def __init__(self, items: List[str]) -> None:
+    def __init__(self, items: list[str]) -> None:
         QObject.__init__(self)
-        self._selection: Dict[str, bool] = {}
+        self._selection: dict[str, bool] = {}
         self._items = items
 
-    def getList(self) -> List[str]:
+    def getList(self) -> list[str]:
         return self._items
 
     def isValueSelected(self, value: str) -> bool:
@@ -38,7 +36,7 @@ class SelectableListModel(QObject):
 
         self.selectionChanged.emit()
 
-    def getSelectedItems(self) -> List[str]:
+    def getSelectedItems(self) -> list[str]:
         return [item for item in self.getList() if self.isValueSelected(item)]
 
     def _setSelectState(self, key: str, state: bool) -> None:

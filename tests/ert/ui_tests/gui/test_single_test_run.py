@@ -2,10 +2,7 @@ import contextlib
 import shutil
 
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
-    QComboBox,
-    QWidget,
-)
+from qtpy.QtWidgets import QComboBox, QWidget
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog

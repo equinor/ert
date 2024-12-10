@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator, TextIO
+from typing import Any, TextIO
 
 import numpy as np
 import numpy.typing as npt
@@ -146,7 +147,7 @@ def open_grdecl(
         if keyword is not None:
             raise ValueError(f"Reached end of stream while reading {keyword}")
 
-    with open(grdecl_file, "r", encoding="utf-8") as stream:
+    with open(grdecl_file, encoding="utf-8") as stream:
         yield read_grdecl(stream)
 
 

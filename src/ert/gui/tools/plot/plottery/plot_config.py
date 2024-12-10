@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from copy import copy
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
@@ -14,10 +14,10 @@ class PlotConfig:
 
     def __init__(
         self,
-        plot_settings: Optional[dict[str, Any]] = None,
-        title: Optional[str] = "Unnamed",
-        x_label: Optional[str] = None,
-        y_label: Optional[str] = None,
+        plot_settings: dict[str, Any] | None = None,
+        title: str | None = "Unnamed",
+        x_label: str | None = None,
+        y_label: str | None = None,
     ):
         self._title = title
         self._plot_settings = plot_settings
@@ -72,7 +72,7 @@ class PlotConfig:
             name="Distribution lines", line_style="-", alpha=0.25, width=1.0
         )
         self._distribution_line_style.setEnabled(False)
-        self._current_color: Optional[Tuple[str, float]] = None
+        self._current_color: tuple[str, float] | None = None
 
         self._legend_enabled = True
         self._grid_enabled = True
@@ -88,22 +88,22 @@ class PlotConfig:
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
-    def currentColor(self) -> Tuple[str, float]:
+    def currentColor(self) -> tuple[str, float]:
         if self._current_color is None:
             return self.nextColor()
 
         return self._current_color
 
-    def nextColor(self) -> Tuple[str, float]:
+    def nextColor(self) -> tuple[str, float]:
         color = next(self._line_color_cycle)
         self._current_color = color
         return self._current_color
 
-    def setLineColorCycle(self, color_list: List[Tuple[str, float]]) -> None:
+    def setLineColorCycle(self, color_list: list[tuple[str, float]]) -> None:
         self._line_color_cycle_colors = color_list
         self._line_color_cycle = itertools.cycle(color_list)
 
-    def lineColorCycle(self) -> List[Tuple[str, float]]:
+    def lineColorCycle(self) -> list[tuple[str, float]]:
         return self._line_color_cycle_colors
 
     def addLegendItem(self, label: str, item: Any) -> None:
@@ -113,7 +113,7 @@ class PlotConfig:
     def title(self) -> str:
         return self._title if self._title is not None else "Unnamed"
 
-    def setTitle(self, title: Optional[str]) -> None:
+    def setTitle(self, title: str | None) -> None:
         self._title = title
 
     def isUnnamed(self) -> bool:
@@ -125,7 +125,7 @@ class PlotConfig:
         style.color, style.alpha = self.currentColor()
         return style
 
-    def observationsColor(self) -> Tuple[str, float]:
+    def observationsColor(self) -> tuple[str, float]:
         assert self._observs_style.color
         return (self._observs_style.color, self._observs_style.alpha)
 
@@ -156,16 +156,16 @@ class PlotConfig:
         style.copyStyleFrom(self._distribution_line_style)
         return style
 
-    def xLabel(self) -> Optional[str]:
+    def xLabel(self) -> str | None:
         return self._x_label
 
-    def yLabel(self) -> Optional[str]:
+    def yLabel(self) -> str | None:
         return self._y_label
 
-    def legendItems(self) -> List[Any]:
+    def legendItems(self) -> list[Any]:
         return self._legend_items
 
-    def legendLabels(self) -> List[str]:
+    def legendLabels(self) -> list[str]:
         return self._legend_labels
 
     def setXLabel(self, label: str) -> None:
@@ -230,7 +230,7 @@ class PlotConfig:
         self._history_style.width = style.width
         self._history_style.size = style.size
 
-    def setObservationsColor(self, color_tuple: Tuple[str, float]) -> None:
+    def setObservationsColor(self, color_tuple: tuple[str, float]) -> None:
         self._observs_style.color, self._observs_style.alpha = color_tuple
 
     def setObservationsStyle(self, style: PlotStyle) -> None:
@@ -253,7 +253,7 @@ class PlotConfig:
     def limits(self, value: PlotLimits) -> None:
         self._limits = copy(value)
 
-    def copyConfigFrom(self, other: "PlotConfig") -> None:
+    def copyConfigFrom(self, other: PlotConfig) -> None:
         self._default_style.copyStyleFrom(other._default_style, copy_enabled_state=True)
         self._history_style.copyStyleFrom(other._history_style, copy_enabled_state=True)
         self._histogram_style.copyStyleFrom(

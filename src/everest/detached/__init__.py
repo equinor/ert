@@ -6,9 +6,10 @@ import os
 import re
 import time
 import traceback
+from collections.abc import Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Literal, Mapping, Optional, Tuple
+from typing import Literal
 
 import requests
 from seba_sqlite.exceptions import ObjectNotFoundError
@@ -72,7 +73,7 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     return driver
 
 
-def stop_server(server_context: Tuple[str, str, Tuple[str, str]], retries: int = 5):
+def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int = 5):
     """
     Stop server if found and it is running.
     """
@@ -95,7 +96,7 @@ def stop_server(server_context: Tuple[str, str, Tuple[str, str]], retries: int =
 
 
 def extract_errors_from_file(path: str):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         content = f.read()
     return re.findall(r"(Error \w+.*)", content)
 
@@ -163,7 +164,7 @@ def get_opt_status(output_folder):
     }
 
 
-def wait_for_server_to_stop(server_context: Tuple[str, str, Tuple[str, str]], timeout):
+def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], timeout):
     """
     Checks everest server has stoped _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
@@ -183,7 +184,7 @@ def wait_for_server_to_stop(server_context: Tuple[str, str, Tuple[str, str]], ti
         raise Exception("Failed to stop server within configured timeout.")
 
 
-def server_is_running(url: str, cert: str, auth: Tuple[str, str]):
+def server_is_running(url: str, cert: str, auth: tuple[str, str]):
     try:
         response = requests.get(
             url,
@@ -200,7 +201,7 @@ def server_is_running(url: str, cert: str, auth: Tuple[str, str]):
 
 
 def start_monitor(
-    server_context: Tuple[str, str, Tuple[str, str]], callback, polling_interval=5
+    server_context: tuple[str, str, tuple[str, str]], callback, polling_interval=5
 ):
     """
     Checks status on Everest server and calls callback when status changes
@@ -259,8 +260,8 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
 
 
 def _find_res_queue_system(
-    simulator: Optional[SimulatorConfig],
-    server: Optional[ServerConfig],
+    simulator: SimulatorConfig | None,
+    server: ServerConfig | None,
 ):
     queue_system_simulator: Literal["lsf", "local", "slurm", "torque"] = "local"
     if simulator is not None and simulator.queue_system is not None:
@@ -282,8 +283,8 @@ def _find_res_queue_system(
 
 
 def get_server_queue_options(
-    simulator: Optional[SimulatorConfig],
-    server: Optional[ServerConfig],
+    simulator: SimulatorConfig | None,
+    server: ServerConfig | None,
 ) -> QueueOptions:
     script = ErtPluginManager().activate_script() or activate_script()
     queue_system = _find_res_queue_system(simulator, server)
@@ -349,7 +350,7 @@ class ServerStatusEncoder(json.JSONEncoder):
 
 
 def update_everserver_status(
-    everserver_status_path: str, status: ServerStatus, message: Optional[str] = None
+    everserver_status_path: str, status: ServerStatus, message: str | None = None
 ):
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
@@ -382,7 +383,7 @@ def everserver_status(everserver_status_path: str):
              }
     """
     if os.path.exists(everserver_status_path):
-        with open(everserver_status_path, "r", encoding="utf-8") as f:
+        with open(everserver_status_path, encoding="utf-8") as f:
             return json.load(f, object_hook=ServerStatusEncoder.decode)
     else:
         return {"status": ServerStatus.never_run, "message": None}

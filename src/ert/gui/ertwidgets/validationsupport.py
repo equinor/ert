@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import html
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import (
     QObject,
@@ -10,13 +10,7 @@ from qtpy.QtCore import (
     Signal,
 )
 from qtpy.QtGui import QColor
-from qtpy.QtWidgets import (
-    QFrame,
-    QLabel,
-    QSizePolicy,
-    QVBoxLayout,
-    QWidget,
-)
+from qtpy.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QEvent
@@ -82,15 +76,15 @@ class ValidationSupport(QObject):
         QObject.__init__(self)
 
         self._validation_target = validation_target
-        self._validation_message: Optional[str] = None
-        self._validation_type: Optional[str] = None
+        self._validation_message: str | None = None
+        self._validation_type: str | None = None
         self._error_popup = ErrorPopup()
 
         self._originalEnterEvent = validation_target.enterEvent
         self._originalLeaveEvent = validation_target.leaveEvent
         self._originalHideEvent = validation_target.hideEvent
 
-        def enterEvent(a0: Optional[QEvent]) -> None:
+        def enterEvent(a0: QEvent | None) -> None:
             self._originalEnterEvent(a0)
 
             if not self.isValid():
@@ -101,7 +95,7 @@ class ValidationSupport(QObject):
 
         validation_target.enterEvent = enterEvent  # type: ignore[method-assign]
 
-        def leaveEvent(a0: Optional[QEvent]) -> None:
+        def leaveEvent(a0: QEvent | None) -> None:
             self._originalLeaveEvent(a0)
 
             if self._error_popup is not None:
@@ -109,7 +103,7 @@ class ValidationSupport(QObject):
 
         validation_target.leaveEvent = leaveEvent  # type: ignore[method-assign]
 
-        def hideEvent(a0: Optional[QHideEvent]) -> None:
+        def hideEvent(a0: QHideEvent | None) -> None:
             self._error_popup.hide()
             self._originalHideEvent(a0)
 

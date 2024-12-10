@@ -4,16 +4,11 @@ import math
 import os
 import shutil
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Self,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Self, overload
 
 import numpy as np
 import pandas as pd
@@ -165,7 +160,7 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
-        with open(parameter_file, "r", encoding="utf-8") as file:
+        with open(parameter_file, encoding="utf-8") as file:
             for item in file:
                 item = item.split("--")[0]  # remove comments
                 if item.strip():  # only lines with content
@@ -308,7 +303,7 @@ class GenKwConfig(ParameterConfig):
             template_file_path = (
                 ensemble.experiment.mount_point / Path(self.template_file).name
             )
-            with open(template_file_path, "r", encoding="utf-8") as f:
+            with open(template_file_path, encoding="utf-8") as f:
                 template = f.read()
             for key, value in data.items():
                 template = template.replace(f"<{key}>", f"{value:.6g}")
@@ -351,8 +346,8 @@ class GenKwConfig(ParameterConfig):
                 return tf.use_log
         return False
 
-    def get_priors(self) -> list["PriorDict"]:
-        priors: list["PriorDict"] = []
+    def get_priors(self) -> list[PriorDict]:
+        priors: list[PriorDict] = []
         for tf in self.transform_functions:
             priors.append(
                 {
@@ -428,8 +423,7 @@ class GenKwConfig(ParameterConfig):
         parameter_values = []
         for key in keys:
             key_hash = sha256(
-                global_seed.encode("utf-8")
-                + f"{parameter_group_name}:{key}".encode("utf-8")
+                global_seed.encode("utf-8") + f"{parameter_group_name}:{key}".encode()
             )
             seed = np.frombuffer(key_hash.digest(), dtype="uint32")
             rng = np.random.default_rng(seed)
@@ -514,16 +508,14 @@ class TransformFunction:
         Skewness > 0 => Shifts towards the right
         The width is a relavant scale for the value of skewness.
         """
-        _min, _max, _skew, _width = arg[0], arg[1], arg[2], arg[3]
-        y = norm(loc=0, scale=_width).cdf(x + _skew)
+        min_, max_, skew, width = arg[0], arg[1], arg[2], arg[3]
+        y = norm(loc=0, scale=width).cdf(x + skew)
         if np.isnan(y):
             raise ValueError(
-                (
-                    "Output is nan, likely from triplet (x, skewness, width) "
-                    "leading to low/high-probability in normal CDF."
-                )
+                "Output is nan, likely from triplet (x, skewness, width) "
+                "leading to low/high-probability in normal CDF."
             )
-        return _min + y * (_max - _min)
+        return min_ + y * (max_ - min_)
 
     @staticmethod
     def trans_const(_: float, arg: list[float]) -> float:
@@ -539,25 +531,25 @@ class TransformFunction:
         Bin the result of `trans_errf` with `min=0` and `max=1` to closest of `nbins`
         linearly spaced values on [0,1]. Finally map [0,1] to [min, max].
         """
-        _steps, _min, _max, _skew, _width = (
+        steps, min_, max_, skew, width = (
             int(arg[0]),
             arg[1],
             arg[2],
             arg[3],
             arg[4],
         )
-        q_values = np.linspace(start=0, stop=1, num=_steps)
-        q_checks = np.linspace(start=0, stop=1, num=_steps + 1)[1:]
-        y = TransformFunction.trans_errf(x, [0, 1, _skew, _width])
+        q_values = np.linspace(start=0, stop=1, num=steps)
+        q_checks = np.linspace(start=0, stop=1, num=steps + 1)[1:]
+        y = TransformFunction.trans_errf(x, [0, 1, skew, width])
         bin_index = np.digitize(y, q_checks, right=True)
         y_binned = q_values[bin_index]
-        result = _min + y_binned * (_max - _min)
-        if result > _max or result < _min:
+        result = min_ + y_binned * (max_ - min_)
+        if result > max_ or result < min_:
             warnings.warn(
                 "trans_derff suffered from catastrophic loss of precision, clamping to min,max",
                 stacklevel=1,
             )
-            return np.clip(result, _min, _max)
+            return np.clip(result, min_, max_)
         if np.isnan(result):
             raise ValueError(
                 "trans_derrf returns nan, check that input arguments are reasonable"
@@ -566,52 +558,52 @@ class TransformFunction:
 
     @staticmethod
     def trans_unif(x: float, arg: list[float]) -> float:
-        _min, _max = arg[0], arg[1]
+        min_, max_ = arg[0], arg[1]
         y = norm.cdf(x)
-        return y * (_max - _min) + _min
+        return y * (max_ - min_) + min_
 
     @staticmethod
     def trans_dunif(x: float, arg: list[float]) -> float:
-        _steps, _min, _max = int(arg[0]), arg[1], arg[2]
+        steps, min_, max_ = int(arg[0]), arg[1], arg[2]
         y = norm.cdf(x)
-        return (math.floor(y * _steps) / (_steps - 1)) * (_max - _min) + _min
+        return (math.floor(y * steps) / (steps - 1)) * (max_ - min_) + min_
 
     @staticmethod
     def trans_normal(x: float, arg: list[float]) -> float:
-        _mean, _std = arg[0], arg[1]
-        return x * _std + _mean
+        mean, std = arg[0], arg[1]
+        return x * std + mean
 
     @staticmethod
     def trans_truncated_normal(x: float, arg: list[float]) -> float:
-        _mean, _std, _min, _max = arg[0], arg[1], arg[2], arg[3]
-        y = x * _std + _mean
-        return max(min(y, _max), _min)  # clamp
+        mean, std, min_, max_ = arg[0], arg[1], arg[2], arg[3]
+        y = x * std + mean
+        return max(min(y, max_), min_)  # clamp
 
     @staticmethod
     def trans_lognormal(x: float, arg: list[float]) -> float:
         # mean is the expectation of log( y )
-        _mean, _std = arg[0], arg[1]
-        return math.exp(x * _std + _mean)
+        mean, std = arg[0], arg[1]
+        return math.exp(x * std + mean)
 
     @staticmethod
     def trans_logunif(x: float, arg: list[float]) -> float:
-        _log_min, _log_max = math.log(arg[0]), math.log(arg[1])
+        log_min, log_max = math.log(arg[0]), math.log(arg[1])
         tmp = norm.cdf(x)
-        log_y = _log_min + tmp * (_log_max - _log_min)  # Shift according to max / min
+        log_y = log_min + tmp * (log_max - log_min)  # Shift according to max / min
         return math.exp(log_y)
 
     @staticmethod
     def trans_triangular(x: float, arg: list[float]) -> float:
-        _min, _mode, _max = arg[0], arg[1], arg[2]
-        inv_norm_left = (_max - _min) * (_mode - _min)
-        inv_norm_right = (_max - _min) * (_max - _mode)
-        ymode = (_mode - _min) / (_max - _min)
+        min_, mode, max_ = arg[0], arg[1], arg[2]
+        inv_norm_left = (max_ - min_) * (mode - min_)
+        inv_norm_right = (max_ - min_) * (max_ - mode)
+        ymode = (mode - min_) / (max_ - min_)
         y = norm.cdf(x)
 
         if y < ymode:
-            return _min + math.sqrt(y * inv_norm_left)
+            return min_ + math.sqrt(y * inv_norm_left)
         else:
-            return _max - math.sqrt((1 - y) * inv_norm_right)
+            return max_ - math.sqrt((1 - y) * inv_norm_right)
 
     def calculate(self, x: float, arg: list[float]) -> float:
         return self.calc_func(x, arg)

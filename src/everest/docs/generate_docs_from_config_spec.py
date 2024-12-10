@@ -2,7 +2,6 @@ import dataclasses
 import inspect
 import re
 import sys
-from typing import Dict, List, Optional
 
 from pydantic.fields import FieldInfo
 
@@ -21,7 +20,7 @@ class ParsedField:
     description: str
     type: str
     is_required: bool
-    subfields: Optional[List["ParsedField"]]
+    subfields: list["ParsedField"] | None
 
     def doc_title(self) -> str:
         return f"{self.name} ({'required' if self.is_required else 'optional'})"
@@ -46,7 +45,7 @@ class ParsedField:
         return self.type
 
 
-def parse_field_info(field_infos: Dict[str, FieldInfo]):
+def parse_field_info(field_infos: dict[str, FieldInfo]):
     """
     Extracts relevant info from a list of pydantic model fields into a convenient
     format of ParsedField items, to be used for further generation of docs
@@ -140,9 +139,9 @@ class DocBuilder:
 
 
 def _generate_rst(
-    parsed_fields: List[ParsedField],
+    parsed_fields: list[ParsedField],
     level: int = 0,
-    builder: Optional[DocBuilder] = None,
+    builder: DocBuilder | None = None,
     extended=False,
 ):
     if not builder:

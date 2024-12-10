@@ -5,7 +5,7 @@ import queue
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Final, Union
+from typing import Final
 
 from _ert import events
 from _ert.events import (
@@ -138,7 +138,7 @@ class Event(Reporter):
         self._real_id = str(msg.real_id)
         self._event_publisher_thread.start()
 
-    def _job_handler(self, msg: Union[Start, Running, Exited]):
+    def _job_handler(self, msg: Start | Running | Exited):
         assert msg.job
         job_name = msg.job.name()
         job_msg = {

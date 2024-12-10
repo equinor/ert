@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Tuple, Type
+from collections.abc import Callable
 
 from _ert.forward_model_runner.reporting.message import (
     Checksum,
@@ -25,7 +25,7 @@ class StateMachine:
         jobs = (Start, Running, Exited)
         checksum = (Checksum,)
         finished = (Finish,)
-        self._handler: Dict[Message, Callable[[Message], None]] = {}
+        self._handler: dict[Message, Callable[[Message], None]] = {}
         self._transitions = {
             None: initialized,
             initialized: jobs + checksum + finished,
@@ -35,7 +35,7 @@ class StateMachine:
         self._state = None
 
     def add_handler(
-        self, states: Tuple[Type[Message], ...], handler: Callable[[Message], None]
+        self, states: tuple[type[Message], ...], handler: Callable[[Message], None]
     ) -> None:
         if states in self._handler:
             raise ValueError(f"{states} already handled by {self._handler[states]}")

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from ert.plugins.plugin_response import PluginMetadata, PluginResponse
 
@@ -11,10 +12,10 @@ P = ParamSpec("P")
 
 def plugin_response(
     plugin_name: str = "",
-) -> Callable[[Callable[P, T]], Callable[P, Optional[PluginResponse[T]]]]:
-    def outer(func: Callable[P, T]) -> Callable[P, Optional[PluginResponse[T]]]:
+) -> Callable[[Callable[P, T]], Callable[P, PluginResponse[T] | None]]:
+    def outer(func: Callable[P, T]) -> Callable[P, PluginResponse[T] | None]:
         @wraps(func)
-        def inner(*args: P.args, **kwargs: P.kwargs) -> Optional[PluginResponse[T]]:
+        def inner(*args: P.args, **kwargs: P.kwargs) -> PluginResponse[T] | None:
             response = func(*args, **kwargs)
             return (
                 PluginResponse(response, PluginMetadata(plugin_name, func.__name__))

@@ -10,7 +10,7 @@ def compute_func(x, y):
 
 
 def read_point(filename):
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         point = json.load(f)
     return point["x"], point["y"]
 

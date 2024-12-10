@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QDialog, QTableView, QVBoxLayout, QWidget
@@ -10,7 +8,7 @@ class DesignMatrixPanel(QDialog):
         self,
         design_matrix_df: pd.DataFrame,
         filename: str,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
 

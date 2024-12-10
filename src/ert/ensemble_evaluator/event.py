@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 from .snapshot import EnsembleSnapshot
 
@@ -11,21 +10,21 @@ class _UpdateEvent:
     total_iterations: int
     progress: float
     realization_count: int
-    status_count: Dict[str, int]
+    status_count: dict[str, int]
     iteration: int
 
 
 @dataclass
 class FullSnapshotEvent(_UpdateEvent):
-    snapshot: Optional[EnsembleSnapshot] = None
+    snapshot: EnsembleSnapshot | None = None
 
 
 @dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
-    snapshot: Optional[EnsembleSnapshot] = None
+    snapshot: EnsembleSnapshot | None = None
 
 
 @dataclass
 class EndEvent:
     failed: bool
-    msg: Optional[str] = None
+    msg: str | None = None

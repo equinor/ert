@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, ParamSpec
+from typing import Any, ParamSpec
 
 from .plugin_manager import (
     ErtPluginContext,

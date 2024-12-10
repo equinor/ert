@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from ert.config import QueueSystem
 from everest.config import EverestConfig
@@ -43,8 +43,8 @@ _TORQUE_OPTIONS = [
 
 
 def _extract_ert_queue_options_from_simulator_config(
-    simulator: Optional[SimulatorConfig], queue_system
-) -> List[Tuple[str, str, Any]]:
+    simulator: SimulatorConfig | None, queue_system
+) -> list[tuple[str, str, Any]]:
     if simulator is None:
         simulator = SimulatorConfig()
 

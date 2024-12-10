@@ -5,11 +5,9 @@ import pathlib
 import socket
 import ssl
 import tempfile
-import typing
 import warnings
 from base64 import b64encode
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -43,7 +41,7 @@ def _generate_authentication() -> str:
 
 def _generate_certificate(
     ip_address: str,
-) -> typing.Tuple[str, bytes, bytes]:
+) -> tuple[str, bytes, bytes]:
     """Generate a private key and a certificate signed with it
     The key is encrypted before being stored.
     Returns the certificate as a string, the key as bytes (encrypted), and
@@ -71,8 +69,8 @@ def _generate_certificate(
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.now(timezone.utc))
-        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365))  # 1 year
+        .not_valid_before(datetime.now(UTC))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=365))  # 1 year
         .add_extension(
             x509.SubjectAlternativeName(
                 [
@@ -123,10 +121,10 @@ class EvaluatorServerConfig:
 
     def __init__(
         self,
-        custom_port_range: typing.Optional[range] = None,
+        custom_port_range: range | None = None,
         use_token: bool = True,
         generate_cert: bool = True,
-        custom_host: typing.Optional[str] = None,
+        custom_host: str | None = None,
     ) -> None:
         self._socket_handle = find_available_socket(
             custom_range=custom_port_range, custom_host=custom_host
@@ -141,7 +139,7 @@ class EvaluatorServerConfig:
         else:
             cert, key, pw = None, None, None
         self.cert = cert
-        self._key: Optional[bytes] = key
+        self._key: bytes | None = key
         self._key_pw = pw
 
         self.token = _generate_authentication() if use_token else None
@@ -158,7 +156,7 @@ class EvaluatorServerConfig:
 
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER
-    ) -> typing.Optional[ssl.SSLContext]:
+    ) -> ssl.SSLContext | None:
         if self.cert is None:
             return None
         with tempfile.TemporaryDirectory() as tmp_dir:

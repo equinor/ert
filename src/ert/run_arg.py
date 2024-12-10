@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 from ert.runpaths import Runpaths
 
@@ -27,9 +27,9 @@ class RunArg:
 
 def create_run_arguments(
     runpaths: Runpaths,
-    active_realizations: Union[List[bool], npt.NDArray[np.bool_]],
+    active_realizations: list[bool] | npt.NDArray[np.bool_],
     ensemble: Ensemble,
-) -> List[RunArg]:
+) -> list[RunArg]:
     iteration = ensemble.iteration
     run_args = []
     runpaths.set_ert_ensemble(ensemble.name)

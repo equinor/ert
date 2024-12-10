@@ -6,7 +6,6 @@ import shutil
 import time
 from functools import partial
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -251,7 +250,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize("max_running", [0, 1, 2, 10])
 async def test_max_running(max_running, mock_driver, storage, tmp_path):
-    runs: List[bool] = []
+    runs: list[bool] = []
 
     async def wait():
         nonlocal runs
@@ -496,7 +495,7 @@ async def test_submit_sleep(
     tmp_path,
     mock_driver,
 ):
-    run_start_times: List[float] = []
+    run_start_times: list[float] = []
 
     async def wait():
         nonlocal run_start_times
@@ -541,7 +540,7 @@ async def test_submit_sleep(
 async def test_submit_sleep_with_max_running(
     submit_sleep, realization_max_runtime, max_running, storage, tmp_path, mock_driver
 ):
-    run_start_times: List[float] = []
+    run_start_times: list[float] = []
 
     async def wait():
         nonlocal run_start_times

@@ -3,7 +3,6 @@ import random
 import time
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import List
 
 import memray
 import numpy as np
@@ -247,7 +246,7 @@ class _Benchmark:
 # hence they are all declared here
 # Note: Adjusting num responses did not seem
 # to have a very big impact on performance.
-_BenchMarks: List[_Benchmark] = [
+_BenchMarks: list[_Benchmark] = [
     _Benchmark(
         alias="small",
         config=_UpdatePerfTestConfig(

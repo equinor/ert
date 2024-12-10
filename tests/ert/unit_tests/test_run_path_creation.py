@@ -484,7 +484,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     run_paths = Runpaths(
         jobname_format=jobname_fmt,
         runpath_format=runpath_fmt,
-        filename=str("a_file_name"),
+        filename="a_file_name",
         substitutions=global_substitutions,
     )
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
@@ -523,7 +523,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     ]
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
 
-    with open(runpath_list_path, "r", encoding="utf-8") as f:
+    with open(runpath_list_path, encoding="utf-8") as f:
         dumped_runpaths = list(
             zip(*[line.split() for line in f.readlines()], strict=False)
         )[1]

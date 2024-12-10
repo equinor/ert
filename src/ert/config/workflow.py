@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 
@@ -15,24 +16,24 @@ if TYPE_CHECKING:
 @dataclass
 class Workflow:
     src_file: str
-    cmd_list: List[Tuple[WorkflowJob, Any]]
+    cmd_list: list[tuple[WorkflowJob, Any]]
 
     def __len__(self) -> int:
         return len(self.cmd_list)
 
-    def __getitem__(self, index: int) -> Tuple[WorkflowJob, Any]:
+    def __getitem__(self, index: int) -> tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self) -> Iterator[Tuple[WorkflowJob, Any]]:
+    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:
         return iter(self.cmd_list)
 
     @classmethod
     def _parse_command_list(
         cls,
         src_file: str,
-        context: List[Tuple[str, str]],
-        job_dict: Dict[str, WorkflowJob],
-    ) -> List[Tuple[WorkflowJob, Any]]:
+        context: list[tuple[str, str]],
+        job_dict: dict[str, WorkflowJob],
+    ) -> list[tuple[WorkflowJob, Any]]:
         schema = init_workflow_schema()
         config_dict = parse(src_file, schema, pre_defines=context)
 
@@ -86,9 +87,9 @@ class Workflow:
     def from_file(
         cls,
         src_file: str,
-        context: Optional[Substitutions],
-        job_dict: Dict[str, WorkflowJob],
-    ) -> "Workflow":
+        context: Substitutions | None,
+        job_dict: dict[str, WorkflowJob],
+    ) -> Workflow:
         if not os.path.exists(src_file):
             raise ConfigValidationError.with_context(
                 f"Workflow file {src_file} does not exist", src_file

@@ -9,7 +9,7 @@ def test_generated_doc():
     """
 
     committed_file = relpath("..", "..", "docs", "everest", "config_generated.rst")
-    with open(committed_file, "r", encoding="utf-8") as fp:
+    with open(committed_file, encoding="utf-8") as fp:
         committed_text = fp.read()
 
     generated_rst = generate_docs_pydantic_to_rst()

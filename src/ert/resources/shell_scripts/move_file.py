@@ -15,7 +15,7 @@ def move_file(src_file, target):
             target = os.path.join(target, os.path.basename(src_file))
         shutil.move(src_file, target)
     else:
-        raise IOError(f"Input argument {src_file} is not an existing file")
+        raise OSError(f"Input argument {src_file} is not an existing file")
 
 
 if __name__ == "__main__":
@@ -23,5 +23,5 @@ if __name__ == "__main__":
     target = sys.argv[2]
     try:
         move_file(src, target)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"MOVE_FILE failed with the following error: {e}")

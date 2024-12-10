@@ -3,11 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config.parsing import (
-    ConfigValidationError,
-    init_user_config_schema,
-    parse,
-)
+from ert.config.parsing import ConfigValidationError, init_user_config_schema, parse
 
 
 def touch(filename):

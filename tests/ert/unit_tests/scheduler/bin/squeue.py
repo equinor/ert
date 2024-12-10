@@ -9,7 +9,7 @@ import argparse
 import glob
 import os
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 JobState = Literal["PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"]
 
@@ -27,7 +27,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def read(path: Path, default: Optional[str] = None) -> Optional[str]:
+def read(path: Path, default: str | None = None) -> str | None:
     return path.read_text().strip() if path.exists() else default
 
 

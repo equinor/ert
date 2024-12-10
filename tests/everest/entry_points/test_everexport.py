@@ -98,7 +98,7 @@ def test_everexport_entry_empty(mocked_func, copy_math_func_test_data_to_tmp):
     everexport_entry([CONFIG_FILE_MINIMAL])
 
     assert os.path.isfile(export_file_path)
-    with open(export_file_path, "r", encoding="utf-8") as f:
+    with open(export_file_path, encoding="utf-8") as f:
         content = f.read()
     assert not content.strip()
 

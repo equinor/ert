@@ -8,7 +8,7 @@ The API is typically meant used as part of workflows.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ class MeasuredData:
     def __init__(
         self,
         ensemble: Ensemble,
-        keys: Optional[List[str]] = None,
+        keys: list[str] | None = None,
     ):
         if keys is None:
             keys = sorted(ensemble.experiment.observation_keys)
@@ -83,7 +83,7 @@ class MeasuredData:
     @staticmethod
     def _get_data(
         ensemble: Ensemble,
-        observation_keys: List[str],
+        observation_keys: list[str],
     ) -> pd.DataFrame:
         """
         Adds simulated and observed data and returns a dataframe where ensemble

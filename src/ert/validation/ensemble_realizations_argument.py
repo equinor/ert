@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .range_string_argument import RangeStringArgument
 from .rangestring import rangestring_to_list
@@ -14,7 +14,7 @@ class EnsembleRealizationsArgument(RangeStringArgument):
     )
 
     def __init__(
-        self, ensemble: "Ensemble", max_value: Optional[int], **kwargs: bool
+        self, ensemble: "Ensemble", max_value: int | None, **kwargs: bool
     ) -> None:
         super().__init__(max_value, **kwargs)
         self.__ensemble = ensemble

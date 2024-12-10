@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment
@@ -27,7 +27,7 @@ class SingleTestRun(EnsembleExperiment):
         self,
         ensemble_name: str,
         experiment_name: str,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         status_queue: SimpleQueue[StatusEvents],
@@ -54,5 +54,5 @@ class SingleTestRun(EnsembleExperiment):
         return "Sample parameters → evaluate single realization"
 
     @classmethod
-    def group(cls) -> Optional[str]:
+    def group(cls) -> str | None:
         return SINGLE_TEST_RUN_GROUP

@@ -20,7 +20,7 @@ def copy_directory(src_path, target_path):
             target_path = os.path.join(target_path, src_basename)
         shutil.copytree(src_path, target_path, dirs_exist_ok=True)
     else:
-        raise IOError(
+        raise OSError(
             f"Input argument:'{src_path}' "
             "does not correspond to an existing directory"
         )
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     target_path = sys.argv[2]
     try:
         copy_directory(src_path, target_path)
-    except IOError as e:
+    except OSError as e:
         sys.exit(
             f"COPY_DIRECTORY failed with the following error: {''.join(e.args[0])}"
         )

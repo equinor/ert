@@ -1,10 +1,8 @@
-from typing import Dict, Optional
-
 from pydantic import BaseModel, Field, field_validator
 
 
 class InputConstraintConfig(BaseModel, extra="forbid"):  # type: ignore
-    weights: Dict[str, float] = Field(
+    weights: dict[str, float] = Field(
         description="""**Example**
 If we are trying to constrain only one control (i.e the z control) value:
 | input_constraints:
@@ -18,7 +16,7 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 `x-0 * 0 + y-1 * 0 + z-2 * 1  > 0.2`
 """,
     )
-    target: Optional[float] = Field(
+    target: float | None = Field(
         default=None,
         description="""**Example**
 | input_constraints:
@@ -32,7 +30,7 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 `x-0 * 1 + y-1 * 2 + z-2 * 3  = 4`
 """,
     )
-    lower_bound: Optional[float] = Field(
+    lower_bound: float | None = Field(
         default=None,
         description="""**Example**
 | input_constraints:
@@ -47,7 +45,7 @@ equation will be allowed:
 `x-0 * 1 + y-1 * 2 + z-2 * 3  >= 4`
 """,
     )
-    upper_bound: Optional[float] = Field(
+    upper_bound: float | None = Field(
         default=None,
         description="""**Example**
 | input_constraints:
@@ -65,7 +63,7 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
     @field_validator("weights")
     @classmethod
     # pylint: disable=E0213
-    def validate_weights_not_empty(cls, weights: Dict[str, float]) -> Dict[str, float]:
+    def validate_weights_not_empty(cls, weights: dict[str, float]) -> dict[str, float]:
         if weights is None or weights == {}:
             raise ValueError("Input weight data required for input constraints")
         return weights

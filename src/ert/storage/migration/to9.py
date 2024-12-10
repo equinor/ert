@@ -28,9 +28,7 @@ def migrate(path: Path) -> None:
 
         with (
             open(experiment / "index.json", encoding="utf-8") as f_experiment,
-            open(
-                experiment / "responses.json", mode="r", encoding="utf-8"
-            ) as f_responses,
+            open(experiment / "responses.json", encoding="utf-8") as f_responses,
         ):
             exp_index = json.load(f_experiment)
             experiment_id = exp_index["id"]

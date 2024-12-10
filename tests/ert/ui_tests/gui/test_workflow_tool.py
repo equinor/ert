@@ -1,7 +1,7 @@
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
 from textwrap import dedent
-from typing import Generator, Tuple
 from unittest.mock import Mock
 
 import pytest
@@ -24,7 +24,7 @@ from .conftest import get_child, wait_for_child
 @contextmanager
 def _open_main_window(
     path,
-) -> Generator[Tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
+) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
     (path / "config.ert").write_text(
         dedent("""
     QUEUE_SYSTEM LOCAL

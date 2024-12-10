@@ -1,12 +1,12 @@
 import logging
-from typing import Dict, Sequence
+from collections.abc import Sequence
 
 from .parsing import ConfigValidationError
 
 logger = logging.getLogger(__name__)
 
 
-def option_dict(option_list: Sequence[str], offset: int) -> Dict[str, str]:
+def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
     """Gets the list of options given to a keywords such as GEN_DATA.
 
     The first step of parsing will separate a line such as

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -15,7 +15,7 @@ estimate the gradient. The default is the built-in 'scipy' backend.
 
 """,
     )
-    options: Optional[Dict[str, Any]] = Field(
+    options: dict[str, Any] | None = Field(
         default=None,
         alias="backend_options",
         description="""
@@ -30,7 +30,7 @@ This dict of values is passed unchanged to the selected method in the backend.
         description="""The sampling method or distribution used by the sampler backend.
 """,
     )
-    shared: Optional[bool] = Field(
+    shared: bool | None = Field(
         default=None,
         description="""Whether to share perturbations between realizations.
 """,

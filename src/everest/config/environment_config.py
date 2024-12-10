@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -6,16 +6,15 @@ from everest.config.validation_utils import check_path_valid
 
 
 class EnvironmentConfig(BaseModel, extra="forbid"):  # type: ignore
-    simulation_folder: Optional[str] = Field(
+    simulation_folder: str | None = Field(
         default="simulation_folder", description="Folder used for simulation by Everest"
     )
-    output_folder: Optional[str] = Field(
+    output_folder: str | None = Field(
         default="everest_output", description="Folder for outputs of Everest"
     )
-    log_level: Optional[Literal["debug", "info", "warning", "error", "critical"]] = (
-        Field(
-            default="info",
-            description="""Defines the verbosity of logs output by Everest.
+    log_level: Literal["debug", "info", "warning", "error", "critical"] | None = Field(
+        default="info",
+        description="""Defines the verbosity of logs output by Everest.
 
 The default log level is `info`. All supported log levels are:
 
@@ -34,9 +33,8 @@ some function.
 critical: A serious error, indicating that the program itself may be unable to
 continue running.
 """,
-        )
     )
-    random_seed: Optional[int] = Field(
+    random_seed: int | None = Field(
         default=None, description="Random seed (must be positive)"
     )
 

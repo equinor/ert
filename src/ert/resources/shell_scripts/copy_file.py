@@ -26,7 +26,7 @@ def copy_file(src, target=None):
             print(f"Copying file '{src}' -> '{target_file}'")
             shutil.copyfile(src, target_file)
     else:
-        raise IOError(f"Input argument:'{src}' does not correspond to an existing file")
+        raise OSError(f"Input argument:'{src}' does not correspond to an existing file")
 
 
 if __name__ == "__main__":
@@ -37,5 +37,5 @@ if __name__ == "__main__":
             copy_file(src, target)
         else:
             copy_file(src)
-    except IOError as e:
+    except OSError as e:
         sys.exit(f"COPY_FILE failed with the following error: {e}")

@@ -10,10 +10,11 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Generator, MutableSequence, Union, cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -80,20 +81,20 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from ert.config import QueueConfig
 
-StatusEvents = Union[
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-    EndEvent,
-    AnalysisEvent,
-    AnalysisStatusEvent,
-    AnalysisTimeEvent,
-    RunModelErrorEvent,
-    RunModelStatusEvent,
-    RunModelTimeEvent,
-    RunModelUpdateBeginEvent,
-    RunModelDataEvent,
-    RunModelUpdateEndEvent,
-]
+StatusEvents = (
+    FullSnapshotEvent
+    | SnapshotUpdateEvent
+    | EndEvent
+    | AnalysisEvent
+    | AnalysisStatusEvent
+    | AnalysisTimeEvent
+    | RunModelErrorEvent
+    | RunModelStatusEvent
+    | RunModelTimeEvent
+    | RunModelUpdateBeginEvent
+    | RunModelDataEvent
+    | RunModelUpdateEndEvent
+)
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
@@ -508,7 +509,7 @@ class BaseRunModel(ABC):
                         EESnapshot,
                         EESnapshotUpdate,
                     ):
-                        event = cast(Union[EESnapshot, EESnapshotUpdate], event)
+                        event = cast(EESnapshot | EESnapshotUpdate, event)
                         await asyncio.get_running_loop().run_in_executor(
                             None,
                             self.send_snapshot_event,

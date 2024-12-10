@@ -276,7 +276,7 @@ class EclRun:
             data_file = input_arg + ".DATA"
 
         if not os.path.isfile(data_file):
-            raise IOError(f"No such file: {data_file}")
+            raise OSError(f"No such file: {data_file}")
 
         (self.run_path, self.data_file) = os.path.split(data_file)
         (self.base_name, ext) = os.path.splitext(self.data_file)
@@ -385,7 +385,7 @@ class EclRun:
 
         with pushd(self.run_path):
             if not os.path.exists(self.data_file):
-                raise IOError(f"Can not find data_file:{self.data_file}")
+                raise OSError(f"Can not find data_file:{self.data_file}")
             if not os.access(self.data_file, os.R_OK):
                 raise OSError(f"Can not read data file:{self.data_file}")
 
@@ -493,7 +493,7 @@ class EclRun:
 
         errors = None
         bugs = None
-        with open(report_file, "r", encoding="utf-8") as filehandle:
+        with open(report_file, encoding="utf-8") as filehandle:
             for line in filehandle.readlines():
                 error_match = re.match(error_regexp, line)
                 if error_match:
@@ -515,7 +515,7 @@ class EclRun:
         error_e100_regexp = re.compile(error_pattern_e100, re.MULTILINE)
         error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
         slave_started_regexp = re.compile(slave_started_pattern, re.MULTILINE)
-        with open(self.prt_path, "r", encoding="utf-8") as filehandle:
+        with open(self.prt_path, encoding="utf-8") as filehandle:
             content = filehandle.read()
 
         for regexp in [error_e100_regexp, error_e300_regexp, slave_started_regexp]:

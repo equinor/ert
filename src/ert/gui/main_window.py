@@ -194,9 +194,7 @@ class ErtMainWindow(QMainWindow):
             widget.setVisible(False)
 
         run_dialog.setParent(self)
-        date_time = datetime.datetime.now(datetime.timezone.utc).strftime(
-            "%Y-%d-%m %H:%M:%S"
-        )
+        date_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%d-%m %H:%M:%S")
         experiment_type = run_dialog._run_model.name()
         simulation_id = experiment_type + " : " + date_time
         self.central_panels_map[simulation_id] = run_dialog

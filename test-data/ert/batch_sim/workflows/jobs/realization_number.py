@@ -8,7 +8,7 @@ REGEX = r"realization-(\d+)"
 
 
 def add_file_to_realization_runpaths(runpath_file):
-    with open(runpath_file, "r", encoding="utf-8") as fh:
+    with open(runpath_file, encoding="utf-8") as fh:
         runpath_file_lines = fh.readlines()
 
     for line in runpath_file_lines:

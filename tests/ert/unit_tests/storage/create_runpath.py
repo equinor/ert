@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path, sample_prior
 from ert.run_arg import create_run_arguments
@@ -12,10 +10,10 @@ def create_runpath(
     config,
     active_mask=None,
     *,
-    ensemble: Optional[Ensemble] = None,
+    ensemble: Ensemble | None = None,
     iteration=0,
-    random_seed: Optional[int] = 1234,
-) -> Tuple[ErtConfig, Ensemble]:
+    random_seed: int | None = 1234,
+) -> tuple[ErtConfig, Ensemble]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
 

@@ -3,13 +3,7 @@ from typing import Any, overload
 from uuid import UUID
 
 import humanize
-from qtpy.QtCore import (
-    QAbstractItemModel,
-    QModelIndex,
-    QObject,
-    Qt,
-    Slot,
-)
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, Slot
 from qtpy.QtWidgets import QApplication
 from typing_extensions import override
 

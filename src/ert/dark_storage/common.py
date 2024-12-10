@@ -1,6 +1,7 @@
 import contextlib
 import logging
-from typing import Any, Callable, Iterator
+from collections.abc import Callable, Iterator
+from typing import Any
 from uuid import UUID
 
 import numpy as np

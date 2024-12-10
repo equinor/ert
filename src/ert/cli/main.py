@@ -7,7 +7,7 @@ import os
 import queue
 import sys
 from collections import Counter
-from typing import Optional, TextIO
+from typing import TextIO
 
 from _ert.threading import ErtThread
 from ert.cli.monitor import Monitor
@@ -34,7 +34,7 @@ class ErtCliError(Exception):
     pass
 
 
-def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) -> None:
+def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> None:
     ert_dir = os.path.abspath(os.path.dirname(args.config))
     os.chdir(ert_dir)
     # Changing current working directory means we need to update
@@ -133,7 +133,7 @@ def run_cli(args: Namespace, plugin_manager: Optional[ErtPluginManager] = None) 
             out = sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)
         thread.start()
-        end_event: Optional[EndEvent] = None
+        end_event: EndEvent | None = None
         try:
             end_event = monitor.monitor(
                 status_queue, ert_config.analysis_config.log_path

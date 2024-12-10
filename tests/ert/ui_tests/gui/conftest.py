@@ -5,10 +5,11 @@ import os.path
 import shutil
 import stat
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
-from typing import Iterator, Type, TypeVar
+from typing import TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -84,9 +85,7 @@ def _new_poly_example(source_root, destination, num_realizations: int = 20):
 
 
 @contextmanager
-def _open_main_window(
-    path,
-) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
+def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
     with ErtPluginContext():
@@ -184,9 +183,9 @@ def _ensemble_experiment_run(
 
 
 @pytest.fixture
-def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
+def esmda_has_run(esmda_run, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_esmda_run, tmp_path, dirs_exist_ok=True)
+    shutil.copytree(esmda_run, tmp_path, dirs_exist_ok=True)
     with (
         _open_main_window(tmp_path / "poly.ert") as (
             gui,
@@ -390,17 +389,17 @@ def add_experiment_manually(
 V = TypeVar("V")
 
 
-def wait_for_child(gui, qtbot: QtBot, typ: Type[V], timeout=5000, **kwargs) -> V:
+def wait_for_child(gui, qtbot: QtBot, typ: type[V], timeout=5000, **kwargs) -> V:
     qtbot.waitUntil(lambda: gui.findChild(typ) is not None, timeout=timeout)
     return get_child(gui, typ, **kwargs)
 
 
-def get_child(gui: QWidget, typ: Type[V], *args, **kwargs) -> V:
+def get_child(gui: QWidget, typ: type[V], *args, **kwargs) -> V:
     child = gui.findChild(typ, *args, **kwargs)
     assert isinstance(child, typ)
     return child
 
 
-def get_children(gui: QWidget, typ: Type[V], *args, **kwargs) -> list[V]:
+def get_children(gui: QWidget, typ: type[V], *args, **kwargs) -> list[V]:
     children: list[typ] = gui.findChildren(typ, *args, **kwargs)
     return children

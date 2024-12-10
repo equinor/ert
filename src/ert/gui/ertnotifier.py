@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import QObject, Signal, Slot
 
 from ert.storage import Ensemble, Storage
@@ -13,8 +11,8 @@ class ErtNotifier(QObject):
     def __init__(self, config_file: str):
         QObject.__init__(self)
         self._config_file = config_file
-        self._storage: Optional[Storage] = None
-        self._current_ensemble: Optional[Ensemble] = None
+        self._storage: Storage | None = None
+        self._current_ensemble: Ensemble | None = None
         self._is_simulation_running = False
 
     @property
@@ -31,7 +29,7 @@ class ErtNotifier(QObject):
         return self._config_file
 
     @property
-    def current_ensemble(self) -> Optional[Ensemble]:
+    def current_ensemble(self) -> Ensemble | None:
         if self._current_ensemble is None and self._storage is not None:
             ensembles = list(self._storage.ensembles)
             if ensembles:
@@ -58,7 +56,7 @@ class ErtNotifier(QObject):
         self.storage_changed.emit(storage)
 
     @Slot(object)
-    def set_current_ensemble(self, ensemble: Optional[Ensemble] = None) -> None:
+    def set_current_ensemble(self, ensemble: Ensemble | None = None) -> None:
         self._current_ensemble = ensemble
         self.current_ensemble_changed.emit(ensemble)
 

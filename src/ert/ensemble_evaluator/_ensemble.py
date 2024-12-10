@@ -3,14 +3,12 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from functools import partialmethod
 from typing import (
     Any,
-    Awaitable,
-    Callable,
     Protocol,
-    Sequence,
 )
 
 from _ert.events import (
@@ -185,7 +183,7 @@ class LegacyEnsemble:
             self.status = self._status_tracker.update_state(self.snapshot.status)
 
         for event in events:
-            if isinstance(event, (ForwardModelStepSuccess, ForwardModelStepFailure)):
+            if isinstance(event, ForwardModelStepSuccess | ForwardModelStepFailure):
                 step = (
                     self.snapshot.reals[event.real]
                     .get("fm_steps", {})
@@ -300,7 +298,7 @@ class LegacyEnsemble:
             self._scheduler.add_dispatch_information_to_jobs_file()
             result = await self._scheduler.execute(min_required_realizations)
         except PermissionError as error:
-            logger.exception((f"Unexpected exception in ensemble: \n {error!s}"))
+            logger.exception(f"Unexpected exception in ensemble: \n {error!s}")
             await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
             return
         except Exception as exc:
@@ -340,7 +338,7 @@ class Realization:
     fm_steps: Sequence[ForwardModelStep]
     active: bool
     max_runtime: int | None
-    run_arg: "RunArg"
+    run_arg: RunArg
     num_cpu: int
     job_script: str
     realization_memory: int  # Memory to reserve/book, in bytes

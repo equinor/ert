@@ -12,10 +12,7 @@ from tests.everest.utils import (
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import (
-    ServerStatus,
-    everserver_status,
-)
+from everest.detached import ServerStatus, everserver_status
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 WELL_ORDER = "everest/model/config.yml"
@@ -149,13 +146,13 @@ def test_everest_main_lint_entry(copy_math_func_test_data_to_tmp):
     with capture_streams() as (out, err), pytest.raises(SystemExit):
         start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
 
-    _type = "(type=float_parsing)"
+    type_ = "(type=float_parsing)"
     validation_msg = dedent(
         f"""Loading config file <config_minimal.yml> failed with:
 Found  1 validation error:
 
 controls -> 0 -> initial_guess
-    * Input should be a valid number, unable to parse string as a number {_type}
+    * Input should be a valid number, unable to parse string as a number {type_}
 """
     )
     assert validation_msg in err.getvalue()

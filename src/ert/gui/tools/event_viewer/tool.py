@@ -1,5 +1,3 @@
-from typing import Optional
-
 from qtpy.QtCore import QObject, Slot
 from qtpy.QtGui import QIcon
 
@@ -9,9 +7,7 @@ from .panel import EventViewerPanel, GUILogHandler
 
 
 class EventViewerTool(Tool, QObject):
-    def __init__(
-        self, gui_handler: GUILogHandler, config_filename: Optional[str] = None
-    ):
+    def __init__(self, gui_handler: GUILogHandler, config_filename: str | None = None):
         super().__init__(
             "Event viewer",
             QIcon("img:notifications.svg"),

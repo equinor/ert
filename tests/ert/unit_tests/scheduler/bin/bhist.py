@@ -3,7 +3,6 @@ import os
 import time
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -31,7 +30,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def bhist_formatter(jobstats: List[Job]) -> str:
+def bhist_formatter(jobstats: list[Job]) -> str:
     string = "Summary of time in seconds spent in various states:\n"
     string += "JOBID   USER    JOB_NAME  PEND    PSUSP   RUN     USUSP   SSUSP   UNKWN   TOTAL\n"
     for job in jobstats:
@@ -45,7 +44,7 @@ def bhist_formatter(jobstats: List[Job]) -> str:
     return string
 
 
-def bhist_long_formatter(jobstats: List[Job]) -> str:
+def bhist_long_formatter(jobstats: list[Job]) -> str:
     """
     This function outputs stub data entirely independent from the input.
     """
@@ -73,7 +72,7 @@ def bhist_long_formatter(jobstats: List[Job]) -> str:
     return f"{50*'-'}".join(formatted_job_outputs)
 
 
-def read(path: Path, default: Optional[str] = None) -> Optional[str]:
+def read(path: Path, default: str | None = None) -> str | None:
     return path.read_text().strip() if path.exists() else default
 
 
@@ -82,7 +81,7 @@ def main() -> None:
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 
-    jobs_output: List[Job] = []
+    jobs_output: list[Job] = []
     for job in args.jobs:
         job_name: str = read(jobs_path / f"{job}.name") or "_"
         assert job_name is not None

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSize
 from qtpy.QtGui import QIcon
@@ -64,7 +64,7 @@ class PathChooser(QWidget):
         self.setLayout(layout)
         self.getPathFromModel()
 
-    def isPathValid(self, path: str) -> Tuple[bool, str]:
+    def isPathValid(self, path: str) -> tuple[bool, str]:
         path = path.strip()
         path_exists = os.path.exists(path)
         is_file = os.path.isfile(path)

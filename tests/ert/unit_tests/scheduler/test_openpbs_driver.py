@@ -8,7 +8,6 @@ import stat
 from functools import partial
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List
 
 import pytest
 from hypothesis import given
@@ -48,7 +47,7 @@ QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
 
 @given(st.lists(st.sampled_from(JOB_STATES)))
-async def test_events_produced_from_jobstate_updates(jobstate_sequence: List[str]):
+async def test_events_produced_from_jobstate_updates(jobstate_sequence: list[str]):
     # Determine what to expect from the sequence:
     started = False
     finished = False
@@ -121,7 +120,7 @@ def capturing_qsub(monkeypatch, tmp_path):
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
 
 
-def parse_resource_string(qsub_args: str) -> Dict[str, str]:
+def parse_resource_string(qsub_args: str) -> dict[str, str]:
     resources = {}
 
     args = shlex.split(qsub_args)

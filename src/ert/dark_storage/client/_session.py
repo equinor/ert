@@ -1,14 +1,13 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, ValidationError
 
 
 class ConnInfo(BaseModel):
     base_url: str
-    auth_token: Optional[str] = None
+    auth_token: str | None = None
 
 
 ENV_VAR = "ERT_STORAGE_CONNECTION_STRING"
@@ -17,7 +16,7 @@ ENV_VAR = "ERT_STORAGE_CONNECTION_STRING"
 # that a single client process will only ever want to connect to a single ERT
 # Storage server during its lifetime, so we don't provide an API for managing
 # this cache.
-_CACHED_CONN_INFO: Optional[ConnInfo] = None
+_CACHED_CONN_INFO: ConnInfo | None = None
 
 
 def find_conn_info() -> ConnInfo:

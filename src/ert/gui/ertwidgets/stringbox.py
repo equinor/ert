@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtGui import QPalette
 from qtpy.QtWidgets import QLineEdit
@@ -34,7 +34,7 @@ class StringBox(QLineEdit):
         QLineEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)
-        self._validator: Optional[ArgumentDefinition] = None
+        self._validator: ArgumentDefinition | None = None
         self._model = model
         self._enable_validation = True
 
@@ -81,7 +81,7 @@ class StringBox(QLineEdit):
 
     def stringBoxChanged(self) -> None:
         """Called whenever the contents of the editline changes."""
-        text: Optional[str] = self.text()
+        text: str | None = self.text()
         if not text:
             text = None
 

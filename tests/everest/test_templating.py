@@ -234,7 +234,7 @@ def test_user_specified_data_n_template(
     assert os.path.isfile(expected_file)
 
     # Check expected contents of file
-    with open(expected_file, "r", encoding="utf-8") as f:
+    with open(expected_file, encoding="utf-8") as f:
         contents = f.read()
     assert (
         contents == "VALUE1+VALUE2"

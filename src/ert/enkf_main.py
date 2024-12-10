@@ -4,9 +4,10 @@ import json
 import logging
 import os
 import time
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping
+from typing import TYPE_CHECKING, Any
 
 import orjson
 from numpy.random import SeedSequence
@@ -65,7 +66,7 @@ def _value_export_json(
         return
 
     # Hierarchical
-    json_out: Dict[str, float | Dict[str, float]] = {
+    json_out: dict[str, float | dict[str, float]] = {
         key: dict(param_map.items()) for key, param_map in values.items()
     }
 
@@ -99,7 +100,7 @@ def _generate_parameter_files(
         iens: Realisation index
         fs: Ensemble from which to load parameter data
     """
-    exports: Dict[str, Dict[str, float]] = {}
+    exports: dict[str, dict[str, float]] = {}
 
     for node in parameter_configs:
         # For the first iteration we do not write the parameter
@@ -116,13 +117,13 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
-def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> Dict[str, Any]:
+def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any]:
     manifest = {}
     # Add expected parameter files to manifest
     for param_config in ensemble.experiment.parameter_configuration.values():
         assert isinstance(
             param_config,
-            (ExtParamConfig, GenKwConfig, Field, SurfaceConfig),
+            ExtParamConfig | GenKwConfig | Field | SurfaceConfig,
         )
         if param_config.forward_init and ensemble.iteration == 0:
             assert param_config.forward_init_file is not None
@@ -195,14 +196,14 @@ def create_run_path(
     run_args: list[RunArg],
     ensemble: Ensemble,
     user_config_file: str,
-    env_vars: Dict[str, str],
-    env_pr_fm_step: Dict[str, Dict[str, Any]],
+    env_vars: dict[str, str],
+    env_pr_fm_step: dict[str, dict[str, Any]],
     forward_model_steps: list[ForwardModelStep],
     substitutions: Substitutions,
     templates: list[tuple[str, str]],
     model_config: ModelConfig,
     runpaths: Runpaths,
-    context_env: Dict[str, str] | None = None,
+    context_env: dict[str, str] | None = None,
 ) -> None:
     if context_env is None:
         context_env = {}

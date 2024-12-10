@@ -2,7 +2,6 @@
 """Partial Differential Equations to use as forward models."""
 
 import sys
-from typing import Optional
 
 import geostat
 import numpy as np
@@ -19,14 +18,14 @@ def heat_equation(
     k_start: int,
     k_end: int,
     rng: np.random.Generator,
-    scale: Optional[float] = None,
+    scale: float | None = None,
 ) -> npt.NDArray[np.float64]:
     """2D heat equation that suppoheat_erts field of heat coefficients.
 
     Based on:
     https://levelup.gitconnected.com/solving-2d-heat-equation-numerically-using-python-3334004aa01a
     """
-    _u = u.copy()
+    u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
     assert cond.shape == (nx, nx)
 
@@ -36,20 +35,20 @@ def heat_equation(
         for i in range(1, plate_length - 1, dx):
             for j in range(1, plate_length - 1, dx):
                 noise = rng.normal(scale=scale) if scale is not None else 0
-                _u[k + 1, i, j] = (
+                u_[k + 1, i, j] = (
                     gamma[i, j]
                     * (
-                        _u[k][i + 1][j]
-                        + _u[k][i - 1][j]
-                        + _u[k][i][j + 1]
-                        + _u[k][i][j - 1]
-                        - 4 * _u[k][i][j]
+                        u_[k][i + 1][j]
+                        + u_[k][i - 1][j]
+                        + u_[k][i][j + 1]
+                        + u_[k][i][j - 1]
+                        - 4 * u_[k][i][j]
                     )
-                    + _u[k][i][j]
+                    + u_[k][i][j]
                     + noise
                 )
 
-    return _u
+    return u_
 
 
 def sample_prior_conductivity(ensemble_size, nx, rng):

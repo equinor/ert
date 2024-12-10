@@ -477,9 +477,7 @@ def test_missing_keywords_in_smspec_raises_informative_error(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
-def test_that_ambiguous_case_restart_raises_an_informative_error(
-    tmp_path,
-):
+def test_that_ambiguous_case_restart_raises_an_informative_error(tmp_path):
     (tmp_path / "test.UNSMRY").write_bytes(b"")
     (tmp_path / "test.FUNSMRY").write_bytes(b"")
     (tmp_path / "test.smspec").write_bytes(b"")

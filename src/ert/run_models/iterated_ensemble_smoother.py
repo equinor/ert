@@ -211,12 +211,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
             else:
                 raise ErtRunError(
-                    (
-                        "Iterated ensemble smoother stopped: "
-                        "maximum number of iteration retries "
-                        f"({self.num_retries_per_iter} retries) reached "
-                        f"for iteration {prior_iter}"
-                    )
+                    "Iterated ensemble smoother stopped: "
+                    "maximum number of iteration retries "
+                    f"({self.num_retries_per_iter} retries) reached "
+                    f"for iteration {prior_iter}"
                 )
             prior = posterior
 

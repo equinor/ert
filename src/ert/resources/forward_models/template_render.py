@@ -27,7 +27,7 @@ def load_data(filename):
         except yaml.YAMLError as err:
             json_err = str(err)
 
-    raise IOError(
+    raise OSError(
         f"{filename} is neither yaml (err_msg={yaml_err}) nor json (err_msg={json_err})"
     )
 

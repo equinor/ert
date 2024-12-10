@@ -67,7 +67,7 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
     with (
-        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly.ert", encoding="utf-8") as fin,
         open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
     ):
         for line in fin:
@@ -153,7 +153,7 @@ def test_surface_init_fails_during_forward_model_callback():
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_unopenable_observation_config_fails_gracefully():
     config_file_name = "snake_oil_field.ert"
-    with open(config_file_name, mode="r", encoding="utf-8") as config_file_handler:
+    with open(config_file_name, encoding="utf-8") as config_file_handler:
         content_lines = config_file_handler.read().splitlines()
     index_line_with_observation_config = next(
         index
@@ -186,7 +186,7 @@ def test_that_the_model_raises_exception_if_successful_realizations_less_than_mi
     mode,
 ):
     with (
-        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly.ert", encoding="utf-8") as fin,
         open("failing_realizations.ert", "w", encoding="utf-8") as fout,
     ):
         for line in fin:
@@ -231,7 +231,7 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(mod
     A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
     """
     with (
-        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly.ert", encoding="utf-8") as fin,
         open("poly_lower_active_reals.ert", "w", encoding="utf-8") as fout,
     ):
         for line in fin:
@@ -883,7 +883,7 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     there are repeated forward models
     """
     with (
-        open("poly.ert", "r", encoding="utf-8") as fin,
+        open("poly.ert", encoding="utf-8") as fin,
         open("poly_repeated_forward_model_steps.ert", "w", encoding="utf-8") as fout,
     ):
         forward_model_steps = ["FORWARD_MODEL poly_eval\n"] * 5

@@ -2,7 +2,8 @@
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QApplication
-from typing import Callable, Any
+from typing import Any
+from collections.abc import Callable
 
 
 def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -27,14 +28,14 @@ class CustomizationView(QWidget):
         self.setLayout(self._layout)
         self._widgets: dict[str, QWidget] = {}
 
-    def addRow(self, title: Optional[str], widget: Optional[QWidget]) -> None:
+    def addRow(self, title: str | None, widget: QWidget | None) -> None:
         self._layout.addRow(title, widget)
 
     def addLineEdit(
         self,
         attribute_name: str,
         title: str,
-        tool_tip: Optional[str] = None,
+        tool_tip: str | None = None,
         placeholder: str = "",
     ) -> None:
         self[attribute_name] = ClearableLineEdit(placeholder=placeholder)
@@ -43,13 +44,13 @@ class CustomizationView(QWidget):
         if tool_tip is not None:
             self[attribute_name].setToolTip(tool_tip)
 
-        def getter(self: Any) -> Optional[str]:
-            value: Optional[str] = str(self[attribute_name].text())
+        def getter(self: Any) -> str | None:
+            value: str | None = str(self[attribute_name].text())
             if not value:
                 value = None
             return value
 
-        def setter(self: Any, value: Optional[str]) -> None:
+        def setter(self: Any, value: str | None) -> None:
             if value is None:
                 value = ""
             self[attribute_name].setText(str(value))
@@ -57,7 +58,7 @@ class CustomizationView(QWidget):
         self.updateProperty(attribute_name, getter, setter)
 
     def addCheckBox(
-        self, attribute_name: str, title: str, tool_tip: Optional[str] = None
+        self, attribute_name: str, title: str, tool_tip: str | None = None
     ) -> None:
         self[attribute_name] = QCheckBox()
         self.addRow(title, self[attribute_name])
@@ -77,7 +78,7 @@ class CustomizationView(QWidget):
         self,
         attribute_name: str,
         title: str,
-        tool_tip: Optional[str] = None,
+        tool_tip: str | None = None,
         min_value: int = 1,
         max_value: int = 10,
         single_step: int = 1,
@@ -110,7 +111,7 @@ class CustomizationView(QWidget):
         self,
         attribute_name: str,
         title: str,
-        tool_tip: Optional[str] = None,
+        tool_tip: str | None = None,
         line_style_set: str = STYLESET_DEFAULT,
     ) -> None:
         style_chooser = StyleChooser(line_style_set=line_style_set)

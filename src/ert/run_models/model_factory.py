@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -212,7 +212,7 @@ def _setup_ensemble_smoother(
     )
 
 
-def _determine_restart_info(args: Namespace) -> Tuple[bool, str]:
+def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
     """Handles differences in configuration between CLI and GUI.
 
     Returns

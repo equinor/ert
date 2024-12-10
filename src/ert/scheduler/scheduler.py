@@ -6,19 +6,11 @@ import os
 import time
 import traceback
 from collections import defaultdict
+from collections.abc import Iterable, MutableMapping, Sequence
 from contextlib import suppress
 from dataclasses import asdict
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Any
 
 import orjson
 from pydantic.dataclasses import dataclass
@@ -39,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class _JobsJson:
-    ens_id: Optional[str]
+    ens_id: str | None
     real_id: int
-    dispatch_url: Optional[str]
-    ee_token: Optional[str]
-    ee_cert_path: Optional[str]
-    experiment_id: Optional[str]
+    dispatch_url: str | None
+    ee_token: str | None
+    ee_cert_path: str | None
+    experiment_id: str | None
 
 
 class SubmitSleeper:
@@ -68,17 +60,17 @@ class Scheduler:
     def __init__(
         self,
         driver: Driver,
-        realizations: Optional[Sequence[Realization]] = None,
-        manifest_queue: Optional[asyncio.Queue[Event]] = None,
-        ensemble_evaluator_queue: Optional[asyncio.Queue[Event]] = None,
+        realizations: Sequence[Realization] | None = None,
+        manifest_queue: asyncio.Queue[Event] | None = None,
+        ensemble_evaluator_queue: asyncio.Queue[Event] | None = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,
         submit_sleep: float = 0.0,
-        ens_id: Optional[str] = None,
-        ee_uri: Optional[str] = None,
-        ee_cert: Optional[str] = None,
-        ee_token: Optional[str] = None,
+        ens_id: str | None = None,
+        ee_uri: str | None = None,
+        ee_cert: str | None = None,
+        ee_token: str | None = None,
     ) -> None:
         self.driver = driver
         self._ensemble_evaluator_queue = ensemble_evaluator_queue
@@ -86,7 +78,7 @@ class Scheduler:
 
         self._job_tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
-        self.submit_sleep_state: Optional[SubmitSleeper] = None
+        self.submit_sleep_state: SubmitSleeper | None = None
         if submit_sleep > 0:
             self.submit_sleep_state = SubmitSleeper(submit_sleep)
 
@@ -114,7 +106,7 @@ class Scheduler:
         self._ee_cert = ee_cert
         self._ee_token = ee_token
 
-        self.checksum: Dict[str, Dict[str, Any]] = {}
+        self.checksum: dict[str, dict[str, Any]] = {}
 
     def kill_all_jobs(self) -> None:
         assert self._loop
@@ -178,8 +170,8 @@ class Scheduler:
     def is_active(self) -> bool:
         return any(not task.done() for task in self._job_tasks.values())
 
-    def count_states(self) -> Dict[JobState, int]:
-        counts: Dict[JobState, int] = defaultdict(int)
+    def count_states(self) -> dict[JobState, int]:
+        counts: dict[JobState, int] = defaultdict(int)
         for job in self._jobs.values():
             counts[job.state] += 1
         return counts
@@ -227,10 +219,8 @@ class Scheduler:
                         )
                     )
                     logger.error(
-                        (
-                            f"Exception in scheduler task {task.get_name()}: {task_exception}\n"
-                            f"Traceback: {exc_traceback}"
-                        )
+                        f"Exception in scheduler task {task.get_name()}: {task_exception}\n"
+                        f"Traceback: {exc_traceback}"
                     )
                     if task in scheduling_tasks:
                         await self._cancel_job_tasks()
@@ -251,7 +241,7 @@ class Scheduler:
     async def execute(
         self,
         min_required_realizations: int = 0,
-    ) -> Union[Id.ENSEMBLE_SUCCEEDED_TYPE, Id.ENSEMBLE_CANCELLED_TYPE]:
+    ) -> Id.ENSEMBLE_SUCCEEDED_TYPE | Id.ENSEMBLE_CANCELLED_TYPE:
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(
@@ -329,7 +319,7 @@ class Scheduler:
             # Any event implies the job has at least started
             job.started.set()
 
-            if isinstance(event, (StartedEvent, FinishedEvent)) and event.exec_hosts:
+            if isinstance(event, StartedEvent | FinishedEvent) and event.exec_hosts:
                 self._jobs[event.iens].exec_hosts = event.exec_hosts
 
             if (

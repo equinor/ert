@@ -6,19 +6,10 @@ import os
 import shutil
 import tempfile
 from argparse import ArgumentParser
+from collections.abc import Callable, Mapping, Sequence
 from itertools import chain
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Literal,
-    Mapping,
-    Sequence,
-    Type,
-    TypeVar,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
 from opentelemetry.sdk.trace import TracerProvider
@@ -86,7 +77,7 @@ class ErtPluginManager(pluggy.PluginManager):
     @property
     def forward_model_steps(
         self,
-    ) -> list[Type[ForwardModelStepPlugin]]:
+    ) -> list[type[ForwardModelStepPlugin]]:
         fm_steps_listed = [
             resp.data for resp in self.hook.installable_forward_model_steps()
         ]
@@ -445,7 +436,7 @@ class ErtPluginContext:
     def __exit__(
         self,
         exception: BaseException,
-        exception_type: Type[BaseException],
+        exception_type: type[BaseException],
         traceback: TracebackType,
     ) -> None:
         self._reset_environment()

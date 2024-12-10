@@ -34,8 +34,8 @@ def _mock_ws(host, port, messages, delay_startup=0):
 class TestEnsemble(Ensemble):
     __test__ = False
 
-    def __init__(self, _iter, reals, fm_steps, id_):
-        self.iter = _iter
+    def __init__(self, iter_, reals, fm_steps, id_):
+        self.iter = iter_
         self.test_reals = reals
         self.fm_steps = fm_steps
 

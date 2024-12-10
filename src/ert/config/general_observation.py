@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
 
 import numpy as np
 
 
 @dataclass(eq=False)
 class GenObservation:
-    values: List[float]
-    stds: List[float]
-    indices: List[int]
-    std_scaling: List[float]
+    values: list[float]
+    stds: list[float]
+    indices: list[int]
+    std_scaling: list[float]
 
     def __post_init__(self) -> None:
         for val in self.stds:

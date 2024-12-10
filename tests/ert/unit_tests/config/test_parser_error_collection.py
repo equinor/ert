@@ -2,9 +2,9 @@ import os
 import re
 import stat
 import warnings
+from collections.abc import Sequence
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Dict, List, Optional, Sequence, Union
 
 import pytest
 from hypothesis import given, strategies
@@ -26,15 +26,15 @@ class FileDetail:
 @dataclass
 class ExpectedErrorInfo:
     filename: str = "test.ert"
-    line: Optional[int] = None
-    column: Optional[int] = None
-    end_column: Optional[int] = None
-    other_files: Optional[Dict[str, FileDetail]] = None
-    match: Optional[str] = None
-    count: Optional[int] = None
+    line: int | None = None
+    column: int | None = None
+    end_column: int | None = None
+    other_files: dict[str, FileDetail] | None = None
+    match: str | None = None
+    count: int | None = None
 
 
-def write_files(files: Optional[Dict[str, Union[str, FileDetail]]] = None):
+def write_files(files: dict[str, str | FileDetail] | None = None):
     if files is not None:
         for other_filename, content in files.items():
             with open(other_filename, mode="w", encoding="utf-8") as fh:
@@ -51,7 +51,7 @@ def write_files(files: Optional[Dict[str, Union[str, FileDetail]]] = None):
 
 
 def find_and_assert_errors_matching_filename(
-    errors: Sequence[ErrorInfo], filename: Optional[str]
+    errors: Sequence[ErrorInfo], filename: str | None
 ):
     matching_errors = (
         [err for err in errors if err.filename is not None and filename in err.filename]
@@ -68,9 +68,9 @@ def find_and_assert_errors_matching_filename(
 
 def find_and_assert_errors_matching_location(
     errors: Sequence[ErrorInfo],
-    line: Optional[int] = None,
-    column: Optional[int] = None,
-    end_column: Optional[int] = None,
+    line: int | None = None,
+    column: int | None = None,
+    end_column: int | None = None,
 ):
     def equals_or_expected_any(actual, expected):
         return True if expected is None else actual == expected
@@ -83,7 +83,7 @@ def find_and_assert_errors_matching_location(
         and equals_or_expected_any(x.end_column, end_column)
     ]
 
-    def none_to_star(val: Optional[int] = None):
+    def none_to_star(val: int | None = None):
         return "*" if val is None else val
 
     assert len(matching_errors) > 0, (
@@ -97,7 +97,7 @@ def find_and_assert_errors_matching_location(
 
 
 def find_and_assert_errors_matching_message(
-    errors: List[ErrorInfo], match: Optional[str] = None
+    errors: list[ErrorInfo], match: str | None = None
 ):
     if match is None:
         return errors

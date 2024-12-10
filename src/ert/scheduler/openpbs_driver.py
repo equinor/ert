@@ -5,9 +5,10 @@ import json
 import logging
 import shlex
 import shutil
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Mapping, MutableMapping, Type, cast, get_type_hints
+from typing import Any, Literal, cast, get_type_hints
 
 from .driver import Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
@@ -62,7 +63,7 @@ class FinishedJob:
 AnyJob = FinishedJob | QueuedJob | RunningJob | IgnoredJobstates
 
 
-_STATE_ORDER: dict[Type[AnyJob], int] = {
+_STATE_ORDER: dict[type[AnyJob], int] = {
     IgnoredJobstates: -1,
     QueuedJob: 0,
     RunningJob: 1,
